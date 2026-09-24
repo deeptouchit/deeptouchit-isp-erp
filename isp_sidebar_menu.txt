@@ -1,0 +1,109 @@
+================================================================================
+           ISP MANAGEMENT SOFTWARE — ENTERPRISE ADMIN SIDEBAR MENU
+================================================================================
+Platform: Laravel 11 / Tailwind / Alpine.js Production Architecture
+Scope   : ISP Super Tenant / Main Office Level (All Direct & Reseller Overview)
+================================================================================
+
+[BRAND HEADER]
+├── ISP Logo / Brand Name
+└── Role Badge: "ISP Super Administrator"
+
+[SEARCH FILTER]
+└── Quick Filter: "Filter navigation menu (Ctrl+/)..."
+
+--------------------------------------------------------------------------------
+1. 🏠 DASHBOARD & EXECUTIVE OVERVIEW
+--------------------------------------------------------------------------------
+├── Executive KPI Dashboard (Total Revenue, Active Users, Bandwidth Usage)
+├── Real-Time NOC Monitor (Online Users, Router CPU, OLT Status, Optical Alerts)
+└── Daily Task & Collection Summary (Today's Collections, Pending Installations, Open Tickets)
+
+--------------------------------------------------------------------------------
+2. 👥 CUSTOMER MANAGEMENT (CRM & SUBSCRIBERS)
+--------------------------------------------------------------------------------
+├── All Customers (Master Database — Direct + All Reseller Customers)
+├── ISP Direct Customers (Company's Own Retail Customer Directory)
+├── Due & Expired Customers (Overdue Billing, Grace Period & Suspended Accounts)
+├── Online PPPoE Sessions (Live Active Sessions, Current Uptime & IP Allocation)
+├── Customer Zones & Areas (Division, District, Thana, Pop Zone / Area Mapping)
+└── Archived / Disconnected Customers (Churned Users & Equipment Return Status)
+
+--------------------------------------------------------------------------------
+3. 🤝 RESELLER NETWORK (SUB-ISP & FRANCHISE MANAGEMENT)
+--------------------------------------------------------------------------------
+├── Packages & Pricing (Custom Wholesale Rates & Reseller Packages)
+├── Reseller Directory (All Resellers List, Contact Details & Profiles)
+├── Subscriptions & Billing (Monthly Software / Panel Fees, Renewal & Due)
+├── Wallets & Balances (Prepaid Balances, Credit Limits & Ledger)
+├── Recharge History (Online Gateway Logs & Offline Manual Approvals)
+├── Bandwidth Allocation (Wholesale Mbps Allocation & Live MRTG Traffic)
+└── Performance & Ledger (Sales Volume, ISP Receivable & Commission Report)
+
+--------------------------------------------------------------------------------
+4. 👔 HUMAN RESOURCES & STAFF (HRM & FIELD ROSTER)
+--------------------------------------------------------------------------------
+├── All Employees Directory (Unified List of All ISP & Reseller Staff)
+├── ISP Operations Staff (ISP Managers, NOC Engineers, Technicians, Collectors)
+├── Reseller Staff Roster (Sub-ISP Managers, Technicians & Collectors)
+├── Add New Employee (Role Assignment, Scope Binding & Permission Setup)
+├── Staff Attendance & Activity Logs (Login History, System Audit Trail)
+└── Staff Target & Commission (Collector Targets & Commission Logs)
+
+--------------------------------------------------------------------------------
+5. 💰 BILLING, COLLECTION & ACCOUNTS (ERP & FINANCE)
+--------------------------------------------------------------------------------
+├── Customer Invoices & Bills (Monthly Automated Invoices, Custom Due Dates)
+├── Payment Collections & Receipts (Instant Money Receipt & SMS Notification)
+├── Daily Cash Handover & Closing (Collector to Manager Cash Verification & Approval)
+├── Reseller Wholesale Billing (Monthly Bandwidth / Package Invoices for Resellers)
+├── Online Gateway Transactions (bKash, Nagad, Rocket, SSLCommerz, ShurjoPay Logs)
+├── Income & Expense Accounts (Company Operational Expenses, Office Rent, Bandwidth Cost)
+└── Financial Statements & Ledger (Trial Balance, Cash Book, Profit & Loss Statement)
+
+--------------------------------------------------------------------------------
+6. 🎫 HELPDESK, NOC & FIELD TICKETING (SUPPORT DESK)
+--------------------------------------------------------------------------------
+├── All Support Tickets (Customer Complaints, Slow Internet, Line Disconnections)
+├── Assigned Field Jobs (Technician Fiber Splicing, ONU Replacement & Home Visits)
+├── New Installation Tasks (Pending Physical Connections & Cable Pulling)
+├── Reseller Escalations (Complex Technical Issues Escalated by Sub-ISPs)
+└── SLA & Performance Analytics (Average Response Time & Ticket Resolution Rate)
+
+--------------------------------------------------------------------------------
+7. 🌐 NETWORK INFRASTRUCTURE & CORE ENGINEERING (NOC & ASSETS)
+--------------------------------------------------------------------------------
+├── MikroTik Routers (RouterOS API, Bandwidth Queues, Firewall & Interfaces)
+├── NAS & RADIUS Servers (AAA Server, CoA Disconnect & Centralized Authentication)
+├── Internet Packages (Bandwidth Profiles, Speed Limits, Day/Night Burst Rules)
+├── OLT Devices (EPON / GPON Optical Line Terminals & Uplink Ports)
+├── ONU / ONT Optical Terminals (Live Rx/Tx Optical Power, Distance & Signal Health)
+├── IP Pools & CGNAT (Public IPv4, Private CGNAT Pools, IPv6 Prefixes & Subnets)
+├── VLAN Management (802.1Q VLANs, QinQ Service Tags & Bridge Interfaces)
+├── Core Routing & BGP (Static Routes, OSPF, BGP Transit Peers & Gateways)
+└── Network Topology Graph (Interactive Real-Time Hierarchical Infrastructure Visualizer)
+
+--------------------------------------------------------------------------------
+8. 📊 REPORTS, ANALYTICS & REGULATORY COMPLIANCE
+--------------------------------------------------------------------------------
+├── Monthly Revenue & Growth Report (ARPU, New Connections, Churn Rate)
+├── Collection & Due Breakdown (Zone-wise, Collector-wise & Package-wise Collection)
+├── Bandwidth MRTG & Peak Graph (Total Upstream Consumption & Peak Hours Analysis)
+├── BTRC Regulatory Compliance Log (Subscriber List, Log Server & Govt Compliance)
+└── Equipment Inventory Report (Fiber Drum, Splitters, ONUs, Patch Cords Stock)
+
+--------------------------------------------------------------------------------
+9. ⚙️ SYSTEM SETTINGS & ADMINISTRATION
+--------------------------------------------------------------------------------
+├── ISP Company Profile (Company Name, Logo, Trade License, Contact Info)
+├── SMS & WhatsApp Gateway (Bulk SMS Configuration, Payment & Expiry Templates)
+├── Automation & Auto-Cut Rules (Auto Suspend Non-Paid Users, Grace Days Setting)
+├── Role-Based Access Control (RBAC Permissions & Menu Visibility Settings)
+├── System Backup & Maintenance (Automated Cloud & Local DB Backup)
+└── Activity & Audit Trail (Full Audit Logs of Admin & Staff Actions)
+
+--------------------------------------------------------------------------------
+[FOOTER PROFILE & LOGOUT]
+├── Logged-in User Profile (Avatar, Name, Role: ISP Admin)
+└── Secure Logout Button
+================================================================================
