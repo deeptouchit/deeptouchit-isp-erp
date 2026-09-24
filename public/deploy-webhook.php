@@ -7,11 +7,23 @@
 header('Content-Type: application/json');
 
 $payload = file_get_contents('php://input');
-$data = json_decode($payload, true);
+$data = json_decode($payload, true) ?: [];
 
-$headers = getallheaders();
-$signature = $headers['X-Hub-Signature-256'] ?? $headers['x-hub-signature-256'] ?? '';
-$event = $headers['X-GitHub-Event'] ?? $headers['x-github-event'] ?? 'push';
+// Get headers safely across all server environments
+$event = $_SERVER['HTTP_X_GITHUB_EVENT'] ?? $_SERVER['X_GITHUB_EVENT'] ?? '';
+if (empty($event) && function_exists('getallheaders')) {
+    $headers = array_change_key_case(getallheaders(), CASE_LOWER);
+    $event = $headers['x-github-event'] ?? '';
+}
+if (empty($event)) {
+    $event = 'push';
+}
+
+$signature = $_SERVER['HTTP_X_HUB_SIGNATURE_256'] ?? $_SERVER['X_HUB_SIGNATURE_256'] ?? '';
+if (empty($signature) && function_exists('getallheaders')) {
+    $headers = array_change_key_case(getallheaders(), CASE_LOWER);
+    $signature = $headers['x-hub-signature-256'] ?? '';
+}
 
 // 1. Handle GitHub Ping
 if ($event === 'ping') {
