@@ -1,67 +1,71 @@
-#!/bin/bash
-# SmartHost Panel Deployment Script
+﻿#!/bin/bash
+# DeepTouch ISP-ERP Automated Deployment Script
+# Repository: https://github.com/deeptouchit/deeptouchit-isp-erp.git
 
 set -e
 
-echo "🚀 Starting deployment..."
+APP_DIR="${DEPLOY_APP_DIR:-/var/www/isp-erp}"
+BRANCH="${DEPLOY_BRANCH:-main}"
 
-# Variables
-APP_DIR="/var/www/smarthost-panel"
-RELEASE_DIR="/var/www/releases"
-CURRENT_DIR="/var/www/current"
-TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-NEW_RELEASE="$RELEASE_DIR/$TIMESTAMP"
+echo "================================================="
+echo "🚀 Starting DeepTouch ISP-ERP Deployment: $(date)"
+echo "📁 Application Directory: $APP_DIR"
+echo "🌿 Branch: $BRANCH"
+echo "================================================="
 
-echo "📁 Creating release directory: $NEW_RELEASE"
-mkdir -p $NEW_RELEASE
+if [ ! -d "$APP_DIR" ]; then
+    echo "❌ Error: Application directory $APP_DIR does not exist!"
+    exit 1
+fi
 
-echo "📦 Cloning repository..."
-git clone git@github.com:your-org/smarthost-panel.git $NEW_RELEASE
+cd "$APP_DIR"
 
-cd $NEW_RELEASE
+# 1. Pull latest changes
+echo "📦 Pulling latest commits from GitHub origin/$BRANCH..."
+git fetch --all --prune
+git checkout -f "$BRANCH"
+git reset --hard "origin/$BRANCH"
 
-echo "📦 Installing composer dependencies..."
-composer install --no-dev --optimize-autoloader --no-interaction
+# 2. Install PHP dependencies
+echo "📦 Installing Composer dependencies..."
+composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
 
-echo "📦 Installing npm dependencies and building assets..."
-npm install && npm run build
+# 3. Build frontend
+echo "⚡ Installing NPM packages & building Vite assets..."
+if command -v npm &> /dev/null; then
+    npm install --no-audit --no-fund
+    npm run build
+fi
 
-echo "🔧 Configuring environment..."
-cp .env.production .env
-php artisan key:generate --force
+# 4. Run migrations
+echo "🗄️ Running database migrations..."
+php artisan migrate --force
+
+# 5. Optimize caches
+echo "🧹 Optimizing Laravel caches..."
+php artisan optimize:clear
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 php artisan event:cache
 
-echo "🗄️ Running migrations..."
-php artisan migrate --force
+# 6. Storage link
+echo "🔗 Ensuring storage link exists..."
+php artisan storage:link 2>/dev/null || true
 
-echo "🔗 Linking storage..."
-php artisan storage:link
+# 7. Update file permissions
+echo "🔒 Updating directory permissions..."
+chown -R www-data:www-data "$APP_DIR/storage" "$APP_DIR/bootstrap/cache" 2>/dev/null || true
+chmod -R 775 "$APP_DIR/storage" "$APP_DIR/bootstrap/cache" 2>/dev/null || true
 
-echo "🔄 Updating symbolic link..."
-rm -rf $CURRENT_DIR
-ln -s $NEW_RELEASE $CURRENT_DIR
+# 8. Reload web services
+echo "🔄 Reloading web services..."
+systemctl reload php8.3-fpm 2>/dev/null || systemctl reload php8.2-fpm 2>/dev/null || true
+systemctl reload nginx 2>/dev/null || true
 
-echo "🔄 Reloading PHP-FPM..."
-sudo systemctl reload php8.3-fpm 2>/dev/null || sudo systemctl reload php8.2-fpm 2>/dev/null || true
+# 9. Restart queue workers
+php artisan queue:restart 2>/dev/null || true
 
-echo "🔄 Reloading Nginx..."
-sudo systemctl reload nginx
-
-echo "🔄 Restarting Horizon..."
-cd $CURRENT_DIR
-php artisan horizon:terminate 2>/dev/null || true
-
-echo "📊 Updating permissions..."
-sudo chown -R www-data:www-data $NEW_RELEASE
-sudo chmod -R 755 $NEW_RELEASE/storage
-sudo chmod -R 755 $NEW_RELEASE/bootstrap/cache
-
-echo "🧹 Cleaning old releases..."
-cd $RELEASE_DIR
-ls -t | tail -n +6 | xargs -r rm -rf 2>/dev/null || true
-
-echo "✅ Deployment completed successfully!"
-echo "🔗 Application is now live at: $CURRENT_DIR"
+echo "================================================="
+echo "✅ DeepTouch ISP-ERP deployment completed successfully at $(date)"
+echo "================================================="
