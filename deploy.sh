@@ -4,7 +4,8 @@
 
 set -e
 
-APP_DIR="${DEPLOY_APP_DIR:-/var/www/isp-erp}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+APP_DIR="${DEPLOY_APP_DIR:-$SCRIPT_DIR}"
 BRANCH="${DEPLOY_BRANCH:-main}"
 
 echo "================================================="
@@ -12,11 +13,6 @@ echo "🚀 Starting DeepTouch ISP-ERP Deployment: $(date)"
 echo "📁 Application Directory: $APP_DIR"
 echo "🌿 Branch: $BRANCH"
 echo "================================================="
-
-if [ ! -d "$APP_DIR" ]; then
-    echo "❌ Error: Application directory $APP_DIR does not exist!"
-    exit 1
-fi
 
 cd "$APP_DIR"
 
@@ -28,7 +24,9 @@ git reset --hard "origin/$BRANCH"
 
 # 2. Install PHP dependencies
 echo "📦 Installing Composer dependencies..."
-composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
+if command -v composer &> /dev/null; then
+    composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
+fi
 
 # 3. Build frontend
 echo "⚡ Installing NPM packages & building Vite assets..."
@@ -55,13 +53,12 @@ php artisan storage:link 2>/dev/null || true
 
 # 7. Update file permissions
 echo "🔒 Updating directory permissions..."
-chown -R www-data:www-data "$APP_DIR/storage" "$APP_DIR/bootstrap/cache" 2>/dev/null || true
 chmod -R 775 "$APP_DIR/storage" "$APP_DIR/bootstrap/cache" 2>/dev/null || true
 
-# 8. Reload web services
+# 8. Reload web services (if root/sudo available)
 echo "🔄 Reloading web services..."
-systemctl reload php8.3-fpm 2>/dev/null || systemctl reload php8.2-fpm 2>/dev/null || true
-systemctl reload nginx 2>/dev/null || true
+sudo systemctl reload php8.3-fpm 2>/dev/null || sudo systemctl reload php8.2-fpm 2>/dev/null || true
+sudo systemctl reload nginx 2>/dev/null || true
 
 # 9. Restart queue workers
 php artisan queue:restart 2>/dev/null || true
