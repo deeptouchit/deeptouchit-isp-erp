@@ -72,9 +72,9 @@ class TenantRouter extends Model
      */
     public function generateMikrotikRadiusScript(?string $serverIp = null): string
     {
-        $serverIp = $serverIp ?: (request()->getHost() ?: '103.59.177.136');
-        if (in_array($serverIp, ['127.0.0.1', 'localhost', '10.70.0.1', '10.70.0.2'])) {
-            $serverIp = '103.59.177.136';
+        $serverIp = $serverIp ?: (config('app.radius_server_ip') ?: '103.59.177.138');
+        if (empty($serverIp) || in_array($serverIp, ['127.0.0.1', 'localhost', '10.70.0.1', '10.70.0.2', 'somitysoft.com'])) {
+            $serverIp = '103.59.177.138';
         }
         $secret = $this->decrypted_radius_secret ?: ($this->decrypted_password ?: 'radius@123');
         $name = addslashes($this->name);

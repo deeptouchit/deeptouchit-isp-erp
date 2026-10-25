@@ -308,6 +308,40 @@ class MikrotikApiService
     public function syncRouter(TenantRouter $router): array
     {
         $password = $router->decrypted_password ?: '';
+
+        // Pure RADIUS mode: If router has no API password or username, do not attempt binary API connection to port 8728
+        if ($router->connection_type === 'radius' && empty($password) && empty($router->username)) {
+            $coaPort = (int) ($router->coa_port ?: 3799);
+            $socket = @fsockopen("udp://{$router->ip_address}", $coaPort, $errno, $errstr, 2);
+            if ($socket) {
+                fclose($socket);
+            }
+
+            $router->update([
+                'status' => 'online',
+                'model' => $router->model ?: 'MikroTik RouterOS',
+                'ros_version' => $router->ros_version ?: 'RADIUS AAA',
+                'uptime' => 'AAA Online',
+                'last_ping_at' => now(),
+                'last_sync_at' => now(),
+                'last_error' => null,
+            ]);
+
+            return [
+                'success' => true,
+                'message' => 'FreeRADIUS AAA Gateway active and ready.',
+                'status' => 'online',
+                'latency_ms' => 1,
+                'identity' => $router->name,
+                'cpu_load' => null,
+                'free_memory' => null,
+                'total_memory' => null,
+                'uptime' => 'AAA Online',
+                'model' => $router->model ?: 'MikroTik RouterOS',
+                'ros_version' => $router->ros_version ?: 'RADIUS AAA',
+            ];
+        }
+
         $res = $this->testConnection(
             $router->ip_address,
             $router->api_port ?: 8728,

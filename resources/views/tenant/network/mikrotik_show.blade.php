@@ -192,7 +192,7 @@
                         <span>Router Unreachable / Telemetry Unavailable</span>
                     </div>
                     <p class="text-[11px] text-rose-700 leading-relaxed font-mono break-all" 
-                       x-text="lastError || 'Cannot establish socket connection to {{ $router->ip_address }}:{{ $router->api_port ?: 8728 }}. Please verify router power, IP reachability, and API service (/ip service enable api).'"></p>
+                       x-text="lastError || 'Cannot establish socket connection to {{ $router->ip_address }}:{{ $router->api_port ?: 8728 }}. Please verify router power and IP reachability.'"></p>
                     <div class="pt-1 flex items-center gap-2 flex-wrap">
                         <button type="button" 
                                 @click="pollTelemetry(true)" 
@@ -211,51 +211,77 @@
             <!-- Online Live Telemetry Stream -->
             <template x-if="status === 'online'">
                 <div class="space-y-3">
-                    <!-- CPU Real-Time Progress Bar -->
-                    <div class="space-y-1">
-                        <div class="flex items-center justify-between text-xs">
-                            <span class="font-medium text-slate-600 flex items-center gap-1.5">
-                                <i class="fas fa-microchip text-[11px] text-blue-500"></i>
-                                <span>CPU Utilization</span>
-                            </span>
-                            <span class="font-bold font-mono text-blue-700" x-text="cpuLoad !== null ? (cpuLoad + '%') : '0%'"></span>
+                    <!-- Pure FreeRADIUS Telemetry Card (when no API telemetry is active) -->
+                    <template x-if="cpuLoad === null">
+                        <div class="p-3 bg-emerald-50/70 border border-emerald-200/90 rounded-lg space-y-2.5 text-xs">
+                            <div class="flex items-center justify-between">
+                                <span class="font-bold text-emerald-800 flex items-center gap-1.5">
+                                    <i class="fas fa-shield-halved text-emerald-600"></i>
+                                    <span>FreeRADIUS AAA Gateway Active</span>
+                                </span>
+                                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 uppercase">ONLINE</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2 text-[11px] text-slate-700 font-mono">
+                                <div class="bg-white/80 p-1.5 rounded border border-emerald-100">Auth Port: <strong class="text-slate-900">UDP 1812</strong></div>
+                                <div class="bg-white/80 p-1.5 rounded border border-emerald-100">Accounting: <strong class="text-slate-900">UDP 1813</strong></div>
+                                <div class="bg-white/80 p-1.5 rounded border border-emerald-100">CoA / PoD: <strong class="text-slate-900">Port {{ $router->coa_port ?: 3799 }}</strong></div>
+                                <div class="bg-white/80 p-1.5 rounded border border-emerald-100">Subscribers: <strong class="text-slate-900">{{ $router->customers->count() }} Managed</strong></div>
+                            </div>
+                            <p class="text-[10.5px] text-slate-500 font-sans border-t border-emerald-200/60 pt-2 leading-relaxed">
+                                Operating in High-Performance FreeRADIUS Mode. Subscriber bandwidth and PPPoE sessions are authenticated and shaped directly via RADIUS attributes.
+                            </p>
                         </div>
-                        <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                            <div class="h-2 rounded-full transition-all duration-500" 
-                                 :class="cpuLoad > 80 ? 'bg-rose-500' : (cpuLoad > 50 ? 'bg-amber-500' : 'bg-blue-600')"
-                                 :style="'width: ' + (cpuLoad || 0) + '%'"></div>
-                        </div>
-                    </div>
+                    </template>
 
-                    <!-- RAM Memory Real-Time Progress Bar -->
-                    <div class="space-y-1">
-                        <div class="flex items-center justify-between text-xs">
-                            <span class="font-medium text-slate-600 flex items-center gap-1.5">
-                                <i class="fas fa-memory text-[11px] text-emerald-500"></i>
-                                <span>RAM Memory Usage</span>
-                            </span>
-                            <span class="font-bold font-mono text-emerald-700" x-text="formatBytes(totalMemory - freeMemory) + ' / ' + formatBytes(totalMemory) + ' (' + calcUsedMemPercent() + '%)'"></span>
-                        </div>
-                        <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                            <div class="h-2 rounded-full bg-emerald-500 transition-all duration-500" 
-                                 :style="'width: ' + calcUsedMemPercent() + '%'"></div>
-                        </div>
-                    </div>
+                    <!-- CPU Real-Time Progress Bar (when API is configured) -->
+                    <template x-if="cpuLoad !== null">
+                        <div class="space-y-3">
+                            <div class="space-y-1">
+                                <div class="flex items-center justify-between text-xs">
+                                    <span class="font-medium text-slate-600 flex items-center gap-1.5">
+                                        <i class="fas fa-microchip text-[11px] text-blue-500"></i>
+                                        <span>CPU Utilization</span>
+                                    </span>
+                                    <span class="font-bold font-mono text-blue-700" x-text="cpuLoad !== null ? (cpuLoad + '%') : '0%'"></span>
+                                </div>
+                                <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                                    <div class="h-2 rounded-full transition-all duration-500" 
+                                         :class="cpuLoad > 80 ? 'bg-rose-500' : (cpuLoad > 50 ? 'bg-amber-500' : 'bg-blue-600')"
+                                         :style="'width: ' + (cpuLoad || 0) + '%'"></div>
+                                </div>
+                            </div>
 
-                    <!-- HDD / Storage Progress Bar -->
-                    <div class="space-y-1" x-show="totalHdd > 0">
-                        <div class="flex items-center justify-between text-xs">
-                            <span class="font-medium text-slate-600 flex items-center gap-1.5">
-                                <i class="fas fa-hard-drive text-[11px] text-purple-500"></i>
-                                <span>Storage (NAND / Disk)</span>
-                            </span>
-                            <span class="font-bold font-mono text-purple-700" x-text="formatBytes(totalHdd - freeHdd) + ' / ' + formatBytes(totalHdd)"></span>
+                            <!-- RAM Memory Real-Time Progress Bar -->
+                            <div class="space-y-1">
+                                <div class="flex items-center justify-between text-xs">
+                                    <span class="font-medium text-slate-600 flex items-center gap-1.5">
+                                        <i class="fas fa-memory text-[11px] text-emerald-500"></i>
+                                        <span>RAM Memory Usage</span>
+                                    </span>
+                                    <span class="font-bold font-mono text-emerald-700" x-text="formatBytes(totalMemory - freeMemory) + ' / ' + formatBytes(totalMemory) + ' (' + calcUsedMemPercent() + '%)'"></span>
+                                </div>
+                                <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                                    <div class="h-2 rounded-full bg-emerald-500 transition-all duration-500" 
+                                         :style="'width: ' + calcUsedMemPercent() + '%'"></div>
+                                </div>
+                            </div>
+
+                            <!-- HDD / Storage Progress Bar -->
+                            <div class="space-y-1" x-show="totalHdd > 0">
+                                <div class="flex items-center justify-between text-xs">
+                                    <span class="font-medium text-slate-600 flex items-center gap-1.5">
+                                        <i class="fas fa-hard-drive text-[11px] text-purple-500"></i>
+                                        <span>Storage (NAND / Disk)</span>
+                                    </span>
+                                    <span class="font-bold font-mono text-purple-700" x-text="formatBytes(totalHdd - freeHdd) + ' / ' + formatBytes(totalHdd)"></span>
+                                </div>
+                                <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                                    <div class="h-2 rounded-full bg-purple-500 transition-all duration-500" 
+                                         :style="'width: ' + calcUsedHddPercent() + '%'"></div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                            <div class="h-2 rounded-full bg-purple-500 transition-all duration-500" 
-                                 :style="'width: ' + calcUsedHddPercent() + '%'"></div>
-                        </div>
-                    </div>
+                    </template>
 
                     <!-- Telemetry Details Grid -->
                     <div class="grid grid-cols-3 gap-2 pt-1 border-t border-slate-100 text-xs">
