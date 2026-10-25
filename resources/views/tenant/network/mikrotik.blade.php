@@ -17,6 +17,7 @@
             'ip_address' => $r->ip_address,
             'connection_type' => $r->connection_type ?: 'radius',
             'radius_secret' => $r->decrypted_radius_secret ?: ($r->decrypted_password ?: 'radius@123'),
+            'password' => $r->decrypted_password ?: '',
             'coa_port' => $r->coa_port ?: 3799,
             'api_port' => $r->api_port ?: 8728,
             'username' => $r->username ?: 'admin',
@@ -688,7 +689,16 @@
                                 <i class="fas fa-plug text-cyan-600"></i>
                                 <span>RouterOS API (Optional)</span>
                             </span>
-                            <span class="text-[10px] text-slate-400 font-normal">মাইক্রোটিক প্যাকেজ ইমপোর্ট ও CPU গ্রাফের জন্য</span>
+                            <div class="flex items-center gap-2">
+                                <button type="button" 
+                                        @click="testRadiusModalSocket()" 
+                                        :disabled="radiusModal.testingSocket"
+                                        class="px-2 py-0.5 rounded bg-cyan-50 hover:bg-cyan-100 text-cyan-700 border border-cyan-200 text-[10px] font-medium inline-flex items-center gap-1 transition cursor-pointer disabled:opacity-50">
+                                    <i class="fas fa-bolt text-[9px]" :class="radiusModal.testingSocket ? 'fa-spin' : ''"></i>
+                                    <span x-text="radiusModal.testingSocket ? 'Testing...' : 'Test API'"></span>
+                                </button>
+                                <span class="text-[10px] text-slate-400 font-normal hidden sm:inline">প্যাকেজ ইমপোর্ট ও গ্রাফের জন্য</span>
+                            </div>
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                             <div>
@@ -1184,7 +1194,8 @@ function mikrotikManager() {
                 password: '',
                 showPassword: false,
                 showRadiusSecret: false,
-                is_active: true
+                is_active: true,
+                testingSocket: false
             };
         },
 
@@ -1200,10 +1211,11 @@ function mikrotikManager() {
                 coa_port: router.coa_port || 3799,
                 api_port: router.api_port || '',
                 username: router.username || '',
-                password: '',
+                password: router.password || '',
                 showPassword: false,
                 showRadiusSecret: false,
-                is_active: !!router.is_active
+                is_active: !!router.is_active,
+                testingSocket: false
             };
         },
 
@@ -1235,7 +1247,7 @@ function mikrotikManager() {
                 model: router.model || '',
                 api_port: router.api_port || 8728,
                 username: router.username || 'admin',
-                password: '',
+                password: router.password || '',
                 use_ssl: !!router.use_ssl,
                 is_active: !!router.is_active,
                 showPassword: false,
@@ -1261,6 +1273,57 @@ function mikrotikManager() {
             const coa = this.radiusModal.coa_port || 3799;
 
             return `# 1. FreeRADIUS Server যুক্ত করুন\n/radius add service=ppp,hotspot,login address=${sIp} secret="${sec}" authentication-port=1812 accounting-port=1813 timeout=3000ms comment="SomitySoft FreeRADIUS"\n\n# 2. Incoming CoA সক্রিয় করুন\n/radius incoming set accept=yes port=${coa}\n\n# 3. PPPoE AAA চালু করুন\n/ppp aaa set use-radius=yes accounting=yes interim-update=5m`;
+        },
+
+        async testRadiusModalSocket() {
+            if (!this.radiusModal.ip_address) {
+                alert('Please enter Router IP Address first.');
+                return;
+            }
+            if (!this.radiusModal.username) {
+                alert('Please enter API Username first.');
+                return;
+            }
+
+            this.radiusModal.testingSocket = true;
+
+            try {
+                const res = await fetch(`{{ route('tenant.network.mikrotik.test') }}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        router_id: this.radiusModal.id,
+                        ip_address: this.radiusModal.ip_address,
+                        api_port: this.radiusModal.api_port || 60624,
+                        username: this.radiusModal.username || 'admin',
+                        password: this.radiusModal.password || '',
+                        use_ssl: false
+                    })
+                });
+                const data = await res.json();
+
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: data.success ? 'success' : 'error',
+                        title: data.success ? 'Connection Successful!' : 'Connection Failed',
+                        html: `<div class='text-xs text-slate-600 mt-1'>${data.message}` + 
+                              (data.ros_version ? `<br><span class='font-mono font-bold text-cyan-800'>RouterOS: ${data.ros_version} (${data.model || ''})</span>` : '') + 
+                              `</div>`,
+                        confirmButtonColor: data.success ? '#0891b2' : '#e11d48',
+                        customClass: { popup: 'rounded-2xl shadow-xl border border-slate-200 p-5' }
+                    });
+                } else {
+                    alert(data.message);
+                }
+            } catch (err) {
+                alert('Network communication error while testing socket.');
+            } finally {
+                this.radiusModal.testingSocket = false;
+            }
         },
 
         async testApiModalSocket() {
@@ -1466,6 +1529,7 @@ function mikrotikManager() {
                         ip_address: router ? router.ip_address : '',
                         api_port: router ? (router.api_port || 8728) : 8728,
                         username: router ? (router.username || 'admin') : 'admin',
+                        password: router ? (router.password || '') : '',
                         use_ssl: router ? !!router.use_ssl : false
                     })
                 });

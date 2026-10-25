@@ -291,12 +291,12 @@ class MikrotikController extends Controller
         $router->model = $request->input('model');
         $router->coa_port = $request->input('coa_port', $router->coa_port ?: 3799);
 
-        if (!empty($validated['radius_secret'])) {
-            $router->radius_secret = $validated['radius_secret'];
+        if ($request->filled('radius_secret')) {
+            $router->radius_secret = trim($request->input('radius_secret'));
         }
 
-        if (!empty($validated['password'])) {
-            $router->password = $validated['password'];
+        if ($request->filled('password')) {
+            $router->password = trim($request->input('password'));
         }
 
         $hasApi = !empty($validated['api_port']) && !empty($validated['username']);
