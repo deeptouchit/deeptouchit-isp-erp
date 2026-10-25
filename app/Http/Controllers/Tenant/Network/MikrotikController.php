@@ -178,13 +178,13 @@ class MikrotikController extends Controller
             $rules['radius_secret'] = 'required|string|max:255';
         }
 
-        if ($mode === 'api' || $mode === 'hybrid') {
+        if ($mode === 'api') {
             $rules['api_port'] = 'required|integer|min:1|max:65535';
             $rules['username'] = 'required|string|max:100';
             $rules['password'] = 'required|string|max:255';
             $rules['use_ssl'] = 'nullable|boolean';
         } else {
-            $rules['api_port'] = 'nullable|integer';
+            $rules['api_port'] = 'nullable|integer|min:1|max:65535';
             $rules['username'] = 'nullable|string|max:100';
             $rules['password'] = 'nullable|string|max:255';
             $rules['use_ssl'] = 'nullable|boolean';
@@ -192,11 +192,24 @@ class MikrotikController extends Controller
 
         $validated = $request->validate($rules);
 
+        $hasApi = !empty($validated['api_port']) && !empty($validated['username']);
+        $hasRadius = !empty($validated['radius_secret']);
+
+        if ($hasApi && $hasRadius) {
+            $validated['connection_type'] = 'hybrid';
+            $validated['api_port'] = (int) $validated['api_port'];
+        } elseif ($hasApi) {
+            $validated['connection_type'] = 'api';
+            $validated['api_port'] = (int) $validated['api_port'];
+        } else {
+            $validated['connection_type'] = 'radius';
+            $validated['api_port'] = null;
+            $validated['username'] = null;
+        }
+
         $validated['tenant_id'] = $tenant->id;
         $validated['model'] = $request->input('model');
         $validated['coa_port'] = $request->input('coa_port', 3799);
-        $validated['api_port'] = ($mode === 'radius') ? null : ($validated['api_port'] ?? 8728);
-        $validated['username'] = ($mode === 'radius') ? null : ($validated['username'] ?? 'admin');
         $validated['use_ssl'] = $request->boolean('use_ssl');
         $validated['status'] = $validated['is_active'] ? 'online' : 'offline';
 
@@ -206,7 +219,7 @@ class MikrotikController extends Controller
         $this->radiusService->syncNasClients($tenant);
 
         // Attempt immediate background / instant test if requested and active
-        if ($validated['is_active'] && $request->boolean('test_immediately') && $mode !== 'radius') {
+        if ($validated['is_active'] && $request->boolean('test_immediately') && $router->connection_type !== 'radius') {
             $this->apiService->syncRouter($router);
         }
 
@@ -260,43 +273,23 @@ class MikrotikController extends Controller
         $rules = [
             'name' => 'required|string|max:100',
             'ip_address' => 'required|string|max:255',
-            'connection_type' => 'required|in:api,radius,hybrid',
+            'connection_type' => 'nullable|in:api,radius,hybrid',
             'model' => 'nullable|string|max:255',
             'coa_port' => 'nullable|integer|min:1|max:65535',
             'is_active' => 'nullable|boolean',
+            'api_port' => 'nullable|integer|min:1|max:65535',
+            'username' => 'nullable|string|max:100',
+            'password' => 'nullable|string|max:255',
+            'radius_secret' => 'nullable|string|max:255',
+            'use_ssl' => 'nullable|boolean',
         ];
-
-        if ($mode === 'radius' || $mode === 'hybrid') {
-            $rules['radius_secret'] = 'required|string|max:255';
-        }
-
-        if ($mode === 'api' || $mode === 'hybrid') {
-            $rules['api_port'] = 'required|integer|min:1|max:65535';
-            $rules['username'] = 'required|string|max:100';
-            $rules['password'] = 'nullable|string|max:255';
-            $rules['use_ssl'] = 'nullable|boolean';
-        } else {
-            $rules['api_port'] = 'nullable|integer';
-            $rules['username'] = 'nullable|string|max:100';
-            $rules['password'] = 'nullable|string|max:255';
-            $rules['use_ssl'] = 'nullable|boolean';
-        }
 
         $validated = $request->validate($rules);
 
         $router->name = $validated['name'];
         $router->ip_address = $validated['ip_address'];
-        $router->connection_type = $validated['connection_type'];
         $router->model = $request->input('model');
         $router->coa_port = $request->input('coa_port', $router->coa_port ?: 3799);
-
-        if ($mode !== 'radius') {
-            $router->api_port = $validated['api_port'] ?? ($router->api_port ?: 8728);
-            $router->username = $validated['username'] ?? ($router->username ?: 'admin');
-            $router->use_ssl = $request->boolean('use_ssl');
-        } else {
-            $router->api_port = null;
-        }
 
         if (!empty($validated['radius_secret'])) {
             $router->radius_secret = $validated['radius_secret'];
@@ -304,6 +297,25 @@ class MikrotikController extends Controller
 
         if (!empty($validated['password'])) {
             $router->password = $validated['password'];
+        }
+
+        $hasApi = !empty($validated['api_port']) && !empty($validated['username']);
+        $hasRadius = !empty($router->decrypted_radius_secret) || !empty($validated['radius_secret']);
+
+        if ($hasApi && $hasRadius) {
+            $router->connection_type = 'hybrid';
+            $router->api_port = (int) $validated['api_port'];
+            $router->username = $validated['username'];
+            $router->use_ssl = $request->boolean('use_ssl');
+        } elseif ($hasApi) {
+            $router->connection_type = 'api';
+            $router->api_port = (int) $validated['api_port'];
+            $router->username = $validated['username'];
+            $router->use_ssl = $request->boolean('use_ssl');
+        } else {
+            $router->connection_type = 'radius';
+            $router->api_port = null;
+            $router->username = null;
         }
 
         if ($request->has('is_active')) {

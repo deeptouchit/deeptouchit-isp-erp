@@ -674,6 +674,43 @@
                         </div>
                     </div>
 
+                    <!-- Optional: RouterOS API Settings (Hybrid Mode for Profile Import & Telemetry) -->
+                    <div class="pt-2 border-t border-slate-100">
+                        <div class="flex items-center justify-between mb-1.5">
+                            <span class="text-[11px] font-semibold text-slate-700 flex items-center gap-1.5">
+                                <i class="fas fa-plug text-cyan-600"></i>
+                                <span>RouterOS API (Optional)</span>
+                            </span>
+                            <span class="text-[10px] text-slate-400 font-normal">মাইক্রোটিক প্যাকেজ ইমপোর্ট ও CPU গ্রাফের জন্য</span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                            <div>
+                                <label class="block text-[10.5px] font-medium text-slate-600 mb-0.5">API Port</label>
+                                <input type="number" 
+                                       name="api_port" 
+                                       x-model="radiusModal.api_port" 
+                                       placeholder="60624"
+                                       class="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs font-mono text-slate-800 focus:bg-white focus:border-cyan-500 outline-hidden transition">
+                            </div>
+                            <div>
+                                <label class="block text-[10.5px] font-medium text-slate-600 mb-0.5">API Username</label>
+                                <input type="text" 
+                                       name="username" 
+                                       x-model="radiusModal.username" 
+                                       placeholder="Sabu"
+                                       class="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:bg-white focus:border-cyan-500 outline-hidden transition">
+                            </div>
+                            <div>
+                                <label class="block text-[10.5px] font-medium text-slate-600 mb-0.5">API Password</label>
+                                <input type="password" 
+                                       name="password" 
+                                       x-model="radiusModal.password" 
+                                       placeholder="Password"
+                                       class="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:bg-white focus:border-cyan-500 outline-hidden transition">
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Live CLI Terminal Script Snippet -->
                     <div class="rounded-lg overflow-hidden border border-slate-800 bg-slate-900 mt-2">
                         <div class="px-3 py-1.5 bg-slate-800/80 border-b border-slate-700/60 flex items-center justify-between text-[10px] text-slate-400 font-mono">
@@ -1128,6 +1165,9 @@ function mikrotikManager() {
                 model: '',
                 radius_secret: 'radius@123',
                 coa_port: 3799,
+                api_port: '',
+                username: '',
+                password: '',
                 is_active: true
             };
         },
@@ -1140,8 +1180,11 @@ function mikrotikManager() {
                 name: router.name || '',
                 ip_address: router.ip_address || '',
                 model: router.model || '',
-                radius_secret: router.radius_secret || 'radius@123',
+                radius_secret: router.radius_secret || '',
                 coa_port: router.coa_port || 3799,
+                api_port: router.api_port || '',
+                username: router.username || '',
+                password: '',
                 is_active: !!router.is_active
             };
         },
