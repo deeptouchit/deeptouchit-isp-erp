@@ -1178,9 +1178,9 @@ class MikrotikApiService
     }
 
     /**
-     * Pull /ip/route list from MikroTik Router.
+     * Pull /ip/route list from MikroTik Router (Only static / configured routes).
      */
-    public function pullRoutes(TenantRouter $router): array
+    public function pullRoutes(TenantRouter $router, bool $staticOnly = true): array
     {
         $password = $router->decrypted_password ?: "";
         if (!$this->connect($router->ip_address, $router->api_port ?: 8728, $router->username ?: "admin", $password, (bool) $router->use_ssl, 4)) {
@@ -1200,18 +1200,29 @@ class MikrotikApiService
             if (isset($row["!re"]["dst-address"])) {
                 $d = $row["!re"];
                 
-                // Determine route type (static, connected, bgp, ospf, blackhole)
+                // Detect whether route is dynamic (DAC connected, BGP, OSPF)
+                $isDynamic = (isset($d["dynamic"]) && in_array(strtolower($d["dynamic"]), ["true", "yes", "1"]))
+                    || (isset($d["connect"]) && in_array(strtolower($d["connect"]), ["true", "yes", "1"]))
+                    || (isset($d["bgp"]) && in_array(strtolower($d["bgp"]), ["true", "yes", "1"]))
+                    || (isset($d["ospf"]) && in_array(strtolower($d["ospf"]), ["true", "yes", "1"]));
+
+                // If static only, skip all dynamic / BGP / connected routes
+                if ($staticOnly && $isDynamic) {
+                    continue;
+                }
+
+                // Determine route type (static, blackhole, connected, bgp, ospf)
                 $type = "static";
                 if (isset($d["type"]) && strtolower($d["type"]) === "blackhole") {
                     $type = "blackhole";
-                } elseif (isset($d["connect"]) && $d["connect"] === "true") {
-                    $type = "connected";
-                } elseif (isset($d["bgp"]) && $d["bgp"] === "true") {
-                    $type = "bgp";
-                } elseif (isset($d["ospf"]) && $d["ospf"] === "true") {
-                    $type = "ospf";
-                } elseif (isset($d["dynamic"]) && $d["dynamic"] === "true") {
-                    $type = "connected";
+                } elseif ($isDynamic) {
+                    if (isset($d["bgp"]) && in_array(strtolower($d["bgp"]), ["true", "yes", "1"])) {
+                        $type = "bgp";
+                    } elseif (isset($d["ospf"]) && in_array(strtolower($d["ospf"]), ["true", "yes", "1"])) {
+                        $type = "ospf";
+                    } else {
+                        $type = "connected";
+                    }
                 }
 
                 $routes[] = [
@@ -1221,8 +1232,8 @@ class MikrotikApiService
                     "routing_table" => $d["routing-table"] ?? ($d["routing-mark"] ?? "main"),
                     "type" => $type,
                     "comment" => $d["comment"] ?? null,
-                    "disabled" => ($d["disabled"] ?? "no") === "yes",
-                    "active" => ($d["active"] ?? "yes") === "yes",
+                    "disabled" => in_array(strtolower($d["disabled"] ?? "no"), ["yes", "true", "1"]),
+                    "active" => in_array(strtolower($d["active"] ?? "yes"), ["yes", "true", "1"]),
                 ];
             }
         }

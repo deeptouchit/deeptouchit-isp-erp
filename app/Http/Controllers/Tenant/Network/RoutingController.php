@@ -408,7 +408,7 @@ class RoutingController extends Controller
 
         $router = TenantRouter::where('tenant_id', $tenant->id)->findOrFail($validated['router_id']);
 
-        $res = $this->mikrotikApiService->pullRoutes($router);
+        $res = $this->mikrotikApiService->pullRoutes($router, true);
         if (!$res['success']) {
             return response()->json([
                 'success' => false,
@@ -424,7 +424,13 @@ class RoutingController extends Controller
             $gateway = !empty($routeData['gateway']) ? $routeData['gateway'] : 'connected';
             $distance = (int) ($routeData['distance'] ?? 1);
             $table = !empty($routeData['routing_table']) ? $routeData['routing_table'] : 'main';
-            $type = in_array($routeData['type'] ?? '', ['static', 'bgp', 'ospf', 'connected', 'blackhole']) ? $routeData['type'] : 'static';
+            $type = in_array($routeData['type'] ?? '', ['static', 'blackhole']) ? $routeData['type'] : 'static';
+
+            // Only import configured static/blackhole routes
+            if (!in_array($type, ['static', 'blackhole'])) {
+                continue;
+            }
+
             $comment = $routeData['comment'] ?? null;
             $disabled = !empty($routeData['disabled']);
 
