@@ -225,7 +225,7 @@
                                 <div class="bg-white/80 p-1.5 rounded border border-emerald-100">Auth Port: <strong class="text-slate-900">UDP 1812</strong></div>
                                 <div class="bg-white/80 p-1.5 rounded border border-emerald-100">Accounting: <strong class="text-slate-900">UDP 1813</strong></div>
                                 <div class="bg-white/80 p-1.5 rounded border border-emerald-100">CoA / PoD: <strong class="text-slate-900">Port {{ $router->coa_port ?: 3799 }}</strong></div>
-                                <div class="bg-white/80 p-1.5 rounded border border-emerald-100">Subscribers: <strong class="text-slate-900">{{ $router->customers->count() }} Managed</strong></div>
+                                <div class="bg-white/80 p-1.5 rounded border border-emerald-100">Subscribers: <strong class="text-slate-900">{{ $router->customers?->count() ?? 0 }} Managed</strong></div>
                             </div>
                             <p class="text-[10.5px] text-slate-500 font-sans border-t border-emerald-200/60 pt-2 leading-relaxed">
                                 Operating in High-Performance FreeRADIUS Mode. Subscriber bandwidth and PPPoE sessions are authenticated and shaped directly via RADIUS attributes.

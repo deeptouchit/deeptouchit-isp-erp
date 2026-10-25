@@ -179,4 +179,12 @@ SCRIPT;
 
         return $raw;
     }
+
+    /**
+     * Associated customer subscribers connected through this router.
+     */
+    public function customers()
+    {
+        return $this->hasMany(TenantCustomer::class, 'router_id');
+    }
 }
