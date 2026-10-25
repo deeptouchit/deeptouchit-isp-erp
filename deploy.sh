@@ -1,4 +1,4 @@
-﻿#!/bin/bash
+#!/bin/bash
 # DeepTouch ISP-ERP Automated Deployment Script
 # Repository: https://github.com/deeptouchit/deeptouchit-isp-erp.git
 
@@ -15,6 +15,10 @@ echo "🌿 Branch: $BRANCH"
 echo "================================================="
 
 cd "$APP_DIR"
+
+# 0. Ensure git safe directory
+git config --global --add safe.directory "$APP_DIR" 2>/dev/null || true
+git config --global --add safe.directory "*" 2>/dev/null || true
 
 # 1. Pull latest changes
 echo "📦 Pulling latest commits from GitHub origin/$BRANCH..."
