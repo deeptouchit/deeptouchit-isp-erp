@@ -365,11 +365,15 @@ class MikrotikApiService
                 'last_error' => null,
             ]);
         } else {
+            $isRadiusCapable = ($router->connection_type === 'hybrid' || $router->connection_type === 'radius' || !empty($router->decrypted_radius_secret));
             $router->update([
-                'status' => 'offline',
+                'status' => $isRadiusCapable ? 'online' : 'offline',
                 'last_ping_at' => now(),
                 'last_error' => $res['message'],
             ]);
+            if ($isRadiusCapable) {
+                $res['status'] = 'online';
+            }
         }
 
         return $res;

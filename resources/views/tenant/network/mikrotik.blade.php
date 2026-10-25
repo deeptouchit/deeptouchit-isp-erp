@@ -653,12 +653,19 @@
                             <label class="block text-[11px] font-semibold text-slate-700 mb-1">
                                 RADIUS Secret <span class="text-rose-500">*</span>
                             </label>
-                            <input type="text" 
-                                   name="radius_secret" 
-                                   x-model="radiusModal.radius_secret" 
-                                   required 
-                                   placeholder="radius@123"
-                                   class="w-full px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs font-mono text-slate-800 focus:bg-white focus:border-cyan-500 outline-hidden transition font-normal">
+                            <div class="relative">
+                                <input :type="radiusModal.showRadiusSecret ? 'text' : 'password'" 
+                                       name="radius_secret" 
+                                       x-model="radiusModal.radius_secret" 
+                                       required 
+                                       placeholder="radius@123"
+                                       class="w-full pl-2.5 pr-7 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs font-mono text-slate-800 focus:bg-white focus:border-cyan-500 outline-hidden transition font-normal">
+                                <button type="button" 
+                                        @click="radiusModal.showRadiusSecret = !radiusModal.showRadiusSecret" 
+                                        class="absolute inset-y-0 right-0 pr-2 flex items-center text-slate-400 hover:text-slate-600 cursor-pointer">
+                                    <i class="fas text-[9px]" :class="radiusModal.showRadiusSecret ? 'fa-eye-slash' : 'fa-eye'"></i>
+                                </button>
+                            </div>
                         </div>
 
                         <!-- CoA Port -->
@@ -702,11 +709,18 @@
                             </div>
                             <div>
                                 <label class="block text-[10.5px] font-medium text-slate-600 mb-0.5">API Password</label>
-                                <input type="password" 
-                                       name="password" 
-                                       x-model="radiusModal.password" 
-                                       placeholder="Password"
-                                       class="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:bg-white focus:border-cyan-500 outline-hidden transition">
+                                <div class="relative">
+                                    <input :type="radiusModal.showPassword ? 'text' : 'password'" 
+                                           name="password" 
+                                           x-model="radiusModal.password" 
+                                           placeholder="Password"
+                                           class="w-full pl-2.5 pr-7 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:bg-white focus:border-cyan-500 outline-hidden transition font-normal">
+                                    <button type="button" 
+                                            @click="radiusModal.showPassword = !radiusModal.showPassword" 
+                                            class="absolute inset-y-0 right-0 pr-2 flex items-center text-slate-400 hover:text-slate-600 cursor-pointer">
+                                        <i class="fas text-[9px]" :class="radiusModal.showPassword ? 'fa-eye-slash' : 'fa-eye'"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1168,6 +1182,8 @@ function mikrotikManager() {
                 api_port: '',
                 username: '',
                 password: '',
+                showPassword: false,
+                showRadiusSecret: false,
                 is_active: true
             };
         },
@@ -1185,6 +1201,8 @@ function mikrotikManager() {
                 api_port: router.api_port || '',
                 username: router.username || '',
                 password: '',
+                showPassword: false,
+                showRadiusSecret: false,
                 is_active: !!router.is_active
             };
         },
