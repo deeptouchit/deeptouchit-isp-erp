@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 use App\Http\Controllers\Api\PaymentWebhookController;
 use App\Http\Controllers\Webhook\GitHubDeployWebhookController;
