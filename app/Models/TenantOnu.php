@@ -33,6 +33,31 @@ class TenantOnu extends Model
         return $this->belongsTo(TenantOlt::class, 'olt_id');
     }
 
+    public function customer(): BelongsTo
+    {
+        return $this->belongsTo(TenantCustomer::class, 'customer_id');
+    }
+
+    /**
+     * Get display router MAC address (dedicated or fallback to auto_router_mac / linked customer)
+     */
+    public function getDisplayRouterMacAttribute(): ?string
+    {
+        if (!empty($this->router_mac)) {
+            return $this->router_mac;
+        }
+
+        if (isset($this->attributes['auto_router_mac']) && !empty($this->attributes['auto_router_mac'])) {
+            return $this->attributes['auto_router_mac'];
+        }
+
+        if ($this->relationLoaded('customer') && $this->customer) {
+            return $this->customer->mac_address;
+        }
+
+        return null;
+    }
+
     /**
      * Get Signal Quality label and color
      * 0 dBm to -20 dBm: Green

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Tenant\Network;
 
 use App\Http\Controllers\Controller;
+use App\Models\TenantCustomer;
 use App\Models\TenantOlt;
 use App\Models\TenantOnu;
 use App\Services\Network\OltApiService;
@@ -28,7 +29,7 @@ class OnuController extends Controller
 
         $olts = TenantOlt::where('tenant_id', $tenant->id)->get();
 
-        $query = TenantOnu::where('tenant_id', $tenant->id)->with('olt');
+        $query = TenantOnu::where('tenant_id', $tenant->id)->with(['olt', 'customer']);
 
         if ($oltId = $request->input('olt_id')) {
             $query->where('olt_id', $oltId);
@@ -52,13 +53,29 @@ class OnuController extends Controller
             $query->where('onu_type', $onuType);
         }
 
+        $matchedUsernames = [];
         if ($search = $request->input('search')) {
-            $query->where(function ($q) use ($search) {
+            $matchedUsernames = TenantCustomer::where('tenant_id', $tenant->id)
+                ->where(function ($cq) use ($search) {
+                    $cq->where('mac_address', 'like', "%{$search}%")
+                       ->orWhere('name', 'like', "%{$search}%");
+                })
+                ->pluck('username')
+                ->filter()
+                ->toArray();
+
+            $query->where(function ($q) use ($search, $matchedUsernames) {
                 $q->where('name', 'like', "%{$search}%")
                   ->orWhere('mac_address', 'like', "%{$search}%")
+                  ->orWhere('router_mac', 'like', "%{$search}%")
                   ->orWhere('onu_id', 'like', "%{$search}%")
                   ->orWhere('model', 'like', "%{$search}%")
-                  ->orWhere('desc', 'like', "%{$search}%");
+                  ->orWhere('desc', 'like', "%{$search}%")
+                  ->orWhere('pppoe_username', 'like', "%{$search}%");
+
+                if (!empty($matchedUsernames)) {
+                    $q->orWhereIn('pppoe_username', $matchedUsernames);
+                }
             });
         }
 
@@ -68,6 +85,33 @@ class OnuController extends Controller
         }
 
         $onus = $query->latest('id')->paginate($perPage)->withQueryString();
+
+        // High-performance batch pre-resolving of customer router MACs
+        $usernames = $onus->pluck('pppoe_username')->filter()->unique()->toArray();
+        $onuMacs = $onus->pluck('mac_address')->filter()->unique()->toArray();
+
+        $customersByUsername = !empty($usernames) ? TenantCustomer::where('tenant_id', $tenant->id)
+            ->whereIn('username', $usernames)
+            ->get()
+            ->keyBy('username') : collect();
+
+        $customersByOnuMac = !empty($onuMacs) ? TenantCustomer::where('tenant_id', $tenant->id)
+            ->whereIn('onu_mac_sn', $onuMacs)
+            ->get()
+            ->keyBy('onu_mac_sn') : collect();
+
+        foreach ($onus as $onu) {
+            if (empty($onu->router_mac)) {
+                $matchedCust = ($onu->pppoe_username ? $customersByUsername->get($onu->pppoe_username) : null)
+                    ?: ($onu->mac_address ? $customersByOnuMac->get($onu->mac_address) : null);
+                if ($matchedCust && !empty($matchedCust->mac_address)) {
+                    $onu->auto_router_mac = $matchedCust->mac_address;
+                    if (empty($onu->customer_id)) {
+                        $onu->linked_customer_id = $matchedCust->id;
+                    }
+                }
+            }
+        }
 
         // Calculate summary metric counters based on active filter scope
         $metricBase = TenantOnu::where('tenant_id', $tenant->id);
@@ -81,12 +125,18 @@ class OnuController extends Controller
         }
 
         if ($search = $request->input('search')) {
-            $metricBase->where(function ($q) use ($search) {
+            $metricBase->where(function ($q) use ($search, $matchedUsernames) {
                 $q->where('name', 'like', "%{$search}%")
                   ->orWhere('mac_address', 'like', "%{$search}%")
+                  ->orWhere('router_mac', 'like', "%{$search}%")
                   ->orWhere('onu_id', 'like', "%{$search}%")
                   ->orWhere('model', 'like', "%{$search}%")
-                  ->orWhere('desc', 'like', "%{$search}%");
+                  ->orWhere('desc', 'like', "%{$search}%")
+                  ->orWhere('pppoe_username', 'like', "%{$search}%");
+
+                if (!empty($matchedUsernames)) {
+                    $q->orWhereIn('pppoe_username', $matchedUsernames);
+                }
             });
         }
 
@@ -121,8 +171,8 @@ class OnuController extends Controller
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
         }
 
-        $onu = TenantOnu::where('tenant_id', $tenant->id)->with('olt')->findOrFail($id);
-        $onu->append('signal_quality');
+        $onu = TenantOnu::where('tenant_id', $tenant->id)->with(['olt', 'customer'])->findOrFail($id);
+        $onu->append(['signal_quality', 'display_router_mac']);
 
         return response()->json([
             'success' => true,
@@ -145,6 +195,7 @@ class OnuController extends Controller
         $validated = $request->validate([
             'name' => 'nullable|string|max:255',
             'desc' => 'nullable|string|max:500',
+            'router_mac' => 'nullable|string|max:50',
             'vlan_id' => 'nullable|integer|min:1|max:4094',
             'vlan_mode' => 'nullable|string|in:tag,untag,transparent,hybrid',
             'service_mode' => 'nullable|string|in:bridge,pppoe,dhcp,static',
@@ -165,8 +216,8 @@ class OnuController extends Controller
             $oltResult = $this->oltApiService->configureOnu($onu->olt, $onu, $validated);
         }
 
-        $onu->load('olt');
-        $onu->append('signal_quality');
+        $onu->load(['olt', 'customer']);
+        $onu->append(['signal_quality', 'display_router_mac']);
 
         return response()->json([
             'success' => true,

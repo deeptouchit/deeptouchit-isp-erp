@@ -136,7 +136,7 @@
                     <input type="text" 
                            name="search" 
                            value="{{ request('search') }}" 
-                           placeholder="Search Name, MAC, Model, Port..." 
+                           placeholder="Search Name, ONU/Router MAC, Port, Model..." 
                            class="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-1 focus:ring-cyan-500 focus:border-cyan-500 transition font-normal" />
                 </div>
             </div>
@@ -234,9 +234,9 @@
                         <th>OLT Name</th>
                         <th class="text-center">PON:ONU ID</th>
                         <th>Client / ONU Name</th>
-                        <th>MAC Address</th>
+                        <th>ONU MAC</th>
+                        <th>Router MAC</th>
                         <th class="text-center">Type</th>
-                        <th>Model</th>
                         <th class="text-center">Optical Power</th>
                         <th class="text-center">Distance</th>
                         <th class="w-10 text-center no-sort">Actions</th>
@@ -252,6 +252,7 @@
                                 'GPON' => 'bg-blue-50 text-blue-700 border-blue-200',
                                 default => 'bg-cyan-50 text-cyan-700 border-cyan-200'
                             };
+                            $routerMacDisplay = $onu->router_mac ?: ($onu->auto_router_mac ?: ($onu->customer->mac_address ?? null));
                             $onuPayload = [
                                 'id' => $onu->id,
                                 'olt_id' => $onu->olt_id,
@@ -262,6 +263,7 @@
                                 'name' => $onu->name,
                                 'desc' => $onu->desc,
                                 'mac_address' => $onu->mac_address,
+                                'router_mac' => $routerMacDisplay ?: '',
                                 'vendor' => $onu->vendor ?: 'VSOL',
                                 'model' => $onu->model ?: '1GE ONU',
                                 'onu_type' => $onuType,
@@ -328,31 +330,43 @@
                                 </button>
                             </td>
 
-                            <!-- 6. MAC Address -->
+                            <!-- 6. ONU MAC -->
                             <td class="font-mono text-slate-700">
                                 <span class="inline-flex items-center gap-1">
                                     <span>{{ $onu->mac_address ?: '--' }}</span>
                                     @if($onu->mac_address)
                                         <button type="button" 
-                                                @click="copyToClipboard('{{ $onu->mac_address }}', 'MAC Address')" 
+                                                @click="copyToClipboard('{{ $onu->mac_address }}', 'ONU MAC')" 
                                                 class="text-slate-400 hover:text-cyan-600 text-[10px] cursor-pointer" 
-                                                title="Copy MAC">
+                                                title="Copy ONU MAC">
                                             <i class="fas fa-copy"></i>
                                         </button>
                                     @endif
                                 </span>
                             </td>
 
-                            <!-- 7. Type -->
+                            <!-- 7. Router MAC -->
+                            <td class="font-mono text-slate-700">
+                                @if($routerMacDisplay)
+                                    <span class="inline-flex items-center gap-1 text-slate-800">
+                                        <span>{{ $routerMacDisplay }}</span>
+                                        <button type="button" 
+                                                @click="copyToClipboard('{{ $routerMacDisplay }}', 'Router MAC')" 
+                                                class="text-slate-400 hover:text-cyan-600 text-[10px] cursor-pointer" 
+                                                title="Copy Router MAC">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                    </span>
+                                @else
+                                    <span class="text-slate-400 text-[10px]">--</span>
+                                @endif
+                            </td>
+
+                            <!-- 8. Type -->
                             <td class="text-center font-mono">
                                 <span class="inline-flex px-1.5 py-0.5 rounded text-[10px] border {{ $typeBadge }}">
                                     {{ $onuType }}
                                 </span>
-                            </td>
-
-                            <!-- 8. Model -->
-                            <td class="font-mono text-slate-700">
-                                {{ $onu->model ?: '1GE ONU' }}
                             </td>
 
                             <!-- 9. Optical Power -->
@@ -507,7 +521,10 @@
                                 <p class="text-[10.5px] text-slate-500 font-normal">
                                     <span x-text="manageModal.onu.olt_name"></span> &bull; 
                                     Port <span class="font-mono text-cyan-700" x-text="manageModal.onu.pon_port + ':#' + manageModal.onu.onu_id"></span> &bull;
-                                    MAC <span class="font-mono text-slate-600" x-text="manageModal.onu.mac_address"></span>
+                                    ONU MAC <span class="font-mono text-slate-600" x-text="manageModal.onu.mac_address"></span>
+                                    <template x-if="manageModal.onu.router_mac">
+                                        <span> &bull; Router MAC <span class="font-mono text-cyan-700" x-text="manageModal.onu.router_mac"></span></span>
+                                    </template>
                                 </p>
                             </div>
                         </div>
@@ -651,6 +668,15 @@
                                        x-model="manageModal.form.name" 
                                        placeholder="e.g. John Doe / Customer #1024" 
                                        class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 outline-hidden transition font-normal" />
+                            </div>
+
+                            <div>
+                                <label class="block text-[11px] font-semibold text-slate-700 mb-1">Router MAC Address</label>
+                                <input type="text" 
+                                       x-model="manageModal.form.router_mac" 
+                                       placeholder="e.g. AA:BB:CC:DD:EE:FF" 
+                                       class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono text-slate-800 focus:bg-white focus:border-cyan-500 outline-hidden transition font-normal" />
+                                <span class="text-[10px] text-slate-400 mt-0.5 block">Client router's WAN MAC address (auto-linked to subscriber profile).</span>
                             </div>
 
                             <div>
@@ -957,6 +983,7 @@ function onuManager() {
             this.manageModal.activeTab = defaultTab;
             this.manageModal.form.name = onuData.name || '';
             this.manageModal.form.desc = onuData.desc || '';
+            this.manageModal.form.router_mac = onuData.router_mac || '';
             this.manageModal.form.vlan_id = onuData.vlan_id || '';
             this.manageModal.form.vlan_mode = onuData.vlan_mode || 'tag';
             this.manageModal.form.service_mode = onuData.service_mode || 'bridge';
@@ -988,6 +1015,7 @@ function onuManager() {
                     body: JSON.stringify({
                         name: this.manageModal.form.name,
                         desc: this.manageModal.form.desc,
+                        router_mac: this.manageModal.form.router_mac || null,
                         vlan_id: this.manageModal.form.vlan_id || null,
                         vlan_mode: this.manageModal.form.vlan_mode,
                         service_mode: this.manageModal.form.service_mode,
@@ -1009,6 +1037,7 @@ function onuManager() {
                     if (nameEl) nameEl.textContent = this.manageModal.form.name;
 
                     this.closeManageModal();
+                    setTimeout(() => window.location.reload(), 600);
                 } else {
                     this.showToast(data.message || 'Failed to save configuration.', 'error');
                 }
