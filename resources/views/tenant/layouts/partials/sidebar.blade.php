@@ -318,11 +318,12 @@
         @if(auth()->user() && (auth()->user()->isOwner() || auth()->user()->isIspAdmin() || auth()->user()->hasPermission('resellers.view')))
         @php
             $isPartnersActive = request()->routeIs('tenant.resellers.index*') || 
+                                request()->routeIs('tenant.resellers.import*') || 
                                 request()->routeIs('tenant.resellers.margins*') || 
                                 request()->routeIs('tenant.resellers.subscriptions*');
         @endphp
         <div x-data="{ open: {{ $isPartnersActive ? 'true' : 'false' }} }" 
-             x-show="!filterQuery || 'reseller partners directory sub-isps franchise add packages margins subscriptions licenses'.includes(filterQuery.toLowerCase())"
+             x-show="!filterQuery || 'reseller partners directory sub-isps franchise add packages margins subscriptions licenses import excel'.includes(filterQuery.toLowerCase())"
              class="space-y-1">
             <button type="button" 
                     @click="open = !open" 
@@ -341,6 +342,13 @@
                    x-show="!filterQuery || 'reseller directory list profiles sub-isps franchise add retail'.includes(filterQuery.toLowerCase())"
                    class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ request()->routeIs('tenant.resellers.index*') ? 'border-cyan-200 bg-cyan-50/80 text-cyan-700 font-bold border-l-4 border-l-cyan-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
                     Partner Directory
+                </a>
+
+                <!-- 1b. Import Resellers -->
+                <a href="{{ Route::has('tenant.resellers.import') ? route('tenant.resellers.import') : '#' }}" 
+                   x-show="!filterQuery || 'import excel csv bulk upload resellers partner sub-isps'.includes(filterQuery.toLowerCase())"
+                   class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ request()->routeIs('tenant.resellers.import*') ? 'border-cyan-200 bg-cyan-50/80 text-cyan-700 font-bold border-l-4 border-l-cyan-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
+                    Import Resellers (Excel)
                 </a>
 
                 <!-- 2. Panel Licenses -->

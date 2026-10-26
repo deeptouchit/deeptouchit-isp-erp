@@ -65,6 +65,14 @@
                 <span>Wallets</span>
             </a>
 
+            <!-- Import Resellers (Excel / CSV) -->
+            <a href="{{ route('tenant.resellers.import') }}" 
+               class="px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-semibold text-xs border border-emerald-200/80 shadow-xs transition flex items-center gap-1.5 cursor-pointer"
+               title="Bulk Import Resellers from Excel / CSV">
+                <i class="fas fa-file-excel text-emerald-600 text-xs"></i>
+                <span>Import Excel</span>
+            </a>
+
             <!-- Add New Reseller Button -->
             <button type="button" 
                     @click="openCreateModal()" 

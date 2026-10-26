@@ -223,6 +223,9 @@ Route::middleware(['web'])->group(function () {
 
             // 1. Reseller Directory & Onboarding (All Resellers List, Contact Details & Profiles)
             Route::get('/', [ResellerDirectoryController::class, 'index'])->name('index');
+            Route::get('/import', [ResellerDirectoryController::class, 'importView'])->name('import');
+            Route::post('/import', [ResellerDirectoryController::class, 'importProcess'])->name('import.process');
+            Route::get('/import-template', [ResellerDirectoryController::class, 'downloadSampleTemplate'])->name('import-template');
             Route::post('/', [ResellerDirectoryController::class, 'store'])->name('store');
             Route::get('/{reseller}', [ResellerDirectoryController::class, 'show'])->whereNumber('reseller')->name('show');
             Route::put('/{reseller}', [ResellerDirectoryController::class, 'update'])->whereNumber('reseller')->name('update');

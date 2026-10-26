@@ -434,4 +434,278 @@ class ResellerDirectoryController extends Controller
 
         return redirect()->route('tenant.resellers.index')->with('success', "Reseller '{$name}' deleted successfully.");
     }
+
+    /**
+     * Show Excel / CSV Import Page for Resellers.
+     */
+    public function importView(Request $request): View
+    {
+        $tenant = Auth::user()?->tenant;
+        if (!$tenant) {
+            abort(404, 'Tenant record not found.');
+        }
+
+        $totalResellers = TenantReseller::where('tenant_id', $tenant->id)->count();
+
+        return view('tenant.resellers.import', compact('tenant', 'totalResellers'));
+    }
+
+    /**
+     * Download Standard CSV / Excel Template for Reseller Import.
+     */
+    public function downloadSampleTemplate(Request $request)
+    {
+        $fileName = "reseller_import_template_" . date('Y-m-d') . ".csv";
+
+        $headers = [
+            "Content-type" => "text/csv; charset=UTF-8",
+            "Content-Disposition" => "attachment; filename=\"{$fileName}\"",
+            "Pragma" => "no-cache",
+            "Cache-Control" => "must-revalidate, post-check=0, pre-check=0",
+            "Expires" => "0"
+        ];
+
+        $columns = [
+            'Reseller Name', 'Code', 'Prefix', 'Contact Person', 'Mobile Phone', 
+            'Email', 'Address', 'Billing Type (prepaid/postpaid)', 'Commission Rate (%)', 
+            'Credit Limit', 'Monthly Panel Charge', 'Initial Wallet Balance', 'Status (active/inactive)', 'Notes'
+        ];
+
+        $sampleRows = [
+            [
+                'SpeedNet Online Ltd', 'RES-001', 'SN', 'Md. Rahim Ahmed', '01711223344',
+                'rahim@speednet.com', 'House 12, Road 4, Sector 3, Uttara, Dhaka', 'prepaid', '25.00',
+                '5000.00', '500.00', '0.00', 'active', 'Primary Sub-ISP Partner'
+            ],
+            [
+                'FastLink Fiber Network', 'RES-002', 'FL', 'Karim Chowdhury', '01811334455',
+                'karim@fastlink.net', 'Agrabad Commercial Area, Chattogram', 'postpaid', '30.00',
+                '10000.00', '1000.00', '0.00', 'active', 'Enterprise Franchise Partner'
+            ],
+            [
+                'Surma Broadband', 'RES-003', 'SB', 'Tanjil Hasan', '01911445566',
+                'tanjil@surmabb.com', 'Zindabazar, Sylhet', 'prepaid', '20.00',
+                '3000.00', '400.00', '0.00', 'active', 'Zonal Partner'
+            ]
+        ];
+
+        $callback = function () use ($columns, $sampleRows) {
+            $file = fopen('php://output', 'w');
+            fputs($file, "\xEF\xBB\xBF"); // UTF-8 BOM for Microsoft Excel
+            fputcsv($file, $columns);
+            foreach ($sampleRows as $row) {
+                fputcsv($file, $row);
+            }
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Process Bulk Reseller Import from CSV / Excel file.
+     */
+    public function importProcess(Request $request): JsonResponse|RedirectResponse
+    {
+        $tenant = Auth::user()?->tenant;
+        if (!$tenant) {
+            abort(404, 'Tenant record not found.');
+        }
+
+        $request->validate([
+            'file' => 'required|file|max:10240',
+            'duplicate_action' => 'nullable|string|in:skip,update',
+            'default_billing_type' => 'nullable|string|in:prepaid,postpaid',
+            'default_commission_rate' => 'nullable|numeric|min:0|max:100',
+            'default_status' => 'nullable|string|in:active,inactive',
+        ]);
+
+        $file = $request->file('file');
+        $duplicateAction = $request->input('duplicate_action', 'skip');
+        $defaultBillingType = $request->input('default_billing_type', 'prepaid');
+        $defaultCommission = (float) $request->input('default_commission_rate', 0);
+        $defaultStatus = $request->input('default_status', 'active');
+
+        $path = $file->getRealPath();
+        $handle = fopen($path, 'r');
+        if (!$handle) {
+            if ($request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Unable to read uploaded file.'], 422);
+            }
+            return back()->with('error', 'Unable to read uploaded file.');
+        }
+
+        // Strip UTF-8 BOM if present
+        $bom = fread($handle, 3);
+        if ($bom !== "\xEF\xBB\xBF") {
+            rewind($handle);
+        }
+
+        $headerRow = fgetcsv($handle);
+        if (!$headerRow) {
+            fclose($handle);
+            if ($request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'The uploaded file is empty.'], 422);
+            }
+            return back()->with('error', 'The uploaded file is empty.');
+        }
+
+        // Normalize headers
+        $cleanHeaders = array_map(function($h) {
+            $h = strtolower(trim((string)$h));
+            return preg_replace('/[^a-z0-9_]/', '', str_replace([' ', '/', '-', '(', ')', '%'], '_', $h));
+        }, $headerRow);
+
+        $imported = 0;
+        $updated = 0;
+        $skipped = 0;
+        $errors = [];
+        $rowNum = 1;
+
+        DB::beginTransaction();
+        try {
+            while (($row = fgetcsv($handle)) !== false) {
+                $rowNum++;
+                // Skip empty row
+                if (empty(array_filter($row))) {
+                    continue;
+                }
+
+                $data = [];
+                foreach ($cleanHeaders as $idx => $key) {
+                    $data[$key] = isset($row[$idx]) ? trim($row[$idx]) : '';
+                }
+
+                // Extract fields with multiple possible column names
+                $name = $data['reseller_name'] ?? ($data['name'] ?? ($data['company_name'] ?? ($data['company__reseller_name'] ?? '')));
+                if (empty($name)) {
+                    $skipped++;
+                    $errors[] = "Row {$rowNum}: Reseller Name is missing.";
+                    continue;
+                }
+
+                $code = $data['code'] ?? ($data['reseller_code'] ?? '');
+                $prefix = $data['prefix'] ?? '';
+                $contactPerson = $data['contact_person'] ?? ($data['contact'] ?? '');
+                $mobile = $data['mobile_phone'] ?? ($data['mobile'] ?? ($data['phone'] ?? ''));
+                $email = $data['email'] ?? '';
+                $address = $data['address'] ?? '';
+                $billingType = strtolower($data['billing_type__prepaidpostpaid_'] ?? ($data['billing_type'] ?? $defaultBillingType));
+                if (!in_array($billingType, ['prepaid', 'postpaid'])) {
+                    $billingType = $defaultBillingType;
+                }
+
+                $commRate = isset($data['commission_rate___']) && is_numeric($data['commission_rate___'])
+                    ? (float) $data['commission_rate___']
+                    : (isset($data['commission_rate']) && is_numeric($data['commission_rate']) ? (float) $data['commission_rate'] : $defaultCommission);
+
+                $creditLimit = isset($data['credit_limit']) && is_numeric($data['credit_limit']) ? (float) $data['credit_limit'] : 0.00;
+                $panelCharge = isset($data['monthly_panel_charge']) && is_numeric($data['monthly_panel_charge']) ? (float) $data['monthly_panel_charge'] : 0.00;
+                $initialWallet = isset($data['initial_wallet_balance']) && is_numeric($data['initial_wallet_balance']) ? (float) $data['initial_wallet_balance'] : 0.00;
+                $status = strtolower($data['status__activeinactive_'] ?? ($data['status'] ?? $defaultStatus));
+                if (!in_array($status, ['active', 'inactive'])) {
+                    $status = $defaultStatus;
+                }
+                $notes = $data['notes'] ?? '';
+
+                // Generate code if missing
+                if (empty($code)) {
+                    $nextNum = TenantReseller::where('tenant_id', $tenant->id)->count() + $imported + 1;
+                    $code = 'RES-' . str_pad($nextNum, 3, '0', STR_PAD_LEFT);
+                }
+
+                if (empty($prefix)) {
+                    $cleanWords = preg_replace('/[^A-Za-z0-9]/', '', $name);
+                    $prefix = strtoupper(substr($cleanWords, 0, 3));
+                }
+
+                // Check duplicate by code or (name + mobile)
+                $existing = TenantReseller::where('tenant_id', $tenant->id)
+                    ->where(function($q) use ($code, $name, $mobile) {
+                        $q->where('code', $code);
+                        if (!empty($mobile)) {
+                            $q->orWhere('mobile', $mobile);
+                        }
+                    })
+                    ->first();
+
+                if ($existing) {
+                    if ($duplicateAction === 'update') {
+                        $existing->update([
+                            'name' => $name,
+                            'prefix' => $prefix ?: $existing->prefix,
+                            'contact_person' => $contactPerson ?: $existing->contact_person,
+                            'mobile' => $mobile ?: $existing->mobile,
+                            'email' => $email ?: $existing->email,
+                            'address' => $address ?: $existing->address,
+                            'billing_type' => $billingType,
+                            'commission_rate' => $commRate,
+                            'credit_limit' => $creditLimit ?: $existing->credit_limit,
+                            'monthly_panel_charge' => $panelCharge ?: $existing->monthly_panel_charge,
+                            'status' => $status,
+                            'notes' => $notes ?: $existing->notes,
+                        ]);
+                        $updated++;
+                    } else {
+                        $skipped++;
+                    }
+                    continue;
+                }
+
+                TenantReseller::create([
+                    'tenant_id' => $tenant->id,
+                    'name' => $name,
+                    'code' => $code,
+                    'prefix' => $prefix,
+                    'contact_person' => $contactPerson,
+                    'mobile' => $mobile,
+                    'email' => $email,
+                    'address' => $address,
+                    'billing_type' => $billingType,
+                    'wallet_balance' => $initialWallet,
+                    'credit_limit' => $creditLimit,
+                    'commission_rate' => $commRate,
+                    'monthly_panel_charge' => $panelCharge,
+                    'status' => $status,
+                    'notes' => $notes,
+                ]);
+
+                $imported++;
+            }
+
+            DB::commit();
+            fclose($handle);
+
+            $msg = "Import completed! Successfully imported {$imported} resellers.";
+            if ($updated > 0) $msg .= " Updated {$updated} existing.";
+            if ($skipped > 0) $msg .= " Skipped {$skipped} duplicates/empty.";
+
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => $msg,
+                    'imported' => $imported,
+                    'updated' => $updated,
+                    'skipped' => $skipped,
+                    'errors' => array_slice($errors, 0, 10),
+                ]);
+            }
+
+            return redirect()->route('tenant.resellers.index')->with('success', $msg);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            fclose($handle);
+            \Illuminate\Support\Facades\Log::error("Reseller Import Error: " . $e->getMessage());
+
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Import failed: ' . $e->getMessage()
+                ], 500);
+            }
+
+            return back()->with('error', 'Import failed: ' . $e->getMessage());
+        }
+    }
 }
