@@ -380,7 +380,8 @@ class OltApiService
                 ])
                 ->get($url);
 
-            if ($response->status() === 401 || $response->status() === 403) {
+            $json = $response->json();
+            if ($response->status() === 401 || $response->status() === 403 || (is_array($json) && isset($json['code']) && in_array($json['code'], [1, 2]))) {
                 $token = $this->getToken($ip, $port, $username, $password, true);
                 if ($token) {
                     $proto = Cache::get("olt_proto_{$ip}_{$port}") ?: (($port === 8081 || $port === 443 || $port === 8443) ? 'https' : 'http');
@@ -392,11 +393,11 @@ class OltApiService
                             'Accept' => 'application/json',
                         ])
                         ->get($url);
+                    $json = $response->json();
                 }
             }
 
             if ($response->successful()) {
-                $json = $response->json();
                 if (isset($json['data'])) return $json['data'];
                 return $json;
             }

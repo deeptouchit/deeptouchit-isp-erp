@@ -316,13 +316,29 @@ class OltController extends Controller
             $padNum = str_pad($i, 2, '0', STR_PAD_LEFT);
             $portTitle = "PON {$padNum}";
             
-            $stat = $ponStats->first(function($s) use ($i) {
-                return $s->pon_port === "0/{$i}" 
-                    || $s->pon_port === "EPON0/{$i}"
-                    || $s->pon_port === "GPON0/{$i}"
-                    || $s->pon_port === (string)$i 
-                    || str_ends_with($s->pon_port, "/{$i}");
+            $slot = (int) ceil($i / 4);
+            $subPort = (($i - 1) % 4) + 1;
+
+            $stat = $ponStats->first(function($s) use ($i, $slot, $subPort) {
+                $p = trim($s->pon_port);
+                return $p === "0/{$i}" 
+                    || $p === "0/0/{$i}"
+                    || $p === "EPON0/{$i}"
+                    || $p === "GPON0/{$i}"
+                    || $p === (string)$i 
+                    || $p === "0/{$slot}/{$subPort}"
+                    || $p === "{$slot}/{$subPort}"
+                    || ($slot === 1 && str_ends_with($p, "/{$i}"));
             });
+
+            // If not matched by pattern, check sequential discovered ports
+            if (!$stat && isset($discoveredPorts[$i - 1])) {
+                $candidate = $discoveredPorts[$i - 1];
+                $alreadyUsed = collect($ponList)->pluck('full_port')->contains($candidate->pon_port);
+                if (!$alreadyUsed) {
+                    $stat = $candidate;
+                }
+            }
             
             if ($stat) {
                 $fullPort = $stat->pon_port;
@@ -332,7 +348,7 @@ class OltController extends Controller
                 $hasOnus = ($total > 0);
                 $isOnline = ($online > 0);
             } else {
-                $fullPort = "0/{$i}";
+                $fullPort = ($totalPorts > 4 && $slot > 1) ? "0/{$slot}/{$subPort}" : "0/{$i}";
                 $total = 0;
                 $online = 0;
                 $offline = 0;
