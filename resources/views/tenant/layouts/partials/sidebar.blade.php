@@ -275,13 +275,6 @@
                     OLT Devices
                 </a>
 
-                <!-- 4b. OLT License Governance -->
-                <a href="{{ route('tenant.network.license') }}" 
-                   x-show="!filterQuery || 'license olt time lock duration unlimited unlock key'.includes(filterQuery.toLowerCase())"
-                   class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ request()->routeIs('tenant.network.license*') ? 'border-blue-200 bg-blue-50/80 text-blue-600 font-bold border-l-4 border-l-blue-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
-                    OLT Licenses
-                </a>
-
                 <!-- 5. ONU / ONT -->
                 <a href="{{ route('tenant.network.onu') }}" 
                    x-show="!filterQuery || 'onu ont terminals signal optical dbm client'.includes(filterQuery.toLowerCase())"

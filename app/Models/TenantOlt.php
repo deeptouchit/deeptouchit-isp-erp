@@ -28,33 +28,9 @@ class TenantOlt extends Model
         'cpu_load' => 'integer',
         'memory_usage' => 'integer',
         'temperature' => 'float',
-        'license_limit' => 'integer',
-        'license_time_hours' => 'integer',
-        'license_auto_renew' => 'boolean',
-        'license_renew_threshold_hours' => 'integer',
-        'license_renew_days' => 'integer',
         'last_ping_at' => 'datetime',
         'last_sync_at' => 'datetime',
     ];
-
-    public function getLicenseFormattedAttribute(): string
-    {
-        if ((int)$this->license_limit === 0) {
-            return "Unlimited / Permanent";
-        }
-        $hours = (int)$this->license_time_hours;
-        if ($hours <= 0) {
-            return "Expired / Locked";
-        }
-        $days = floor($hours / 24);
-        $remHours = $hours % 24;
-        return sprintf("%02d days %02d hours", $days, $remHours);
-    }
-
-    public function getIsLicenseWarningAttribute(): bool
-    {
-        return (int)$this->license_limit === 1 && (int)$this->license_time_hours <= 168;
-    }
 
     /**
      * Encrypt Web API password

@@ -249,22 +249,6 @@
                     <span class="text-slate-400 block text-[10px] uppercase font-semibold">System Uptime</span>
                     <span class="font-bold text-slate-800 font-mono">{{ $olt->uptime ?? '--' }}</span>
                 </div>
-                <div>
-                    <span class="text-slate-400 block text-[10px] uppercase font-semibold">License Status</span>
-                    @if($olt->license_limit)
-                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10.5px] font-bold bg-amber-50 text-amber-700 border border-amber-200">Time limited</span>
-                    @else
-                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10.5px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">Unlimited / Permanent</span>
-                    @endif
-                </div>
-                <div>
-                    <span class="text-slate-400 block text-[10px] uppercase font-semibold">License Time</span>
-                    @if($olt->license_time_hours > 0)
-                        <span class="font-bold text-amber-700 font-mono text-xs">{{ floor($olt->license_time_hours / 24) }}d {{ $olt->license_time_hours % 24 }}h</span>
-                    @else
-                        <span class="font-bold text-slate-800 font-mono text-xs">Permanent</span>
-                    @endif
-                </div>
             </div>
         </div>
     </div>

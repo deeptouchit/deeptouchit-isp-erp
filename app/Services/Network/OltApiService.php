@@ -1077,8 +1077,6 @@ class OltApiService
             'firmware_version' => $sysInfo['Firmware'] ?? ($sysInfo['soft_ver'] ?? $olt->firmware_version),
             'mac_address' => $sysInfo['DevMacAddr'] ?? ($sysInfo['mac'] ?? $olt->mac_address),
             'uptime' => $uptimeStr ?? ($sysInfo['sys_time'] ?? $olt->uptime),
-            'license_limit' => (isset($sysInfo['LicenseLimit']) && (int)$sysInfo['LicenseLimit'] >= 0) ? (int)$sysInfo['LicenseLimit'] : ($olt->license_limit ?? 0),
-            'license_time_hours' => (isset($sysInfo['LicenseTime']) && (int)$sysInfo['LicenseTime'] >= 0) ? (int)$sysInfo['LicenseTime'] : 0,
             'cpu_load' => $olt->cpu_load ?? 31,
             'memory_usage' => $olt->memory_usage ?? 12,
             'temperature' => $olt->temperature ?? 46.5,

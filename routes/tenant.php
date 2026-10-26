@@ -10,7 +10,6 @@ use App\Http\Controllers\Tenant\Network\MikrotikController;
 use App\Http\Controllers\Tenant\Network\NasController;
 use App\Http\Controllers\Tenant\Network\InternetPackageController;
 use App\Http\Controllers\Tenant\Network\OltController;
-use App\Http\Controllers\Tenant\Network\OltLicenseController;
 use App\Http\Controllers\Tenant\Network\OnuController;
 use App\Http\Controllers\Tenant\Network\IpPoolController;
 use App\Http\Controllers\Tenant\Network\VlanController;
@@ -140,11 +139,6 @@ Route::middleware(['web'])->group(function () {
             Route::get('/olt/{olt}/telemetry', [OltController::class, 'telemetry'])->name('olt.telemetry');
             Route::get('/olt/{olt}/port-stats', [OltController::class, 'portStats'])->name('olt.port-stats');
             Route::post('/olt/{olt}/port-stats/reset', [OltController::class, 'resetPortStats'])->name('olt.port-stats.reset');
-            // OLT License Governance & Lifecycle
-            Route::get('/license', [OltLicenseController::class, 'index'])->name('license');
-            Route::post('/license/{olt}/update', [OltLicenseController::class, 'update'])->name('license.update');
-            Route::post('/license/{olt}/sync', [OltLicenseController::class, 'sync'])->name('license.sync');
-            Route::post('/license/{olt}/auto-renew', [OltLicenseController::class, 'toggleAutoRenew'])->name('license.auto-renew');
             Route::get('/onu', [OnuController::class, 'index'])->name('onu');
             Route::get('/onu/{onu}', [OnuController::class, 'show'])->name('onu.show');
             Route::put('/onu/{onu}', [OnuController::class, 'update'])->name('onu.update');
