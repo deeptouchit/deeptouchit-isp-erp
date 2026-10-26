@@ -136,32 +136,44 @@ class OltApiService
      */
     protected function attemptFastCgiLogin(string $ip, int $port, string $username, string $password): ?string
     {
-        try {
-            $url = "http://{$ip}:{$port}/cgi-bin/h.cgi?module=sys_login";
-            $pwdMd5 = md5($password);
+        $protocols = ($port === 8081 || $port === 443 || $port === 8443) ? ['https', 'http'] : ['http', 'https'];
 
-            $response = Http::timeout(4)
-                ->withHeaders([
-                    'Content-Type' => 'application/json',
-                    'Accept' => 'application/json',
-                ])
-                ->post($url, [
-                    'Usrname' => $username,
-                    'Password' => $pwdMd5,
-                ]);
+        foreach ($protocols as $proto) {
+            try {
+                $url = "{$proto}://{$ip}:{$port}/cgi-bin/h.cgi?module=sys_login";
+                $pwdMd5 = md5($password);
 
-            if ($response->successful()) {
-                $token = $response->header('token') ?: $response->header('Token');
-                if ($token) return $token;
+                $response = Http::withoutVerifying()
+                    ->timeout(5)
+                    ->withHeaders([
+                        'Content-Type' => 'application/json',
+                        'Accept' => 'application/json',
+                    ])
+                    ->post($url, [
+                        'Usrname' => $username,
+                        'Password' => $pwdMd5,
+                    ]);
 
-                $data = $response->json();
-                if (isset($data['data']['token']) && !empty($data['data']['token'])) {
-                    return $data['data']['token'];
+                if ($response->successful()) {
+                    $token = $response->header('token') ?: $response->header('Token');
+                    if ($token) {
+                        Cache::put("olt_proto_{$ip}_{$port}", $proto, now()->addDays(7));
+                        return $token;
+                    }
+
+                    $data = $response->json();
+                    if (isset($data['data']['token']) && !empty($data['data']['token'])) {
+                        Cache::put("olt_proto_{$ip}_{$port}", $proto, now()->addDays(7));
+                        return $data['data']['token'];
+                    }
+                    if (isset($data['token']) && !empty($data['token'])) {
+                        Cache::put("olt_proto_{$ip}_{$port}", $proto, now()->addDays(7));
+                        return $data['token'];
+                    }
                 }
-                if (isset($data['token'])) return $data['token'];
+            } catch (Exception $e) {
+                // Continue fallback
             }
-        } catch (Exception $e) {
-            // Continue fallback
         }
         return null;
     }
@@ -357,9 +369,11 @@ class OltApiService
         $token = $this->getToken($ip, $port, $username, $password);
         if (!$token) return null;
 
-        $url = "http://{$ip}:{$port}/cgi-bin/h.cgi?module={$module}";
+        $proto = Cache::get("olt_proto_{$ip}_{$port}") ?: (($port === 8081 || $port === 443 || $port === 8443) ? 'https' : 'http');
+        $url = "{$proto}://{$ip}:{$port}/cgi-bin/h.cgi?module={$module}";
         try {
-            $response = Http::timeout($this->timeout)
+            $response = Http::withoutVerifying()
+                ->timeout($this->timeout)
                 ->withHeaders([
                     'token' => $token,
                     'Accept' => 'application/json',
@@ -369,7 +383,10 @@ class OltApiService
             if ($response->status() === 401 || $response->status() === 403) {
                 $token = $this->getToken($ip, $port, $username, $password, true);
                 if ($token) {
-                    $response = Http::timeout($this->timeout)
+                    $proto = Cache::get("olt_proto_{$ip}_{$port}") ?: (($port === 8081 || $port === 443 || $port === 8443) ? 'https' : 'http');
+                    $url = "{$proto}://{$ip}:{$port}/cgi-bin/h.cgi?module={$module}";
+                    $response = Http::withoutVerifying()
+                        ->timeout($this->timeout)
                         ->withHeaders([
                             'token' => $token,
                             'Accept' => 'application/json',
@@ -441,15 +458,17 @@ class OltApiService
         $token = $this->getToken($ip, $port, $username, $password);
         if (!$token) return null;
 
+        $proto = Cache::get("olt_proto_{$ip}_{$port}") ?: (($port === 8081 || $port === 443 || $port === 8443) ? 'https' : 'http');
         $endpoints = [
             "ont_optical_list_get&PonId={$ponId}",
             "onu_optical_list_get&PonId={$ponId}",
         ];
 
         foreach ($endpoints as $ep) {
-            $url = "http://{$ip}:{$port}/cgi-bin/h.cgi?module={$ep}";
+            $url = "{$proto}://{$ip}:{$port}/cgi-bin/h.cgi?module={$ep}";
             try {
-                $response = Http::timeout($this->timeout)
+                $response = Http::withoutVerifying()
+                    ->timeout($this->timeout)
                     ->withHeaders(['token' => $token])
                     ->get($url);
 
@@ -599,19 +618,30 @@ class OltApiService
         }
 
         // 4. FastCGI
-        $sysInfo = $this->getModule($ip, $port, $username, $password, 'sys_info');
+        $sysDevInfo = $this->getModule($ip, $port, $username, $password, 'sys_dev_info');
+        $sysInfo = !empty($sysDevInfo) ? $sysDevInfo : $this->getModule($ip, $port, $username, $password, 'sys_info');
         $latency = round((microtime(true) - $start) * 1000, 1);
+
+        $uptimeStr = null;
+        if (!empty($sysInfo['Uptime'])) {
+            $upSec = floor((int)$sysInfo['Uptime'] / 1000);
+            $upDays = floor($upSec / 86400);
+            $upHours = floor(($upSec % 86400) / 3600);
+            $upMins = floor(($upSec % 3600) / 60);
+            $uptimeStr = "{$upDays}d {$upHours}h {$upMins}m";
+        }
 
         return [
             'success' => true,
             'message' => 'Connected successfully to FastCGI OLT Web API.',
             'latency_ms' => $latency,
             'device_info' => [
-                'model' => $sysInfo['product_type'] ?? ($sysInfo['board_type'] ?? 'EPON OLT'),
-                'hardware' => $sysInfo['hard_ver'] ?? null,
-                'firmware' => $sysInfo['soft_ver'] ?? null,
-                'mac' => $sysInfo['mac'] ?? null,
-                'uptime' => $sysInfo['sys_time'] ?? null,
+                'model' => $sysInfo['Model'] ?? ($sysInfo['product_type'] ?? ($sysInfo['board_type'] ?? 'EPON OLT')),
+                'hardware' => $sysInfo['Hardware'] ?? ($sysInfo['hard_ver'] ?? null),
+                'firmware' => $sysInfo['Firmware'] ?? ($sysInfo['soft_ver'] ?? null),
+                'mac' => $sysInfo['DevMacAddr'] ?? ($sysInfo['mac'] ?? null),
+                'serial' => $sysInfo['SnNum'] ?? null,
+                'uptime' => $uptimeStr ?? ($sysInfo['sys_time'] ?? null),
                 'pon_ports' => 8,
             ],
         ];
@@ -1262,17 +1292,21 @@ class OltApiService
         // 2. FastCGI / VSOL / EPON OLT
         $token = $this->getToken($ip, $port, $username, $password);
         if ($token) {
+            $proto = Cache::get("olt_proto_{$ip}_{$port}") ?: (($port === 8081 || $port === 443 || $port === 8443) ? 'https' : 'http');
             $endpoints = [
-                "http://{$ip}:{$port}/cgi-bin/h.cgi?module=ont_reboot&PonId={$ponNumber}&OntId={$onuId}",
-                "http://{$ip}:{$port}/cgi-bin/h.cgi?module=onu_reboot&PonId={$ponNumber}&OntId={$onuId}",
-                "http://{$ip}:{$port}/cgi-bin/h.cgi?module=ont_reset&PonId={$ponNumber}&OntId={$onuId}",
-                "http://{$ip}:{$port}/cgi-bin/h.cgi?module=onu_reset&PonId={$ponNumber}&OntId={$onuId}",
-                "http://{$ip}:{$port}/cgi-bin/h.cgi?module=ont_action&action=reboot&PonId={$ponNumber}&OntId={$onuId}",
+                "{$proto}://{$ip}:{$port}/cgi-bin/h.cgi?module=ont_reboot&PonId={$ponPort}&OntId={$onuId}",
+                "{$proto}://{$ip}:{$port}/cgi-bin/h.cgi?module=ont_reboot&PonId={$ponNumber}&OntId={$onuId}",
+                "{$proto}://{$ip}:{$port}/cgi-bin/h.cgi?module=onu_reboot&PonId={$ponPort}&OntId={$onuId}",
+                "{$proto}://{$ip}:{$port}/cgi-bin/h.cgi?module=onu_reboot&PonId={$ponNumber}&OntId={$onuId}",
+                "{$proto}://{$ip}:{$port}/cgi-bin/h.cgi?module=ont_reset&PonId={$ponPort}&OntId={$onuId}",
+                "{$proto}://{$ip}:{$port}/cgi-bin/h.cgi?module=ont_reset&PonId={$ponNumber}&OntId={$onuId}",
+                "{$proto}://{$ip}:{$port}/cgi-bin/h.cgi?module=onu_reset&PonId={$ponNumber}&OntId={$onuId}",
+                "{$proto}://{$ip}:{$port}/cgi-bin/h.cgi?module=ont_action&action=reboot&PonId={$ponNumber}&OntId={$onuId}",
             ];
 
             foreach ($endpoints as $url) {
                 try {
-                    $response = Http::timeout(4)->withHeaders(['token' => $token])->get($url);
+                    $response = Http::withoutVerifying()->timeout(4)->withHeaders(['token' => $token])->get($url);
                     if ($response->successful()) {
                         $json = $response->json();
                         if (isset($json['code']) && in_array($json['code'], [0, 200])) {
@@ -1286,8 +1320,8 @@ class OltApiService
 
             // Also try POST
             try {
-                $postRes = Http::timeout(4)->withHeaders(['token' => $token])->asForm()->post("http://{$ip}:{$port}/cgi-bin/h.cgi?module=ont_reboot", [
-                    'PonId' => $ponNumber,
+                $postRes = Http::withoutVerifying()->timeout(4)->withHeaders(['token' => $token])->asForm()->post("{$proto}://{$ip}:{$port}/cgi-bin/h.cgi?module=ont_reboot", [
+                    'PonId' => $ponPort,
                     'OntId' => $onuId,
                     'action' => 'reboot',
                 ]);
@@ -1415,10 +1449,14 @@ class OltApiService
         }
 
         // 3. FastCGI / Standard EPON OLT Driver
-        $opticalList = $this->getOpticalList($ip, $port, $username, $password, (string)$ponNumber);
+        $targetPon = str_contains($ponPort, '/') ? $ponPort : (string)$ponNumber;
+        $opticalList = $this->getOpticalList($ip, $port, $username, $password, $targetPon);
+        if (empty($opticalList)) {
+            $opticalList = $this->getOpticalList($ip, $port, $username, $password, (string)$ponNumber);
+        }
         if (!empty($opticalList)) {
             foreach ($opticalList as $opt) {
-                $curOnuId = (int)($opt['OntId'] ?? ($opt['onu_id'] ?? ($opt['id'] ?? 0)));
+                $curOnuId = (int)($opt['OnuId'] ?? ($opt['OntId'] ?? ($opt['onu_id'] ?? ($opt['id'] ?? 0))));
                 if ($curOnuId === $onuId) {
                     $rx = isset($opt['RxPower']) && is_numeric($opt['RxPower']) ? (float)$opt['RxPower'] : (isset($opt['rx_power']) ? (float)$opt['rx_power'] : null);
                     $tx = isset($opt['TxPower']) && is_numeric($opt['TxPower']) ? (float)$opt['TxPower'] : (isset($opt['tx_power']) ? (float)$opt['tx_power'] : null);
