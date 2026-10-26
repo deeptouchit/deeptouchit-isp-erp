@@ -212,23 +212,27 @@ class OltApiService
      */
     protected function attemptVsolHttpsLogin(string $ip, int $port, string $username, string $password): ?string
     {
+        $cookieFile = storage_path("framework/cache/vsol_cookie_{$ip}_{$port}.txt");
         try {
-            $url = "https://{$ip}:{$port}/action/main.html";
-            $response = Http::withoutVerifying()
-                ->timeout(4)
-                ->asForm()
-                ->post($url, [
-                    'user' => $username,
-                    'password' => $password,
-                ]);
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, "https://{$ip}:{$port}/action/main.html");
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 6);
+            curl_setopt($ch, CURLOPT_COOKIEJAR, $cookieFile);
+            curl_setopt($ch, CURLOPT_COOKIEFILE, $cookieFile);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query([
+                'user' => $username,
+                'pass' => $password,
+                'who'  => '100',
+            ]));
+            $res = curl_exec($ch);
+            curl_close($ch);
 
-            if ($response->successful()) {
-                $cookies = $response->cookies();
-                $vsolCookie = $cookies->getCookieByName('vsol_session');
-                if ($vsolCookie) {
-                    return 'cookie:' . $vsolCookie->getValue();
-                }
-                return 'cookie:authenticated';
+            if ($res && (str_contains($res, 'systeminfo.html') || str_contains($res, 'mainFrame') || str_contains($res, 'Device Status'))) {
+                return 'vsol_session_' . md5("{$ip}_{$port}_{$username}");
             }
         } catch (Exception $e) {
             // Continue fallback
@@ -283,26 +287,65 @@ class OltApiService
     }
 
     /**
-     * Fetch VSOL HTML Pages over HTTPS
+     * Fetch VSOL HTML Pages over HTTPS with session persistence & auto re-login
      */
     public function fetchVsolHtmlPage(string $ip, int $port, string $username, string $password, string $page, array $postData = []): ?string
     {
-        try {
-            $url = "https://{$ip}:{$port}/action/{$page}";
-            $client = Http::withoutVerifying()->timeout(5);
+        $cookieFile = storage_path("framework/cache/vsol_cookie_{$ip}_{$port}.txt");
 
-            if (!empty($postData)) {
-                $response = $client->asForm()->post($url, $postData);
-            } else {
-                $response = $client->get($url);
+        $execCurl = function($targetUrl, $data = null) use ($cookieFile) {
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $targetUrl);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 8);
+            curl_setopt($ch, CURLOPT_COOKIEJAR, $cookieFile);
+            curl_setopt($ch, CURLOPT_COOKIEFILE, $cookieFile);
+            if ($data !== null) {
+                curl_setopt($ch, CURLOPT_POST, true);
+                curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+            }
+            $res = curl_exec($ch);
+            $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+            return ['code' => $code, 'body' => $res];
+        };
+
+        try {
+            $pageUrl = "https://{$ip}:{$port}/action/{$page}";
+
+            // If cookie file doesn't exist or is older than 5 minutes, login first
+            if (!file_exists($cookieFile) || (time() - filemtime($cookieFile) > 300)) {
+                $execCurl("https://{$ip}:{$port}/action/main.html", [
+                    'user' => $username,
+                    'pass' => $password,
+                    'who'  => '100'
+                ]);
             }
 
-            if ($response->successful()) {
-                return $response->body();
+            // Fetch target page
+            $res = $execCurl($pageUrl, !empty($postData) ? $postData : null);
+
+            // If redirected to login or unauthenticated response received, re-login and retry
+            if ($res['code'] === 302 || empty($res['body']) || str_contains($res['body'], 'login_first.html') || str_contains($res['body'], 'login.html')) {
+                $loginRes = $execCurl("https://{$ip}:{$port}/action/main.html", [
+                    'user' => $username,
+                    'pass' => $password,
+                    'who'  => '100'
+                ]);
+                if (!empty($loginRes['body']) && (str_contains($loginRes['body'], 'systeminfo.html') || str_contains($loginRes['body'], 'mainFrame'))) {
+                    $res = $execCurl($pageUrl, !empty($postData) ? $postData : null);
+                }
+            }
+
+            if ($res['code'] === 200 && !empty($res['body']) && !str_contains($res['body'], 'login_first.html')) {
+                return $res['body'];
             }
         } catch (Exception $e) {
             Log::warning("VSOL fetch page {$page} error: " . $e->getMessage());
         }
+
         return null;
     }
 
@@ -495,21 +538,38 @@ class OltApiService
             $sysHtml = $this->fetchVsolHtmlPage($ip, $port, $username, $password, 'systeminfo.html');
             $latency = round((microtime(true) - $start) * 1000, 1);
 
+            if (!$sysHtml) {
+                return [
+                    'success' => false,
+                    'message' => 'Connection failed: Unable to authenticate or fetch system info from VSOL OLT. Verify IP, Port, Username and Password.',
+                    'latency_ms' => $latency,
+                ];
+            }
+
             $firmware = null;
             $mac = null;
             $uptime = null;
-            if ($sysHtml) {
-                if (preg_match('/Firmware Version<\/td>\s*<td[^>]*>([^<]+)<\/td>/i', $sysHtml, $m)) $firmware = trim($m[1]);
-                if (preg_match('/MAC Address<\/td>\s*<td[^>]*>([^<]+)<\/td>/i', $sysHtml, $m)) $mac = trim($m[1]);
-                if (preg_match('/System Up Time<\/td>\s*<td[^>]*>([^<]+)<\/td>/i', $sysHtml, $m)) $uptime = trim($m[1]);
-            }
+            $serialNumber = null;
+            $hardware = null;
+            $deviceModel = null;
+            if (preg_match('/Serial Number.*?<\/td>\s*<td[^>]*>([^<]+)<\/td>/is', $sysHtml, $m)) $serialNumber = trim($m[1]);
+            if (preg_match('/Hardware Version.*?<\/td>\s*<td[^>]*>([^<]+)<\/td>/is', $sysHtml, $m)) $hardware = trim($m[1]);
+            if (preg_match('/Firmware Version.*?<\/td>\s*<td[^>]*>([^<]+)<\/td>/is', $sysHtml, $m)) $firmware = trim($m[1]);
+            if (preg_match('/MAC Address.*?<\/td>\s*<td[^>]*>([^<]+)<\/td>/is', $sysHtml, $m)) $mac = trim($m[1]);
+            if (preg_match('/Device Model.*?<\/td>\s*<td[^>]*>([^<]+)<\/td>/is', $sysHtml, $m)) $deviceModel = trim($m[1]);
+            if (preg_match('/Running Time.*?<\/td>\s*<td[^>]*>([^<]+)<\/td>/is', $sysHtml, $m)) $uptime = trim($m[1]);
+            if (!$uptime && preg_match('/System Up Time.*?<\/td>\s*<td[^>]*>([^<]+)<\/td>/is', $sysHtml, $m)) $uptime = trim($m[1]);
+
+            $modelName = !empty($deviceModel) ? "VSOL {$deviceModel} (V1600D4)" : 'VSOL V1600D4';
 
             return [
                 'success' => true,
                 'message' => 'Connected successfully to VSOL HTTPS OLT Gateway.',
                 'latency_ms' => $latency,
                 'device_info' => [
-                    'model' => 'VSOL V1600D4',
+                    'model' => $modelName,
+                    'hardware' => $hardware,
+                    'serial' => $serialNumber,
                     'firmware' => $firmware,
                     'mac' => $mac,
                     'uptime' => $uptime,
@@ -694,41 +754,40 @@ class OltApiService
         if ($driver === 'vsol_https' || $port === 8082) {
             $sysHtml = $this->fetchVsolHtmlPage($ip, $port, $username, $password, 'systeminfo.html');
 
+            if (!$sysHtml) {
+                $olt->update([
+                    'status' => 'offline',
+                    'last_error' => "Unable to authenticate or fetch system info from VSOL OLT at {$ip}:{$port}",
+                    'last_ping_at' => now(),
+                ]);
+                return [
+                    'success' => false,
+                    'message' => "Failed to authenticate or fetch system info from VSOL OLT at {$ip}:{$port}. Please verify Web User and Password.",
+                    'latency_ms' => round((microtime(true) - $start) * 1000, 1),
+                ];
+            }
+
             $firmware = null;
             $mac = null;
             $uptime = null;
             $serialNumber = null;
+            $hardwareVersion = null;
+            $deviceModel = null;
             $cpuLoad = null;
             $memUsage = null;
-            if ($sysHtml) {
-                if (preg_match('/Firmware Version<\/td>\s*<td[^>]*>([^<]+)<\/td>/i', $sysHtml, $m)) $firmware = trim($m[1]);
-                if (preg_match('/MAC Address<\/td>\s*<td[^>]*>([^<]+)<\/td>/i', $sysHtml, $m)) $mac = trim($m[1]);
-                if (preg_match('/Running Time<\/td>\s*<td[^>]*>([^<]+)<\/td>/i', $sysHtml, $m)) $uptime = trim($m[1]);
-                if (!$uptime && preg_match('/System Up Time<\/td>\s*<td[^>]*>([^<]+)<\/td>/i', $sysHtml, $m)) $uptime = trim($m[1]);
-                if (preg_match('/Serial Number<\/td>\s*<td[^>]*>([^<]+)<\/td>/i', $sysHtml, $m)) $serialNumber = trim($m[1]);
-                if (preg_match('/CPU Usage<\/td>\s*<td[^>]*>(\d+)/i', $sysHtml, $m)) $cpuLoad = (int)$m[1];
-                if (preg_match('/Memory Usage<\/td>\s*<td[^>]*>(\d+)/i', $sysHtml, $m)) $memUsage = (int)$m[1];
-            }
-
-            $olt->update([
-                'status' => 'online',
-                'vendor' => 'VSOL',
-                'model' => 'V1600D4',
-                'total_pon_ports' => 4,
-                'serial_number' => $serialNumber ?? $olt->serial_number,
-                'firmware_version' => $firmware ?? $olt->firmware_version,
-                'mac_address' => $mac ?? $olt->mac_address,
-                'uptime' => $uptime ?? $olt->uptime,
-                'cpu_load' => $cpuLoad ?? $olt->cpu_load,
-                'memory_usage' => $memUsage ?? $olt->memory_usage,
-                'temperature' => 42.0,
-                'last_ping_at' => now(),
-                'last_sync_at' => now(),
-                'last_error' => null,
-            ]);
+            if (preg_match('/Serial Number.*?<\/td>\s*<td[^>]*>([^<]+)<\/td>/is', $sysHtml, $m)) $serialNumber = trim($m[1]);
+            if (preg_match('/Hardware Version.*?<\/td>\s*<td[^>]*>([^<]+)<\/td>/is', $sysHtml, $m)) $hardwareVersion = trim($m[1]);
+            if (preg_match('/Firmware Version.*?<\/td>\s*<td[^>]*>([^<]+)<\/td>/is', $sysHtml, $m)) $firmware = trim($m[1]);
+            if (preg_match('/MAC Address.*?<\/td>\s*<td[^>]*>([^<]+)<\/td>/is', $sysHtml, $m)) $mac = trim($m[1]);
+            if (preg_match('/Device Model.*?<\/td>\s*<td[^>]*>([^<]+)<\/td>/is', $sysHtml, $m)) $deviceModel = trim($m[1]);
+            if (preg_match('/Running Time.*?<\/td>\s*<td[^>]*>([^<]+)<\/td>/is', $sysHtml, $m)) $uptime = trim($m[1]);
+            if (!$uptime && preg_match('/System Up Time.*?<\/td>\s*<td[^>]*>([^<]+)<\/td>/is', $sysHtml, $m)) $uptime = trim($m[1]);
+            if (preg_match('/CPU Usage.*?<\/td>\s*<td[^>]*>(\d+)/is', $sysHtml, $m)) $cpuLoad = (int)$m[1];
+            if (preg_match('/Memory Usage.*?<\/td>\s*<td[^>]*>(\d+)/is', $sysHtml, $m)) $memUsage = (int)$m[1];
 
             $syncedCount = 0;
             $onlineCount = 0;
+            $syncedOnuDbIds = [];
 
             for ($p = 1; $p <= 4; $p++) {
                 $onuHtml = $this->fetchVsolHtmlPage($ip, $port, $username, $password, 'onustatusinfo.html', ['select' => (string)$p]);
@@ -793,14 +852,38 @@ class OltApiService
                 TenantOnu::where('olt_id', $olt->id)->whereNotIn('id', $syncedOnuDbIds)->delete();
             }
 
+            $offlineCount = max(0, $syncedCount - $onlineCount);
+            $oltModel = !empty($deviceModel) ? "VSOL {$deviceModel} (V1600D4)" : 'VSOL V1600D4';
+
+            $olt->update([
+                'status' => 'online',
+                'vendor' => 'VSOL',
+                'model' => $oltModel,
+                'total_pon_ports' => 4,
+                'serial_number' => $serialNumber ?? $olt->serial_number,
+                'hardware_version' => $hardwareVersion ?? $olt->hardware_version,
+                'firmware_version' => $firmware ?? $olt->firmware_version,
+                'mac_address' => $mac ?? $olt->mac_address,
+                'uptime' => $uptime ?? $olt->uptime,
+                'cpu_load' => $cpuLoad ?? $olt->cpu_load,
+                'memory_usage' => $memUsage ?? $olt->memory_usage,
+                'temperature' => 42.0,
+                'total_onus_count' => $syncedCount,
+                'online_onus_count' => $onlineCount,
+                'offline_onus_count' => $offlineCount,
+                'last_ping_at' => now(),
+                'last_sync_at' => now(),
+                'last_error' => null,
+            ]);
+
             $latency = round((microtime(true) - $start) * 1000, 1);
 
             return [
                 'success' => true,
-                'message' => "Successfully synchronized {$syncedCount} ONUs from VSOL HTTPS OLT (Online: {$onlineCount}, Offline: " . max(0, $syncedCount - $onlineCount) . ").",
+                'message' => "Successfully synchronized {$syncedCount} ONUs from VSOL HTTPS OLT (Online: {$onlineCount}, Offline: {$offlineCount}). Latency: {$latency}ms.",
                 'total_onus' => $syncedCount,
                 'online_onus' => $onlineCount,
-                'offline_onus' => max(0, $syncedCount - $onlineCount),
+                'offline_onus' => $offlineCount,
                 'synced_count' => $syncedCount,
                 'latency_ms' => $latency,
             ];

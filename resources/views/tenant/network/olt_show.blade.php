@@ -37,7 +37,7 @@
                         <span>{{ strtoupper($olt->status) }}</span>
                     </span>
                     <span class="px-2 py-0.5 rounded text-[10.5px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
-                        {{ $olt->vendor ?? 'DN OPTIC' }} {{ $olt->model ?? 'DN08EP-EX-4S+' }}
+                        {{ $olt->vendor ?? 'OLT' }} {{ $olt->model ?? 'Chassis' }}
                     </span>
                     @if($olt->router)
                         <a href="{{ route('tenant.network.mikrotik.show', $olt->router->id) }}" class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10.5px] font-bold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 transition" title="Parent MikroTik Router">
@@ -219,27 +219,27 @@
             <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-3 text-xs">
                 <div>
                     <span class="text-slate-400 block text-[10px] uppercase font-semibold">Device Model</span>
-                    <span class="font-bold text-slate-800 font-mono">{{ $olt->model ?? 'EPON OLT' }}</span>
+                    <span class="font-bold text-slate-800 font-mono">{{ $olt->model ?? '--' }}</span>
                 </div>
                 <div>
                     <span class="text-slate-400 block text-[10px] uppercase font-semibold">Vendor / Brand</span>
-                    <span class="font-bold text-slate-800">{{ $olt->vendor ?? 'Carrier OLT' }}</span>
+                    <span class="font-bold text-slate-800">{{ $olt->vendor ?? '--' }}</span>
                 </div>
                 <div>
                     <span class="text-slate-400 block text-[10px] uppercase font-semibold">Serial Number (SN)</span>
-                    <span class="font-bold text-slate-800 font-mono">{{ $olt->serial_number ?? 'AF2802-2604000011' }}</span>
+                    <span class="font-bold text-slate-800 font-mono">{{ $olt->serial_number ?? '--' }}</span>
                 </div>
                 <div>
                     <span class="text-slate-400 block text-[10px] uppercase font-semibold">Hardware Version</span>
-                    <span class="font-bold text-slate-800 font-mono">{{ $olt->hardware_version ?? 'V1.1' }}</span>
+                    <span class="font-bold text-slate-800 font-mono">{{ $olt->hardware_version ?? '--' }}</span>
                 </div>
                 <div>
                     <span class="text-slate-400 block text-[10px] uppercase font-semibold">Firmware Version</span>
-                    <span class="font-bold text-slate-800 font-mono">{{ $olt->firmware_version ?? 'V3.4.66' }}</span>
+                    <span class="font-bold text-slate-800 font-mono">{{ $olt->firmware_version ?? '--' }}</span>
                 </div>
                 <div>
                     <span class="text-slate-400 block text-[10px] uppercase font-semibold">MAC Address</span>
-                    <span class="font-bold text-slate-800 font-mono">{{ $olt->mac_address ?? '48:35:2E:1C:7F:13' }}</span>
+                    <span class="font-bold text-slate-800 font-mono">{{ $olt->mac_address ?? '--' }}</span>
                 </div>
                 <div>
                     <span class="text-slate-400 block text-[10px] uppercase font-semibold">IP Address</span>
@@ -247,22 +247,32 @@
                 </div>
                 <div>
                     <span class="text-slate-400 block text-[10px] uppercase font-semibold">System Uptime</span>
-                    <span class="font-bold text-slate-800 font-mono">{{ $olt->uptime ?? '1d 9h 21m' }}</span>
+                    <span class="font-bold text-slate-800 font-mono">{{ $olt->uptime ?? '--' }}</span>
                 </div>
                 <div>
-                    <span class="text-slate-400 block text-[10px] uppercase font-semibold">License Limit</span>
-                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10.5px] font-bold bg-amber-50 text-amber-700 border border-amber-200">Time limited</span>
+                    <span class="text-slate-400 block text-[10px] uppercase font-semibold">License Status</span>
+                    @if($olt->license_limit)
+                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10.5px] font-bold bg-amber-50 text-amber-700 border border-amber-200">Time limited</span>
+                    @else
+                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10.5px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">Unlimited / Permanent</span>
+                    @endif
                 </div>
                 <div>
-                    <span class="text-slate-400 block text-[10px] uppercase font-semibold">License Time Remaining</span>
-                    <span class="font-bold text-amber-700 font-mono text-xs">02 days 18 hours</span>
+                    <span class="text-slate-400 block text-[10px] uppercase font-semibold">License Time</span>
+                    @if($olt->license_time_hours > 0)
+                        <span class="font-bold text-amber-700 font-mono text-xs">{{ floor($olt->license_time_hours / 24) }}d {{ $olt->license_time_hours % 24 }}h</span>
+                    @else
+                        <span class="font-bold text-slate-800 font-mono text-xs">Permanent</span>
+                    @endif
                 </div>
             </div>
         </div>
     </div>
 
 </div>
+@endsection
 
+@push('scripts')
 <script>
 function oltShowManager() {
     return {
@@ -307,4 +317,4 @@ function oltShowManager() {
     };
 }
 </script>
-@endsection
+@endpush
