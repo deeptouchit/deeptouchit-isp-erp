@@ -576,8 +576,14 @@ class ResellerDirectoryController extends Controller
                     $data[$key] = isset($row[$idx]) ? trim($row[$idx]) : '';
                 }
 
-                // Extract fields with multiple possible column names
-                $name = $data['reseller_name'] ?? ($data['name'] ?? ($data['company_name'] ?? ($data['company__reseller_name'] ?? '')));
+                // Reseller Name
+                $name = '';
+                foreach ($data as $k => $v) {
+                    if (str_contains($k, 'name') && !str_contains($k, 'contact') && !empty($v)) {
+                        $name = $v;
+                        break;
+                    }
+                }
                 if (empty($name)) {
                     $skipped++;
                     $errors[] = "Row {$rowNum}: Reseller Name is missing.";
@@ -587,26 +593,65 @@ class ResellerDirectoryController extends Controller
                 $code = $data['code'] ?? ($data['reseller_code'] ?? '');
                 $prefix = $data['prefix'] ?? '';
                 $contactPerson = $data['contact_person'] ?? ($data['contact'] ?? '');
-                $mobile = $data['mobile_phone'] ?? ($data['mobile'] ?? ($data['phone'] ?? ''));
+                $mobile = $data['mobile_phone'] ?? ($data['mobile'] ?? ($data['phone'] ?? ($data['phone_number'] ?? '')));
                 $email = $data['email'] ?? '';
                 $address = $data['address'] ?? '';
-                $billingType = strtolower($data['billing_type__prepaidpostpaid_'] ?? ($data['billing_type'] ?? $defaultBillingType));
-                if (!in_array($billingType, ['prepaid', 'postpaid'])) {
-                    $billingType = $defaultBillingType;
+
+                // Billing Type
+                $billingType = $defaultBillingType;
+                foreach ($data as $k => $v) {
+                    if (str_contains($k, 'billing') && in_array(strtolower($v), ['prepaid', 'postpaid'])) {
+                        $billingType = strtolower($v);
+                        break;
+                    }
                 }
 
-                $commRate = isset($data['commission_rate___']) && is_numeric($data['commission_rate___'])
-                    ? (float) $data['commission_rate___']
-                    : (isset($data['commission_rate']) && is_numeric($data['commission_rate']) ? (float) $data['commission_rate'] : $defaultCommission);
-
-                $creditLimit = isset($data['credit_limit']) && is_numeric($data['credit_limit']) ? (float) $data['credit_limit'] : 0.00;
-                $panelCharge = isset($data['monthly_panel_charge']) && is_numeric($data['monthly_panel_charge']) ? (float) $data['monthly_panel_charge'] : 0.00;
-                $initialWallet = isset($data['initial_wallet_balance']) && is_numeric($data['initial_wallet_balance']) ? (float) $data['initial_wallet_balance'] : 0.00;
-                $status = strtolower($data['status__activeinactive_'] ?? ($data['status'] ?? $defaultStatus));
-                if (!in_array($status, ['active', 'inactive'])) {
-                    $status = $defaultStatus;
+                // Commission Rate
+                $commRate = $defaultCommission;
+                foreach ($data as $k => $v) {
+                    if (str_starts_with($k, 'commission') && is_numeric($v)) {
+                        $commRate = (float) $v;
+                        break;
+                    }
                 }
-                $notes = $data['notes'] ?? '';
+
+                // Credit Limit
+                $creditLimit = 0.00;
+                foreach ($data as $k => $v) {
+                    if (str_contains($k, 'credit') && is_numeric($v)) {
+                        $creditLimit = (float) $v;
+                        break;
+                    }
+                }
+
+                // Monthly Panel Charge
+                $panelCharge = 0.00;
+                foreach ($data as $k => $v) {
+                    if (str_contains($k, 'panel') && is_numeric($v)) {
+                        $panelCharge = (float) $v;
+                        break;
+                    }
+                }
+
+                // Initial Wallet Balance
+                $initialWallet = 0.00;
+                foreach ($data as $k => $v) {
+                    if (str_contains($k, 'wallet') && is_numeric($v)) {
+                        $initialWallet = (float) $v;
+                        break;
+                    }
+                }
+
+                // Status
+                $status = $defaultStatus;
+                foreach ($data as $k => $v) {
+                    if (str_starts_with($k, 'status') && in_array(strtolower($v), ['active', 'inactive'])) {
+                        $status = strtolower($v);
+                        break;
+                    }
+                }
+
+                $notes = $data['notes'] ?? ($data['note'] ?? ($data['remarks'] ?? ''));
 
                 // Generate code if missing
                 if (empty($code)) {
