@@ -134,8 +134,9 @@
                         Default Billing Type
                     </label>
                     <select name="default_billing_type" class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 py-1.5 focus:bg-white focus:border-cyan-500 focus:outline-none transition">
-                        <option value="prepaid" selected>Prepaid (Wallet Deduct)</option>
-                        <option value="postpaid">Postpaid (Monthly Invoiced)</option>
+                        <option value="PREPAID_WALLET" selected>Prepaid (Wallet Deduct)</option>
+                        <option value="POSTPAID_MONTHLY">Postpaid (Monthly Invoiced)</option>
+                        <option value="BANDWIDTH_WHOLESALE">Bandwidth Wholesale</option>
                     </select>
                 </div>
 

@@ -521,10 +521,25 @@ class ResellerDirectoryController extends Controller
         ]);
 
         $file = $request->file('file');
-        $duplicateAction = $request->input('duplicate_action', 'skip');
-        $defaultBillingType = $request->input('default_billing_type', 'prepaid');
+        $normalizeBillingType = function($val, $fallback = 'PREPAID_WALLET') {
+            $v = strtolower(trim((string)$val));
+            if (str_contains($v, 'postpaid') || str_contains($v, 'monthly')) {
+                return 'POSTPAID_MONTHLY';
+            }
+            if (str_contains($v, 'bandwidth') || str_contains($v, 'wholesale')) {
+                return 'BANDWIDTH_WHOLESALE';
+            }
+            if (str_contains($v, 'prepaid') || str_contains($v, 'wallet')) {
+                return 'PREPAID_WALLET';
+            }
+            return $fallback;
+        };
+
+        $defaultBillingType = $normalizeBillingType($request->input('default_billing_type', 'PREPAID_WALLET'));
         $defaultCommission = (float) $request->input('default_commission_rate', 0);
-        $defaultStatus = $request->input('default_status', 'active');
+        $defaultStatus = in_array(strtolower((string)$request->input('default_status', 'active')), ['active', 'inactive', 'suspended'])
+            ? strtolower((string)$request->input('default_status', 'active'))
+            : 'active';
 
         $path = $file->getRealPath();
         $handle = fopen($path, 'r');
@@ -600,8 +615,8 @@ class ResellerDirectoryController extends Controller
                 // Billing Type
                 $billingType = $defaultBillingType;
                 foreach ($data as $k => $v) {
-                    if (str_contains($k, 'billing') && in_array(strtolower($v), ['prepaid', 'postpaid'])) {
-                        $billingType = strtolower($v);
+                    if (str_contains($k, 'billing') && !empty($v)) {
+                        $billingType = $normalizeBillingType($v, $defaultBillingType);
                         break;
                     }
                 }
@@ -645,8 +660,11 @@ class ResellerDirectoryController extends Controller
                 // Status
                 $status = $defaultStatus;
                 foreach ($data as $k => $v) {
-                    if (str_starts_with($k, 'status') && in_array(strtolower($v), ['active', 'inactive'])) {
-                        $status = strtolower($v);
+                    if (str_starts_with($k, 'status') && !empty($v)) {
+                        $st = strtolower(trim($v));
+                        if (in_array($st, ['active', 'inactive', 'suspended'])) {
+                            $status = $st;
+                        }
                         break;
                     }
                 }
