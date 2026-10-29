@@ -5,21 +5,10 @@ $u = "admin";
 $p = "admin606245";
 $sid = base64_encode("{$u}&{$p}");
 
-function postCmd($cmd, $referer = 'http://103.59.177.137:8084/') {
+function getPage($path) {
     $fp = @fsockopen("103.59.177.137", 8084, $errno, $errstr, 5);
     if (!$fp) return "FAILED";
-    
-    $len = strlen($cmd);
-    $req = "POST /sw.cgi HTTP/1.1\r\n" .
-           "Host: 103.59.177.137:8084\r\n" .
-           "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64)\r\n" .
-           "Accept: text/javascript, text/html, application/xml, text/xml, */*\r\n" .
-           "Content-Type: uni_mars_ap\r\n" .
-           "Referer: {$referer}\r\n" .
-           "Content-Length: {$len}\r\n" .
-           "Connection: close\r\n\r\n" .
-           $cmd;
-            
+    $req = "GET {$path} HTTP/1.1\r\nHost: 103.59.177.137:8084\r\nUser-Agent: Mozilla/5.0\r\nReferer: http://103.59.177.137:8084/\r\nConnection: close\r\n\r\n";
     fwrite($fp, $req);
     $res = '';
     while (!feof($fp)) $res .= fgets($fp, 1024);
@@ -27,32 +16,36 @@ function postCmd($cmd, $referer = 'http://103.59.177.137:8084/') {
     return $res;
 }
 
-// 1. Login
-$login = postCmd("set=login&user={$sid}");
-echo "LOGIN:\n{$login}\n\n";
+// First login
+$fp = @fsockopen("103.59.177.137", 8084, $errno, $errstr, 5);
+$body = "set=login&user={$sid}";
+$len = strlen($body);
+$req = "POST /sw.cgi HTTP/1.1\r\nHost: 103.59.177.137:8084\r\nUser-Agent: Mozilla/5.0\r\nContent-Type: uni_mars_ap\r\nContent-Length: {$len}\r\nConnection: close\r\n\r\n{$body}";
+fwrite($fp, $req);
+while(!feof($fp)) fgets($fp, 1024);
+fclose($fp);
 
-// 2. Try sysinfo right after login with referer http://103.59.177.137:8084/
-$sysinfo = postCmd("get=sysinfo2&sysunit=1");
-echo "SYSINFO:\n{$sysinfo}\n\n";
-
-// 3. Try other commands
-$tests = [
-    "get=sysinfo&sysUnit=1",
-    "get=sysinfo2&sysUnit=1",
-    "get=poninfo&sysUnit=1",
-    "get=pon_info&sysUnit=1",
-    "get=ponlist&sysUnit=1",
-    "get=portinfo&sysUnit=1",
-    "get=onualllist&sysUnit=1",
-    "get=onualllist&sysunit=1",
-    "get=onulist&sysUnit=1",
-    "get=onulist&pon=1",
-    "get=onulist&sysunit=1&port=1",
-    "get=onulist&sysUnit=1&port=1",
-    "get=onulist&sysUnit=1&port=2",
+$pages = [
+    "/index.html",
+    "/index.htm",
+    "/main.htm",
+    "/menu.htm",
+    "/left.htm",
+    "/top.htm",
+    "/m/onu_all_onu.htm",
+    "/m/onu_list.htm",
+    "/onu_list.htm",
+    "/onu_all_onu.htm",
+    "/pon_info.htm",
+    "/m/pon_info.htm",
 ];
 
-foreach ($tests as $t) {
-    $res = postCmd($t);
-    echo "=== CMD: {$t} ===\n" . substr($res, 0, 400) . "\n\n";
+foreach ($pages as $p) {
+    $res = getPage($p);
+    $firstLine = strtok($res, "\r\n");
+    $len = strlen($res);
+    echo "=== {$p} ===: {$firstLine} (Length: {$len})\n";
+    if (str_contains($res, '200 OK')) {
+        echo substr($res, 0, 600) . "\n\n";
+    }
 }
