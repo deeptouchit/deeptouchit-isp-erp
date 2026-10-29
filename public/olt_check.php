@@ -9,15 +9,9 @@ if ($fp) {
     while (!feof($fp)) $res .= fgets($fp, 1024);
     fclose($fp);
     
-    // Find sendRequest definition
-    if (preg_match('/function\s+sendRequest[^{]*\{([^}]+(\{[^}]*\})*[^}]*)\}/s', $res, $m)) {
-        echo $m[0];
-    } else {
-        // Output lines with sendRequest
-        foreach (explode("\n", $res) as $i => $line) {
-            if (str_contains($line, 'sendRequest')) {
-                echo "$i: $line\n";
-            }
+    foreach (explode("\n", $res) as $i => $line) {
+        if (str_contains($line, 'var url') || str_contains($line, 'url=') || str_contains($line, 'url =') || str_contains($line, 'sw.cgi')) {
+            echo "$i: $line\n";
         }
     }
 }
