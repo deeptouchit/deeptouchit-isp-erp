@@ -318,6 +318,7 @@
         @if(auth()->user() && (auth()->user()->isOwner() || auth()->user()->isIspAdmin() || auth()->user()->hasPermission('resellers.view')))
         @php
             $isPartnersActive = request()->routeIs('tenant.resellers.index*') || 
+                                request()->routeIs('tenant.resellers.show*') || 
                                 request()->routeIs('tenant.resellers.import*') || 
                                 request()->routeIs('tenant.resellers.margins*') || 
                                 request()->routeIs('tenant.resellers.subscriptions*');
@@ -340,7 +341,7 @@
                 <!-- 1. Directory -->
                 <a href="{{ Route::has('tenant.resellers.index') ? route('tenant.resellers.index') : '#' }}" 
                    x-show="!filterQuery || 'reseller directory list profiles sub-isps franchise add retail'.includes(filterQuery.toLowerCase())"
-                   class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ request()->routeIs('tenant.resellers.index*') ? 'border-cyan-200 bg-cyan-50/80 text-cyan-700 font-bold border-l-4 border-l-cyan-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
+                   class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ (request()->routeIs('tenant.resellers.index*') || request()->routeIs('tenant.resellers.show*')) ? 'border-cyan-200 bg-cyan-50/80 text-cyan-700 font-bold border-l-4 border-l-cyan-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
                     Partner Directory
                 </a>
 
