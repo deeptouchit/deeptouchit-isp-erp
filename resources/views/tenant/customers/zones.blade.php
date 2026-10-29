@@ -215,10 +215,13 @@
                             $assignedStaffPhone = $z->assignedStaff?->phone ?: ($z->in_charge_phone ?: '');
                             $assignedStaffRole = $z->assignedStaff?->role_badge['label'] ?? '';
 
+                            $subAreasList = $z->sub_areas_list;
                             $zoneData = [
                                 'id' => $z->id,
                                 'code' => $z->code,
                                 'name' => $z->name,
+                                'sub_areas' => $subAreasList,
+                                'sub_areas_count' => count($subAreasList),
                                 'reseller_id' => $z->reseller_id ? (string)$z->reseller_id : '',
                                 'reseller_name' => $z->reseller?->name ?? 'HQ Direct',
                                 'reseller_code' => $z->reseller?->code ?? '',
@@ -243,9 +246,33 @@
                                 {{ $z->code }}
                             </td>
 
-                            <!-- 2. Name -->
+                            <!-- 2. Name & Sub-Areas -->
                             <td class="font-medium text-slate-900">
-                                {{ $z->name }}
+                                <div class="font-semibold text-slate-900 leading-tight">
+                                    {{ $z->name }}
+                                </div>
+                                @if(!empty($subAreasList))
+                                    <div class="flex items-center gap-1 mt-0.5 flex-wrap">
+                                        @foreach(array_slice($subAreasList, 0, 2) as $sa)
+                                            <span class="inline-block px-1.5 py-0.2 bg-slate-100 text-slate-700 rounded text-[9.5px] border border-slate-200/80">{{ $sa }}</span>
+                                        @endforeach
+                                        @if(count($subAreasList) > 2)
+                                            <button type="button" 
+                                                    @click="openSubAreasModal({{ Js::from($zoneData) }})"
+                                                    class="text-[9.5px] font-semibold text-cyan-700 bg-cyan-50 hover:bg-cyan-100 px-1 py-0.2 rounded border border-cyan-200/60 cursor-pointer" 
+                                                    title="{{ implode(', ', array_slice($subAreasList, 2)) }}">
+                                                +{{ count($subAreasList) - 2 }} more
+                                            </button>
+                                        @endif
+                                    </div>
+                                @else
+                                    <button type="button" 
+                                            @click="openSubAreasModal({{ Js::from($zoneData) }})"
+                                            class="text-[9.5px] text-slate-400 hover:text-cyan-700 inline-flex items-center gap-0.5 mt-0.5 cursor-pointer">
+                                        <i class="fas fa-plus text-[8px]"></i>
+                                        <span>Add Sub-Area</span>
+                                    </button>
+                                @endif
                             </td>
 
                             <!-- 3. Affiliation / Partner -->
@@ -343,6 +370,14 @@
                     class="w-full px-3 py-1.5 hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition text-left cursor-pointer">
                 <i class="fas fa-eye text-cyan-600 w-3.5 text-center text-[11px]"></i>
                 <span>View Details</span>
+            </button>
+
+            <!-- Manage Sub Areas (Add, Edit, View, Delete) -->
+            <button type="button" 
+                    @click="const item = activeMenu; activeMenu = null; openSubAreasModal(item)" 
+                    class="w-full px-3 py-1.5 hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition text-left cursor-pointer">
+                <i class="fas fa-layer-group text-emerald-600 w-3.5 text-center text-[11px]"></i>
+                <span>Manage Sub Areas</span>
             </button>
 
             <!-- Edit Zone -->
@@ -518,14 +553,14 @@
                         </div>
                     </div>
 
-                    <!-- Description / Boundaries -->
+                    <!-- Sub Areas (উপ-এলাকা সমূহ) -->
                     <div class="space-y-1">
                         <label class="block text-slate-700 font-semibold text-[11px]">
-                            Coverage Boundaries &amp; Remarks <span class="text-slate-400 font-normal">(Optional)</span>
+                            Sub Areas / উপ-এলাকা সমূহ <span class="text-slate-400 font-normal">(কমা দিয়ে একাধিক উপ-এলাকা লিখুন)</span>
                         </label>
                         <textarea x-model="modal.form.description" 
                                   rows="2" 
-                                  placeholder="e.g. Covers House 1-150, Road 4 to 8, Splitter Box #3 to #7"
+                                  placeholder="যেমন: পশ্চিমপাড়া, পূর্বপাড়া, গুচ্ছগ্রাম, বাজারপাড়া..."
                                   class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 text-slate-800 focus:bg-white focus:border-cyan-500 transition"></textarea>
                     </div>
 
@@ -650,9 +685,26 @@
                         <span class="text-xs font-medium text-slate-800 block" x-text="detailsModal.zone?.city_upazila || '--'"></span>
                     </div>
 
-                    <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200/80 space-y-0.5 col-span-2" x-show="detailsModal.zone?.description">
-                        <span class="text-[9.5px] font-semibold text-slate-400 uppercase tracking-wider block">Coverage Boundaries / Notes</span>
-                        <p class="text-xs text-slate-700 leading-relaxed" x-text="detailsModal.zone?.description"></p>
+                    <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200/80 space-y-1.5 col-span-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[9.5px] font-semibold text-slate-500 uppercase tracking-wider block">
+                                Sub Areas / উপ-এলাকা সমূহ (<span x-text="detailsModal.zone?.sub_areas?.length ?? 0"></span>)
+                            </span>
+                            <button type="button" 
+                                    @click="openSubAreasModal(detailsModal.zone)" 
+                                    class="text-[10px] text-cyan-700 hover:text-cyan-900 font-semibold inline-flex items-center gap-1 cursor-pointer">
+                                <i class="fas fa-layer-group text-[9px]"></i>
+                                <span>Manage Sub Areas</span>
+                            </button>
+                        </div>
+                        <div class="flex items-center gap-1.5 flex-wrap" x-show="detailsModal.zone?.sub_areas && detailsModal.zone?.sub_areas?.length > 0">
+                            <template x-for="(sa, idx) in (detailsModal.zone?.sub_areas ?? [])" :key="idx">
+                                <span class="px-2 py-0.5 bg-white border border-slate-200 rounded-md text-[11px] font-medium text-slate-700 shadow-2xs" x-text="sa"></span>
+                            </template>
+                        </div>
+                        <p class="text-xs text-slate-400 italic" x-show="!detailsModal.zone?.sub_areas || detailsModal.zone?.sub_areas?.length === 0">
+                            No sub-areas defined for this zone.
+                        </p>
                     </div>
                 </div>
 
@@ -671,6 +723,152 @@
                         class="bg-cyan-600 hover:bg-cyan-700 text-white font-medium text-xs px-4 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow-xs cursor-pointer">
                     <i class="fas fa-pen-to-square text-[11px]"></i>
                     <span>Edit Zone</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 7. Production-Grade Natural Modal: Manage Sub Areas (View, Add, Edit, Delete) -->
+    <div x-show="subAreasModal.open" 
+         x-cloak 
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         style="display: none;">
+        
+        <div class="bg-white rounded-xl border border-slate-200/90 shadow-2xl w-full max-w-lg overflow-hidden"
+             @click.away="if (!subAreasModal.loading) subAreasModal.open = false"
+             x-transition:enter="transition ease-out duration-200 transform"
+             x-transition:enter-start="opacity-0 scale-95"
+             x-transition:enter-end="opacity-100 scale-100"
+             x-transition:leave="transition ease-in duration-150 transform"
+             x-transition:leave-start="opacity-100 scale-100"
+             x-transition:leave-end="opacity-0 scale-95">
+            
+            <!-- Soft Natural Header -->
+            <div class="bg-slate-50/80 border-b border-slate-200 px-4 py-3 flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center text-xs flex-shrink-0 shadow-2xs">
+                        <i class="fas fa-layer-group"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xs font-semibold text-slate-800">
+                            Sub Areas / উপ-এলাকা - <span class="text-cyan-700" x-text="subAreasModal.zone?.name"></span>
+                        </h3>
+                        <p class="text-[10.5px] text-slate-500 font-normal">Add, edit, or delete operational sub-areas in this zone</p>
+                    </div>
+                </div>
+                <button type="button" 
+                        @click="subAreasModal.open = false" 
+                        :disabled="subAreasModal.loading"
+                        class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center cursor-pointer">
+                    <i class="fas fa-times text-xs"></i>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-4 space-y-4 text-xs">
+                <!-- Add New Sub-Area Form Strip -->
+                <div class="space-y-1">
+                    <label class="block text-slate-700 font-semibold text-[11px]">
+                        + Add New Sub-Area (নতুন উপ-এলাকা যুক্ত করুন)
+                    </label>
+                    <div class="flex items-center gap-2">
+                        <input type="text" 
+                               x-model="subAreasModal.newSubArea" 
+                               @keydown.enter.prevent="addSubArea()"
+                               placeholder="যেমন: পশ্চিমপাড়া / চারমাথা / বাজার" 
+                               class="flex-1 bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 text-slate-800 focus:bg-white focus:border-cyan-500 transition">
+                        <button type="button" 
+                                @click="addSubArea()" 
+                                class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs px-3.5 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1 cursor-pointer">
+                            <i class="fas fa-plus text-[10px]"></i>
+                            <span>Add</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Sub-Areas List -->
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between text-[11px] text-slate-600 font-semibold">
+                        <span>Current Sub-Areas (<span x-text="subAreasModal.items.length"></span>)</span>
+                        <span class="text-slate-400 font-normal text-[10px]">Click pencil to edit or trash to delete</span>
+                    </div>
+
+                    <div class="max-h-60 overflow-y-auto space-y-1.5 pr-1 divide-y divide-slate-100 border border-slate-200 rounded-lg p-2 bg-slate-50/50">
+                        <template x-for="(item, idx) in subAreasModal.items" :key="idx">
+                            <div class="pt-1.5 first:pt-0 flex items-center justify-between gap-2">
+                                <!-- View Mode -->
+                                <div class="flex items-center gap-2 flex-1 min-w-0" x-show="subAreasModal.editingIndex !== idx">
+                                    <span class="w-5 h-5 rounded-full bg-slate-200/80 text-slate-600 flex items-center justify-center text-[10px] font-mono flex-shrink-0" x-text="idx + 1"></span>
+                                    <span class="text-xs font-medium text-slate-800 truncate" x-text="item"></span>
+                                </div>
+
+                                <!-- Inline Edit Mode -->
+                                <div class="flex items-center gap-1.5 flex-1 min-w-0" x-show="subAreasModal.editingIndex === idx">
+                                    <input type="text" 
+                                           x-model="subAreasModal.editingValue" 
+                                           @keydown.enter.prevent="saveEditSubArea(idx)" 
+                                           class="w-full bg-white border border-cyan-400 rounded-md text-xs px-2 py-1 text-slate-800 focus:outline-hidden">
+                                    <button type="button" 
+                                            @click="saveEditSubArea(idx)" 
+                                            class="w-6 h-6 rounded bg-emerald-600 text-white flex items-center justify-center text-[10px] hover:bg-emerald-700 cursor-pointer" 
+                                            title="Save">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                    <button type="button" 
+                                            @click="subAreasModal.editingIndex = null" 
+                                            class="w-6 h-6 rounded bg-slate-200 text-slate-600 flex items-center justify-center text-[10px] hover:bg-slate-300 cursor-pointer" 
+                                            title="Cancel">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+
+                                <!-- Action Buttons (when not editing) -->
+                                <div class="flex items-center gap-1 flex-shrink-0" x-show="subAreasModal.editingIndex !== idx">
+                                    <button type="button" 
+                                            @click="startEditSubArea(idx, item)" 
+                                            class="w-6 h-6 rounded hover:bg-slate-200 text-slate-500 hover:text-cyan-700 transition flex items-center justify-center text-[10px] cursor-pointer" 
+                                            title="Edit Name">
+                                        <i class="fas fa-pen"></i>
+                                    </button>
+                                    <button type="button" 
+                                            @click="deleteSubArea(idx)" 
+                                            class="w-6 h-6 rounded hover:bg-rose-100 text-slate-400 hover:text-rose-600 transition flex items-center justify-center text-[10px] cursor-pointer" 
+                                            title="Delete Sub-Area">
+                                        <i class="fas fa-trash-can"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
+
+                        <div x-show="subAreasModal.items.length === 0" class="py-6 text-center text-slate-400 text-xs italic">
+                            <i class="fas fa-map-pin text-xl text-slate-300 mb-1.5 block"></i>
+                            No sub-areas added yet. Type a name above to add.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-4 py-2.5 bg-slate-50/80 border-t border-slate-200 flex items-center justify-between">
+                <button type="button" 
+                        @click="subAreasModal.open = false" 
+                        :disabled="subAreasModal.loading"
+                        class="border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs px-3.5 py-1.5 rounded-lg transition shadow-2xs cursor-pointer">
+                    Cancel
+                </button>
+
+                <button type="button" 
+                        @click="saveSubAreasToServer()" 
+                        :disabled="subAreasModal.loading"
+                        class="bg-cyan-600 hover:bg-cyan-700 text-white font-medium text-xs px-4 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
+                    <i class="fas" :class="subAreasModal.loading ? 'fa-spinner fa-spin' : 'fa-save'"></i>
+                    <span x-text="subAreasModal.loading ? 'Saving...' : 'Save Sub Areas'"></span>
                 </button>
             </div>
         </div>
@@ -867,6 +1065,16 @@ function zoneManager() {
             zone: null
         },
 
+        subAreasModal: {
+            open: false,
+            loading: false,
+            zone: null,
+            items: [],
+            newSubArea: '',
+            editingIndex: null,
+            editingValue: '',
+        },
+
         importModal: {
             open: false,
             loading: false,
@@ -945,6 +1153,78 @@ function zoneManager() {
         openDetailsModal(item) {
             this.detailsModal.zone = item;
             this.detailsModal.open = true;
+        },
+
+        openSubAreasModal(zone) {
+            this.subAreasModal.zone = zone;
+            this.subAreasModal.items = Array.isArray(zone.sub_areas) ? [...zone.sub_areas] : [];
+            this.subAreasModal.newSubArea = '';
+            this.subAreasModal.editingIndex = null;
+            this.subAreasModal.editingValue = '';
+            this.subAreasModal.open = true;
+        },
+
+        addSubArea() {
+            const val = this.subAreasModal.newSubArea.trim();
+            if (!val) return;
+            const splitVals = val.split(/[,;\n]+/).map(s => s.trim()).filter(Boolean);
+            splitVals.forEach(s => {
+                if (!this.subAreasModal.items.includes(s)) {
+                    this.subAreasModal.items.push(s);
+                }
+            });
+            this.subAreasModal.newSubArea = '';
+        },
+
+        startEditSubArea(idx, currentVal) {
+            this.subAreasModal.editingIndex = idx;
+            this.subAreasModal.editingValue = currentVal;
+        },
+
+        saveEditSubArea(idx) {
+            const val = this.subAreasModal.editingValue.trim();
+            if (val) {
+                this.subAreasModal.items[idx] = val;
+            }
+            this.subAreasModal.editingIndex = null;
+            this.subAreasModal.editingValue = '';
+        },
+
+        deleteSubArea(idx) {
+            this.subAreasModal.items.splice(idx, 1);
+            if (this.subAreasModal.editingIndex === idx) {
+                this.subAreasModal.editingIndex = null;
+            }
+        },
+
+        async saveSubAreasToServer() {
+            if (!this.subAreasModal.zone) return;
+            this.subAreasModal.loading = true;
+            try {
+                const res = await fetch(`{{ url('admin/customers/zones') }}/${this.subAreasModal.zone.id}/sub-areas`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        sub_areas: this.subAreasModal.items
+                    })
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    this.showToast(data.message, 'success');
+                    this.subAreasModal.open = false;
+                    setTimeout(() => window.location.reload(), 600);
+                } else {
+                    this.showToast(data.message || 'Failed to update sub-areas.', 'error');
+                }
+            } catch (err) {
+                this.showToast('Network error while saving sub-areas.', 'error');
+            } finally {
+                this.subAreasModal.loading = false;
+            }
         },
 
         async submitModal() {

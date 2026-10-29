@@ -279,6 +279,7 @@ Route::middleware(['web'])->group(function () {
             Route::put('/zones/{id}', [TenantCoverageZoneController::class, 'update'])->whereNumber('id')->name('zones.update');
             Route::delete('/zones/{id}', [TenantCoverageZoneController::class, 'destroy'])->whereNumber('id')->name('zones.destroy');
             Route::post('/zones/{id}/toggle-status', [TenantCoverageZoneController::class, 'toggleStatus'])->whereNumber('id')->name('zones.toggle-status');
+            Route::post('/zones/{id}/sub-areas', [TenantCoverageZoneController::class, 'updateSubAreas'])->whereNumber('id')->name('zones.sub-areas');
 
             Route::get('/disconnected', [TenantCustomerController::class, 'index'])->defaults('status', 'disconnected')->name('disconnected');
             Route::get('/create', [TenantCustomerController::class, 'create'])->name('create');

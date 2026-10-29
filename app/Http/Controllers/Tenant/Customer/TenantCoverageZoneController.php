@@ -737,4 +737,41 @@ class TenantCoverageZoneController extends Controller
             return back()->with('error', 'Import failed: ' . $e->getMessage());
         }
     }
+
+    /**
+     * Update Sub-Areas of a Coverage Zone
+     */
+    public function updateSubAreas(Request $request, $id)
+    {
+        $tenant = $this->getTenant();
+        $user = Auth::user();
+        $isResellerUser = $user && ($user->isResellerUser() || !empty($user->reseller_id));
+        $userResellerId = $user?->reseller_id;
+
+        $zoneQuery = TenantCoverageZone::where('tenant_id', $tenant->id);
+        if ($isResellerUser) {
+            $zoneQuery->where('reseller_id', $userResellerId);
+        }
+        $zone = $zoneQuery->findOrFail($id);
+
+        $subAreas = $request->input('sub_areas');
+        if (is_array($subAreas)) {
+            $clean = array_values(array_filter(array_map('trim', $subAreas)));
+            $zone->description = implode(', ', $clean);
+        } else {
+            $zone->description = trim((string)$subAreas);
+        }
+        $zone->save();
+
+        if ($request->wantsJson() || $request->ajax() || str_contains($request->header('Accept', ''), 'json')) {
+            return response()->json([
+                'success' => true,
+                'message' => "Sub-areas for '{$zone->name}' updated successfully.",
+                'sub_areas' => $zone->sub_areas_list,
+                'description' => $zone->description,
+            ]);
+        }
+
+        return back()->with('success', "Sub-areas for '{$zone->name}' updated successfully.");
+    }
 }

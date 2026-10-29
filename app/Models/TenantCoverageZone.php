@@ -90,4 +90,15 @@ class TenantCoverageZone extends Model
             })
             ->sum('monthly_bill');
     }
+    /**
+     * Get array of sub areas from description
+     */
+    public function getSubAreasListAttribute(): array
+    {
+        if (empty($this->description)) {
+            return [];
+        }
+        $parts = preg_split('/[,;\n]+/', $this->description);
+        return array_values(array_filter(array_map('trim', $parts)));
+    }
 }
