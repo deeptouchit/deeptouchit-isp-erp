@@ -867,6 +867,17 @@ function zoneManager() {
             zone: null
         },
 
+        importModal: {
+            open: false,
+            loading: false,
+            isDragging: false,
+            file: null,
+            fileName: '',
+            fileSize: '',
+            duplicateAction: 'skip',
+            defaultResellerId: 'isp',
+        },
+
         get filteredStaffList() {
             if (!this.modal.form.reseller_id) {
                 // HQ Direct: Show HQ staff (where reseller_id is empty) or all staff
@@ -1085,15 +1096,9 @@ function zoneManager() {
                         this.showToast(data.message, 'error');
                     }
                 }
-        importModal: {
-            open: false,
-            loading: false,
-            isDragging: false,
-            file: null,
-            fileName: '',
-            fileSize: '',
-            duplicateAction: 'skip',
-            defaultResellerId: 'isp',
+            } catch (err) {
+                this.showToast('Network error while deleting zone.', 'error');
+            }
         },
 
         openImportModal() {
