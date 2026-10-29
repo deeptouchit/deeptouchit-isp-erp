@@ -4,6 +4,8 @@
 /public/hot
 /public/storage
 /public/*.csv
+/*.csv
+*.csv
 /storage/*.key
 /vendor
 .env
