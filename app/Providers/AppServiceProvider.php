@@ -50,30 +50,35 @@ class AppServiceProvider extends ServiceProvider
             // Fail-safe during early migrations
         }
 
-        // 2. Share global settings across all blade views
+        // 2. Share global settings across all blade views with In-Memory Request Memoization
         View::composer('*', function ($view) {
+            static $cachedSettings = null;
             try {
                 if (Schema::hasTable('settings')) {
-                    $globalSettings = Setting::whereNull('tenant_id')->pluck('value', 'key')->toArray();
-                    $currencySymbol = $globalSettings['currency_symbol'] ?? '৳';
-                    $currencyCode = $globalSettings['currency_code'] ?? 'BDT';
-                    $currencyPosition = $globalSettings['currency_position'] ?? 'left';
-                    $currencyDecimals = (int)($globalSettings['currency_decimals'] ?? 2);
-                    $thousandSep = $globalSettings['thousand_separator'] ?? ',';
-                    if ($thousandSep === 'space') {
-                        $thousandSep = ' ';
-                    }
-                    $decimalSep = $globalSettings['decimal_separator'] ?? '.';
+                    if ($cachedSettings === null) {
+                        $globalSettings = Setting::whereNull('tenant_id')->pluck('value', 'key')->toArray();
+                        $currencySymbol = $globalSettings['currency_symbol'] ?? '৳';
+                        $currencyCode = $globalSettings['currency_code'] ?? 'BDT';
+                        $currencyPosition = $globalSettings['currency_position'] ?? 'left';
+                        $currencyDecimals = (int)($globalSettings['currency_decimals'] ?? 2);
+                        $thousandSep = $globalSettings['thousand_separator'] ?? ',';
+                        if ($thousandSep === 'space') {
+                            $thousandSep = ' ';
+                        }
+                        $decimalSep = $globalSettings['decimal_separator'] ?? '.';
 
-                    $view->with([
-                        'globalSettings' => $globalSettings,
-                        'currencySymbol' => $currencySymbol,
-                        'currencyCode' => $currencyCode,
-                        'currencyPosition' => $currencyPosition,
-                        'currencyDecimals' => $currencyDecimals,
-                        'thousandSeparator' => $thousandSep,
-                        'decimalSeparator' => $decimalSep,
-                    ]);
+                        $cachedSettings = [
+                            'globalSettings' => $globalSettings,
+                            'currencySymbol' => $currencySymbol,
+                            'currencyCode' => $currencyCode,
+                            'currencyPosition' => $currencyPosition,
+                            'currencyDecimals' => $currencyDecimals,
+                            'thousandSeparator' => $thousandSep,
+                            'decimalSeparator' => $decimalSep,
+                        ];
+                    }
+
+                    $view->with($cachedSettings);
                 }
             } catch (\Throwable $e) {
                 // Fail-safe during early migrations
