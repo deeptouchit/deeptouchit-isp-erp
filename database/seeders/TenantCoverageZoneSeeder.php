@@ -218,19 +218,30 @@ class TenantCoverageZoneSeeder extends Seeder
         ];
 
         // 5. Insert records ensuring exact ID numbers
+        $hasDescriptionCol = Schema::hasColumn('tenant_coverage_zones', 'description');
+        $hasSubAreasCol = Schema::hasColumn('tenant_coverage_zones', 'sub_areas');
+
         foreach ($zones as $zoneData) {
-            DB::table('tenant_coverage_zones')->insert([
+            $insertData = [
                 'id' => $zoneData['id'],
                 'tenant_id' => $tenantId,
                 'reseller_id' => $zoneData['reseller_id'],
                 'code' => $zoneData['code'],
                 'name' => $zoneData['name'],
                 'city_upazila' => $zoneData['city_upazila'],
-                'sub_areas' => $zoneData['sub_areas'],
                 'is_active' => $zoneData['is_active'],
                 'created_at' => now(),
                 'updated_at' => now(),
-            ]);
+            ];
+
+            if ($hasDescriptionCol) {
+                $insertData['description'] = $zoneData['sub_areas'] ?? null;
+            }
+            if ($hasSubAreasCol) {
+                $insertData['sub_areas'] = $zoneData['sub_areas'] ?? null;
+            }
+
+            DB::table('tenant_coverage_zones')->insert($insertData);
         }
 
         // 6. Automatically link customers back to zones if their customer address/zone matches name
