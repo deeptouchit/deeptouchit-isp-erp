@@ -62,35 +62,44 @@ class OltApiService
                 Cache::put($cacheKey, $token, now()->addMinutes(15));
                 return $token;
             }
-        } else {
-            // 4. Default: Try FastCGI, then HSGQ, then VSOL HTTPS, then UniMars
+        }
+
+        if ($knownDriver === 'fastcgi') {
             $token = $this->attemptFastCgiLogin($ip, $port, $username, $password);
             if ($token) {
                 Cache::put($driverKey, 'fastcgi', now()->addDays(7));
                 Cache::put($cacheKey, $token, now()->addMinutes(15));
                 return $token;
             }
+        }
 
-            $token = $this->attemptHsgqLogin($ip, $port, $username, $password);
-            if ($token) {
-                Cache::put($driverKey, 'hsgq', now()->addDays(7));
-                Cache::put($cacheKey, $token, now()->addMinutes(15));
-                return $token;
-            }
+        // 4. Dynamic Auto-Detection for ANY newly added OLT (non-blocking fallback order)
+        $token = $this->attemptFastCgiLogin($ip, $port, $username, $password);
+        if ($token) {
+            Cache::put($driverKey, 'fastcgi', now()->addDays(7));
+            Cache::put($cacheKey, $token, now()->addMinutes(15));
+            return $token;
+        }
 
-            $token = $this->attemptVsolHttpsLogin($ip, $port, $username, $password);
-            if ($token) {
-                Cache::put($driverKey, 'vsol_https', now()->addDays(7));
-                Cache::put($cacheKey, $token, now()->addMinutes(15));
-                return $token;
-            }
+        $token = $this->attemptHsgqLogin($ip, $port, $username, $password);
+        if ($token) {
+            Cache::put($driverKey, 'hsgq', now()->addDays(7));
+            Cache::put($cacheKey, $token, now()->addMinutes(15));
+            return $token;
+        }
 
-            $token = $this->attemptUniMarsLogin($ip, $port, $username, $password);
-            if ($token) {
-                Cache::put($driverKey, 'unimars', now()->addDays(7));
-                Cache::put($cacheKey, $token, now()->addMinutes(15));
-                return $token;
-            }
+        $token = $this->attemptUniMarsLogin($ip, $port, $username, $password);
+        if ($token) {
+            Cache::put($driverKey, 'unimars', now()->addDays(7));
+            Cache::put($cacheKey, $token, now()->addMinutes(15));
+            return $token;
+        }
+
+        $token = $this->attemptVsolHttpsLogin($ip, $port, $username, $password);
+        if ($token) {
+            Cache::put($driverKey, 'vsol_https', now()->addDays(7));
+            Cache::put($cacheKey, $token, now()->addMinutes(15));
+            return $token;
         }
 
         return null;
@@ -104,6 +113,10 @@ class OltApiService
         $fp = @fsockopen($ip, $port, $errno, $errstr, $timeout);
         if (!$fp) return null;
 
+        $referer = str_starts_with($body, 'set=login')
+            ? "http://{$ip}:{$port}/"
+            : "http://{$ip}:{$port}/m/onu_all_onu.htm";
+
         $len = strlen($body);
         $req = "POST /sw.cgi HTTP/1.1\r\n" .
                "Host: {$ip}:{$port}\r\n" .
@@ -111,7 +124,7 @@ class OltApiService
                "Accept: text/javascript, text/html, application/xml, text/xml, */*\r\n" .
                "X-Requested-With: XMLHttpRequest\r\n" .
                "Content-Type: uni_mars_ap\r\n" .
-               "Referer: http://{$ip}:{$port}/m/onu_all_onu.htm\r\n" .
+               "Referer: {$referer}\r\n" .
                "Content-Length: {$len}\r\n" .
                "Connection: close\r\n\r\n" .
                $body;
@@ -261,7 +274,7 @@ class OltApiService
             $sid = base64_encode("{$username}&{$password}");
             $body = $this->sendUniMarsRequest($ip, $port, "set=login&user={$sid}");
 
-            if ($body && (str_contains($body, '<item name="method" value="0"') || str_contains($body, '<xml>'))) {
+            if ($body && (str_contains($body, '<item name="method" value="0"') || str_contains($body, 'value="0"'))) {
                 return 'unimars_session_' . md5("{$ip}_{$port}_{$username}");
             }
         } catch (Exception $e) {
@@ -506,7 +519,7 @@ class OltApiService
         $driver = Cache::get($driverKey);
 
         // 1. UniMars / CoreLink
-        if ($driver === 'unimars' || $port === 8084) {
+        if ($driver === 'unimars' || $port === 8084 || str_contains(strtolower($vendor), 'core') || str_contains(strtolower($vendor), 'mars')) {
             $sysInfo = $this->fetchUniMarsSystemInfo($ip, $port, $username, $password);
             $latency = round((microtime(true) - $start) * 1000, 1);
 
@@ -680,9 +693,9 @@ class OltApiService
         $syncedOnuDbIds = [];
 
         // =========================================================================
-        // 1. UniMars / CoreLink Driver Sync (Port 8084)
+        // 1. UniMars / CoreLink Driver Sync
         // =========================================================================
-        if ($driver === 'unimars' || $port === 8084) {
+        if ($driver === 'unimars' || $port === 8084 || str_contains(strtolower($olt->vendor ?? ''), 'core') || str_contains(strtolower($olt->model ?? ''), 'ha73') || str_contains(strtolower($olt->model ?? ''), 'cw2')) {
             $sysInfo = $this->fetchUniMarsSystemInfo($ip, $port, $username, $password);
 
             $uptimeStr = null;
@@ -692,20 +705,6 @@ class OltApiService
                     $uptimeStr = "{$parts[0]}d {$parts[1]}h {$parts[2]}m {$parts[3]}s";
                 }
             }
-
-            $olt->update([
-                'status' => 'online',
-                'vendor' => 'Core Link',
-                'model' => $sysInfo['product_name'] ?? 'HA7302V',
-                'hardware_version' => $sysInfo['hw_version'] ?? 'V2.0',
-                'firmware_version' => $sysInfo['sw_version'] ?? 'V1.1.11',
-                'mac_address' => $sysInfo['mac'] ?? $olt->mac_address,
-                'uptime' => $uptimeStr ?? $olt->uptime,
-                'total_pon_ports' => 2,
-                'last_ping_at' => now(),
-                'last_sync_at' => now(),
-                'last_error' => null,
-            ]);
 
             $sid = base64_encode("{$username}&{$password}");
             $this->sendUniMarsRequest($ip, $port, "set=login&user={$sid}");
@@ -766,14 +765,33 @@ class OltApiService
                 TenantOnu::where('olt_id', $olt->id)->whereNotIn('id', $syncedOnuDbIds)->delete();
             }
 
+            $offlineCount = max(0, $syncedCount - $onlineCount);
+
+            $olt->update([
+                'status' => 'online',
+                'vendor' => 'Core Link',
+                'model' => $sysInfo['product_name'] ?? ($olt->model ?: 'HA7302V'),
+                'hardware_version' => $sysInfo['hw_version'] ?? ($olt->hardware_version ?: 'V2.0'),
+                'firmware_version' => $sysInfo['sw_version'] ?? ($olt->firmware_version ?: 'V1.1.11'),
+                'mac_address' => $sysInfo['mac'] ?? $olt->mac_address,
+                'uptime' => $uptimeStr ?? $olt->uptime,
+                'total_pon_ports' => 2,
+                'total_onus_count' => $syncedCount,
+                'online_onus_count' => $onlineCount,
+                'offline_onus_count' => $offlineCount,
+                'last_ping_at' => now(),
+                'last_sync_at' => now(),
+                'last_error' => null,
+            ]);
+
             $latency = round((microtime(true) - $start) * 1000, 1);
 
             return [
                 'success' => true,
-                'message' => "Successfully synchronized CoreLink OLT (Total: {$syncedCount}, Online: {$onlineCount}, Offline: " . max(0, $syncedCount - $onlineCount) . "). Latency: {$latency}ms.",
+                'message' => "Successfully synchronized CoreLink OLT (Total: {$syncedCount}, Online: {$onlineCount}, Offline: {$offlineCount}). Latency: {$latency}ms.",
                 'total_onus' => $syncedCount,
                 'online_onus' => $onlineCount,
-                'offline_onus' => max(0, $syncedCount - $onlineCount),
+                'offline_onus' => $offlineCount,
                 'synced_count' => $syncedCount,
                 'latency_ms' => $latency,
             ];
