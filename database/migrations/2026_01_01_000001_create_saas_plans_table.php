@@ -11,18 +11,26 @@ return new class extends Migration
         if (!Schema::hasTable('saas_plans')) {
             Schema::create('saas_plans', function (Blueprint $table) {
                 $table->id();
+                $table->string('code', 20)->nullable();
                 $table->string('name');
                 $table->string('slug')->unique();
-                $table->text('description')->nullable();
-                $table->decimal('price', 10, 2)->default(0.00);
-                $table->string('billing_cycle')->default('monthly'); // monthly, yearly
-                $table->integer('max_nas')->default(1);
-                $table->integer('max_customers')->default(100);
-                $table->integer('max_resellers')->default(5);
+                $table->decimal('monthly_price', 10, 2)->default(0.00);
+                $table->decimal('otc_charge', 10, 2)->default(0.00);
+                $table->decimal('premium_monthly_price', 10, 2)->nullable();
+                $table->decimal('yearly_price', 10, 2)->default(0.00);
+                $table->integer('customer_limit')->default(500);
+                $table->integer('mikrotik_limit')->default(2);
+                $table->integer('olt_limit')->default(1);
+                $table->boolean('allow_radius')->default(false);
+                $table->boolean('allow_wireguard')->default(false);
+                $table->boolean('allow_snmp_monitoring')->default(true);
+                $table->integer('reseller_limit')->default(5);
                 $table->json('features')->nullable();
+                $table->integer('trial_days')->default(14);
                 $table->boolean('is_popular')->default(false);
-                $table->boolean('is_active')->default(true);
+                $table->string('badge_text', 50)->nullable();
                 $table->integer('sort_order')->default(0);
+                $table->boolean('is_active')->default(true);
                 $table->timestamps();
             });
         }
