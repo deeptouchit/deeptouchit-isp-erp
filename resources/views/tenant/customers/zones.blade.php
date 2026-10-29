@@ -49,7 +49,7 @@
                class="px-3 py-1.5 rounded-md bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs border border-slate-200 shadow-2xs transition inline-flex items-center gap-1.5 cursor-pointer"
                title="Download standard Excel / CSV template">
                 <i class="fas fa-file-excel text-emerald-600 text-[11px]"></i>
-                <span>Excel Template</span>
+                <span>Download Excel Template</span>
             </a>
             <button type="button" 
                     @click="openImportModal()" 
