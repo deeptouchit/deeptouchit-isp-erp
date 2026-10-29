@@ -46,6 +46,12 @@
 
         <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap">
             <button type="button" 
+                    @click="openImportModal()" 
+                    class="px-3 py-1.5 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer">
+                <i class="fas fa-file-excel text-[11px]"></i>
+                <span>Import Excel / CSV</span>
+            </button>
+            <button type="button" 
                     @click="openCreateModal()" 
                     class="px-3 py-1.5 rounded-md bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-plus text-[11px]"></i>
@@ -670,6 +676,145 @@
         </div>
     </div>
 
+    <!-- 8. Production-Grade Natural Modal: Import Excel / CSV -->
+    <div x-show="importModal.open" 
+         x-cloak 
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         style="display: none;">
+        
+        <div class="bg-white rounded-xl border border-slate-200/90 shadow-2xl w-full max-w-xl overflow-hidden"
+             @click.away="if (!importModal.loading) importModal.open = false"
+             x-transition:enter="transition ease-out duration-200 transform"
+             x-transition:enter-start="opacity-0 scale-95"
+             x-transition:enter-end="opacity-100 scale-100"
+             x-transition:leave="transition ease-in duration-150 transform"
+             x-transition:leave-start="opacity-100 scale-100"
+             x-transition:leave-end="opacity-0 scale-95">
+            
+            <!-- Soft Natural Header -->
+            <div class="bg-slate-50/80 border-b border-slate-200 px-4 py-3 flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center text-xs flex-shrink-0 shadow-2xs">
+                        <i class="fas fa-file-excel"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xs font-semibold text-slate-800">{{ __('Import Coverage Zones & Areas') }}</h3>
+                        <p class="text-[10.5px] text-slate-500 font-normal">{{ __('Upload Excel or CSV file to import operational areas & sub-areas') }}</p>
+                    </div>
+                </div>
+                <button type="button" 
+                        @click="importModal.open = false" 
+                        :disabled="importModal.loading"
+                        class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center cursor-pointer">
+                    <i class="fas fa-times text-xs"></i>
+                </button>
+            </div>
+
+            <!-- Form -->
+            <form @submit.prevent="submitImport()" class="p-4 space-y-3.5 text-xs">
+                <!-- Template Download Alert Strip -->
+                <div class="flex items-center justify-between p-2.5 bg-cyan-50/60 border border-cyan-100 rounded-lg text-cyan-800">
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-info-circle text-cyan-600"></i>
+                        <span class="text-[11px] font-medium">{{ __('Need formatting guidelines? Download standard template.') }}</span>
+                    </div>
+                    <a href="{{ route('tenant.customers.zones.import-template') }}" 
+                       class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-white border border-cyan-200 hover:bg-cyan-50 text-cyan-700 text-[10.5px] font-semibold transition shadow-2xs">
+                        <i class="fas fa-download text-[10px]"></i>
+                        <span>Template (CSV)</span>
+                    </a>
+                </div>
+
+                <!-- Drag & Drop Zone -->
+                <div class="relative border-2 border-dashed rounded-xl p-5 text-center transition cursor-pointer"
+                     :class="importModal.isDragging ? 'border-emerald-500 bg-emerald-50/40' : 'border-slate-200 hover:border-emerald-400 bg-slate-50/50 hover:bg-slate-50'"
+                     @dragover.prevent="importModal.isDragging = true"
+                     @dragleave.prevent="importModal.isDragging = false"
+                     @drop.prevent="handleImportDrop($event)">
+                    
+                    <input type="file" 
+                           id="zone_import_file" 
+                           accept=".csv,.xlsx,.xls"
+                           class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                           @change="handleImportFileSelect($event)">
+
+                    <template x-if="!importModal.fileName">
+                        <div class="flex flex-col items-center justify-center space-y-1.5 pointer-events-none">
+                            <div class="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center text-lg shadow-xs">
+                                <i class="fas fa-cloud-arrow-up"></i>
+                            </div>
+                            <p class="text-xs font-bold text-slate-800">Click to browse or drag and drop your file here</p>
+                            <p class="text-[10.5px] text-slate-400">Supports standard CSV, UTF-8 encoded Excel/CSV up to 10MB</p>
+                        </div>
+                    </template>
+
+                    <template x-if="importModal.fileName">
+                        <div class="flex items-center justify-center gap-3 pointer-events-none">
+                            <div class="w-9 h-9 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center text-base">
+                                <i class="fas fa-file-csv"></i>
+                            </div>
+                            <div class="text-left">
+                                <p class="text-xs font-bold text-slate-800" x-text="importModal.fileName"></p>
+                                <p class="text-[10.5px] text-emerald-700 font-mono font-semibold" x-text="importModal.fileSize"></p>
+                            </div>
+                            <button type="button" 
+                                    @click.stop="clearImportFile()" 
+                                    class="pointer-events-auto ml-2 w-5 h-5 rounded-full bg-slate-200 hover:bg-rose-100 hover:text-rose-600 text-slate-500 flex items-center justify-center text-[9px] transition">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Options Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                    <!-- Duplicate Action -->
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-700 mb-1">Duplicate Action</label>
+                        <select x-model="importModal.duplicateAction" class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 py-1.5 focus:bg-white focus:border-cyan-500 focus:outline-none transition">
+                            <option value="skip">Skip Duplicates</option>
+                            <option value="update">Update Existing by Name/Code</option>
+                        </select>
+                    </div>
+
+                    <!-- Default Reseller Scope -->
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-700 mb-1">Default Scope / Reseller</label>
+                        <select x-model="importModal.defaultResellerId" class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 py-1.5 focus:bg-white focus:border-cyan-500 focus:outline-none transition">
+                            <option value="isp">ISP Headquarters (HQ Direct)</option>
+                            @foreach($allResellers as $r)
+                                <option value="{{ $r->id }}">{{ $r->name }} ({{ $r->code ?: 'RES-' . $r->id }})</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Footer Buttons -->
+                <div class="pt-3 border-t border-slate-200 flex items-center justify-end gap-2">
+                    <button type="button" 
+                            @click="importModal.open = false" 
+                            :disabled="importModal.loading"
+                            class="border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs px-3.5 py-1.5 rounded-lg transition shadow-2xs cursor-pointer">
+                        Cancel
+                    </button>
+
+                    <button type="submit" 
+                            :disabled="importModal.loading || !importModal.file"
+                            class="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-medium text-xs px-4 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow-xs cursor-pointer">
+                        <i class="fas" :class="importModal.loading ? 'fa-spinner fa-spin' : 'fa-upload'"></i>
+                        <span x-text="importModal.loading ? 'Importing...' : 'Upload & Import'"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
 </div>
 @endsection
 
@@ -940,8 +1085,86 @@ function zoneManager() {
                         this.showToast(data.message, 'error');
                     }
                 }
+        importModal: {
+            open: false,
+            loading: false,
+            isDragging: false,
+            file: null,
+            fileName: '',
+            fileSize: '',
+            duplicateAction: 'skip',
+            defaultResellerId: 'isp',
+        },
+
+        openImportModal() {
+            this.importModal.open = true;
+            this.clearImportFile();
+        },
+
+        handleImportFileSelect(e) {
+            const files = e.target.files;
+            if (files && files[0]) {
+                this.setImportFile(files[0]);
+            }
+        },
+
+        handleImportDrop(e) {
+            this.importModal.isDragging = false;
+            const files = e.dataTransfer.files;
+            if (files && files[0]) {
+                this.setImportFile(files[0]);
+            }
+        },
+
+        setImportFile(file) {
+            this.importModal.file = file;
+            this.importModal.fileName = file.name;
+            const sizeKb = (file.size / 1024).toFixed(1);
+            this.importModal.fileSize = sizeKb > 1024 ? `${(sizeKb / 1024).toFixed(2)} MB` : `${sizeKb} KB`;
+        },
+
+        clearImportFile() {
+            this.importModal.file = null;
+            this.importModal.fileName = '';
+            this.importModal.fileSize = '';
+            const input = document.getElementById('zone_import_file');
+            if (input) input.value = '';
+        },
+
+        async submitImport() {
+            if (!this.importModal.file) {
+                this.showToast('Please select a CSV or Excel file to import.', 'error');
+                return;
+            }
+
+            this.importModal.loading = true;
+            const formData = new FormData();
+            formData.append('file', this.importModal.file);
+            formData.append('duplicate_action', this.importModal.duplicateAction);
+            formData.append('default_reseller_id', this.importModal.defaultResellerId);
+
+            try {
+                const res = await fetch(`{{ route('tenant.customers.zones.import') }}`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    },
+                    body: formData
+                });
+
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    this.showToast(data.message, 'success');
+                    this.importModal.open = false;
+                    setTimeout(() => window.location.reload(), 800);
+                } else {
+                    this.showToast(data.message || 'Import failed. Check file format.', 'error');
+                }
             } catch (err) {
-                this.showToast('Network error while deleting zone.', 'error');
+                this.showToast('Network error while importing file.', 'error');
+            } finally {
+                this.importModal.loading = false;
             }
         }
     };

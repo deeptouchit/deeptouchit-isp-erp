@@ -273,6 +273,8 @@ Route::middleware(['web'])->group(function () {
             
             // Coverage Zones & Areas Dedicated Routes
             Route::get('/zones', [TenantCoverageZoneController::class, 'index'])->name('zones');
+            Route::get('/zones/import-template', [TenantCoverageZoneController::class, 'downloadSampleTemplate'])->name('zones.import-template');
+            Route::post('/zones/import', [TenantCoverageZoneController::class, 'importProcess'])->name('zones.import');
             Route::post('/zones', [TenantCoverageZoneController::class, 'store'])->name('zones.store');
             Route::put('/zones/{id}', [TenantCoverageZoneController::class, 'update'])->whereNumber('id')->name('zones.update');
             Route::delete('/zones/{id}', [TenantCoverageZoneController::class, 'destroy'])->whereNumber('id')->name('zones.destroy');
