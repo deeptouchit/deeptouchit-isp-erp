@@ -427,7 +427,7 @@ class TenantCoverageZoneController extends Controller
     {
         $headers = [
             'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="coverage_zones_template.csv"',
+            'Content-Disposition' => 'attachment; filename="zones_and_sub_areas_template.csv"',
             'Pragma' => 'no-cache',
             'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
             'Expires' => '0',

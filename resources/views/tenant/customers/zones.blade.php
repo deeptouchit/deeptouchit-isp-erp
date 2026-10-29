@@ -45,10 +45,16 @@
         </div>
 
         <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+            <a href="{{ route('tenant.customers.zones.import-template') }}" 
+               class="px-3 py-1.5 rounded-md bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs border border-slate-200 shadow-2xs transition inline-flex items-center gap-1.5 cursor-pointer"
+               title="Download standard Excel / CSV template">
+                <i class="fas fa-file-excel text-emerald-600 text-[11px]"></i>
+                <span>Excel Template</span>
+            </a>
             <button type="button" 
                     @click="openImportModal()" 
                     class="px-3 py-1.5 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer">
-                <i class="fas fa-file-excel text-[11px]"></i>
+                <i class="fas fa-file-import text-[11px]"></i>
                 <span>Import Excel / CSV</span>
             </button>
             <button type="button" 
@@ -198,6 +204,7 @@
                     <tr>
                         <th class="w-16">Code</th>
                         <th>Zone / Area Name</th>
+                        <th>Sub Areas / উপ-এলাকা</th>
                         <th>Affiliation / Partner</th>
                         <th>City / Upazila</th>
                         <th>Assigned Staff / Tech</th>
@@ -246,30 +253,32 @@
                                 {{ $z->code }}
                             </td>
 
-                            <!-- 2. Name & Sub-Areas -->
-                            <td class="font-medium text-slate-900">
-                                <div class="font-semibold text-slate-900 leading-tight">
-                                    {{ $z->name }}
-                                </div>
+                            <!-- 2. Zone Name -->
+                            <td class="font-semibold text-slate-900">
+                                {{ $z->name }}
+                            </td>
+
+                            <!-- 3. Sub Areas (Dedicated Column) -->
+                            <td>
                                 @if(!empty($subAreasList))
-                                    <div class="flex items-center gap-1 mt-0.5 flex-wrap">
-                                        @foreach(array_slice($subAreasList, 0, 2) as $sa)
-                                            <span class="inline-block px-1.5 py-0.2 bg-slate-100 text-slate-700 rounded text-[9.5px] border border-slate-200/80">{{ $sa }}</span>
+                                    <div class="flex items-center gap-1 flex-wrap max-w-xs">
+                                        @foreach(array_slice($subAreasList, 0, 3) as $sa)
+                                            <span class="inline-block px-1.5 py-0.5 bg-slate-100 text-slate-700 rounded text-[10px] font-medium border border-slate-200/80">{{ $sa }}</span>
                                         @endforeach
-                                        @if(count($subAreasList) > 2)
+                                        @if(count($subAreasList) > 3)
                                             <button type="button" 
                                                     @click="openSubAreasModal({{ Js::from($zoneData) }})"
-                                                    class="text-[9.5px] font-semibold text-cyan-700 bg-cyan-50 hover:bg-cyan-100 px-1 py-0.2 rounded border border-cyan-200/60 cursor-pointer" 
-                                                    title="{{ implode(', ', array_slice($subAreasList, 2)) }}">
-                                                +{{ count($subAreasList) - 2 }} more
+                                                    class="text-[10px] font-semibold text-cyan-700 bg-cyan-50 hover:bg-cyan-100 px-1.5 py-0.5 rounded border border-cyan-200/70 transition cursor-pointer" 
+                                                    title="{{ implode(', ', array_slice($subAreasList, 3)) }}">
+                                                +{{ count($subAreasList) - 3 }} more
                                             </button>
                                         @endif
                                     </div>
                                 @else
                                     <button type="button" 
                                             @click="openSubAreasModal({{ Js::from($zoneData) }})"
-                                            class="text-[9.5px] text-slate-400 hover:text-cyan-700 inline-flex items-center gap-0.5 mt-0.5 cursor-pointer">
-                                        <i class="fas fa-plus text-[8px]"></i>
+                                            class="text-[10.5px] text-slate-400 hover:text-cyan-700 inline-flex items-center gap-1 transition cursor-pointer">
+                                        <i class="fas fa-plus text-[9px]"></i>
                                         <span>Add Sub-Area</span>
                                     </button>
                                 @endif
@@ -337,7 +346,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="9" class="px-4 py-8 text-center text-slate-400 text-xs italic bg-slate-50/50">
+                            <td colspan="10" class="px-4 py-8 text-center text-slate-400 text-xs italic bg-slate-50/50">
                                 <i class="fas fa-map-location text-2xl text-slate-300 mb-2 block"></i>
                                 No coverage zones found. Click "+ Add New Zone" to define operational areas.
                             </td>
