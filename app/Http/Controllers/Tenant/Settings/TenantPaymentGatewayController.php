@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Tenant\Settings;
 
 use App\Http\Controllers\Controller;
-use App\Models\Payment;
 use App\Models\PaymentGateway;
 use App\Models\Setting;
 use App\Models\Tenant;
