@@ -4,43 +4,38 @@ $app = require_once __DIR__ . '/../bootstrap/app.php';
 $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
 $kernel->bootstrap();
 
-header('Content-Type: application/json');
+header('Content-Type: text/plain');
 
 $olt = App\Models\TenantOlt::find(4);
-if (!$olt) {
-    $all = App\Models\TenantOlt::all();
-    echo json_encode([
-        'error' => 'OLT 4 not found',
-        'available_olts' => $all->map(fn($o) => [
-            'id' => $o->id,
-            'name' => $o->name,
-            'ip' => $o->ip_address,
-            'web_port' => $o->web_port,
-            'brand' => $o->brand,
-            'status' => $o->status,
-        ])
-    ], JSON_PRETTY_PRINT);
-    exit;
-}
-
 $api = new App\Services\Network\OltApiService();
-$syncResult = $api->syncOlt($olt);
 
-$onusCount = App\Models\TenantOnu::where('olt_id', $olt->id)->count();
+$ip = $olt->ip_address;
+$port = (int)$olt->web_port;
+$username = $olt->web_username;
+$password = $olt->decrypted_web_password;
 
-echo json_encode([
-    'olt' => [
-        'id' => $olt->id,
-        'name' => $olt->name,
-        'ip_address' => $olt->ip_address,
-        'web_port' => $olt->web_port,
-        'web_username' => $olt->web_username,
-        'has_password' => !empty($olt->decrypted_web_password),
-        'brand' => $olt->brand,
-        'model' => $olt->model,
-        'status' => $olt->status,
-        'total_onus_in_olt_record' => $olt->total_onus,
-        'actual_onus_in_db' => $onusCount,
-    ],
-    'sync_result' => $syncResult,
-], JSON_PRETTY_PRINT);
+$sid = base64_encode("{$username}&{$password}");
+$loginRes = $api->sendUniMarsRequest($ip, $port, "set=login&user={$sid}");
+echo "--- LOGIN RESPONSE ---\n" . $loginRes . "\n\n";
+
+$sysinfo = $api->sendUniMarsRequest($ip, $port, "get=sysinfo2&sysunit=1");
+echo "--- SYSINFO RESPONSE ---\n" . $sysinfo . "\n\n";
+
+// Let's test different commands for ONU list on HA7302V / CoreLink / UniMars:
+$cmds = [
+    "get=onualllist&sysUnit=1",
+    "get=onulist&sysUnit=1",
+    "get=onustatus&sysUnit=1",
+    "get=onu_list&sysUnit=1",
+    "get=all_onu&sysUnit=1",
+    "get=onuinfo&sysUnit=1",
+    "get=onualllist&sysunit=1",
+    "get=onulist&pon=1",
+    "get=onulist&pon=2",
+    "get=onu_table",
+];
+
+foreach ($cmds as $cmd) {
+    $res = $api->sendUniMarsRequest($ip, $port, $cmd);
+    echo "=== CMD: {$cmd} ===\n" . substr($res, 0, 500) . "\n\n";
+}
