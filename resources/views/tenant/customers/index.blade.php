@@ -624,7 +624,7 @@
                         <tr>
                             <td colspan="{{ $isDueRoute ? 13 : 12 }}" class="px-4 py-8 text-center text-slate-400 text-xs italic bg-slate-50/50">
                                 <i class="fas fa-users-slash text-2xl text-slate-300 mb-2 block"></i>
-                                No customers found matching your filter criteria.
+                                No customer or subscriber records found. (Database is empty)
                             </td>
                         </tr>
                     @endforelse
