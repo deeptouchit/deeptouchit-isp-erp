@@ -247,96 +247,96 @@
                                 'created_at' => $z->created_at?->format('d M, Y h:i A') ?? '--'
                             ];
                         @endphp
-                        <tr>
+                        <tr class="whitespace-nowrap">
                             <!-- 1. Code -->
-                            <td class="font-mono text-cyan-800 font-semibold">
+                            <td class="font-mono text-cyan-800 font-semibold whitespace-nowrap">
                                 {{ $z->code }}
                             </td>
 
                             <!-- 2. Zone Name -->
-                            <td class="font-semibold text-slate-900">
+                            <td class="font-semibold text-slate-900 whitespace-nowrap">
                                 {{ $z->name }}
                             </td>
 
-                            <!-- 3. Sub Areas (Dedicated Column) -->
-                            <td>
+                            <!-- 3. Sub Areas (Dedicated Column - Strict Single-Line / Nowrap) -->
+                            <td class="whitespace-nowrap">
                                 @if(!empty($subAreasList))
-                                    <div class="flex items-center gap-1 flex-wrap max-w-xs">
-                                        @foreach(array_slice($subAreasList, 0, 3) as $sa)
-                                            <span class="inline-block px-1.5 py-0.5 bg-slate-100 text-slate-700 rounded text-[10px] font-medium border border-slate-200/80">{{ $sa }}</span>
+                                    <div class="flex items-center gap-1 flex-nowrap whitespace-nowrap">
+                                        @foreach(array_slice($subAreasList, 0, 2) as $sa)
+                                            <span class="inline-block px-1.5 py-0.5 bg-slate-100 text-slate-700 rounded text-[10px] font-medium border border-slate-200/80 whitespace-nowrap">{{ $sa }}</span>
                                         @endforeach
-                                        @if(count($subAreasList) > 3)
+                                        @if(count($subAreasList) > 2)
                                             <button type="button" 
                                                     @click="openSubAreasModal({{ Js::from($zoneData) }})"
-                                                    class="text-[10px] font-semibold text-cyan-700 bg-cyan-50 hover:bg-cyan-100 px-1.5 py-0.5 rounded border border-cyan-200/70 transition cursor-pointer" 
-                                                    title="{{ implode(', ', array_slice($subAreasList, 3)) }}">
-                                                +{{ count($subAreasList) - 3 }} more
+                                                    class="text-[10px] font-semibold text-cyan-700 bg-cyan-50 hover:bg-cyan-100 px-1.5 py-0.5 rounded border border-cyan-200/70 transition cursor-pointer whitespace-nowrap" 
+                                                    title="{{ implode(', ', array_slice($subAreasList, 2)) }}">
+                                                +{{ count($subAreasList) - 2 }} more
                                             </button>
                                         @endif
                                     </div>
                                 @else
                                     <button type="button" 
                                             @click="openSubAreasModal({{ Js::from($zoneData) }})"
-                                            class="text-[10.5px] text-slate-400 hover:text-cyan-700 inline-flex items-center gap-1 transition cursor-pointer">
+                                            class="text-[10.5px] text-slate-400 hover:text-cyan-700 inline-flex items-center gap-1 transition cursor-pointer whitespace-nowrap">
                                         <i class="fas fa-plus text-[9px]"></i>
                                         <span>Add Sub-Area</span>
                                     </button>
                                 @endif
                             </td>
 
-                            <!-- 3. Affiliation / Partner -->
-                            <td>
+                            <!-- 4. Affiliation / Partner -->
+                            <td class="whitespace-nowrap">
                                 @if($z->reseller)
-                                    <span class="inline-flex items-center gap-1 text-cyan-800 font-semibold" title="Managed by Sub-ISP Reseller: {{ $z->reseller->name }}">
+                                    <span class="inline-flex items-center gap-1 text-cyan-800 font-semibold whitespace-nowrap" title="Managed by Sub-ISP Reseller: {{ $z->reseller->name }}">
                                         <i class="fas fa-handshake text-cyan-600 text-[10px]"></i>
                                         <span>{{ $z->reseller->code ?: $z->reseller->name }}</span>
                                     </span>
                                 @else
-                                    <span class="inline-flex items-center gap-1 text-purple-700 font-semibold" title="ISP Headquarters Direct Territory">
+                                    <span class="inline-flex items-center gap-1 text-purple-700 font-semibold whitespace-nowrap" title="ISP Headquarters Direct Territory">
                                         <i class="fas fa-building text-purple-500 text-[10px]"></i>
                                         <span>HQ Direct</span>
                                     </span>
                                 @endif
                             </td>
 
-                            <!-- 4. City / Upazila -->
-                            <td class="text-slate-600">
+                            <!-- 5. City / Upazila -->
+                            <td class="text-slate-600 whitespace-nowrap">
                                 {{ $z->city_upazila ?: '--' }}
                             </td>
 
-                            <!-- 5. Assigned Staff / Tech (Strict single data per cell) -->
-                            <td class="text-slate-700" title="{{ $assignedStaffRole ? ($assignedStaffRole . ' - ' . $assignedStaffName) : $assignedStaffName }}">
+                            <!-- 6. Assigned Staff / Tech (Strict single data per cell) -->
+                            <td class="text-slate-700 whitespace-nowrap" title="{{ $assignedStaffRole ? ($assignedStaffRole . ' - ' . $assignedStaffName) : $assignedStaffName }}">
                                 {{ $assignedStaffName ?: '--' }}
                             </td>
 
-                            <!-- 6. Phone -->
-                            <td class="font-mono text-slate-600">
+                            <!-- 7. Phone -->
+                            <td class="font-mono text-slate-600 whitespace-nowrap">
                                 {{ $assignedStaffPhone ?: '--' }}
                             </td>
 
-                            <!-- 7. Subscribers Count -->
-                            <td class="text-center">
+                            <!-- 8. Subscribers Count -->
+                            <td class="text-center whitespace-nowrap">
                                 <a href="{{ route('tenant.customers.index', ['zone' => $z->name]) }}" 
-                                   class="inline-flex items-center gap-1 font-mono font-bold text-xs {{ $subCount > 0 ? 'text-cyan-700 hover:text-cyan-900 underline' : 'text-slate-400' }}"
+                                   class="inline-flex items-center gap-1 font-mono font-bold text-xs whitespace-nowrap {{ $subCount > 0 ? 'text-cyan-700 hover:text-cyan-900 underline' : 'text-slate-400' }}"
                                    title="View all subscribers in {{ $z->name }}">
                                     <span>{{ $subCount }}</span>
                                     <i class="fas fa-arrow-up-right-from-square text-[9px]"></i>
                                 </a>
                             </td>
 
-                            <!-- 8. Status Toggle -->
-                            <td class="text-center">
+                            <!-- 9. Status Toggle -->
+                            <td class="text-center whitespace-nowrap">
                                 <button type="button" 
                                         @click="toggleStatus({{ $z->id }}, '{{ addslashes($z->name) }}')"
-                                        class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold border transition cursor-pointer shadow-2xs {{ $z->is_active ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' : 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100' }}"
+                                        class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold border transition cursor-pointer shadow-2xs whitespace-nowrap {{ $z->is_active ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' : 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100' }}"
                                         title="Click to toggle active status">
                                     <span class="w-1.5 h-1.5 rounded-full {{ $z->is_active ? 'bg-emerald-500' : 'bg-rose-500' }}"></span>
                                     <span>{{ $z->is_active ? 'Active' : 'Inactive' }}</span>
                                 </button>
                             </td>
 
-                            <!-- 9. Action (Floating 3-Dot Menu) -->
-                            <td class="text-center">
+                            <!-- 10. Action (Floating 3-Dot Menu) -->
+                            <td class="text-center whitespace-nowrap">
                                 <button type="button" 
                                         @click="toggleMenu({{ Js::from($zoneData) }}, $event)" 
                                         class="w-6 h-6 rounded-md hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition cursor-pointer inline-flex items-center justify-center">
