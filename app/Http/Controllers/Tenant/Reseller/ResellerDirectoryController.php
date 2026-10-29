@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Tenant\Reseller;
 use App\Http\Controllers\Controller;
 use App\Models\TenantReseller;
 use App\Models\TenantInternetPackage;
+use App\Models\TenantCustomer;
+use App\Models\TenantCoverageZone;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -244,9 +246,9 @@ class ResellerDirectoryController extends Controller
     }
 
     /**
-     * Return JSON details of a single Reseller for modals and details drawer.
+     * Display the dedicated details page of a single Reseller.
      */
-    public function show(int $id): JsonResponse
+    public function show(Request $request, int $id): View|JsonResponse
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
@@ -254,12 +256,74 @@ class ResellerDirectoryController extends Controller
         }
 
         $reseller = TenantReseller::where('tenant_id', $tenant->id)
+            ->with(['bandwidthAllocation'])
             ->findOrFail($id);
 
-        return response()->json([
-            'success' => true,
-            'reseller' => $reseller,
-        ]);
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'reseller' => $reseller,
+            ]);
+        }
+
+        // 1. Subscriber Counts and Stats
+        $customersQuery = TenantCustomer::where('tenant_id', $tenant->id)
+            ->where('reseller_id', $reseller->id);
+
+        $totalCustomers = (clone $customersQuery)->count();
+        $activeCustomers = (clone $customersQuery)->where('status', 'active')->count();
+        $onlineCustomers = (clone $customersQuery)->where('online_status', 'online')->count();
+        $dueCustomers = (clone $customersQuery)->where('due_amount', '>', 0)->count();
+        $totalMonthlyRevenue = (float) (clone $customersQuery)->sum('monthly_bill');
+
+        // 2. Staff and Operators
+        $staffCount = User::where('tenant_id', $tenant->id)
+            ->where('reseller_id', $reseller->id)
+            ->count();
+        $staffList = User::where('tenant_id', $tenant->id)
+            ->where('reseller_id', $reseller->id)
+            ->latest('id')
+            ->take(6)
+            ->get();
+
+        // 3. Recent Wholesale Invoices
+        $recentInvoices = $reseller->invoices()
+            ->latest('id')
+            ->take(5)
+            ->get();
+
+        // 4. Recent Subscribers Preview
+        $recentCustomers = (clone $customersQuery)
+            ->with('package')
+            ->latest('id')
+            ->take(8)
+            ->get();
+
+        // 5. Assigned Coverage Zones
+        $coverageZones = TenantCoverageZone::where('tenant_id', $tenant->id)
+            ->where('reseller_id', $reseller->id)
+            ->get();
+
+        // 6. Bandwidth Allocation Profile
+        $bandwidth = $reseller->bandwidthAllocation;
+        $totalBandwidthMbps = $bandwidth ? (float) ($bandwidth->total_bandwidth_mbps ?? 0) : 0;
+
+        return view('tenant.resellers.show', compact(
+            'tenant',
+            'reseller',
+            'totalCustomers',
+            'activeCustomers',
+            'onlineCustomers',
+            'dueCustomers',
+            'totalMonthlyRevenue',
+            'staffCount',
+            'staffList',
+            'recentInvoices',
+            'recentCustomers',
+            'coverageZones',
+            'bandwidth',
+            'totalBandwidthMbps'
+        ));
     }
 
     /**

@@ -316,20 +316,18 @@
 
                             <!-- 3. Code -->
                             <td class="font-mono text-cyan-800 font-semibold">
-                                <button type="button" 
-                                        @click="openViewModal({{ Js::from($resPayload) }})" 
-                                        class="hover:underline cursor-pointer">
+                                <a href="{{ route('tenant.resellers.show', $res->id) }}" 
+                                   class="hover:underline cursor-pointer">
                                     {{ $res->code }}
-                                </button>
+                                </a>
                             </td>
 
                             <!-- 4. Reseller Name -->
                             <td class="text-slate-800 font-medium">
-                                <button type="button" 
-                                        @click="openViewModal({{ Js::from($resPayload) }})" 
-                                        class="hover:underline text-left cursor-pointer">
+                                <a href="{{ route('tenant.resellers.show', $res->id) }}" 
+                                   class="hover:underline text-left cursor-pointer">
                                     {{ $res->name }}
-                                </button>
+                                </a>
                             </td>
 
                             <!-- 5. Prefix -->
@@ -437,12 +435,11 @@
         
         <!-- Group 1: Profile & Wallet Recharge -->
         <div class="py-0.5">
-            <button type="button" 
-                    @click="viewFromMenu()" 
-                    class="w-full px-2.5 py-1 hover:bg-slate-50 text-slate-700 font-normal flex items-center gap-2 transition text-left cursor-pointer text-[11px]">
+            <a :href="'{{ url('admin/resellers') }}/' + activeMenuRes?.id" 
+               class="w-full px-2.5 py-1 hover:bg-slate-50 text-slate-700 font-normal flex items-center gap-2 transition text-left cursor-pointer text-[11px]">
                 <i class="fas fa-id-card text-purple-600 w-3.5 text-center text-[10px]"></i>
-                <span>View Full Profile</span>
-            </button>
+                <span>{{ __('View Details') }}</span>
+            </a>
 
             <button type="button" 
                     @click="rechargeFromMenu()" 
@@ -897,117 +894,6 @@
             </div>
         </div>
     </div>
-
-    <!-- 8. Production-Grade Natural Modal: View Full Reseller Profile Modal -->
-    <div x-show="viewModal.open" 
-         x-transition:enter="transition ease-out duration-150"
-         x-transition:enter-start="opacity-0"
-         x-transition:enter-end="opacity-100"
-         x-transition:leave="transition ease-in duration-100"
-         x-transition:leave-start="opacity-100"
-         x-transition:leave-end="opacity-0"
-         class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4"
-         style="display: none;">
-        
-        <div @click.away="closeViewModal()" 
-             x-transition:enter="transition ease-out duration-150"
-             x-transition:enter-start="transform opacity-0 scale-95"
-             x-transition:enter-end="transform opacity-100 scale-100"
-             x-transition:leave="transition ease-in duration-100"
-             x-transition:leave-start="transform opacity-100 scale-100"
-             x-transition:leave-end="transform opacity-0 scale-95"
-             class="bg-white rounded-xl border border-slate-200/90 shadow-2xl w-full max-w-lg overflow-hidden">
-            
-            <!-- Soft Natural Header -->
-            <div class="px-4 py-3 bg-slate-50/80 border-b border-slate-200 flex items-center justify-between">
-                <div class="flex items-center gap-2.5">
-                    <div class="w-7 h-7 rounded-lg bg-purple-50 text-purple-600 border border-purple-100 flex items-center justify-center text-xs flex-shrink-0">
-                        <i class="fas fa-id-card"></i>
-                    </div>
-                    <div>
-                        <h3 class="text-xs font-semibold text-slate-800" x-text="viewModal.data.name"></h3>
-                        <p class="text-[10.5px] text-purple-700 font-mono font-semibold" x-text="'Code: ' + viewModal.data.code"></p>
-                    </div>
-                </div>
-                <button type="button" @click="closeViewModal()" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center text-xs cursor-pointer">
-                    <i class="fas fa-xmark"></i>
-                </button>
-            </div>
-
-            <div class="p-4 space-y-3.5 text-xs">
-                <!-- 4 KPI Badges Grid -->
-                <div class="grid grid-cols-2 gap-2">
-                    <div class="p-2.5 bg-purple-50/50 rounded-lg border border-purple-100">
-                        <span class="text-[9.5px] text-purple-700 uppercase font-semibold block tracking-wider">Username Prefix</span>
-                        <span class="font-mono font-bold text-purple-900 text-xs block mt-0.5" x-text="viewModal.data.prefix ? viewModal.data.prefix + '_*' : 'None'"></span>
-                    </div>
-
-                    <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200">
-                        <span class="text-[9.5px] text-slate-500 uppercase font-semibold block tracking-wider">Billing Model</span>
-                        <span class="font-bold text-slate-800 text-xs block mt-0.5" x-text="viewModal.data.billing_type"></span>
-                    </div>
-
-                    <div class="p-2.5 bg-emerald-50/50 rounded-lg border border-emerald-100">
-                        <span class="text-[9.5px] text-emerald-800 uppercase font-semibold block tracking-wider">Wallet Balance</span>
-                        <span class="font-mono font-extrabold text-emerald-700 text-xs block mt-0.5">
-                            <span x-text="currencySymbol"></span>&nbsp;<span x-text="parseFloat(viewModal.data.wallet_balance || 0).toFixed(2)"></span>
-                        </span>
-                    </div>
-
-                    <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200">
-                        <span class="text-[9.5px] text-slate-500 uppercase font-semibold block tracking-wider">Credit Limit</span>
-                        <span class="font-mono font-bold text-slate-800 text-xs block mt-0.5">
-                            <span x-text="currencySymbol"></span>&nbsp;<span x-text="parseFloat(viewModal.data.credit_limit || 0).toFixed(2)"></span>
-                        </span>
-                    </div>
-                </div>
-
-                <!-- Key Details Breakdown -->
-                <div class="p-3 bg-slate-50 rounded-lg border border-slate-200/80 divide-y divide-slate-200/60 text-slate-700">
-                    <div class="flex justify-between py-1">
-                        <span class="text-slate-500">Contact Person:</span>
-                        <span class="font-semibold text-slate-900" x-text="viewModal.data.contact_person"></span>
-                    </div>
-                    <div class="flex justify-between py-1">
-                        <span class="text-slate-500">Mobile:</span>
-                        <span class="font-mono text-slate-800" x-text="viewModal.data.mobile"></span>
-                    </div>
-                    <div class="flex justify-between py-1">
-                        <span class="text-slate-500">Email:</span>
-                        <span class="text-slate-800 font-mono" x-text="viewModal.data.email || 'N/A'"></span>
-                    </div>
-                    <div class="flex justify-between py-1">
-                        <span class="text-slate-500">Monthly Software Fee:</span>
-                        <span class="font-mono font-bold text-purple-700">
-                            <span x-text="currencySymbol"></span>&nbsp;<span x-text="parseFloat(viewModal.data.monthly_panel_charge || 0).toFixed(2)"></span>
-                        </span>
-                    </div>
-                    <div class="flex justify-between py-1">
-                        <span class="text-slate-500">Panel Expiry Date:</span>
-                        <span class="font-mono text-slate-800" x-text="viewModal.data.panel_expiry_date || 'N/A'"></span>
-                    </div>
-                    <div class="flex justify-between py-1">
-                        <span class="text-slate-500">Office Address:</span>
-                        <span class="text-right text-slate-800 max-w-[220px]" x-text="viewModal.data.address || 'N/A'"></span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- View Modal Footer -->
-            <div class="px-4 py-2.5 bg-slate-50/80 border-t border-slate-200 flex items-center justify-between">
-                <button type="button" 
-                        @click="const res = viewModal.data; closeViewModal(); openRechargeModal(res)" 
-                        class="px-3.5 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-medium text-xs flex items-center gap-1.5 transition cursor-pointer">
-                    <i class="fas fa-wallet text-emerald-600"></i>
-                    <span>Recharge Wallet</span>
-                </button>
-
-                <button type="button" @click="closeViewModal()" class="px-4 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium transition cursor-pointer">
-                    Close
-                </button>
-            </div>
-        </div>
-    </div>
 </div>
 @endsection
 
@@ -1060,11 +946,6 @@ function resellerDirectoryManager() {
             }
         },
 
-        viewModal: {
-            open: false,
-            data: {}
-        },
-
         toggleMenu(res, event) {
             if (this.activeMenuRes && this.activeMenuRes.id === res.id) {
                 this.activeMenuRes = null;
@@ -1095,13 +976,6 @@ function resellerDirectoryManager() {
                     left: 'auto'
                 };
             }
-        },
-
-        viewFromMenu() {
-            if (!this.activeMenuRes) return;
-            const res = this.activeMenuRes;
-            this.activeMenuRes = null;
-            this.openViewModal(res);
         },
 
         rechargeFromMenu() {
@@ -1207,15 +1081,6 @@ function resellerDirectoryManager() {
 
         closeRechargeModal() {
             this.rechargeModal.open = false;
-        },
-
-        openViewModal(res) {
-            this.viewModal.data = res;
-            this.viewModal.open = true;
-        },
-
-        closeViewModal() {
-            this.viewModal.open = false;
         },
 
         async saveReseller() {
