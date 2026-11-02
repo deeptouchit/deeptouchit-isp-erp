@@ -279,131 +279,209 @@
     @endif
 
     <!-- 3. Search & Multi-Filter Toolbar -->
-    <div class="bg-white p-2.5 rounded-md border border-slate-200 shadow-2xs">
-        <form method="GET" action="{{ url()->current() }}" class="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2">
-            
-            <!-- Search Text -->
-            <div class="relative col-span-2 sm:flex-1 sm:min-w-[180px]">
-                <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
-                <input type="text" 
-                       name="search" 
-                       value="{{ $search }}" 
-                       placeholder="Search Name, ID, Username, Phone, IP..." 
-                       class="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-            </div>
+    @php
+        $activeMoreCount = collect([$scopeFilter, $selectedResellerId, $onlineFilter, $connectionType, $routerFilter ?? null])->filter()->count();
+        $isMoreOpen = $activeMoreCount > 0;
+    @endphp
+    <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5"
+         x-data="{ showMoreFilters: {{ $isMoreOpen ? 'true' : 'false' }} }">
+        <form method="GET" action="{{ url()->current() }}" class="space-y-2.5">
+            <!-- Primary Filter Bar (Always visible single row) -->
+            <div class="flex flex-col md:flex-row items-stretch md:items-center gap-2">
+                
+                <!-- Search Text -->
+                <div class="relative flex-1 min-w-[180px]">
+                    <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
+                    <input type="text" 
+                           name="search" 
+                           value="{{ $search }}" 
+                           placeholder="{{ __('Search Name, ID, Username, Phone, IP...') }}" 
+                           class="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition placeholder:text-slate-400">
+                </div>
 
-            @php
-                $authUser = auth()->user();
-            @endphp
+                <!-- Status Filter -->
+                <div class="w-full md:w-32 flex-shrink-0">
+                    <select name="status" 
+                            onchange="this.form.submit()"
+                            class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
+                        <option value="">{{ __('All Status') }}</option>
+                        <option value="active" {{ $statusFilter === 'active' ? 'selected' : '' }}>{{ __('Active') }}</option>
+                        <option value="due" {{ $statusFilter === 'due' ? 'selected' : '' }}>{{ __('Due') }}</option>
+                        <option value="expired" {{ $statusFilter === 'expired' ? 'selected' : '' }}>{{ __('Expired') }}</option>
+                        <option value="suspended" {{ $statusFilter === 'suspended' ? 'selected' : '' }}>{{ __('Suspended') }}</option>
+                        <option value="disabled" {{ $statusFilter === 'disabled' ? 'selected' : '' }}>{{ __('Disabled') }}</option>
+                        <option value="disconnected" {{ in_array($statusFilter, ['disconnected', 'archived']) ? 'selected' : '' }}>{{ __('Disconnected') }}</option>
+                    </select>
+                </div>
 
-            @if(!$authUser || !$authUser->isCollector())
-            <!-- Scope Filter -->
-            <div class="col-span-1 sm:w-32">
-                <select name="scope" 
-                        onchange="this.form.submit()"
-                        class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                    <option value="">All Scopes</option>
-                    <option value="isp" {{ $scopeFilter === 'isp' ? 'selected' : '' }}>ISP Direct</option>
-                    <option value="reseller" {{ $scopeFilter === 'reseller' ? 'selected' : '' }}>Sub-ISP</option>
-                </select>
-            </div>
+                <!-- Zone Filter -->
+                <div class="w-full md:w-36 flex-shrink-0">
+                    <select name="zone" 
+                            onchange="this.form.submit()"
+                            class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
+                        <option value="">{{ __('All Zones') }}</option>
+                        @foreach($distinctZones as $z)
+                            <option value="{{ $z }}" {{ $zoneFilter === $z ? 'selected' : '' }}>
+                                {{ $z }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
 
-            <!-- Sub-ISP Partner Filter -->
-            <div class="col-span-1 sm:w-40">
-                <select name="reseller_id" 
-                        onchange="this.form.submit()"
-                        class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                    <option value="">All Partners</option>
-                    @foreach($allResellers as $reseller)
-                        <option value="{{ $reseller->id }}" {{ (string)$selectedResellerId === (string)$reseller->id ? 'selected' : '' }}>
-                            {{ $reseller->name }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
-            @endif
+                <!-- Package Filter -->
+                <div class="w-full md:w-36 flex-shrink-0">
+                    <select name="package_id" 
+                            onchange="this.form.submit()"
+                            class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
+                        <option value="">{{ __('All Packages') }}</option>
+                        @foreach($allPackages as $pkg)
+                            <option value="{{ $pkg->id }}" {{ (string)$packageFilter === (string)$pkg->id ? 'selected' : '' }}>
+                                {{ $pkg->name ?: ($pkg->mikrotik_profile ?: ($pkg->package_name ?: 'Package #' . $pkg->id)) }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
 
-            <!-- Status Filter -->
-            <div class="col-span-1 sm:w-32">
-                <select name="status" 
-                        onchange="this.form.submit()"
-                        class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                    <option value="">All Status</option>
-                    <option value="active" {{ $statusFilter === 'active' ? 'selected' : '' }}>Active</option>
-                    <option value="due" {{ $statusFilter === 'due' ? 'selected' : '' }}>Due</option>
-                    <option value="expired" {{ $statusFilter === 'expired' ? 'selected' : '' }}>Expired</option>
-                    <option value="suspended" {{ $statusFilter === 'suspended' ? 'selected' : '' }}>Suspended</option>
-                    <option value="disabled" {{ $statusFilter === 'disabled' ? 'selected' : '' }}>Disabled</option>
-                    <option value="disconnected" {{ in_array($statusFilter, ['disconnected', 'archived']) ? 'selected' : '' }}>Disconnected</option>
-                </select>
-            </div>
+                <!-- Per Page Selector -->
+                <div class="w-full md:w-28 flex-shrink-0">
+                    <select name="per_page" 
+                            onchange="this.form.submit()"
+                            class="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700">
+                        <option value="15" {{ request('per_page', 20) == 15 ? 'selected' : '' }}>15 / {{ __('page') }}</option>
+                        <option value="20" {{ request('per_page', 20) == 20 ? 'selected' : '' }}>20 / {{ __('page') }}</option>
+                        <option value="30" {{ request('per_page', 20) == 30 ? 'selected' : '' }}>30 / {{ __('page') }}</option>
+                        <option value="50" {{ request('per_page', 20) == 50 ? 'selected' : '' }}>50 / {{ __('page') }}</option>
+                        <option value="100" {{ request('per_page', 20) == 100 ? 'selected' : '' }}>100 / {{ __('page') }}</option>
+                        <option value="250" {{ request('per_page', 20) == 250 ? 'selected' : '' }}>250 / {{ __('page') }}</option>
+                    </select>
+                </div>
 
-            <!-- Zone / Area Filter -->
-            <div class="col-span-1 sm:w-36">
-                <select name="zone" 
-                        onchange="this.form.submit()"
-                        class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                    <option value="">All Zones</option>
-                    @foreach($distinctZones as $z)
-                        <option value="{{ $z }}" {{ $zoneFilter === $z ? 'selected' : '' }}>
-                            {{ $z }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
-
-            <!-- Package Filter -->
-            <div class="col-span-1 sm:w-36">
-                <select name="package_id" 
-                        onchange="this.form.submit()"
-                        class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                    <option value="">All Packages</option>
-                    @foreach($allPackages as $pkg)
-                        <option value="{{ $pkg->id }}" {{ (string)$packageFilter === (string)$pkg->id ? 'selected' : '' }}>
-                            {{ $pkg->name ?: ($pkg->mikrotik_profile ?: ($pkg->package_name ?: 'Package #' . $pkg->id)) }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
-
-            <!-- Live Session Filter -->
-            <div class="col-span-1 sm:w-28">
-                <select name="online_status" 
-                        onchange="this.form.submit()"
-                        class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                    <option value="">All Sessions</option>
-                    <option value="online" {{ ($onlineFilter ?? '') === 'online' ? 'selected' : '' }}>🟢 Online</option>
-                    <option value="offline" {{ ($onlineFilter ?? '') === 'offline' ? 'selected' : '' }}>⚪ Offline</option>
-                </select>
-            </div>
-
-            <!-- Per Page Select -->
-            <div class="col-span-1 sm:w-24">
-                <select name="per_page" 
-                        onchange="this.form.submit()"
-                        class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                    <option value="15" {{ request('per_page', 20) == 15 ? 'selected' : '' }}>15 / Page</option>
-                    <option value="20" {{ request('per_page', 20) == 20 ? 'selected' : '' }}>20 / Page</option>
-                    <option value="30" {{ request('per_page', 20) == 30 ? 'selected' : '' }}>30 / Page</option>
-                    <option value="50" {{ request('per_page', 20) == 50 ? 'selected' : '' }}>50 / Page</option>
-                    <option value="100" {{ request('per_page', 20) == 100 ? 'selected' : '' }}>100 / Page</option>
-                </select>
-            </div>
-
-            <!-- Action Buttons (Strict Universal Standard) -->
-            <div class="col-span-2 sm:col-span-1 flex items-center justify-end gap-1.5 sm:ml-auto flex-shrink-0">
-                <button type="submit" 
-                        class="flex-1 sm:flex-initial bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-1.5 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" 
-                        title="Apply Filters">
-                    <i class="fas fa-filter text-[10px]"></i>
-                    <span>Filter</span>
+                <!-- More Filters Toggle Button -->
+                <button type="button" 
+                        @click="showMoreFilters = !showMoreFilters"
+                        :class="showMoreFilters || {{ $activeMoreCount }} > 0 ? 'bg-cyan-50 text-cyan-700 border-cyan-300 ring-1 ring-cyan-200' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'"
+                        class="py-1.5 px-2.5 rounded-lg border text-xs font-medium transition flex items-center justify-center gap-1.5 flex-shrink-0 cursor-pointer shadow-2xs"
+                        title="{{ __('Toggle Advanced Filters') }}">
+                    <i class="fas fa-sliders-h text-[10px]"></i>
+                    <span>{{ __('More Filters') }}</span>
+                    @if($activeMoreCount > 0)
+                        <span class="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-cyan-600 text-white leading-none">
+                            {{ $activeMoreCount }}
+                        </span>
+                    @endif
+                    <i class="fas text-[9px] transition-transform duration-200" 
+                       :class="showMoreFilters ? 'fa-chevron-up text-cyan-600' : 'fa-chevron-down text-slate-400'"></i>
                 </button>
-                <a href="{{ url()->current() }}" 
-                   class="flex-1 sm:flex-initial bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-1.5 px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer" 
-                   title="Reset Filters">
-                    <i class="fas fa-rotate-left text-[10px]"></i>
-                    <span>Reset</span>
-                </a>
+
+                <!-- Filter & Reset Buttons (Strict AGENTS.md sequence: [Filter] then [Reset]) -->
+                <div class="flex items-center gap-1.5 flex-shrink-0 md:ml-auto">
+                    <button type="submit" 
+                            class="bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-1.5 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" 
+                            title="{{ __('Apply Filters') }}">
+                        <i class="fas fa-filter text-[10px]"></i>
+                        <span>{{ __('Filter') }}</span>
+                    </button>
+                    <a href="{{ url()->current() }}" 
+                       class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-1.5 px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer" 
+                       title="{{ __('Reset Filters') }}">
+                        <i class="fas fa-rotate-left text-[10px]"></i>
+                        <span>{{ __('Reset') }}</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Advanced / Secondary Filters Drawer -->
+            <div x-show="showMoreFilters" 
+                 x-cloak
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0 -translate-y-2"
+                 x-transition:enter-end="opacity-100 translate-y-0"
+                 x-transition:leave="transition ease-in duration-150"
+                 x-transition:leave-start="opacity-100 translate-y-0"
+                 x-transition:leave-end="opacity-0 -translate-y-2"
+                 class="pt-2.5 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+
+                @php
+                    $authUser = auth()->user();
+                @endphp
+
+                @if(!$authUser || !$authUser->isCollector())
+                <!-- Scope Filter -->
+                <div>
+                    <label class="text-[9px] font-semibold text-slate-500 uppercase tracking-wider block mb-0.5">{{ __('Scope') }}</label>
+                    <select name="scope" 
+                            onchange="this.form.submit()"
+                            class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
+                        <option value="">{{ __('All Scopes') }}</option>
+                        <option value="isp" {{ $scopeFilter === 'isp' ? 'selected' : '' }}>{{ __('ISP Direct') }}</option>
+                        <option value="reseller" {{ $scopeFilter === 'reseller' ? 'selected' : '' }}>{{ __('Sub-ISP') }}</option>
+                    </select>
+                </div>
+
+                <!-- Sub-ISP Partner Filter -->
+                <div>
+                    <label class="text-[9px] font-semibold text-slate-500 uppercase tracking-wider block mb-0.5">{{ __('Partner') }}</label>
+                    <select name="reseller_id" 
+                            onchange="this.form.submit()"
+                            class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
+                        <option value="">{{ __('All Partners') }}</option>
+                        @foreach($allResellers as $reseller)
+                            <option value="{{ $reseller->id }}" {{ (string)$selectedResellerId === (string)$reseller->id ? 'selected' : '' }}>
+                                {{ $reseller->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                @endif
+
+                <!-- Live Session Filter -->
+                <div>
+                    <label class="text-[9px] font-semibold text-slate-500 uppercase tracking-wider block mb-0.5">{{ __('Session') }}</label>
+                    <select name="online_status" 
+                            onchange="this.form.submit()"
+                            class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
+                        <option value="">{{ __('All Sessions') }}</option>
+                        <option value="online" {{ ($onlineFilter ?? '') === 'online' ? 'selected' : '' }}>🟢 {{ __('Online') }}</option>
+                        <option value="offline" {{ ($onlineFilter ?? '') === 'offline' ? 'selected' : '' }}>⚪ {{ __('Offline') }}</option>
+                    </select>
+                </div>
+
+                <!-- Connection Type Filter -->
+                <div>
+                    <label class="text-[9px] font-semibold text-slate-500 uppercase tracking-wider block mb-0.5">{{ __('Connection') }}</label>
+                    <select name="connection_type" 
+                            onchange="this.form.submit()"
+                            class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
+                        <option value="">{{ __('All Types') }}</option>
+                        <option value="pppoe" {{ ($connectionType ?? '') === 'pppoe' ? 'selected' : '' }}>PPPoE</option>
+                        <option value="static_ip" {{ ($connectionType ?? '') === 'static_ip' ? 'selected' : '' }}>Static IP</option>
+                        <option value="hotspot" {{ ($connectionType ?? '') === 'hotspot' ? 'selected' : '' }}>Hotspot</option>
+                    </select>
+                </div>
+
+                <!-- Router Filter -->
+                <div>
+                    <label class="text-[9px] font-semibold text-slate-500 uppercase tracking-wider block mb-0.5">{{ __('Router') }}</label>
+                    <select name="router_id" 
+                            onchange="this.form.submit()"
+                            class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
+                        <option value="">{{ __('All Routers') }}</option>
+                        @foreach($allRouters as $rtr)
+                            <option value="{{ $rtr->id }}" {{ ($routerFilter ?? request('router_id')) == $rtr->id ? 'selected' : '' }}>
+                                {{ $rtr->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <!-- Reset Advanced Filters Action -->
+                <div class="flex items-end pb-1">
+                    <a href="{{ request()->fullUrlWithQuery(['scope' => null, 'reseller_id' => null, 'online_status' => null, 'connection_type' => null, 'router_id' => null]) }}" 
+                       class="text-[11px] text-cyan-700 hover:text-cyan-900 font-medium inline-flex items-center gap-1 transition">
+                        <i class="fas fa-times-circle text-[10px]"></i>
+                        <span>{{ __('Clear Secondary') }}</span>
+                    </a>
+                </div>
             </div>
         </form>
     </div>

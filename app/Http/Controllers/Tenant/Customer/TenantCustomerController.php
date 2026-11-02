@@ -65,6 +65,7 @@ class TenantCustomerController extends Controller
         $packageFilter = $request->input('package_id');
         $onlineFilter = $request->input('online_status') ?: $request->route('online_status');
         $connectionType = $request->input('connection_type');
+        $routerFilter = $request->input('router_id');
 
         $authUser = Auth::user();
         $isIspCollector = $authUser && $authUser->isCollector() && empty($authUser->reseller_id);
@@ -165,8 +166,12 @@ class TenantCustomerController extends Controller
             $query->where('connection_type', $connectionType);
         }
 
+        if ($routerFilter) {
+            $query->where('router_id', $routerFilter);
+        }
+
         $perPage = (int)$request->input('per_page', 20);
-        if (!in_array($perPage, [15, 20, 30, 50, 100])) {
+        if (!in_array($perPage, [15, 20, 30, 50, 100, 250])) {
             $perPage = 20;
         }
 
@@ -248,6 +253,7 @@ class TenantCustomerController extends Controller
             'packageFilter',
             'onlineFilter',
             'connectionType',
+            'routerFilter',
             'perPage'
         ));
     }
