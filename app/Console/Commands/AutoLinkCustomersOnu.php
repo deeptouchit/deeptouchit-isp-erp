@@ -44,38 +44,6 @@ class AutoLinkCustomersOnu extends Command
             $onus = TenantOnu::where('tenant_id', $tenant->id)->get();
             $this->info("Found {$onus->count()} ONUs across all OLTs.");
 
-            // Print 3 sample ONUs for diagnosis
-            $sampleOnus = $onus->take(5);
-            foreach ($sampleOnus as $so) {
-                $this->line("  [SAMPLE ONU] ID={$so->id} OLT={$so->olt_id} PORT={$so->pon_port}:{$so->onu_id} NAME='{$so->name}' MAC='{$so->mac_address}' RMAC='{$so->router_mac}' USER='{$so->pppoe_username}' DESC='{$so->desc}'");
-            }
-
-            // Check if any ONU has router_mac or if any customer matches by name
-            $withRmac = $onus->whereNotNull('router_mac')->where('router_mac', '!=', '')->count();
-            $this->info("ONUs with populated router_mac: {$withRmac}");
-
-            $shamoli = TenantCustomer::find(851);
-            if ($shamoli) {
-                $this->info("Customer 851 Details: NAME='{$shamoli->name}' USER='{$shamoli->username}' CODE='{$shamoli->customer_id}' MAC='{$shamoli->mac_address}'");
-                $shMac = strtolower(preg_replace('/[^a-f0-9]/i', '', $shamoli->mac_address ?? ''));
-                $matchFound = false;
-                foreach ($onus as $o) {
-                    $oMac = strtolower(preg_replace('/[^a-f0-9]/i', '', $o->mac_address ?? ''));
-                    $oRMac = strtolower(preg_replace('/[^a-f0-9]/i', '', $o->router_mac ?? ''));
-                    if (($shMac && ($oMac === $shMac || $oRMac === $shMac)) || 
-                        str_contains(strtolower($o->name ?? ''), 'shamoli') || 
-                        str_contains(strtolower($o->desc ?? ''), 'shamoli') ||
-                        str_contains(strtolower($o->name ?? ''), '939') ||
-                        str_contains(strtolower($o->desc ?? ''), '939')) {
-                        $this->line("  ==> Potential Match for 851: ONU ID={$o->id} OLT={$o->olt_id} PORT={$o->pon_port}:{$o->onu_id} NAME='{$o->name}' MAC='{$o->mac_address}' RMAC='{$o->router_mac}'");
-                        $matchFound = true;
-                    }
-                }
-                if (!$matchFound) {
-                    $this->warn("  ==> No ONU found with MAC '{$shamoli->mac_address}' or name containing 'shamoli' or '939' in current 802 ONUs.");
-                }
-            }
-
             if ($onus->isEmpty()) {
                 continue;
             }
@@ -116,11 +84,6 @@ class AutoLinkCustomersOnu extends Command
             // Fetch customers
             $customers = TenantCustomer::where('tenant_id', $tenant->id)->get();
             $this->info("Evaluating {$customers->count()} Customers for automatic pairing...");
-
-            $sampleCusts = $customers->whereNotNull('mac_address')->take(3);
-            foreach ($sampleCusts as $sc) {
-                $this->line("  [SAMPLE CUST] ID={$sc->id} CODE={$sc->customer_id} USER='{$sc->username}' MAC='{$sc->mac_address}' ONU_MAC='{$sc->onu_mac_sn}'");
-            }
 
             $linkedCount = 0;
 
