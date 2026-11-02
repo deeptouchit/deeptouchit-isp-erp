@@ -47,11 +47,11 @@ class TenantOnu extends Model
             return $this->router_mac;
         }
 
-        if (isset($this->attributes['auto_router_mac']) && !empty($this->attributes['auto_router_mac'])) {
-            return $this->attributes['auto_router_mac'];
+        if (!empty($this->auto_router_mac)) {
+            return $this->auto_router_mac;
         }
 
-        if ($this->relationLoaded('customer') && $this->customer) {
+        if ($this->customer && !empty($this->customer->mac_address)) {
             return $this->customer->mac_address;
         }
 

@@ -1024,6 +1024,28 @@ class OltApiService
                 return "{$o->pon_port}:{$o->onu_id}";
             });
 
+            // Fetch learned Router MAC table from HSGQ PON MAC table
+            $hsgqLearned = [];
+            try {
+                $this->getHsgqEndpoint($ip, $port, $username, $password, 'pon_mac?form=table');
+                $tableRes = Http::timeout(10)->withHeaders(['X-Token' => $token, 'Accept' => 'application/json'])
+                    ->get("http://{$ip}:{$port}/pon_mac_table?t=" . time());
+                if ($tableRes->successful() && !empty($tableRes->json('data'))) {
+                    foreach ($tableRes->json('data') as $hr) {
+                        $pId = (int)($hr['port_id'] ?? 1);
+                        $oId = (int)($hr['onu_id'] ?? 0);
+                        if ($oId > 0 && !empty($hr['macaddr'])) {
+                            $hsgqLearned["0/{$pId}:{$oId}"] = [
+                                'router_mac' => strtoupper(trim($hr['macaddr'])),
+                                'vlan_id' => (int)($hr['vlan_id'] ?? 1),
+                            ];
+                        }
+                    }
+                }
+            } catch (\Throwable $e) {
+                Log::warning("HSGQ pon_mac_table error: " . $e->getMessage());
+            }
+
             if (is_array($onuList)) {
                 foreach ($onuList as $raw) {
                     $portId = (int) ($raw['port_id'] ?? 1);
@@ -1055,6 +1077,11 @@ class OltApiService
                     $txPower = $isOnline ? ($existingOnu?->tx_power_dbm ?: $defaultTx) : null;
                     $distVal = $isOnline ? ($existingOnu?->distance_m ?: $defaultDist) : null;
 
+                    $hsgqKey = "{$ponPort}:{$onuId}";
+                    $learnedInfo = $hsgqLearned[$hsgqKey] ?? null;
+                    $routerMac = $learnedInfo['router_mac'] ?? null;
+                    $vlanId = $learnedInfo['vlan_id'] ?? null;
+
                     $savedOnu = TenantOnu::updateOrCreate(
                         [
                             'olt_id' => $olt->id,
@@ -1069,6 +1096,8 @@ class OltApiService
                             'name' => !empty($raw['onu_name']) ? $raw['onu_name'] : "ONU {$ponPort}:{$onuId}",
                             'desc' => $raw['onu_desc'] ?? '',
                             'mac_address' => $raw['macaddr'] ?? null,
+                            'router_mac' => $routerMac ?: ($existingOnu?->router_mac ?: null),
+                            'vlan_id' => $vlanId ?: ($existingOnu?->vlan_id ?: null),
                             'vendor' => $raw['vendor'] ?? 'HSGQ',
                             'model' => $hsgqModel,
                             'onu_type' => $hsgqType,
@@ -1084,7 +1113,7 @@ class OltApiService
                         ]
                     );
 
-                    $this->autoLinkCustomerToOnu($savedOnu, $olt, null, $raw['macaddr'] ?? null);
+                    $this->autoLinkCustomerToOnu($savedOnu, $olt, $routerMac, $raw['macaddr'] ?? null);
 
                     $syncedOnuDbIds[] = $savedOnu->id;
                     $syncedCount++;
@@ -1154,17 +1183,72 @@ class OltApiService
         $syncedCount = 0;
         $onlineCount = 0;
 
+        // Fetch learned Router MAC table from C-Data FDB (epon_mac_address_get)
+        $cdataLearned = [];
+        $portIndices = '17825793,17825794,17825795,17825796,34603009,34603010,34603011,34603012';
+        try {
+            $macRes = $this->getModule($ip, $port, $username, $password, "epon_mac_address_get&PortIndex={$portIndices}&PageNumber=1&PageSize=500");
+            $macArray = $macRes['MacArray'] ?? ($macRes['data']['MacArray'] ?? ($macRes['list'] ?? []));
+            if (is_array($macArray)) {
+                foreach ($macArray as $mItem) {
+                    $rawPort = trim(str_ireplace('epon', '', $mItem['PortIndex'] ?? ''));
+                    $mOnuId = (int)($mItem['OnuId'] ?? 0);
+                    $mMac = strtoupper(trim($mItem['MacAddress'] ?? ''));
+                    $mVlan = (int)($mItem['Vlan'] ?? 1);
+                    if ($mOnuId > 0 && !empty($mMac)) {
+                        $cdataLearned["{$rawPort}:{$mOnuId}"] = [
+                            'router_mac' => $mMac,
+                            'vlan_id' => $mVlan,
+                        ];
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::warning("C-Data epon_mac_address_get error: " . $e->getMessage());
+        }
+
         foreach ($allPorts as $ponPort) {
             $opticalList = $this->getOpticalList($ip, $port, $username, $password, $ponPort);
             $opticalMap = [];
             if (!empty($opticalList)) {
                 foreach ($opticalList as $opt) {
-                    $onuId = (int) ($opt['OnuId'] ?? 0);
+                    $onuId = (int) ($opt['OnuId'] ?? ($opt['OntId'] ?? ($opt['onu_id'] ?? 0)));
                     if ($onuId > 0) {
+                        $rawRx = $opt['RxPower'] ?? ($opt['rx_power'] ?? null);
+                        $rawTx = $opt['TxPower'] ?? ($opt['tx_power'] ?? null);
+                        $rawRange = $opt['Range'] ?? ($opt['distance'] ?? null);
+
+                        $rx = null;
+                        if ($rawRx !== null && $rawRx !== '' && $rawRx !== '-inf' && $rawRx !== 'inf') {
+                            if (is_numeric($rawRx)) {
+                                $rx = (float)$rawRx;
+                            } elseif (preg_match('/([-\d.]+)/', (string)$rawRx, $m)) {
+                                $rx = (float)$m[1];
+                            }
+                        }
+
+                        $tx = null;
+                        if ($rawTx !== null && $rawTx !== '' && $rawTx !== '-inf' && $rawTx !== 'inf') {
+                            if (is_numeric($rawTx)) {
+                                $tx = (float)$rawTx;
+                            } elseif (preg_match('/([-\d.]+)/', (string)$rawTx, $m)) {
+                                $tx = (float)$m[1];
+                            }
+                        }
+
+                        $dist = null;
+                        if ($rawRange !== null && $rawRange !== '') {
+                            if (is_numeric($rawRange)) {
+                                $dist = (int)$rawRange;
+                            } elseif (preg_match('/(\d+)/', (string)$rawRange, $m)) {
+                                $dist = (int)$m[1];
+                            }
+                        }
+
                         $opticalMap[$onuId] = [
-                            'rx' => isset($opt['RxPower']) && is_numeric($opt['RxPower']) ? (float) $opt['RxPower'] : null,
-                            'tx' => isset($opt['TxPower']) && is_numeric($opt['TxPower']) ? (float) $opt['TxPower'] : null,
-                            'range' => isset($opt['Range']) && is_numeric($opt['Range']) ? (int) $opt['Range'] : null,
+                            'rx' => $rx,
+                            'tx' => $tx,
+                            'range' => $dist,
                             'temp' => isset($opt['Temperature']) && is_numeric($opt['Temperature']) ? (float) $opt['Temperature'] : null,
                             'voltage' => isset($opt['Voltage']) && is_numeric($opt['Voltage']) ? (float) $opt['Voltage'] : null,
                         ];
@@ -1200,6 +1284,16 @@ class OltApiService
                         $olt->vendor
                     );
 
+                    $learnedKey = "{$ponPort}:{$onuId}";
+                    $learnedInfo = $cdataLearned[$learnedKey] ?? null;
+                    $routerMac = $learnedInfo['router_mac'] ?? null;
+                    $vlanId = $learnedInfo['vlan_id'] ?? null;
+
+                    $existingOnu = TenantOnu::where('olt_id', $olt->id)
+                        ->where('pon_port', $ponPort)
+                        ->where('onu_id', $onuId)
+                        ->first();
+
                     $savedOnu = TenantOnu::updateOrCreate(
                         [
                             'olt_id' => $olt->id,
@@ -1213,7 +1307,9 @@ class OltApiService
                             'onu_id' => $onuId,
                             'name' => $raw['OnuName'] ?? "ONU {$ponPort}:{$onuId}",
                             'desc' => $raw['Desc'] ?? ($raw['OnuDesc'] ?? ''),
-                            'mac_address' => $raw['Mac'] ?? null,
+                            'mac_address' => $raw['Mac'] ?? ($raw['MacAddress'] ?? null),
+                            'router_mac' => $routerMac ?: ($existingOnu?->router_mac ?: null),
+                            'vlan_id' => $vlanId ?: ($existingOnu?->vlan_id ?: null),
                             'vendor' => !empty($raw['OnuVendor']) ? $raw['OnuVendor'] : (!empty($raw['Vendor']) ? $raw['Vendor'] : 'DN OPTIC'),
                             'model' => $parsedModel,
                             'onu_type' => $detectedType,
@@ -1222,14 +1318,14 @@ class OltApiService
                             'status' => $isOnline ? 'online' : 'offline',
                             'running_state' => $isOnline ? 1 : 0,
                             'control_flag' => 1,
-                            'rx_power_dbm' => $opt['rx'] ?? null,
-                            'tx_power_dbm' => $opt['tx'] ?? null,
-                            'distance_m' => $dist,
+                            'rx_power_dbm' => $opt['rx'] ?? ($isOnline ? $existingOnu?->rx_power_dbm : null),
+                            'tx_power_dbm' => $opt['tx'] ?? ($isOnline ? $existingOnu?->tx_power_dbm : null),
+                            'distance_m' => $dist ?? ($isOnline ? $existingOnu?->distance_m : null),
                             'last_online_at' => $isOnline ? now() : null,
                         ]
                     );
 
-                    $this->autoLinkCustomerToOnu($savedOnu, $olt, null, $raw['Mac'] ?? null);
+                    $this->autoLinkCustomerToOnu($savedOnu, $olt, $routerMac, $raw['Mac'] ?? ($raw['MacAddress'] ?? null));
 
                     $syncedOnuDbIds[] = $savedOnu->id;
                     $syncedCount++;
@@ -1541,6 +1637,43 @@ class OltApiService
 
         // 2. VSOL HTTPS Web Driver (Port 8082)
         if ($driver === 'vsol_https' || $port === 8082) {
+            $opmHtml = $this->fetchVsolHtmlPage($ip, $port, $username, $password, 'onuopmdiag.html', ['select' => (string)$ponNumber]);
+            if ($opmHtml && preg_match_all('/<tr>\s*<td[^>]*>EPON0\/(\d+):(\d+)<\/td>\s*<td[^>]*>([0-9a-fA-F:]{17})<\/td>\s*<td[^>]*>([^<]*)<\/td>\s*<td[^>]*>([-\d.]+)<\/td>\s*<td[^>]*>([-\d.]+)<\/td>\s*<td[^>]*>([-\d.]+)<\/td>\s*<td[^>]*>([-\d.]+)<\/td>\s*<td[^>]*>([-\d.]+)<\/td>\s*<td[^>]*>([-\d.]+)<\/td>\s*<\/tr>/i', $opmHtml, $opmMatches, PREG_SET_ORDER)) {
+                foreach ($opmMatches as $om) {
+                    if ((int)$om[2] === $onuId) {
+                        $dist = (int)$om[5];
+                        $temp = is_numeric($om[6]) ? (float)$om[6] : null;
+                        $volt = is_numeric($om[7]) ? (float)$om[7] : null;
+                        $tx = is_numeric($om[9]) ? (float)$om[9] : null;
+                        $rx = is_numeric($om[10]) ? (float)$om[10] : null;
+
+                        $telemetry = [
+                            'rx_power_dbm' => $rx,
+                            'tx_power_dbm' => $tx,
+                            'distance_m' => $dist,
+                            'temperature' => $temp,
+                            'voltage' => $volt,
+                            'updated_at' => now()->toIso8601String(),
+                        ];
+
+                        TenantOnu::where('olt_id', $olt->id)
+                            ->where(function($q) use ($ponPort, $ponNumber) {
+                                $q->where('pon_port', $ponPort)->orWhere('pon_port', "0/{$ponNumber}");
+                            })
+                            ->where('onu_id', $onuId)
+                            ->update([
+                                'rx_power_dbm' => $rx,
+                                'tx_power_dbm' => $tx,
+                                'distance_m' => $dist,
+                                'status' => ($rx !== null) ? 'online' : 'offline',
+                            ]);
+
+                        return $telemetry;
+                    }
+                }
+            }
+
+            // Fallback to previously stored DB telemetry if hardware query timed out
             $onu = TenantOnu::where('olt_id', $olt->id)
                 ->where(function($q) use ($ponPort, $ponNumber) {
                     $q->where('pon_port', $ponPort)->orWhere('pon_port', "0/{$ponNumber}");
@@ -1549,33 +1682,18 @@ class OltApiService
                 ->first();
 
             if ($onu) {
-                $hash = abs(crc32($onu->mac_address ?: (string)$onuId));
-                $rx = $onu->rx_power_dbm ?: round(-1 * (11.20 + (($hash % 83) / 10)), 2);
-                $tx = $onu->tx_power_dbm ?: round(1.40 + (($hash % 125) / 100), 2);
-                $dist = $onu->distance_m ?: (int)(1200 + ($hash % 1500));
-                $temp = round(38.0 + (($hash % 180) / 10), 2);
-                $volt = round(3.20 + (($hash % 18) / 100), 2);
-
-                $telemetry = [
-                    'rx_power_dbm' => $rx,
-                    'tx_power_dbm' => $tx,
-                    'distance_m' => $dist,
-                    'temperature' => $temp,
-                    'voltage' => $volt,
+                return [
+                    'rx_power_dbm' => $onu->rx_power_dbm,
+                    'tx_power_dbm' => $onu->tx_power_dbm,
+                    'distance_m' => $onu->distance_m,
+                    'temperature' => null,
+                    'voltage' => null,
                     'updated_at' => now()->toIso8601String(),
                 ];
-
-                $onu->update([
-                    'rx_power_dbm' => $rx,
-                    'tx_power_dbm' => $tx,
-                    'distance_m' => $dist,
-                ]);
-
-                return $telemetry;
             }
         }
 
-        // 3. FastCGI / Standard EPON OLT Driver
+        // 3. FastCGI / Standard EPON OLT Driver (C-Data DN-10G, etc.)
         $targetPon = str_contains($ponPort, '/') ? $ponPort : (string)$ponNumber;
         $opticalList = $this->getOpticalList($ip, $port, $username, $password, $targetPon);
         if (empty($opticalList)) {
@@ -1585,9 +1703,37 @@ class OltApiService
             foreach ($opticalList as $opt) {
                 $curOnuId = (int)($opt['OnuId'] ?? ($opt['OntId'] ?? ($opt['onu_id'] ?? ($opt['id'] ?? 0))));
                 if ($curOnuId === $onuId) {
-                    $rx = isset($opt['RxPower']) && is_numeric($opt['RxPower']) ? (float)$opt['RxPower'] : (isset($opt['rx_power']) ? (float)$opt['rx_power'] : null);
-                    $tx = isset($opt['TxPower']) && is_numeric($opt['TxPower']) ? (float)$opt['TxPower'] : (isset($opt['tx_power']) ? (float)$opt['tx_power'] : null);
-                    $dist = isset($opt['Range']) && is_numeric($opt['Range']) ? (int)$opt['Range'] : (isset($opt['distance']) ? (int)$opt['distance'] : null);
+                    $rawRx = $opt['RxPower'] ?? ($opt['rx_power'] ?? null);
+                    $rawTx = $opt['TxPower'] ?? ($opt['tx_power'] ?? null);
+                    $rawRange = $opt['Range'] ?? ($opt['distance'] ?? null);
+
+                    $rx = null;
+                    if ($rawRx !== null && $rawRx !== '' && $rawRx !== '-inf' && $rawRx !== 'inf') {
+                        if (is_numeric($rawRx)) {
+                            $rx = (float)$rawRx;
+                        } elseif (preg_match('/([-\d.]+)/', (string)$rawRx, $m)) {
+                            $rx = (float)$m[1];
+                        }
+                    }
+
+                    $tx = null;
+                    if ($rawTx !== null && $rawTx !== '' && $rawTx !== '-inf' && $rawTx !== 'inf') {
+                        if (is_numeric($rawTx)) {
+                            $tx = (float)$rawTx;
+                        } elseif (preg_match('/([-\d.]+)/', (string)$rawTx, $m)) {
+                            $tx = (float)$m[1];
+                        }
+                    }
+
+                    $dist = null;
+                    if ($rawRange !== null && $rawRange !== '') {
+                        if (is_numeric($rawRange)) {
+                            $dist = (int)$rawRange;
+                        } elseif (preg_match('/(\d+)/', (string)$rawRange, $m)) {
+                            $dist = (int)$m[1];
+                        }
+                    }
+
                     $temp = isset($opt['Temperature']) && is_numeric($opt['Temperature']) ? (float)$opt['Temperature'] : (isset($opt['temp']) ? (float)$opt['temp'] : null);
                     $volt = isset($opt['Voltage']) && is_numeric($opt['Voltage']) ? (float)$opt['Voltage'] : (isset($opt['voltage']) ? (float)$opt['voltage'] : null);
 
