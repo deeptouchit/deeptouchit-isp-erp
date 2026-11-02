@@ -353,6 +353,10 @@
                         <option value="50" {{ request('per_page', 20) == 50 ? 'selected' : '' }}>50 / {{ __('page') }}</option>
                         <option value="100" {{ request('per_page', 20) == 100 ? 'selected' : '' }}>100 / {{ __('page') }}</option>
                         <option value="250" {{ request('per_page', 20) == 250 ? 'selected' : '' }}>250 / {{ __('page') }}</option>
+                        <option value="500" {{ request('per_page', 20) == 500 ? 'selected' : '' }}>500 / {{ __('page') }}</option>
+                        <option value="1000" {{ request('per_page', 20) == 1000 ? 'selected' : '' }}>1000 / {{ __('page') }}</option>
+                        <option value="2000" {{ request('per_page', 20) == 2000 ? 'selected' : '' }}>2000 / {{ __('page') }}</option>
+                        <option value="all" {{ request('per_page') === 'all' ? 'selected' : '' }}>{{ __('All Subscribers') }}</option>
                     </select>
                 </div>
 

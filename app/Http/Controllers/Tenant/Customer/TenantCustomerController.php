@@ -170,9 +170,14 @@ class TenantCustomerController extends Controller
             $query->where('router_id', $routerFilter);
         }
 
-        $perPage = (int)$request->input('per_page', 20);
-        if (!in_array($perPage, [15, 20, 30, 50, 100, 250])) {
-            $perPage = 20;
+        $perPageInput = $request->input('per_page', 20);
+        if ($perPageInput === 'all') {
+            $perPage = 10000;
+        } else {
+            $perPage = (int)$perPageInput;
+            if (!in_array($perPage, [15, 20, 30, 50, 100, 250, 500, 1000, 2000, 5000, 10000])) {
+                $perPage = 20;
+            }
         }
 
         $customers = $query->orderByDesc('id')->paginate($perPage)->withQueryString();
