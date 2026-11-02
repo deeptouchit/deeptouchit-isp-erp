@@ -47,7 +47,16 @@ Each Blade view must strictly follow this 3-section layout:
 - ভ্যালু: `text-[13px] font-bold font-mono leading-tight block`।
 - আইকন ব্যাজ: `w-6 h-6 rounded-md text-[10px] border flex-shrink-0`।
 
-### C. Search & Multi-Filter Toolbar & Action Buttons
+### C. Search & Multi-Filter Toolbar & Action Buttons (Customer-Standard 2-Tier Filter System)
+- **২-স্তরীয় (2-Tier) ফিল্টার আর্কিটেকচার**: সমস্ত মাস্টার লিস্টিং পেজে (যেমন `/admin/customers`, `/admin/network/onu` ইত্যাদি) বাধ্যতামূলকভাবে `/admin/customers` এর মতো ২-স্তরীয় ফিল্টার ডিজাইন অনুসরণ করতে হবে:
+  - **কন্টেইনার**: `bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5` সাথে Alpine.js স্টেট `x-data="{ showMoreFilters: {{ $isMoreOpen ? 'true' : 'false' }}, searchQuery: '{{ addslashes(request('search', '')) }}' }"`.
+  - **১ম স্তর: প্রাইমারি ফিল্টার বার (Primary Single Row)**: `flex flex-col md:flex-row items-stretch md:items-center gap-2`।
+    - **ইন্টেলিজেন্ট লাইভ সার্চ বক্স**: `relative flex-1 min-w-[200px]`, ডায়নামিক আইকন (`:class="searchQuery ? 'text-cyan-600 font-bold' : 'text-slate-400'"`), কমপ্যাক্ট ইনপুট (`pl-8 pr-7 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden`), এবং ১-ক্লিক ক্লিয়ার ক্রস বাটন (`x-show="searchQuery && searchQuery.length > 0" @click="searchQuery = ''; $nextTick(() => $el.closest('form').submit())"`).
+    - **প্রাইমারি ড্রপডাউনসমূহ**: ২-৩টি আবশ্যক কোর ফিল্টার (যেমন: OLT / Router, Status, Type)।
+    - **পেজিনেশন সিলেক্টর (`per_page`)**: `w-full md:w-28 flex-shrink-0` (15, 20, 30, 50, 100, 250, 500 / page)।
+    - **"More Filters" অ্যাকর্ডিয়ন টগল বাটন**: কাউন্টার ব্যাজ (`{{ $activeMoreCount }}`) এবং ট্রানজিশন শেভরন (`:class="showMoreFilters ? 'fa-chevron-up text-cyan-600' : 'fa-chevron-down text-slate-400'"`).
+    - **কঠোর ফিল্টার ও রিসেট বাটন সিকুয়েন্স**: সর্বদা প্রাইমারি রো-এর সর্বশেষে ডানে (`flex items-center gap-1.5 flex-shrink-0 md:ml-auto`) প্রথমে **[Filter] বাটন** (`bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-1.5 px-3 rounded-lg shadow-xs`) এবং পরে **[Reset] বাটন** (`bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-1.5 px-2.5 rounded-lg border border-slate-200/80`) বসবে। কোনো পিএইচপি কন্ডিশনাল ছাড়া রিসেট বাটন সর্বদা দৃশ্যমান থাকবে।
+  - **২য় স্তর: সেকেন্ডারি ফিল্টার ড্রয়ার (Secondary Filters Drawer)**: `x-show="showMoreFilters" x-cloak x-transition ... class="pt-2 border-t border-slate-100 flex flex-wrap items-center gap-2"`। কোনো সেকেন্ডারি ফিল্টার সক্রিয় থাকলে পেজ লোডেই ড্রয়ারটি স্বয়ংক্রিয়ভাবে ওপেন থাকবে। ড্রপডাউনসমূহ: পোর্ট, ভেন্ডর, রেঞ্জ, বাইন্ডিং স্টেট ইত্যাদি।
 - **কমপ্যাক্ট গ্রিড**: সার্চ বক্স (`pl-8 pr-3 py-1.5 text-xs`), ড্রপডাউন ফিল্টারসমূহ, `per_page` পেজিনেশন সিলেক্টর (10, 20, 50, 100), এবং সুনির্দিষ্ট ফিল্টার ও রিসেট বাটন সিকুয়েন্স।
 - **কঠোর ফিল্টার ও রিসেট বাটন নীতি (Strict Filter & Reset Button Sequence & Styles)**:
   - বাটন দুটির অবস্থান সর্বদা ফিল্টার গ্রিডের শেষে একটি কমপ্যাক্ট ফ্লেক্স বক্সে (`flex items-center gap-1.5` অথবা `flex items-end gap-1.5`) থাকবে।

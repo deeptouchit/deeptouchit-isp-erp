@@ -53,6 +53,36 @@ class OnuController extends Controller
             $query->where('onu_type', $onuType);
         }
 
+        if ($ponPort = $request->input('pon_port')) {
+            $query->where('pon_port', $ponPort);
+        }
+
+        if ($vendor = $request->input('vendor')) {
+            $query->where('vendor', $vendor);
+        }
+
+        if ($binding = $request->input('binding')) {
+            if ($binding === 'linked') {
+                $query->where(function ($q) {
+                    $q->whereNotNull('customer_id')->orWhereNotNull('router_mac');
+                });
+            } elseif ($binding === 'unlinked') {
+                $query->whereNull('customer_id')->whereNull('router_mac');
+            }
+        }
+
+        if ($distRange = $request->input('distance_range')) {
+            if ($distRange === 'under_500') {
+                $query->where('distance_m', '<', 500);
+            } elseif ($distRange === '500_1000') {
+                $query->whereBetween('distance_m', [500, 1000]);
+            } elseif ($distRange === '1000_2000') {
+                $query->whereBetween('distance_m', [1000, 2000]);
+            } elseif ($distRange === 'over_2000') {
+                $query->where('distance_m', '>', 2000);
+            }
+        }
+
         $matchedUsernames = [];
         if ($search = $request->input('search')) {
             $matchedUsernames = TenantCustomer::where('tenant_id', $tenant->id)
@@ -120,8 +150,52 @@ class OnuController extends Controller
             $metricBase->where('olt_id', $oltId);
         }
 
+        if ($status = $request->input('status')) {
+            if ($status === 'online') {
+                $metricBase->where('status', 'online');
+            } elseif ($status === 'offline') {
+                $metricBase->where('status', 'offline');
+            } elseif ($status === 'good') {
+                $metricBase->where('rx_power_dbm', '>=', -20);
+            } elseif ($status === 'warning') {
+                $metricBase->where('rx_power_dbm', '>=', -26)->where('rx_power_dbm', '<', -20);
+            } elseif ($status === 'critical') {
+                $metricBase->where('rx_power_dbm', '<', -26);
+            }
+        }
+
         if ($onuType = $request->input('onu_type')) {
             $metricBase->where('onu_type', $onuType);
+        }
+
+        if ($ponPort = $request->input('pon_port')) {
+            $metricBase->where('pon_port', $ponPort);
+        }
+
+        if ($vendor = $request->input('vendor')) {
+            $metricBase->where('vendor', $vendor);
+        }
+
+        if ($binding = $request->input('binding')) {
+            if ($binding === 'linked') {
+                $metricBase->where(function ($q) {
+                    $q->whereNotNull('customer_id')->orWhereNotNull('router_mac');
+                });
+            } elseif ($binding === 'unlinked') {
+                $metricBase->whereNull('customer_id')->whereNull('router_mac');
+            }
+        }
+
+        if ($distRange = $request->input('distance_range')) {
+            if ($distRange === 'under_500') {
+                $metricBase->where('distance_m', '<', 500);
+            } elseif ($distRange === '500_1000') {
+                $metricBase->whereBetween('distance_m', [500, 1000]);
+            } elseif ($distRange === '1000_2000') {
+                $metricBase->whereBetween('distance_m', [1000, 2000]);
+            } elseif ($distRange === 'over_2000') {
+                $metricBase->where('distance_m', '>', 2000);
+            }
         }
 
         if ($search = $request->input('search')) {
@@ -149,6 +223,21 @@ class OnuController extends Controller
             ->where('rx_power_dbm', '<', -20)
             ->count();
 
+        $distinctPonPorts = TenantOnu::where('tenant_id', $tenant->id)
+            ->when($oltId, fn($q) => $q->where('olt_id', $oltId))
+            ->distinct()
+            ->orderBy('pon_port')
+            ->pluck('pon_port')
+            ->filter()
+            ->values();
+
+        $distinctVendors = TenantOnu::where('tenant_id', $tenant->id)
+            ->distinct()
+            ->orderBy('vendor')
+            ->pluck('vendor')
+            ->filter()
+            ->values();
+
         return view('tenant.network.onu', compact(
             'tenant',
             'olts',
@@ -157,7 +246,9 @@ class OnuController extends Controller
             'onlineOnus',
             'offlineOnus',
             'criticalOnus',
-            'warningOnus'
+            'warningOnus',
+            'distinctPonPorts',
+            'distinctVendors'
         ));
     }
 
