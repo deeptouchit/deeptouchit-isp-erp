@@ -568,14 +568,10 @@
                             <td class="text-center whitespace-nowrap">
                                 @php
                                     $isLiveOnline = ($c->online_status === 'online');
-                                    $escapedUsername = addslashes($c->username);
                                 @endphp
-                                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[10px] font-semibold border shadow-2xs whitespace-nowrap transition {{ $isLiveOnline ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200' }}"
-                                      :class="getOnlineStatus('{{ $escapedUsername }}', '{{ $c->online_status }}') === 'online' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200'">
-                                    <span class="w-1.5 h-1.5 rounded-full {{ $isLiveOnline ? 'bg-emerald-500 ring-2 ring-emerald-300 animate-pulse' : 'bg-rose-500 ring-2 ring-rose-200' }}"
-                                          :class="getOnlineStatus('{{ $escapedUsername }}', '{{ $c->online_status }}') === 'online' ? 'bg-emerald-500 ring-2 ring-emerald-300 animate-pulse' : 'bg-rose-500 ring-2 ring-rose-200'"></span>
-                                    <span x-show="getOnlineStatus('{{ $escapedUsername }}', '{{ $c->online_status }}') === 'online'" style="{{ $isLiveOnline ? '' : 'display: none;' }}">Online</span>
-                                    <span x-show="getOnlineStatus('{{ $escapedUsername }}', '{{ $c->online_status }}') !== 'online'" style="{{ $isLiveOnline ? 'display: none;' : '' }}">Offline</span>
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[10px] font-semibold border shadow-2xs whitespace-nowrap {{ $isLiveOnline ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200' }}">
+                                    <span class="w-1.5 h-1.5 rounded-full {{ $isLiveOnline ? 'bg-emerald-500 ring-2 ring-emerald-300 animate-pulse' : 'bg-rose-500 ring-2 ring-rose-200' }}"></span>
+                                    <span>{{ $isLiveOnline ? 'Online' : 'Offline' }}</span>
                                 </span>
                             </td>
 
@@ -588,18 +584,11 @@
                                     @endphp
                                     @if(!$authUser || !$authUser->isCollector())
                                     <button type="button" 
-                                            @click="toggleMikrotikState({{ $c->id }}, '{{ $escapedUsername }}', '{{ $initialMikrotik }}')" 
-                                            :title="getMikrotikState('{{ $escapedUsername }}', '{{ $initialMikrotik }}') === 'enabled' ? 'MikroTik Secret: ENABLED (Click to Disable)' : 'MikroTik Secret: DISABLED (Click to Enable)'"
-                                            class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[10px] font-semibold border transition cursor-pointer shadow-2xs whitespace-nowrap {{ $isMktEnabled ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' : 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100' }}"
-                                            :class="getMikrotikState('{{ $escapedUsername }}', '{{ $initialMikrotik }}') === 'enabled'
-                                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' 
-                                                : 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100'">
-                                        <span class="w-1.5 h-1.5 rounded-full {{ $isMktEnabled ? 'bg-emerald-500 ring-2 ring-emerald-300' : 'bg-rose-500' }}"
-                                              :class="getMikrotikState('{{ $escapedUsername }}', '{{ $initialMikrotik }}') === 'enabled'
-                                                  ? 'bg-emerald-500 ring-2 ring-emerald-300' 
-                                                  : 'bg-rose-500'"></span>
-                                        <span x-show="getMikrotikState('{{ $escapedUsername }}', '{{ $initialMikrotik }}') === 'enabled'" style="{{ $isMktEnabled ? '' : 'display: none;' }}">Enabled</span>
-                                        <span x-show="getMikrotikState('{{ $escapedUsername }}', '{{ $initialMikrotik }}') !== 'enabled'" style="{{ $isMktEnabled ? 'display: none;' : '' }}">Disabled</span>
+                                            @click="toggleMikrotikState({{ $c->id }}, '{{ addslashes($c->username) }}', '{{ $initialMikrotik }}', $event)" 
+                                            title="{{ $isMktEnabled ? 'MikroTik Secret: ENABLED (Click to Disable)' : 'MikroTik Secret: DISABLED (Click to Enable)' }}"
+                                            class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[10px] font-semibold border transition cursor-pointer shadow-2xs whitespace-nowrap {{ $isMktEnabled ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' : 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100' }}">
+                                        <span class="w-1.5 h-1.5 rounded-full {{ $isMktEnabled ? 'bg-emerald-500 ring-2 ring-emerald-300' : 'bg-rose-500' }}"></span>
+                                        <span>{{ $isMktEnabled ? 'Enabled' : 'Disabled' }}</span>
                                     </button>
                                     @else
                                     <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[10px] font-semibold border shadow-2xs whitespace-nowrap {{ $isMktEnabled ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200' }}">
@@ -2332,14 +2321,18 @@ function customerMasterManager() {
             }
         },
 
-        async toggleMikrotikState(id, username, fallback) {
-            const currentState = this.getMikrotikState(username, fallback);
-            const nextState = (currentState === 'enabled') ? 'disabled' : 'enabled';
+        async toggleMikrotikState(id, username, fallback, event) {
+            const btn = event ? event.currentTarget : null;
+            const isCurrentlyEnabled = btn ? btn.innerText.includes('Enabled') : (fallback === 'enabled');
+            const nextState = isCurrentlyEnabled ? 'disabled' : 'enabled';
             
-            // Immediate In-Place Optimistic UI Update (Zero page reload)
-            this.mikrotikMap[username] = nextState;
-            if (nextState === 'disabled') {
-                this.onlineMap[username] = 'offline';
+            // Immediate In-Place Optimistic UI Update on button
+            if (btn) {
+                btn.className = `inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[10px] font-semibold border transition cursor-pointer shadow-2xs whitespace-nowrap ${nextState === 'enabled' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' : 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100'}`;
+                const dot = btn.querySelector('span:first-child');
+                if (dot) dot.className = `w-1.5 h-1.5 rounded-full ${nextState === 'enabled' ? 'bg-emerald-500 ring-2 ring-emerald-300' : 'bg-rose-500'}`;
+                const txt = btn.querySelector('span:last-child');
+                if (txt) txt.textContent = nextState === 'enabled' ? 'Enabled' : 'Disabled';
             }
 
             try {
@@ -2354,17 +2347,26 @@ function customerMasterManager() {
                 const data = await res.json();
                 if (res.ok && data.success) {
                     this.showToast(data.message, 'success');
-                    this.mikrotikMap[username] = data.mikrotik_status || nextState;
-                    if (data.online_status) {
-                        this.onlineMap[username] = data.online_status;
-                    }
                 } else {
-                    // Revert state on failure
-                    this.mikrotikMap[username] = currentState;
+                    if (btn) {
+                        const prev = isCurrentlyEnabled ? 'enabled' : 'disabled';
+                        btn.className = `inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[10px] font-semibold border transition cursor-pointer shadow-2xs whitespace-nowrap ${prev === 'enabled' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' : 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100'}`;
+                        const dot = btn.querySelector('span:first-child');
+                        if (dot) dot.className = `w-1.5 h-1.5 rounded-full ${prev === 'enabled' ? 'bg-emerald-500 ring-2 ring-emerald-300' : 'bg-rose-500'}`;
+                        const txt = btn.querySelector('span:last-child');
+                        if (txt) txt.textContent = prev === 'enabled' ? 'Enabled' : 'Disabled';
+                    }
                     this.showToast(data.message || 'Failed to toggle MikroTik state.', 'error');
                 }
             } catch (err) {
-                this.mikrotikMap[username] = currentState;
+                if (btn) {
+                    const prev = isCurrentlyEnabled ? 'enabled' : 'disabled';
+                    btn.className = `inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[10px] font-semibold border transition cursor-pointer shadow-2xs whitespace-nowrap ${prev === 'enabled' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' : 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100'}`;
+                    const dot = btn.querySelector('span:first-child');
+                    if (dot) dot.className = `w-1.5 h-1.5 rounded-full ${prev === 'enabled' ? 'bg-emerald-500 ring-2 ring-emerald-300' : 'bg-rose-500'}`;
+                    const txt = btn.querySelector('span:last-child');
+                    if (txt) txt.textContent = prev === 'enabled' ? 'Enabled' : 'Disabled';
+                }
                 this.showToast('Network error toggling MikroTik status.', 'error');
             }
         },
