@@ -127,26 +127,42 @@ class TenantCustomerController extends Controller
             $query->where('reseller_id', $selectedResellerId);
         }
 
-        if ($statusFilter === 'due') {
-            $query->where(function ($q) {
-                $q->whereIn('status', ['due', 'expired'])
-                  ->orWhere('due_amount', '>', 0)
-                  ->orWhere(function ($eq) {
-                      $eq->whereNotNull('expiry_date')
-                         ->whereDate('expiry_date', '<=', Carbon::today());
+        if ($statusFilter === 'active') {
+            $query->whereNotIn('status', ['disabled', 'disconnected', 'archived', 'suspended', 'due'])
+                  ->where(function ($eq) {
+                      $eq->whereNull('expiry_date')
+                         ->orWhereDate('expiry_date', '>=', Carbon::today());
+                  })
+                  ->where(function ($dq) {
+                      $dq->whereNull('due_amount')
+                         ->orWhere('due_amount', '<=', 0);
                   });
-            });
+        } elseif ($statusFilter === 'due') {
+            $query->whereNotIn('status', ['disabled', 'disconnected', 'archived', 'suspended'])
+                  ->where(function ($eq) {
+                      $eq->whereNull('expiry_date')
+                         ->orWhereDate('expiry_date', '>=', Carbon::today());
+                  })
+                  ->where(function ($dq) {
+                      $dq->where('due_amount', '>', 0)
+                         ->orWhere('status', 'due');
+                  });
         } elseif ($statusFilter === 'expired') {
-            $query->where(function ($q) {
-                $q->whereIn('status', ['expired', 'suspended'])
-                  ->orWhere(function ($eq) {
-                      $eq->whereNotNull('expiry_date')
-                         ->whereDate('expiry_date', '<=', Carbon::today());
+            $query->whereNotIn('status', ['disabled', 'disconnected', 'archived', 'suspended'])
+                  ->where(function ($eq) {
+                      $eq->where('status', 'expired')
+                         ->orWhere(function ($sub) {
+                             $sub->whereNotNull('expiry_date')
+                                 ->whereDate('expiry_date', '<', Carbon::today());
+                         });
                   });
-            });
+        } elseif ($statusFilter === 'suspended') {
+            $query->where('status', 'suspended');
+        } elseif ($statusFilter === 'disabled' || $statusFilter === 'inactive') {
+            $query->whereIn('status', ['disabled', 'inactive', 'disconnected', 'archived']);
         } elseif ($statusFilter === 'disconnected' || $statusFilter === 'archived') {
             $query->whereIn('status', ['disconnected', 'archived']);
-        } elseif ($statusFilter) {
+        } elseif ($statusFilter && $statusFilter !== 'all') {
             $query->where('status', $statusFilter);
         }
 

@@ -485,14 +485,6 @@
                         @endforeach
                     </select>
                 </div>
-                        <option value="">{{ __('All Routers') }}</option>
-                        @foreach($allRouters as $rtr)
-                            <option value="{{ $rtr->id }}" {{ ($routerFilter ?? request('router_id')) == $rtr->id ? 'selected' : '' }}>
-                                {{ $rtr->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
             </div>
             </form>
     </div>
@@ -649,41 +641,39 @@
 
                             @if($isOnlineRoute)
                                 <!-- Download (RX) Column -->
-                                <td class="text-right font-mono text-emerald-700 font-semibold">
-                                    <template x-if="liveTrafficMap['{{ $c->id }}']">
-                                        <span class="inline-flex items-center gap-1" :title="'Total Rx: ' + (liveTrafficMap['{{ $c->id }}'].total_rx_human || '0 B')">
-                                            <i class="fas fa-arrow-down text-[9px] text-emerald-500" :class="{'animate-pulse text-emerald-600': isTableLiveStreaming}"></i>
-                                            <span x-text="liveTrafficMap['{{ $c->id }}'].rx_human">0.00 Mbps</span>
-                                        </span>
-                                    </template>
-                                    <template x-if="!liveTrafficMap['{{ $c->id }}']">
-                                        <button type="button" 
-                                                @click="fetchSingleRowTraffic({{ $c->id }}, '{{ $c->username }}')"
-                                                :disabled="loadingTrafficMap['{{ $c->id }}']"
-                                                class="px-1.5 py-0.5 rounded text-[10px] bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 cursor-pointer inline-flex items-center gap-1 transition shadow-2xs">
-                                            <i class="fas fa-arrow-down text-[8px]" :class="{'fa-spin': loadingTrafficMap['{{ $c->id }}']}"></i>
-                                            <span x-text="loadingTrafficMap['{{ $c->id }}'] ? '...' : 'Check RX'">Check RX</span>
-                                        </button>
-                                    </template>
+                                <td class="text-right font-mono text-emerald-700 font-semibold whitespace-nowrap">
+                                    <span x-show="liveTrafficMap['{{ $c->id }}']" 
+                                          class="inline-flex items-center gap-1" 
+                                          :title="'Total Rx: ' + (liveTrafficMap['{{ $c->id }}']?.total_rx_human || '0 B')">
+                                        <i class="fas fa-arrow-down text-[9px] text-emerald-500" :class="{'animate-pulse text-emerald-600': isTableLiveStreaming}"></i>
+                                        <span x-text="liveTrafficMap['{{ $c->id }}']?.rx_human || '0.00 Mbps'">0.00 Mbps</span>
+                                    </span>
+                                    <button x-show="!liveTrafficMap['{{ $c->id }}']" 
+                                            type="button" 
+                                            @click="fetchSingleRowTraffic({{ $c->id }}, '{{ $c->username }}')"
+                                            :disabled="loadingTrafficMap['{{ $c->id }}']"
+                                            class="px-1.5 py-0.5 rounded text-[10px] bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 cursor-pointer inline-flex items-center gap-1 transition shadow-2xs">
+                                        <i class="fas fa-arrow-down text-[8px]" :class="{'fa-spin': loadingTrafficMap['{{ $c->id }}']}"></i>
+                                        <span x-text="loadingTrafficMap['{{ $c->id }}'] ? '...' : '0.00 Mbps'">0.00 Mbps</span>
+                                    </button>
                                 </td>
 
                                 <!-- Upload (TX) Column -->
-                                <td class="text-right font-mono text-purple-700 font-semibold">
-                                    <template x-if="liveTrafficMap['{{ $c->id }}']">
-                                        <span class="inline-flex items-center gap-1" :title="'Total Tx: ' + (liveTrafficMap['{{ $c->id }}'].total_tx_human || '0 B')">
-                                            <i class="fas fa-arrow-up text-[9px] text-purple-500" :class="{'animate-pulse text-purple-600': isTableLiveStreaming}"></i>
-                                            <span x-text="liveTrafficMap['{{ $c->id }}'].tx_human">0.00 Mbps</span>
-                                        </span>
-                                    </template>
-                                    <template x-if="!liveTrafficMap['{{ $c->id }}']">
-                                        <button type="button" 
-                                                @click="fetchSingleRowTraffic({{ $c->id }}, '{{ $c->username }}')"
-                                                :disabled="loadingTrafficMap['{{ $c->id }}']"
-                                                class="px-1.5 py-0.5 rounded text-[10px] bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 cursor-pointer inline-flex items-center gap-1 transition shadow-2xs">
-                                            <i class="fas fa-arrow-up text-[8px]" :class="{'fa-spin': loadingTrafficMap['{{ $c->id }}']}"></i>
-                                            <span x-text="loadingTrafficMap['{{ $c->id }}'] ? '...' : 'Check TX'">Check TX</span>
-                                        </button>
-                                    </template>
+                                <td class="text-right font-mono text-purple-700 font-semibold whitespace-nowrap">
+                                    <span x-show="liveTrafficMap['{{ $c->id }}']" 
+                                          class="inline-flex items-center gap-1" 
+                                          :title="'Total Tx: ' + (liveTrafficMap['{{ $c->id }}']?.total_tx_human || '0 B')">
+                                        <i class="fas fa-arrow-up text-[9px] text-purple-500" :class="{'animate-pulse text-purple-600': isTableLiveStreaming}"></i>
+                                        <span x-text="liveTrafficMap['{{ $c->id }}']?.tx_human || '0.00 Mbps'">0.00 Mbps</span>
+                                    </span>
+                                    <button x-show="!liveTrafficMap['{{ $c->id }}']" 
+                                            type="button" 
+                                            @click="fetchSingleRowTraffic({{ $c->id }}, '{{ $c->username }}')"
+                                            :disabled="loadingTrafficMap['{{ $c->id }}']"
+                                            class="px-1.5 py-0.5 rounded text-[10px] bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 cursor-pointer inline-flex items-center gap-1 transition shadow-2xs">
+                                        <i class="fas fa-arrow-up text-[8px]" :class="{'fa-spin': loadingTrafficMap['{{ $c->id }}']}"></i>
+                                        <span x-text="loadingTrafficMap['{{ $c->id }}'] ? '...' : '0.00 Mbps'">0.00 Mbps</span>
+                                    </button>
                                 </td>
                             @else
                                 <!-- 9. Monthly Bill -->
