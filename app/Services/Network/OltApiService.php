@@ -756,6 +756,9 @@ class OltApiService
                             'last_online_at' => $isOnline ? now() : null,
                         ]
                     );
+
+                    $this->autoLinkCustomerToOnu($savedOnu, $olt, null, ($mac && $mac !== 'NA') ? $mac : null);
+
                     $syncedOnuDbIds[] = $savedOnu->id;
                     $syncedCount++;
                 }
@@ -928,29 +931,7 @@ class OltApiService
                         );
 
                         // Auto-link customer via Learned Router MAC or ONU MAC
-                        $effectiveRouterMac = $routerMac ?: $savedOnu->router_mac;
-                        if (!empty($effectiveRouterMac)) {
-                            $cleanRMac = strtolower(preg_replace('/[^a-f0-9]/i', '', $effectiveRouterMac));
-                            $cust = TenantCustomer::where('tenant_id', $olt->tenant_id)
-                                ->where(function($q) use ($effectiveRouterMac, $cleanRMac) {
-                                    $q->where('mac_address', $effectiveRouterMac)
-                                      ->orWhereRaw("LOWER(REPLACE(REPLACE(REPLACE(mac_address, ':', ''), '-', ''), '.', '')) = ?", [$cleanRMac]);
-                                })
-                                ->first();
-
-                            if ($cust) {
-                                $savedOnu->updateQuietly([
-                                    'customer_id' => $cust->id,
-                                    'pppoe_username' => $cust->username,
-                                    'router_mac' => $effectiveRouterMac,
-                                ]);
-                                $cust->updateQuietly([
-                                    'olt_id' => $olt->id,
-                                    'onu_mac_sn' => $macAddr ?: $cust->onu_mac_sn,
-                                    'fiber_route_info' => "0/{$pId}:{$oId}",
-                                ]);
-                            }
-                        }
+                        $this->autoLinkCustomerToOnu($savedOnu, $olt, $routerMac, $macAddr);
 
                         $syncedOnuDbIds[] = $savedOnu->id;
                         $syncedCount++;
@@ -1102,6 +1083,9 @@ class OltApiService
                             'last_online_at' => $isOnline ? now() : null,
                         ]
                     );
+
+                    $this->autoLinkCustomerToOnu($savedOnu, $olt, null, $raw['macaddr'] ?? null);
+
                     $syncedOnuDbIds[] = $savedOnu->id;
                     $syncedCount++;
                 }
@@ -1244,6 +1228,9 @@ class OltApiService
                             'last_online_at' => $isOnline ? now() : null,
                         ]
                     );
+
+                    $this->autoLinkCustomerToOnu($savedOnu, $olt, null, $raw['Mac'] ?? null);
+
                     $syncedOnuDbIds[] = $savedOnu->id;
                     $syncedCount++;
                 }
@@ -1274,6 +1261,67 @@ class OltApiService
             'synced_count' => $syncedCount,
             'latency_ms' => $latency,
         ];
+    }
+
+    /**
+     * Dynamic Zero-Touch Auto-Link: Matches ANY customer across ANY OLT via Learned Router MAC, ONU MAC, or Username
+     */
+    public function autoLinkCustomerToOnu(TenantOnu $onu, TenantOlt $olt, ?string $routerMac = null, ?string $onuMac = null): void
+    {
+        $effectiveRouterMac = $routerMac ?: $onu->router_mac;
+        $effectiveOnuMac = $onuMac ?: $onu->mac_address;
+        $cust = null;
+
+        // 1. Match by Router MAC (OLT FDB / Learned MAC <=> PPPoE Calling Station ID)
+        if (!empty($effectiveRouterMac)) {
+            $cleanRMac = strtolower(preg_replace('/[^a-f0-9]/i', '', $effectiveRouterMac));
+            if (strlen($cleanRMac) >= 10) {
+                $cust = TenantCustomer::where('tenant_id', $olt->tenant_id)
+                    ->where(function($q) use ($effectiveRouterMac, $cleanRMac) {
+                        $q->where('mac_address', $effectiveRouterMac)
+                          ->orWhereRaw("LOWER(REPLACE(REPLACE(REPLACE(mac_address, ':', ''), '-', ''), '.', '')) = ?", [$cleanRMac]);
+                    })
+                    ->first();
+            }
+        }
+
+        // 2. Match by Hardware ONU MAC / Serial Number
+        if (!$cust && !empty($effectiveOnuMac)) {
+            $cleanOMac = strtolower(preg_replace('/[^a-f0-9]/i', '', $effectiveOnuMac));
+            if (strlen($cleanOMac) >= 10) {
+                $cust = TenantCustomer::where('tenant_id', $olt->tenant_id)
+                    ->where(function($q) use ($effectiveOnuMac, $cleanOMac) {
+                        $q->where('onu_mac_sn', $effectiveOnuMac)
+                          ->orWhereRaw("LOWER(REPLACE(REPLACE(REPLACE(onu_mac_sn, ':', ''), '-', ''), '.', '')) = ?", [$cleanOMac]);
+                    })
+                    ->first();
+            }
+        }
+
+        // 3. Match by exact PPPoE Username if ONU name/desc matches
+        if (!$cust && (!empty($onu->name) || !empty($onu->desc) || !empty($onu->pppoe_username))) {
+            $candidateUsername = $onu->pppoe_username ?: ($onu->desc ?: $onu->name);
+            if ($candidateUsername && strlen($candidateUsername) >= 3) {
+                $cust = TenantCustomer::where('tenant_id', $olt->tenant_id)
+                    ->where('username', strtolower(trim($candidateUsername)))
+                    ->first();
+            }
+        }
+
+        if ($cust) {
+            $route = $onu->pon_port . ($onu->onu_id ? ':' . $onu->onu_id : '');
+            $onu->updateQuietly([
+                'customer_id' => $cust->id,
+                'pppoe_username' => $cust->username,
+                'router_mac' => $effectiveRouterMac ?: ($onu->router_mac ?: $cust->mac_address),
+            ]);
+
+            $cust->updateQuietly([
+                'olt_id' => $olt->id,
+                'onu_mac_sn' => $effectiveOnuMac ?: $cust->onu_mac_sn,
+                'fiber_route_info' => $route,
+            ]);
+        }
     }
 
     /**

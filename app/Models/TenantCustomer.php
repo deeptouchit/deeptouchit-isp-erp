@@ -95,13 +95,7 @@ class TenantCustomer extends Model
      */
     public function getOnuDeviceAttribute(): ?TenantOnu
     {
-        // 1. Direct customer_id link
-        $direct = TenantOnu::where('tenant_id', $this->tenant_id)->where('customer_id', $this->id)->first();
-        if ($direct) {
-            return $direct;
-        }
-
-        // 2. Link by Customer's Router MAC (from PPPoE / MikroTik caller-id / radacct)
+        // 1. Link by Customer's Live Router MAC across ALL active OLT gateways
         $macToMatch = $this->mac_address;
         if (empty($macToMatch) && !empty($this->username)) {
             try {
@@ -133,14 +127,33 @@ class TenantCustomer extends Model
                 })->first();
 
             if ($foundByRouterMac) {
-                if (empty($foundByRouterMac->customer_id)) {
+                if ($foundByRouterMac->customer_id !== $this->id) {
+                    TenantOnu::where('tenant_id', $this->tenant_id)
+                        ->where('customer_id', $this->id)
+                        ->where('id', '!=', $foundByRouterMac->id)
+                        ->update(['customer_id' => null]);
+
                     $foundByRouterMac->updateQuietly([
                         'customer_id' => $this->id,
                         'router_mac' => $routerMac,
+                        'pppoe_username' => $this->username,
+                    ]);
+                }
+                if ($this->olt_id !== $foundByRouterMac->olt_id) {
+                    $this->updateQuietly([
+                        'olt_id' => $foundByRouterMac->olt_id,
+                        'onu_mac_sn' => $foundByRouterMac->mac_address ?: $this->onu_mac_sn,
+                        'fiber_route_info' => $foundByRouterMac->pon_port . ($foundByRouterMac->onu_id ? ':' . $foundByRouterMac->onu_id : ''),
                     ]);
                 }
                 return $foundByRouterMac;
             }
+        }
+
+        // 2. Direct customer_id link fallback
+        $direct = TenantOnu::where('tenant_id', $this->tenant_id)->where('customer_id', $this->id)->first();
+        if ($direct) {
+            return $direct;
         }
 
         // 3. Link by ONU MAC or Serial Number (if set on customer)
