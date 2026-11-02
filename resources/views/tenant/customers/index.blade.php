@@ -570,13 +570,12 @@
                                     $isLiveOnline = ($c->online_status === 'online');
                                     $escapedUsername = addslashes($c->username);
                                 @endphp
-                                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-semibold border shadow-2xs whitespace-nowrap transition {{ $isLiveOnline ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200' }}"
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[10px] font-semibold border shadow-2xs whitespace-nowrap transition {{ $isLiveOnline ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200' }}"
                                       :class="getOnlineStatus('{{ $escapedUsername }}', '{{ $c->online_status }}') === 'online' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200'">
                                     <span class="w-1.5 h-1.5 rounded-full {{ $isLiveOnline ? 'bg-emerald-500 ring-2 ring-emerald-300 animate-pulse' : 'bg-rose-500 ring-2 ring-rose-200' }}"
                                           :class="getOnlineStatus('{{ $escapedUsername }}', '{{ $c->online_status }}') === 'online' ? 'bg-emerald-500 ring-2 ring-emerald-300 animate-pulse' : 'bg-rose-500 ring-2 ring-rose-200'"></span>
-                                    <span x-text="getOnlineStatus('{{ $escapedUsername }}', '{{ $c->online_status }}') === 'online' ? 'Online' : 'Offline'">
-                                        {{ $isLiveOnline ? 'Online' : 'Offline' }}
-                                    </span>
+                                    <span x-show="getOnlineStatus('{{ $escapedUsername }}', '{{ $c->online_status }}') === 'online'" style="{{ $isLiveOnline ? '' : 'display: none;' }}">Online</span>
+                                    <span x-show="getOnlineStatus('{{ $escapedUsername }}', '{{ $c->online_status }}') !== 'online'" style="{{ $isLiveOnline ? 'display: none;' : '' }}">Offline</span>
                                 </span>
                             </td>
 
@@ -599,9 +598,8 @@
                                               :class="getMikrotikState('{{ $escapedUsername }}', '{{ $initialMikrotik }}') === 'enabled'
                                                   ? 'bg-emerald-500 ring-2 ring-emerald-300' 
                                                   : 'bg-rose-500'"></span>
-                                        <span x-text="getMikrotikState('{{ $escapedUsername }}', '{{ $initialMikrotik }}') === 'enabled' ? 'Enabled' : 'Disabled'">
-                                            {{ $isMktEnabled ? 'Enabled' : 'Disabled' }}
-                                        </span>
+                                        <span x-show="getMikrotikState('{{ $escapedUsername }}', '{{ $initialMikrotik }}') === 'enabled'" style="{{ $isMktEnabled ? '' : 'display: none;' }}">Enabled</span>
+                                        <span x-show="getMikrotikState('{{ $escapedUsername }}', '{{ $initialMikrotik }}') !== 'enabled'" style="{{ $isMktEnabled ? 'display: none;' : '' }}">Disabled</span>
                                     </button>
                                     @else
                                     <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[10px] font-semibold border shadow-2xs whitespace-nowrap {{ $isMktEnabled ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200' }}">
