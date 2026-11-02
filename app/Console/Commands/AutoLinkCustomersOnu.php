@@ -45,9 +45,18 @@ class AutoLinkCustomersOnu extends Command
             $this->info("Found {$onus->count()} ONUs across all OLTs.");
 
             // Print 3 sample ONUs for diagnosis
-            $sampleOnus = $onus->take(3);
+            $sampleOnus = $onus->take(5);
             foreach ($sampleOnus as $so) {
                 $this->line("  [SAMPLE ONU] ID={$so->id} OLT={$so->olt_id} PORT={$so->pon_port}:{$so->onu_id} NAME='{$so->name}' MAC='{$so->mac_address}' RMAC='{$so->router_mac}' USER='{$so->pppoe_username}' DESC='{$so->desc}'");
+            }
+
+            // Check if any ONU has router_mac or if any customer matches by name
+            $withRmac = $onus->whereNotNull('router_mac')->where('router_mac', '!=', '')->count();
+            $this->info("ONUs with populated router_mac: {$withRmac}");
+
+            $amirul = TenantCustomer::where('name', 'like', '%amirul%')->orWhere('username', 'like', '%amirul%')->first();
+            if ($amirul) {
+                $this->info("Found customer Amirul: ID={$amirul->id} NAME='{$amirul->name}' USER='{$amirul->username}' MAC='{$amirul->mac_address}'");
             }
 
             if ($onus->isEmpty()) {
