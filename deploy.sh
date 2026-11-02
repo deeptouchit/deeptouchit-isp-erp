@@ -51,10 +51,10 @@ php artisan migrate --force
 # 5. Optimize caches
 echo "🧹 Optimizing Laravel caches..."
 php artisan optimize:clear
-php artisan config:cache
-php artisan route:cache
+
+
 php artisan view:cache
-php artisan event:cache
+
 
 # 6. Storage link
 echo "🔗 Ensuring storage link exists..."
