@@ -109,7 +109,7 @@
             <!-- Sub-items -->
             <div x-show="open || filterQuery" x-collapse class="pl-2.5 pr-0.5 space-y-1">
                 <a href="{{ route('reseller.customers.index') }}" 
-                   class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ request()->routeIs('reseller.customers*') && !request()->has('status') && !request()->routeIs('reseller.customers.bulk-payments*') ? 'border-cyan-300 bg-cyan-50 text-cyan-800 font-bold border-l-4 border-l-cyan-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 font-medium' }}">
+                   class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ request()->routeIs('reseller.customers*') && !in_array(request('status'), ['due', 'active']) && !request()->routeIs('reseller.customers.bulk-payments*') ? 'border-cyan-300 bg-cyan-50 text-cyan-800 font-bold border-l-4 border-l-cyan-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 font-medium' }}">
                     {{ __('All Customers') }}
                 </a>
                 @if(!$authUser || !$authUser->isResellerTech())
