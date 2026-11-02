@@ -500,6 +500,7 @@
                         @if(!$isOnlineRoute)
                             <th class="w-20 text-center">MikroTik</th>
                         @endif
+                        <th class="text-center">Status</th>
                         <th>Name</th>
                         <th>Mobile</th>
                         <th>PPPoE</th>
@@ -515,7 +516,6 @@
                         @if($isDueRoute)
                             <th class="text-right">Due Amount</th>
                         @endif
-                        <th class="text-center">Status</th>
                         <th>Expiry Date</th>
                         <th class="w-14 text-center no-sort">Action</th>
                     </tr>
@@ -563,8 +563,8 @@
                                     </span>
                                 </template>
                                 <template x-if="getOnlineStatus('{{ $c->username }}', '{{ $c->online_status }}') !== 'online'">
-                                    <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-medium border bg-slate-100 text-slate-500 border-slate-200">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                                    <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-semibold border bg-rose-50 text-rose-700 border-rose-200 shadow-2xs">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-rose-500 ring-2 ring-rose-200"></span>
                                         <span>Offline</span>
                                     </span>
                                 </template>
@@ -600,6 +600,14 @@
                                     @endif
                                 </td>
                             @endif
+
+                            <!-- Status (Active / Expired / Suspended / Due) -->
+                            <td class="text-center">
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold border {{ $statusBadge['class'] }} shadow-2xs">
+                                    <span class="w-1.5 h-1.5 rounded-full {{ $statusBadge['dot'] }}"></span>
+                                    <span>{{ $statusBadge['label'] }}</span>
+                                </span>
+                            </td>
 
                             <!-- 4. Name -->
                             <td class="font-medium text-slate-900">
@@ -694,14 +702,6 @@
                                     @currency($c->due_amount > 0 ? $c->due_amount : $c->monthly_bill)
                                 </td>
                             @endif
-
-                            <!-- 10. Status (Active / Expired / Suspended / Due) -->
-                            <td class="text-center">
-                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold border {{ $statusBadge['class'] }} shadow-2xs">
-                                    <span class="w-1.5 h-1.5 rounded-full {{ $statusBadge['dot'] }}"></span>
-                                    <span>{{ $statusBadge['label'] }}</span>
-                                </span>
-                            </td>
 
                             <!-- 11. Expiry Date -->
                             <td class="font-mono text-slate-600">
