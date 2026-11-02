@@ -11,12 +11,15 @@ $port = (int)$vsol->web_port;
 $username = $vsol->web_username;
 $password = $vsol->decrypted_web_password;
 
-$main = $oltService->fetchVsolHtmlPage($ip, $port, $username, $password, 'main.html');
-echo "MAIN.HTML:\n" . substr($main, 0, 1500) . "\n-------------------------\n";
-
 $loginRes = $oltService->fetchVsolHtmlPage($ip, $port, $username, $password, 'main.html', [
     'user' => $username,
     'pass' => $password,
     'who'  => '100'
 ]);
-echo "LOGIN RESPONSE:\n" . substr($loginRes, 0, 1500) . "\n";
+
+if ($loginRes) {
+    preg_match_all('/href="([^"]+\.html)"/i', $loginRes, $m);
+    echo "ALL PAGES IN VSOL MENU:\n";
+    $pages = array_unique($m[1]);
+    print_r($pages);
+}
