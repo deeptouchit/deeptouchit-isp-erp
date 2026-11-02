@@ -51,10 +51,7 @@ php artisan migrate --force
 # 5. Optimize caches
 echo "🧹 Optimizing Laravel caches..."
 php artisan optimize:clear
-
-
 php artisan view:cache
-
 
 # 6. Storage link
 echo "🔗 Ensuring storage link exists..."
@@ -62,7 +59,8 @@ php artisan storage:link 2>/dev/null || true
 
 # 7. Update file permissions
 echo "🔒 Updating directory permissions..."
-chmod -R 775 "$APP_DIR/storage" "$APP_DIR/bootstrap/cache" 2>/dev/null || true
+sudo chown -R somitysoft:www-data "$APP_DIR/storage" "$APP_DIR/bootstrap/cache" 2>/dev/null || true
+chmod -R 777 "$APP_DIR/storage" "$APP_DIR/bootstrap/cache" 2>/dev/null || chmod -R 775 "$APP_DIR/storage" "$APP_DIR/bootstrap/cache" 2>/dev/null || true
 
 # 8. Reload web services (if root/sudo available)
 echo "🔄 Reloading web services..."
