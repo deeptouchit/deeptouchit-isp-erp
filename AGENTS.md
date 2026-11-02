@@ -268,14 +268,14 @@ Each Blade view must strictly follow this 3-section layout:
    git push origin main
    ```
 
-2. **লাইভ সার্ভারে স্বয়ংক্রিয় ডেপ্লয় ও ক্যাশ অপটিমাইজেশন (Live Server SSH/Plink):**
-   গিট পুশের পরপরই লাইভ সার্ভারে (`somitysoft@103.59.177.138`) কমান্ড পাঠিয়ে কোড আপডেট ও ক্যাশ ক্লিয়ার করতে হবে:
+2. **লাইভ সার্ভারে স্বয়ংক্রিয় ডেপ্লয় ও ক্যাশ অপটিমাইজেশন (Live Server SSH/Plink with deploy.sh):**
+   গিট পুশের পরপরই লাইভ সার্ভারে (`somitysoft@103.59.177.138`) `deploy.sh` কার্যকর করে সম্পূর্ণ ডেপ্লয়মেন্ট (Git Pull, Composer, Vite, Migration, Cache ও PHP-FPM Reload) করতে হবে:
    ```bash
-   plink -batch -ssh -pw "sabu@606245" somitysoft@103.59.177.138 "cd /var/www/vhosts/somitysoft/somitysoft.com/public_html && git pull origin main && php artisan optimize:clear"
+   plink -batch -ssh -pw "sabu@606245" somitysoft@103.59.177.138 "cd /var/www/vhosts/somitysoft/somitysoft.com/public_html && bash deploy.sh"
    ```
 
 3. **লাইভ স্ট্যাটাস কনফার্মেশন:**
-   লাইভ সার্ভারে `git pull` এবং `optimize:clear` সফল হয়েছে কিনা তা যাচাই করে ইউজারকে চূড়ান্ত কনফার্মেশন দিতে হবে।
+   লাইভ সার্ভারে `deploy.sh` নির্বিঘ্নে সফল হয়েছে কিনা তা লগ আউটপুট যাচাই করে ইউজারকে চূড়ান্ত কনফার্মেশন দিতে হবে।
 
 
 

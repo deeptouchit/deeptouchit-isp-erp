@@ -297,6 +297,9 @@ Route::middleware(['web'])->group(function () {
             Route::post('/{customer}/renew', [TenantCustomerController::class, 'renewSubscription'])->whereNumber('customer')->name('renew');
             Route::post('/{customer}/sync-mikrotik', [TenantCustomerController::class, 'syncMikrotik'])->whereNumber('customer')->name('sync-mikrotik');
             Route::post('/sync-all-mikrotik', [TenantCustomerController::class, 'syncAllMikrotik'])->name('sync-all-mikrotik');
+            Route::post('/two-way-sync', [TenantCustomerController::class, 'twoWaySmartSync'])->name('two-way-sync');
+            Route::get('/mikrotik-import-preview', [TenantCustomerController::class, 'previewMikrotikImport'])->name('mikrotik-import-preview');
+            Route::post('/import-from-mikrotik', [TenantCustomerController::class, 'importFromMikrotik'])->name('import-from-mikrotik');
             Route::post('/sync-online-sessions', [TenantCustomerController::class, 'syncOnlineSessions'])->name('sync-online');
             Route::post('/{customer}/kick-session', [TenantCustomerController::class, 'kickSession'])->whereNumber('customer')->name('kick-session');
             Route::post('/{customer}/ping', [TenantCustomerController::class, 'pingCustomer'])->whereNumber('customer')->name('ping');

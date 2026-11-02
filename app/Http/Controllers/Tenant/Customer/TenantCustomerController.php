@@ -23,6 +23,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -947,38 +948,376 @@ class TenantCustomerController extends Controller
     }
 
     /**
-     * Batch Sync all customers to MikroTik & FreeRADIUS.
+     * Batch Sync all customers to MikroTik & FreeRADIUS (Intelligent 2-Way).
      */
     public function syncAllMikrotik(Request $request): JsonResponse
     {
-        $tenant = $this->getTenant();
-        $customers = TenantCustomer::where('tenant_id', $tenant->id)->get();
+        return $this->twoWaySmartSync($request);
+    }
 
+    /**
+     * Complete Intelligent Two-Way Sync between Software DB, MikroTik Routers & FreeRADIUS:
+     * 1. PULL: Discovers & imports new customers from MikroTik /ppp/secret into DB & FreeRADIUS.
+     * 2. PUSH: Provisions & updates existing DB customers to MikroTik /ppp/secret & FreeRADIUS.
+     * 3. TELEMETRY: Queries live active PPPoE sessions from /ppp/active & radacct.
+     */
+    public function twoWaySmartSync(Request $request): JsonResponse
+    {
+        $tenant = $this->getTenant();
         $mikrotikApi = new MikrotikApiService();
         $radiusService = new RadiusService();
-        $syncedCount = 0;
-        $failedCount = 0;
 
-        foreach ($customers as $customer) {
-            $res = $mikrotikApi->syncCustomerToMikrotik($customer);
+        $routers = TenantRouter::where('tenant_id', $tenant->id)->get();
+        if ($routers->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No active MikroTik router found configured for this tenant.',
+            ], 422);
+        }
+
+        $importedCount = 0;
+        $pushedCount = 0;
+        $failedCount = 0;
+        $activeUsernames = [];
+
+        // Packages map for auto-matching profile names
+        $packages = TenantInternetPackage::where('tenant_id', $tenant->id)->get();
+        $defaultPackage = $packages->where('is_active', true)->first();
+
+        // ----------------------------------------------------
+        // STEP 1: PULL (MikroTik -> Software & FreeRADIUS)
+        // ----------------------------------------------------
+        foreach ($routers as $router) {
+            try {
+                $secRes = $mikrotikApi->pullPppSecrets($router);
+                if (!empty($secRes['success']) && !empty($secRes['secrets'])) {
+                    foreach ($secRes['secrets'] as $sec) {
+                        $username = trim($sec['name'] ?? '');
+                        if (empty($username)) {
+                            continue;
+                        }
+
+                        $existing = TenantCustomer::where('tenant_id', $tenant->id)
+                            ->where('username', $username)
+                            ->first();
+
+                        if (!$existing) {
+                            // Find matching package by mikrotik_profile or name
+                            $matchedPackage = $packages->first(function ($p) use ($sec) {
+                                return strtolower(trim($p->mikrotik_profile ?: $p->name)) === strtolower(trim($sec['profile'] ?? ''));
+                            }) ?: $defaultPackage;
+
+                            // Customer ID handling
+                            $comment = trim($sec['comment'] ?? '');
+                            $prefix = TenantCustomer::getTenantPrefix($tenant->id);
+                            $customerId = null;
+
+                            // Check if comment is already an ID matching prefix
+                            if (!empty($comment) && str_starts_with(strtoupper($comment), strtoupper($prefix))) {
+                                if (!TenantCustomer::where('tenant_id', $tenant->id)->where('customer_id', $comment)->exists()) {
+                                    $customerId = $comment;
+                                }
+                            }
+                            if (!$customerId) {
+                                $customerId = TenantCustomer::generateNextCustomerId($tenant->id);
+                            }
+
+                            $newCustomer = TenantCustomer::create([
+                                'tenant_id' => $tenant->id,
+                                'customer_id' => $customerId,
+                                'name' => !empty($comment) && !str_starts_with(strtoupper($comment), strtoupper($prefix)) ? $comment : ucfirst($username),
+                                'username' => $username,
+                                'password' => !empty($sec['password']) ? $sec['password'] : '123456',
+                                'phone' => '01800000000',
+                                'status' => !empty($sec['disabled']) ? 'disabled' : 'active',
+                                'connection_type' => 'pppoe',
+                                'package_id' => $matchedPackage?->id,
+                                'monthly_bill' => $matchedPackage?->price ?? 0.00,
+                                'router_id' => $router->id,
+                                'billing_cycle_date' => now()->startOfMonth(),
+                                'expiry_date' => now()->endOfMonth(),
+                            ]);
+
+                            // Immediately sync new subscriber to FreeRADIUS
+                            try {
+                                $radiusService->syncCustomerSubscriber($newCustomer);
+                            } catch (\Exception $e) {
+                                // Non-blocking
+                            }
+
+                            $importedCount++;
+                        } else {
+                            if (!$existing->router_id) {
+                                $existing->router_id = $router->id;
+                                $existing->save();
+                            }
+                        }
+                    }
+                }
+            } catch (\Exception $e) {
+                Log::warning("Two-Way Sync: Error pulling secrets from router #{$router->id}: " . $e->getMessage());
+            }
+        }
+
+        // ----------------------------------------------------
+        // STEP 2: PUSH (Software DB -> MikroTik & FreeRADIUS)
+        // ----------------------------------------------------
+        $allCustomers = TenantCustomer::where('tenant_id', $tenant->id)->get();
+        foreach ($allCustomers as $customer) {
+            $pushRes = $mikrotikApi->syncCustomerToMikrotik($customer);
             try {
                 $radiusService->syncCustomerSubscriber($customer);
             } catch (\Exception $e) {
                 // Non-blocking
             }
 
-            if ($res['success']) {
-                $syncedCount++;
+            if ($pushRes['success']) {
+                $pushedCount++;
             } else {
                 $failedCount++;
             }
         }
 
+        // ----------------------------------------------------
+        // STEP 3: TELEMETRY (Query Live Sessions & Real-time IPs)
+        // ----------------------------------------------------
+        $liveCount = 0;
+        foreach ($routers as $router) {
+            try {
+                $actRes = $mikrotikApi->getActivePppoe($router);
+                if (!empty($actRes['success']) && !empty($actRes['data'])) {
+                    foreach ($actRes['data'] as $session) {
+                        $u = $session['name'] ?? null;
+                        if ($u) {
+                            $activeUsernames[$u] = true;
+                            $liveCount++;
+                            TenantCustomer::where('tenant_id', $tenant->id)
+                                ->where('username', $u)
+                                ->update([
+                                    'online_status' => 'online',
+                                    'ip_address' => !empty($session['address']) ? $session['address'] : DB::raw('ip_address'),
+                                    'mac_address' => !empty($session['caller_id']) ? $session['caller_id'] : DB::raw('mac_address'),
+                                ]);
+                        }
+                    }
+                }
+            } catch (\Exception $e) {
+                // Non-blocking
+            }
+        }
+
+        // Accounting sessions from FreeRADIUS radacct
+        try {
+            $radiusSessions = DB::table('radacct')
+                ->where('tenant_id', $tenant->id)
+                ->whereNull('acctstoptime')
+                ->get();
+
+            foreach ($radiusSessions as $rs) {
+                if (!empty($rs->username)) {
+                    if (!isset($activeUsernames[$rs->username])) {
+                        $activeUsernames[$rs->username] = true;
+                        $liveCount++;
+                    }
+                    TenantCustomer::where('tenant_id', $tenant->id)
+                        ->where('username', $rs->username)
+                        ->update([
+                            'online_status' => 'online',
+                            'ip_address' => !empty($rs->framedipaddress) ? $rs->framedipaddress : DB::raw('ip_address'),
+                            'mac_address' => !empty($rs->callingstationid) ? $rs->callingstationid : DB::raw('mac_address'),
+                        ]);
+                }
+            }
+        } catch (\Exception $e) {
+            // Ignore
+        }
+
+        // Set others to offline
+        $onlineList = array_keys($activeUsernames);
+        if (!empty($onlineList)) {
+            TenantCustomer::where('tenant_id', $tenant->id)
+                ->whereNotIn('username', $onlineList)
+                ->update(['online_status' => 'offline']);
+        }
+
         return response()->json([
             'success' => true,
-            'message' => "Successfully synced {$syncedCount} customers to MikroTik & FreeRADIUS!" . ($failedCount > 0 ? " ({$failedCount} failed)" : ""),
-            'synced' => $syncedCount,
+            'message' => "Two-Way Smart Sync completed! [{$importedCount} imported from router, {$pushedCount} provisioned to network, {$liveCount} live online sessions updated]",
+            'imported' => $importedCount,
+            'pushed' => $pushedCount,
             'failed' => $failedCount,
+            'live_active' => $liveCount,
+        ]);
+    }
+
+    /**
+     * Preview subscriber records from a selected MikroTik router before importing.
+     */
+    public function previewMikrotikImport(Request $request): JsonResponse
+    {
+        $tenant = $this->getTenant();
+        $routerId = (int) $request->query('router_id');
+        $router = TenantRouter::where('tenant_id', $tenant->id)->findOrFail($routerId);
+
+        $mikrotikApi = new MikrotikApiService();
+        $res = $mikrotikApi->pullPppSecrets($router);
+
+        if (!$res['success']) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Connection failed: ' . ($res['message'] ?? 'Unable to connect to router.'),
+            ], 422);
+        }
+
+        $secrets = $res['secrets'] ?? [];
+        $existingUsernames = TenantCustomer::where('tenant_id', $tenant->id)
+            ->pluck('username')
+            ->map(fn($u) => strtolower(trim($u)))
+            ->toArray();
+
+        $newSecrets = [];
+        $existingCount = 0;
+
+        foreach ($secrets as $s) {
+            $u = strtolower(trim($s['name'] ?? ''));
+            if (empty($u)) continue;
+
+            if (in_array($u, $existingUsernames, true)) {
+                $existingCount++;
+            } else {
+                $newSecrets[] = [
+                    'username' => $s['name'],
+                    'profile' => $s['profile'] ?? 'default',
+                    'comment' => $s['comment'] ?? '',
+                    'disabled' => !empty($s['disabled']),
+                ];
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'router_name' => $router->name,
+            'total_secrets' => count($secrets),
+            'new_count' => count($newSecrets),
+            'existing_count' => $existingCount,
+            'preview_items' => array_slice($newSecrets, 0, 15),
+        ]);
+    }
+
+    /**
+     * Dedicated Bulk Import of Subscribers from MikroTik /ppp/secret.
+     */
+    public function importFromMikrotik(Request $request): JsonResponse
+    {
+        $tenant = $this->getTenant();
+        $request->validate([
+            'router_id' => 'required|integer|exists:tenant_routers,id',
+            'default_package_id' => 'nullable|integer|exists:tenant_internet_packages,id',
+            'zone_id' => 'nullable|integer|exists:tenant_coverage_zones,id',
+            'update_existing' => 'nullable|boolean',
+        ]);
+
+        $router = TenantRouter::where('tenant_id', $tenant->id)->findOrFail($request->input('router_id'));
+        $defaultPackageId = $request->input('default_package_id');
+        $zoneId = $request->input('zone_id');
+        $updateExisting = (bool) $request->input('update_existing', false);
+
+        $mikrotikApi = new MikrotikApiService();
+        $radiusService = new RadiusService();
+        $res = $mikrotikApi->pullPppSecrets($router);
+
+        if (!$res['success']) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to pull secrets from MikroTik: ' . ($res['message'] ?? 'Connection error'),
+            ], 422);
+        }
+
+        $secrets = $res['secrets'] ?? [];
+        $packages = TenantInternetPackage::where('tenant_id', $tenant->id)->get();
+        $defaultPackage = $defaultPackageId ? $packages->find($defaultPackageId) : $packages->where('is_active', true)->first();
+
+        $imported = 0;
+        $updated = 0;
+        $prefix = TenantCustomer::getTenantPrefix($tenant->id);
+
+        foreach ($secrets as $sec) {
+            $username = trim($sec['name'] ?? '');
+            if (empty($username)) continue;
+
+            $existing = TenantCustomer::where('tenant_id', $tenant->id)->where('username', $username)->first();
+
+            // Match package
+            $matchedPackage = $packages->first(function ($p) use ($sec) {
+                return strtolower(trim($p->mikrotik_profile ?: $p->name)) === strtolower(trim($sec['profile'] ?? ''));
+            }) ?: $defaultPackage;
+
+            if (!$existing) {
+                $comment = trim($sec['comment'] ?? '');
+                $customerId = null;
+                if (!empty($comment) && str_starts_with(strtoupper($comment), strtoupper($prefix))) {
+                    if (!TenantCustomer::where('tenant_id', $tenant->id)->where('customer_id', $comment)->exists()) {
+                        $customerId = $comment;
+                    }
+                }
+                if (!$customerId) {
+                    $customerId = TenantCustomer::generateNextCustomerId($tenant->id);
+                }
+
+                $customer = TenantCustomer::create([
+                    'tenant_id' => $tenant->id,
+                    'customer_id' => $customerId,
+                    'name' => !empty($comment) && !str_starts_with(strtoupper($comment), strtoupper($prefix)) ? $comment : ucfirst($username),
+                    'username' => $username,
+                    'password' => !empty($sec['password']) ? $sec['password'] : '123456',
+                    'phone' => '01800000000',
+                    'status' => !empty($sec['disabled']) ? 'disabled' : 'active',
+                    'connection_type' => 'pppoe',
+                    'package_id' => $matchedPackage?->id,
+                    'monthly_bill' => $matchedPackage?->price ?? 0.00,
+                    'router_id' => $router->id,
+                    'zone_id' => $zoneId ?: null,
+                    'billing_cycle_date' => now()->startOfMonth(),
+                    'expiry_date' => now()->endOfMonth(),
+                ]);
+
+                try {
+                    $radiusService->syncCustomerSubscriber($customer);
+                } catch (\Exception $e) {
+                    // Non-blocking
+                }
+
+                $imported++;
+            } elseif ($updateExisting) {
+                $existing->router_id = $router->id;
+                if (!empty($sec['password'])) {
+                    $existing->password = $sec['password'];
+                }
+                if ($matchedPackage) {
+                    $existing->package_id = $matchedPackage->id;
+                    $existing->monthly_bill = $matchedPackage->price;
+                }
+                if ($zoneId) {
+                    $existing->zone_id = $zoneId;
+                }
+                $existing->status = !empty($sec['disabled']) ? 'disabled' : 'active';
+                $existing->save();
+
+                try {
+                    $radiusService->syncCustomerSubscriber($existing);
+                } catch (\Exception $e) {
+                    // Non-blocking
+                }
+
+                $updated++;
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => "Successfully imported {$imported} new customers from MikroTik '{$router->name}'!" . ($updated > 0 ? " ({$updated} updated)" : ""),
+            'imported' => $imported,
+            'updated' => $updated,
         ]);
     }
 

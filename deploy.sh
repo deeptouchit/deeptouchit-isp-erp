@@ -20,6 +20,11 @@ cd "$APP_DIR"
 git config --global --add safe.directory "$APP_DIR" 2>/dev/null || true
 git config --global --add safe.directory "*" 2>/dev/null || true
 
+# Enable maintenance mode during deployment & ensure it comes back up on exit
+echo "🚧 Putting application into maintenance mode..."
+php artisan down --retry=60 2>/dev/null || true
+trap 'php artisan up 2>/dev/null || true' EXIT
+
 # 1. Pull latest changes
 echo "📦 Pulling latest commits from GitHub origin/$BRANCH..."
 git fetch --all --prune
@@ -61,11 +66,15 @@ chmod -R 775 "$APP_DIR/storage" "$APP_DIR/bootstrap/cache" 2>/dev/null || true
 
 # 8. Reload web services (if root/sudo available)
 echo "🔄 Reloading web services..."
-sudo systemctl reload php8.3-fpm 2>/dev/null || sudo systemctl reload php8.2-fpm 2>/dev/null || true
+sudo systemctl reload php8.4-fpm 2>/dev/null || sudo systemctl reload php8.3-fpm 2>/dev/null || sudo systemctl reload php8.2-fpm 2>/dev/null || true
 sudo systemctl reload nginx 2>/dev/null || true
 
 # 9. Restart queue workers
 php artisan queue:restart 2>/dev/null || true
+
+# 10. Bring application back up
+echo "✨ Bringing application out of maintenance mode..."
+php artisan up 2>/dev/null || true
 
 echo "================================================="
 echo "✅ DeepTouch ISP-ERP deployment completed successfully at $(date)"

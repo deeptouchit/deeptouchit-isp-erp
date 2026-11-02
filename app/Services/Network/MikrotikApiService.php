@@ -1788,6 +1788,7 @@ class MikrotikApiService
                 $d = $row['!re'];
                 $secrets[] = [
                     'name' => $d['name'],
+                    'password' => $d['password'] ?? '',
                     'service' => $d['service'] ?? 'any',
                     'profile' => $d['profile'] ?? 'default',
                     'remote_address' => $d['remote-address'] ?? null,

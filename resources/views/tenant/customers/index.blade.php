@@ -101,13 +101,23 @@
             @endif
 
             @if(!$authUser || !$authUser->isCollector())
-            <!-- Sync All to MikroTik -->
+            <!-- Two-Way Smart Sync (MikroTik <-> Software <-> FreeRADIUS) -->
             <button type="button" 
                     @click="syncAllMikrotik()"
                     :disabled="isSyncing"
-                    class="px-2.5 py-1.5 rounded-md bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold text-xs transition inline-flex items-center justify-center gap-1.5 shadow-2xs border border-indigo-200 cursor-pointer disabled:opacity-50">
-                <i class="fas fa-arrows-rotate text-indigo-600 text-[11px]" :class="{'fa-spin': isSyncing}"></i>
-                <span class="truncate" x-text="isSyncing ? 'Syncing...' : 'Sync MikroTik'"></span>
+                    class="px-2.5 py-1.5 rounded-md bg-cyan-50 hover:bg-cyan-100 text-cyan-700 font-semibold text-xs transition inline-flex items-center justify-center gap-1.5 shadow-2xs border border-cyan-200 cursor-pointer disabled:opacity-50"
+                    title="{{ __('Intelligent Two-Way Sync between MikroTik, Software DB & FreeRADIUS') }}">
+                <i class="fas fa-arrows-rotate text-cyan-600 text-[11px]" :class="{'fa-spin': isSyncing}"></i>
+                <span class="truncate" x-text="isSyncing ? '{{ __('Syncing...') }}' : '{{ __('2-Way Smart Sync') }}'"></span>
+            </button>
+
+            <!-- Dedicated Import from MikroTik Router Button -->
+            <button type="button" 
+                    @click="openMikrotikImportModal()"
+                    class="px-2.5 py-1.5 rounded-md bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold text-xs transition inline-flex items-center justify-center gap-1.5 shadow-2xs border border-indigo-200 cursor-pointer"
+                    title="{{ __('Import / Pull existing subscriber records from MikroTik /ppp/secret') }}">
+                <i class="fas fa-network-wired text-indigo-600 text-[11px]"></i>
+                <span class="truncate">{{ __('Import Router') }}</span>
             </button>
 
             @if($isDueRoute)
@@ -1643,6 +1653,168 @@
         </div>
     </div>
 
+
+    <!-- ========================================================================= -->
+    <!-- MODAL 6: MIKROTIK ROUTER SUBSCRIBER IMPORT MODAL (Natural White Production Grade) -->
+    <!-- ========================================================================= -->
+    <div x-show="mikrotikImportModal.open" 
+         x-cloak 
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs"
+         style="display: none;">
+        <div class="bg-white rounded-xl border border-slate-200/90 shadow-2xl w-full max-w-xl overflow-hidden"
+             @click.away="if (!mikrotikImportModal.loading) mikrotikImportModal.open = false"
+             x-transition:enter="transition ease-out duration-200 transform"
+             x-transition:enter-start="opacity-0 scale-95"
+             x-transition:enter-end="opacity-100 scale-100"
+             x-transition:leave="transition ease-in duration-150 transform"
+             x-transition:leave-start="opacity-100 scale-100"
+             x-transition:leave-end="opacity-0 scale-95">
+
+            <!-- Soft Natural Header -->
+            <div class="bg-slate-50/80 border-b border-slate-200 px-4 py-3 flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center justify-center text-xs flex-shrink-0">
+                        <i class="fas fa-network-wired"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xs font-semibold text-slate-800">{{ __('Import Customers from MikroTik') }}</h3>
+                        <p class="text-[10.5px] text-slate-500 font-normal">
+                            {{ __('Pull /ppp/secret records and sync them into ISP ERP & FreeRADIUS') }}
+                        </p>
+                    </div>
+                </div>
+                <button type="button" 
+                        @click="mikrotikImportModal.open = false" 
+                        :disabled="mikrotikImportModal.loading"
+                        class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center cursor-pointer">
+                    <i class="fas fa-times text-xs"></i>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-4 space-y-3.5 text-xs">
+                <!-- Select Router -->
+                <div>
+                    <label class="block text-[11px] font-semibold text-slate-700 mb-1">
+                        {{ __('Select MikroTik Router') }} <span class="text-rose-500">*</span>
+                    </label>
+                    <select x-model="mikrotikImportModal.router_id" 
+                            @change="fetchRouterPreview()"
+                            class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-cyan-500 transition">
+                        <option value="">-- {{ __('Choose Router') }} --</option>
+                        @foreach($allRouters as $r)
+                            <option value="{{ $r->id }}">{{ $r->name }} ({{ $r->ip_address }})</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <!-- Live Preview State -->
+                <div x-show="mikrotikImportModal.previewing" class="py-3 text-center text-slate-500 text-xs">
+                    <i class="fas fa-spinner fa-spin mr-1.5 text-indigo-600"></i> {{ __('Querying /ppp/secret from RouterOS API...') }}
+                </div>
+
+                <div x-show="mikrotikImportModal.error_message" class="p-2.5 bg-rose-50 border border-rose-200 rounded-lg text-rose-700 text-xs flex items-center gap-2">
+                    <i class="fas fa-triangle-exclamation text-rose-500"></i>
+                    <span x-text="mikrotikImportModal.error_message"></span>
+                </div>
+
+                <!-- Preview Metric Cards Strip (If data loaded) -->
+                <div x-show="mikrotikImportModal.preview_data && !mikrotikImportModal.previewing" class="space-y-2.5">
+                    <div class="grid grid-cols-3 gap-2">
+                        <div class="p-2 bg-slate-50 rounded-lg border border-slate-200/80 text-center">
+                            <span class="text-[9px] uppercase tracking-wider text-slate-500 font-medium block">{{ __('On Router') }}</span>
+                            <span class="text-sm font-bold font-mono text-slate-800" x-text="mikrotikImportModal.preview_data?.total_secrets || 0"></span>
+                        </div>
+                        <div class="p-2 bg-emerald-50/70 rounded-lg border border-emerald-200/80 text-center">
+                            <span class="text-[9px] uppercase tracking-wider text-emerald-600 font-semibold block">{{ __('New To Import') }}</span>
+                            <span class="text-sm font-bold font-mono text-emerald-700" x-text="mikrotikImportModal.preview_data?.new_count || 0"></span>
+                        </div>
+                        <div class="p-2 bg-slate-100 rounded-lg border border-slate-200 text-center">
+                            <span class="text-[9px] uppercase tracking-wider text-slate-600 font-medium block">{{ __('Already in DB') }}</span>
+                            <span class="text-sm font-bold font-mono text-slate-700" x-text="mikrotikImportModal.preview_data?.existing_count || 0"></span>
+                        </div>
+                    </div>
+
+                    <!-- Compact Preview List -->
+                    <template x-if="mikrotikImportModal.preview_data?.preview_items?.length > 0">
+                        <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-200/80 space-y-1.5">
+                            <div class="text-[10px] font-semibold uppercase tracking-wider text-slate-600 flex items-center justify-between">
+                                <span>{{ __('Sample New Users Detected') }}</span>
+                                <span class="font-mono text-slate-500" x-text="'Showing ' + mikrotikImportModal.preview_data.preview_items.length"></span>
+                            </div>
+                            <div class="max-h-28 overflow-y-auto space-y-1 pr-1">
+                                <template x-for="item in mikrotikImportModal.preview_data.preview_items" :key="item.username">
+                                    <div class="flex items-center justify-between bg-white px-2 py-1 rounded border border-slate-200/60 text-[11px]">
+                                        <div class="flex items-center gap-1.5 font-mono font-medium text-slate-800">
+                                            <i class="fas fa-user text-[9px] text-slate-400"></i>
+                                            <span x-text="item.username"></span>
+                                        </div>
+                                        <div class="flex items-center gap-1.5 text-[10px]">
+                                            <span class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600" x-text="item.profile"></span>
+                                            <span class="text-slate-400 truncate max-w-[120px]" x-text="item.comment || ''"></span>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Configuration Options -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-700 mb-1">
+                            {{ __('Fallback Package (If profile unmatched)') }}
+                        </label>
+                        <select x-model="mikrotikImportModal.default_package_id" 
+                                class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 py-1.5 focus:bg-white focus:border-cyan-500">
+                            <option value="">-- {{ __('Auto Match Profile') }} --</option>
+                            @foreach($allPackages as $pkg)
+                                <option value="{{ $pkg->id }}">{{ $pkg->name }} (@currency($pkg->price))</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-700 mb-1">
+                            {{ __('Default Coverage Zone') }}
+                        </label>
+                        <select x-model="mikrotikImportModal.zone_id" 
+                                class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 py-1.5 focus:bg-white focus:border-cyan-500">
+                            <option value="">-- {{ __('Unassigned') }} --</option>
+                            @foreach($distinctZones as $z)
+                                <option value="{{ $z->id }}">{{ $z->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Update Existing Checkbox -->
+                <label class="flex items-center gap-2 p-2 bg-slate-50 rounded-lg border border-slate-200/80 cursor-pointer select-none">
+                    <input type="checkbox" x-model="mikrotikImportModal.update_existing" class="rounded text-cyan-600 focus:ring-cyan-500 w-3.5 h-3.5">
+                    <span class="text-[11px] text-slate-700">{{ __('Update password, profile & router for existing customers') }}</span>
+                </label>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-4 py-2.5 bg-slate-50/80 border-t border-slate-200 flex items-center justify-between">
+                <button type="button" 
+                        @click="mikrotikImportModal.open = false" 
+                        :disabled="mikrotikImportModal.loading"
+                        class="border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs px-3.5 py-1.5 rounded-lg cursor-pointer transition">
+                    {{ __('Cancel') }}
+                </button>
+                <button type="button" 
+                        @click="submitMikrotikImport()" 
+                        :disabled="mikrotikImportModal.loading || !mikrotikImportModal.router_id || mikrotikImportModal.previewing"
+                        class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-xs px-4 py-1.5 rounded-lg shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50">
+                    <i class="fas fa-file-import text-xs" :class="{'fa-spin': mikrotikImportModal.loading}"></i>
+                    <span x-text="mikrotikImportModal.loading ? '{{ __('Importing Records...') }}' : '{{ __('Start Import to Database') }}'"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+
 </div>
 @endsection
 
@@ -1652,6 +1824,17 @@ function customerMasterManager() {
     return {
         isSyncing: false,
         activeMenu: null,
+        mikrotikImportModal: {
+            open: false,
+            loading: false,
+            previewing: false,
+            router_id: '',
+            default_package_id: '',
+            zone_id: '',
+            update_existing: false,
+            preview_data: null,
+            error_message: ''
+        },
         menuPos: { top: '0px', bottom: 'auto', right: '0px', left: 'auto' },
         onlineMap: {},
         mikrotikMap: {},
@@ -2059,8 +2242,8 @@ function customerMasterManager() {
         async syncAllMikrotik() {
             this.isSyncing = true;
             try {
-                this.showToast('Initiating full batch sync to MikroTik RouterOS...', 'info');
-                const res = await fetch(`{{ route('tenant.customers.sync-all-mikrotik') }}`, {
+                this.showToast('Initiating 2-Way Smart Sync (MikroTik <-> Software <-> FreeRADIUS)...', 'info');
+                const res = await fetch(`{{ route('tenant.customers.two-way-sync') }}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -2071,13 +2254,81 @@ function customerMasterManager() {
                 const data = await res.json();
                 if (data.success) {
                     this.showToast(data.message, 'success');
+                    setTimeout(() => window.location.reload(), 1400);
                 } else {
-                    this.showToast(data.message || 'Batch sync failed.', 'error');
+                    this.showToast(data.message || 'Two-way smart sync failed.', 'error');
                 }
             } catch (err) {
-                this.showToast('Network error during MikroTik batch sync.', 'error');
+                this.showToast('Network error during two-way smart sync.', 'error');
             } finally {
                 this.isSyncing = false;
+            }
+        },
+
+        openMikrotikImportModal() {
+            this.activeMenu = null;
+            this.mikrotikImportModal.open = true;
+            this.mikrotikImportModal.router_id = @json($allRouters->first()?->id ?? '');
+            this.mikrotikImportModal.preview_data = null;
+            this.mikrotikImportModal.error_message = '';
+            if (this.mikrotikImportModal.router_id) {
+                this.fetchRouterPreview();
+            }
+        },
+
+        async fetchRouterPreview() {
+            if (!this.mikrotikImportModal.router_id) return;
+            this.mikrotikImportModal.previewing = true;
+            this.mikrotikImportModal.error_message = '';
+            this.mikrotikImportModal.preview_data = null;
+            try {
+                const res = await fetch(`{{ route('tenant.customers.mikrotik-import-preview') }}?router_id=${this.mikrotikImportModal.router_id}`);
+                const data = await res.json();
+                if (data.success) {
+                    this.mikrotikImportModal.preview_data = data;
+                } else {
+                    this.mikrotikImportModal.error_message = data.message || 'Failed to connect to router.';
+                }
+            } catch (err) {
+                this.mikrotikImportModal.error_message = 'Network error fetching router preview.';
+            } finally {
+                this.mikrotikImportModal.previewing = false;
+            }
+        },
+
+        async submitMikrotikImport() {
+            if (!this.mikrotikImportModal.router_id) {
+                this.showToast('Please select a MikroTik router.', 'error');
+                return;
+            }
+            this.mikrotikImportModal.loading = true;
+            try {
+                const res = await fetch(`{{ route('tenant.customers.import-from-mikrotik') }}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        router_id: this.mikrotikImportModal.router_id,
+                        default_package_id: this.mikrotikImportModal.default_package_id || null,
+                        zone_id: this.mikrotikImportModal.zone_id || null,
+                        update_existing: this.mikrotikImportModal.update_existing
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    this.showToast(data.message, 'success');
+                    this.mikrotikImportModal.open = false;
+                    setTimeout(() => window.location.reload(), 1200);
+                } else {
+                    this.showToast(data.message || 'Import failed.', 'error');
+                }
+            } catch (err) {
+                this.showToast('Network error during MikroTik import.', 'error');
+            } finally {
+                this.mikrotikImportModal.loading = false;
             }
         },
 
