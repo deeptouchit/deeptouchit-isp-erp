@@ -11,15 +11,20 @@ $port = (int)$vsol->web_port;
 $username = $vsol->web_username;
 $password = $vsol->decrypted_web_password;
 
-$loginRes = $oltService->fetchVsolHtmlPage($ip, $port, $username, $password, 'main.html', [
-    'user' => $username,
-    'pass' => $password,
-    'who'  => '100'
-]);
+$pages = ['macinfo.html', 'mac.html', 'macList.html', 'onuopmdiag.html'];
 
-if ($loginRes) {
-    preg_match_all('/href="([^"]+\.html)"/i', $loginRes, $m);
-    echo "ALL PAGES IN VSOL MENU:\n";
-    $pages = array_unique($m[1]);
-    print_r($pages);
+foreach ($pages as $p) {
+    echo "\n==================== FETCHING {$p} ====================\n";
+    $res = $oltService->fetchVsolHtmlPage($ip, $port, $username, $password, $p);
+    echo "Length: " . strlen($res ?? '') . "\n";
+    if ($res) {
+        // Search for target router MAC A8:31:62:02:15:77 or ONU MAC 4C:AE:1C:97:D7:10
+        if (str_contains(strtolower($res), 'a8:31:62') || str_contains(strtolower($res), 'a8-31-62') || str_contains(strtolower($res), 'a83162')) {
+            echo "  >>> ROUTER MAC A8:31:62:02:15:77 FOUND IN {$p}!\n";
+        }
+        if (str_contains(strtolower($res), '4c:ae:1c') || str_contains(strtolower($res), '4cae1c')) {
+            echo "  >>> ONU MAC 4C:AE:1C:97:D7:10 FOUND IN {$p}!\n";
+        }
+        echo substr(strip_tags($res), 0, 1000) . "\n";
+    }
 }
