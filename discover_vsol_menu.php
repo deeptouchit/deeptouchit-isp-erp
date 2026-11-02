@@ -11,22 +11,18 @@ $port = (int)$vsol->web_port;
 $username = $vsol->web_username;
 $password = $vsol->decrypted_web_password;
 
-// 1. Fetch main.html to see frame/menu structure
-$mainHtml = $oltService->fetchVsolHtmlPage($ip, $port, $username, $password, 'main.html');
-echo "MAIN HTML LENGTH: " . strlen($mainHtml ?? '') . "\n";
-if ($mainHtml) {
-    preg_match_all('/(?:src|href)=["\']([^"\']+\.html)["\']/i', $mainHtml, $matches);
-    echo "FRAMES / LINKS IN MAIN.HTML:\n";
-    print_r(array_unique($matches[1] ?? []));
+$sysHtml = $oltService->fetchVsolHtmlPage($ip, $port, $username, $password, 'systeminfo.html');
+echo "SYSTEM INFO HTML LENGTH: " . strlen($sysHtml ?? '') . "\n";
+if ($sysHtml) {
+    preg_match_all('/[a-zA-Z0-9_-]+\.html/i', $sysHtml, $matches);
+    echo "ALL HTML REFERENCES IN SYSTEMINFO.HTML:\n";
+    print_r(array_unique($matches[0] ?? []));
 }
 
-// 2. Fetch menu.html / nav.html / left.html
-$menuPages = ['menu.html', 'left.html', 'nav.html', 'navigation.html', 'tree.html', 'header.html'];
-foreach ($menuPages as $mp) {
-    $mHtml = $oltService->fetchVsolHtmlPage($ip, $port, $username, $password, $mp);
-    if ($mHtml) {
-        echo "FOUND MENU PAGE {$mp}! All links inside:\n";
-        preg_match_all('/(?:href|src|openPage|goPage)=["\']([^"\']+\.html)["\']/i', $mHtml, $links);
-        print_r(array_unique($links[1] ?? []));
-    }
+// Also check index.html
+$idxHtml = $oltService->fetchVsolHtmlPage($ip, $port, $username, $password, 'index.html');
+if ($idxHtml) {
+    preg_match_all('/[a-zA-Z0-9_-]+\.html/i', $idxHtml, $m2);
+    echo "ALL HTML REFERENCES IN INDEX.HTML:\n";
+    print_r(array_unique($m2[0] ?? []));
 }
