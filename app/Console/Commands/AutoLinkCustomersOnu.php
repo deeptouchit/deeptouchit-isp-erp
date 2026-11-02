@@ -54,9 +54,26 @@ class AutoLinkCustomersOnu extends Command
             $withRmac = $onus->whereNotNull('router_mac')->where('router_mac', '!=', '')->count();
             $this->info("ONUs with populated router_mac: {$withRmac}");
 
-            $amirul = TenantCustomer::where('name', 'like', '%amirul%')->orWhere('username', 'like', '%amirul%')->first();
-            if ($amirul) {
-                $this->info("Found customer Amirul: ID={$amirul->id} NAME='{$amirul->name}' USER='{$amirul->username}' MAC='{$amirul->mac_address}'");
+            $shamoli = TenantCustomer::find(851);
+            if ($shamoli) {
+                $this->info("Customer 851 Details: NAME='{$shamoli->name}' USER='{$shamoli->username}' CODE='{$shamoli->customer_id}' MAC='{$shamoli->mac_address}'");
+                $shMac = strtolower(preg_replace('/[^a-f0-9]/i', '', $shamoli->mac_address ?? ''));
+                $matchFound = false;
+                foreach ($onus as $o) {
+                    $oMac = strtolower(preg_replace('/[^a-f0-9]/i', '', $o->mac_address ?? ''));
+                    $oRMac = strtolower(preg_replace('/[^a-f0-9]/i', '', $o->router_mac ?? ''));
+                    if (($shMac && ($oMac === $shMac || $oRMac === $shMac)) || 
+                        str_contains(strtolower($o->name ?? ''), 'shamoli') || 
+                        str_contains(strtolower($o->desc ?? ''), 'shamoli') ||
+                        str_contains(strtolower($o->name ?? ''), '939') ||
+                        str_contains(strtolower($o->desc ?? ''), '939')) {
+                        $this->line("  ==> Potential Match for 851: ONU ID={$o->id} OLT={$o->olt_id} PORT={$o->pon_port}:{$o->onu_id} NAME='{$o->name}' MAC='{$o->mac_address}' RMAC='{$o->router_mac}'");
+                        $matchFound = true;
+                    }
+                }
+                if (!$matchFound) {
+                    $this->warn("  ==> No ONU found with MAC '{$shamoli->mac_address}' or name containing 'shamoli' or '939' in current 802 ONUs.");
+                }
             }
 
             if ($onus->isEmpty()) {
