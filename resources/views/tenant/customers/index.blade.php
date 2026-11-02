@@ -422,6 +422,7 @@
                         <th>Name</th>
                         <th>Mobile</th>
                         <th>PPPoE</th>
+                        <th>Zone</th>
                         <th>Partner</th>
                         <th>Package</th>
                         @if($isOnlineRoute)
@@ -536,6 +537,11 @@
                                 {{ $c->username }}
                             </td>
 
+                            <!-- Zone -->
+                            <td class="text-slate-700">
+                                {{ $c->zone ?: ($c->coverageZone?->name ?? '--') }}
+                            </td>
+
                             <!-- 7. Partner / Scope -->
                             <td class="text-center font-mono">
                                 @if($c->reseller)
@@ -632,7 +638,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="{{ $isDueRoute ? 13 : 12 }}" class="px-4 py-8 text-center text-slate-400 text-xs italic bg-slate-50/50">
+                            <td colspan="{{ $isDueRoute ? 14 : 13 }}" class="px-4 py-8 text-center text-slate-400 text-xs italic bg-slate-50/50">
                                 <i class="fas fa-users-slash text-2xl text-slate-300 mb-2 block"></i>
                                 No customer or subscriber records found. (Database is empty)
                             </td>
