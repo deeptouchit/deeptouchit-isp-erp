@@ -150,7 +150,7 @@
                            id="onuSearchInput"
                            x-model="searchQuery"
                            placeholder="{{ __('Search Name, ONU MAC, Router MAC, Port, Model...') }}" 
-                           class="w-full pl-8 pr-7 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition placeholder:text-slate-400"
+                           class="w-full h-[34px] pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition placeholder:text-slate-400"
                            autocomplete="off">
                     <button type="button" 
                             x-show="searchQuery && searchQuery.length > 0" 
@@ -166,7 +166,7 @@
                 <div class="w-full md:w-36 flex-shrink-0">
                     <select name="olt_id" 
                             onchange="this.form.submit()" 
-                            class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                         <option value="">{{ __('All OLTs') }}</option>
                         @foreach($olts as $o)
                             <option value="{{ $o->id }}" {{ (string)$oltFilter === (string)$o->id ? 'selected' : '' }}>
@@ -180,7 +180,7 @@
                 <div class="w-full md:w-32 flex-shrink-0">
                     <select name="status" 
                             onchange="this.form.submit()" 
-                            class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                         <option value="">{{ __('All Status') }}</option>
                         <option value="online" {{ $statusFilter === 'online' ? 'selected' : '' }}>🟢 {{ __('Online') }}</option>
                         <option value="offline" {{ $statusFilter === 'offline' ? 'selected' : '' }}>🔴 {{ __('Offline') }}</option>
@@ -194,7 +194,7 @@
                 <div class="w-full md:w-28 flex-shrink-0">
                     <select name="onu_type" 
                             onchange="this.form.submit()" 
-                            class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                         <option value="">{{ __('All Types') }}</option>
                         <option value="EPON" {{ $onuTypeFilter === 'EPON' ? 'selected' : '' }}>EPON</option>
                         <option value="GPON" {{ $onuTypeFilter === 'GPON' ? 'selected' : '' }}>GPON</option>
@@ -207,7 +207,7 @@
                     @php $perPageVal = (int)request('per_page', 30); @endphp
                     <select name="per_page" 
                             onchange="this.form.submit()" 
-                            class="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700">
+                            class="w-full h-[34px] px-2 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700">
                         <option value="15" {{ $perPageVal === 15 ? 'selected' : '' }}>15 / {{ __('page') }}</option>
                         <option value="20" {{ $perPageVal === 20 ? 'selected' : '' }}>20 / {{ __('page') }}</option>
                         <option value="30" {{ $perPageVal === 30 ? 'selected' : '' }}>30 / {{ __('page') }}</option>
@@ -220,9 +220,9 @@
 
                 <!-- More Filters Toggle Button (Identical to /admin/customers) -->
                 <button type="button" 
-                        @click="showMoreFilters = !showMoreFilters"
-                        :class="showMoreFilters || {{ $activeMoreCount }} > 0 ? 'bg-cyan-50 text-cyan-700 border-cyan-300 ring-1 ring-cyan-200' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'"
-                        class="py-1.5 px-2.5 rounded-lg border text-xs font-medium transition flex items-center justify-center gap-1.5 flex-shrink-0 cursor-pointer shadow-2xs"
+                        @click="showMoreFilters = !showMoreFilters" 
+                        :class="showMoreFilters || {{ $activeMoreCount }} > 0 ? 'bg-cyan-50 text-cyan-700 border-cyan-300 ring-1 ring-cyan-200' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'" 
+                        class="h-[34px] py-0 px-2.5 rounded-lg border text-xs font-medium transition flex items-center justify-center gap-1.5 flex-shrink-0 cursor-pointer shadow-2xs" 
                         title="{{ __('Toggle Advanced Filters') }}">
                     <i class="fas fa-sliders-h text-[10px]"></i>
                     <span>{{ __('More Filters') }}</span>
@@ -238,13 +238,13 @@
                 <!-- Filter & Reset Buttons (Strict AGENTS.md sequence: [Filter] then [Reset]) -->
                 <div class="flex items-center gap-1.5 flex-shrink-0 md:ml-auto">
                     <button type="submit" 
-                            class="bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-1.5 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" 
+                            class="h-[34px] bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-0 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" 
                             title="{{ __('Apply Filters') }}">
                         <i class="fas fa-filter text-[10px]"></i>
                         <span>{{ __('Filter') }}</span>
                     </button>
                     <a href="{{ route('tenant.network.onu') }}" 
-                       class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-1.5 px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer" 
+                       class="h-[34px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-0 px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer" 
                        title="{{ __('Reset Filters') }}">
                         <i class="fas fa-rotate-left text-[10px]"></i>
                         <span>{{ __('Reset') }}</span>
@@ -267,7 +267,7 @@
                 <div class="flex-1 min-w-[130px]">
                     <select name="pon_port" 
                             onchange="this.form.submit()" 
-                            class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                         <option value="">{{ __('All PON Ports') }}</option>
                         @foreach($distinctPonPorts ?? [] as $pp)
                             <option value="{{ $pp }}" {{ $ponPortFilter === $pp ? 'selected' : '' }}>
@@ -281,7 +281,7 @@
                 <div class="flex-1 min-w-[130px]">
                     <select name="vendor" 
                             onchange="this.form.submit()" 
-                            class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                         <option value="">{{ __('All Vendors') }}</option>
                         @foreach($distinctVendors ?? [] as $v)
                             <option value="{{ $v }}" {{ $vendorFilter === $v ? 'selected' : '' }}>
@@ -295,7 +295,7 @@
                 <div class="flex-1 min-w-[140px]">
                     <select name="binding" 
                             onchange="this.form.submit()" 
-                            class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                         <option value="">{{ __('All Bindings') }}</option>
                         <option value="linked" {{ $bindingFilter === 'linked' ? 'selected' : '' }}>{{ __('Linked to Customer') }}</option>
                         <option value="unlinked" {{ $bindingFilter === 'unlinked' ? 'selected' : '' }}>{{ __('Unassigned / Free') }}</option>
@@ -306,7 +306,7 @@
                 <div class="flex-1 min-w-[140px]">
                     <select name="distance_range" 
                             onchange="this.form.submit()" 
-                            class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                         <option value="">{{ __('All Distances') }}</option>
                         <option value="under_500" {{ $distanceFilter === 'under_500' ? 'selected' : '' }}>&lt; 500m</option>
                         <option value="500_1000" {{ $distanceFilter === '500_1000' ? 'selected' : '' }}>500m - 1,000m</option>

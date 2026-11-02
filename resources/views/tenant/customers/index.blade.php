@@ -300,7 +300,7 @@
                            @input="handleLiveSearch($event.target.value)"
                            @keydown.enter.prevent="submitSearchNow()"
                            placeholder="{{ __('Live Search Name, ID, Username, Phone, IP...') }}" 
-                           class="w-full pl-8 pr-7 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition placeholder:text-slate-400"
+                           class="w-full h-[34px] pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition placeholder:text-slate-400"
                            autocomplete="off">
                     <button type="button" 
                             x-show="searchQuery && searchQuery.length > 0" 
@@ -316,7 +316,7 @@
                 <div class="w-full md:w-32 flex-shrink-0">
                     <select name="status" 
                             onchange="this.form.submit()"
-                            class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                         <option value="">{{ __('All Status') }}</option>
                         <option value="active" {{ $statusFilter === 'active' ? 'selected' : '' }}>{{ __('Active') }}</option>
                         <option value="due" {{ $statusFilter === 'due' ? 'selected' : '' }}>{{ __('Due') }}</option>
@@ -331,7 +331,7 @@
                 <div class="w-full md:w-36 flex-shrink-0">
                     <select name="zone" 
                             onchange="this.form.submit()"
-                            class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                         <option value="">{{ __('All Zones') }}</option>
                         @foreach($distinctZones as $z)
                             <option value="{{ $z }}" {{ $zoneFilter === $z ? 'selected' : '' }}>
@@ -345,7 +345,7 @@
                 <div class="w-full md:w-36 flex-shrink-0">
                     <select name="package_id" 
                             onchange="this.form.submit()"
-                            class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                         <option value="">{{ __('All Packages') }}</option>
                         @foreach($allPackages as $pkg)
                             <option value="{{ $pkg->id }}" {{ (string)$packageFilter === (string)$pkg->id ? 'selected' : '' }}>
@@ -359,7 +359,7 @@
                 <div class="w-full md:w-28 flex-shrink-0">
                     <select name="per_page" 
                             onchange="this.form.submit()"
-                            class="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700">
+                            class="w-full h-[34px] px-2 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700">
                         <option value="15" {{ request('per_page', 20) == 15 ? 'selected' : '' }}>15 / {{ __('page') }}</option>
                         <option value="20" {{ request('per_page', 20) == 20 ? 'selected' : '' }}>20 / {{ __('page') }}</option>
                         <option value="30" {{ request('per_page', 20) == 30 ? 'selected' : '' }}>30 / {{ __('page') }}</option>
@@ -377,7 +377,7 @@
                 <button type="button" 
                         @click="showMoreFilters = !showMoreFilters"
                         :class="showMoreFilters || {{ $activeMoreCount }} > 0 ? 'bg-cyan-50 text-cyan-700 border-cyan-300 ring-1 ring-cyan-200' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'"
-                        class="py-1.5 px-2.5 rounded-lg border text-xs font-medium transition flex items-center justify-center gap-1.5 flex-shrink-0 cursor-pointer shadow-2xs"
+                        class="h-[34px] py-0 px-2.5 rounded-lg border text-xs font-medium transition flex items-center justify-center gap-1.5 flex-shrink-0 cursor-pointer shadow-2xs"
                         title="{{ __('Toggle Advanced Filters') }}">
                     <i class="fas fa-sliders-h text-[10px]"></i>
                     <span>{{ __('More Filters') }}</span>
@@ -393,13 +393,13 @@
                 <!-- Filter & Reset Buttons (Strict AGENTS.md sequence: [Filter] then [Reset]) -->
                 <div class="flex items-center gap-1.5 flex-shrink-0 md:ml-auto">
                     <button type="submit" 
-                            class="bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-1.5 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" 
+                            class="h-[34px] bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-0 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" 
                             title="{{ __('Apply Filters') }}">
                         <i class="fas fa-filter text-[10px]"></i>
                         <span>{{ __('Filter') }}</span>
                     </button>
                     <a href="{{ url()->current() }}" 
-                       class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-1.5 px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer" 
+                       class="h-[34px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-0 px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer" 
                        title="{{ __('Reset Filters') }}">
                         <i class="fas fa-rotate-left text-[10px]"></i>
                         <span>{{ __('Reset') }}</span>
@@ -427,7 +427,7 @@
                 <div class="flex-1 min-w-[130px]">
                     <select name="scope" 
                             onchange="this.form.submit()"
-                            class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                         <option value="">{{ __('All Scopes') }}</option>
                         <option value="isp" {{ $scopeFilter === 'isp' ? 'selected' : '' }}>{{ __('ISP Direct') }}</option>
                         <option value="reseller" {{ $scopeFilter === 'reseller' ? 'selected' : '' }}>{{ __('Sub-ISP') }}</option>
@@ -438,7 +438,7 @@
                 <div class="flex-1 min-w-[150px]">
                     <select name="reseller_id" 
                             onchange="this.form.submit()"
-                            class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                         <option value="">{{ __('All Partners') }}</option>
                         @foreach($allResellers as $reseller)
                             <option value="{{ $reseller->id }}" {{ (string)$selectedResellerId === (string)$reseller->id ? 'selected' : '' }}>
@@ -453,7 +453,7 @@
                 <div class="flex-1 min-w-[120px]">
                     <select name="online_status" 
                             onchange="this.form.submit()"
-                            class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                         <option value="">{{ __('All Sessions') }}</option>
                         <option value="online" {{ ($onlineFilter ?? '') === 'online' ? 'selected' : '' }}>🟢 {{ __('Online') }}</option>
                         <option value="offline" {{ ($onlineFilter ?? '') === 'offline' ? 'selected' : '' }}>⚪ {{ __('Offline') }}</option>
@@ -464,7 +464,7 @@
                 <div class="flex-1 min-w-[130px]">
                     <select name="connection_type" 
                             onchange="this.form.submit()"
-                            class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                         <option value="">{{ __('All Connection Types') }}</option>
                         <option value="pppoe" {{ ($connectionType ?? '') === 'pppoe' ? 'selected' : '' }}>PPPoE</option>
                         <option value="static_ip" {{ ($connectionType ?? '') === 'static_ip' ? 'selected' : '' }}>Static IP</option>
@@ -476,7 +476,15 @@
                 <div class="flex-1 min-w-[140px]">
                     <select name="router_id" 
                             onchange="this.form.submit()"
-                            class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
+                        <option value="">{{ __('All Routers') }}</option>
+                        @foreach($allRouters as $rtr)
+                            <option value="{{ $rtr->id }}" {{ ($routerFilter ?? request('router_id')) == $rtr->id ? 'selected' : '' }}>
+                                {{ $rtr->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
                         <option value="">{{ __('All Routers') }}</option>
                         @foreach($allRouters as $rtr)
                             <option value="{{ $rtr->id }}" {{ ($routerFilter ?? request('router_id')) == $rtr->id ? 'selected' : '' }}>
