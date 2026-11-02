@@ -1783,7 +1783,7 @@
                                 class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 py-1.5 focus:bg-white focus:border-cyan-500">
                             <option value="">-- {{ __('Unassigned') }} --</option>
                             @foreach($distinctZones as $z)
-                                <option value="{{ $z->id }}">{{ $z->name }}</option>
+                                <option value="{{ is_object($z) ? $z->id : $z }}">{{ is_object($z) ? $z->name : $z }}</option>
                             @endforeach
                         </select>
                     </div>
