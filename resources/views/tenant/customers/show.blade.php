@@ -129,36 +129,39 @@
             $customer->package_name ? ($allPackages->firstWhere('name', $customer->package_name) ?? $allPackages->firstWhere('package_name', $customer->package_name)) : null
         )
     );
+
+    $actionConfig = [
+        'customerId' => $customer->id,
+        'customerStatus' => $customer->status ?? 'active',
+        'pppoeUsername' => (string)($customer->username ?? ''),
+        'pppoePassword' => (string)($customer->password ?? ''),
+        'ipAddress' => (string)($customer->ip_address ?? '127.0.0.1'),
+        'packageId' => (string)($currentPackage?->id ?? ($customer->package_id ?? '')),
+        'packageName' => (string)($customer->package_display_name ?? 'Custom Plan'),
+        'packageCode' => (string)($currentPackage?->name ?? ''),
+        'packageSpeed' => (string)($currentPackage ? ($currentPackage->download_speed . '/' . $currentPackage->upload_speed . ' Mbps') : ($customer->bandwidth ?: 'N/A')),
+        'monthlyBill' => number_format((float)($customer->monthly_bill ?? ($currentPackage?->price ?? 0)), 2, '.', ''),
+        'expiryDate' => $customer->expiry_date ? $customer->expiry_date->format('Y-m-d') : '',
+        'expiryDateFormatted' => $customer->expiry_date ? $customer->expiry_date->format('d M Y') : 'N/A',
+        'billingType' => strtolower((string)($customer->billing_type ?: 'prepaid')),
+        'gracePeriodDays' => (int)($customer->grace_period_days ?? 0),
+        'autoCutEnabled' => (bool)$customer->auto_cut_enabled,
+        'dueAmount' => number_format((float)($customer->due_amount ?? 0), 2, '.', ''),
+        'isReseller' => (bool)$customer->reseller_id,
+        'resellerId' => (string)($customer->reseller_id ?? ''),
+        'resellerName' => (string)($customer->reseller?->name ?? ''),
+        'resellerCode' => (string)($customer->reseller?->code ?? ''),
+        'resellerBalance' => (float)($customer->reseller?->wallet_balance ?? 0),
+        'resellerCreditLimit' => (float)($customer->reseller?->credit_limit ?? 0),
+        'resellerCommissionRate' => (float)($customer->reseller?->commission_rate ?? 0),
+        'isOnline' => (bool)($customer->online_status === 'online' || ($customer->is_online ?? false)),
+        'remarks' => (string)($customer->remarks ?? ''),
+    ];
 @endphp
 
 @section('content')
 <div class="space-y-3" 
-     x-data="customerActionBarManager({
-         customerId: {{ $customer->id }},
-         customerStatus: '{{ $customer->status }}',
-         pppoeUsername: '{{ addslashes($customer->username ?? '') }}',
-         pppoePassword: '{{ addslashes($customer->password ?? '') }}',
-         ipAddress: '{{ $customer->ip_address ?? '127.0.0.1' }}',
-         packageId: '{{ $currentPackage?->id ?? ($customer->package_id ?? '') }}',
-         packageName: '{{ addslashes($currentPackage ? ($currentPackage->package_name ?: $currentPackage->name) : ($customer->package_name ?: 'Custom Plan')) }}',
-         packageCode: '{{ addslashes($currentPackage?->name ?? '') }}',
-         packageSpeed: '{{ $currentPackage ? ($currentPackage->download_speed . '/' . $currentPackage->upload_speed . ' Mbps') : '' }}',
-          monthlyBill: '{{ number_format((float)($customer->monthly_bill ?? ($currentPackage?->price ?? 0)), 2, '.', '') }}',
-          expiryDate: '{{ $customer->expiry_date ? $customer->expiry_date->format('Y-m-d') : '' }}',
-          expiryDateFormatted: '{{ $customer->expiry_date ? $customer->expiry_date->format('d M Y') : '' }}',
-          billingType: '{{ strtolower($customer->billing_type ?: 'prepaid') }}',
-          gracePeriodDays: {{ (int)($customer->grace_period_days ?? 0) }},
-          autoCutEnabled: {{ $customer->auto_cut_enabled ? 'true' : 'false' }},
-          dueAmount: '{{ number_format((float)($customer->due_amount ?? 0), 2, '.', '') }}',
-          isReseller: {{ $customer->reseller_id ? 'true' : 'false' }},
-         resellerId: '{{ $customer->reseller_id ?? '' }}',
-         resellerName: '{{ addslashes($customer->reseller?->name ?? '') }}',
-         resellerCode: '{{ addslashes($customer->reseller?->code ?? '') }}',
-         resellerBalance: '{{ (float)($customer->reseller?->wallet_balance ?? 0) }}',
-         resellerCreditLimit: '{{ (float)($customer->reseller?->credit_limit ?? 0) }}',
-         resellerCommissionRate: '{{ (float)($customer->reseller?->commission_rate ?? 0) }}',
-         isOnline: {{ ($customer->is_online ?? false) ? 'true' : 'false' }}
-     })"
+     x-data="customerActionBarManager(@js($actionConfig))"
      @keydown.escape.window="closeAllModals()">
 
     <!-- Toast Notification Banner -->
@@ -420,9 +423,9 @@
                                 </div>
                                 <div class="min-w-0 flex-1">
                                     <h3 class="text-xs font-bold text-slate-900 tracking-tight leading-snug truncate" 
-                                        x-text="packageData.currentPackageName || '{{ addslashes($customer->packageDisplayName) }}'"
-                                        title="{{ $customer->packageDisplayName }}">
-                                        {{ $customer->packageDisplayName }}
+                                        x-text="packageData.currentPackageName || '{{ addslashes($customer->package_display_name) }}'"
+                                        title="{{ $customer->package_display_name }}">
+                                        {{ $customer->package_display_name }}
                                     </h3>
                                     <span class="inline-flex items-center px-1.5 py-0.5 mt-0.5 rounded text-[9.5px] font-semibold font-mono uppercase border {{ $customer->status === 'active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : ($customer->status === 'expired' ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-rose-50 text-rose-700 border border-rose-200') }}"
                                           :class="statusForm.status === 'active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : (statusForm.status === 'expired' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-rose-50 text-rose-700 border-rose-200')"
@@ -457,7 +460,7 @@
                                     </div>
                                     <span class="text-slate-400 font-bold px-1 flex-shrink-0">:</span>
                                     <span class="font-bold text-emerald-700 text-right flex-1 truncate text-[11px] pl-1 font-mono">
-                                        {{ $currencySymbol ?? '৳' }} <span x-text="Number(packageData.currentMonthlyBill || {{ (float)($customer->monthly_bill ?? ($currentPackage?->price ?? 0)) }}).toFixed(2)">{{ number_format((float)($customer->monthly_bill ?? ($currentPackage?->price ?? 0)), 2) }}</span>
+                                        {{ $currencySymbol ?? '৳' }} <span x-text="Number(packageData.currentMonthlyBill || 0).toFixed(2)">{{ number_format((float)($customer->monthly_bill ?? ($currentPackage?->price ?? 0)), 2) }}</span>
                                     </span>
                                 </div>
 
@@ -495,7 +498,7 @@
                                     </div>
                                     <span class="text-slate-400 font-bold px-1 flex-shrink-0">:</span>
                                     <span class="font-semibold text-slate-800 text-right flex-1 truncate text-[11px] pl-1 font-mono">
-                                        <span x-text="cycleData.gracePeriodDays ?? '{{ $customer->grace_period_days ?? 0 }}'">{{ $customer->grace_period_days ?? 0 }}</span> Days
+                                        <span x-text="cycleData.gracePeriodDays ?? {{ $customer->grace_period_days ?? 0 }}">{{ $customer->grace_period_days ?? 0 }}</span> Days
                                     </span>
                                 </div>
                             </div>
@@ -507,8 +510,8 @@
                             <div class="flex items-center justify-between p-1.5 rounded bg-slate-50/80 border border-slate-200/70">
                                 <span class="text-[10px] font-medium text-slate-600">Auto-Cut System:</span>
                                 <span class="px-1.5 py-0.5 rounded text-[9.5px] font-bold font-mono uppercase border"
-                                      :class="(cycleData.autoCutEnabled ?? {{ $customer->auto_cut_enabled ? 'true' : 'false' }}) ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200'"
-                                      x-text="(cycleData.autoCutEnabled ?? {{ $customer->auto_cut_enabled ? 'true' : 'false' }}) ? 'ENABLED' : 'DISABLED'">
+                                      :class="cycleData.autoCutEnabled ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200'"
+                                      x-text="cycleData.autoCutEnabled ? 'ENABLED' : 'DISABLED'">
                                     {{ $customer->auto_cut_enabled ? 'ENABLED' : 'DISABLED' }}
                                 </span>
                             </div>
@@ -570,7 +573,7 @@
                                     <span class="text-slate-400 font-bold px-1 flex-shrink-0">:</span>
                                     <div class="flex items-center justify-end gap-1.5 flex-1 truncate pl-1">
                                         <span class="font-mono text-[11px] font-semibold text-slate-800 truncate" 
-                                              x-text="showPassword ? '{{ addslashes($customer->password ?? '') }}' : '••••••••'">
+                                              x-text="showPassword ? (pppoeForm.password || '') : '••••••••'">
                                             ••••••••
                                         </span>
                                         <button type="button" 
@@ -1425,7 +1428,7 @@ function customerActionBarManager(config) {
         showPassword: false,
         toast: { show: false, message: '', type: 'success' },
         noteForm: {
-            remarks: '{{ addslashes($customer->remarks ?? '') }}'
+            remarks: config.remarks || ''
         },
         payForm: {
             payment_mode: 'due',
@@ -1533,12 +1536,12 @@ function customerActionBarManager(config) {
             adjustedExpiryDate: ''
         },
         traffic: {
-            is_online: false,
+            is_online: !!config.isOnline,
             rx_mbps: 0.00,
             tx_mbps: 0.00,
             rx_human: '0.00 Mbps',
             tx_human: '0.00 Mbps',
-            uptime: '--',
+            uptime: config.isOnline ? 'Online' : 'Offline',
             ip: config.ipAddress || '',
             mac: '',
             total_rx_human: '0 B',
@@ -1767,7 +1770,7 @@ function customerActionBarManager(config) {
             this.fetchUsageHistory();
             this.$nextTick(() => {
                 this.initMikrotikGraph();
-                if (this.traffic.is_online || {{ ($customer->is_online ?? false) ? 'true' : 'false' }}) {
+                if (this.traffic.is_online || config.isOnline) {
                     this.startPolling();
                 }
             });
@@ -2852,6 +2855,9 @@ function customerActionBarManager(config) {
                 });
                 const res = await response.json();
                 if (res.success) {
+                    if (res.remarks !== undefined) {
+                        this.noteForm.remarks = res.remarks || '';
+                    }
                     this.showToast(res.message || 'Customer notes saved successfully!');
                     this.noteModal = false;
                 } else {
@@ -2865,5 +2871,6 @@ function customerActionBarManager(config) {
         }
     };
 }
+window.customerActionBarManager = customerActionBarManager;
 </script>
 @endpush
