@@ -517,6 +517,7 @@
                             <th class="text-right">Due Amount</th>
                         @endif
                         <th>Expiry Date</th>
+                        <th class="text-center">{{ __('Validity') }}</th>
                         <th class="w-14 text-center no-sort">Action</th>
                     </tr>
                 </thead>
@@ -526,6 +527,7 @@
                             $statusBadge = $c->status_badge;
                             $packageName = $c->package_display_name;
                             $dueAmountVal = (float)($c->due_amount > 0 ? $c->due_amount : ($c->monthly_bill ?: 0));
+                            $expiryBadge = $c->expiry_days_badge;
                             $rawCustomerData = [
                                 'id' => $c->id,
                                 'customer_id' => $c->customer_id,
@@ -708,7 +710,19 @@
                                 {{ $c->expiry_date ? $c->expiry_date->format('d M Y') : '--' }}
                             </td>
 
-                            <!-- 12. Action (3-Dot Floating Action Menu) -->
+                            <!-- 12. Validity / Remaining / Overdue -->
+                            <td class="text-center font-mono whitespace-nowrap" data-sort-value="{{ $expiryBadge['days'] !== null ? $expiryBadge['days'] : 99999 }}">
+                                @if($expiryBadge['state'] === 'none')
+                                    <span class="text-slate-400">--</span>
+                                @else
+                                    <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] border {{ $expiryBadge['class'] }}">
+                                        <span class="w-1.5 h-1.5 rounded-full {{ $expiryBadge['dot'] }}"></span>
+                                        <span>{{ __($expiryBadge['label']) }}</span>
+                                    </span>
+                                @endif
+                            </td>
+
+                            <!-- 13. Action (3-Dot Floating Action Menu) -->
                             <td class="text-center">
                                 <button type="button" 
                                         @click="toggleMenu({{ Js::from($rawCustomerData) }}, $event)" 
@@ -719,7 +733,7 @@
                         </tr>
                     @empty
                         <tr class="no-record-row">
-                            <td colspan="{{ $isDueRoute ? 14 : 13 }}" class="px-4 py-8 text-center text-slate-400 text-xs italic bg-slate-50/50">
+                            <td colspan="{{ $isDueRoute ? 15 : 14 }}" class="px-4 py-8 text-center text-slate-400 text-xs italic bg-slate-50/50">
                                 <i class="fas fa-users-slash text-2xl text-slate-300 mb-2 block"></i>
                                 No customer or subscriber records found. (Database is empty)
                             </td>
@@ -727,7 +741,7 @@
                     @endforelse
                     <!-- Instant Live Search No Match Indicator -->
                     <tr x-show="searchQuery && totalMatchingRows === 0" x-cloak class="no-record-row">
-                        <td colspan="{{ $isDueRoute ? 14 : 13 }}" class="px-4 py-8 text-center text-slate-400 text-xs bg-slate-50/50">
+                        <td colspan="{{ $isDueRoute ? 15 : 14 }}" class="px-4 py-8 text-center text-slate-400 text-xs bg-slate-50/50">
                             <i class="fas fa-magnifying-glass text-xl text-slate-300 mb-2 block"></i>
                             <span>{{ __('No subscribers matched your search on this page.') }}</span>
                             <span class="block text-[11px] text-slate-400 mt-1">{{ __('Press Enter to query the entire database...') }}</span>

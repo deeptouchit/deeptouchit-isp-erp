@@ -217,6 +217,68 @@ class TenantCustomer extends Model
     }
 
     /**
+     * Expiry remaining or overdue days badge
+     */
+    public function getExpiryDaysBadgeAttribute(): array
+    {
+        if (!$this->expiry_date) {
+            return [
+                'days' => null,
+                'state' => 'none',
+                'label' => '--',
+                'class' => 'text-slate-400 font-mono text-xs',
+                'dot' => '',
+            ];
+        }
+
+        $today = now()->startOfDay();
+        $expiry = $this->expiry_date->copy()->startOfDay();
+        $diff = (int)$today->diffInDays($expiry, false);
+
+        if ($diff > 0) {
+            $dayText = $diff . ' ' . ($diff === 1 ? 'Day' : 'Days') . ' Left';
+            if ($diff <= 3) {
+                return [
+                    'days' => $diff,
+                    'state' => 'expiring_soon',
+                    'label' => $dayText,
+                    'class' => 'bg-amber-50 text-amber-700 border-amber-200 shadow-2xs font-semibold',
+                    'dot' => 'bg-amber-500 ring-2 ring-amber-200',
+                ];
+            }
+
+            return [
+                'days' => $diff,
+                'state' => 'active',
+                'label' => $dayText,
+                'class' => 'bg-emerald-50 text-emerald-700 border-emerald-200 shadow-2xs font-semibold',
+                'dot' => 'bg-emerald-500 ring-2 ring-emerald-200',
+            ];
+        }
+
+        if ($diff === 0) {
+            return [
+                'days' => 0,
+                'state' => 'today',
+                'label' => 'Expires Today',
+                'class' => 'bg-amber-50 text-amber-800 border-amber-300 shadow-2xs font-bold animate-pulse',
+                'dot' => 'bg-amber-500 ring-2 ring-amber-300',
+            ];
+        }
+
+        $overdueDays = abs($diff);
+        $overdueText = $overdueDays . ' ' . ($overdueDays === 1 ? 'Day' : 'Days') . ' Over';
+
+        return [
+            'days' => $diff,
+            'state' => 'overdue',
+            'label' => $overdueText,
+            'class' => 'bg-rose-50 text-rose-700 border-rose-200 shadow-2xs font-semibold',
+            'dot' => 'bg-rose-500 ring-2 ring-rose-200',
+        ];
+    }
+
+    /**
      * Scope Affiliation Badge (ISP Core Direct vs Sub-ISP Franchise)
      */
     public function getScopeBadgeAttribute(): array
