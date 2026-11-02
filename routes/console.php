@@ -51,4 +51,10 @@ Schedule::command('isp:process-subscribers --mode=auto')
     ->withoutOverlapping(15)
     ->runInBackground();
 
+// 7. Automated MikroTik Active PPPoE & Live Sessions Sync (Every 2 Minutes)
+Schedule::command('network:sync-sessions')
+    ->everyTwoMinutes()
+    ->withoutOverlapping(10)
+    ->runInBackground();
+
 

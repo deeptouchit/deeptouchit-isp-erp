@@ -565,46 +565,47 @@
                             </td>
 
                             <!-- 2. Live Status (Real-time Online / Offline) -->
-                            <td class="text-center">
-                                <template x-if="getOnlineStatus('{{ $c->username }}', '{{ $c->online_status }}') === 'online'">
-                                    <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-semibold border bg-emerald-50 text-emerald-700 border-emerald-200 shadow-2xs">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 ring-2 ring-emerald-300 animate-pulse"></span>
-                                        <span>Online</span>
+                            <td class="text-center whitespace-nowrap">
+                                @php
+                                    $isLiveOnline = ($c->online_status === 'online');
+                                    $escapedUsername = addslashes($c->username);
+                                @endphp
+                                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-semibold border shadow-2xs whitespace-nowrap transition {{ $isLiveOnline ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200' }}"
+                                      :class="getOnlineStatus('{{ $escapedUsername }}', '{{ $c->online_status }}') === 'online' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200'">
+                                    <span class="w-1.5 h-1.5 rounded-full {{ $isLiveOnline ? 'bg-emerald-500 ring-2 ring-emerald-300 animate-pulse' : 'bg-rose-500 ring-2 ring-rose-200' }}"
+                                          :class="getOnlineStatus('{{ $escapedUsername }}', '{{ $c->online_status }}') === 'online' ? 'bg-emerald-500 ring-2 ring-emerald-300 animate-pulse' : 'bg-rose-500 ring-2 ring-rose-200'"></span>
+                                    <span x-text="getOnlineStatus('{{ $escapedUsername }}', '{{ $c->online_status }}') === 'online' ? 'Online' : 'Offline'">
+                                        {{ $isLiveOnline ? 'Online' : 'Offline' }}
                                     </span>
-                                </template>
-                                <template x-if="getOnlineStatus('{{ $c->username }}', '{{ $c->online_status }}') !== 'online'">
-                                    <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-semibold border bg-rose-50 text-rose-700 border-rose-200 shadow-2xs">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-rose-500 ring-2 ring-rose-200"></span>
-                                        <span>Offline</span>
-                                    </span>
-                                </template>
+                                </span>
                             </td>
 
                             <!-- 3. MikroTik (Direct Real-time MikroTik /ppp/secret State) -->
                             @if(!$isOnlineRoute)
-                                <td class="text-center">
+                                <td class="text-center whitespace-nowrap">
                                     @php
                                         $initialMikrotik = $c->mikrotik_status ?: 'enabled';
+                                        $isMktEnabled = ($initialMikrotik === 'enabled');
                                     @endphp
                                     @if(!$authUser || !$authUser->isCollector())
                                     <button type="button" 
-                                            @click="toggleMikrotikState({{ $c->id }}, '{{ $c->username }}', '{{ $initialMikrotik }}')" 
-                                            :title="getMikrotikState('{{ $c->username }}', '{{ $initialMikrotik }}') === 'enabled' ? 'MikroTik Secret: ENABLED (Click to Disable)' : 'MikroTik Secret: DISABLED (Click to Enable)'"
-                                            class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[10px] font-semibold border transition cursor-pointer shadow-2xs"
-                                            :class="getMikrotikState('{{ $c->username }}', '{{ $initialMikrotik }}') === 'enabled'
+                                            @click="toggleMikrotikState({{ $c->id }}, '{{ $escapedUsername }}', '{{ $initialMikrotik }}')" 
+                                            :title="getMikrotikState('{{ $escapedUsername }}', '{{ $initialMikrotik }}') === 'enabled' ? 'MikroTik Secret: ENABLED (Click to Disable)' : 'MikroTik Secret: DISABLED (Click to Enable)'"
+                                            class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[10px] font-semibold border transition cursor-pointer shadow-2xs whitespace-nowrap {{ $isMktEnabled ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' : 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100' }}"
+                                            :class="getMikrotikState('{{ $escapedUsername }}', '{{ $initialMikrotik }}') === 'enabled'
                                                 ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' 
                                                 : 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100'">
-                                        <span class="w-1.5 h-1.5 rounded-full"
-                                              :class="getMikrotikState('{{ $c->username }}', '{{ $initialMikrotik }}') === 'enabled'
+                                        <span class="w-1.5 h-1.5 rounded-full {{ $isMktEnabled ? 'bg-emerald-500 ring-2 ring-emerald-300' : 'bg-rose-500' }}"
+                                              :class="getMikrotikState('{{ $escapedUsername }}', '{{ $initialMikrotik }}') === 'enabled'
                                                   ? 'bg-emerald-500 ring-2 ring-emerald-300' 
                                                   : 'bg-rose-500'"></span>
-                                        <span x-text="getMikrotikState('{{ $c->username }}', '{{ $initialMikrotik }}') === 'enabled' ? 'Enabled' : 'Disabled'">
-                                            {{ $initialMikrotik === 'enabled' ? 'Enabled' : 'Disabled' }}
+                                        <span x-text="getMikrotikState('{{ $escapedUsername }}', '{{ $initialMikrotik }}') === 'enabled' ? 'Enabled' : 'Disabled'">
+                                            {{ $isMktEnabled ? 'Enabled' : 'Disabled' }}
                                         </span>
                                     </button>
                                     @else
-                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[10px] font-semibold border shadow-2xs {{ $initialMikrotik === 'enabled' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200' }}">
-                                        <span class="w-1.5 h-1.5 rounded-full {{ $initialMikrotik === 'enabled' ? 'bg-emerald-500 ring-2 ring-emerald-300' : 'bg-rose-500' }}"></span>
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[10px] font-semibold border shadow-2xs whitespace-nowrap {{ $isMktEnabled ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200' }}">
+                                        <span class="w-1.5 h-1.5 rounded-full {{ $isMktEnabled ? 'bg-emerald-500 ring-2 ring-emerald-300' : 'bg-rose-500' }}"></span>
                                         <span>{{ ucfirst($initialMikrotik) }}</span>
                                     </span>
                                     @endif

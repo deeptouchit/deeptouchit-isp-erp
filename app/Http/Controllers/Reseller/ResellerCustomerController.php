@@ -3074,7 +3074,7 @@ class ResellerCustomerController extends Controller
         }
 
         // 4. Mark offline
-        $onlineList = array_keys($activeUsernames);
+        $onlineList = array_values(array_map('strval', array_keys($activeUsernames)));
         if (!empty($onlineList)) {
             TenantCustomer::where('tenant_id', $tenantId)
                 ->where('reseller_id', $resellerId)

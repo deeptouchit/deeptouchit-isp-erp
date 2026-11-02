@@ -1143,8 +1143,8 @@ class TenantCustomerController extends Controller
             // Ignore
         }
 
-        // Set others to offline
-        $onlineList = array_keys($activeUsernames);
+        // Set others to offline safely
+        $onlineList = array_values(array_map('strval', array_keys($activeUsernames)));
         if (!empty($onlineList)) {
             TenantCustomer::where('tenant_id', $tenant->id)
                 ->whereNotIn('username', $onlineList)
@@ -1388,11 +1388,16 @@ class TenantCustomerController extends Controller
     public function syncOnlineSessions(Request $request): JsonResponse
     {
         $tenant = $this->getTenant();
-        $routers = TenantRouter::where('tenant_id', $tenant->id)->get();
+        $routers = TenantRouter::where('tenant_id', $tenant->id)->where('is_active', true)->get();
+        if ($routers->isEmpty()) {
+            $routers = TenantRouter::where('tenant_id', $tenant->id)->get();
+        }
         $mikrotikApi = new MikrotikApiService();
 
         $activeUsernames = [];
         $liveCount = 0;
+        $ipMap = [];
+        $macMap = [];
 
         // 1. Check live active PPPoE sessions directly from connected MikroTik routers
         foreach ($routers as $router) {
@@ -1400,17 +1405,15 @@ class TenantCustomerController extends Controller
                 $res = $mikrotikApi->getActivePppoe($router);
                 if (!empty($res['success']) && !empty($res['data'])) {
                     foreach ($res['data'] as $session) {
-                        $u = $session['name'] ?? null;
-                        if ($u) {
+                        $u = trim((string)($session['name'] ?? ''));
+                        if ($u !== '') {
                             $activeUsernames[$u] = true;
-                            $liveCount++;
-                            TenantCustomer::where('tenant_id', $tenant->id)
-                                ->where('username', $u)
-                                ->update([
-                                    'online_status' => 'online',
-                                    'ip_address' => !empty($session['address']) ? $session['address'] : DB::raw('ip_address'),
-                                    'mac_address' => !empty($session['caller_id']) ? $session['caller_id'] : DB::raw('mac_address'),
-                                ]);
+                            if (!empty($session['address'])) {
+                                $ipMap[$u] = $session['address'];
+                            }
+                            if (!empty($session['caller_id'])) {
+                                $macMap[$u] = $session['caller_id'];
+                            }
                         }
                     }
                 }
@@ -1427,38 +1430,58 @@ class TenantCustomerController extends Controller
                 ->get();
 
             foreach ($radiusSessions as $rs) {
-                if (!empty($rs->username)) {
-                    if (!isset($activeUsernames[$rs->username])) {
-                        $activeUsernames[$rs->username] = true;
-                        $liveCount++;
+                $ru = trim((string)($rs->username ?? ''));
+                if ($ru !== '') {
+                    $activeUsernames[$ru] = true;
+                    if (!empty($rs->framedipaddress) && !isset($ipMap[$ru])) {
+                        $ipMap[$ru] = $rs->framedipaddress;
                     }
-                    TenantCustomer::where('tenant_id', $tenant->id)
-                        ->where('username', $rs->username)
-                        ->update([
-                            'online_status' => 'online',
-                            'ip_address' => !empty($rs->framedipaddress) ? $rs->framedipaddress : DB::raw('ip_address'),
-                            'mac_address' => !empty($rs->callingstationid) ? $rs->callingstationid : DB::raw('mac_address'),
-                        ]);
+                    if (!empty($rs->callingstationid) && !isset($macMap[$ru])) {
+                        $macMap[$ru] = $rs->callingstationid;
+                    }
                 }
             }
         } catch (\Exception $e) {
             // Ignore if radacct table not used
         }
 
+        $onlineList = array_values(array_map('strval', array_keys($activeUsernames)));
+        $liveCount = count($onlineList);
+
+        // Bulk update online / offline states safely without mixed-type SQL coercion
+        if (!empty($onlineList)) {
+            foreach (array_chunk($onlineList, 500) as $chunk) {
+                TenantCustomer::where('tenant_id', $tenant->id)
+                    ->whereIn('username', $chunk)
+                    ->update(['online_status' => 'online']);
+            }
+
+            TenantCustomer::where('tenant_id', $tenant->id)
+                ->whereNotIn('username', $onlineList)
+                ->update(['online_status' => 'offline']);
+        } else {
+            TenantCustomer::where('tenant_id', $tenant->id)
+                ->update(['online_status' => 'offline']);
+        }
+
         // 3. Pull real-time /ppp/secret states directly from MikroTik routers
         $mikrotikStatusMap = [];
+        $disabledSecrets = [];
+        $enabledSecrets = [];
         foreach ($routers as $router) {
             try {
                 $secRes = $mikrotikApi->pullPppSecrets($router);
                 if (!empty($secRes['success']) && !empty($secRes['secrets'])) {
                     foreach ($secRes['secrets'] as $sec) {
-                        $u = $sec['name'] ?? null;
-                        if ($u) {
+                        $su = trim((string)($sec['name'] ?? ''));
+                        if ($su !== '') {
                             $mState = !empty($sec['disabled']) ? 'disabled' : 'enabled';
-                            $mikrotikStatusMap[$u] = $mState;
-                            TenantCustomer::where('tenant_id', $tenant->id)
-                                ->where('username', $u)
-                                ->update(['mikrotik_status' => $mState]);
+                            $mikrotikStatusMap[$su] = $mState;
+                            if ($mState === 'disabled') {
+                                $disabledSecrets[] = $su;
+                            } else {
+                                $enabledSecrets[] = $su;
+                            }
                         }
                     }
                 }
@@ -1467,12 +1490,21 @@ class TenantCustomerController extends Controller
             }
         }
 
-        // 4. Mark all other tenant customers as offline
-        $onlineList = array_keys($activeUsernames);
-        if (!empty($onlineList)) {
-            TenantCustomer::where('tenant_id', $tenant->id)
-                ->whereNotIn('username', $onlineList)
-                ->update(['online_status' => 'offline']);
+        if (!empty($disabledSecrets)) {
+            $disabledStrings = array_values(array_map('strval', array_unique($disabledSecrets)));
+            foreach (array_chunk($disabledStrings, 500) as $chunk) {
+                TenantCustomer::where('tenant_id', $tenant->id)
+                    ->whereIn('username', $chunk)
+                    ->update(['mikrotik_status' => 'disabled']);
+            }
+        }
+        if (!empty($enabledSecrets)) {
+            $enabledStrings = array_values(array_map('strval', array_unique($enabledSecrets)));
+            foreach (array_chunk($enabledStrings, 500) as $chunk) {
+                TenantCustomer::where('tenant_id', $tenant->id)
+                    ->whereIn('username', $chunk)
+                    ->update(['mikrotik_status' => 'enabled']);
+            }
         }
 
         return response()->json([
