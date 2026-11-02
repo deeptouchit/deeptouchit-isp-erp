@@ -1247,7 +1247,7 @@
                             </div>
                             <span class="text-slate-400 font-bold px-1 flex-shrink-0">:</span>
                             <span class="font-semibold text-slate-800 text-right flex-1 truncate text-[11px] pl-1 font-mono">
-                                {{ $customer->olt?->name ?: ($customer->olt?->brand ?: 'N/A') }}
+                                {{ $customer->olt?->name ?: ($onu?->olt?->name ?: 'N/A') }}
                             </span>
                         </div>
                     </div>

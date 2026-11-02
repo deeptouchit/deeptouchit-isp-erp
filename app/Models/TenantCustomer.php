@@ -101,22 +101,67 @@ class TenantCustomer extends Model
             return $direct;
         }
 
-        // 2. Link by ONU MAC or Serial Number
+        // 2. Link by Customer's Router MAC (from PPPoE / MikroTik caller-id / radacct)
+        $macToMatch = $this->mac_address;
+        if (empty($macToMatch) && !empty($this->username)) {
+            try {
+                $session = \Illuminate\Support\Facades\DB::table('radacct')
+                    ->where('username', $this->username)
+                    ->whereNotNull('callingstationid')
+                    ->where('callingstationid', '!=', '')
+                    ->orderByDesc('radacctid')
+                    ->first();
+                if ($session && !empty($session->callingstationid)) {
+                    $macToMatch = $session->callingstationid;
+                    $this->updateQuietly(['mac_address' => $macToMatch]);
+                }
+            } catch (\Throwable $e) {
+                // Ignore if radacct is inaccessible
+            }
+        }
+
+        if (!empty($macToMatch)) {
+            $routerMac = trim($macToMatch);
+            $cleanRouterMac = strtolower(str_replace([':', '-', '.', ' '], '', $routerMac));
+
+            $foundByRouterMac = TenantOnu::where('tenant_id', $this->tenant_id)
+                ->where(function($q) use ($routerMac, $cleanRouterMac) {
+                    $q->where('router_mac', $routerMac)
+                      ->orWhere('mac_address', $routerMac)
+                      ->orWhereRaw("REPLACE(REPLACE(REPLACE(LOWER(COALESCE(router_mac, '')), ':', ''), '-', ''), '.', '') = ?", [$cleanRouterMac])
+                      ->orWhereRaw("REPLACE(REPLACE(REPLACE(LOWER(COALESCE(mac_address, '')), ':', ''), '-', ''), '.', '') = ?", [$cleanRouterMac]);
+                })->first();
+
+            if ($foundByRouterMac) {
+                if (empty($foundByRouterMac->customer_id)) {
+                    $foundByRouterMac->updateQuietly([
+                        'customer_id' => $this->id,
+                        'router_mac' => $routerMac,
+                    ]);
+                }
+                return $foundByRouterMac;
+            }
+        }
+
+        // 3. Link by ONU MAC or Serial Number (if set on customer)
         if (!empty($this->onu_mac_sn)) {
             $mac = trim($this->onu_mac_sn);
-            $cleanMac = strtolower(str_replace([':', '-', ' '], '', $mac));
+            $cleanMac = strtolower(str_replace([':', '-', '.', ' '], '', $mac));
             $found = TenantOnu::where('tenant_id', $this->tenant_id)
                 ->where(function($q) use ($mac, $cleanMac) {
                     $q->where('mac_address', $mac)
                       ->orWhere('name', 'like', "%{$mac}%")
-                      ->orWhereRaw("REPLACE(REPLACE(LOWER(mac_address), ':', ''), '-', '') = ?", [$cleanMac]);
+                      ->orWhereRaw("REPLACE(REPLACE(REPLACE(LOWER(COALESCE(mac_address, '')), ':', ''), '-', ''), '.', '') = ?", [$cleanMac]);
                 })->first();
             if ($found) {
+                if (empty($found->customer_id)) {
+                    $found->updateQuietly(['customer_id' => $this->id]);
+                }
                 return $found;
             }
         }
 
-        // 3. Link by PPPoE Username or Customer ID / Name in OLT description
+        // 4. Link by PPPoE Username or Customer ID / Name in OLT description
         if (!empty($this->username)) {
             $found = TenantOnu::where('tenant_id', $this->tenant_id)
                 ->where(function($q) {
@@ -130,6 +175,12 @@ class TenantCustomer extends Model
                 })
                 ->first();
             if ($found) {
+                if (empty($found->customer_id)) {
+                    $found->updateQuietly([
+                        'customer_id' => $this->id,
+                        'pppoe_username' => $this->username,
+                    ]);
+                }
                 return $found;
             }
         }
