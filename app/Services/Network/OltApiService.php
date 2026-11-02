@@ -730,6 +730,27 @@ class OltApiService
                     $ponPort = $pParts[0] ?? '1/1';
                     $onuId = isset($pParts[1]) ? (int)$pParts[1] : ($syncedCount + 1);
 
+                    // Fetch learned router MAC from CoreLink FDB / onumaclist
+                    $cleanPort = preg_replace('/[^0-9]/', '', substr($ponPort, strrpos($ponPort, '/') ?: 0));
+                    $ponNum = is_numeric($cleanPort) && (int)$cleanPort > 0 ? (int)$cleanPort : 1;
+                    $abnormalOnuId = str_replace('/', '_', $portOnu);
+                    $routerMac = null;
+                    if ($isOnline) {
+                        try {
+                            $macRes = $this->sendUniMarsRequest($ip, $port, "get=onumaclist&sysUnit=1&ponport={$ponNum}&onuid={$abnormalOnuId}");
+                            if ($macRes && preg_match('/<item\s+mac="([0-9a-fA-F:]{17})"/i', $macRes, $mMacItem)) {
+                                $routerMac = strtoupper(trim($mMacItem[1]));
+                            }
+                        } catch (\Throwable $e) {
+                            Log::warning("CoreLink onumaclist error for {$portOnu}: " . $e->getMessage());
+                        }
+                    }
+
+                    $existingOnu = TenantOnu::where('olt_id', $olt->id)
+                        ->where('pon_port', $ponPort)
+                        ->where('onu_id', $onuId)
+                        ->first();
+
                     $savedOnu = TenantOnu::updateOrCreate(
                         [
                             'olt_id' => $olt->id,
@@ -744,6 +765,7 @@ class OltApiService
                             'name' => "ONU {$ponPort}:{$onuId}",
                             'desc' => '',
                             'mac_address' => ($mac && $mac !== 'NA') ? $mac : null,
+                            'router_mac' => $routerMac ?: ($existingOnu?->router_mac ?: null),
                             'vendor' => 'CoreLink',
                             'model' => 'HA7200',
                             'onu_type' => 'EPON',
@@ -757,7 +779,7 @@ class OltApiService
                         ]
                     );
 
-                    $this->autoLinkCustomerToOnu($savedOnu, $olt, null, ($mac && $mac !== 'NA') ? $mac : null);
+                    $this->autoLinkCustomerToOnu($savedOnu, $olt, $routerMac, ($mac && $mac !== 'NA') ? $mac : null);
 
                     $syncedOnuDbIds[] = $savedOnu->id;
                     $syncedCount++;
