@@ -285,18 +285,31 @@
     @endphp
     <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5"
          x-data="{ showMoreFilters: {{ $isMoreOpen ? 'true' : 'false' }} }">
-        <form method="GET" action="{{ url()->current() }}" class="space-y-2.5">
+        <form method="GET" action="{{ url()->current() }}" id="customerFilterForm" class="space-y-2.5">
             <!-- Primary Filter Bar (Always visible single row) -->
             <div class="flex flex-col md:flex-row items-stretch md:items-center gap-2">
                 
-                <!-- Search Text -->
-                <div class="relative flex-1 min-w-[180px]">
-                    <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
+                <!-- Search Text (Instant Live Search + Full DB Lookup) -->
+                <div class="relative flex-1 min-w-[200px]">
+                    <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-xs pointer-events-none transition-colors"
+                       :class="searchQuery ? 'text-cyan-600 font-bold' : 'text-slate-400'"></i>
                     <input type="text" 
                            name="search" 
-                           value="{{ $search }}" 
-                           placeholder="{{ __('Search Name, ID, Username, Phone, IP...') }}" 
-                           class="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition placeholder:text-slate-400">
+                           id="customerSearchInput"
+                           x-model="searchQuery"
+                           @input="handleLiveSearch($event.target.value)"
+                           @keydown.enter.prevent="submitSearchNow()"
+                           placeholder="{{ __('Live Search Name, ID, Username, Phone, IP...') }}" 
+                           class="w-full pl-8 pr-7 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition placeholder:text-slate-400"
+                           autocomplete="off">
+                    <button type="button" 
+                            x-show="searchQuery && searchQuery.length > 0" 
+                            x-cloak
+                            @click="clearLiveSearch()"
+                            class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500 p-0.5 text-xs transition cursor-pointer"
+                            title="{{ __('Clear Search') }}">
+                        <i class="fas fa-times-circle"></i>
+                    </button>
                 </div>
 
                 <!-- Status Filter -->
@@ -705,13 +718,21 @@
                             </td>
                         </tr>
                     @empty
-                        <tr>
+                        <tr class="no-record-row">
                             <td colspan="{{ $isDueRoute ? 14 : 13 }}" class="px-4 py-8 text-center text-slate-400 text-xs italic bg-slate-50/50">
                                 <i class="fas fa-users-slash text-2xl text-slate-300 mb-2 block"></i>
                                 No customer or subscriber records found. (Database is empty)
                             </td>
                         </tr>
                     @endforelse
+                    <!-- Instant Live Search No Match Indicator -->
+                    <tr x-show="searchQuery && totalMatchingRows === 0" x-cloak class="no-record-row">
+                        <td colspan="{{ $isDueRoute ? 14 : 13 }}" class="px-4 py-8 text-center text-slate-400 text-xs bg-slate-50/50">
+                            <i class="fas fa-magnifying-glass text-xl text-slate-300 mb-2 block"></i>
+                            <span>{{ __('No subscribers matched your search on this page.') }}</span>
+                            <span class="block text-[11px] text-slate-400 mt-1">{{ __('Press Enter to query the entire database...') }}</span>
+                        </td>
+                    </tr>
                 </tbody>
             </table>
         </div>
@@ -1919,8 +1940,66 @@ function customerMasterManager() {
         isTableLiveStreaming: false,
         tableLiveStreamTimer: null,
         visibleCustomerIds: @json($customers->pluck('id')),
+        searchQuery: @json($search ?? ''),
+        searchDebounceTimer: null,
+        totalMatchingRows: null,
+
+        handleLiveSearch(val) {
+            this.filterRowsOnly(val);
+
+            // Debounced full database search across all pages
+            clearTimeout(this.searchDebounceTimer);
+            this.searchDebounceTimer = setTimeout(() => {
+                const form = document.getElementById('customerFilterForm');
+                if (form) {
+                    form.submit();
+                }
+            }, 600);
+        },
+
+        filterRowsOnly(val) {
+            const term = (val || '').trim().toLowerCase();
+            const rows = document.querySelectorAll('.saas-table tbody tr:not(.no-record-row)');
+            let matchCount = 0;
+            rows.forEach(row => {
+                const text = row.innerText.toLowerCase();
+                const matches = !term || text.includes(term);
+                row.style.display = matches ? '' : 'none';
+                if (matches) matchCount++;
+            });
+            this.totalMatchingRows = term ? matchCount : null;
+        },
+
+        clearLiveSearch() {
+            this.searchQuery = '';
+            clearTimeout(this.searchDebounceTimer);
+            const rows = document.querySelectorAll('.saas-table tbody tr:not(.no-record-row)');
+            rows.forEach(row => {
+                row.style.display = '';
+            });
+            this.totalMatchingRows = null;
+            const form = document.getElementById('customerFilterForm');
+            if (form) {
+                const input = form.querySelector('input[name="search"]');
+                if (input) input.value = '';
+                form.submit();
+            }
+        },
+
+        submitSearchNow() {
+            clearTimeout(this.searchDebounceTimer);
+            const form = document.getElementById('customerFilterForm');
+            if (form) {
+                form.submit();
+            }
+        },
 
         init() {
+            if (this.searchQuery) {
+                this.$nextTick(() => {
+                    this.filterRowsOnly(this.searchQuery);
+                });
+            }
             // Real-time automatic session polling from MikroTik/FreeRADIUS in background
             this.pollLiveSessions(false);
             this.pollInterval = setInterval(() => {
