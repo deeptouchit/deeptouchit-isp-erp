@@ -95,6 +95,13 @@ class TenantCustomer extends Model
      */
     public function getOnuDeviceAttribute(): ?TenantOnu
     {
+        // 1. Direct customer_id link
+        $direct = TenantOnu::where('tenant_id', $this->tenant_id)->where('customer_id', $this->id)->first();
+        if ($direct) {
+            return $direct;
+        }
+
+        // 2. Link by ONU MAC or Serial Number
         if (!empty($this->onu_mac_sn)) {
             $mac = trim($this->onu_mac_sn);
             $cleanMac = strtolower(str_replace([':', '-', ' '], '', $mac));
@@ -104,14 +111,27 @@ class TenantCustomer extends Model
                       ->orWhere('name', 'like', "%{$mac}%")
                       ->orWhereRaw("REPLACE(REPLACE(LOWER(mac_address), ':', ''), '-', '') = ?", [$cleanMac]);
                 })->first();
-            if ($found) return $found;
+            if ($found) {
+                return $found;
+            }
         }
 
+        // 3. Link by PPPoE Username or Customer ID / Name in OLT description
         if (!empty($this->username)) {
             $found = TenantOnu::where('tenant_id', $this->tenant_id)
-                ->where('pppoe_username', $this->username)
+                ->where(function($q) {
+                    $q->where('pppoe_username', $this->username)
+                      ->orWhere('name', $this->username)
+                      ->orWhere('desc', 'like', "%{$this->username}%");
+                    if (!empty($this->customer_id)) {
+                        $q->orWhere('name', 'like', "%{$this->customer_id}%")
+                          ->orWhere('desc', 'like', "%{$this->customer_id}%");
+                    }
+                })
                 ->first();
-            if ($found) return $found;
+            if ($found) {
+                return $found;
+            }
         }
 
         return null;
