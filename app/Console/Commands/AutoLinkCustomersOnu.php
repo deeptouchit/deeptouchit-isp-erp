@@ -44,6 +44,12 @@ class AutoLinkCustomersOnu extends Command
             $onus = TenantOnu::where('tenant_id', $tenant->id)->get();
             $this->info("Found {$onus->count()} ONUs across all OLTs.");
 
+            // Print 3 sample ONUs for diagnosis
+            $sampleOnus = $onus->take(3);
+            foreach ($sampleOnus as $so) {
+                $this->line("  [SAMPLE ONU] ID={$so->id} OLT={$so->olt_id} PORT={$so->pon_port}:{$so->onu_id} NAME='{$so->name}' MAC='{$so->mac_address}' RMAC='{$so->router_mac}' USER='{$so->pppoe_username}' DESC='{$so->desc}'");
+            }
+
             if ($onus->isEmpty()) {
                 continue;
             }
@@ -84,6 +90,11 @@ class AutoLinkCustomersOnu extends Command
             // Fetch customers
             $customers = TenantCustomer::where('tenant_id', $tenant->id)->get();
             $this->info("Evaluating {$customers->count()} Customers for automatic pairing...");
+
+            $sampleCusts = $customers->whereNotNull('mac_address')->take(3);
+            foreach ($sampleCusts as $sc) {
+                $this->line("  [SAMPLE CUST] ID={$sc->id} CODE={$sc->customer_id} USER='{$sc->username}' MAC='{$sc->mac_address}' ONU_MAC='{$sc->onu_mac_sn}'");
+            }
 
             $linkedCount = 0;
 
