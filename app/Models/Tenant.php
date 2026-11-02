@@ -91,4 +91,27 @@ class Tenant extends Model
     {
         return $this->status === 'active';
     }
+
+    /**
+     * Get 2-4 uppercase letter company short code / initials (e.g. TDC for Tithi Digital Communication)
+     */
+    public function getCompanyCodeAttribute(): string
+    {
+        $name = trim($this->company_name ?: ($this->name ?: 'ISP'));
+        $words = preg_split('/[\s\-_]+/', $name);
+        if (count($words) >= 2) {
+            $code = '';
+            foreach ($words as $w) {
+                if (!empty($w)) {
+                    $code .= strtoupper(substr($w, 0, 1));
+                }
+            }
+            if (strlen($code) >= 2 && strlen($code) <= 5) {
+                return $code;
+            }
+        }
+
+        $clean = preg_replace('/[^a-zA-Z0-9]/', '', $name);
+        return strtoupper(substr($clean, 0, 4));
+    }
 }

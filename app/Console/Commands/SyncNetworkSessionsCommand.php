@@ -104,3 +104,4 @@ class SyncNetworkSessionsCommand extends Command
         return Command::SUCCESS;
     }
 }
+

@@ -559,9 +559,7 @@
                         <tr>
                             <!-- 1. Customer ID -->
                             <td class="font-mono text-cyan-800 font-semibold">
-                                <a href="{{ route('tenant.customers.show', $c->id) }}" class="hover:underline hover:text-cyan-600">
-                                    {{ $c->customer_id }}
-                                </a>
+                                {{ $c->customer_id }}
                             </td>
 
                             <!-- 2. Live Status (Real-time Online / Offline) -->
