@@ -140,37 +140,6 @@ class AutoLinkCustomersOnu extends Command
                     $matchedOnu = $onuByUsername[$cidKey] ?? null;
                 }
 
-                // Strategy 4: Smart Prefix / Substring Matching (e.g. 'Shamoli' <==> 'shamoli939')
-                if (!$matchedOnu && !empty($c->username)) {
-                    $rawU = strtolower(trim(explode('@', $c->username)[0]));
-                    $cleanU = preg_replace('/[^a-z0-9]/i', '', $rawU);
-                    $alphaU = preg_replace('/[0-9]/', '', $cleanU); // e.g. 'shamoli' from 'shamoli939'
-
-                    foreach ($onus as $candidateOnu) {
-                        $onuName = strtolower(trim($candidateOnu->name ?? ''));
-                        $onuDesc = strtolower(trim($candidateOnu->desc ?? ''));
-                        $cleanOnuName = preg_replace('/[^a-z0-9]/i', '', $onuName);
-
-                        if (strlen($cleanU) >= 4 && ($cleanOnuName === $cleanU || str_contains($cleanOnuName, $cleanU) || str_contains($cleanU, $cleanOnuName))) {
-                            $matchedOnu = $candidateOnu;
-                            break;
-                        }
-
-                        if (strlen($alphaU) >= 4 && ($cleanOnuName === $alphaU || str_contains($cleanOnuName, $alphaU) || str_contains($alphaU, $cleanOnuName))) {
-                            $matchedOnu = $candidateOnu;
-                            break;
-                        }
-
-                        if (!empty($c->customer_id) && strlen($c->customer_id) >= 3) {
-                            $shortCode = substr($c->customer_id, -3); // e.g. '939'
-                            if (str_contains($onuName, $c->customer_id) || str_contains($onuDesc, $c->customer_id) || str_ends_with($onuName, $shortCode)) {
-                                $matchedOnu = $candidateOnu;
-                                break;
-                            }
-                        }
-                    }
-                }
-
                 // Apply link
                 if ($matchedOnu) {
                     $matchedOnu->updateQuietly([

@@ -4,6 +4,7 @@ namespace App\Services\Network;
 
 use App\Models\TenantOlt;
 use App\Models\TenantOnu;
+use App\Models\TenantCustomer;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -834,6 +835,35 @@ class OltApiService
             if (preg_match('/CPU Usage.*?<\/td>\s*<td[^>]*>(\d+)/is', $sysHtml, $m)) $cpuLoad = (int)$m[1];
             if (preg_match('/Memory Usage.*?<\/td>\s*<td[^>]*>(\d+)/is', $sysHtml, $m)) $memUsage = (int)$m[1];
 
+            // 1. Fetch Learned MAC Address Table (FDB / Router MAC mapping) from macinfo.html
+            $macInfoHtml = $this->fetchVsolHtmlPage($ip, $port, $username, $password, 'macinfo.html');
+            $learnedMacs = [];
+            if ($macInfoHtml && preg_match_all('/<tr>\s*<td>(\d+)<\/td>\s*<td>([0-9a-fA-F:]{17})<\/td>\s*<td>[^<]*<\/td>\s*<td>EPON0\/(\d+):(\d+)<\/td>\s*<\/tr>/i', $macInfoHtml, $mRows, PREG_SET_ORDER)) {
+                foreach ($mRows as $mr) {
+                    $onuKey = "0/{$mr[3]}:{$mr[4]}";
+                    $learnedMacs[$onuKey] = [
+                        'vlan_id' => (int)$mr[1],
+                        'router_mac' => strtoupper(trim($mr[2])),
+                    ];
+                }
+            }
+
+            // 2. Fetch Real Optical Diagnostics (Rx/Tx Power, Distance) for all 4 ports from onuopmdiag.html
+            $opmDiag = [];
+            for ($p = 1; $p <= 4; $p++) {
+                $opmHtml = $this->fetchVsolHtmlPage($ip, $port, $username, $password, 'onuopmdiag.html', ['select' => (string)$p]);
+                if ($opmHtml && preg_match_all('/<tr>\s*<td[^>]*>EPON0\/(\d+):(\d+)<\/td>\s*<td[^>]*>([0-9a-fA-F:]{17})<\/td>\s*<td[^>]*>([^<]*)<\/td>\s*<td[^>]*>([-\d.]+)<\/td>\s*<td[^>]*>([-\d.]+)<\/td>\s*<td[^>]*>([-\d.]+)<\/td>\s*<td[^>]*>([-\d.]+)<\/td>\s*<td[^>]*>([-\d.]+)<\/td>\s*<td[^>]*>([-\d.]+)<\/td>\s*<\/tr>/i', $opmHtml, $opmMatches, PREG_SET_ORDER)) {
+                    foreach ($opmMatches as $om) {
+                        $onuKey = "0/{$om[1]}:{$om[2]}";
+                        $opmDiag[$onuKey] = [
+                            'distance_m' => (int)$om[5],
+                            'tx_power_dbm' => (float)$om[9],
+                            'rx_power_dbm' => (float)$om[10],
+                        ];
+                    }
+                }
+            }
+
             $syncedCount = 0;
             $onlineCount = 0;
             $syncedOnuDbIds = [];
@@ -857,12 +887,16 @@ class OltApiService
                         $detectedModel = !empty($desc) ? $desc : 'V2801SG';
                         $detectedType = $this->detectOnuType($desc, $desc, 'VSOL', 'VSOL');
 
+                        $onuKey = "0/{$pId}:{$oId}";
+                        $routerMac = $learnedMacs[$onuKey]['router_mac'] ?? null;
+                        $vlanId = $learnedMacs[$onuKey]['vlan_id'] ?? null;
+
+                        $diag = $opmDiag[$onuKey] ?? null;
+                        $realRx = $diag['rx_power_dbm'] ?? null;
+                        $realTx = $diag['tx_power_dbm'] ?? null;
+                        $realDist = $diag['distance_m'] ?? $distM;
+
                         $existingOnu = TenantOnu::where('olt_id', $olt->id)->where('pon_port', "0/{$pId}")->where('onu_id', $oId)->first();
-                        $hash = abs(crc32($macAddr ?: (string)$oId));
-                        $calibratedRx = round(-1 * (11.20 + (($hash % 83) / 10)), 2);
-                        $calibratedTx = round(1.40 + (($hash % 125) / 100), 2);
-                        $rxPower = $isOnline ? ($existingOnu?->rx_power_dbm ?: $calibratedRx) : null;
-                        $txPower = $isOnline ? ($existingOnu?->tx_power_dbm ?: $calibratedTx) : null;
 
                         $savedOnu = TenantOnu::updateOrCreate(
                             [
@@ -878,18 +912,46 @@ class OltApiService
                                 'name' => !empty($desc) ? $desc : "ONU 0/{$pId}:{$oId}",
                                 'desc' => $desc,
                                 'mac_address' => $macAddr,
+                                'router_mac' => $routerMac ?: ($existingOnu?->router_mac ?: null),
+                                'vlan_id' => $vlanId ?: ($existingOnu?->vlan_id ?: null),
                                 'vendor' => 'VSOL',
                                 'model' => $detectedModel,
                                 'onu_type' => $detectedType,
                                 'status' => $isOnline ? 'online' : 'offline',
                                 'running_state' => $isOnline ? 1 : 0,
                                 'control_flag' => 1,
-                                'distance_m' => $distM,
-                                'rx_power_dbm' => $rxPower,
-                                'tx_power_dbm' => $txPower,
+                                'distance_m' => $realDist,
+                                'rx_power_dbm' => $isOnline ? ($realRx !== null ? $realRx : $existingOnu?->rx_power_dbm) : null,
+                                'tx_power_dbm' => $isOnline ? ($realTx !== null ? $realTx : $existingOnu?->tx_power_dbm) : null,
                                 'last_online_at' => $isOnline ? now() : null,
                             ]
                         );
+
+                        // Auto-link customer via Learned Router MAC or ONU MAC
+                        $effectiveRouterMac = $routerMac ?: $savedOnu->router_mac;
+                        if (!empty($effectiveRouterMac)) {
+                            $cleanRMac = strtolower(preg_replace('/[^a-f0-9]/i', '', $effectiveRouterMac));
+                            $cust = TenantCustomer::where('tenant_id', $olt->tenant_id)
+                                ->where(function($q) use ($effectiveRouterMac, $cleanRMac) {
+                                    $q->where('mac_address', $effectiveRouterMac)
+                                      ->orWhereRaw("LOWER(REPLACE(REPLACE(REPLACE(mac_address, ':', ''), '-', ''), '.', '')) = ?", [$cleanRMac]);
+                                })
+                                ->first();
+
+                            if ($cust) {
+                                $savedOnu->updateQuietly([
+                                    'customer_id' => $cust->id,
+                                    'pppoe_username' => $cust->username,
+                                    'router_mac' => $effectiveRouterMac,
+                                ]);
+                                $cust->updateQuietly([
+                                    'olt_id' => $olt->id,
+                                    'onu_mac_sn' => $macAddr ?: $cust->onu_mac_sn,
+                                    'fiber_route_info' => "0/{$pId}:{$oId}",
+                                ]);
+                            }
+                        }
+
                         $syncedOnuDbIds[] = $savedOnu->id;
                         $syncedCount++;
                     }
