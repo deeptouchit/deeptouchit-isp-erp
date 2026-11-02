@@ -553,7 +553,7 @@
                                 'phone' => $c->phone,
                                 'zone' => $c->zone ?: '--',
                                 'package_name' => $packageName,
-                                'reseller_name' => $c->reseller ? ($c->reseller->code ?: $c->reseller->name) : 'HQ',
+                                'reseller_name' => $c->reseller ? ($c->reseller->code ?: $c->reseller->name) : ($tenant->company_code ?? 'TDC'),
                             ];
                         @endphp
                         <tr>
@@ -635,9 +635,9 @@
                                         <span>{{ $c->reseller->code ?: ($c->reseller->prefix ?: $c->reseller->name) }}</span>
                                     </span>
                                 @else
-                                    <span class="inline-flex items-center gap-1 text-purple-700 font-semibold" title="ISP Headquarters Direct">
+                                    <span class="inline-flex items-center gap-1 text-purple-700 font-semibold" title="{{ $tenant->company_name ?? $tenant->name }} (Direct Retail)">
                                         <i class="fas fa-building text-purple-500 text-[10px]"></i>
-                                        <span>HQ</span>
+                                        <span>{{ $tenant->company_code ?? 'TDC' }}</span>
                                     </span>
                                 @endif
                             </td>
@@ -719,7 +719,7 @@
                             <!-- 13. Action (3-Dot Floating Action Menu) -->
                             <td class="text-center">
                                 <button type="button" 
-                                        @click="toggleMenu({{ Js::from($rawCustomerData) }}, $event)" 
+                                        @click.stop="toggleMenu({{ Js::from($rawCustomerData) }}, $event)" 
                                         class="w-6 h-6 rounded-md hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition cursor-pointer inline-flex items-center justify-center">
                                     <i class="fas fa-ellipsis-v text-[10px]"></i>
                                 </button>
@@ -755,6 +755,7 @@
 
     <!-- 5. Floating Action Dropdown Menu (Fixed z-50 with BoundingClientRect Positioning) -->
     <div x-show="activeMenu !== null" 
+         x-cloak
          @click.outside="activeMenu = null"
          x-transition:enter="transition ease-out duration-100"
          x-transition:enter-start="opacity-0 scale-95"
@@ -762,9 +763,8 @@
          x-transition:leave="transition ease-in duration-75"
          x-transition:leave-start="opacity-100 scale-100"
          x-transition:leave-end="opacity-0 scale-95"
-         :style="{ top: menuPos.top, bottom: menuPos.bottom, right: menuPos.right, left: menuPos.left }"
-         class="fixed z-50 w-48 bg-white rounded-xl shadow-2xl border border-slate-200 py-1 text-left text-xs divide-y divide-slate-100"
-         style="display: none;">
+         :style="`top: ${menuPos.top}; bottom: ${menuPos.bottom}; right: ${menuPos.right}; left: ${menuPos.left};`"
+         class="fixed z-50 w-48 bg-white rounded-xl shadow-2xl border border-slate-200 py-1 text-left text-xs divide-y divide-slate-100">
         
         <div class="py-1">
             <!-- View Full Profile (Dedicated Page) -->
@@ -1510,7 +1510,7 @@
                         <label class="block text-[11px] font-medium text-slate-700 mb-1">Default Scope / Reseller</label>
                         <select x-model="importModal.default_reseller_id" 
                                 class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-amber-500 focus:outline-hidden transition">
-                            <option value="">ISP Direct Retail (HQ)</option>
+                            <option value="">{{ $tenant->company_name ?? 'ISP' }} Direct Retail ({{ $tenant->company_code ?? 'TDC' }})</option>
                             @foreach($allResellers as $r)
                                 <option value="{{ $r->id }}">Sub-ISP: {{ $r->name }} ({{ $r->code }})</option>
                             @endforeach
@@ -1716,7 +1716,7 @@
                     <div>
                         <label class="block text-[11px] font-medium text-slate-700 mb-1">Subscriber Scope</label>
                         <select x-model="exportModal.scope" class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium focus:bg-white focus:border-emerald-500">
-                            <option value="">All Subscribers (HQ + Sub-ISPs)</option>
+                            <option value="">All Subscribers ({{ $tenant->company_code ?? 'TDC' }} + Resellers)</option>
                             <option value="isp">ISP Direct Retail Only</option>
                             <option value="all_resellers">Sub-ISP Franchise Only</option>
                         </select>
@@ -2253,12 +2253,17 @@ function customerMasterManager() {
         },
 
         toggleMenu(item, event) {
-            if (this.activeMenu?.id === item.id) {
+            if (event && event.stopPropagation) {
+                event.stopPropagation();
+            }
+            if (this.activeMenu && this.activeMenu.id === item.id) {
                 this.activeMenu = null;
                 return;
             }
             this.activeMenu = item;
-            const rect = event.currentTarget.getBoundingClientRect();
+            const btn = event ? (event.currentTarget || (event.target ? event.target.closest('button') : null)) : null;
+            if (!btn) return;
+            const rect = btn.getBoundingClientRect();
             const dropdownHeight = 340;
             const right = Math.max(10, window.innerWidth - rect.right);
             let top = Math.round(rect.bottom) + 2;
