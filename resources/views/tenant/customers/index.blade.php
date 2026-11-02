@@ -394,7 +394,7 @@
                 </div>
             </div>
 
-            <!-- Advanced / Secondary Filters Drawer -->
+            <!-- Advanced / Secondary Filters Drawer (Clean No-Label Toolbar Row) -->
             <div x-show="showMoreFilters" 
                  x-cloak
                  x-transition:enter="transition ease-out duration-200"
@@ -403,7 +403,7 @@
                  x-transition:leave="transition ease-in duration-150"
                  x-transition:leave-start="opacity-100 translate-y-0"
                  x-transition:leave-end="opacity-0 -translate-y-2"
-                 class="pt-2.5 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+                 class="pt-2 border-t border-slate-100 flex flex-wrap items-center gap-2">
 
                 @php
                     $authUser = auth()->user();
@@ -411,8 +411,7 @@
 
                 @if(!$authUser || !$authUser->isCollector())
                 <!-- Scope Filter -->
-                <div>
-                    <label class="text-[9px] font-semibold text-slate-500 uppercase tracking-wider block mb-0.5">{{ __('Scope') }}</label>
+                <div class="flex-1 min-w-[130px]">
                     <select name="scope" 
                             onchange="this.form.submit()"
                             class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
@@ -423,8 +422,7 @@
                 </div>
 
                 <!-- Sub-ISP Partner Filter -->
-                <div>
-                    <label class="text-[9px] font-semibold text-slate-500 uppercase tracking-wider block mb-0.5">{{ __('Partner') }}</label>
+                <div class="flex-1 min-w-[150px]">
                     <select name="reseller_id" 
                             onchange="this.form.submit()"
                             class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
@@ -439,8 +437,7 @@
                 @endif
 
                 <!-- Live Session Filter -->
-                <div>
-                    <label class="text-[9px] font-semibold text-slate-500 uppercase tracking-wider block mb-0.5">{{ __('Session') }}</label>
+                <div class="flex-1 min-w-[120px]">
                     <select name="online_status" 
                             onchange="this.form.submit()"
                             class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
@@ -451,12 +448,11 @@
                 </div>
 
                 <!-- Connection Type Filter -->
-                <div>
-                    <label class="text-[9px] font-semibold text-slate-500 uppercase tracking-wider block mb-0.5">{{ __('Connection') }}</label>
+                <div class="flex-1 min-w-[130px]">
                     <select name="connection_type" 
                             onchange="this.form.submit()"
                             class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                        <option value="">{{ __('All Types') }}</option>
+                        <option value="">{{ __('All Connection Types') }}</option>
                         <option value="pppoe" {{ ($connectionType ?? '') === 'pppoe' ? 'selected' : '' }}>PPPoE</option>
                         <option value="static_ip" {{ ($connectionType ?? '') === 'static_ip' ? 'selected' : '' }}>Static IP</option>
                         <option value="hotspot" {{ ($connectionType ?? '') === 'hotspot' ? 'selected' : '' }}>Hotspot</option>
@@ -464,8 +460,7 @@
                 </div>
 
                 <!-- Router Filter -->
-                <div>
-                    <label class="text-[9px] font-semibold text-slate-500 uppercase tracking-wider block mb-0.5">{{ __('Router') }}</label>
+                <div class="flex-1 min-w-[140px]">
                     <select name="router_id" 
                             onchange="this.form.submit()"
                             class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
@@ -477,17 +472,8 @@
                         @endforeach
                     </select>
                 </div>
-
-                <!-- Reset Advanced Filters Action -->
-                <div class="flex items-end pb-1">
-                    <a href="{{ request()->fullUrlWithQuery(['scope' => null, 'reseller_id' => null, 'online_status' => null, 'connection_type' => null, 'router_id' => null]) }}" 
-                       class="text-[11px] text-cyan-700 hover:text-cyan-900 font-medium inline-flex items-center gap-1 transition">
-                        <i class="fas fa-times-circle text-[10px]"></i>
-                        <span>{{ __('Clear Secondary') }}</span>
-                    </a>
-                </div>
             </div>
-        </form>
+            </form>
     </div>
 
     <!-- 4. Master Table (<table class="saas-table"> Pure CSS System) -->
