@@ -126,7 +126,7 @@ class AutoLinkCustomersOnu extends Command
 
             foreach ($customers as $c) {
                 // If already linked and not force mode, skip
-                if (!$force && !empty($c->onu_mac_sn) && !empty($c->olt_id)) {
+                if (!$force && !empty($c->onu_mac_sn) && !empty($c->olt_id) && $c->onu_device !== null) {
                     continue;
                 }
 
@@ -166,7 +166,7 @@ class AutoLinkCustomersOnu extends Command
                     }
                 }
 
-                // Strategy 3: Check PPPoE Username or Customer ID
+                // Strategy 3: Exact Username or Customer ID
                 if (!$matchedOnu && !empty($c->username)) {
                     $uKey = strtolower(trim($c->username));
                     $matchedOnu = $onuByUsername[$uKey] ?? null;
@@ -175,6 +175,37 @@ class AutoLinkCustomersOnu extends Command
                 if (!$matchedOnu && !empty($c->customer_id)) {
                     $cidKey = strtolower(trim($c->customer_id));
                     $matchedOnu = $onuByUsername[$cidKey] ?? null;
+                }
+
+                // Strategy 4: Smart Prefix / Substring Matching (e.g. 'Shamoli' <==> 'shamoli939')
+                if (!$matchedOnu && !empty($c->username)) {
+                    $rawU = strtolower(trim(explode('@', $c->username)[0]));
+                    $cleanU = preg_replace('/[^a-z0-9]/i', '', $rawU);
+                    $alphaU = preg_replace('/[0-9]/', '', $cleanU); // e.g. 'shamoli' from 'shamoli939'
+
+                    foreach ($onus as $candidateOnu) {
+                        $onuName = strtolower(trim($candidateOnu->name ?? ''));
+                        $onuDesc = strtolower(trim($candidateOnu->desc ?? ''));
+                        $cleanOnuName = preg_replace('/[^a-z0-9]/i', '', $onuName);
+
+                        if (strlen($cleanU) >= 4 && ($cleanOnuName === $cleanU || str_contains($cleanOnuName, $cleanU) || str_contains($cleanU, $cleanOnuName))) {
+                            $matchedOnu = $candidateOnu;
+                            break;
+                        }
+
+                        if (strlen($alphaU) >= 4 && ($cleanOnuName === $alphaU || str_contains($cleanOnuName, $alphaU) || str_contains($alphaU, $cleanOnuName))) {
+                            $matchedOnu = $candidateOnu;
+                            break;
+                        }
+
+                        if (!empty($c->customer_id) && strlen($c->customer_id) >= 3) {
+                            $shortCode = substr($c->customer_id, -3); // e.g. '939'
+                            if (str_contains($onuName, $c->customer_id) || str_contains($onuDesc, $c->customer_id) || str_ends_with($onuName, $shortCode)) {
+                                $matchedOnu = $candidateOnu;
+                                break;
+                            }
+                        }
+                    }
                 }
 
                 // Apply link
@@ -192,7 +223,7 @@ class AutoLinkCustomersOnu extends Command
                     ]);
 
                     $linkedCount++;
-                    $this->line("  [MATCHED] {$c->name} ({$c->username}) <==> OLT #{$matchedOnu->olt_id} ({$matchedOnu->pon_port}:{$matchedOnu->onu_id}) MAC: {$matchedOnu->mac_address}");
+                    $this->line("  [MATCHED] {$c->name} ({$c->username}) <==> OLT #{$matchedOnu->olt_id} ({$matchedOnu->pon_port}:{$matchedOnu->onu_id}) ONU: '{$matchedOnu->name}' MAC: {$matchedOnu->mac_address} RMAC: {$matchedOnu->router_mac}");
                 }
             }
 
