@@ -11,18 +11,12 @@ $port = (int)$vsol->web_port;
 $username = $vsol->web_username;
 $password = $vsol->decrypted_web_password;
 
-$sysHtml = $oltService->fetchVsolHtmlPage($ip, $port, $username, $password, 'systeminfo.html');
-echo "SYSTEM INFO HTML LENGTH: " . strlen($sysHtml ?? '') . "\n";
-if ($sysHtml) {
-    preg_match_all('/[a-zA-Z0-9_-]+\.html/i', $sysHtml, $matches);
-    echo "ALL HTML REFERENCES IN SYSTEMINFO.HTML:\n";
-    print_r(array_unique($matches[0] ?? []));
-}
+$main = $oltService->fetchVsolHtmlPage($ip, $port, $username, $password, 'main.html');
+echo "MAIN.HTML:\n" . substr($main, 0, 1500) . "\n-------------------------\n";
 
-// Also check index.html
-$idxHtml = $oltService->fetchVsolHtmlPage($ip, $port, $username, $password, 'index.html');
-if ($idxHtml) {
-    preg_match_all('/[a-zA-Z0-9_-]+\.html/i', $idxHtml, $m2);
-    echo "ALL HTML REFERENCES IN INDEX.HTML:\n";
-    print_r(array_unique($m2[0] ?? []));
-}
+$loginRes = $oltService->fetchVsolHtmlPage($ip, $port, $username, $password, 'main.html', [
+    'user' => $username,
+    'pass' => $password,
+    'who'  => '100'
+]);
+echo "LOGIN RESPONSE:\n" . substr($loginRes, 0, 1500) . "\n";
