@@ -469,7 +469,7 @@
                                     </div>
                                     <span class="text-slate-400 font-bold px-1 flex-shrink-0">:</span>
                                     <span class="font-semibold text-slate-800 text-right flex-1 truncate text-[11px] pl-1 capitalize font-mono"
-                                          x-text="(cycleData.billing_type || '{{ $customer->billing_type }}').toUpperCase()">
+                                          x-text="(cycleData.currentBillingType || '{{ $customer->billing_type }}').toUpperCase()">
                                         {{ strtoupper($customer->billing_type) }}
                                     </span>
                                 </div>
@@ -482,7 +482,7 @@
                                     </div>
                                     <span class="text-slate-400 font-bold px-1 flex-shrink-0">:</span>
                                     <span class="font-bold text-slate-800 text-right flex-1 truncate text-[11px] pl-1 font-mono"
-                                          x-text="formatDate(cycleData.expiry_date) || '{{ $customer->expiry_date?->format('d M Y') ?? 'N/A' }}'">
+                                          x-text="cycleData.currentExpiryDateFormatted || '{{ $customer->expiry_date?->format('d M Y') ?? 'N/A' }}'">
                                         {{ $customer->expiry_date?->format('d M Y') ?? 'N/A' }}
                                     </span>
                                 </div>
@@ -495,7 +495,7 @@
                                     </div>
                                     <span class="text-slate-400 font-bold px-1 flex-shrink-0">:</span>
                                     <span class="font-semibold text-slate-800 text-right flex-1 truncate text-[11px] pl-1 font-mono">
-                                        <span x-text="cycleData.grace_period_days ?? '{{ $customer->grace_period_days ?? 0 }}'">{{ $customer->grace_period_days ?? 0 }}</span> Days
+                                        <span x-text="cycleData.gracePeriodDays ?? '{{ $customer->grace_period_days ?? 0 }}'">{{ $customer->grace_period_days ?? 0 }}</span> Days
                                     </span>
                                 </div>
                             </div>
@@ -507,8 +507,8 @@
                             <div class="flex items-center justify-between p-1.5 rounded bg-slate-50/80 border border-slate-200/70">
                                 <span class="text-[10px] font-medium text-slate-600">Auto-Cut System:</span>
                                 <span class="px-1.5 py-0.5 rounded text-[9.5px] font-bold font-mono uppercase border"
-                                      :class="(cycleData.auto_cut_enabled ?? {{ $customer->auto_cut_enabled ? 'true' : 'false' }}) ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200'"
-                                      x-text="(cycleData.auto_cut_enabled ?? {{ $customer->auto_cut_enabled ? 'true' : 'false' }}) ? 'ENABLED' : 'DISABLED'">
+                                      :class="(cycleData.autoCutEnabled ?? {{ $customer->auto_cut_enabled ? 'true' : 'false' }}) ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200'"
+                                      x-text="(cycleData.autoCutEnabled ?? {{ $customer->auto_cut_enabled ? 'true' : 'false' }}) ? 'ENABLED' : 'DISABLED'">
                                     {{ $customer->auto_cut_enabled ? 'ENABLED' : 'DISABLED' }}
                                 </span>
                             </div>
@@ -1746,13 +1746,13 @@ function customerActionBarManager(config) {
             this.noteModal = true;
         },
 
-        openRxtxModal() {
+        async openRxtxModal() {
             this.closeAllModals();
             this.rxtxModal = true;
             this.isLivePolling = true;
-            this.$nextTick(() => {
+            this.$nextTick(async () => {
                 this.initGraph();
-                this.fetchTrafficPoint();
+                await this.fetchTrafficPoint();
                 this.startPolling();
             });
         },
@@ -1961,14 +1961,10 @@ function customerActionBarManager(config) {
         },
 
         startPolling() {
-            if (!this.traffic.is_online) {
-                this.stopPolling();
-                return;
-            }
             this.isLivePolling = true;
             if (this.pollTimer) clearInterval(this.pollTimer);
             this.pollTimer = setInterval(() => {
-                if (this.isLivePolling && this.traffic.is_online) {
+                if (this.isLivePolling) {
                     this.fetchTrafficPoint();
                 } else {
                     this.stopPolling();
@@ -2316,8 +2312,21 @@ function customerActionBarManager(config) {
             }
         },
 
+        formatDate(val) {
+            if (!val) return '';
+            try {
+                const dt = new Date(val);
+                if (isNaN(dt.getTime())) return val;
+                const day = String(dt.getDate()).padStart(2, '0');
+                const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                return `${day} ${months[dt.getMonth()]} ${dt.getFullYear()}`;
+            } catch (e) {
+                return val;
+            }
+        },
+
         initGraph() {
-            const canvas = document.getElementById('rxtxCanvas');
+            const canvas = document.getElementById('rxtxCanvas') || document.getElementById('rxtxLiveCanvas');
             if (!canvas) return;
             const dpr = window.devicePixelRatio || 1;
             const rect = canvas.getBoundingClientRect();
@@ -2327,7 +2336,7 @@ function customerActionBarManager(config) {
         },
 
         drawCanvasGraph() {
-            const canvas = document.getElementById('rxtxCanvas');
+            const canvas = document.getElementById('rxtxCanvas') || document.getElementById('rxtxLiveCanvas');
             if (!canvas) return;
             const ctx = canvas.getContext('2d');
             const w = canvas.width;

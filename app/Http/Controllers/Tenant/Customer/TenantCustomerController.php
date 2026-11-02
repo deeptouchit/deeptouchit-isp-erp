@@ -555,7 +555,12 @@ class TenantCustomerController extends Controller
             ->take(12)
             ->get();
 
-        return view('tenant.customers.show', compact('tenant', 'customer', 'allPackages', 'allResellers', 'allRouters', 'recentPayments', 'recentSessions', 'activityLogs'));
+        $onu = $customer->onu_device;
+        if ($onu && !$customer->olt_id && $onu->olt) {
+            $customer->setRelation('olt', $onu->olt);
+        }
+
+        return view('tenant.customers.show', compact('tenant', 'customer', 'onu', 'allPackages', 'allResellers', 'allRouters', 'recentPayments', 'recentSessions', 'activityLogs'));
     }
 
     /**

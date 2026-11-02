@@ -70,7 +70,7 @@
                 </div>
 
                 <!-- Canvas -->
-                <canvas id="rxtxLiveCanvas" class="w-full h-36 rounded-lg bg-slate-900 border border-slate-800"></canvas>
+                <canvas id="rxtxCanvas" class="w-full h-36 rounded-lg bg-slate-900 border border-slate-800"></canvas>
             </div>
 
             <!-- Interface Telemetry 4-Column Grid -->
