@@ -635,13 +635,13 @@
                     </span>
                 </a>
 
-                <!-- 6. Expired 60+ Days -->
-                <a href="{{ Route::has('tenant.customers.expired-60') ? route('tenant.customers.expired-60') : route('tenant.customers.index', ['status' => 'expired_60']) }}" 
-                   x-show="!filterQuery || 'expired 60 days overdue sixty days inactive churned disconnected ৬০ দিন এক্সপায়ার মেয়াদ উত্তীর্ণ'.includes(filterQuery.toLowerCase())"
-                   class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ (request()->routeIs('tenant.customers.expired-60*') || request('status') === 'expired_60' || request('status') === 'expired-60') ? 'border-rose-400 bg-rose-50 text-rose-800 font-bold border-l-4 border-l-rose-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
+                <!-- 6. Disconnected (Closed / 60+ Days Expired) -->
+                <a href="{{ Route::has('tenant.customers.disconnected') ? route('tenant.customers.disconnected') : route('tenant.customers.index', ['status' => 'disconnected']) }}" 
+                   x-show="!filterQuery || 'disconnected churned closed users left equipment return onu return status inactive বন্ধ ডিসকানেক্ট ৬০ দিন'.includes(filterQuery.toLowerCase())"
+                   class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ (request()->routeIs('tenant.customers.disconnected*') || request('status') === 'disconnected' || request('status') === 'expired_60' || request()->routeIs('tenant.customers.expired-60*')) ? 'border-rose-300 bg-rose-50 text-rose-800 font-bold border-l-4 border-l-rose-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
                     <span class="flex items-center justify-between">
-                        <span>Expired (60+ Days)</span>
-                        <span class="px-1.5 py-0.2 rounded text-[9px] bg-rose-100 text-rose-800 font-bold">60d+</span>
+                        <span>Disconnected (বন্ধ)</span>
+                        <span class="px-1.5 py-0.2 rounded text-[9px] bg-slate-100 text-slate-700 font-bold">Closed</span>
                     </span>
                 </a>
 

@@ -167,19 +167,22 @@ class TenantCustomerController extends Controller
                       $eq->where('status', 'expired')
                          ->orWhere(function ($sub) {
                              $sub->whereNotNull('expiry_date')
-                                 ->whereDate('expiry_date', '<', Carbon::today());
+                                 ->whereDate('expiry_date', '<', Carbon::today())
+                                 ->whereDate('expiry_date', '>', Carbon::today()->subDays(60));
                          });
                   });
-        } elseif ($statusFilter === 'expired_60' || $statusFilter === 'expired-60') {
-            $query->whereNotIn('status', ['archived'])
-                  ->whereNotNull('expiry_date')
-                  ->whereDate('expiry_date', '<=', Carbon::today()->subDays(60));
+        } elseif ($statusFilter === 'disconnected' || $statusFilter === 'archived' || $statusFilter === 'expired_60' || $statusFilter === 'expired-60') {
+            $query->where(function ($q) {
+                $q->whereIn('status', ['disconnected', 'archived'])
+                  ->orWhere(function ($sub) {
+                      $sub->whereNotNull('expiry_date')
+                          ->whereDate('expiry_date', '<=', Carbon::today()->subDays(60));
+                  });
+            });
         } elseif ($statusFilter === 'suspended') {
             $query->where('status', 'suspended');
         } elseif ($statusFilter === 'disabled' || $statusFilter === 'inactive') {
             $query->whereIn('status', ['disabled', 'inactive', 'disconnected', 'archived']);
-        } elseif ($statusFilter === 'disconnected' || $statusFilter === 'archived') {
-            $query->whereIn('status', ['disconnected', 'archived']);
         } elseif ($statusFilter && $statusFilter !== 'all') {
             $query->where('status', $statusFilter);
         }
@@ -265,7 +268,13 @@ class TenantCustomerController extends Controller
                      ->whereDate('expiry_date', '<=', Carbon::today());
               });
         })->count();
-        $disconnectedCount = (clone $baseQuery)->whereIn('status', ['disconnected', 'archived'])->count();
+        $disconnectedCount = (clone $baseQuery)->where(function ($q) {
+            $q->whereIn('status', ['disconnected', 'archived'])
+              ->orWhere(function ($sub) {
+                  $sub->whereNotNull('expiry_date')
+                      ->whereDate('expiry_date', '<=', Carbon::today()->subDays(60));
+              });
+        })->count();
 
         // Compute Zone Stats breakdown
         $zoneStatsQuery = TenantCustomer::where('tenant_id', $tenant->id)
