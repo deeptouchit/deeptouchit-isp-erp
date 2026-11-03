@@ -175,7 +175,6 @@
                         @endforeach
                     </select>
                 </div>
-            </div>
 
                 <!-- Physical Installation Address (Spans remaining columns) -->
                 <div class="sm:col-span-2 md:col-span-2 xl:col-span-3">
