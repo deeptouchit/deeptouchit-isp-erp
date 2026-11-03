@@ -143,8 +143,11 @@
 
                 <!-- Sub-items -->
                 <div x-show="open || filterQuery" x-collapse class="pl-2.5 pr-0.5 space-y-1">
+                    @php
+                        $isCollectorCustActive = (request()->routeIs('tenant.customers.index') || request()->routeIs('tenant.customers.create') || request()->routeIs('tenant.customers.edit') || request()->routeIs('tenant.customers.show')) && !in_array(request('status'), ['due', 'active', 'expired', 'disconnected']);
+                    @endphp
                     <a href="{{ route('tenant.customers.index') }}" 
-                       class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ request()->routeIs('tenant.customers.index') && !in_array(request('status'), ['due', 'active']) ? 'border-cyan-300 bg-cyan-50 text-cyan-800 font-bold border-l-4 border-l-cyan-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 font-medium' }}">
+                       class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ $isCollectorCustActive ? 'border-cyan-300 bg-cyan-50 text-cyan-800 font-bold border-l-4 border-l-cyan-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 font-medium' }}">
                         {{ __('All Customers') }}
                     </a>
                     <a href="{{ route('tenant.customers.index', ['status' => 'due']) }}" 
@@ -601,9 +604,19 @@
                 @endif
 
                 <!-- 2. All Customers -->
+                @php
+                    $isAllCustActive = (request()->routeIs('tenant.customers.index') || request()->routeIs('tenant.customers.create') || request()->routeIs('tenant.customers.edit') || request()->routeIs('tenant.customers.show')) 
+                        && !request()->filled('status') 
+                        && !request()->routeIs('tenant.customers.expired*') 
+                        && !request()->routeIs('tenant.customers.due*') 
+                        && !request()->routeIs('tenant.customers.online*') 
+                        && !request()->routeIs('tenant.customers.disconnected*') 
+                        && !request()->routeIs('tenant.customers.zones*') 
+                        && !request()->routeIs('tenant.customers.bulk-payments*');
+                @endphp
                 <a href="{{ Route::has('tenant.customers.index') ? route('tenant.customers.index') : '#' }}" 
                    x-show="!filterQuery || 'all customers master database direct reseller subscribers list clients onboard create add'.includes(filterQuery.toLowerCase())"
-                   class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ (request()->routeIs('tenant.customers.index') && !request()->filled('status') && !request()->routeIs('tenant.customers.expired*') && !request()->routeIs('tenant.customers.due*')) ? 'border-cyan-200 bg-cyan-50/80 text-cyan-700 font-bold border-l-4 border-l-cyan-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
+                   class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ $isAllCustActive ? 'border-cyan-200 bg-cyan-50/80 text-cyan-700 font-bold border-l-4 border-l-cyan-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
                     All Customers
                 </a>
 
@@ -640,7 +653,7 @@
                    x-show="!filterQuery || 'disconnected churned closed users left equipment return onu return status inactive বন্ধ ডিসকানেক্ট ৬০ দিন'.includes(filterQuery.toLowerCase())"
                    class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ (request()->routeIs('tenant.customers.disconnected*') || request('status') === 'disconnected' || request('status') === 'expired_60' || request()->routeIs('tenant.customers.expired-60*')) ? 'border-rose-300 bg-rose-50 text-rose-800 font-bold border-l-4 border-l-rose-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
                     <span class="flex items-center justify-between">
-                        <span>Disconnected (বন্ধ)</span>
+                        <span>Disconnected</span>
                         <span class="px-1.5 py-0.2 rounded text-[9px] bg-slate-100 text-slate-700 font-bold">Closed</span>
                     </span>
                 </a>
