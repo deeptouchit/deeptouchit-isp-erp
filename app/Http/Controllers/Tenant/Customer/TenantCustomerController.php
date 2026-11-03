@@ -66,6 +66,8 @@ class TenantCustomerController extends Controller
         $onlineFilter = $request->input('online_status') ?: $request->route('online_status');
         $connectionType = $request->input('connection_type');
         $routerFilter = $request->input('router_id');
+        $oltFilter = $request->input('olt_id');
+        $ponFilter = $request->input('pon_port');
 
         $authUser = Auth::user();
         $isIspCollector = $authUser && $authUser->isCollector() && empty($authUser->reseller_id);
@@ -76,6 +78,17 @@ class TenantCustomerController extends Controller
         $allRouters = TenantRouter::where('tenant_id', $tenant->id)->orderBy('name')->get();
         $allOlts = TenantOlt::where('tenant_id', $tenant->id)->orderBy('name')->get();
         $allCollectors = User::where('tenant_id', $tenant->id)->where('role', 'like', '%collector%')->orderBy('name')->get();
+
+        $ponQuery = TenantOnu::where('tenant_id', $tenant->id);
+        if ($oltFilter && $oltFilter !== 'unassigned') {
+            $ponQuery->where('olt_id', $oltFilter);
+        }
+        $distinctPonPorts = $ponQuery->whereNotNull('pon_port')
+            ->where('pon_port', '!=', '')
+            ->distinct()
+            ->orderBy('pon_port')
+            ->pluck('pon_port')
+            ->values();
         
         $distinctZonesQuery = TenantCustomer::where('tenant_id', $tenant->id);
         if ($isIspCollector) {
@@ -186,6 +199,53 @@ class TenantCustomerController extends Controller
             $query->where('router_id', $routerFilter);
         }
 
+        if ($oltFilter === 'unassigned') {
+            $query->where(function ($q) {
+                $q->whereNull('olt_id')
+                  ->whereNotIn('id', function ($sub) {
+                      $sub->select('customer_id')
+                          ->from('tenant_onus')
+                          ->whereNotNull('customer_id');
+                  });
+            });
+        } elseif ($oltFilter) {
+            $query->where(function ($q) use ($oltFilter) {
+                $q->where('olt_id', $oltFilter)
+                  ->orWhereIn('id', function ($sub) use ($oltFilter) {
+                      $sub->select('customer_id')
+                          ->from('tenant_onus')
+                          ->where('olt_id', $oltFilter)
+                          ->whereNotNull('customer_id');
+                  });
+            });
+        }
+
+        if ($ponFilter === 'unassigned') {
+            $query->where(function ($q) {
+                $q->where(function ($fq) {
+                    $fq->whereNull('fiber_route_info')
+                       ->orWhere('fiber_route_info', '');
+                })
+                ->whereNotIn('id', function ($sub) {
+                    $sub->select('customer_id')
+                        ->from('tenant_onus')
+                        ->whereNotNull('customer_id')
+                        ->whereNotNull('pon_port')
+                        ->where('pon_port', '!=', '');
+                });
+            });
+        } elseif ($ponFilter) {
+            $query->where(function ($q) use ($ponFilter) {
+                $q->whereIn('id', function ($sub) use ($ponFilter) {
+                    $sub->select('customer_id')
+                        ->from('tenant_onus')
+                        ->where('pon_port', $ponFilter)
+                        ->whereNotNull('customer_id');
+                })
+                ->orWhere('fiber_route_info', 'like', "{$ponFilter}%");
+            });
+        }
+
         $perPageInput = $request->input('per_page', 20);
         if ($perPageInput === 'all') {
             $perPage = 10000;
@@ -275,6 +335,9 @@ class TenantCustomerController extends Controller
             'onlineFilter',
             'connectionType',
             'routerFilter',
+            'oltFilter',
+            'ponFilter',
+            'distinctPonPorts',
             'perPage'
         ));
     }

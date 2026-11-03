@@ -280,7 +280,7 @@
 
     <!-- 3. Search & Multi-Filter Toolbar -->
     @php
-        $activeMoreCount = collect([$scopeFilter, $selectedResellerId, $onlineFilter, $connectionType, $routerFilter ?? null])->filter()->count();
+        $activeMoreCount = collect([$scopeFilter, $selectedResellerId, $onlineFilter, $connectionType, $routerFilter ?? null, $oltFilter ?? null, $ponFilter ?? null])->filter()->count();
         $isMoreOpen = $activeMoreCount > 0;
     @endphp
     <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5"
@@ -481,6 +481,36 @@
                         @foreach($allRouters as $rtr)
                             <option value="{{ $rtr->id }}" {{ ($routerFilter ?? request('router_id')) == $rtr->id ? 'selected' : '' }}>
                                 {{ $rtr->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <!-- OLT Filter -->
+                <div class="flex-1 min-w-[130px]">
+                    <select name="olt_id" 
+                            onchange="this.form.submit()"
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
+                        <option value="">{{ __('All OLTs') }}</option>
+                        <option value="unassigned" {{ ($oltFilter ?? '') === 'unassigned' ? 'selected' : '' }}>⚠️ {{ __('Unassigned (No OLT)') }}</option>
+                        @foreach($allOlts as $olt)
+                            <option value="{{ $olt->id }}" {{ (string)($oltFilter ?? '') === (string)$olt->id ? 'selected' : '' }}>
+                                {{ $olt->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <!-- PON Port Filter -->
+                <div class="flex-1 min-w-[130px]">
+                    <select name="pon_port" 
+                            onchange="this.form.submit()"
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
+                        <option value="">{{ __('All PON Ports') }}</option>
+                        <option value="unassigned" {{ ($ponFilter ?? '') === 'unassigned' ? 'selected' : '' }}>⚠️ {{ __('Unassigned (No PON)') }}</option>
+                        @foreach($distinctPonPorts as $pon)
+                            <option value="{{ $pon }}" {{ ($ponFilter ?? '') === $pon ? 'selected' : '' }}>
+                                PON: {{ $pon }}
                             </option>
                         @endforeach
                     </select>
