@@ -21,6 +21,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -176,7 +177,13 @@ class TenantGatewayTransactionController extends Controller
         $transactions = $query->orderBy('id', 'desc')->paginate($perPage)->withQueryString();
 
         // Gateways for filter dropdown
-        $allGateways = PaymentGateway::where('is_active', true)->orderBy('sort_order')->get();
+        try {
+            $allGateways = Schema::hasTable('payment_gateways')
+                ? PaymentGateway::where('is_active', true)->orderBy('sort_order')->get()
+                : collect();
+        } catch (\Throwable $e) {
+            $allGateways = collect();
+        }
 
         return view('tenant.finance.gateway_transactions', compact(
             'tenant',
