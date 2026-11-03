@@ -845,8 +845,14 @@ function bulkPaymentManager() {
             let url = new URL("{{ route('tenant.customers.bulk-payments.print') }}", window.location.origin);
             const currentParams = new URLSearchParams(window.location.search);
             currentParams.forEach((val, key) => url.searchParams.set(key, val));
-            if (this.selectedIds.length > 0 && this.selectedIds.length < this.tableRows.length) {
-                url.searchParams.set('ids', this.selectedIds.join(','));
+
+            // Only print the subscribers currently in this table / selected rows
+            const targetIds = (this.selectedIds && this.selectedIds.length > 0)
+                ? this.selectedIds
+                : this.tableRows.map(r => r.id);
+
+            if (targetIds && targetIds.length > 0) {
+                url.searchParams.set('ids', targetIds.join(','));
             }
             window.open(url.toString(), '_blank');
         },

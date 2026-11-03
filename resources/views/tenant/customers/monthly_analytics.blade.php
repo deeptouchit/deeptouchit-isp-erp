@@ -426,3 +426,4 @@ function monthlyAnalyticsManager() {
 }
 </script>
 @endpush
+

@@ -468,7 +468,14 @@ class TenantCustomerPaymentController extends Controller
 
         if (!empty($selectedIds)) {
             $idArray = is_array($selectedIds) ? $selectedIds : explode(',', $selectedIds);
-            $query->whereIn('id', array_map('intval', $idArray));
+            $cleanIds = array_filter(array_map('intval', $idArray));
+            if (!empty($cleanIds)) {
+                $query->whereIn('id', $cleanIds);
+                $orderRaw = implode(',', $cleanIds);
+                $subscribers = $query->orderByRaw("FIELD(id, {$orderRaw})")->get();
+            } else {
+                $subscribers = collect();
+            }
         } else {
             if ($mode === 'reseller') {
                 if ($reseller) {
@@ -504,9 +511,14 @@ class TenantCustomerPaymentController extends Controller
                       ->orWhere('phone', 'like', "%{$search}%");
                 });
             }
-        }
 
-        $subscribers = $query->orderBy('due_amount', 'desc')->orderBy('name')->get();
+            $perPage = $request->get('per_page');
+            if ($perPage && $perPage !== 'all') {
+                $query->limit((int)$perPage);
+            }
+
+            $subscribers = $query->orderBy('due_amount', 'desc')->orderBy('name')->get();
+        }
 
         $totalGrossBill = (float) $subscribers->sum(function ($c) {
             return (float) ($c->due_amount > 0 ? $c->due_amount : ($c->monthly_bill ?: 0));
