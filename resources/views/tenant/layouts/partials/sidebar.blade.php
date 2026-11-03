@@ -53,10 +53,10 @@
 @endpush
 
 <!-- Sleek Compact Left Sidebar (60 Width or 68px Collapsed on Desktop) -->
-<aside class="fixed inset-y-0 left-0 z-50 bg-white border-r border-slate-200 flex flex-col transition-all duration-200 ease-in-out"
+<aside class="sidebar-fixed fixed inset-y-0 left-0 z-50 bg-white border-r border-slate-200 flex flex-col lg:w-60"
        :class="[
            mobileSidebar ? 'translate-x-0 shadow-xl w-60' : '-translate-x-full lg:translate-x-0',
-           sidebarCollapsed ? 'sidebar-collapsed lg:w-[68px]' : 'lg:w-60'
+           sidebarCollapsed ? 'sidebar-collapsed' : ''
        ]">
     
     <!-- Compact Brand Header -->
@@ -142,7 +142,7 @@
                 </button>
 
                 <!-- Sub-items -->
-                <div x-show="open || filterQuery" x-collapse class="pl-2.5 pr-0.5 space-y-1">
+                <div x-show="open || filterQuery" x-collapse class="pl-2.5 pr-0.5 space-y-1" style="{{ $isCustActive ? '' : 'display: none;' }}">
                     @php
                         $isCollectorCustActive = (request()->routeIs('tenant.customers.index') || request()->routeIs('tenant.customers.create') || request()->routeIs('tenant.customers.edit') || request()->routeIs('tenant.customers.show')) && !in_array(request('status'), ['due', 'active', 'expired', 'disconnected']);
                     @endphp
@@ -215,7 +215,7 @@
             </button>
 
             <!-- Sub-menu Items -->
-            <div x-show="open || filterQuery" x-collapse class="pl-2.5 pr-0.5 space-y-1">
+            <div x-show="open || filterQuery" x-collapse class="pl-2.5 pr-0.5 space-y-1" style="{{ $isBillingActive ? '' : 'display: none;' }}">
                 <a href="{{ route('tenant.billing.dashboard') }}" 
                    x-show="!filterQuery || 'subscription status plan details expiry renewal overview license'.includes(filterQuery.toLowerCase())"
                    class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ request()->routeIs('tenant.billing.dashboard') ? 'border-blue-200 bg-blue-50/80 text-blue-600 font-bold border-l-4 border-l-blue-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
@@ -256,7 +256,7 @@
             </button>
 
             <!-- Sub-menu Items -->
-            <div x-show="open || filterQuery" x-collapse class="pl-2.5 pr-0.5 space-y-1">
+            <div x-show="open || filterQuery" x-collapse class="pl-2.5 pr-0.5 space-y-1" style="{{ $isUpstreamActive ? '' : 'display: none;' }}">
                 <a href="{{ route('tenant.upstream.index') }}" 
                    x-show="!filterQuery || 'upstream carriers links capacity iig itc nttn bdix cdn accounting'.includes(filterQuery.toLowerCase())"
                    class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ request()->routeIs('tenant.upstream.index') ? 'border-blue-200 bg-blue-50/80 text-blue-600 font-bold border-l-4 border-l-blue-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
@@ -297,7 +297,7 @@
             </button>
 
             <!-- Sub-menu Items -->
-            <div x-show="open || filterQuery" x-collapse class="pl-2.5 pr-0.5 space-y-1">
+            <div x-show="open || filterQuery" x-collapse class="pl-2.5 pr-0.5 space-y-1" style="{{ $isNetworkActive ? '' : 'display: none;' }}">
                 <!-- 1. MikroTik Routers -->
                 <a href="{{ route('tenant.network.mikrotik') }}" 
                    x-show="!filterQuery || 'mikrotik routers gateway ros rb pppoe queues'.includes(filterQuery.toLowerCase())"
@@ -388,7 +388,7 @@
             </button>
 
             <!-- Sub-menu Items -->
-            <div x-show="open || filterQuery" x-collapse class="pl-2.5 pr-0.5 space-y-1">
+            <div x-show="open || filterQuery" x-collapse class="pl-2.5 pr-0.5 space-y-1" style="{{ $isPartnersActive ? '' : 'display: none;' }}">
                 <!-- 1. Directory -->
                 <a href="{{ Route::has('tenant.resellers.index') ? route('tenant.resellers.index') : '#' }}" 
                    x-show="!filterQuery || 'reseller directory list profiles sub-isps franchise add retail'.includes(filterQuery.toLowerCase())"
@@ -433,7 +433,7 @@
             </button>
 
             <!-- Sub-menu Items (Wholesale Bandwidth Ecosystem) -->
-            <div x-show="open || filterQuery" x-collapse class="pl-2.5 pr-0.5 space-y-1">
+            <div x-show="open || filterQuery" x-collapse class="pl-2.5 pr-0.5 space-y-1" style="{{ $isWholesaleActive ? '' : 'display: none;' }}">
                 <!-- 1. Bandwidth Rate Plans -->
                 <a href="{{ Route::has('tenant.resellers.bandwidth-plans') ? route('tenant.resellers.bandwidth-plans') : '#' }}" 
                    x-show="!filterQuery || 'bandwidth rate plans tariff pricing per mbps global bdix cdn wholesale packages'.includes(filterQuery.toLowerCase())"
@@ -484,7 +484,7 @@
             </button>
 
             <!-- Sub-menu Items -->
-            <div x-show="open || filterQuery" x-collapse class="pl-2.5 pr-0.5 space-y-1">
+            <div x-show="open || filterQuery" x-collapse class="pl-2.5 pr-0.5 space-y-1" style="{{ $isBillingActive ? '' : 'display: none;' }}">
                 <!-- 1. Wallets & Credit -->
                 <a href="{{ Route::has('tenant.resellers.wallets') ? route('tenant.resellers.wallets') : '#' }}" 
                    x-show="!filterQuery || 'wallets balances credit limit topup balance reseller'.includes(filterQuery.toLowerCase())"
@@ -528,7 +528,7 @@
             </button>
 
             <!-- Sub-menu Items -->
-            <div x-show="open || filterQuery" x-collapse class="pl-2.5 pr-0.5 space-y-1">
+            <div x-show="open || filterQuery" x-collapse class="pl-2.5 pr-0.5 space-y-1" style="{{ $isStaffActive ? '' : 'display: none;' }}">
                 <!-- 1. Staff Directory -->
                 <a href="{{ Route::has('tenant.staff.index') ? route('tenant.staff.index') : '#' }}" 
                    x-show="!filterQuery || 'all employees directory unified list staff users hrm profile'.includes(filterQuery.toLowerCase())"
@@ -593,7 +593,7 @@
             </button>
 
             <!-- Sub-menu Items -->
-            <div x-show="open || filterQuery" x-collapse class="pl-2.5 pr-0.5 space-y-1">
+            <div x-show="open || filterQuery" x-collapse class="pl-2.5 pr-0.5 space-y-1" style="{{ $isCustomersActive ? '' : 'display: none;' }}">
                 @if(!auth()->user()->isCollector() || auth()->user()->isIspAdmin() || auth()->user()->isOwner())
                 <!-- 1. Coverage Zones -->
                 <a href="{{ Route::has('tenant.customers.zones') ? route('tenant.customers.zones') : '#' }}" 
@@ -700,7 +700,7 @@
             </button>
 
             <!-- Sub-menu Items -->
-            <div x-show="open || filterQuery" x-collapse class="pl-2.5 pr-0.5 space-y-1">
+            <div x-show="open || filterQuery" x-collapse class="pl-2.5 pr-0.5 space-y-1" style="{{ $isFinanceActive ? '' : 'display: none;' }}">
                 <!-- 1. Collector Hub -->
                 <a href="{{ Route::has('tenant.collector.due-customers') ? route('tenant.collector.due-customers') : route('tenant.dashboard') }}" 
                    x-show="!filterQuery || 'collector hub field collection counter bill payments due'.includes(filterQuery.toLowerCase())"
@@ -783,7 +783,7 @@
             </button>
 
             <!-- Sub-menu Items -->
-            <div x-show="open || filterQuery" x-collapse class="pl-2.5 pr-0.5 space-y-1">
+            <div x-show="open || filterQuery" x-collapse class="pl-2.5 pr-0.5 space-y-1" style="{{ $isReportsActive ? '' : 'display: none;' }}">
                 <!-- 1. Revenue & Growth -->
                 <a href="{{ Route::has('tenant.reports.revenue') ? route('tenant.reports.revenue') : '#' }}" 
                    x-show="!filterQuery || 'monthly revenue growth report arpu new connections churn rate sales growth sales revenue'.includes(filterQuery.toLowerCase())"
@@ -841,7 +841,7 @@
             </button>
 
             <!-- Sub-menu Items -->
-            <div x-show="open || filterQuery" x-collapse class="pl-2.5 pr-0.5 space-y-1">
+            <div x-show="open || filterQuery" x-collapse class="pl-2.5 pr-0.5 space-y-1" style="{{ $isTicketsActive ? '' : 'display: none;' }}">
                 <!-- 1. Support Tickets -->
                 <a href="{{ Route::has('tenant.tickets.index') ? route('tenant.tickets.index') : '#' }}" 
                    x-show="!filterQuery || 'all support tickets customer complaints slow internet line disconnections open closed pending'.includes(filterQuery.toLowerCase())"
@@ -903,7 +903,7 @@
             </button>
 
             <!-- Sub-menu Items -->
-            <div x-show="open || filterQuery" x-collapse class="pl-2.5 pr-0.5 space-y-1">
+            <div x-show="open || filterQuery" x-collapse class="pl-2.5 pr-0.5 space-y-1" style="{{ $isSettingsActive ? '' : 'display: none;' }}">
                 <!-- 1. Company Profile -->
                 <a href="{{ Route::has('tenant.settings.profile') ? route('tenant.settings.profile') : '#' }}" 
                    x-show="!filterQuery || 'isp company profile company name logo trade license contact info branding'.includes(filterQuery.toLowerCase())"

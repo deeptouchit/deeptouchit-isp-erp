@@ -138,8 +138,8 @@
     <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5"
          x-data="{ showMoreFilters: {{ $isMoreOpen ? 'true' : 'false' }}, searchQuery: '{{ addslashes(request('search', '')) }}' }">
         <form method="GET" action="{{ route('tenant.network.onu') }}" id="onuFilterForm" class="space-y-2.5">
-            <!-- Primary Filter Bar (Always visible single row) -->
-            <div class="flex flex-col md:flex-row items-stretch md:items-center gap-2">
+            <!-- Primary Filter Bar (Always visible responsive row) -->
+            <div class="flex flex-wrap items-center gap-2">
                 
                 <!-- Search Text (Instant Live Search + Full DB Lookup) -->
                 <div class="relative flex-1 min-w-[200px]">
@@ -236,7 +236,7 @@
                 </button>
 
                 <!-- Filter & Reset Buttons (Strict AGENTS.md sequence: [Filter] then [Reset]) -->
-                <div class="flex items-center gap-1.5 flex-shrink-0 md:ml-auto">
+                <div class="flex items-center gap-1.5 flex-shrink-0 sm:ml-auto">
                     <button type="submit" 
                             class="h-[34px] bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-0 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" 
                             title="{{ __('Apply Filters') }}">

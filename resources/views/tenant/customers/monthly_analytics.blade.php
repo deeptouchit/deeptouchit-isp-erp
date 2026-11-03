@@ -120,7 +120,7 @@
 
     <!-- 3. Search & Multi-Filter Toolbar (Strict AGENTS.md Rule 2.C) -->
     <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs">
-        <form method="GET" action="{{ route('tenant.customers.monthly-analytics') }}" class="flex flex-col md:flex-row items-stretch md:items-center gap-2">
+        <form method="GET" action="{{ route('tenant.customers.monthly-analytics') }}" class="flex flex-wrap items-center gap-2">
             
             <!-- Year Selector -->
             <div class="w-full md:w-36 flex-shrink-0">
@@ -173,7 +173,7 @@
             </div>
 
             <!-- Filter & Reset Buttons (Strict AGENTS.md sequence: [Filter] then [Reset]) -->
-            <div class="flex items-center gap-1.5 flex-shrink-0 md:ml-auto">
+            <div class="flex items-center gap-1.5 flex-shrink-0 sm:ml-auto">
                 <button type="submit" 
                         class="h-[34px] bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-0 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" 
                         title="Apply Filters">

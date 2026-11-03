@@ -28,6 +28,36 @@
     <!-- FontAwesome 6 Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
+    {{-- Instant Stable Sidebar & Viewport Anti-FOUC Init Script & Styles --}}
+    <script>
+        (function() {
+            try {
+                if (localStorage.getItem('isp_sidebar_collapsed') === '1') {
+                    document.documentElement.classList.add('sidebar-collapsed');
+                }
+            } catch(e) {}
+        })();
+    </script>
+    <style>
+        /* Instant Stable Sidebar & Viewport Dimensions - Zero Layout Shift (Anti-FOUC) */
+        @media (min-width: 1024px) {
+            aside.sidebar-fixed {
+                width: 15rem; /* 240px */
+                transition: width 0.2s ease-in-out;
+            }
+            html.sidebar-collapsed aside.sidebar-fixed {
+                width: 68px !important;
+            }
+            .main-viewport {
+                padding-left: 15rem; /* 240px */
+                transition: padding-left 0.2s ease-in-out;
+            }
+            html.sidebar-collapsed .main-viewport {
+                padding-left: 68px !important;
+            }
+        }
+    </style>
+
     {{-- 4. Tailwind CSS Play CDN & Enterprise Theme Config --}}
     <script>
         // Suppress Tailwind Play CDN production warning in console

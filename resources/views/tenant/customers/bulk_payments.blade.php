@@ -171,11 +171,11 @@
         <form method="GET" action="{{ route('tenant.customers.bulk-payments') }}" id="bulkPaymentFilterForm" class="space-y-2.5">
             <input type="hidden" name="mode" x-model="mode">
 
-            <!-- Tier 1: Primary Filter Bar (Single Row, Strict h-[34px]) -->
-            <div class="flex flex-col md:flex-row items-stretch md:items-center gap-2">
+            <!-- Tier 1: Primary Filter Bar (Strict h-[34px] & Responsive Wrap) -->
+            <div class="flex flex-wrap items-center gap-2">
                 
                 <!-- Intelligent Live Search Box -->
-                <div class="relative flex-1 min-w-[200px]">
+                <div class="relative flex-1 min-w-[180px]">
                     <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-xs pointer-events-none transition-colors"
                        :class="searchQuery ? 'text-cyan-600 font-bold' : 'text-slate-400'"></i>
                     <input type="text" 
@@ -197,7 +197,7 @@
                 </div>
 
                 <!-- Reseller Select (Highlighted when Reseller Mode) -->
-                <div class="w-full md:w-56 flex-shrink-0" x-show="mode === 'reseller'">
+                <div class="w-full sm:w-52 md:w-56 flex-shrink-0" x-show="mode === 'reseller'">
                     <select name="reseller_id" 
                             x-model="selectedResellerId"
                             @change="onResellerChange($event)"
@@ -216,7 +216,7 @@
                 </div>
 
                 <!-- Status Select -->
-                <div class="w-full md:w-44 flex-shrink-0">
+                <div class="w-full sm:w-40 md:w-44 flex-shrink-0">
                     <select name="status" 
                             onchange="this.form.submit()"
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700">
@@ -230,7 +230,7 @@
                 </div>
 
                 <!-- Per Page Selector (per_page) -->
-                <div class="w-full md:w-28 flex-shrink-0">
+                <div class="w-full sm:w-28 flex-shrink-0">
                     <select name="per_page" 
                             onchange="this.form.submit()"
                             class="w-full h-[34px] px-2 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700">
@@ -262,7 +262,7 @@
                 </button>
 
                 <!-- Filter & Reset Buttons (Strict AGENTS.md sequence: [Filter] then [Reset]) -->
-                <div class="flex items-center gap-1.5 flex-shrink-0 md:ml-auto">
+                <div class="flex items-center gap-1.5 flex-shrink-0 sm:ml-auto">
                     <button type="submit" 
                             class="h-[34px] bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-0 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" 
                             title="Apply Filters">

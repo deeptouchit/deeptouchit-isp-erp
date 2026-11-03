@@ -34,11 +34,14 @@
 <div class="min-h-screen flex flex-col bg-slate-100/70 text-slate-800 text-xs antialiased font-sans selection:bg-blue-600 selection:text-white" 
      x-data="{ 
         mobileSidebar: false, 
-        sidebarCollapsed: localStorage.getItem('isp_sidebar_collapsed') === '1',
+        sidebarCollapsed: document.documentElement.classList.contains('sidebar-collapsed'),
         filterQuery: '',
         toggleSidebar() {
             this.sidebarCollapsed = !this.sidebarCollapsed;
-            localStorage.setItem('isp_sidebar_collapsed', this.sidebarCollapsed ? '1' : '0');
+            document.documentElement.classList.toggle('sidebar-collapsed', this.sidebarCollapsed);
+            try {
+                localStorage.setItem('isp_sidebar_collapsed', this.sidebarCollapsed ? '1' : '0');
+            } catch(e) {}
         }
      }"
      @keydown.window.ctrl.b.prevent="toggleSidebar()">
@@ -47,15 +50,14 @@
     @include('tenant.layouts.partials.sidebar')
 
     {{-- Main Workspace Viewport (Offset on Desktop for Fixed Sidebar) --}}
-    <div class="flex flex-col flex-1 min-h-screen transition-all duration-200 ease-in-out"
-         :class="sidebarCollapsed ? 'lg:pl-[68px]' : 'lg:pl-60'">
+    <div class="main-viewport flex flex-col flex-1 min-h-screen">
         
         {{-- Professional Sticky Topbar --}}
         @include('tenant.layouts.partials.topbar')
 
         {{-- Main Body Canvas --}}
         <main class="flex-1 p-3 sm:p-5 bg-slate-100/70 pb-16 lg:pb-6">
-            <div class="@hasSection('full_width') w-full space-y-3 sm:space-y-4 @else max-w-7xl mx-auto space-y-4 @endif">
+            <div class="w-full space-y-3 sm:space-y-4">
                 @yield('content')
             </div>
         </main>

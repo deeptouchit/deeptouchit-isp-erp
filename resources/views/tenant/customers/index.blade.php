@@ -286,11 +286,11 @@
     <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5"
          x-data="{ showMoreFilters: {{ $isMoreOpen ? 'true' : 'false' }} }">
         <form method="GET" action="{{ url()->current() }}" id="customerFilterForm" class="space-y-2.5">
-            <!-- Primary Filter Bar (Always visible single row) -->
-            <div class="flex flex-col md:flex-row items-stretch md:items-center gap-2">
+            <!-- Primary Filter Bar (Always visible responsive row) -->
+            <div class="flex flex-wrap items-center gap-2">
                 
                 <!-- Search Text (Instant Live Search + Full DB Lookup) -->
-                <div class="relative flex-1 min-w-[200px]">
+                <div class="relative flex-1 min-w-[180px]">
                     <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-xs pointer-events-none transition-colors"
                        :class="searchQuery ? 'text-cyan-600 font-bold' : 'text-slate-400'"></i>
                     <input type="text" 
@@ -313,7 +313,7 @@
                 </div>
 
                 <!-- Status Filter -->
-                <div class="w-full md:w-32 flex-shrink-0">
+                <div class="w-full sm:w-32 flex-shrink-0">
                     <select name="status" 
                             onchange="this.form.submit()"
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
@@ -328,7 +328,7 @@
                 </div>
 
                 <!-- Zone Filter -->
-                <div class="w-full md:w-36 flex-shrink-0">
+                <div class="w-full sm:w-36 flex-shrink-0">
                     <select name="zone" 
                             onchange="this.form.submit()"
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
@@ -342,7 +342,7 @@
                 </div>
 
                 <!-- Package Filter -->
-                <div class="w-full md:w-36 flex-shrink-0">
+                <div class="w-full sm:w-36 flex-shrink-0">
                     <select name="package_id" 
                             onchange="this.form.submit()"
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
@@ -356,7 +356,7 @@
                 </div>
 
                 <!-- Per Page Selector -->
-                <div class="w-full md:w-28 flex-shrink-0">
+                <div class="w-full sm:w-28 flex-shrink-0">
                     <select name="per_page" 
                             onchange="this.form.submit()"
                             class="w-full h-[34px] px-2 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700">
@@ -391,7 +391,7 @@
                 </button>
 
                 <!-- Filter & Reset Buttons (Strict AGENTS.md sequence: [Filter] then [Reset]) -->
-                <div class="flex items-center gap-1.5 flex-shrink-0 md:ml-auto">
+                <div class="flex items-center gap-1.5 flex-shrink-0 sm:ml-auto">
                     <button type="submit" 
                             class="h-[34px] bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-0 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" 
                             title="{{ __('Apply Filters') }}">
