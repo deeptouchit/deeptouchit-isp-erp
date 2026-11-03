@@ -35,6 +35,9 @@
         .font-mono {
             font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
         }
+        table, th, td {
+            white-space: nowrap !important;
+        }
 
         @media print {
             @page {
@@ -62,6 +65,11 @@
             }
             table {
                 page-break-inside: auto;
+                width: 100% !important;
+                white-space: nowrap !important;
+            }
+            th, td {
+                white-space: nowrap !important;
             }
             tr {
                 page-break-inside: avoid;
@@ -153,23 +161,23 @@
         </div>
 
         <!-- Master Matrix Table -->
-        <table class="w-full border-collapse border border-slate-300 text-left text-[11px]">
+        <table class="w-full border-collapse border border-slate-300 text-left text-[11px] whitespace-nowrap">
             <thead>
-                <tr class="bg-slate-100 text-slate-700 border-b border-slate-300 font-bold">
-                    <th class="p-1.5 border border-slate-300 w-8 text-center">#</th>
-                    <th class="p-1.5 border border-slate-300 w-20">Customer ID</th>
-                    <th class="p-1.5 border border-slate-300">Subscriber Name</th>
-                    <th class="p-1.5 border border-slate-300 w-28">Mobile</th>
-                    <th class="p-1.5 border border-slate-300 w-28">Zone / Area</th>
-                    <th class="p-1.5 border border-slate-300 w-28">Package</th>
-                    <th class="p-1.5 border border-slate-300 w-24 text-center">Expiry</th>
-                    <th class="p-1.5 border border-slate-300 w-24 text-right">Bill ({{ $currencySymbol }})</th>
-                    <th class="p-1.5 border border-slate-300 w-24 text-right">Due ({{ $currencySymbol }})</th>
-                    <th class="p-1.5 border border-slate-300 w-24 text-right font-bold bg-slate-200/60">Payable ({{ $currencySymbol }})</th>
-                    <th class="p-1.5 border border-slate-300 w-28 text-center">Signature / Note</th>
+                <tr class="bg-slate-100 text-slate-700 border-b border-slate-300 font-bold whitespace-nowrap">
+                    <th class="px-2 py-1.5 border border-slate-300 w-8 text-center whitespace-nowrap">#</th>
+                    <th class="px-2 py-1.5 border border-slate-300 w-24 whitespace-nowrap">Customer ID</th>
+                    <th class="px-2 py-1.5 border border-slate-300 whitespace-nowrap">Subscriber Name</th>
+                    <th class="px-2 py-1.5 border border-slate-300 whitespace-nowrap">Mobile</th>
+                    <th class="px-2 py-1.5 border border-slate-300 whitespace-nowrap">Zone / Area</th>
+                    <th class="px-2 py-1.5 border border-slate-300 whitespace-nowrap">Package</th>
+                    <th class="px-2 py-1.5 border border-slate-300 text-center whitespace-nowrap">Expiry</th>
+                    <th class="px-2 py-1.5 border border-slate-300 text-right whitespace-nowrap">Bill ({{ $currencySymbol }})</th>
+                    <th class="px-2 py-1.5 border border-slate-300 text-right whitespace-nowrap">Due ({{ $currencySymbol }})</th>
+                    <th class="px-2 py-1.5 border border-slate-300 text-right font-bold bg-slate-200/60 whitespace-nowrap">Payable ({{ $currencySymbol }})</th>
+                    <th class="px-2 py-1.5 border border-slate-300 text-center whitespace-nowrap">Signature / Note</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-slate-200 font-mono">
+            <tbody class="divide-y divide-slate-200 font-mono whitespace-nowrap">
                 @php
                     $sumMonthly = 0;
                     $sumDue = 0;
@@ -185,34 +193,34 @@
                         $sumPayable += $payable;
                         $packageName = $c->mikrotik_profile_name ?: ($c->package ? ($c->package->mikrotik_profile ?: ($c->package->name ?: $c->package->package_name)) : ($c->package_name ?: 'default'));
                     @endphp
-                    <tr class="hover:bg-slate-50">
-                        <td class="p-1.5 border border-slate-300 text-center text-slate-500">{{ $idx + 1 }}</td>
-                        <td class="p-1.5 border border-slate-300 font-bold text-cyan-800">{{ $c->customer_id }}</td>
-                        <td class="p-1.5 border border-slate-300 font-sans font-semibold text-slate-800">{{ $c->name }}</td>
-                        <td class="p-1.5 border border-slate-300 text-slate-700">{{ $c->phone ?: '--' }}</td>
-                        <td class="p-1.5 border border-slate-300 font-sans text-slate-600">{{ $c->zone ?: '--' }}</td>
-                        <td class="p-1.5 border border-slate-300 font-sans font-medium text-slate-700">{{ $packageName }}</td>
-                        <td class="p-1.5 border border-slate-300 text-center text-slate-600">{{ $c->expiry_date ? \Carbon\Carbon::parse($c->expiry_date)->format('d M Y') : '--' }}</td>
-                        <td class="p-1.5 border border-slate-300 text-right text-slate-700">{{ number_format($monthly, 2) }}</td>
-                        <td class="p-1.5 border border-slate-300 text-right font-bold {{ $due > 0 ? 'text-rose-600' : 'text-slate-400' }}">{{ number_format($due, 2) }}</td>
-                        <td class="p-1.5 border border-slate-300 text-right font-bold text-slate-900 bg-emerald-50/50">{{ number_format($payable, 2) }}</td>
-                        <td class="p-1.5 border border-slate-300 text-center text-slate-300 font-sans">__________</td>
+                    <tr class="hover:bg-slate-50 whitespace-nowrap">
+                        <td class="px-2 py-1.5 border border-slate-300 text-center text-slate-500 whitespace-nowrap">{{ $idx + 1 }}</td>
+                        <td class="px-2 py-1.5 border border-slate-300 font-bold text-cyan-800 whitespace-nowrap">{{ $c->customer_id }}</td>
+                        <td class="px-2 py-1.5 border border-slate-300 font-sans font-semibold text-slate-800 whitespace-nowrap">{{ $c->name }}</td>
+                        <td class="px-2 py-1.5 border border-slate-300 text-slate-700 whitespace-nowrap">{{ $c->phone ?: '--' }}</td>
+                        <td class="px-2 py-1.5 border border-slate-300 font-sans text-slate-600 whitespace-nowrap">{{ $c->zone ?: '--' }}</td>
+                        <td class="px-2 py-1.5 border border-slate-300 font-sans font-medium text-slate-700 whitespace-nowrap">{{ $packageName }}</td>
+                        <td class="px-2 py-1.5 border border-slate-300 text-center text-slate-600 whitespace-nowrap">{{ $c->expiry_date ? \Carbon\Carbon::parse($c->expiry_date)->format('d M Y') : '--' }}</td>
+                        <td class="px-2 py-1.5 border border-slate-300 text-right text-slate-700 whitespace-nowrap">{{ number_format($monthly, 2) }}</td>
+                        <td class="px-2 py-1.5 border border-slate-300 text-right font-bold whitespace-nowrap {{ $due > 0 ? 'text-rose-600' : 'text-slate-400' }}">{{ number_format($due, 2) }}</td>
+                        <td class="px-2 py-1.5 border border-slate-300 text-right font-bold text-slate-900 bg-emerald-50/50 whitespace-nowrap">{{ number_format($payable, 2) }}</td>
+                        <td class="px-2 py-1.5 border border-slate-300 text-center text-slate-300 font-sans whitespace-nowrap">__________</td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="11" class="p-6 text-center text-slate-400 font-sans text-xs italic">
+                        <td colspan="11" class="p-6 text-center text-slate-400 font-sans text-xs italic whitespace-nowrap">
                             No subscriber records found in this table batch.
                         </td>
                     </tr>
                 @endforelse
             </tbody>
             <tfoot>
-                <tr class="bg-slate-100 font-bold font-mono border-t-2 border-slate-400">
-                    <td colspan="7" class="p-2 text-right border border-slate-300 font-sans text-xs">Total Batch Sum ({{ count($subscribers) }} Subscribers):</td>
-                    <td class="p-2 text-right border border-slate-300 text-slate-800">{{ number_format($sumMonthly, 2) }}</td>
-                    <td class="p-2 text-right border border-slate-300 text-rose-600">{{ number_format($sumDue, 2) }}</td>
-                    <td class="p-2 text-right border border-slate-300 text-emerald-900 bg-emerald-100/60">{{ number_format($sumPayable, 2) }}</td>
-                    <td class="p-2 border border-slate-300"></td>
+                <tr class="bg-slate-100 font-bold font-mono border-t-2 border-slate-400 whitespace-nowrap">
+                    <td colspan="7" class="p-2 text-right border border-slate-300 font-sans text-xs whitespace-nowrap">Total Batch Sum ({{ count($subscribers) }} Subscribers):</td>
+                    <td class="p-2 text-right border border-slate-300 text-slate-800 whitespace-nowrap">{{ number_format($sumMonthly, 2) }}</td>
+                    <td class="p-2 text-right border border-slate-300 text-rose-600 whitespace-nowrap">{{ number_format($sumDue, 2) }}</td>
+                    <td class="p-2 text-right border border-slate-300 text-emerald-900 bg-emerald-100/60 whitespace-nowrap">{{ number_format($sumPayable, 2) }}</td>
+                    <td class="p-2 border border-slate-300 whitespace-nowrap"></td>
                 </tr>
             </tfoot>
         </table>
