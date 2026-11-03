@@ -612,7 +612,8 @@
                         && !request()->routeIs('tenant.customers.online*') 
                         && !request()->routeIs('tenant.customers.disconnected*') 
                         && !request()->routeIs('tenant.customers.zones*') 
-                        && !request()->routeIs('tenant.customers.bulk-payments*');
+                        && !request()->routeIs('tenant.customers.bulk-payments*')
+                        && !request()->routeIs('tenant.customers.monthly-analytics*');
                 @endphp
                 <a href="{{ Route::has('tenant.customers.index') ? route('tenant.customers.index') : '#' }}" 
                    x-show="!filterQuery || 'all customers master database direct reseller subscribers list clients onboard create add'.includes(filterQuery.toLowerCase())"
@@ -664,6 +665,16 @@
                    x-show="!filterQuery || 'bulk payments batch bill receive pay reseller commission dues'.includes(filterQuery.toLowerCase())"
                    class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ request()->routeIs('tenant.customers.bulk-payments*') ? 'border-cyan-200 bg-cyan-50/80 text-cyan-700 font-bold border-l-4 border-l-cyan-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
                     Bulk Payments
+                </a>
+
+                <!-- 8. Monthly Analytics & Recharge Growth -->
+                <a href="{{ Route::has('tenant.customers.monthly-analytics') ? route('tenant.customers.monthly-analytics') : '#' }}" 
+                   x-show="!filterQuery || 'monthly analytics growth recharge new customers report cohorts trends cohorts billing month'.includes(filterQuery.toLowerCase())"
+                   class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ request()->routeIs('tenant.customers.monthly-analytics*') ? 'border-cyan-200 bg-cyan-50/80 text-cyan-700 font-bold border-l-4 border-l-cyan-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
+                    <span class="flex items-center justify-between">
+                        <span>Monthly Analytics</span>
+                        <span class="px-1.5 py-0.2 rounded text-[9px] bg-cyan-100 text-cyan-800 font-bold">New</span>
+                    </span>
                 </a>
                 @endif
             </div>

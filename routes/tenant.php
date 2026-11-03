@@ -314,6 +314,7 @@ Route::middleware(['web'])->group(function () {
             Route::get('/bulk-payments/print', [TenantCustomerPaymentController::class, 'printBulkPayments'])->name('bulk-payments.print');
             Route::post('/bulk-payments/process', [TenantCustomerPaymentController::class, 'processBulkPayment'])->name('bulk-payments.process');
             Route::post('/bulk-pay-bills', [TenantCustomerPaymentController::class, 'processBulkPayment'])->name('bulk-pay-bills');
+            Route::get('/monthly-analytics', [TenantCustomerController::class, 'monthlyAnalytics'])->name('monthly-analytics');
             Route::post('/{customer}/pay-bill', [TenantCustomerPaymentController::class, 'receivePayment'])->whereNumber('customer')->name('pay-bill');
             Route::get('/payments/{payment}/receipt', [TenantCustomerPaymentController::class, 'printReceipt'])->whereNumber('payment')->name('payments.receipt');
             Route::get('/{customer}/payments', [TenantCustomerPaymentController::class, 'history'])->whereNumber('customer')->name('payments.history');

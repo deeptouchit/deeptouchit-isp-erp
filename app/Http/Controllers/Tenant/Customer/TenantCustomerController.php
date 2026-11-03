@@ -231,6 +231,37 @@ class TenantCustomerController extends Controller
             });
         }
 
+        if ($request->filled('created_month')) {
+            $cMonth = $request->input('created_month'); // e.g. '2026-11'
+            $cYear = (int) substr($cMonth, 0, 4);
+            $cMonthNum = (int) substr($cMonth, 5, 2);
+            $query->whereYear('created_at', $cYear)->whereMonth('created_at', $cMonthNum);
+        }
+
+        if ($request->filled('recharged_month')) {
+            $rMonth = $request->input('recharged_month'); // e.g. '2026-11'
+            $rYear = (int) substr($rMonth, 0, 4);
+            $rMonthNum = (int) substr($rMonth, 5, 2);
+            $query->whereHas('payments', function ($pq) use ($rYear, $rMonthNum) {
+                $pq->where('status', 'completed')
+                   ->whereYear(DB::raw('COALESCE(paid_at, created_at)'), $rYear)
+                   ->whereMonth(DB::raw('COALESCE(paid_at, created_at)'), $rMonthNum);
+            });
+        }
+
+        if ($request->filled('unpaid_month')) {
+            $uMonth = $request->input('unpaid_month'); // e.g. '2026-11'
+            $uYear = (int) substr($uMonth, 0, 4);
+            $uMonthNum = (int) substr($uMonth, 5, 2);
+            $endOfU = Carbon::createFromDate($uYear, $uMonthNum, 1)->endOfMonth();
+            $query->where('created_at', '<=', $endOfU)
+                  ->whereDoesntHave('payments', function ($pq) use ($uYear, $uMonthNum) {
+                      $pq->where('status', 'completed')
+                         ->whereYear(DB::raw('COALESCE(paid_at, created_at)'), $uYear)
+                         ->whereMonth(DB::raw('COALESCE(paid_at, created_at)'), $uMonthNum);
+                  });
+        }
+
         $perPageInput = $request->input('per_page', 20);
         if ($perPageInput === 'all') {
             $perPage = 10000;
@@ -3612,5 +3643,208 @@ class TenantCustomerController extends Controller
         };
 
         return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Monthly Analytics & Recharge Growth Matrix
+     */
+    public function monthlyAnalytics(Request $request)
+    {
+        $tenant = $this->getTenant();
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
+
+        $selectedYear = (int) $request->input('year', date('Y'));
+        $scope = $request->input('scope', 'all'); // 'all', 'isp', 'reseller'
+        $resellerId = $request->input('reseller_id');
+        $zone = $request->input('zone');
+
+        // Available years for dropdown
+        $years = TenantCustomer::where('tenant_id', $tenant->id)
+            ->selectRaw('DISTINCT YEAR(created_at) as yr')
+            ->pluck('yr')
+            ->merge([(int)date('Y'), (int)date('Y') - 1])
+            ->filter()
+            ->unique()
+            ->sortDesc()
+            ->values();
+
+        // Resellers list
+        $resellers = TenantReseller::where('tenant_id', $tenant->id)->orderBy('name')->get();
+
+        // Distinct Zones
+        $zones = TenantCustomer::where('tenant_id', $tenant->id)
+            ->whereNotNull('zone')
+            ->where('zone', '!=', '')
+            ->distinct('zone')
+            ->pluck('zone')
+            ->filter()
+            ->values();
+
+        // Monthly breakdown for selectedYear
+        $maxMonth = ($selectedYear === (int)date('Y')) ? (int)date('n') : 12;
+
+        // Query 1: New customers per month
+        $newCustomersQuery = TenantCustomer::where('tenant_id', $tenant->id)
+            ->whereYear('created_at', $selectedYear);
+        if ($scope === 'isp') {
+            $newCustomersQuery->whereNull('reseller_id');
+        } elseif ($scope === 'reseller') {
+            $newCustomersQuery->whereNotNull('reseller_id');
+        }
+        if ($resellerId) {
+            $newCustomersQuery->where('reseller_id', $resellerId);
+        }
+        if ($zone) {
+            $newCustomersQuery->where('zone', $zone);
+        }
+        $newCustomersMonthly = $newCustomersQuery
+            ->selectRaw('MONTH(created_at) as m, COUNT(*) as cnt')
+            ->groupBy('m')
+            ->pluck('cnt', 'm');
+
+        // Query 2: Payments per month (Recharged customers count & Total collection)
+        $paymentsQuery = TenantCustomerPayment::where('tenant_id', $tenant->id)
+            ->where('status', 'completed')
+            ->whereYear(DB::raw('COALESCE(paid_at, created_at)'), $selectedYear);
+        if ($scope === 'isp') {
+            $paymentsQuery->whereNull('reseller_id');
+        } elseif ($scope === 'reseller') {
+            $paymentsQuery->whereNotNull('reseller_id');
+        }
+        if ($resellerId) {
+            $paymentsQuery->where('reseller_id', $resellerId);
+        }
+        if ($zone) {
+            $paymentsQuery->whereHas('customer', fn($cq) => $cq->where('zone', $zone));
+        }
+        $monthlyPayments = $paymentsQuery
+            ->selectRaw('
+                MONTH(COALESCE(paid_at, created_at)) as m,
+                COUNT(DISTINCT customer_id) as recharged_count,
+                SUM(amount) as total_collection,
+                COUNT(*) as transaction_count
+            ')
+            ->groupBy('m')
+            ->get()
+            ->keyBy('m');
+
+        $rows = [];
+        $kpiTotalNewYear = 0;
+        $kpiTotalCollectionYear = 0;
+        $kpiCurrentMonthNew = 0;
+        $kpiCurrentMonthRecharged = 0;
+        $kpiCurrentMonthNonRecharged = 0;
+        $kpiCurrentMonthCollection = 0;
+
+        $totalActiveSubscribers = TenantCustomer::where('tenant_id', $tenant->id)
+            ->when($scope === 'isp', fn($q) => $q->whereNull('reseller_id'))
+            ->when($scope === 'reseller', fn($q) => $q->whereNotNull('reseller_id'))
+            ->when($resellerId, fn($q) => $q->where('reseller_id', $resellerId))
+            ->when($zone, fn($q) => $q->where('zone', $zone))
+            ->whereNotIn('status', ['disabled', 'disconnected', 'archived'])
+            ->count();
+
+        for ($m = $maxMonth; $m >= 1; $m--) {
+            $carbonMonth = Carbon::create($selectedYear, $m, 1, 0, 0, 0);
+            $monthKey = $carbonMonth->format('Y-m'); // e.g. 2026-11
+            $monthLabel = $carbonMonth->format('M Y'); // e.g. Nov 2026
+            $monthFullName = $carbonMonth->format('F Y'); // e.g. November 2026
+            $endOfMonth = $carbonMonth->copy()->endOfMonth();
+
+            $newCount = (int) ($newCustomersMonthly[$m] ?? 0);
+            $kpiTotalNewYear += $newCount;
+
+            $payData = $monthlyPayments->get($m);
+            $rechargedCount = (int) ($payData?->recharged_count ?? 0);
+            $collection = (float) ($payData?->total_collection ?? 0);
+            $transactions = (int) ($payData?->transaction_count ?? 0);
+            $kpiTotalCollectionYear += $collection;
+
+            // Total active/billed base up to that month
+            $baseCount = TenantCustomer::where('tenant_id', $tenant->id)
+                ->where('created_at', '<=', $endOfMonth)
+                ->when($scope === 'isp', fn($q) => $q->whereNull('reseller_id'))
+                ->when($scope === 'reseller', fn($q) => $q->whereNotNull('reseller_id'))
+                ->when($resellerId, fn($q) => $q->where('reseller_id', $resellerId))
+                ->when($zone, fn($q) => $q->where('zone', $zone))
+                ->whereNotIn('status', ['disabled', 'disconnected', 'archived'])
+                ->count();
+
+            // Non-recharged is base minus recharged
+            $nonRechargedCount = max(0, $baseCount - $rechargedCount);
+
+            $rechargeRate = $baseCount > 0 ? round(($rechargedCount / $baseCount) * 100, 1) : 0;
+
+            if ($m === (int)date('n') && $selectedYear === (int)date('Y')) {
+                $kpiCurrentMonthNew = $newCount;
+                $kpiCurrentMonthRecharged = $rechargedCount;
+                $kpiCurrentMonthNonRecharged = $nonRechargedCount;
+                $kpiCurrentMonthCollection = $collection;
+            }
+
+            $rows[] = [
+                'month_num' => $m,
+                'month_key' => $monthKey,
+                'month_label' => $monthLabel,
+                'month_full' => $monthFullName,
+                'new_customers' => $newCount,
+                'base_customers' => $baseCount,
+                'recharged_customers' => $rechargedCount,
+                'non_recharged_customers' => $nonRechargedCount,
+                'collection' => $collection,
+                'transactions' => $transactions,
+                'recharge_rate' => $rechargeRate,
+            ];
+        }
+
+        // CSV Export Support
+        if ($request->input('export') === 'csv') {
+            $headers = [
+                'Content-Type' => 'text/csv; charset=UTF-8',
+                'Content-Disposition' => "attachment; filename=\"monthly_customer_analytics_{$selectedYear}.csv\"",
+            ];
+            $callback = function () use ($rows) {
+                $file = fopen('php://output', 'w');
+                fputs($file, "\xEF\xBB\xBF");
+                fputcsv($file, ['Month', 'New Customers Added', 'Active Base', 'Recharged (Paid)', 'Non-Recharged (Unpaid)', 'Total Collection', 'Recharge Rate (%)', 'Transactions']);
+                foreach ($rows as $r) {
+                    fputcsv($file, [
+                        $r['month_full'],
+                        $r['new_customers'],
+                        $r['base_customers'],
+                        $r['recharged_customers'],
+                        $r['non_recharged_customers'],
+                        $r['collection'],
+                        $r['recharge_rate'] . '%',
+                        $r['transactions'],
+                    ]);
+                }
+                fclose($file);
+            };
+            return response()->stream($callback, 200, $headers);
+        }
+
+        $kpis = [
+            'total_subscribers' => $totalActiveSubscribers,
+            'year_new' => $kpiTotalNewYear,
+            'current_month_new' => $kpiCurrentMonthNew,
+            'current_month_recharged' => $kpiCurrentMonthRecharged,
+            'current_month_non_recharged' => $kpiCurrentMonthNonRecharged,
+            'current_month_collection' => $kpiCurrentMonthCollection,
+        ];
+
+        return view('tenant.customers.monthly_analytics', compact(
+            'tenant',
+            'currencySymbol',
+            'selectedYear',
+            'scope',
+            'resellerId',
+            'zone',
+            'years',
+            'resellers',
+            'zones',
+            'rows',
+            'kpis'
+        ));
     }
 }
