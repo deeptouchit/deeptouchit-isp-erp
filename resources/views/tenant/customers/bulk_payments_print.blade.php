@@ -159,16 +159,14 @@
                     <th class="p-1.5 border border-slate-300 w-8 text-center">#</th>
                     <th class="p-1.5 border border-slate-300 w-20">Customer ID</th>
                     <th class="p-1.5 border border-slate-300">Subscriber Name</th>
-                    <th class="p-1.5 border border-slate-300 w-24">PPPoE User</th>
-                    <th class="p-1.5 border border-slate-300 w-24">Mobile</th>
-                    <th class="p-1.5 border border-slate-300 w-24">Zone / Area</th>
-                    <th class="p-1.5 border border-slate-300 w-24">Package</th>
-                    <th class="p-1.5 border border-slate-300 w-16 text-center">Status</th>
-                    <th class="p-1.5 border border-slate-300 w-20 text-center">Expiry</th>
-                    <th class="p-1.5 border border-slate-300 w-20 text-right">Bill ({{ $currencySymbol }})</th>
-                    <th class="p-1.5 border border-slate-300 w-20 text-right">Due ({{ $currencySymbol }})</th>
-                    <th class="p-1.5 border border-slate-300 w-22 text-right font-bold bg-slate-200/60">Payable ({{ $currencySymbol }})</th>
-                    <th class="p-1.5 border border-slate-300 w-24 text-center">Signature / Note</th>
+                    <th class="p-1.5 border border-slate-300 w-28">Mobile</th>
+                    <th class="p-1.5 border border-slate-300 w-28">Zone / Area</th>
+                    <th class="p-1.5 border border-slate-300 w-28">Package</th>
+                    <th class="p-1.5 border border-slate-300 w-24 text-center">Expiry</th>
+                    <th class="p-1.5 border border-slate-300 w-24 text-right">Bill ({{ $currencySymbol }})</th>
+                    <th class="p-1.5 border border-slate-300 w-24 text-right">Due ({{ $currencySymbol }})</th>
+                    <th class="p-1.5 border border-slate-300 w-24 text-right font-bold bg-slate-200/60">Payable ({{ $currencySymbol }})</th>
+                    <th class="p-1.5 border border-slate-300 w-28 text-center">Signature / Note</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-slate-200 font-mono">
@@ -191,15 +189,9 @@
                         <td class="p-1.5 border border-slate-300 text-center text-slate-500">{{ $idx + 1 }}</td>
                         <td class="p-1.5 border border-slate-300 font-bold text-cyan-800">{{ $c->customer_id }}</td>
                         <td class="p-1.5 border border-slate-300 font-sans font-semibold text-slate-800">{{ $c->name }}</td>
-                        <td class="p-1.5 border border-slate-300 text-slate-700">{{ $c->username }}</td>
                         <td class="p-1.5 border border-slate-300 text-slate-700">{{ $c->phone ?: '--' }}</td>
                         <td class="p-1.5 border border-slate-300 font-sans text-slate-600">{{ $c->zone ?: '--' }}</td>
                         <td class="p-1.5 border border-slate-300 font-sans font-medium text-slate-700">{{ $packageName }}</td>
-                        <td class="p-1.5 border border-slate-300 text-center font-sans">
-                            <span class="inline-block px-1.5 py-0.2 rounded text-[9.5px] uppercase font-bold {{ $c->status === 'active' ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-rose-100 text-rose-800 border border-rose-200' }}">
-                                {{ $c->status }}
-                            </span>
-                        </td>
                         <td class="p-1.5 border border-slate-300 text-center text-slate-600">{{ $c->expiry_date ? \Carbon\Carbon::parse($c->expiry_date)->format('d M Y') : '--' }}</td>
                         <td class="p-1.5 border border-slate-300 text-right text-slate-700">{{ number_format($monthly, 2) }}</td>
                         <td class="p-1.5 border border-slate-300 text-right font-bold {{ $due > 0 ? 'text-rose-600' : 'text-slate-400' }}">{{ number_format($due, 2) }}</td>
@@ -208,7 +200,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="13" class="p-6 text-center text-slate-400 font-sans text-xs italic">
+                        <td colspan="11" class="p-6 text-center text-slate-400 font-sans text-xs italic">
                             No subscriber records found in this table batch.
                         </td>
                     </tr>
@@ -216,7 +208,7 @@
             </tbody>
             <tfoot>
                 <tr class="bg-slate-100 font-bold font-mono border-t-2 border-slate-400">
-                    <td colspan="9" class="p-2 text-right border border-slate-300 font-sans text-xs">Total Batch Sum ({{ count($subscribers) }} Subscribers):</td>
+                    <td colspan="7" class="p-2 text-right border border-slate-300 font-sans text-xs">Total Batch Sum ({{ count($subscribers) }} Subscribers):</td>
                     <td class="p-2 text-right border border-slate-300 text-slate-800">{{ number_format($sumMonthly, 2) }}</td>
                     <td class="p-2 text-right border border-slate-300 text-rose-600">{{ number_format($sumDue, 2) }}</td>
                     <td class="p-2 text-right border border-slate-300 text-emerald-900 bg-emerald-100/60">{{ number_format($sumPayable, 2) }}</td>
