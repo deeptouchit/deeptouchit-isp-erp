@@ -8,13 +8,23 @@
 <!-- Professional Sticky Top Navbar for ISP Tenant Portal -->
 <header class="h-14 bg-white/95 backdrop-blur-md border-b border-slate-200 px-3.5 sm:px-6 flex items-center justify-between sticky top-0 z-40 shadow-2xs">
     
-    <!-- Left Section: Mobile Drawer Toggle & Breadcrumb / Company Info -->
-    <div class="flex items-center gap-3">
+    <!-- Left Section: Mobile Drawer Toggle & Desktop Collapse Button & Breadcrumb / Company Info -->
+    <div class="flex items-center gap-2 sm:gap-3">
+        <!-- Mobile Drawer Toggle -->
         <button type="button" 
                 @click="mobileSidebar = true" 
                 class="lg:hidden p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition cursor-pointer" 
                 title="Toggle Menu">
             <i class="fas fa-bars text-sm"></i>
+        </button>
+
+        <!-- Desktop Sidebar Toggle (Collapse / Expand) -->
+        <button type="button" 
+                @click="toggleSidebar()" 
+                class="hidden lg:flex items-center justify-center w-8 h-8 rounded-lg border border-slate-200 text-slate-600 hover:text-cyan-700 hover:bg-slate-50 hover:border-slate-300 transition cursor-pointer shadow-2xs" 
+                :title="sidebarCollapsed ? 'Expand Sidebar (Ctrl+B)' : 'Collapse Sidebar (Ctrl+B)'">
+            <i class="fas text-xs transition-transform duration-200" 
+               :class="sidebarCollapsed ? 'fa-bars text-cyan-600' : 'fa-bars-staggered'"></i>
         </button>
 
         <div class="flex items-center gap-2">

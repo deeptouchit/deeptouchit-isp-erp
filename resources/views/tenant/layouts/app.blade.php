@@ -34,14 +34,21 @@
 <div class="min-h-screen flex flex-col bg-slate-100/70 text-slate-800 text-xs antialiased font-sans selection:bg-blue-600 selection:text-white" 
      x-data="{ 
         mobileSidebar: false, 
-        filterQuery: '' 
-     }">
+        sidebarCollapsed: localStorage.getItem('isp_sidebar_collapsed') === '1',
+        filterQuery: '',
+        toggleSidebar() {
+            this.sidebarCollapsed = !this.sidebarCollapsed;
+            localStorage.setItem('isp_sidebar_collapsed', this.sidebarCollapsed ? '1' : '0');
+        }
+     }"
+     @keydown.window.ctrl.b.prevent="toggleSidebar()">
 
     {{-- Left Navigation Sidebar Partial --}}
     @include('tenant.layouts.partials.sidebar')
 
-    {{-- Main Workspace Viewport (Offset 60 on Desktop for Fixed Sidebar) --}}
-    <div class="lg:pl-60 flex flex-col flex-1 min-h-screen">
+    {{-- Main Workspace Viewport (Offset on Desktop for Fixed Sidebar) --}}
+    <div class="flex flex-col flex-1 min-h-screen transition-all duration-200 ease-in-out"
+         :class="sidebarCollapsed ? 'lg:pl-[68px]' : 'lg:pl-60'">
         
         {{-- Professional Sticky Topbar --}}
         @include('tenant.layouts.partials.topbar')

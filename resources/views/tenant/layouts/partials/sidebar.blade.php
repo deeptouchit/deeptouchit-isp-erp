@@ -14,32 +14,84 @@
      class="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-xs lg:hidden" 
      x-cloak></div>
 
-<!-- Sleek Compact Left Sidebar (60 Width on Desktop) -->
-<aside class="fixed inset-y-0 left-0 z-50 w-60 bg-white border-r border-slate-200 flex flex-col transition-transform duration-200 ease-in-out lg:translate-x-0"
-       :class="mobileSidebar ? 'translate-x-0 shadow-xl' : '-translate-x-full lg:translate-x-0'">
+@push('styles')
+<style>
+    .sidebar-collapsed .sidebar-brand-text,
+    .sidebar-collapsed .sidebar-search,
+    .sidebar-collapsed .sidebar-user-text {
+        display: none !important;
+    }
+    .sidebar-collapsed .sidebar-nav-container a > span,
+    .sidebar-collapsed .sidebar-nav-container button span,
+    .sidebar-collapsed .sidebar-nav-container button > .fa-chevron-right,
+    .sidebar-collapsed .sidebar-nav-container [x-collapse] {
+        display: none !important;
+    }
+    .sidebar-collapsed .sidebar-nav-container a,
+    .sidebar-collapsed .sidebar-nav-container button {
+        justify-content: center !important;
+        padding-left: 0.5rem !important;
+        padding-right: 0.5rem !important;
+    }
+    .sidebar-collapsed .sidebar-nav-container button > div {
+        justify-content: center !important;
+        margin: 0 !important;
+        gap: 0 !important;
+    }
+    .sidebar-collapsed .sidebar-nav-container a i,
+    .sidebar-collapsed .sidebar-nav-container button i {
+        margin: 0 !important;
+        font-size: 13px !important;
+    }
+    .sidebar-collapsed .sidebar-user-footer {
+        justify-content: center !important;
+    }
+    .sidebar-collapsed .sidebar-user-footer form {
+        display: none !important;
+    }
+</style>
+@endpush
+
+<!-- Sleek Compact Left Sidebar (60 Width or 68px Collapsed on Desktop) -->
+<aside class="fixed inset-y-0 left-0 z-50 bg-white border-r border-slate-200 flex flex-col transition-all duration-200 ease-in-out"
+       :class="[
+           mobileSidebar ? 'translate-x-0 shadow-xl w-60' : '-translate-x-full lg:translate-x-0',
+           sidebarCollapsed ? 'sidebar-collapsed lg:w-[68px]' : 'lg:w-60'
+       ]">
     
     <!-- Compact Brand Header -->
-    <div class="h-14 px-4 flex items-center justify-between border-b border-slate-100 bg-white">
-        <a href="{{ route('tenant.dashboard') }}" class="flex items-center gap-2.5 overflow-hidden">
+    <div class="h-14 px-3 flex items-center justify-between border-b border-slate-100 bg-white">
+        <a href="{{ route('tenant.dashboard') }}" class="flex items-center gap-2.5 overflow-hidden flex-1" :title="sidebarCollapsed ? 'Dashboard' : ''">
             @if(isset($tenant) && $tenant && !empty($tenant->logo))
-                <img src="{{ $tenant->logo }}" alt="{{ $tenant->company_name ?: $tenant->name }}" class="h-7 max-w-[120px] object-contain">
+                <img src="{{ $tenant->logo }}" alt="{{ $tenant->company_name ?: $tenant->name }}" class="h-7 max-w-[120px] object-contain flex-shrink-0">
             @else
                 <div class="w-7 h-7 rounded-lg bg-blue-600 flex-shrink-0 flex items-center justify-center text-white font-bold text-xs shadow-xs">
                     {{ strtoupper(substr($tenant->name ?? 'ISP', 0, 1)) }}
                 </div>
             @endif
-            <div class="flex flex-col overflow-hidden leading-tight">
+            <div class="sidebar-brand-text flex flex-col overflow-hidden leading-tight">
                 <span class="font-bold text-slate-900 text-xs tracking-tight truncate">{{ isset($tenant) && $tenant ? ($tenant->company_name ?: ($tenant->name ?? 'ISP Portal')) : 'ISP Portal' }}</span>
                 <span class="text-[9.5px] font-semibold text-blue-600 uppercase tracking-wider">{{ $authUser && $authUser->isCollector() ? 'Bill Collector' : 'ISP Admin Console' }}</span>
             </div>
         </a>
+
+        <!-- Desktop Sidebar Toggle Button inside Sidebar Header -->
+        <button type="button" 
+                @click="toggleSidebar()" 
+                class="hidden lg:flex items-center justify-center w-7 h-7 rounded-lg text-slate-400 hover:text-cyan-700 hover:bg-slate-100 transition cursor-pointer flex-shrink-0" 
+                :title="sidebarCollapsed ? 'Expand Sidebar (Ctrl+B)' : 'Collapse Sidebar (Ctrl+B)'">
+            <i class="fas text-[11px] transition-transform duration-200" 
+               :class="sidebarCollapsed ? 'fa-chevron-right text-cyan-600' : 'fa-chevron-left'"></i>
+        </button>
+
+        <!-- Mobile Close Button -->
         <button type="button" @click="mobileSidebar = false" class="lg:hidden p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer">
             <i class="fas fa-times text-xs"></i>
         </button>
     </div>
 
     <!-- Sleek Search Filter -->
-    <div class="p-2.5 border-b border-slate-100 bg-slate-50/50">
+    <div class="sidebar-search p-2.5 border-b border-slate-100 bg-slate-50/50">
         <div class="relative">
             <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-[10px]"></i>
             <input type="search" 
@@ -66,7 +118,8 @@
     </div>
 
     <!-- Navigation Menu -->
-    <div class="flex-1 overflow-y-auto p-2 space-y-1">
+    <div class="sidebar-nav-container flex-1 overflow-y-auto p-2 space-y-1"
+         @click="if (sidebarCollapsed) { toggleSidebar(); }">
         @if($authUser && $authUser->isCollector())
             <!-- 1. Main Dashboard -->
             <a href="{{ route('tenant.dashboard') }}" 
@@ -881,12 +934,12 @@
     </div>
 
     <!-- Sidebar User Footer -->
-    <div class="p-2.5 border-t border-slate-100 bg-slate-50/70 flex items-center justify-between">
+    <div class="sidebar-user-footer p-2.5 border-t border-slate-100 bg-slate-50/70 flex items-center justify-between">
         <div class="flex items-center gap-2 overflow-hidden">
             <div class="w-6 h-6 rounded-md bg-blue-100 text-blue-700 flex-shrink-0 flex items-center justify-center font-bold text-[10px]">
                 {{ strtoupper(substr($authUser->name ?? 'A', 0, 1)) }}
             </div>
-            <div class="flex flex-col overflow-hidden leading-none">
+            <div class="sidebar-user-text flex flex-col overflow-hidden leading-none">
                 <span class="text-[11px] font-bold text-slate-800 truncate">{{ $authUser->name ?? 'Admin' }}</span>
                 <span class="text-[9px] text-slate-400">{{ $authUser->role_badge['label'] ?? ($authUser->isCollector() ? 'Bill Collector' : 'ISP Staff') }}</span>
             </div>
@@ -897,5 +950,21 @@
                 <i class="fas fa-sign-out-alt text-xs"></i>
             </button>
         </form>
+    </div>
+
+    <!-- Sleek Desktop Collapse Toggle Footer Bar -->
+    <div class="hidden lg:flex items-center justify-between p-2 border-t border-slate-200/60 bg-white text-slate-500">
+        <button type="button" 
+                @click="toggleSidebar()" 
+                class="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-100 hover:text-slate-800 transition cursor-pointer"
+                :class="sidebarCollapsed ? 'justify-center' : 'justify-between'"
+                :title="sidebarCollapsed ? 'Expand Sidebar (Ctrl+B)' : 'Collapse Sidebar (Ctrl+B)'">
+            <div class="flex items-center gap-2 overflow-hidden">
+                <i class="fas text-xs transition-transform duration-200" 
+                   :class="sidebarCollapsed ? 'fa-angles-right text-cyan-600' : 'fa-angles-left text-slate-400'"></i>
+                <span x-show="!sidebarCollapsed" class="text-[11px] font-medium tracking-tight">Collapse</span>
+            </div>
+            <kbd x-show="!sidebarCollapsed" class="text-[9px] font-mono bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 text-slate-400">Ctrl+B</kbd>
+        </button>
     </div>
 </aside>
