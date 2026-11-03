@@ -81,7 +81,7 @@ class TenantCustomerController extends Controller
         $allCollectors = User::where('tenant_id', $tenant->id)->where('role', 'like', '%collector%')->orderBy('name')->get();
 
         $ponQuery = TenantOnu::where('tenant_id', $tenant->id);
-        if ($oltFilter && $oltFilter !== 'unassigned') {
+        if ($oltFilter) {
             $ponQuery->where('olt_id', $oltFilter);
         }
         $distinctPonPorts = $ponQuery->whereNotNull('pon_port')
@@ -200,16 +200,7 @@ class TenantCustomerController extends Controller
             $query->where('router_id', $routerFilter);
         }
 
-        if ($oltFilter === 'unassigned') {
-            $query->where(function ($q) {
-                $q->whereNull('olt_id')
-                  ->whereNotIn('id', function ($sub) {
-                      $sub->select('customer_id')
-                          ->from('tenant_onus')
-                          ->whereNotNull('customer_id');
-                  });
-            });
-        } elseif ($oltFilter) {
+        if ($oltFilter) {
             $query->where(function ($q) use ($oltFilter) {
                 $q->where('olt_id', $oltFilter)
                   ->orWhereIn('id', function ($sub) use ($oltFilter) {
@@ -221,21 +212,7 @@ class TenantCustomerController extends Controller
             });
         }
 
-        if ($ponFilter === 'unassigned') {
-            $query->where(function ($q) {
-                $q->where(function ($fq) {
-                    $fq->whereNull('fiber_route_info')
-                       ->orWhere('fiber_route_info', '');
-                })
-                ->whereNotIn('id', function ($sub) {
-                    $sub->select('customer_id')
-                        ->from('tenant_onus')
-                        ->whereNotNull('customer_id')
-                        ->whereNotNull('pon_port')
-                        ->where('pon_port', '!=', '');
-                });
-            });
-        } elseif ($ponFilter) {
+        if ($ponFilter) {
             $query->where(function ($q) use ($ponFilter) {
                 $q->whereIn('id', function ($sub) use ($ponFilter) {
                     $sub->select('customer_id')

@@ -492,7 +492,6 @@
                             onchange="this.form.submit()"
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                         <option value="">{{ __('All OLTs') }}</option>
-                        <option value="unassigned" {{ ($oltFilter ?? '') === 'unassigned' ? 'selected' : '' }}>⚠️ {{ __('Unassigned (No OLT)') }}</option>
                         @foreach($allOlts as $olt)
                             <option value="{{ $olt->id }}" {{ (string)($oltFilter ?? '') === (string)$olt->id ? 'selected' : '' }}>
                                 {{ $olt->name }}
@@ -507,7 +506,6 @@
                             onchange="this.form.submit()"
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                         <option value="">{{ __('All PON Ports') }}</option>
-                        <option value="unassigned" {{ ($ponFilter ?? '') === 'unassigned' ? 'selected' : '' }}>⚠️ {{ __('Unassigned (No PON)') }}</option>
                         @foreach($distinctPonPorts as $pon)
                             <option value="{{ $pon }}" {{ ($ponFilter ?? '') === $pon ? 'selected' : '' }}>
                                 PON: {{ $pon }}
