@@ -54,7 +54,7 @@ php artisan migrate --force
 # 5. Optimize caches
 echo "🧹 Optimizing Laravel caches..."
 php artisan optimize:clear
-php artisan view:cache
+rm -f "$APP_DIR/storage/framework/views"/*.php 2>/dev/null || true
 
 # 6. Storage link
 echo "🔗 Ensuring storage link exists..."
