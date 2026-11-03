@@ -125,54 +125,83 @@
     </div>
 
     <!-- 3. Scope Mode Switcher & Filter Toolbar -->
-    <div class="bg-white p-3 rounded-md border border-slate-200 shadow-2xs space-y-2.5">
-        <form method="GET" action="{{ route('tenant.customers.bulk-payments') }}" class="space-y-2.5">
-            
-            <!-- Scope Mode Buttons & Quick Presets -->
-            <div class="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-100">
-                <div class="flex items-center gap-1 bg-slate-100 p-0.5 rounded-md">
-                    <button type="button" 
-                            @click="setMode('reseller')"
-                            :class="mode === 'reseller' ? 'bg-white text-purple-700 shadow-2xs font-bold' : 'text-slate-600 hover:text-slate-900 font-medium'"
-                            class="px-3 py-1 rounded text-xs transition cursor-pointer flex items-center gap-1.5">
-                        <i class="fas fa-handshake text-[10px]"></i>
-                        <span>Reseller / Sub-ISP Wise</span>
-                    </button>
-                    <button type="button" 
-                            @click="setMode('direct')"
-                            :class="mode === 'direct' ? 'bg-white text-cyan-700 shadow-2xs font-bold' : 'text-slate-600 hover:text-slate-900 font-medium'"
-                            class="px-3 py-1 rounded text-xs transition cursor-pointer flex items-center gap-1.5">
-                        <i class="fas fa-building text-[10px]"></i>
-                        <span>ISP Direct / Custom Scope</span>
-                    </button>
-                </div>
-                <input type="hidden" name="mode" x-model="mode">
-
-                <div class="flex items-center gap-2">
-                    <span class="text-[11px] text-slate-500 font-medium">Auto-Selection:</span>
-                    <button type="button" 
-                            @click="selectAllRows()" 
-                            class="px-2 py-0.5 rounded bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-[11px] font-semibold border border-emerald-200 cursor-pointer">
-                        Select All (<span x-text="tableRows.length"></span>)
-                    </button>
-                    <button type="button" 
-                            @click="clearAllSelections()" 
-                            class="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 text-[11px] font-semibold cursor-pointer">
-                        Deselect All
-                    </button>
-                </div>
+    @php
+        $activeMoreCount = collect([$zone, $packageId])->filter()->count();
+        $isMoreOpen = $activeMoreCount > 0;
+    @endphp
+    <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5">
+        
+        <!-- Top Scope Mode Switcher & Quick Selection Bar -->
+        <div class="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-100">
+            <div class="flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg border border-slate-200/80">
+                <button type="button" 
+                        @click="setMode('reseller')"
+                        :class="mode === 'reseller' ? 'bg-white text-purple-700 shadow-2xs font-bold' : 'text-slate-600 hover:text-slate-900 font-medium'"
+                        class="px-3 py-1 rounded-md text-xs transition cursor-pointer flex items-center gap-1.5">
+                    <i class="fas fa-handshake text-[10px]"></i>
+                    <span>Reseller / Sub-ISP Wise</span>
+                </button>
+                <button type="button" 
+                        @click="setMode('direct')"
+                        :class="mode === 'direct' ? 'bg-white text-cyan-700 shadow-2xs font-bold' : 'text-slate-600 hover:text-slate-900 font-medium'"
+                        class="px-3 py-1 rounded-md text-xs transition cursor-pointer flex items-center gap-1.5">
+                    <i class="fas fa-building text-[10px]"></i>
+                    <span>ISP Direct / Custom Scope</span>
+                </button>
             </div>
 
-            <!-- Filter Grid -->
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 lg:grid-cols-12 gap-2">
+            <div class="flex items-center gap-2">
+                <span class="text-[11px] text-slate-500 font-medium">Auto-Selection:</span>
+                <button type="button" 
+                        @click="selectAllRows()" 
+                        class="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-semibold border border-emerald-200 transition cursor-pointer flex items-center gap-1">
+                    <i class="fas fa-check-double text-[10px]"></i>
+                    <span>Select All (<span x-text="tableRows.length"></span>)</span>
+                </button>
+                <button type="button" 
+                        @click="clearAllSelections()" 
+                        class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold border border-slate-200 transition cursor-pointer flex items-center gap-1">
+                    <i class="fas fa-times text-[10px]"></i>
+                    <span>Deselect All</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 2-Tier Filter Form (Strict AGENTS.md Standard & Uniform h-[34px]) -->
+        <form method="GET" action="{{ route('tenant.customers.bulk-payments') }}" id="bulkPaymentFilterForm" class="space-y-2.5">
+            <input type="hidden" name="mode" x-model="mode">
+
+            <!-- Tier 1: Primary Filter Bar (Single Row, Strict h-[34px]) -->
+            <div class="flex flex-col md:flex-row items-stretch md:items-center gap-2">
                 
+                <!-- Intelligent Live Search Box -->
+                <div class="relative flex-1 min-w-[200px]">
+                    <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-xs pointer-events-none transition-colors"
+                       :class="searchQuery ? 'text-cyan-600 font-bold' : 'text-slate-400'"></i>
+                    <input type="text" 
+                           name="search" 
+                           id="bulkSearchInput"
+                           x-model="searchQuery"
+                           @keydown.enter.prevent="submitSearchNow()"
+                           placeholder="{{ __('Search Name, ID, Username, Phone, IP...') }}" 
+                           class="w-full h-[34px] pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition placeholder:text-slate-400"
+                           autocomplete="off">
+                    <button type="button" 
+                            x-show="searchQuery && searchQuery.length > 0" 
+                            x-cloak
+                            @click="clearLiveSearch()"
+                            class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500 p-0.5 text-xs transition cursor-pointer"
+                            title="{{ __('Clear Search') }}">
+                        <i class="fas fa-times-circle"></i>
+                    </button>
+                </div>
+
                 <!-- Reseller Select (Highlighted when Reseller Mode) -->
-                <div class="col-span-2 sm:col-span-3 lg:col-span-3" x-show="mode === 'reseller'">
-                    <label class="block text-[10px] font-semibold uppercase text-slate-600 mb-0.5">Reseller / Franchise <span class="text-rose-500">*</span></label>
+                <div class="w-full md:w-56 flex-shrink-0" x-show="mode === 'reseller'">
                     <select name="reseller_id" 
                             x-model="selectedResellerId"
                             @change="onResellerChange($event)"
-                            class="w-full px-2.5 py-1.5 bg-purple-50/50 border border-purple-200 rounded-md text-xs font-semibold text-purple-900 focus:bg-white focus:border-purple-500 focus:outline-hidden transition">
+                            class="w-full h-[34px] px-2.5 bg-purple-50/60 border border-purple-200 rounded-lg text-xs font-semibold text-purple-900 focus:bg-white focus:border-purple-500 focus:outline-hidden transition">
                         <option value="">-- Choose Reseller --</option>
                         @foreach($resellers as $res)
                             <option value="{{ $res->id }}" 
@@ -186,40 +215,11 @@
                     </select>
                 </div>
 
-                <!-- Zone Select -->
-                <div class="col-span-1 sm:col-span-1 lg:col-span-2">
-                    <label class="block text-[10px] font-semibold uppercase text-slate-600 mb-0.5">Area / Zone</label>
-                    <select name="zone" 
-                            onchange="this.form.submit()"
-                            class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                        <option value="">All Zones</option>
-                        @foreach($zones as $z)
-                            <option value="{{ $z }}" {{ $zone === $z ? 'selected' : '' }}>{{ $z }}</option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <!-- Package Select -->
-                <div class="col-span-1 sm:col-span-2 lg:col-span-2">
-                    <label class="block text-[10px] font-semibold uppercase text-slate-600 mb-0.5">Package Plan</label>
-                    <select name="package_id" 
-                            onchange="this.form.submit()"
-                            class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                        <option value="">All Packages</option>
-                        @foreach($packages as $pkg)
-                            <option value="{{ $pkg->id }}" {{ (string)$packageId === (string)$pkg->id ? 'selected' : '' }}>
-                                {{ $pkg->mikrotik_profile ?: ($pkg->name ?: $pkg->package_name) }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-
                 <!-- Status Select -->
-                <div class="col-span-1 sm:col-span-1 lg:col-span-2">
-                    <label class="block text-[10px] font-semibold uppercase text-slate-600 mb-0.5">Status Filter</label>
+                <div class="w-full md:w-44 flex-shrink-0">
                     <select name="status" 
                             onchange="this.form.submit()"
-                            class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700">
                         <option value="all_due" {{ $status === 'all_due' ? 'selected' : '' }}>Pending Dues &amp; Expired</option>
                         <option value="all" {{ $status === 'all' ? 'selected' : '' }}>All Statuses</option>
                         <option value="active" {{ $status === 'active' ? 'selected' : '' }}>🟢 Active Only</option>
@@ -229,39 +229,115 @@
                     </select>
                 </div>
 
-                <!-- Search Input -->
-                <div class="col-span-2 sm:col-span-2 lg:col-span-2">
-                    <label class="block text-[10px] font-semibold uppercase text-slate-600 mb-0.5">Search User / Phone</label>
-                    <input type="text" 
-                           name="search" 
-                           value="{{ $search }}" 
-                           placeholder="ID / Username / Phone..."
-                           class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
+                <!-- Per Page Selector (per_page) -->
+                <div class="w-full md:w-28 flex-shrink-0">
+                    <select name="per_page" 
+                            onchange="this.form.submit()"
+                            class="w-full h-[34px] px-2 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700">
+                        <option value="20" {{ request('per_page', $perPage) == 20 ? 'selected' : '' }}>20 / page</option>
+                        <option value="30" {{ request('per_page', $perPage) == 30 ? 'selected' : '' }}>30 / page</option>
+                        <option value="50" {{ request('per_page', $perPage) == 50 ? 'selected' : '' }}>50 / page</option>
+                        <option value="100" {{ request('per_page', $perPage) == 100 ? 'selected' : '' }}>100 / page</option>
+                        <option value="250" {{ request('per_page', $perPage) == 250 ? 'selected' : '' }}>250 / page</option>
+                        <option value="500" {{ request('per_page', $perPage) == 500 ? 'selected' : '' }}>500 / page</option>
+                        <option value="all" {{ request('per_page', $perPage) === 'all' ? 'selected' : '' }}>All Users</option>
+                    </select>
                 </div>
 
-                <!-- Filter & Reset Buttons (Strict Universal Standard) -->
-                <div class="col-span-2 sm:col-span-1 lg:col-span-1 flex items-end gap-1.5 flex-shrink-0">
+                <!-- More Filters Accordion Toggle Button -->
+                <button type="button" 
+                        @click="showMoreFilters = !showMoreFilters" 
+                        :class="showMoreFilters || {{ $activeMoreCount }} > 0 ? 'bg-cyan-50 text-cyan-700 border-cyan-300 ring-1 ring-cyan-200' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'"
+                        class="h-[34px] py-0 px-2.5 rounded-lg border text-xs font-medium transition flex items-center justify-center gap-1.5 flex-shrink-0 cursor-pointer shadow-2xs"
+                        title="Toggle Area & Package Filters">
+                    <i class="fas fa-sliders-h text-[10px]"></i>
+                    <span>More Filters</span>
+                    @if($activeMoreCount > 0)
+                        <span class="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-cyan-600 text-white leading-none">
+                            {{ $activeMoreCount }}
+                        </span>
+                    @endif
+                    <i class="fas text-[9px] transition-transform duration-200" 
+                       :class="showMoreFilters ? 'fa-chevron-up text-cyan-600' : 'fa-chevron-down text-slate-400'"></i>
+                </button>
+
+                <!-- Filter & Reset Buttons (Strict AGENTS.md sequence: [Filter] then [Reset]) -->
+                <div class="flex items-center gap-1.5 flex-shrink-0 md:ml-auto">
                     <button type="submit" 
-                            class="flex-1 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-1.5 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" 
+                            class="h-[34px] bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-0 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" 
                             title="Apply Filters">
                         <i class="fas fa-filter text-[10px]"></i>
                         <span>Filter</span>
                     </button>
-                    <a href="{{ route('tenant.customers.bulk-payments') }}" 
-                       class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-1.5 px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer" 
+                    <a href="{{ route('tenant.customers.bulk-payments', ['mode' => $mode]) }}" 
+                       class="h-[34px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-0 px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer" 
                        title="Reset Filters">
                         <i class="fas fa-rotate-left text-[10px]"></i>
                         <span>Reset</span>
                     </a>
                 </div>
             </div>
+
+            <!-- Tier 2: Secondary Filters Drawer (Clean No-Label Toolbar Row) -->
+            <div x-show="showMoreFilters" 
+                 x-cloak
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0 -translate-y-2"
+                 x-transition:enter-end="opacity-100 translate-y-0"
+                 x-transition:leave="transition ease-in duration-150"
+                 x-transition:leave-start="opacity-100 translate-y-0"
+                 x-transition:leave-end="opacity-0 -translate-y-2"
+                 class="pt-2 border-t border-slate-100 flex flex-wrap items-center gap-2">
+
+                <!-- Zone Select -->
+                <div class="flex-1 min-w-[160px]">
+                    <select name="zone" 
+                            onchange="this.form.submit()"
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
+                        <option value="">All Zones / Areas</option>
+                        @foreach($zones as $z)
+                            <option value="{{ $z }}" {{ $zone === $z ? 'selected' : '' }}>{{ $z }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <!-- Package Select -->
+                <div class="flex-1 min-w-[180px]">
+                    <select name="package_id" 
+                            onchange="this.form.submit()"
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
+                        <option value="">All Packages</option>
+                        @foreach($packages as $pkg)
+                            <option value="{{ $pkg->id }}" {{ (string)$packageId === (string)$pkg->id ? 'selected' : '' }}>
+                                {{ $pkg->mikrotik_profile ?: ($pkg->name ?: $pkg->package_name) }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                @if($mode === 'direct')
+                <!-- Optional Reseller Selector when Direct Mode -->
+                <div class="flex-1 min-w-[180px]">
+                    <select name="reseller_id" 
+                            onchange="this.form.submit()"
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
+                        <option value="">All Reseller Scopes</option>
+                        @foreach($resellers as $res)
+                            <option value="{{ $res->id }}" {{ (string)$resellerId === (string)$res->id ? 'selected' : '' }}>
+                                {{ $res->name }} ({{ $res->code ?: 'RES-' . $res->id }})
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                @endif
+            </div>
         </form>
 
         <!-- Reseller Information Banner (when Reseller is selected) -->
         @if($mode === 'reseller' && $selectedReseller)
-            <div class="p-3 bg-purple-50/70 border border-purple-200 rounded-md flex flex-wrap items-center justify-between gap-3 text-xs">
+            <div class="p-3 bg-purple-50/70 border border-purple-200 rounded-lg flex flex-wrap items-center justify-between gap-3 text-xs">
                 <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-md bg-purple-600 text-white flex items-center justify-center font-bold text-sm shadow-2xs flex-shrink-0">
+                    <div class="w-8 h-8 rounded-lg bg-purple-600 text-white flex items-center justify-center font-bold text-sm shadow-2xs flex-shrink-0">
                         {{ substr($selectedReseller->name, 0, 1) }}
                     </div>
                     <div>
@@ -277,27 +353,27 @@
                     </div>
                 </div>
 
-                <div class="flex items-center gap-3 flex-wrap sm:ml-auto">
+                <div class="flex items-center gap-2.5 flex-wrap sm:ml-auto">
                     <!-- Commission Rate -->
-                    <div class="px-2.5 py-1 bg-white rounded border border-purple-200 text-center">
+                    <div class="px-2.5 py-1 bg-white rounded-md border border-purple-200 text-center shadow-2xs">
                         <span class="text-[9px] text-slate-500 uppercase font-semibold block">Commission Rate</span>
                         <span class="text-xs font-bold text-purple-700 font-mono">{{ (float)$selectedReseller->commission_rate }}%</span>
                     </div>
 
                     <!-- Current Wallet Balance -->
-                    <div class="px-2.5 py-1 bg-white rounded border border-purple-200 text-center">
+                    <div class="px-2.5 py-1 bg-white rounded-md border border-purple-200 text-center shadow-2xs">
                         <span class="text-[9px] text-slate-500 uppercase font-semibold block">Wallet Balance</span>
                         <span class="text-xs font-bold text-slate-900 font-mono">@currency($selectedReseller->wallet_balance)</span>
                     </div>
 
                     <!-- Credit Limit -->
-                    <div class="px-2.5 py-1 bg-white rounded border border-purple-200 text-center">
+                    <div class="px-2.5 py-1 bg-white rounded-md border border-purple-200 text-center shadow-2xs">
                         <span class="text-[9px] text-slate-500 uppercase font-semibold block">Credit Limit</span>
                         <span class="text-xs font-bold text-slate-700 font-mono">@currency($selectedReseller->credit_limit)</span>
                     </div>
 
                     <!-- Total Available -->
-                    <div class="px-2.5 py-1 bg-emerald-50 rounded border border-emerald-200 text-center">
+                    <div class="px-2.5 py-1 bg-emerald-50 rounded-md border border-emerald-200 text-center shadow-2xs">
                         <span class="text-[9px] text-emerald-800 uppercase font-semibold block">Total Available</span>
                         <span class="text-xs font-bold text-emerald-700 font-mono">@currency($selectedReseller->total_available_balance)</span>
                     </div>
@@ -642,6 +718,20 @@ function bulkPaymentManager() {
         selectedIds: rawRows.map(r => r.id), // Auto-select rows by default for fast bulk payment
         selectedDueMap: rawRows.reduce((acc, cur) => { acc[cur.id] = cur.due; return acc; }, {}),
         selectAll: true,
+
+        showMoreFilters: {{ ($isMoreOpen ?? false) ? 'true' : 'false' }},
+        searchQuery: '{{ addslashes($search ?? "") }}',
+
+        clearLiveSearch() {
+            this.searchQuery = '';
+            const form = document.getElementById('bulkPaymentFilterForm');
+            if (form) form.submit();
+        },
+
+        submitSearchNow() {
+            const form = document.getElementById('bulkPaymentFilterForm');
+            if (form) form.submit();
+        },
 
         paymentMethod: '{{ $mode === "reseller" && $selectedReseller ? "reseller_wallet" : "cash" }}',
         billingMonth: '{{ date("F Y") }}',
