@@ -603,23 +603,26 @@
                 <!-- 2. All Customers -->
                 <a href="{{ Route::has('tenant.customers.index') ? route('tenant.customers.index') : '#' }}" 
                    x-show="!filterQuery || 'all customers master database direct reseller subscribers list clients onboard create add'.includes(filterQuery.toLowerCase())"
-                   class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ (request()->routeIs('tenant.customers.index') || request()->routeIs('tenant.customers.create') || request()->routeIs('tenant.customers.edit') || request()->routeIs('tenant.customers.show')) ? 'border-cyan-200 bg-cyan-50/80 text-cyan-700 font-bold border-l-4 border-l-cyan-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
+                   class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ (request()->routeIs('tenant.customers.index') && !request()->filled('status') && !request()->routeIs('tenant.customers.expired*') && !request()->routeIs('tenant.customers.due*')) ? 'border-cyan-200 bg-cyan-50/80 text-cyan-700 font-bold border-l-4 border-l-cyan-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
                     All Customers
                 </a>
 
-                <!-- 3. Direct Customers -->
-                <a href="{{ Route::has('tenant.customers.direct') ? route('tenant.customers.direct') : '#' }}" 
-                   x-show="!filterQuery || 'isp direct customers retail clients subscribers direct billing company own'.includes(filterQuery.toLowerCase())"
-                   class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ request()->routeIs('tenant.customers.direct*') ? 'border-cyan-200 bg-cyan-50/80 text-cyan-700 font-bold border-l-4 border-l-cyan-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
-                    Direct Customers
+                <!-- 3. Expired Customers -->
+                <a href="{{ Route::has('tenant.customers.expired') ? route('tenant.customers.expired') : route('tenant.customers.index', ['status' => 'expired']) }}" 
+                   x-show="!filterQuery || 'expired subscribers customers list overdue validity মেয়াদ উত্তীর্ণ এক্সপায়ার'.includes(filterQuery.toLowerCase())"
+                   class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ (request()->routeIs('tenant.customers.expired*') || request('status') === 'expired') ? 'border-rose-300 bg-rose-50 text-rose-800 font-bold border-l-4 border-l-rose-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
+                    <span class="flex items-center justify-between">
+                        <span>Expired Customers</span>
+                        <span class="px-1.5 py-0.2 rounded text-[9px] bg-rose-100 text-rose-800 font-bold">Expired</span>
+                    </span>
                 </a>
 
-                <!-- 4. Due & Expired -->
-                <a href="{{ Route::has('tenant.customers.due') ? route('tenant.customers.due') : '#' }}" 
-                   x-show="!filterQuery || 'due expired overdue grace period billing suspended unpaid customers'.includes(filterQuery.toLowerCase())"
-                   class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ request()->routeIs('tenant.customers.due*') ? 'border-cyan-200 bg-cyan-50/80 text-cyan-700 font-bold border-l-4 border-l-cyan-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
+                <!-- 4. Due Customers -->
+                <a href="{{ Route::has('tenant.customers.due') ? route('tenant.customers.due') : route('tenant.customers.index', ['status' => 'due']) }}" 
+                   x-show="!filterQuery || 'due overdue billing suspended unpaid customers বকেয়া'.includes(filterQuery.toLowerCase())"
+                   class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ (request()->routeIs('tenant.customers.due*') || request('status') === 'due') ? 'border-amber-300 bg-amber-50 text-amber-800 font-bold border-l-4 border-l-amber-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
                     <span class="flex items-center justify-between">
-                        <span>Due &amp; Expired</span>
+                        <span>Due Customers</span>
                         <span class="px-1.5 py-0.2 rounded text-[9px] bg-amber-100 text-amber-800 font-bold">Collect</span>
                     </span>
                 </a>

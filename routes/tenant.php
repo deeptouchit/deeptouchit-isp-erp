@@ -269,6 +269,7 @@ Route::middleware(['web'])->group(function () {
             Route::get('/', [TenantCustomerController::class, 'index'])->name('index');
             Route::get('/direct', [TenantCustomerController::class, 'index'])->defaults('scope', 'isp')->name('direct');
             Route::get('/due', [TenantCustomerController::class, 'index'])->defaults('status', 'due')->name('due');
+            Route::get('/expired', [TenantCustomerController::class, 'index'])->defaults('status', 'expired')->name('expired');
             Route::get('/online', [TenantCustomerController::class, 'index'])->defaults('online_status', 'online')->name('online');
             
             // Coverage Zones & Areas Dedicated Routes
