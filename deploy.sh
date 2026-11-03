@@ -16,7 +16,10 @@ echo "================================================="
 
 cd "$APP_DIR"
 
-# 0. Ensure git safe directory
+# 0. Ensure git safe directory (handle non-writable home directory for www-data)
+export GIT_CONFIG_GLOBAL="/tmp/.gitconfig"
+git config -f /tmp/.gitconfig --add safe.directory "$APP_DIR" 2>/dev/null || true
+git config -f /tmp/.gitconfig --add safe.directory "*" 2>/dev/null || true
 git config --global --add safe.directory "$APP_DIR" 2>/dev/null || true
 git config --global --add safe.directory "*" 2>/dev/null || true
 
@@ -27,9 +30,9 @@ trap 'php artisan up 2>/dev/null || true' EXIT
 
 # 1. Pull latest changes
 echo "📦 Pulling latest commits from GitHub origin/$BRANCH..."
-git fetch --all --prune
-git checkout -f "$BRANCH"
-git reset --hard "origin/$BRANCH"
+git -c safe.directory="*" fetch --all --prune
+git -c safe.directory="*" checkout -f "$BRANCH"
+git -c safe.directory="*" reset --hard "origin/$BRANCH"
 
 # 2. Install PHP dependencies
 echo "📦 Installing Composer dependencies..."
