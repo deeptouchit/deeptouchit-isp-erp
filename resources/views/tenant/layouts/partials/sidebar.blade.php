@@ -60,8 +60,12 @@
        ]">
     
     <!-- Compact Brand Header -->
-    <div class="h-14 px-3 flex items-center justify-between border-b border-slate-100 bg-white">
-        <a href="{{ route('tenant.dashboard') }}" class="flex items-center gap-2.5 overflow-hidden flex-1" :title="sidebarCollapsed ? 'Dashboard' : ''">
+    <div class="h-14 px-3 flex items-center justify-between border-b border-slate-100 bg-white"
+         :class="sidebarCollapsed ? 'justify-center px-2' : 'justify-between px-3'">
+        <a href="{{ route('tenant.dashboard') }}" 
+           class="flex items-center gap-2.5 overflow-hidden" 
+           :class="sidebarCollapsed ? 'justify-center' : 'flex-1'"
+           :title="sidebarCollapsed ? 'Dashboard' : ''">
             @if(isset($tenant) && $tenant && !empty($tenant->logo))
                 <img src="{{ $tenant->logo }}" alt="{{ $tenant->company_name ?: $tenant->name }}" class="h-7 max-w-[120px] object-contain flex-shrink-0">
             @else
@@ -74,15 +78,6 @@
                 <span class="text-[9.5px] font-semibold text-blue-600 uppercase tracking-wider">{{ $authUser && $authUser->isCollector() ? 'Bill Collector' : 'ISP Admin Console' }}</span>
             </div>
         </a>
-
-        <!-- Desktop Sidebar Toggle Button inside Sidebar Header -->
-        <button type="button" 
-                @click="toggleSidebar()" 
-                class="hidden lg:flex items-center justify-center w-7 h-7 rounded-lg text-slate-400 hover:text-cyan-700 hover:bg-slate-100 transition cursor-pointer flex-shrink-0" 
-                :title="sidebarCollapsed ? 'Expand Sidebar (Ctrl+B)' : 'Collapse Sidebar (Ctrl+B)'">
-            <i class="fas text-[11px] transition-transform duration-200" 
-               :class="sidebarCollapsed ? 'fa-chevron-right text-cyan-600' : 'fa-chevron-left'"></i>
-        </button>
 
         <!-- Mobile Close Button -->
         <button type="button" @click="mobileSidebar = false" class="lg:hidden p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer">
