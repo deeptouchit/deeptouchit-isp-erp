@@ -11,6 +11,7 @@ use App\Models\TenantCustomerInvoice;
 use App\Models\TenantCustomerPayment;
 use App\Models\TenantInternetPackage;
 use App\Models\TenantOlt;
+use App\Models\TenantOnu;
 use App\Models\TenantReseller;
 use App\Models\TenantResellerWalletTransaction;
 use App\Models\TenantRouter;
