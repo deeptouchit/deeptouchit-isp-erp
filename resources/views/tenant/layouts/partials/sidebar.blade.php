@@ -635,7 +635,7 @@
                    class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ (request()->routeIs('tenant.customers.expired*') || request('status') === 'expired') ? 'border-rose-300 bg-rose-50 text-rose-800 font-bold border-l-4 border-l-rose-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
                     <span class="flex items-center justify-between">
                         <span>Expired Customers</span>
-                        <span class="px-1.5 py-0.2 rounded text-[9px] bg-rose-100 text-rose-800 font-bold">Expired</span>
+                        
                     </span>
                 </a>
 
@@ -645,7 +645,7 @@
                    class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ (request()->routeIs('tenant.customers.due*') || request('status') === 'due') ? 'border-amber-300 bg-amber-50 text-amber-800 font-bold border-l-4 border-l-amber-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
                     <span class="flex items-center justify-between">
                         <span>Due Customers</span>
-                        <span class="px-1.5 py-0.2 rounded text-[9px] bg-amber-100 text-amber-800 font-bold">Collect</span>
+                       
                     </span>
                 </a>
 
@@ -655,7 +655,7 @@
                    class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ (request()->routeIs('tenant.customers.disconnected*') || request('status') === 'disconnected' || request('status') === 'expired_60' || request()->routeIs('tenant.customers.expired-60*')) ? 'border-rose-300 bg-rose-50 text-rose-800 font-bold border-l-4 border-l-rose-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
                     <span class="flex items-center justify-between">
                         <span>Disconnected</span>
-                        <span class="px-1.5 py-0.2 rounded text-[9px] bg-slate-100 text-slate-700 font-bold">Closed</span>
+                       
                     </span>
                 </a>
 
@@ -673,7 +673,7 @@
                    class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ request()->routeIs('tenant.customers.monthly-analytics*') ? 'border-cyan-200 bg-cyan-50/80 text-cyan-700 font-bold border-l-4 border-l-cyan-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
                     <span class="flex items-center justify-between">
                         <span>Monthly Analytics</span>
-                        <span class="px-1.5 py-0.2 rounded text-[9px] bg-cyan-100 text-cyan-800 font-bold">New</span>
+                       
                     </span>
                 </a>
                 @endif
