@@ -607,7 +607,15 @@
                     All Customers
                 </a>
 
-                <!-- 3. Expired Customers -->
+                <!-- 3. Online Sessions -->
+                <a href="{{ Route::has('tenant.customers.online') ? route('tenant.customers.online') : '#' }}" 
+                   x-show="!filterQuery || 'online pppoe live active sessions uptime ip allocation nas radius'.includes(filterQuery.toLowerCase())"
+                   class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ request()->routeIs('tenant.customers.online*') ? 'border-cyan-200 bg-cyan-50/80 text-cyan-700 font-bold border-l-4 border-l-cyan-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
+                    Online Sessions
+                </a>
+
+
+                <!-- 4. Expired Customers -->
                 <a href="{{ Route::has('tenant.customers.expired') ? route('tenant.customers.expired') : route('tenant.customers.index', ['status' => 'expired']) }}" 
                    x-show="!filterQuery || 'expired subscribers customers list overdue validity মেয়াদ উত্তীর্ণ এক্সপায়ার'.includes(filterQuery.toLowerCase())"
                    class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ (request()->routeIs('tenant.customers.expired*') || request('status') === 'expired') ? 'border-rose-300 bg-rose-50 text-rose-800 font-bold border-l-4 border-l-rose-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
@@ -617,7 +625,7 @@
                     </span>
                 </a>
 
-                <!-- 4. Due Customers -->
+                <!-- 5. Due Customers -->
                 <a href="{{ Route::has('tenant.customers.due') ? route('tenant.customers.due') : route('tenant.customers.index', ['status' => 'due']) }}" 
                    x-show="!filterQuery || 'due overdue billing suspended unpaid customers বকেয়া'.includes(filterQuery.toLowerCase())"
                    class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ (request()->routeIs('tenant.customers.due*') || request('status') === 'due') ? 'border-amber-300 bg-amber-50 text-amber-800 font-bold border-l-4 border-l-amber-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
@@ -627,28 +635,24 @@
                     </span>
                 </a>
 
+                <!-- 6. Expired 60+ Days -->
+                <a href="{{ Route::has('tenant.customers.expired-60') ? route('tenant.customers.expired-60') : route('tenant.customers.index', ['status' => 'expired_60']) }}" 
+                   x-show="!filterQuery || 'expired 60 days overdue sixty days inactive churned disconnected ৬০ দিন এক্সপায়ার মেয়াদ উত্তীর্ণ'.includes(filterQuery.toLowerCase())"
+                   class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ (request()->routeIs('tenant.customers.expired-60*') || request('status') === 'expired_60' || request('status') === 'expired-60') ? 'border-rose-400 bg-rose-50 text-rose-800 font-bold border-l-4 border-l-rose-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
+                    <span class="flex items-center justify-between">
+                        <span>Expired (60+ Days)</span>
+                        <span class="px-1.5 py-0.2 rounded text-[9px] bg-rose-100 text-rose-800 font-bold">60d+</span>
+                    </span>
+                </a>
+
                 @if(!auth()->user()->isCollector() || auth()->user()->isIspAdmin() || auth()->user()->isOwner())
-                <!-- 5. Bulk Payments -->
+                <!-- 7. Bulk Payments -->
                 <a href="{{ Route::has('tenant.customers.bulk-payments') ? route('tenant.customers.bulk-payments') : '#' }}" 
                    x-show="!filterQuery || 'bulk payments batch bill receive pay reseller commission dues'.includes(filterQuery.toLowerCase())"
                    class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ request()->routeIs('tenant.customers.bulk-payments*') ? 'border-cyan-200 bg-cyan-50/80 text-cyan-700 font-bold border-l-4 border-l-cyan-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
                     Bulk Payments
                 </a>
                 @endif
-
-                <!-- 6. Online Sessions -->
-                <a href="{{ Route::has('tenant.customers.online') ? route('tenant.customers.online') : '#' }}" 
-                   x-show="!filterQuery || 'online pppoe live active sessions uptime ip allocation nas radius'.includes(filterQuery.toLowerCase())"
-                   class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ request()->routeIs('tenant.customers.online*') ? 'border-cyan-200 bg-cyan-50/80 text-cyan-700 font-bold border-l-4 border-l-cyan-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
-                    Online Sessions
-                </a>
-
-                <!-- 7. Disconnected -->
-                <a href="{{ Route::has('tenant.customers.disconnected') ? route('tenant.customers.disconnected') : (Route::has('tenant.customers.archived') ? route('tenant.customers.archived') : '#') }}" 
-                   x-show="!filterQuery || 'disconnected churned users left equipment return onu return status inactive'.includes(filterQuery.toLowerCase())"
-                   class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ (request()->routeIs('tenant.customers.disconnected*') || request()->routeIs('tenant.customers.archived*')) ? 'border-cyan-200 bg-cyan-50/80 text-cyan-700 font-bold border-l-4 border-l-cyan-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
-                    Disconnected
-                </a>
             </div>
         </div>
         @endif

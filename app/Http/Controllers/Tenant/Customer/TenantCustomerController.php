@@ -170,6 +170,10 @@ class TenantCustomerController extends Controller
                                  ->whereDate('expiry_date', '<', Carbon::today());
                          });
                   });
+        } elseif ($statusFilter === 'expired_60' || $statusFilter === 'expired-60') {
+            $query->whereNotIn('status', ['archived'])
+                  ->whereNotNull('expiry_date')
+                  ->whereDate('expiry_date', '<=', Carbon::today()->subDays(60));
         } elseif ($statusFilter === 'suspended') {
             $query->where('status', 'suspended');
         } elseif ($statusFilter === 'disabled' || $statusFilter === 'inactive') {
