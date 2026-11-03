@@ -48,7 +48,7 @@
 
         {{-- Main Body Canvas --}}
         <main class="flex-1 p-3 sm:p-5 bg-slate-100/70 pb-16 lg:pb-6">
-            <div class="max-w-6xl mx-auto space-y-4">
+            <div class="@hasSection('full_width') w-full space-y-3 sm:space-y-4 @else max-w-7xl mx-auto space-y-4 @endif">
                 @yield('content')
             </div>
         </main>

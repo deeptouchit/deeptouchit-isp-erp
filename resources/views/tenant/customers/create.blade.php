@@ -1,13 +1,14 @@
 @extends('tenant.layouts.app')
 
 @section('title', 'Onboard New Customer - ' . ($tenant->company_name ?? $tenant->name))
+@section('full_width', true)
 
 @push('styles')
     {{-- Page-specific CSS --}}
 @endpush
 
 @section('content')
-<div class="max-w-4xl mx-auto space-y-3 sm:space-y-4 px-1 sm:px-0" x-data="customerCreateManager()">
+<div class="w-full space-y-3 sm:space-y-4" x-data="customerCreateManager()">
     
     <!-- 1. Top Header Bar (Strictly Back Arrow + Title + Info Badges ONLY - No Subtitles/Descriptions) -->
     <div class="flex flex-wrap sm:flex-nowrap items-center justify-between gap-2.5 bg-white p-3 sm:p-3.5 rounded-xl border border-slate-200 shadow-xs">
@@ -22,13 +23,13 @@
 
         <div class="flex items-center gap-2 flex-shrink-0 ml-auto sm:ml-0">
             <!-- Suggested ID Badge -->
-            <div class="inline-flex items-center gap-1.5 bg-cyan-50 text-cyan-800 border border-cyan-200 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg text-[11px] sm:text-xs font-mono font-semibold shadow-2xs">
-                <span class="text-[9px] sm:text-[10px] text-cyan-500 font-sans uppercase font-medium">Auto ID:</span>
-                <span>{{ $autoCustomerId }}</span>
+            <div class="inline-flex items-center gap-1.5 bg-cyan-50 text-cyan-800 border border-cyan-200 px-2.5 py-1 rounded-lg text-xs font-mono font-semibold shadow-2xs">
+                <span class="text-[10px] text-cyan-600 font-sans uppercase font-medium">Auto ID:</span>
+                <span class="font-bold tracking-wider">{{ $autoCustomerId }}</span>
             </div>
 
             <!-- Provisioning Mode Indicator -->
-            <span class="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border bg-emerald-50 text-emerald-700 border-emerald-200 shadow-2xs">
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border bg-emerald-50 text-emerald-700 border-emerald-200 shadow-2xs">
                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 ring-2 ring-emerald-300 animate-pulse"></span>
                 <span>MikroTik Live Sync Ready</span>
             </span>
@@ -69,7 +70,7 @@
                 <span class="text-[10px] sm:text-[10.5px] text-slate-400 font-medium">Fields marked with <span class="text-rose-500 font-bold">*</span> are required</span>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-3.5">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-3.5">
                 <!-- Scope / Reseller Affiliation -->
                 <div>
                     <label class="block text-[11px] font-medium text-slate-700 mb-1">Affiliation Scope / Partner</label>
@@ -89,14 +90,17 @@
 
                 <!-- Customer ID -->
                 <div>
-                    <label class="block text-[11px] font-medium text-slate-700 mb-1">Customer ID <span class="text-slate-400 font-normal">(Leave blank for Auto-ID)</span></label>
+                    <div class="flex items-center justify-between mb-1">
+                        <label class="block text-[11px] font-medium text-slate-700">Customer ID <span class="text-cyan-600 font-semibold">(Auto Generated)</span></label>
+                        <span class="text-[9.5px] text-slate-400 font-mono">DB Sequence</span>
+                    </div>
                     <div class="relative">
                         <input type="text" 
                                name="customer_id" 
                                value="{{ old('customer_id', $autoCustomerId) }}"
                                placeholder="e.g. {{ $autoCustomerId }}" 
-                               class="w-full pl-3 pr-8 py-1.5 rounded-lg text-xs font-mono uppercase font-semibold transition focus:bg-white focus:border-cyan-500 focus:outline-hidden @error('customer_id') border-rose-400 ring-1 ring-rose-100 bg-rose-50/30 text-rose-900 @else bg-slate-50 border border-slate-200 text-slate-800 @enderror">
-                        <span class="absolute right-2.5 top-2 text-slate-400 text-xs" title="Unique Master ID">
+                               class="w-full pl-3 pr-8 py-1.5 rounded-lg text-xs font-mono font-bold text-cyan-900 tracking-wider transition focus:bg-white focus:border-cyan-500 focus:outline-hidden @error('customer_id') border-rose-400 ring-1 ring-rose-100 bg-rose-50/30 text-rose-900 @else bg-slate-50 border border-slate-200 @enderror">
+                        <span class="absolute right-2.5 top-2 text-cyan-600 text-xs" title="Auto Unique Master ID">
                             <i class="fas fa-fingerprint text-[11px]"></i>
                         </span>
                     </div>
@@ -202,16 +206,16 @@
                         @endforeach
                     </select>
                 </div>
-            </div>
 
-            <!-- Installation Address -->
-            <div>
-                <label class="block text-[11px] font-medium text-slate-700 mb-1">Physical Installation Address</label>
-                <input type="text" 
-                       name="address" 
-                       value="{{ old('address') }}"
-                       placeholder="House, Road, Block, Flat / Floor details..." 
-                       class="w-full px-3 py-1.5 rounded-lg text-xs transition focus:bg-white focus:border-cyan-500 focus:outline-hidden @error('address') border-rose-400 ring-1 ring-rose-100 bg-rose-50/30 text-rose-900 @else bg-slate-50 border border-slate-200 text-slate-800 @enderror">
+                <!-- Physical Installation Address (Spans remaining columns) -->
+                <div class="sm:col-span-2 md:col-span-2 xl:col-span-3">
+                    <label class="block text-[11px] font-medium text-slate-700 mb-1">Physical Installation Address</label>
+                    <input type="text" 
+                           name="address" 
+                           value="{{ old('address') }}"
+                           placeholder="House, Road, Block, Flat / Floor details..." 
+                           class="w-full px-3 py-1.5 rounded-lg text-xs transition focus:bg-white focus:border-cyan-500 focus:outline-hidden @error('address') border-rose-400 ring-1 ring-rose-100 bg-rose-50/30 text-rose-900 @else bg-slate-50 border border-slate-200 text-slate-800 @enderror">
+                </div>
             </div>
         </div>
 
@@ -229,7 +233,7 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-3.5">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-3.5">
                 <!-- Connection Protocol -->
                 <div>
                     <label class="block text-[11px] font-medium text-slate-700 mb-1">Connection Protocol <span class="text-rose-500">*</span></label>
@@ -369,8 +373,8 @@
                            class="w-full px-3 py-1.5 rounded-lg text-xs font-mono uppercase transition focus:bg-white focus:border-cyan-500 focus:outline-hidden @error('onu_mac_sn') border-rose-400 ring-1 ring-rose-100 bg-rose-50/30 text-rose-900 @else bg-slate-50 border border-slate-200 text-slate-800 @enderror">
                 </div>
 
-                <!-- Fiber Core / Route Info -->
-                <div>
+                <!-- Fiber Core / Route Info (Spans 2-4 cols) -->
+                <div class="sm:col-span-2 md:col-span-3 xl:col-span-4">
                     <label class="block text-[11px] font-medium text-slate-700 mb-1">Fiber Core &amp; TJ Box Route</label>
                     <input type="text" 
                            name="fiber_route_info" 
@@ -393,7 +397,7 @@
                 <span class="text-[10.5px] font-mono text-emerald-700 font-semibold" x-text="monthlyBill ? 'Selected Rate: {{ $currencySymbol ?? '৳' }}' + monthlyBill + '/mo' : ''"></span>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-3.5">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-3.5">
                 <!-- Package Selector -->
                 <div>
                     <label class="block text-[11px] font-medium text-slate-700 mb-1">Internet Package</label>
@@ -452,26 +456,26 @@
             </div>
 
             <!-- Expiry Quick Buttons (Wrap gracefully on mobile) -->
-            <div class="flex flex-wrap items-center gap-1.5 sm:gap-2 pt-1">
+            <div class="flex flex-wrap items-center gap-1.5 sm:gap-2 pt-1 border-t border-slate-50">
                 <span class="text-[10px] font-semibold text-slate-400 uppercase mr-0.5 sm:mr-1">Quick Presets:</span>
                 <button type="button" 
                         @click="setExpiry(30)" 
-                        class="px-2 py-1 rounded text-[10.5px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium transition cursor-pointer">
+                        class="px-2.5 py-1 rounded-lg text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium transition cursor-pointer">
                     +30 Days
                 </button>
                 <button type="button" 
                         @click="setExpiry('next_month_same_day')" 
-                        class="px-2 py-1 rounded text-[10.5px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium transition cursor-pointer">
+                        class="px-2.5 py-1 rounded-lg text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium transition cursor-pointer">
                     +1 Month
                 </button>
                 <button type="button" 
                         @click="setExpiry('first_of_next_month')" 
-                        class="px-2 py-1 rounded text-[10.5px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium transition cursor-pointer">
+                        class="px-2.5 py-1 rounded-lg text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium transition cursor-pointer">
                     1st of Next Month
                 </button>
                 <button type="button" 
                         @click="setExpiry(90)" 
-                        class="px-2 py-1 rounded text-[10.5px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium transition cursor-pointer">
+                        class="px-2.5 py-1 rounded-lg text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium transition cursor-pointer">
                     Quarterly (+90d)
                 </button>
             </div>
@@ -486,7 +490,7 @@
                 <h2 class="text-xs font-bold text-slate-800 uppercase tracking-wider">4. Account Status &amp; Admin Notes</h2>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-3.5">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-3.5">
                 <!-- Initial Account Status -->
                 <div>
                     <label class="block text-[11px] font-medium text-slate-700 mb-1">Initial Account Status</label>
@@ -500,8 +504,8 @@
                     </select>
                 </div>
 
-                <!-- Internal Remarks -->
-                <div>
+                <!-- Internal Remarks (Spans 2-3 columns) -->
+                <div class="sm:col-span-2 md:col-span-2 xl:col-span-3">
                     <label class="block text-[11px] font-medium text-slate-700 mb-1">Administrative Remarks / Internal Notes</label>
                     <input type="text" 
                            name="remarks" 

@@ -434,27 +434,48 @@ class TenantCustomer extends Model
     }
 
     /**
-     * Auto Generate Guaranteed Unique Next Customer ID (e.g. SN1001, SO1001, ISP1001)
+     * Auto Generate Guaranteed Unique Next Customer ID
+     * Database Standard: 2-digit Year (e.g. 24, 25, 26) + 6-digit Sequence (e.g. 000940 -> 000941)
      */
     public static function generateNextCustomerId(int $tenantId): string
     {
-        $prefix = self::getTenantPrefix($tenantId);
+        $currentYearPrefix = date('y'); // e.g. '26' for year 2026
 
+        // Query the latest customer for this tenant
         $lastCustomer = self::where('tenant_id', $tenantId)
-            ->where('customer_id', 'LIKE', "{$prefix}%")
+            ->whereNotNull('customer_id')
+            ->where('customer_id', '!=', '')
             ->orderByDesc('id')
             ->first();
 
-        $nextNum = 1001;
-        if ($lastCustomer && preg_match('/' . preg_quote($prefix, '/') . '[-_]?(\d+)/i', $lastCustomer->customer_id, $matches)) {
-            $nextNum = ((int) $matches[1]) + 1;
+        $nextSeq = 1;
+
+        if ($lastCustomer) {
+            $lastCid = trim((string) $lastCustomer->customer_id);
+
+            // Pattern 1: Standard 8-digit numeric (2-digit year + 6-digit sequence, e.g. 26000940)
+            if (preg_match('/^(\d{2})(\d{6})$/', $lastCid, $matches)) {
+                $nextSeq = ((int) $matches[2]) + 1;
+            }
+            // Pattern 2: Any purely numeric ID
+            elseif (ctype_digit($lastCid)) {
+                $val = (int) $lastCid;
+                $nextSeq = (strlen($lastCid) >= 8) ? ($val % 1000000) + 1 : $val + 1;
+            }
+            // Pattern 3: Prefix with numbers (e.g. TD1001, SO1001)
+            elseif (preg_match('/(\d+)$/', $lastCid, $matches)) {
+                $nextSeq = ((int) $matches[1]) + 1;
+            }
         }
 
-        // Loop to guarantee absolute uniqueness per tenant
-        while (self::where('tenant_id', $tenantId)->where('customer_id', "{$prefix}{$nextNum}")->exists()) {
-            $nextNum++;
+        $nextCustomerId = $currentYearPrefix . str_pad((string) $nextSeq, 6, '0', STR_PAD_LEFT);
+
+        // Ensure absolute collision-free uniqueness in database
+        while (self::where('tenant_id', $tenantId)->where('customer_id', $nextCustomerId)->exists()) {
+            $nextSeq++;
+            $nextCustomerId = $currentYearPrefix . str_pad((string) $nextSeq, 6, '0', STR_PAD_LEFT);
         }
 
-        return "{$prefix}{$nextNum}";
+        return $nextCustomerId;
     }
 }

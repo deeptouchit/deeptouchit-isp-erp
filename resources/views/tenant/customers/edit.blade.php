@@ -1,13 +1,14 @@
 @extends('tenant.layouts.app')
 
 @section('title', 'Edit Customer: ' . $customer->name . ' - ' . ($tenant->company_name ?? $tenant->name))
+@section('full_width', true)
 
 @push('styles')
     {{-- Page-specific CSS --}}
 @endpush
 
 @section('content')
-<div class="max-w-4xl mx-auto space-y-3 sm:space-y-4 px-1 sm:px-0" x-data="customerEditManager()">
+<div class="w-full space-y-3 sm:space-y-4" x-data="customerEditManager()">
     
     <!-- Top Header (Strictly Back Arrow + Title ONLY - No Subtitle) -->
     <div class="flex flex-wrap sm:flex-nowrap items-center justify-between gap-2.5 bg-white p-3 sm:p-3.5 rounded-xl border border-slate-200 shadow-xs">
@@ -19,8 +20,8 @@
             </a>
             <h1 class="text-xs sm:text-sm font-bold text-slate-900 tracking-tight truncate">Edit Customer: {{ $customer->name }}</h1>
         </div>
-        <div class="text-[11px] font-mono text-cyan-700 font-semibold bg-cyan-50 px-2.5 py-1 rounded-lg border border-cyan-100 flex-shrink-0 ml-auto sm:ml-0">
-            ID: {{ $customer->customer_id }}
+        <div class="text-xs font-mono text-cyan-800 font-bold bg-cyan-50 px-3 py-1 rounded-lg border border-cyan-200 shadow-2xs flex-shrink-0 ml-auto sm:ml-0">
+            <span class="text-[10px] text-cyan-600 font-sans font-medium uppercase mr-1">ID:</span>{{ $customer->customer_id }}
         </div>
     </div>
 
@@ -49,14 +50,14 @@
 
         <!-- Section 1: Subscriber Profile & Partner Affiliation -->
         <div class="bg-white p-3.5 sm:p-5 rounded-xl border border-slate-200 shadow-xs space-y-3.5 sm:space-y-4">
-            <div class="flex items-center gap-2 pb-2 border-b border-slate-100">
+            <div class="flex items-center gap-2 pb-2.5 border-b border-slate-100">
                 <div class="w-6 h-6 rounded-md bg-cyan-50 text-cyan-600 flex items-center justify-center text-xs flex-shrink-0">
                     <i class="fas fa-user-circle"></i>
                 </div>
                 <h2 class="text-xs font-bold text-slate-800 uppercase tracking-wider">1. Subscriber Profile &amp; Partner Scope</h2>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-3.5">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-3.5">
                 <!-- Scope / Reseller -->
                 <div>
                     <label class="block text-[11px] font-medium text-slate-700 mb-1">Scope / Partner</label>
@@ -81,7 +82,7 @@
                            name="customer_id" 
                            value="{{ old('customer_id', $customer->customer_id) }}"
                            placeholder="e.g. {{ $customer->customer_id }}" 
-                           class="w-full px-3 py-1.5 rounded-lg text-xs font-mono uppercase transition focus:bg-white focus:border-cyan-500 focus:outline-hidden @error('customer_id') border-rose-400 ring-1 ring-rose-100 bg-rose-50/30 text-rose-900 @else bg-slate-50 border border-slate-200 text-slate-800 @enderror">
+                           class="w-full px-3 py-1.5 rounded-lg text-xs font-mono font-bold text-cyan-900 tracking-wider transition focus:bg-white focus:border-cyan-500 focus:outline-hidden @error('customer_id') border-rose-400 ring-1 ring-rose-100 bg-rose-50/30 text-rose-900 @else bg-slate-50 border border-slate-200 @enderror">
                     @error('customer_id')
                         <span class="text-[10px] text-rose-600 font-medium block mt-0.5">{{ $message }}</span>
                     @enderror
@@ -176,27 +177,28 @@
                 </div>
             </div>
 
-            <!-- Installation Address -->
-            <div>
-                <label class="block text-[11px] font-medium text-slate-700 mb-1">Installation Address</label>
-                <input type="text" 
-                       name="address" 
-                       value="{{ old('address', $customer->address) }}"
-                       placeholder="House, Road, Block, Floor / Flat details..." 
-                       class="w-full px-3 py-1.5 rounded-lg text-xs transition focus:bg-white focus:border-cyan-500 focus:outline-hidden @error('address') border-rose-400 ring-1 ring-rose-100 bg-rose-50/30 text-rose-900 @else bg-slate-50 border border-slate-200 text-slate-800 @enderror">
+                <!-- Physical Installation Address (Spans remaining columns) -->
+                <div class="sm:col-span-2 md:col-span-2 xl:col-span-3">
+                    <label class="block text-[11px] font-medium text-slate-700 mb-1">Installation Address</label>
+                    <input type="text" 
+                           name="address" 
+                           value="{{ old('address', $customer->address) }}"
+                           placeholder="House, Road, Block, Floor / Flat details..." 
+                           class="w-full px-3 py-1.5 rounded-lg text-xs transition focus:bg-white focus:border-cyan-500 focus:outline-hidden @error('address') border-rose-400 ring-1 ring-rose-100 bg-rose-50/30 text-rose-900 @else bg-slate-50 border border-slate-200 text-slate-800 @enderror">
+                </div>
             </div>
         </div>
 
         <!-- Section 2: Technical & MikroTik Provisioning -->
         <div class="bg-white p-3.5 sm:p-5 rounded-xl border border-slate-200 shadow-xs space-y-3.5 sm:space-y-4">
-            <div class="flex items-center gap-2 pb-2 border-b border-slate-100">
+            <div class="flex items-center gap-2 pb-2.5 border-b border-slate-100">
                 <div class="w-6 h-6 rounded-md bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs flex-shrink-0">
                     <i class="fas fa-network-wired"></i>
                 </div>
                 <h2 class="text-xs font-bold text-slate-800 uppercase tracking-wider">2. Technical &amp; MikroTik Provisioning</h2>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-3.5">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-3.5">
                 <!-- Connection Type -->
                 <div>
                     <label class="block text-[11px] font-medium text-slate-700 mb-1">Connection Protocol <span class="text-rose-500">*</span></label>
@@ -297,8 +299,8 @@
                            class="w-full px-3 py-1.5 rounded-lg text-xs font-mono uppercase transition focus:bg-white focus:border-cyan-500 focus:outline-hidden @error('onu_mac_sn') border-rose-400 ring-1 ring-rose-100 bg-rose-50/30 text-rose-900 @else bg-slate-50 border border-slate-200 text-slate-800 @enderror">
                 </div>
 
-                <!-- Fiber Core Route Info -->
-                <div>
+                <!-- Fiber Core Route Info (Spans 2-4 cols) -->
+                <div class="sm:col-span-2 md:col-span-3 xl:col-span-4">
                     <label class="block text-[11px] font-medium text-slate-700 mb-1">Fiber Core / TJ Box Info</label>
                     <input type="text" 
                            name="fiber_route_info" 
@@ -311,14 +313,14 @@
 
         <!-- Section 3: Package, Billing & Expiry Cycle -->
         <div class="bg-white p-3.5 sm:p-5 rounded-xl border border-slate-200 shadow-xs space-y-3.5 sm:space-y-4">
-            <div class="flex items-center gap-2 pb-2 border-b border-slate-100">
+            <div class="flex items-center gap-2 pb-2.5 border-b border-slate-100">
                 <div class="w-6 h-6 rounded-md bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs flex-shrink-0">
                     <i class="fas fa-file-invoice-dollar"></i>
                 </div>
                 <h2 class="text-xs font-bold text-slate-800 uppercase tracking-wider">3. Internet Package, Billing &amp; Expiry Cycle</h2>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-3.5">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-3.5">
                 <!-- Internet Package -->
                 <div>
                     <label class="block text-[11px] font-medium text-slate-700 mb-1">Internet Package</label>
@@ -384,7 +386,7 @@
                 <h2 class="text-xs font-bold text-slate-800 uppercase tracking-wider">4. Account Status &amp; Admin Notes</h2>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-3.5">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-3.5">
                 <!-- Status -->
                 <div>
                     <label class="block text-[11px] font-medium text-slate-700 mb-1">Account Status</label>
@@ -399,8 +401,8 @@
                     </select>
                 </div>
 
-                <!-- Remarks -->
-                <div>
+                <!-- Remarks (Spans 2-3 columns) -->
+                <div class="sm:col-span-2 md:col-span-2 xl:col-span-3">
                     <label class="block text-[11px] font-medium text-slate-700 mb-1">Remarks / Internal Notes</label>
                     <input type="text" 
                            name="remarks" 
