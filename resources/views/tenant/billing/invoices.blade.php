@@ -186,19 +186,19 @@
         </div>
 
         <div class="overflow-x-auto">
-            <table id="invoices-table" class="w-full text-left whitespace-nowrap border-collapse border border-slate-200">
-                <thead class="bg-slate-100 text-slate-700 uppercase text-[11px] font-normal tracking-wider border-b border-slate-200">
+            <table id="invoices-table" class="saas-table">
+                <thead>
                     <tr>
-                        <th class="px-2.5 py-2 text-center w-10 border border-slate-200 font-normal text-[11px]">#</th>
-                        <th class="px-2.5 py-2 text-left border border-slate-200 font-normal text-[11px]">Invoice #</th>
-                        <th class="px-2.5 py-2 text-left border border-slate-200 font-normal text-[11px]">Plan / Description</th>
-                        <th class="px-2.5 py-2 text-left border border-slate-200 font-normal text-[11px]">Issue Date</th>
-                        <th class="px-2.5 py-2 text-left border border-slate-200 font-normal text-[11px]">Due Date</th>
-                        <th class="px-2.5 py-2 text-left border border-slate-200 font-normal text-[11px]">Total Amount</th>
-                        <th class="px-2.5 py-2 text-left border border-slate-200 font-normal text-[11px]">Paid Amount</th>
-                        <th class="px-2.5 py-2 text-left border border-slate-200 font-normal text-[11px]">Due</th>
-                        <th class="px-2.5 py-2 text-center border border-slate-200 font-normal text-[11px]">Status</th>
-                        <th class="px-2.5 py-2 text-center border border-slate-200 font-normal text-[11px] w-20">Action</th>
+                        <th class="no-sort text-center w-10">#</th>
+                        <th class="text-left">Invoice #</th>
+                        <th class="text-left">Plan / Description</th>
+                        <th class="text-left">Issue Date</th>
+                        <th class="text-left">Due Date</th>
+                        <th class="text-left">Total Amount</th>
+                        <th class="text-left">Paid Amount</th>
+                        <th class="text-left">Due</th>
+                        <th class="text-center">Status</th>
+                        <th class="no-sort text-center w-20">Action</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-200 text-[11px] font-normal text-slate-700">
@@ -304,22 +304,4 @@
     </div>
 
 </div>
-@push('scripts')
-<script>
-$(document).ready(function() {
-    if ($('#invoices-table').length && !$('#invoices-table tbody td[colspan]').length) {
-        $('#invoices-table').DataTable({
-            paging: false,
-            info: false,
-            searching: false,
-            ordering: true,
-            order: [],
-            columnDefs: [
-                { orderable: false, targets: [0, -1] }
-            ]
-        });
-    }
-});
-</script>
-@endpush
 @endsection
