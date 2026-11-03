@@ -150,8 +150,8 @@ class AutoLinkCustomersOnu extends Command
 
                     $c->updateQuietly([
                         'olt_id' => $matchedOnu->olt_id,
+                        'pon_port' => $matchedOnu->pon_port . ($matchedOnu->onu_id ? ':' . $matchedOnu->onu_id : ''),
                         'onu_mac_sn' => $matchedOnu->mac_address ?: $c->onu_mac_sn,
-                        'fiber_route_info' => $matchedOnu->pon_port . ($matchedOnu->onu_id ? ':' . $matchedOnu->onu_id : ''),
                     ]);
 
                     $linkedCount++;

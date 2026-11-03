@@ -1436,8 +1436,8 @@ class OltApiService
 
             $cust->updateQuietly([
                 'olt_id' => $olt->id,
+                'pon_port' => $route,
                 'onu_mac_sn' => $effectiveOnuMac ?: $cust->onu_mac_sn,
-                'fiber_route_info' => $route,
             ]);
         }
     }

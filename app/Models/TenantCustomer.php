@@ -139,11 +139,11 @@ class TenantCustomer extends Model
                         'pppoe_username' => $this->username,
                     ]);
                 }
-                if ($this->olt_id !== $foundByRouterMac->olt_id) {
+                if ($this->olt_id !== $foundByRouterMac->olt_id || empty($this->pon_port)) {
                     $this->updateQuietly([
                         'olt_id' => $foundByRouterMac->olt_id,
+                        'pon_port' => $foundByRouterMac->pon_port . ($foundByRouterMac->onu_id ? ':' . $foundByRouterMac->onu_id : ''),
                         'onu_mac_sn' => $foundByRouterMac->mac_address ?: $this->onu_mac_sn,
-                        'fiber_route_info' => $foundByRouterMac->pon_port . ($foundByRouterMac->onu_id ? ':' . $foundByRouterMac->onu_id : ''),
                     ]);
                 }
                 return $foundByRouterMac;

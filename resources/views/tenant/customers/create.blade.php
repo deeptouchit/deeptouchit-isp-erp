@@ -363,6 +363,22 @@
                     </select>
                 </div>
 
+                <!-- PON Port / Slot -->
+                <div>
+                    <label class="block text-[11px] font-medium text-slate-700 mb-1">PON Port / Slot</label>
+                    <input type="text" 
+                           name="pon_port" 
+                           list="ponPortListCreate"
+                           value="{{ old('pon_port') }}"
+                           placeholder="e.g. 0/4 or 0/4:47" 
+                           class="w-full h-[36px] px-3 rounded-lg text-xs font-mono transition focus:bg-white focus:border-cyan-500 focus:outline-hidden @error('pon_port') border-rose-400 ring-1 ring-rose-100 bg-rose-50/30 text-rose-900 @else bg-slate-50 border border-slate-200 text-slate-800 @enderror">
+                    <datalist id="ponPortListCreate">
+                        @foreach($allPonPorts ?? [] as $port)
+                            <option value="{{ $port }}">{{ $port }}</option>
+                        @endforeach
+                    </datalist>
+                </div>
+
                 <!-- ONU MAC / Serial -->
                 <div>
                     <label class="block text-[11px] font-medium text-slate-700 mb-1">ONU MAC / Serial Number</label>
@@ -374,7 +390,7 @@
                 </div>
 
                 <!-- Fiber Core / Route Info (Spans 2-4 cols) -->
-                <div class="sm:col-span-2 md:col-span-3 xl:col-span-4">
+                <div class="sm:col-span-1 md:col-span-2 xl:col-span-3">
                     <label class="block text-[11px] font-medium text-slate-700 mb-1">Fiber Core &amp; TJ Box Route</label>
                     <input type="text" 
                            name="fiber_route_info" 

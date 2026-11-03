@@ -1133,7 +1133,7 @@
                             </div>
                             <span class="text-slate-400 font-bold px-1 flex-shrink-0">:</span>
                             <span class="font-semibold text-slate-800 text-right flex-1 truncate text-[11px] pl-1 font-mono">
-                                {{ $onu ? ($onu->pon_port . ($onu->onu_id ? ':' . $onu->onu_id : '')) : ($customer->fiber_route_info ?: 'N/A') }}
+                                {{ $onu ? ($onu->pon_port . ($onu->onu_id ? ':' . $onu->onu_id : '')) : ($customer->pon_port ?: 'N/A') }}
                             </span>
                         </div>
 

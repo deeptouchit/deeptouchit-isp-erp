@@ -214,13 +214,13 @@ class TenantCustomerController extends Controller
 
         if ($ponFilter) {
             $query->where(function ($q) use ($ponFilter) {
-                $q->whereIn('id', function ($sub) use ($ponFilter) {
-                    $sub->select('customer_id')
-                        ->from('tenant_onus')
-                        ->where('pon_port', $ponFilter)
-                        ->whereNotNull('customer_id');
-                })
-                ->orWhere('fiber_route_info', 'like', "{$ponFilter}%");
+                $q->where('pon_port', 'like', "{$ponFilter}%")
+                  ->orWhereIn('id', function ($sub) use ($ponFilter) {
+                      $sub->select('customer_id')
+                          ->from('tenant_onus')
+                          ->where('pon_port', $ponFilter)
+                          ->whereNotNull('customer_id');
+                  });
             });
         }
 
@@ -332,6 +332,13 @@ class TenantCustomerController extends Controller
         $allResellers = TenantReseller::where('tenant_id', $tenant->id)->where('status', 'active')->get();
         $coverageZones = TenantCoverageZone::where('tenant_id', $tenant->id)->where('is_active', true)->orderBy('name')->get();
         $allZones = $coverageZones->pluck('name');
+        $allPonPorts = TenantOnu::where('tenant_id', $tenant->id)
+            ->whereNotNull('pon_port')
+            ->where('pon_port', '!=', '')
+            ->distinct()
+            ->pluck('pon_port')
+            ->sort()
+            ->values();
         $autoCustomerId = TenantCustomer::generateNextCustomerId($tenant->id);
 
         return view('tenant.customers.create', compact(
@@ -339,6 +346,7 @@ class TenantCustomerController extends Controller
             'allPackages',
             'allRouters',
             'allOlts',
+            'allPonPorts',
             'allResellers',
             'allZones',
             'coverageZones',
@@ -384,6 +392,7 @@ class TenantCustomerController extends Controller
             'ip_address' => 'nullable|string|max:45',
             'mac_address' => 'nullable|string|max:50',
             'olt_id' => 'nullable|exists:tenant_olts,id',
+            'pon_port' => 'nullable|string|max:50',
             'onu_mac_sn' => 'nullable|string|max:100',
             'fiber_route_info' => 'nullable|string|max:191',
             'billing_type' => 'required|string|in:prepaid,postpaid',
@@ -435,6 +444,7 @@ class TenantCustomerController extends Controller
             'ip_address' => $validated['ip_address'] ?? null,
             'mac_address' => $validated['mac_address'] ?? null,
             'olt_id' => $validated['olt_id'] ?? null,
+            'pon_port' => $validated['pon_port'] ?? null,
             'onu_mac_sn' => $validated['onu_mac_sn'] ?? null,
             'fiber_route_info' => $validated['fiber_route_info'] ?? null,
             'billing_type' => $validated['billing_type'],
@@ -617,6 +627,13 @@ class TenantCustomerController extends Controller
         $allResellers = TenantReseller::where('tenant_id', $tenant->id)->where('status', 'active')->get();
         $coverageZones = TenantCoverageZone::where('tenant_id', $tenant->id)->orderBy('name')->get();
         $allZones = $coverageZones->pluck('name');
+        $allPonPorts = TenantOnu::where('tenant_id', $tenant->id)
+            ->whereNotNull('pon_port')
+            ->where('pon_port', '!=', '')
+            ->distinct()
+            ->pluck('pon_port')
+            ->sort()
+            ->values();
 
         return view('tenant.customers.edit', compact(
             'tenant',
@@ -624,6 +641,7 @@ class TenantCustomerController extends Controller
             'allPackages',
             'allRouters',
             'allOlts',
+            'allPonPorts',
             'allResellers',
             'allZones',
             'coverageZones'
@@ -669,6 +687,7 @@ class TenantCustomerController extends Controller
             'ip_address' => 'nullable|string|max:45',
             'mac_address' => 'nullable|string|max:50',
             'olt_id' => 'nullable|exists:tenant_olts,id',
+            'pon_port' => 'nullable|string|max:50',
             'onu_mac_sn' => 'nullable|string|max:100',
             'fiber_route_info' => 'nullable|string|max:191',
             'billing_type' => 'required|string|in:prepaid,postpaid',
@@ -720,6 +739,7 @@ class TenantCustomerController extends Controller
         $customer->ip_address = $validated['ip_address'] ?? $customer->ip_address;
         $customer->mac_address = $validated['mac_address'] ?? $customer->mac_address;
         $customer->olt_id = $validated['olt_id'] ?? $customer->olt_id;
+        $customer->pon_port = $validated['pon_port'] ?? $customer->pon_port;
         $customer->onu_mac_sn = $validated['onu_mac_sn'] ?? $customer->onu_mac_sn;
         $customer->fiber_route_info = $validated['fiber_route_info'] ?? $customer->fiber_route_info;
         $customer->billing_type = $validated['billing_type'];

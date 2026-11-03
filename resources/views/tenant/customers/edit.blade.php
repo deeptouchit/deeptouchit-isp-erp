@@ -288,6 +288,22 @@
                     </select>
                 </div>
 
+                <!-- PON Port / Slot -->
+                <div>
+                    <label class="block text-[11px] font-medium text-slate-700 mb-1">PON Port / Slot</label>
+                    <input type="text" 
+                           name="pon_port" 
+                           list="ponPortList"
+                           value="{{ old('pon_port', $customer->pon_port ?: ($customer->onu_device?->pon_port . ($customer->onu_device?->onu_id ? ':' . $customer->onu_device?->onu_id : ''))) }}"
+                           placeholder="e.g. 0/4 or 0/4:47" 
+                           class="w-full h-[36px] px-3 rounded-lg text-xs font-mono transition focus:bg-white focus:border-cyan-500 focus:outline-hidden @error('pon_port') border-rose-400 ring-1 ring-rose-100 bg-rose-50/30 text-rose-900 @else bg-slate-50 border border-slate-200 text-slate-800 @enderror">
+                    <datalist id="ponPortList">
+                        @foreach($allPonPorts ?? [] as $port)
+                            <option value="{{ $port }}">{{ $port }}</option>
+                        @endforeach
+                    </datalist>
+                </div>
+
                 <!-- ONU MAC / Serial -->
                 <div>
                     <label class="block text-[11px] font-medium text-slate-700 mb-1">ONU SN / MAC</label>
@@ -299,11 +315,17 @@
                 </div>
 
                 <!-- Fiber Core Route Info (Spans 2-4 cols) -->
-                <div class="sm:col-span-2 md:col-span-3 xl:col-span-4">
+                @php
+                    $displayFiberRoute = $customer->fiber_route_info;
+                    if ($displayFiberRoute && preg_match('/^(?:(?:EPON|GPON|pon)?\d+\/\d+(?:\/\d+)?(?::\d+)?)$/i', trim($displayFiberRoute))) {
+                        $displayFiberRoute = '';
+                    }
+                @endphp
+                <div class="sm:col-span-1 md:col-span-2 xl:col-span-3">
                     <label class="block text-[11px] font-medium text-slate-700 mb-1">Fiber Core / TJ Box Info</label>
                     <input type="text" 
                            name="fiber_route_info" 
-                           value="{{ old('fiber_route_info', $customer->fiber_route_info) }}"
+                           value="{{ old('fiber_route_info', $displayFiberRoute) }}"
                            placeholder="TJ-4, Core 2, Splitter 1:8" 
                            class="w-full h-[36px] px-3 rounded-lg text-xs transition focus:bg-white focus:border-cyan-500 focus:outline-hidden @error('fiber_route_info') border-rose-400 ring-1 ring-rose-100 bg-rose-50/30 text-rose-900 @else bg-slate-50 border border-slate-200 text-slate-800 @enderror">
                 </div>
