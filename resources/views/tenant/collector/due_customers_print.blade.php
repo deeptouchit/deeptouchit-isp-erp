@@ -221,14 +221,15 @@
         <thead>
             <tr>
                 <th class="text-center" style="width: 25px;">#</th>
-                <th style="width: 110px;">{{ __('Customer ID') }}</th>
-                <th>{{ __('Username / Subscriber') }}</th>
-                <th style="width: 95px;">{{ __('Phone Number') }}</th>
-                <th>{{ __('Address / Location') }}</th>
-                <th style="width: 80px;">{{ __('Package') }}</th>
-                <th class="text-right" style="width: 80px;">{{ __('Due (৳)') }}</th>
-                <th class="text-center" style="width: 90px;">{{ __('Collected (৳)') }}</th>
-                <th class="text-center" style="width: 100px;">{{ __('Subscriber Sign') }}</th>
+                <th style="width: 95px;">{{ __('Customer ID') }}</th>
+                <th>{{ __('Customer Name') }}</th>
+                <th style="width: 95px;">{{ __('Mobile Number') }}</th>
+                <th style="width: 100px;">{{ __('Area') }}</th>
+                <th style="width: 90px;">{{ __('Package') }}</th>
+                <th class="text-right" style="width: 75px;">{{ __('Monthly Bill') }}</th>
+                <th class="text-right" style="width: 80px;">{{ __('Due Amount') }}</th>
+                <th class="text-center" style="width: 85px;">{{ __('Collected (Tk)') }}</th>
+                <th class="text-center" style="width: 95px;">{{ __('Signature') }}</th>
             </tr>
         </thead>
         <tbody>
@@ -238,18 +239,22 @@
                 @endphp
                 <tr>
                     <td class="text-center font-mono">{{ $index + 1 }}</td>
-                    <td class="font-mono font-bold">{{ $customer->customer_id }}</td>
+                    <td class="font-mono font-bold">{{ $customer->customer_id ?: $customer->username }}</td>
                     <td>
-                        <strong>{{ $customer->username }}</strong>
+                        <strong>{{ $customer->name ?: $customer->username }}</strong>
+                        @if(!empty($customer->name) && $customer->username !== $customer->name)
+                            <span class="font-mono" style="color: #64748b; font-size: 10px;">({{ $customer->username }})</span>
+                        @endif
                         @if($isExpired)
-                            <span style="color: #e11d48; font-size: 9px; font-weight: bold;">[EXPIRED]</span>
+                            <span style="color: #e11d48; font-size: 9px; font-weight: bold; margin-left: 4px;">[EXPIRED]</span>
                         @endif
                     </td>
                     <td class="font-mono">{{ $customer->phone ?? '—' }}</td>
-                    <td style="max-width: 160px; overflow: hidden; text-overflow: ellipsis;">
-                        {{ $customer->zone?->name ?? '' }}{{ !empty($customer->address) ? ' - ' . $customer->address : '' }}
-                    </td>
+                    <td>{{ $customer->zone?->name ?? 'Default Area' }}</td>
                     <td>{{ $customer->package_display_name }}</td>
+                    <td class="text-right font-mono">
+                        {{ number_format((float)($customer->monthly_bill ?? ($customer->package?->price ?? 0)), 2) }}
+                    </td>
                     <td class="text-right font-mono font-bold" style="color: #9f1239;">
                         {{ number_format((float)($customer->due_amount ?? 0), 2) }}
                     </td>
@@ -258,7 +263,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="9" class="text-center" style="padding: 20px;">
+                    <td colspan="10" class="text-center" style="padding: 20px;">
                         {{ __('No due subscribers found for the selected scope.') }}
                     </td>
                 </tr>
@@ -266,9 +271,9 @@
         </tbody>
         <tfoot>
             <tr style="background-color: #f8fafc; font-weight: bold;">
-                <td colspan="6" class="text-right uppercase">{{ __('Total Scope Due:') }}</td>
+                <td colspan="7" class="text-right uppercase">{{ __('Total Scope Due:') }}</td>
                 <td class="text-right font-mono font-bold" style="color: #9f1239; font-size: 12px;">
-                    {{ number_format($totalDue, 2) }} ৳
+                    Tk {{ number_format($totalDue, 2) }}
                 </td>
                 <td colspan="2"></td>
             </tr>

@@ -178,7 +178,7 @@
                         <option value="all_due" {{ $dueStatusFilter === 'all_due' ? 'selected' : '' }}>{{ __('All Dues & Expired') }}</option>
                         <option value="due_only" {{ $dueStatusFilter === 'due_only' ? 'selected' : '' }}>🟢 {{ __('Active Lines (Due)') }}</option>
                         <option value="expired_only" {{ $dueStatusFilter === 'expired_only' ? 'selected' : '' }}>🔴 {{ __('Expired Lines') }}</option>
-                        <option value="high_due" {{ $dueStatusFilter === 'high_due' ? 'selected' : '' }}>⚠️ {{ __('High Due (৳1000+)') }}</option>
+                        <option value="high_due" {{ $dueStatusFilter === 'high_due' ? 'selected' : '' }}>⚠️ {{ __('High Due (Tk 1000+)') }}</option>
                     </select>
                 </div>
 
@@ -272,17 +272,19 @@
         </form>
     </div>
 
-    {{-- 4. MASTER COMPACT TABLE (Strict AGENTS.md Rule 2.D Standard: Max 7 Core Columns, No-Wrap) --}}
+    {{-- 4. MASTER COMPACT TABLE --}}
     <div class="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden">
         <div class="overflow-x-auto">
             <table class="saas-table">
                 <thead>
                     <tr>
                         <th class="w-10 text-center no-sort">#</th>
-                        <th class="text-left">{{ __('Subscriber') }}</th>
-                        <th class="text-left">{{ __('Phone & Quick Contact') }}</th>
-                        <th class="text-left">{{ __('Zone / Location') }}</th>
-                        <th class="text-left">{{ __('Package & Rate') }}</th>
+                        <th class="text-left">{{ __('Customer ID') }}</th>
+                        <th class="text-left">{{ __('Customer Name') }}</th>
+                        <th class="text-left">{{ __('Mobile Number') }}</th>
+                        <th class="text-left">{{ __('Area') }}</th>
+                        <th class="text-left">{{ __('Package') }}</th>
+                        <th class="text-right">{{ __('Monthly Bill') }}</th>
                         <th class="text-right">{{ __('Due Amount') }}</th>
                         <th class="w-24 text-center no-sort">{{ __('Action') }}</th>
                     </tr>
@@ -298,36 +300,43 @@
                             } else {
                                 $intlPhone = $cleanPhone;
                             }
-                            $waMessage = rawurlencode("সম্মানিত গ্রাহক ({$customer->username}), আপনার ইন্টারনেট বিল বাবদ " . number_format($dueAmt, 2) . " ৳ বকেয়া রয়েছে। সংযোগ সচল রাখতে অনুগ্রহ করে বিল পরিশোধ করুন। ধন্যবাদ - " . ($tenant->company_name ?? 'ISP'));
+                            $waMessage = rawurlencode("Dear Customer ({$customer->username}), your internet bill due is Tk " . number_format($dueAmt, 2) . ". Please pay your bill to keep your internet connection active. Thank you - " . ($tenant->company_name ?? 'ISP'));
                         @endphp
                         <tr>
                             {{-- 1. Index --}}
                             <td class="text-center font-mono text-slate-500">{{ $customers->firstItem() + $index }}</td>
 
-                            {{-- 2. Subscriber Identifier --}}
-                            <td>
+                            {{-- 2. Customer ID --}}
+                            <td class="font-mono font-bold text-slate-800 text-xs whitespace-nowrap">
+                                {{ $customer->customer_id ?: $customer->username }}
+                            </td>
+
+                            {{-- 3. Customer Name --}}
+                            <td class="whitespace-nowrap">
                                 <div class="flex items-center gap-1.5 flex-nowrap whitespace-nowrap">
-                                    <span class="font-semibold text-slate-900 font-mono text-xs">{{ $customer->username }}</span>
-                                    <span class="text-[10px] text-slate-400 font-mono">({{ $customer->customer_id }})</span>
+                                    <span class="font-medium text-slate-900 text-xs">{{ $customer->name ?: $customer->username }}</span>
+                                    @if(!empty($customer->name) && $customer->username !== $customer->name)
+                                        <span class="text-[10px] text-slate-400 font-mono">({{ $customer->username }})</span>
+                                    @endif
                                     @if($isExpired)
                                         <span class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-rose-50 text-rose-700 border border-rose-200/80 leading-none">
-                                            {{ __('Expired') }}
+                                            Expired
                                         </span>
                                     @else
                                         <span class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/80 leading-none">
-                                            {{ __('Active') }}
+                                            Active
                                         </span>
                                     @endif
                                 </div>
                             </td>
 
-                            {{-- 3. Phone & Quick Contact Buttons (Call & WhatsApp) --}}
-                            <td>
+                            {{-- 4. Mobile Number --}}
+                            <td class="whitespace-nowrap">
                                 <div class="flex items-center gap-1.5 flex-nowrap whitespace-nowrap">
                                     @if(!empty($customer->phone))
                                         <a href="tel:{{ $customer->phone }}" 
-                                           class="inline-flex items-center gap-1 font-mono text-slate-700 hover:text-cyan-700 font-semibold"
-                                           title="{{ __('Call Now') }}">
+                                           class="inline-flex items-center gap-1 font-mono text-slate-700 hover:text-cyan-700 font-semibold text-xs"
+                                           title="Call Now">
                                             <i class="fas fa-phone text-emerald-600 text-[10px]"></i>
                                             <span>{{ $customer->phone }}</span>
                                         </a>
@@ -335,8 +344,8 @@
                                         {{-- WhatsApp Quick Reminder Link --}}
                                         <a href="https://wa.me/{{ $intlPhone }}?text={{ $waMessage }}" 
                                            target="_blank" 
-                                           class="w-5 h-5 rounded-md bg-emerald-50 hover:bg-emerald-100 text-emerald-600 border border-emerald-200 flex items-center justify-center text-[11px] transition shadow-2xs"
-                                           title="{{ __('Send WhatsApp Due Reminder') }}">
+                                           class="w-5 h-5 rounded-md bg-emerald-50 hover:bg-emerald-100 text-emerald-600 border border-emerald-200 inline-flex items-center justify-center text-[10px] transition shadow-2xs"
+                                           title="Send WhatsApp Due Reminder">
                                             <i class="fab fa-whatsapp"></i>
                                         </a>
                                     @else
@@ -345,59 +354,56 @@
                                 </div>
                             </td>
 
-                            {{-- 4. Zone & Address --}}
-                            <td>
-                                <div class="flex items-center gap-1 text-slate-700 flex-nowrap whitespace-nowrap">
-                                    <i class="fas fa-location-dot text-slate-400 text-[10px]"></i>
-                                    <span class="font-medium text-xs">{{ $customer->zone?->name ?? 'Default Area' }}</span>
-                                    @if(!empty($customer->address))
-                                        <span class="text-[10px] text-slate-400 truncate max-w-[140px]" title="{{ $customer->address }}">
-                                            • {{ $customer->address }}
-                                        </span>
-                                    @endif
-                                </div>
+                            {{-- 5. Area --}}
+                            <td class="whitespace-nowrap">
+                                <span class="font-medium text-slate-700 text-xs">{{ $customer->zone?->name ?? 'Default Area' }}</span>
                             </td>
 
-                            {{-- 5. Package & Monthly Fee --}}
-                            <td>
-                                <div class="flex items-center gap-1.5 flex-nowrap whitespace-nowrap">
-                                    <span class="font-medium text-slate-800">{{ $customer->package_display_name }}</span>
-                                    <span class="font-mono text-[10.5px] text-slate-400">(@currency($customer->monthly_bill ?? ($customer->package?->price ?? 0)))</span>
-                                </div>
+                            {{-- 6. Package --}}
+                            <td class="whitespace-nowrap">
+                                <span class="font-medium text-slate-800 text-xs">{{ $customer->package_display_name }}</span>
                             </td>
 
-                            {{-- 6. Due Amount --}}
-                            <td class="text-right">
+                            {{-- 7. Monthly Bill / Price --}}
+                            <td class="text-right whitespace-nowrap">
+                                <span class="font-mono font-semibold text-xs text-slate-700">
+                                    @currency($customer->monthly_bill ?? ($customer->package?->price ?? 0))
+                                </span>
+                            </td>
+
+                            {{-- 8. Due Amount --}}
+                            <td class="text-right whitespace-nowrap">
                                 <span class="font-mono font-bold text-xs text-rose-600">
                                     @currency($dueAmt)
                                 </span>
                             </td>
 
-                            {{-- 7. Action: 1-Click Collect Button --}}
-                            <td class="text-center">
+                            {{-- 9. Action --}}
+                            <td class="text-center whitespace-nowrap">
                                 <button type="button" 
                                         @click="openCollectModal({
                                             id: {{ $customer->id }},
                                             username: '{{ addslashes($customer->username) }}',
-                                            customer_id: '{{ addslashes($customer->customer_id) }}',
+                                            customer_id: '{{ addslashes($customer->customer_id ?? $customer->username) }}',
+                                            name: '{{ addslashes($customer->name ?? $customer->username) }}',
                                             phone: '{{ addslashes($customer->phone ?? '') }}',
                                             package_name: '{{ addslashes($customer->package_display_name) }}',
-                                            monthly_bill: '{{ (float)($customer->monthly_bill ?? 0) }}',
+                                            monthly_bill: '{{ (float)($customer->monthly_bill ?? ($customer->package?->price ?? 0)) }}',
                                             due_amount: {{ $dueAmt }}
                                         })" 
                                         class="h-[28px] px-2.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-xs font-semibold shadow-xs transition inline-flex items-center justify-center gap-1.5 cursor-pointer"
-                                        title="{{ __('Collect Due Bill') }}">
+                                        title="Collect Due Bill">
                                     <i class="fas fa-money-bill-wave text-[10px]"></i>
-                                    <span>{{ __('Collect') }}</span>
+                                    <span>Collect</span>
                                 </button>
                             </td>
                         </tr>
                     @empty
                         <tr class="no-record-row">
-                            <td colspan="7" class="text-center py-8 text-slate-400">
+                            <td colspan="9" class="text-center py-8 text-slate-400">
                                 <i class="fas fa-circle-check text-2xl mb-1.5 block text-emerald-500"></i>
-                                <span class="font-medium text-slate-600 text-xs">{{ __('No due customers found in the selected scope.') }}</span>
-                                <p class="text-[11px] text-slate-400 mt-0.5">{{ __('All assigned subscribers in this area have zero outstanding dues.') }}</p>
+                                <span class="font-medium text-slate-600 text-xs">No due customers found in the selected scope.</span>
+                                <p class="text-[11px] text-slate-400 mt-0.5">All assigned subscribers in this area have zero outstanding dues.</p>
                             </td>
                         </tr>
                     @endforelse
@@ -464,12 +470,12 @@
                         <div class="text-[11px] text-slate-500 flex items-center gap-2 mt-0.5">
                             <span x-text="selectedCustomer?.package_name"></span>
                             <span>•</span>
-                            <span class="font-mono text-slate-700" x-text="'Fee: ৳' + selectedCustomer?.monthly_bill"></span>
+                            <span class="font-mono text-slate-700" x-text="'Fee: Tk ' + selectedCustomer?.monthly_bill"></span>
                         </div>
                     </div>
                     <div class="text-right">
                         <span class="text-[9px] uppercase font-semibold text-slate-500 block">{{ __('Total Due') }}</span>
-                        <span class="font-bold font-mono text-sm text-rose-600" x-text="'৳' + Number(selectedCustomer?.due_amount || 0).toFixed(2)"></span>
+                        <span class="font-bold font-mono text-sm text-rose-600" x-text="'Tk ' + Number(selectedCustomer?.due_amount || 0).toFixed(2)"></span>
                     </div>
                 </div>
 
@@ -477,7 +483,7 @@
                 <div>
                     <div class="flex items-center justify-between mb-1">
                         <label class="block text-[11px] font-semibold text-slate-700">
-                            {{ __('Collection Amount (৳)') }} <span class="text-rose-500">*</span>
+                            {{ __('Collection Amount (Tk)') }} <span class="text-rose-500">*</span>
                         </label>
                         <div class="flex items-center gap-1">
                             <button type="button" 
@@ -509,17 +515,17 @@
                         <select x-model="paymentMethod" 
                                 required 
                                 class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 py-1.5 focus:bg-white focus:border-cyan-500 font-medium text-slate-800 shadow-2xs">
-                            <option value="cash">{{ __('Cash in Hand (নগদ)') }}</option>
-                            <option value="bkash">bKash (বিকাশ)</option>
-                            <option value="nagad">Nagad (নগদ)</option>
-                            <option value="rocket">Rocket (রকেট)</option>
+                            <option value="cash">Cash in Hand</option>
+                            <option value="bkash">bKash</option>
+                            <option value="nagad">Nagad</option>
+                            <option value="rocket">Rocket</option>
                             <option value="bank">Bank Deposit</option>
                         </select>
                     </div>
 
                     <div>
                         <label class="block text-[11px] font-semibold text-slate-700 mb-1">
-                            {{ __('Discount / Waiver (৳)') }}
+                            {{ __('Discount / Waiver (Tk)') }}
                         </label>
                         <input type="number" 
                                x-model="collectDiscount" 
@@ -599,7 +605,7 @@
                 </div>
                 <div class="flex justify-between">
                     <span class="text-slate-500">{{ __('Amount Paid:') }}</span>
-                    <span class="font-bold text-emerald-600" x-text="'৳' + Number(receiptData?.amount || 0).toFixed(2)"></span>
+                    <span class="font-bold text-emerald-600" x-text="'Tk ' + Number(receiptData?.amount || 0).toFixed(2)"></span>
                 </div>
                 <div class="flex justify-between">
                     <span class="text-slate-500">{{ __('Method:') }}</span>
@@ -607,7 +613,7 @@
                 </div>
                 <div class="flex justify-between border-t border-slate-200 pt-1">
                     <span class="text-slate-500">{{ __('Remaining Due:') }}</span>
-                    <span class="font-bold text-rose-600" x-text="'৳' + Number(receiptData?.remaining_due || 0).toFixed(2)"></span>
+                    <span class="font-bold text-rose-600" x-text="'Tk ' + Number(receiptData?.remaining_due || 0).toFixed(2)"></span>
                 </div>
             </div>
 
@@ -746,9 +752,9 @@ function dueCustomersManager() {
                     <div class="row"><span>Subscriber:</span><span class="bold">${data.username}</span></div>
                     <div class="row"><span>Customer ID:</span><span>${data.customer_id}</span></div>
                     <div class="divider"></div>
-                    <div class="row bold" style="font-size: 13px;"><span>Paid Amount:</span><span>৳${Number(data.amount).toFixed(2)}</span></div>
+                    <div class="row bold" style="font-size: 13px;"><span>Paid Amount:</span><span>Tk ${Number(data.amount).toFixed(2)}</span></div>
                     <div class="row"><span>Method:</span><span>${data.payment_method.toUpperCase()}</span></div>
-                    <div class="row"><span>Remaining Due:</span><span>৳${Number(data.remaining_due).toFixed(2)}</span></div>
+                    <div class="row"><span>Remaining Due:</span><span>Tk ${Number(data.remaining_due).toFixed(2)}</span></div>
                     <div class="divider"></div>
                     <div class="text-center" style="font-size: 10px; margin-top: 10px;">
                         Thank you for using our internet service!<br>
