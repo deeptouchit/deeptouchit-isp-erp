@@ -77,7 +77,7 @@ class TenantCustomerInvoiceController extends Controller
 
         // Base Query
         $query = TenantCustomerInvoice::where('tenant_id', $tenant->id)
-            ->with(['customer', 'reseller', 'package', 'creator']);
+            ->with(['customer.zone', 'customer.coverageZone', 'reseller', 'package', 'creator']);
 
         // 1. Reseller Scoping
         if ($isResellerUser) {
@@ -171,7 +171,9 @@ class TenantCustomerInvoiceController extends Controller
                       $cq->where('name', 'like', "%{$search}%")
                          ->orWhere('username', 'like', "%{$search}%")
                          ->orWhere('customer_id', 'like', "%{$search}%")
-                         ->orWhere('phone', 'like', "%{$search}%");
+                         ->orWhere('phone', 'like', "%{$search}%")
+                         ->orWhere('father_name', 'like', "%{$search}%")
+                         ->orWhere('address', 'like', "%{$search}%");
                   })
                   ->orWhereHas('reseller', function ($rq) use ($search) {
                       $rq->where('name', 'like', "%{$search}%")
@@ -181,7 +183,7 @@ class TenantCustomerInvoiceController extends Controller
         }
 
         $perPage = (int) $request->input('per_page', 20);
-        if (!in_array($perPage, [10, 20, 50, 100])) {
+        if (!in_array($perPage, [10, 15, 20, 30, 50, 100, 250, 500])) {
             $perPage = 20;
         }
 

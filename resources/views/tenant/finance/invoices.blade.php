@@ -154,104 +154,70 @@
         </div>
     </div>
 
-    <!-- 3. Search & Multi-Filter Toolbar (AGENTS.md Rule 2.C - Day to Day Date Range) -->
-    <div class="bg-white p-2.5 sm:p-3 rounded-xl border border-slate-200 shadow-2xs space-y-2.5">
-        <form method="GET" action="{{ route('tenant.finance.invoices') }}" class="space-y-2">
+    <!-- 3. Search & Multi-Filter Toolbar (AGENTS.md Rule 2.C - Customer-Standard 2-Tier Architecture & Uniform h-[34px]) -->
+    @php
+        $secondaryFilters = [
+            $dateFrom ? $dateFrom : null,
+            $dateTo ? $dateTo : null,
+            ($selectedMonth ?? 'all') !== 'all' ? $selectedMonth : null,
+            ($selectedPackageId ?? 'all') !== 'all' ? $selectedPackageId : null,
+            (!$isResellerUser && ($selectedResellerId ?? 'all') !== 'all') ? $selectedResellerId : null,
+        ];
+        $activeMoreCount = collect($secondaryFilters)->filter()->count();
+        $isMoreOpen = $activeMoreCount > 0;
+    @endphp
+    <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5">
+        <form method="GET" action="{{ route('tenant.finance.invoices') }}" id="invoiceFilterForm" class="space-y-2.5">
             
-            <!-- Row 1: Search Box, Quick Period Preset, Day to Day Date Range -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-2 items-center">
+            {{-- Tier 1: Primary Filter Bar (Uniform h-[34px] & Responsive Wrapping) --}}
+            <div class="flex flex-wrap items-center gap-2">
                 
-                <!-- Search Box (4 Cols) -->
-                <div class="md:col-span-4 relative">
-                    <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none">
-                        <i class="fas fa-search"></i>
-                    </span>
+                {{-- Intelligent Live Search Box (Instant Client-Side & Debounced Server Search) --}}
+                <div class="relative flex-1 min-w-[200px]">
+                    <i class="fas fa-spinner fa-spin absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-cyan-600 pointer-events-none"
+                       x-show="isSearching" x-cloak></i>
+                    <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-xs pointer-events-none transition-colors"
+                       :class="searchQuery ? 'text-cyan-600 font-bold' : 'text-slate-400'"
+                       x-show="!isSearching"></i>
                     <input type="text" 
                            name="search" 
-                           value="{{ $search ?? '' }}" 
-                           placeholder="Search invoice #, customer, username, phone..." 
-                           class="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 placeholder-slate-400 focus:bg-white focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition shadow-2xs">
+                           id="invoiceSearchInput"
+                           x-model="searchQuery"
+                           @input="handleLiveSearch($event.target.value)"
+                           @keydown.enter.prevent="submitSearchNow()"
+                           placeholder="Search Invoice #, Customer ID, Name, Phone, Address..." 
+                           class="w-full h-[34px] pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition placeholder:text-slate-400 font-medium"
+                           autocomplete="off">
+                    <button type="button" 
+                            x-show="searchQuery && searchQuery.length > 0" 
+                            x-cloak
+                            @click="clearLiveSearch()"
+                            class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500 p-0.5 text-xs transition cursor-pointer"
+                            title="Clear Search">
+                        <i class="fas fa-times-circle"></i>
+                    </button>
                 </div>
 
-                <!-- Quick Period Preset (2 Cols) -->
-                <div class="md:col-span-2">
+                {{-- Quick Period Preset --}}
+                <div class="w-full sm:w-36 flex-shrink-0">
                     <select name="period" 
-                            class="w-full px-2.5 py-1.5 text-xs font-medium text-slate-700 bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:border-cyan-500 transition shadow-2xs">
-                        <option value="all" {{ ($period ?? '') === 'all' ? 'selected' : '' }}>All Time (সব সময়)</option>
-                        <option value="today" {{ ($period ?? '') === 'today' ? 'selected' : '' }}>Today (আজ)</option>
-                        <option value="yesterday" {{ ($period ?? '') === 'yesterday' ? 'selected' : '' }}>Yesterday (গতকাল)</option>
-                        <option value="this_week" {{ ($period ?? '') === 'this_week' ? 'selected' : '' }}>This Week (এই সপ্তাহ)</option>
-                        <option value="this_month" {{ ($period ?? '') === 'this_month' ? 'selected' : '' }}>This Month (চলতি মাস)</option>
-                        <option value="last_month" {{ ($period ?? '') === 'last_month' ? 'selected' : '' }}>Last Month (গত মাস)</option>
-                        <option value="custom" {{ ($period ?? '') === 'custom' ? 'selected' : '' }}>Custom Range (দিন-তারিখ)</option>
+                            onchange="this.form.submit()"
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700">
+                        <option value="all" {{ ($period ?? '') === 'all' ? 'selected' : '' }}>All Time</option>
+                        <option value="today" {{ ($period ?? '') === 'today' ? 'selected' : '' }}>Today</option>
+                        <option value="yesterday" {{ ($period ?? '') === 'yesterday' ? 'selected' : '' }}>Yesterday</option>
+                        <option value="this_week" {{ ($period ?? '') === 'this_week' ? 'selected' : '' }}>This Week</option>
+                        <option value="this_month" {{ ($period ?? '') === 'this_month' ? 'selected' : '' }}>This Month</option>
+                        <option value="last_month" {{ ($period ?? '') === 'last_month' ? 'selected' : '' }}>Last Month</option>
+                        <option value="custom" {{ ($period ?? '') === 'custom' ? 'selected' : '' }}>Custom Range</option>
                     </select>
                 </div>
 
-                <!-- Date From (3 Cols) -->
-                <div class="md:col-span-3 relative">
-                    <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[9.5px] uppercase font-bold text-slate-400 pointer-events-none">From</span>
-                    <input type="date" 
-                           name="date_from" 
-                           value="{{ $dateFrom ?? '' }}" 
-                           class="w-full pl-11 pr-2 py-1.5 text-xs font-mono bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:border-cyan-500 transition shadow-2xs">
-                </div>
-
-                <!-- Date To (3 Cols) -->
-                <div class="md:col-span-3 relative">
-                    <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[9.5px] uppercase font-bold text-slate-400 pointer-events-none">To</span>
-                    <input type="date" 
-                           name="date_to" 
-                           value="{{ $dateTo ?? '' }}" 
-                           class="w-full pl-8 pr-2 py-1.5 text-xs font-mono bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:border-cyan-500 transition shadow-2xs">
-                </div>
-
-            </div>
-
-            <!-- Row 2: Secondary Dropdowns (Billing Month, Package, Reseller, Status, Per Page) + Strict Filter & Reset Buttons -->
-            <div class="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-100">
-                
-                <!-- Billing Month Selector -->
-                <div class="w-full sm:w-auto sm:min-w-[130px] flex-shrink-0">
-                    <select name="month" class="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:border-cyan-500 transition shadow-2xs">
-                        <option value="all" {{ ($selectedMonth ?? '') === 'all' ? 'selected' : '' }}>All Months</option>
-                        @foreach($availableMonths as $m)
-                            <option value="{{ $m }}" {{ ($selectedMonth ?? '') === $m ? 'selected' : '' }}>
-                                {{ \Carbon\Carbon::createFromFormat('Y-m', $m)->format('F Y') }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <!-- Package Profile Dropdown -->
-                <div class="w-full sm:w-auto sm:min-w-[130px] flex-shrink-0">
-                    <select name="package_id" class="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:border-cyan-500 transition shadow-2xs">
-                        <option value="all">All Packages</option>
-                        @foreach($allPackages ?? [] as $pkg)
-                            <option value="{{ $pkg->id }}" {{ ($selectedPackageId ?? '') == $pkg->id ? 'selected' : '' }}>
-                                {{ $pkg->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-
-                @if(!$isResellerUser)
-                    <!-- Reseller / Partner Filter -->
-                    <div class="w-full sm:w-auto sm:min-w-[140px] flex-shrink-0">
-                        <select name="reseller_id" class="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:border-cyan-500 transition shadow-2xs">
-                            <option value="all" {{ ($selectedResellerId ?? 'all') === 'all' ? 'selected' : '' }}>All Partners</option>
-                            <option value="isp" {{ ($selectedResellerId ?? '') === 'isp' ? 'selected' : '' }}>HQ Direct Invoices</option>
-                            @foreach($allResellers ?? [] as $r)
-                                <option value="{{ $r->id }}" {{ ($selectedResellerId ?? '') == $r->id ? 'selected' : '' }}>
-                                    {{ $r->code ?: $r->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                @endif
-
-                <!-- Status Filter -->
-                <div class="w-full sm:w-auto sm:min-w-[110px] flex-shrink-0">
-                    <select name="status" class="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:border-cyan-500 transition shadow-2xs">
+                {{-- Status Filter --}}
+                <div class="w-full sm:w-32 flex-shrink-0">
+                    <select name="status" 
+                            onchange="this.form.submit()"
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700">
                         <option value="all" {{ ($statusFilter ?? 'all') === 'all' ? 'selected' : '' }}>All Status</option>
                         <option value="paid" {{ ($statusFilter ?? '') === 'paid' ? 'selected' : '' }}>Paid</option>
                         <option value="unpaid" {{ ($statusFilter ?? '') === 'unpaid' ? 'selected' : '' }}>Unpaid</option>
@@ -261,52 +227,158 @@
                     </select>
                 </div>
 
-                <!-- Items Per Page -->
-                <div class="w-full sm:w-auto sm:min-w-[90px] flex-shrink-0">
-                    <select name="per_page" class="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:border-cyan-500 transition shadow-2xs">
-                        <option value="10" {{ ($perPage ?? 20) == 10 ? 'selected' : '' }}>10 / pg</option>
-                        <option value="20" {{ ($perPage ?? 20) == 20 ? 'selected' : '' }}>20 / pg</option>
-                        <option value="50" {{ ($perPage ?? 20) == 50 ? 'selected' : '' }}>50 / pg</option>
-                        <option value="100" {{ ($perPage ?? 20) == 100 ? 'selected' : '' }}>100 / pg</option>
+                {{-- Pagination Per-Page Selector --}}
+                <div class="w-full sm:w-28 flex-shrink-0">
+                    <select name="per_page" 
+                            onchange="this.form.submit()"
+                            class="w-full h-[34px] px-2 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700">
+                        <option value="15" {{ ($perPage ?? 20) == 15 ? 'selected' : '' }}>15 / page</option>
+                        <option value="20" {{ ($perPage ?? 20) == 20 ? 'selected' : '' }}>20 / page</option>
+                        <option value="30" {{ ($perPage ?? 20) == 30 ? 'selected' : '' }}>30 / page</option>
+                        <option value="50" {{ ($perPage ?? 20) == 50 ? 'selected' : '' }}>50 / page</option>
+                        <option value="100" {{ ($perPage ?? 20) == 100 ? 'selected' : '' }}>100 / page</option>
+                        <option value="250" {{ ($perPage ?? 20) == 250 ? 'selected' : '' }}>250 / page</option>
+                        <option value="500" {{ ($perPage ?? 20) == 500 ? 'selected' : '' }}>500 / page</option>
                     </select>
                 </div>
 
-                <!-- Filter & Reset Buttons (Strict Universal Standard) -->
-                <div class="flex items-center gap-1.5 flex-shrink-0 ml-auto sm:ml-0">
-                    <button type="submit" class="py-1.5 px-3.5 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" title="Apply Filters">
+                {{-- More Filters Accordion Toggle Button --}}
+                <button type="button" 
+                        @click="showMoreFilters = !showMoreFilters" 
+                        :class="showMoreFilters || {{ $activeMoreCount }} > 0 ? 'bg-cyan-50 text-cyan-700 border-cyan-300 ring-1 ring-cyan-200' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'"
+                        class="h-[34px] py-0 px-2.5 rounded-lg border text-xs font-medium transition flex items-center justify-center gap-1.5 flex-shrink-0 cursor-pointer shadow-2xs"
+                        title="Toggle Date Range, Month, Partner & Package Filters">
+                    <i class="fas fa-sliders-h text-[10px]"></i>
+                    <span>More Filters</span>
+                    @if($activeMoreCount > 0)
+                        <span class="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-cyan-600 text-white leading-none">
+                            {{ $activeMoreCount }}
+                        </span>
+                    @endif
+                    <i class="fas text-[9px] transition-transform duration-200" 
+                       :class="showMoreFilters ? 'fa-chevron-up text-cyan-600' : 'fa-chevron-down text-slate-400'"></i>
+                </button>
+
+                {{-- Strict Filter & Reset Buttons Sequence (Strict AGENTS.md Rule 2.C) --}}
+                <div class="flex items-center gap-1.5 flex-shrink-0 sm:ml-auto">
+                    <button type="submit" 
+                            class="h-[34px] bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-0 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" 
+                            title="Apply Filters">
                         <i class="fas fa-filter text-[10px]"></i>
                         <span>Filter</span>
                     </button>
-                    <a href="{{ route('tenant.finance.invoices') }}" class="py-1.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer" title="Reset Filters">
+                    <a href="{{ route('tenant.finance.invoices') }}" 
+                       class="h-[34px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-0 px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer" 
+                       title="Reset Filters">
                         <i class="fas fa-rotate-left text-[10px]"></i>
                         <span>Reset</span>
                     </a>
+                </div>
+            </div>
+
+            {{-- Tier 2: Secondary Filters Drawer --}}
+            <div x-show="showMoreFilters" 
+                 x-cloak 
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0 -translate-y-2"
+                 x-transition:enter-end="opacity-100 translate-y-0"
+                 class="pt-2 border-t border-slate-100 flex flex-wrap items-center gap-2">
+                
+                {{-- Date From --}}
+                <div class="relative w-full sm:w-36 flex-shrink-0">
+                    <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[9.5px] uppercase font-bold text-slate-400 pointer-events-none">From</span>
+                    <input type="date" 
+                           name="date_from" 
+                           value="{{ $dateFrom ?? '' }}" 
+                           class="w-full h-[34px] pl-11 pr-2 text-xs font-mono bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
+                </div>
+
+                {{-- Date To --}}
+                <div class="relative w-full sm:w-36 flex-shrink-0">
+                    <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[9.5px] uppercase font-bold text-slate-400 pointer-events-none">To</span>
+                    <input type="date" 
+                           name="date_to" 
+                           value="{{ $dateTo ?? '' }}" 
+                           class="w-full h-[34px] pl-8 pr-2 text-xs font-mono bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
+                </div>
+
+                {{-- Billing Month Selector --}}
+                <div class="w-full sm:w-40 flex-shrink-0">
+                    <select name="month" 
+                            onchange="this.form.submit()"
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700">
+                        <option value="all" {{ ($selectedMonth ?? '') === 'all' ? 'selected' : '' }}>All Months</option>
+                        @foreach($availableMonths as $m)
+                            <option value="{{ $m }}" {{ ($selectedMonth ?? '') === $m ? 'selected' : '' }}>
+                                {{ \Carbon\Carbon::createFromFormat('Y-m', $m)->format('F Y') }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                {{-- Partner / Reseller Filter --}}
+                @if(!$isResellerUser)
+                <div class="w-full sm:w-44 flex-shrink-0">
+                    <select name="reseller_id" 
+                            onchange="this.form.submit()"
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700">
+                        <option value="all" {{ ($selectedResellerId ?? 'all') === 'all' ? 'selected' : '' }}>All Partners</option>
+                        <option value="isp" {{ ($selectedResellerId ?? '') === 'isp' ? 'selected' : '' }}>Direct Retail (HQ)</option>
+                        @foreach($allResellers ?? [] as $r)
+                            <option value="{{ $r->id }}" {{ ($selectedResellerId ?? '') == $r->id ? 'selected' : '' }}>
+                                {{ $r->code ?: $r->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                @endif
+
+                {{-- Package Profile Filter --}}
+                <div class="w-full sm:w-44 flex-shrink-0">
+                    <select name="package_id" 
+                            onchange="this.form.submit()"
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700">
+                        <option value="all">All Packages</option>
+                        @foreach($allPackages ?? [] as $pkg)
+                            <option value="{{ $pkg->id }}" {{ ($selectedPackageId ?? '') == $pkg->id ? 'selected' : '' }}>
+                                {{ $pkg->name }}
+                            </option>
+                        @endforeach
+                    </select>
                 </div>
             </div>
         </form>
     </div>
 
     <!-- 4. Master Table (<table class="saas-table"> Pure CSS System) -->
-    <div class="bg-white rounded-md border border-slate-200 overflow-hidden shadow-2xs">
+    <div class="bg-white rounded-xl border border-slate-200/90 overflow-hidden shadow-2xs">
         <div class="overflow-x-auto">
             <table class="saas-table">
                 <thead>
                     <tr>
-                        <th class="w-24">Invoice #</th>
-                        <th>Month</th>
-                        <th>Subscriber Name</th>
-                        <th>PPPoE User</th>
-                        <th>Partner</th>
-                        <th>Package</th>
-                        <th class="text-right">Billed</th>
-                        <th class="text-right">Paid</th>
-                        <th class="text-right">Due</th>
-                        <th class="text-center">Status</th>
-                        <th>Due Date</th>
+                        <th class="w-10 text-center no-sort">#</th>
+                        <th class="text-left font-semibold">Invoice No</th>
+                        <th class="text-left font-semibold">Customer ID</th>
+                        <th class="text-left font-semibold">Customer Name</th>
+                        <th class="text-left font-semibold">Guardian Name</th>
+                        <th class="text-left font-semibold">Area</th>
+                        <th class="text-left font-semibold">Partner</th>
+                        <th class="text-left font-semibold">Package</th>
+                        <th class="text-right font-semibold">Bill Amount</th>
+                        <th class="text-right font-semibold">Paid Amount</th>
+                        <th class="text-center font-semibold">Status</th>
+                        <th class="text-left font-semibold">Payment Date &amp; Time</th>
                         <th class="w-14 text-center no-sort">Action</th>
                     </tr>
                 </thead>
                 <tbody>
+                    <tr x-show="searchQuery && totalMatchingRows === 0" x-cloak class="no-record-row">
+                        <td colspan="13" class="text-center py-6 text-slate-500 bg-slate-50/50">
+                            <i class="fas fa-spinner fa-spin text-cyan-600 mr-1.5" x-show="isSearching"></i>
+                            <i class="fas fa-search text-slate-400 mr-1.5" x-show="!isSearching"></i>
+                            <span class="text-xs font-medium">No matching invoices found on this page. Searching entire database...</span>
+                        </td>
+                    </tr>
                     @forelse($invoices as $inv)
                         @php
                             $statusBadge = $inv->status_badge;
@@ -329,87 +401,100 @@
                             ];
                         @endphp
                         <tr>
-                            <!-- 1. Invoice No -->
-                            <td class="font-mono text-cyan-800 font-semibold">
+                            <!-- 1. Index -->
+                            <td class="text-center font-mono text-slate-500 whitespace-nowrap">
+                                {{ $invoices->firstItem() + $loop->index }}
+                            </td>
+
+                            <!-- 2. Invoice No (Clickable) -->
+                            <td class="font-mono text-cyan-800 font-bold whitespace-nowrap">
                                 <button type="button" 
                                         @click="openViewModal({{ $inv->id }})" 
-                                        class="hover:underline hover:text-cyan-600 cursor-pointer"
+                                        class="hover:underline hover:text-cyan-600 cursor-pointer inline-flex items-center gap-1"
                                         title="Click to view & print invoice">
-                                    {{ $inv->invoice_no }}
+                                    <i class="fas fa-file-invoice text-[10px] text-cyan-600"></i>
+                                    <span>{{ $inv->invoice_no }}</span>
                                 </button>
                             </td>
 
-                            <!-- 2. Billing Month -->
-                            <td class="font-mono text-slate-700">
-                                {{ $inv->formatted_month }}
+                            <!-- 3. Customer ID -->
+                            <td class="font-mono font-bold text-slate-800 text-xs whitespace-nowrap">
+                                {{ $inv->customer?->customer_id ?: ($inv->customer?->username ?? '—') }}
                             </td>
 
-                            <!-- 3. Subscriber Name (Strict Single Data per Cell) -->
-                            <td class="font-medium text-slate-900">
+                            <!-- 4. Customer Name (Clean, single data per cell) -->
+                            <td class="font-medium text-slate-900 whitespace-nowrap text-xs">
                                 @if($inv->customer)
-                                    <a href="{{ route('tenant.customers.show', $inv->customer->id) }}" class="hover:underline hover:text-cyan-600">
-                                        {{ $inv->customer->name }}
+                                    <a href="{{ route('tenant.customers.show', $inv->customer->id) }}" class="hover:underline hover:text-cyan-700">
+                                        {{ $inv->customer->name ?: $inv->customer->username }}
                                     </a>
                                 @else
-                                    <span class="text-slate-400">Deleted Subscriber</span>
+                                    <span class="text-slate-400 font-sans">Deleted Subscriber</span>
                                 @endif
                             </td>
 
-                            <!-- 4. PPPoE Username -->
-                            <td class="font-mono text-cyan-900 font-semibold">
-                                {{ $inv->customer?->username ?? '--' }}
+                            <!-- 5. Guardian Name -->
+                            <td class="text-slate-700 whitespace-nowrap text-xs">
+                                {{ $inv->customer?->father_name ?: '—' }}
                             </td>
 
-                            <!-- 5. Partner / Scope -->
-                            <td class="font-mono text-center">
+                            <!-- 6. Area -->
+                            <td class="text-slate-700 whitespace-nowrap text-xs">
+                                {{ (is_object($inv->customer?->zone) ? ($inv->customer->zone->name ?? '') : $inv->customer?->zone) ?: ($inv->customer?->coverageZone?->name ?: ($inv->customer?->address ?: '—')) }}
+                            </td>
+
+                            <!-- 7. Partner / Reseller -->
+                            <td class="font-mono whitespace-nowrap text-xs">
                                 @if($inv->reseller)
                                     <span class="inline-flex items-center gap-1 text-cyan-800 font-semibold" title="{{ $inv->reseller->name }}">
                                         <i class="fas fa-handshake text-cyan-600 text-[10px]"></i>
                                         <span>{{ $inv->reseller->code ?: $inv->reseller->name }}</span>
                                     </span>
                                 @else
-                                    <span class="inline-flex items-center gap-1 text-purple-700 font-semibold" title="HQ Direct Retail">
-                                        <i class="fas fa-building text-purple-500 text-[10px]"></i>
-                                        <span>HQ</span>
+                                    <span class="inline-flex items-center gap-1 text-slate-600 font-medium" title="HQ Direct Retail">
+                                        <i class="fas fa-building text-slate-400 text-[10px]"></i>
+                                        <span>Direct</span>
                                     </span>
                                 @endif
                             </td>
 
-                            <!-- 6. MikroTik Package -->
-                            <td class="font-mono text-slate-800 font-semibold">
-                                {{ $inv->mikrotik_package_name }}
+                            <!-- 8. Package -->
+                            <td class="font-medium text-slate-800 whitespace-nowrap text-xs">
+                                {{ $inv->mikrotik_package_name ?: ($inv->package?->name ?: ($inv->package_name ?: '—')) }}
                             </td>
 
-                            <!-- 7. Total Billed -->
-                            <td class="text-right font-mono font-semibold text-slate-800">
+                            <!-- 9. Bill Amount -->
+                            <td class="text-right font-mono font-semibold text-slate-800 whitespace-nowrap text-xs">
                                 @currency($inv->total_payable)
                             </td>
 
-                            <!-- 8. Paid Amount -->
-                            <td class="text-right font-mono font-semibold text-emerald-600">
+                            <!-- 10. Paid Amount -->
+                            <td class="text-right font-mono font-semibold text-emerald-600 whitespace-nowrap text-xs">
                                 @currency($inv->paid_amount)
                             </td>
 
-                            <!-- 9. Due Amount -->
-                            <td class="text-right font-mono font-bold {{ $inv->due_amount > 0 ? 'text-amber-600' : 'text-slate-400' }}">
-                                @currency($inv->due_amount)
-                            </td>
-
-                            <!-- 10. Status Badge -->
-                            <td class="text-center">
-                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold border {{ $statusBadge['class'] }} shadow-2xs">
+                            <!-- 11. Status Badge -->
+                            <td class="text-center whitespace-nowrap">
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold border {{ $statusBadge['class'] }} shadow-2xs">
                                     <span class="w-1.5 h-1.5 rounded-full {{ $statusBadge['dot'] }}"></span>
                                     <span>{{ $statusBadge['label'] }}</span>
                                 </span>
                             </td>
 
-                            <!-- 11. Due Date -->
-                            <td class="font-mono text-slate-600">
-                                {{ $inv->due_date ? $inv->due_date->format('d M Y') : '--' }}
+                            <!-- 12. Payment Date & Time -->
+                            <td class="font-mono text-slate-700 whitespace-nowrap text-xs">
+                                @if($inv->paid_at)
+                                    <span class="inline-flex items-center gap-1 text-slate-700">
+                                        <i class="fas fa-clock text-emerald-600 text-[10px]"></i>
+                                        <span>{{ \Carbon\Carbon::parse($inv->paid_at)->format('d M Y, h:i A') }}</span>
+                                    </span>
+                                @else
+                                    <span class="text-slate-400 font-sans">—</span>
+                                @endif
                             </td>
 
-                            <!-- 12. Action (Floating 3-Dot Menu) -->
-                            <td class="text-center">
+                            <!-- 13. Action (Floating 3-Dot Menu) -->
+                            <td class="text-center whitespace-nowrap">
                                 <button type="button" 
                                         @click="toggleMenu({{ Js::from($invData) }}, $event)" 
                                         class="w-6 h-6 rounded-md hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition cursor-pointer inline-flex items-center justify-center">
@@ -418,10 +503,10 @@
                             </td>
                         </tr>
                     @empty
-                        <tr>
-                            <td colspan="12" class="px-4 py-8 text-center text-slate-400 text-xs italic bg-slate-50/50">
+                        <tr class="no-record-row">
+                            <td colspan="13" class="px-4 py-8 text-center text-slate-400 text-xs italic bg-slate-50/50">
                                 <i class="fas fa-file-invoice text-2xl text-slate-300 mb-2 block"></i>
-                                No customer invoices found. Click "+ Generate Monthly Bills" to generate billing records.
+                                No customer invoices found for the selected scope.
                             </td>
                         </tr>
                     @endforelse
@@ -1175,6 +1260,77 @@ function invoiceManager() {
     return {
         activeMenu: null,
         menuPos: { top: 'auto', bottom: 'auto', right: '10px', left: 'auto' },
+
+        showMoreFilters: {{ $isMoreOpen ? 'true' : 'false' }},
+        searchQuery: @json($search ?? ''),
+        searchDebounceTimer: null,
+        totalMatchingRows: null,
+        isSearching: false,
+
+        init() {
+            if (this.searchQuery) {
+                this.$nextTick(() => {
+                    this.filterRowsOnly(this.searchQuery);
+                    const input = document.getElementById('invoiceSearchInput');
+                    if (input) {
+                        input.focus();
+                        input.setSelectionRange(input.value.length, input.value.length);
+                    }
+                });
+            }
+        },
+
+        handleLiveSearch(val) {
+            this.searchQuery = val;
+            this.filterRowsOnly(val);
+
+            clearTimeout(this.searchDebounceTimer);
+            this.isSearching = true;
+            this.searchDebounceTimer = setTimeout(() => {
+                const form = document.getElementById('invoiceFilterForm');
+                if (form) {
+                    form.submit();
+                }
+            }, 500);
+        },
+
+        filterRowsOnly(val) {
+            const term = (val || '').trim().toLowerCase();
+            const rows = document.querySelectorAll('.saas-table tbody tr:not(.no-record-row)');
+            let matchCount = 0;
+            rows.forEach(row => {
+                const text = row.innerText.toLowerCase();
+                const matches = !term || text.includes(term);
+                row.style.display = matches ? '' : 'none';
+                if (matches) matchCount++;
+            });
+            this.totalMatchingRows = term ? matchCount : null;
+        },
+
+        clearLiveSearch() {
+            this.searchQuery = '';
+            clearTimeout(this.searchDebounceTimer);
+            const rows = document.querySelectorAll('.saas-table tbody tr:not(.no-record-row)');
+            rows.forEach(row => {
+                row.style.display = '';
+            });
+            this.totalMatchingRows = null;
+            this.isSearching = false;
+            const form = document.getElementById('invoiceFilterForm');
+            if (form) {
+                const input = form.querySelector('input[name="search"]');
+                if (input) input.value = '';
+                form.submit();
+            }
+        },
+
+        submitSearchNow() {
+            clearTimeout(this.searchDebounceTimer);
+            const form = document.getElementById('invoiceFilterForm');
+            if (form) {
+                form.submit();
+            }
+        },
 
         toast: {
             show: false,
