@@ -77,7 +77,15 @@ class TenantCustomerInvoiceController extends Controller
 
         // Base Query
         $query = TenantCustomerInvoice::where('tenant_id', $tenant->id)
-            ->with(['customer.zone', 'customer.coverageZone', 'reseller', 'package', 'creator']);
+            ->with([
+                'customer.zone', 
+                'customer.coverageZone', 
+                'customer.collector',
+                'reseller', 
+                'package', 
+                'creator',
+                'payments.collector'
+            ]);
 
         // 1. Reseller Scoping
         if ($isResellerUser) {
@@ -90,6 +98,20 @@ class TenantCustomerInvoiceController extends Controller
             } elseif (!empty($selectedResellerId) && $selectedResellerId !== 'all') {
                 $query->where('reseller_id', (int) $selectedResellerId);
             }
+        }
+
+        // 1b. Collector / Collected By Filter
+        $collectorFilter = $request->input('collector_id', 'all');
+        if (!empty($collectorFilter) && $collectorFilter !== 'all') {
+            $query->where(function ($q) use ($collectorFilter) {
+                $q->where('created_by', (int) $collectorFilter)
+                  ->orWhereHas('payments', function ($pq) use ($collectorFilter) {
+                      $pq->where('collected_by', (int) $collectorFilter);
+                  })
+                  ->orWhereHas('customer', function ($cq) use ($collectorFilter) {
+                      $cq->where('assigned_collector_id', (int) $collectorFilter);
+                  });
+            });
         }
 
         // 2. Period & Date Range Filter (Day-to-day resolution)
@@ -211,6 +233,15 @@ class TenantCustomerInvoiceController extends Controller
             array_unshift($availableMonths, $currentMonth);
         }
 
+        // Field Collectors List for Filter
+        $allCollectors = User::where('tenant_id', $tenant->id)
+            ->where(function ($q) {
+                $q->whereIn('role', ['isp_collector', 'collector', 'reseller_collector'])
+                  ->orWhere('role', 'like', '%collector%');
+            })
+            ->orderBy('name')
+            ->get();
+
         $currencySymbol = $tenant->currency_symbol ?? '৳';
 
         return view('tenant.finance.invoices', compact(
@@ -219,6 +250,8 @@ class TenantCustomerInvoiceController extends Controller
             'allCustomers',
             'allResellers',
             'allPackages',
+            'allCollectors',
+            'collectorFilter',
             'availableMonths',
             'selectedMonth',
             'selectedResellerId',

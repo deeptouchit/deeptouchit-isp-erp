@@ -69,6 +69,14 @@ class TenantCustomerInvoice extends Model
     }
 
     /**
+     * Associated Payments Relationship
+     */
+    public function payments(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(TenantCustomerPayment::class, 'invoice_id')->latest('id');
+    }
+
+    /**
      * Generate Unique Serialized Invoice Number (e.g. INV-202609-1001)
      */
     public static function generateInvoiceNo(int $tenantId, ?string $billingMonth = null): string

@@ -86,7 +86,7 @@
     </div>
 
     <!-- 2. KPI Summary Strip (Strictly 6 Cards) -->
-    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+    <div id="invoicesKpiStrip" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
         <!-- Metric 1: Total Invoices -->
         <div class="px-2.5 py-1.5 rounded-md bg-white border border-slate-200 shadow-2xs flex items-center justify-between">
             <div class="min-w-0">
@@ -162,12 +162,13 @@
             ($selectedMonth ?? 'all') !== 'all' ? $selectedMonth : null,
             ($selectedPackageId ?? 'all') !== 'all' ? $selectedPackageId : null,
             (!$isResellerUser && ($selectedResellerId ?? 'all') !== 'all') ? $selectedResellerId : null,
+            ($collectorFilter ?? 'all') !== 'all' ? $collectorFilter : null,
         ];
         $activeMoreCount = collect($secondaryFilters)->filter()->count();
         $isMoreOpen = $activeMoreCount > 0;
     @endphp
     <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5">
-        <form method="GET" action="{{ route('tenant.finance.invoices') }}" id="invoiceFilterForm" class="space-y-2.5">
+        <form method="GET" action="{{ route('tenant.finance.invoices') }}" id="invoiceFilterForm" @submit.prevent="submitSearchNow()" class="space-y-2.5">
             
             {{-- Tier 1: Primary Filter Bar (Uniform h-[34px] & Responsive Wrapping) --}}
             <div class="flex flex-wrap items-center gap-2">
@@ -224,6 +225,20 @@
                         <option value="partially_paid" {{ ($statusFilter ?? '') === 'partially_paid' ? 'selected' : '' }}>Partially Paid</option>
                         <option value="overdue" {{ ($statusFilter ?? '') === 'overdue' ? 'selected' : '' }}>Overdue</option>
                         <option value="cancelled" {{ ($statusFilter ?? '') === 'cancelled' ? 'selected' : '' }}>Cancelled</option>
+                    </select>
+                </div>
+
+                {{-- Collector / Collected By Filter --}}
+                <div class="w-full sm:w-36 flex-shrink-0">
+                    <select name="collector_id" 
+                            onchange="this.form.submit()"
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700">
+                        <option value="all">All Collectors</option>
+                        @foreach($allCollectors ?? [] as $col)
+                            <option value="{{ $col->id }}" {{ (string)($collectorFilter ?? 'all') === (string)$col->id ? 'selected' : '' }}>
+                                {{ $col->name }}
+                            </option>
+                        @endforeach
                     </select>
                 </div>
 
@@ -351,29 +366,30 @@
     </div>
 
     <!-- 4. Master Table (<table class="saas-table"> Pure CSS System) -->
-    <div class="bg-white rounded-xl border border-slate-200/90 overflow-hidden shadow-2xs">
+    <div id="invoicesTableCard" class="bg-white rounded-xl border border-slate-200/90 overflow-hidden shadow-2xs">
         <div class="overflow-x-auto">
             <table class="saas-table">
                 <thead>
                     <tr>
                         <th class="w-10 text-center no-sort">#</th>
-                        <th class="text-left font-semibold">Invoice No</th>
-                        <th class="text-left font-semibold">Customer ID</th>
-                        <th class="text-left font-semibold">Customer Name</th>
-                        <th class="text-left font-semibold">Guardian Name</th>
+                        <th class="text-left font-semibold">Invoice #</th>
+                        <th class="text-left font-semibold">Cust ID</th>
+                        <th class="text-left font-semibold">Customer</th>
+                        <th class="text-left font-semibold">Guardian</th>
                         <th class="text-left font-semibold">Area</th>
                         <th class="text-left font-semibold">Partner</th>
                         <th class="text-left font-semibold">Package</th>
-                        <th class="text-right font-semibold">Bill Amount</th>
-                        <th class="text-right font-semibold">Paid Amount</th>
+                        <th class="text-right font-semibold">Bill (Tk)</th>
+                        <th class="text-right font-semibold">Paid (Tk)</th>
+                        <th class="text-left font-semibold">Collector</th>
                         <th class="text-center font-semibold">Status</th>
-                        <th class="text-left font-semibold">Payment Date &amp; Time</th>
+                        <th class="text-left font-semibold">Paid At</th>
                         <th class="w-14 text-center no-sort">Action</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr x-show="searchQuery && totalMatchingRows === 0" x-cloak class="no-record-row">
-                        <td colspan="13" class="text-center py-6 text-slate-500 bg-slate-50/50">
+                        <td colspan="14" class="text-center py-6 text-slate-500 bg-slate-50/50">
                             <i class="fas fa-spinner fa-spin text-cyan-600 mr-1.5" x-show="isSearching"></i>
                             <i class="fas fa-search text-slate-400 mr-1.5" x-show="!isSearching"></i>
                             <span class="text-xs font-medium">No matching invoices found on this page. Searching entire database...</span>
@@ -406,7 +422,7 @@
                                 {{ $invoices->firstItem() + $loop->index }}
                             </td>
 
-                            <!-- 2. Invoice No (Clickable) -->
+                            <!-- 2. Invoice # (Clickable) -->
                             <td class="font-mono text-cyan-800 font-bold whitespace-nowrap">
                                 <button type="button" 
                                         @click="openViewModal({{ $inv->id }})" 
@@ -417,12 +433,12 @@
                                 </button>
                             </td>
 
-                            <!-- 3. Customer ID -->
+                            <!-- 3. Cust ID -->
                             <td class="font-mono font-bold text-slate-800 text-xs whitespace-nowrap">
                                 {{ $inv->customer?->customer_id ?: ($inv->customer?->username ?? '—') }}
                             </td>
 
-                            <!-- 4. Customer Name (Clean, single data per cell) -->
+                            <!-- 4. Customer -->
                             <td class="font-medium text-slate-900 whitespace-nowrap text-xs">
                                 @if($inv->customer)
                                     <a href="{{ route('tenant.customers.show', $inv->customer->id) }}" class="hover:underline hover:text-cyan-700">
@@ -433,7 +449,7 @@
                                 @endif
                             </td>
 
-                            <!-- 5. Guardian Name -->
+                            <!-- 5. Guardian -->
                             <td class="text-slate-700 whitespace-nowrap text-xs">
                                 {{ $inv->customer?->father_name ?: '—' }}
                             </td>
@@ -443,7 +459,7 @@
                                 {{ (is_object($inv->customer?->zone) ? ($inv->customer->zone->name ?? '') : $inv->customer?->zone) ?: ($inv->customer?->coverageZone?->name ?: ($inv->customer?->address ?: '—')) }}
                             </td>
 
-                            <!-- 7. Partner / Reseller -->
+                            <!-- 7. Partner -->
                             <td class="font-mono whitespace-nowrap text-xs">
                                 @if($inv->reseller)
                                     <span class="inline-flex items-center gap-1 text-cyan-800 font-semibold" title="{{ $inv->reseller->name }}">
@@ -463,17 +479,34 @@
                                 {{ $inv->mikrotik_package_name ?: ($inv->package?->name ?: ($inv->package_name ?: '—')) }}
                             </td>
 
-                            <!-- 9. Bill Amount -->
+                            <!-- 9. Bill (Tk) -->
                             <td class="text-right font-mono font-semibold text-slate-800 whitespace-nowrap text-xs">
                                 @currency($inv->total_payable)
                             </td>
 
-                            <!-- 10. Paid Amount -->
+                            <!-- 10. Paid (Tk) -->
                             <td class="text-right font-mono font-semibold text-emerald-600 whitespace-nowrap text-xs">
                                 @currency($inv->paid_amount)
                             </td>
 
-                            <!-- 11. Status Badge -->
+                            <!-- 11. Collector -->
+                            <td class="whitespace-nowrap text-xs">
+                                @php
+                                    $collectedBy = $inv->payments->first()?->collector?->name 
+                                        ?: ($inv->creator?->name 
+                                        ?: ($inv->customer?->collector?->name ?: 'Direct / System'));
+                                @endphp
+                                @if($inv->payments->first()?->collector || $inv->creator || $inv->customer?->collector)
+                                    <span class="inline-flex items-center gap-1 font-medium text-slate-800">
+                                        <i class="fas fa-user-check text-[10px] text-cyan-600"></i>
+                                        <span>{{ $collectedBy }}</span>
+                                    </span>
+                                @else
+                                    <span class="text-slate-400 font-sans">Direct / System</span>
+                                @endif
+                            </td>
+
+                            <!-- 12. Status -->
                             <td class="text-center whitespace-nowrap">
                                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold border {{ $statusBadge['class'] }} shadow-2xs">
                                     <span class="w-1.5 h-1.5 rounded-full {{ $statusBadge['dot'] }}"></span>
@@ -481,7 +514,7 @@
                                 </span>
                             </td>
 
-                            <!-- 12. Payment Date & Time -->
+                            <!-- 13. Paid At -->
                             <td class="font-mono text-slate-700 whitespace-nowrap text-xs">
                                 @if($inv->paid_at)
                                     <span class="inline-flex items-center gap-1 text-slate-700">
@@ -493,7 +526,7 @@
                                 @endif
                             </td>
 
-                            <!-- 13. Action (Floating 3-Dot Menu) -->
+                            <!-- 14. Action -->
                             <td class="text-center whitespace-nowrap">
                                 <button type="button" 
                                         @click="toggleMenu({{ Js::from($invData) }}, $event)" 
@@ -504,7 +537,7 @@
                         </tr>
                     @empty
                         <tr class="no-record-row">
-                            <td colspan="13" class="px-4 py-8 text-center text-slate-400 text-xs italic bg-slate-50/50">
+                            <td colspan="14" class="px-4 py-8 text-center text-slate-400 text-xs italic bg-slate-50/50">
                                 <i class="fas fa-file-invoice text-2xl text-slate-300 mb-2 block"></i>
                                 No customer invoices found for the selected scope.
                             </td>
@@ -1284,14 +1317,12 @@ function invoiceManager() {
             this.searchQuery = val;
             this.filterRowsOnly(val);
 
+            // Debounced full database search via AJAX without page reload or focus loss
             clearTimeout(this.searchDebounceTimer);
             this.isSearching = true;
             this.searchDebounceTimer = setTimeout(() => {
-                const form = document.getElementById('invoiceFilterForm');
-                if (form) {
-                    form.submit();
-                }
-            }, 500);
+                this.fetchData();
+            }, 350);
         },
 
         filterRowsOnly(val) {
@@ -1307,29 +1338,59 @@ function invoiceManager() {
             this.totalMatchingRows = term ? matchCount : null;
         },
 
+        async fetchData() {
+            const form = document.getElementById('invoiceFilterForm');
+            if (!form) return;
+            const formData = new FormData(form);
+            const params = new URLSearchParams(formData);
+            const url = `${form.action}?${params.toString()}`;
+
+            this.isSearching = true;
+            try {
+                const res = await fetch(url, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+                if (res.ok) {
+                    const html = await res.text();
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+
+                    // Smoothly replace Table Card without page reload
+                    const newTable = doc.querySelector('#invoicesTableCard');
+                    const curTable = document.querySelector('#invoicesTableCard');
+                    if (newTable && curTable) {
+                        curTable.innerHTML = newTable.innerHTML;
+                    }
+
+                    // Smoothly update KPI Stats Strip
+                    const newKpi = doc.querySelector('#invoicesKpiStrip');
+                    const curKpi = document.querySelector('#invoicesKpiStrip');
+                    if (newKpi && curKpi) {
+                        curKpi.innerHTML = newKpi.innerHTML;
+                    }
+
+                    this.filterRowsOnly(this.searchQuery);
+                    window.history.replaceState({}, '', url);
+                }
+            } catch (err) {
+                console.error('Invoice live search error:', err);
+            } finally {
+                this.isSearching = false;
+            }
+        },
+
         clearLiveSearch() {
             this.searchQuery = '';
             clearTimeout(this.searchDebounceTimer);
-            const rows = document.querySelectorAll('.saas-table tbody tr:not(.no-record-row)');
-            rows.forEach(row => {
-                row.style.display = '';
-            });
-            this.totalMatchingRows = null;
-            this.isSearching = false;
-            const form = document.getElementById('invoiceFilterForm');
-            if (form) {
-                const input = form.querySelector('input[name="search"]');
-                if (input) input.value = '';
-                form.submit();
-            }
+            const input = document.getElementById('invoiceSearchInput');
+            if (input) input.value = '';
+            this.filterRowsOnly('');
+            this.fetchData();
         },
 
         submitSearchNow() {
             clearTimeout(this.searchDebounceTimer);
-            const form = document.getElementById('invoiceFilterForm');
-            if (form) {
-                form.submit();
-            }
+            this.fetchData();
         },
 
         toast: {

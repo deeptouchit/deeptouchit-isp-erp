@@ -55,7 +55,7 @@
     </div>
 
     {{-- 2. KPI SUMMARY STRIP (Strictly 6 Cards - AGENTS.md Rule 2.B) --}}
-    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+    <div id="dueCustomersKpiStrip" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
         {{-- Card 1: Due & Expired Customers Count --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
@@ -129,7 +129,7 @@
         $isMoreOpen = $activeMoreCount > 0;
     @endphp
     <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5">
-        <form method="GET" action="{{ route('tenant.collector.due-customers') }}" id="dueFilterForm" class="space-y-2.5">
+        <form method="GET" action="{{ route('tenant.collector.due-customers') }}" id="dueFilterForm" @submit.prevent="submitSearchNow()" class="space-y-2.5">
             
             {{-- Tier 1: Primary Filter Bar (Uniform h-[34px] & Responsive Wrapping) --}}
             <div class="flex flex-wrap items-center gap-2">
@@ -277,7 +277,7 @@
     </div>
 
     {{-- 4. MASTER COMPACT TABLE --}}
-    <div class="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden">
+    <div id="dueCustomersTableCard" class="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden">
         <div class="overflow-x-auto">
             <table class="saas-table">
                 <thead>
@@ -470,15 +470,12 @@ function dueCustomersManager() {
             this.searchQuery = val;
             this.filterRowsOnly(val);
 
-            // Debounced full database search across all pages
+            // Debounced full database search via AJAX without page reload or focus loss
             clearTimeout(this.searchDebounceTimer);
             this.isSearching = true;
             this.searchDebounceTimer = setTimeout(() => {
-                const form = document.getElementById('dueFilterForm');
-                if (form) {
-                    form.submit();
-                }
-            }, 500);
+                this.fetchData();
+            }, 350);
         },
 
         filterRowsOnly(val) {
@@ -494,29 +491,59 @@ function dueCustomersManager() {
             this.totalMatchingRows = term ? matchCount : null;
         },
 
+        async fetchData() {
+            const form = document.getElementById('dueFilterForm');
+            if (!form) return;
+            const formData = new FormData(form);
+            const params = new URLSearchParams(formData);
+            const url = `${form.action}?${params.toString()}`;
+
+            this.isSearching = true;
+            try {
+                const res = await fetch(url, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+                if (res.ok) {
+                    const html = await res.text();
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+
+                    // Seamlessly replace Table Card without page reload
+                    const newTable = doc.querySelector('#dueCustomersTableCard');
+                    const curTable = document.querySelector('#dueCustomersTableCard');
+                    if (newTable && curTable) {
+                        curTable.innerHTML = newTable.innerHTML;
+                    }
+
+                    // Seamlessly update KPI Stats Strip
+                    const newKpi = doc.querySelector('#dueCustomersKpiStrip');
+                    const curKpi = document.querySelector('#dueCustomersKpiStrip');
+                    if (newKpi && curKpi) {
+                        curKpi.innerHTML = newKpi.innerHTML;
+                    }
+
+                    this.filterRowsOnly(this.searchQuery);
+                    window.history.replaceState({}, '', url);
+                }
+            } catch (err) {
+                console.error('Live search error:', err);
+            } finally {
+                this.isSearching = false;
+            }
+        },
+
         clearLiveSearch() {
             this.searchQuery = '';
             clearTimeout(this.searchDebounceTimer);
-            const rows = document.querySelectorAll('.saas-table tbody tr:not(.no-record-row)');
-            rows.forEach(row => {
-                row.style.display = '';
-            });
-            this.totalMatchingRows = null;
-            this.isSearching = false;
-            const form = document.getElementById('dueFilterForm');
-            if (form) {
-                const input = form.querySelector('input[name="search"]');
-                if (input) input.value = '';
-                form.submit();
-            }
+            const input = document.getElementById('dueSearchInput');
+            if (input) input.value = '';
+            this.filterRowsOnly('');
+            this.fetchData();
         },
 
         submitSearchNow() {
             clearTimeout(this.searchDebounceTimer);
-            const form = document.getElementById('dueFilterForm');
-            if (form) {
-                form.submit();
-            }
+            this.fetchData();
         }
     };
 }
