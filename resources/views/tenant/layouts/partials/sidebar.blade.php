@@ -706,29 +706,8 @@
 
             <!-- Sub-menu Items -->
             <div x-show="open || filterQuery" x-collapse class="pl-2.5 pr-0.5 space-y-1" style="{{ $isFinanceActive ? '' : 'display: none;' }}">
-                <!-- 1. Collector Hub -->
-                @php
-                    $isCollectorActive = request()->routeIs('tenant.collector.due-customers*') 
-                        || request()->routeIs('tenant.collector.collect*') 
-                        || request()->routeIs('tenant.finance.collector*')
-                        || request()->is('admin/collector/due-customers*')
-                        || request()->is('admin/collector/collect*');
-                @endphp
-                <a href="{{ Route::has('tenant.collector.due-customers') ? route('tenant.collector.due-customers') : route('tenant.dashboard') }}" 
-                   x-show="!filterQuery || 'collector hub field collection counter bill payments due expired validity cut'.includes(filterQuery.toLowerCase())"
-                   class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ $isCollectorActive ? 'border-amber-200 bg-amber-50/80 text-amber-700 font-bold border-l-4 border-l-amber-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
-                    Due &amp; Expired List
-                </a>
-
                 @if(!auth()->user()->isCollector() || auth()->user()->isIspAdmin() || auth()->user()->isOwner())
-                <!-- 2. Invoices -->
-                <a href="{{ Route::has('tenant.finance.invoices') ? route('tenant.finance.invoices') : '#' }}" 
-                   x-show="!filterQuery || 'customer invoices bills monthly automated invoices custom due dates billing'.includes(filterQuery.toLowerCase())"
-                   class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ request()->routeIs('tenant.finance.invoices*') && !request()->routeIs('tenant.finance.billing-catchup*') ? 'border-amber-200 bg-amber-50/80 text-amber-700 font-bold border-l-4 border-l-amber-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
-                    Invoices
-                </a>
-
-                <!-- 2.1 Billing Catch-Up & Uninvoiced Queue -->
+                <!-- 1. Billing Catch-Up & Uninvoiced Queue -->
                 <a href="{{ Route::has('tenant.finance.billing-catchup') ? route('tenant.finance.billing-catchup') : '#' }}" 
                    x-show="!filterQuery || 'billing catch up catchup uninvoiced missed invoices auto billing generate cron recovery queue audit'.includes(filterQuery.toLowerCase())"
                    class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ request()->routeIs('tenant.finance.billing-catchup*') ? 'border-amber-200 bg-amber-50/80 text-amber-700 font-bold border-l-4 border-l-amber-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
@@ -739,14 +718,37 @@
                 </a>
                 @endif
 
-                <!-- 3. Collections -->
-                <a href="{{ Route::has('tenant.finance.payments') ? route('tenant.finance.payments') : '#' }}" 
-                   x-show="!filterQuery || 'payment collections receipts instant money receipt sms notification pos collection bill receive'.includes(filterQuery.toLowerCase())"
-                   class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ request()->routeIs('tenant.finance.payments*') ? 'border-amber-200 bg-amber-50/80 text-amber-700 font-bold border-l-4 border-l-amber-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
-                    Collections
+                <!-- 2. Due Invoices (Due & Expired List) -->
+                @php
+                    $isCollectorActive = request()->routeIs('tenant.collector.due-customers*') 
+                        || request()->routeIs('tenant.collector.collect*') 
+                        || request()->routeIs('tenant.finance.collector*')
+                        || request()->is('admin/collector/due-customers*')
+                        || request()->is('admin/collector/collect*');
+                @endphp
+                <a href="{{ Route::has('tenant.collector.due-customers') ? route('tenant.collector.due-customers') : route('tenant.dashboard') }}" 
+                   x-show="!filterQuery || 'due invoices unpaid expired list collector hub field collection counter bill payments validity cut'.includes(filterQuery.toLowerCase())"
+                   class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ $isCollectorActive ? 'border-amber-200 bg-amber-50/80 text-amber-700 font-bold border-l-4 border-l-amber-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
+                    Due Invoices
                 </a>
 
-                <!-- 4. Cash Handover -->
+                @if(!auth()->user()->isCollector() || auth()->user()->isIspAdmin() || auth()->user()->isOwner())
+                <!-- 3. Paid Invoices (Invoices Master Ledger) -->
+                <a href="{{ Route::has('tenant.finance.invoices') ? route('tenant.finance.invoices') : '#' }}" 
+                   x-show="!filterQuery || 'paid invoices customer bills monthly automated invoices custom due dates billing ledger'.includes(filterQuery.toLowerCase())"
+                   class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ request()->routeIs('tenant.finance.invoices*') && !request()->routeIs('tenant.finance.billing-catchup*') ? 'border-amber-200 bg-amber-50/80 text-amber-700 font-bold border-l-4 border-l-amber-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
+                    Paid Invoices
+                </a>
+                @endif
+
+                <!-- 4. Collections Report -->
+                <a href="{{ Route::has('tenant.finance.payments') ? route('tenant.finance.payments') : '#' }}" 
+                   x-show="!filterQuery || 'collection report collections receipts instant money receipt sms notification pos collection bill receive'.includes(filterQuery.toLowerCase())"
+                   class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ request()->routeIs('tenant.finance.payments*') ? 'border-amber-200 bg-amber-50/80 text-amber-700 font-bold border-l-4 border-l-amber-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
+                    Collection Report
+                </a>
+
+                <!-- 5. Cash Handover -->
                 <a href="{{ Route::has('tenant.collector.handover') ? route('tenant.collector.handover') : (Route::has('tenant.finance.cash-handover') ? route('tenant.finance.cash-handover') : '#') }}" 
                    x-show="!filterQuery || 'daily cash handover closing collector manager verification cash approval vault'.includes(filterQuery.toLowerCase())"
                    class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ request()->routeIs('tenant.finance.cash-handover*') || request()->routeIs('tenant.collector.handover*') ? 'border-amber-200 bg-amber-50/80 text-amber-700 font-bold border-l-4 border-l-amber-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
@@ -754,28 +756,28 @@
                 </a>
 
                 @if(!auth()->user()->isCollector() || auth()->user()->isIspAdmin() || auth()->user()->isOwner())
-                <!-- 5. Reseller Billing -->
+                <!-- 6. Reseller Billing -->
                 <a href="{{ Route::has('tenant.finance.wholesale-billing') ? route('tenant.finance.wholesale-billing') : '#' }}" 
                    x-show="!filterQuery || 'reseller wholesale billing monthly bandwidth package invoices sub-isp billing'.includes(filterQuery.toLowerCase())"
                    class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ request()->routeIs('tenant.finance.wholesale-billing*') ? 'border-amber-200 bg-amber-50/80 text-amber-700 font-bold border-l-4 border-l-amber-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
                     Reseller Billing
                 </a>
 
-                <!-- 6. Gateway Payments -->
+                <!-- 7. Gateway Payments -->
                 <a href="{{ Route::has('tenant.finance.gateway-transactions') ? route('tenant.finance.gateway-transactions') : '#' }}" 
                    x-show="!filterQuery || 'online gateway transactions bkash nagad rocket sslcommerz shurjopay pgw logs payment gateway'.includes(filterQuery.toLowerCase())"
                    class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ request()->routeIs('tenant.finance.gateway-transactions*') ? 'border-amber-200 bg-amber-50/80 text-amber-700 font-bold border-l-4 border-l-amber-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
                     Gateway Payments
                 </a>
 
-                <!-- 7. Income & Expenses -->
+                <!-- 8. Income & Expenses -->
                 <a href="{{ Route::has('tenant.finance.expenses') ? route('tenant.finance.expenses') : '#' }}" 
                    x-show="!filterQuery || 'income expense accounts company operational office rent bandwidth cost bills voucher'.includes(filterQuery.toLowerCase())"
                    class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ request()->routeIs('tenant.finance.expenses*') ? 'border-amber-200 bg-amber-50/80 text-amber-700 font-bold border-l-4 border-l-amber-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
                     Income &amp; Expenses
                 </a>
 
-                <!-- 8. Accounts & Ledger -->
+                <!-- 9. Accounts & Ledger -->
                 <a href="{{ Route::has('tenant.finance.ledger') ? route('tenant.finance.ledger') : '#' }}" 
                    x-show="!filterQuery || 'financial statements ledger trial balance cash book profit loss balance sheet accounts'.includes(filterQuery.toLowerCase())"
                    class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ request()->routeIs('tenant.finance.ledger*') ? 'border-amber-200 bg-amber-50/80 text-amber-700 font-bold border-l-4 border-l-amber-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
