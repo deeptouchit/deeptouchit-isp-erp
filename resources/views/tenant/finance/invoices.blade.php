@@ -67,6 +67,17 @@
         </div>
 
         <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+            @if(isset($uninvoicedQueueCount) && $uninvoicedQueueCount > 0)
+            <!-- Billing Catch-Up Queue Quick Link -->
+            <a href="{{ route('tenant.finance.billing-catchup') }}" 
+               class="px-2.5 py-1.5 rounded-md bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 font-semibold text-xs shadow-2xs transition inline-flex items-center gap-1.5 cursor-pointer"
+               title="{{ $uninvoicedQueueCount }} uninvoiced subscribers in catch-up queue">
+                <i class="fas fa-bolt text-amber-600 text-[11px]"></i>
+                <span>Catch-Up Queue</span>
+                <span class="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-amber-600 text-white font-mono leading-none">{{ $uninvoicedQueueCount }}</span>
+            </a>
+            @endif
+
             <!-- Create Custom Invoice Button -->
             <button type="button" 
                     @click="openCreateModal()" 

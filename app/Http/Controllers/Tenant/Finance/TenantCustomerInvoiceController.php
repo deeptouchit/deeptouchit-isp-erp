@@ -11,6 +11,7 @@ use App\Models\TenantInternetPackage;
 use App\Models\TenantReseller;
 use App\Models\TenantRouter;
 use App\Models\TenantActivityLog;
+use App\Models\TenantAutomationSetting;
 use App\Models\AutomationLog;
 use App\Models\TenantCoverageZone;
 use App\Models\User;
@@ -246,6 +247,31 @@ class TenantCustomerInvoiceController extends Controller
 
         $currencySymbol = $tenant->currency_symbol ?? '৳';
 
+        // Check if there are any uninvoiced subscribers in the catch-up queue
+        $catchupSettings = TenantAutomationSetting::firstOrCreate(['tenant_id' => $tenant->id]);
+        $catchupLeadDays = (int) ($catchupSettings->billing_generation_day ?: 3);
+        $catchupTargetDate = Carbon::today()->addDays($catchupLeadDays);
+
+        $uninvoicedQueueQuery = TenantCustomer::where('tenant_id', $tenant->id)
+            ->whereIn('status', ['active', 'due', 'suspended', 'expired'])
+            ->whereNotNull('expiry_date')
+            ->whereDate('expiry_date', '<=', $catchupTargetDate)
+            ->whereNotExists(function ($sub) use ($tenant) {
+                $sub->select(DB::raw(1))
+                    ->from('tenant_customer_invoices')
+                    ->whereColumn('tenant_customer_invoices.customer_id', 'tenant_customers.id')
+                    ->where('tenant_customer_invoices.tenant_id', $tenant->id)
+                    ->where(function ($q) {
+                        $q->whereRaw("tenant_customer_invoices.billing_month = DATE_FORMAT(tenant_customers.expiry_date, '%Y-%m')")
+                          ->orWhereRaw("DATE(tenant_customer_invoices.due_date) = DATE(tenant_customers.expiry_date)");
+                    });
+            });
+
+        if ($isResellerUser) {
+            $uninvoicedQueueQuery->where('reseller_id', $userResellerId);
+        }
+        $uninvoicedQueueCount = $uninvoicedQueueQuery->count();
+
         return view('tenant.finance.invoices', compact(
             'tenant',
             'invoices',
@@ -272,7 +298,8 @@ class TenantCustomerInvoiceController extends Controller
             'totalPaidAmount',
             'totalDueAmount',
             'unpaidOverdueCount',
-            'collectionRate'
+            'collectionRate',
+            'uninvoicedQueueCount'
         ));
     }
 
@@ -720,7 +747,8 @@ class TenantCustomerInvoiceController extends Controller
         $packageFilter = $request->input('package_id', 'all');
         $perPage = $request->input('per_page', 20);
 
-        $leadDays = 3;
+        $settings = TenantAutomationSetting::firstOrCreate(['tenant_id' => $tenant->id]);
+        $leadDays = (int) ($settings->billing_generation_day ?: 3);
         $targetDate = Carbon::today()->addDays($leadDays);
 
         // 2. Base Uninvoiced Query
@@ -851,7 +879,8 @@ class TenantCustomerInvoiceController extends Controller
         $scope = $request->input('scope', 'selected'); // 'selected', 'partner', 'all'
         $targetResellerId = $request->input('partner_id');
 
-        $leadDays = 3;
+        $settings = TenantAutomationSetting::firstOrCreate(['tenant_id' => $tenant->id]);
+        $leadDays = (int) ($settings->billing_generation_day ?: 3);
         $targetDate = Carbon::today()->addDays($leadDays);
 
         $query = TenantCustomer::where('tenant_id', $tenant->id)
@@ -871,7 +900,19 @@ class TenantCustomerInvoiceController extends Controller
             $query->whereIn('id', (array)$customerIds);
         }
 
-        $candidates = $query->get();
+        // Direct SQL filter to exclude already invoiced users for the cycle
+        $query->whereNotExists(function ($sub) use ($tenant) {
+            $sub->select(DB::raw(1))
+                ->from('tenant_customer_invoices')
+                ->whereColumn('tenant_customer_invoices.customer_id', 'tenant_customers.id')
+                ->where('tenant_customer_invoices.tenant_id', $tenant->id)
+                ->where(function ($q) {
+                    $q->whereRaw("tenant_customer_invoices.billing_month = DATE_FORMAT(tenant_customers.expiry_date, '%Y-%m')")
+                      ->orWhereRaw("DATE(tenant_customer_invoices.due_date) = DATE(tenant_customers.expiry_date)");
+                });
+        });
+
+        $candidates = $query->with('package')->get();
         $generatedCount = 0;
         $skippedCount = 0;
         $totalBilled = 0.00;
@@ -882,7 +923,7 @@ class TenantCustomerInvoiceController extends Controller
             $billingMonth = Carbon::parse($customer->expiry_date)->format('Y-m');
             $targetExpiryDate = Carbon::parse($customer->expiry_date);
 
-            // Check if invoice already exists
+            // Double check idempotency
             $exists = TenantCustomerInvoice::where('tenant_id', $tenant->id)
                 ->where('customer_id', $customer->id)
                 ->where(function ($q) use ($billingMonth, $targetExpiryDate) {
@@ -898,6 +939,7 @@ class TenantCustomerInvoiceController extends Controller
 
             $monthlyBill = (float)($customer->monthly_bill > 0 ? $customer->monthly_bill : ($customer->package?->price ?? 0.00));
             if ($monthlyBill <= 0) {
+                $skippedCount++;
                 continue;
             }
 
@@ -936,8 +978,27 @@ class TenantCustomerInvoiceController extends Controller
             try {
                 $radiusService->syncCustomerSubscriber($customer);
             } catch (\Exception $e) {
-                // Non-blocking
+                \Illuminate\Support\Facades\Log::warning("FreeRADIUS sync warning for {$customer->username}: " . $e->getMessage());
             }
+        }
+
+        // Activity Trail
+        if ($generatedCount > 0) {
+            TenantActivityLog::create([
+                'tenant_id' => $tenant->id,
+                'actor_type' => 'App\Models\User',
+                'actor_id' => Auth::id() ?: 1,
+                'actor_name' => Auth::user()?->name ?: 'System',
+                'event_type' => 'CATCHUP_BILLING_EXECUTED',
+                'description' => "Executed Catch-Up Billing: {$generatedCount} invoices created totaling ৳" . number_format($totalBilled, 2),
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'metadata' => [
+                    'generated_count' => $generatedCount,
+                    'total_billed' => $totalBilled,
+                    'scope' => $scope,
+                ],
+            ]);
         }
 
         return response()->json([
