@@ -1,6 +1,6 @@
 @extends('tenant.layouts.app')
 
-@section('title', 'কালেক্টর আদায় বিস্তারিত: ' . $collectorName . ' - ' . ($tenant->company_name ?? $tenant->name))
+@section('title', 'Collector Receipts: ' . $collectorName . ' - ' . ($tenant->company_name ?? $tenant->name))
 
 @push('styles')
 <style>
@@ -45,7 +45,7 @@
             </div>
             
             <h1 class="text-xs sm:text-sm font-bold text-slate-900 tracking-tight flex items-center gap-2">
-                <span>কালেক্টর আদায় বিস্তারিত: {{ $collectorName }}</span>
+                <span>Collector Receipts: {{ $collectorName }}</span>
             </h1>
 
             <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-cyan-50 text-cyan-800 border border-cyan-200">
@@ -241,14 +241,14 @@
                 <thead>
                     <tr>
                         <th class="w-10 text-center no-sort">#</th>
-                        <th class="text-left font-semibold">রিসিট নং (Receipt No)</th>
-                        <th class="text-left font-semibold">গ্রাহকের আইডি ও নাম (Customer)</th>
-                        <th class="text-left font-semibold">মোবাইল নম্বর (Phone)</th>
-                        <th class="text-left font-semibold">প্যাকেজ (Package)</th>
-                        <th class="text-right font-semibold">আদায়ের পরিমাণ (Amount)</th>
-                        <th class="text-center font-semibold">পেমেন্ট মাধ্যম (Method)</th>
-                        <th class="text-left font-semibold">আদায়ের তারিখ ও সময় (Paid At)</th>
-                        <th class="w-24 text-center no-sort">একশন (Action)</th>
+                        <th class="text-left font-semibold">Receipt No</th>
+                        <th class="text-left font-semibold">Customer ID &amp; Name</th>
+                        <th class="text-left font-semibold">Mobile Phone</th>
+                        <th class="text-left font-semibold">Package Profile</th>
+                        <th class="text-right font-semibold">Amount</th>
+                        <th class="text-center font-semibold">Method</th>
+                        <th class="text-left font-semibold">Paid At</th>
+                        <th class="w-24 text-center no-sort">Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -418,3 +418,4 @@ function collectorDetailsManager() {
 }
 </script>
 @endpush
+

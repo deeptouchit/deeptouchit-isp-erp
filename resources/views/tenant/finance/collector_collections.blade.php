@@ -190,11 +190,11 @@
                                 } 
                             })"
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-semibold text-slate-800 cursor-pointer">
-                        <option value="daily" {{ $period === 'daily' ? 'selected' : '' }}>⚡ Daily (আজকের দিন)</option>
-                        <option value="monthly" {{ $period === 'monthly' ? 'selected' : '' }}>📅 Monthly (চলতি মাস)</option>
-                        <option value="yearly" {{ $period === 'yearly' ? 'selected' : '' }}>🗓️ Yearly (চলতি বছর)</option>
-                        <option value="all" {{ $period === 'all' ? 'selected' : '' }}>🌐 All Time (সব সময়)</option>
-                        <option value="custom" {{ $period === 'custom' ? 'selected' : '' }}>🎯 Custom Date Range...</option>
+                        <option value="daily" {{ $period === 'daily' ? 'selected' : '' }}>Daily (Today)</option>
+                        <option value="monthly" {{ $period === 'monthly' ? 'selected' : '' }}>Monthly (This Month)</option>
+                        <option value="yearly" {{ $period === 'yearly' ? 'selected' : '' }}>Yearly (This Year)</option>
+                        <option value="all" {{ $period === 'all' ? 'selected' : '' }}>All Time</option>
+                        <option value="custom" {{ $period === 'custom' ? 'selected' : '' }}>Custom Date Range...</option>
                     </select>
                 </div>
 
@@ -335,12 +335,12 @@
                 <thead>
                     <tr>
                         <th class="w-10 text-center no-sort">#</th>
-                        <th class="text-left font-semibold">কালেক্টর নাম (Collector Name)</th>
-                        <th class="text-left font-semibold">পাটনার (Partner)</th>
-                        <th class="text-left font-semibold">মাসের নাম / সময়কাল (Period)</th>
-                        <th class="text-center font-semibold">মোট কাউন্ট (Total Count)</th>
-                        <th class="text-right font-semibold">মোট টাকা (Total Amount)</th>
-                        <th class="w-28 text-center no-sort">একশন (Action)</th>
+                        <th class="text-left font-semibold">Collector Name</th>
+                        <th class="text-left font-semibold">Partner / Scope</th>
+                        <th class="text-left font-semibold">Billing Period</th>
+                        <th class="text-center font-semibold">Total Receipts</th>
+                        <th class="text-right font-semibold">Total Collected</th>
+                        <th class="w-28 text-center no-sort">Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -400,7 +400,7 @@
                             {{-- 5. Total Count --}}
                             <td class="text-center whitespace-nowrap font-mono font-bold text-xs text-slate-800">
                                 <span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-800 border border-slate-200/90">
-                                    {{ number_format($row->total_count) }} টি
+                                    {{ number_format($row->total_count) }}
                                 </span>
                             </td>
 
@@ -409,13 +409,13 @@
                                 @currency($row->total_amount)
                             </td>
 
-                            {{-- 7. Action: View Details Full Page / তালিকা দেখুন --}}
+                            {{-- 7. Action: View Details Full Page --}}
                             <td class="text-center whitespace-nowrap">
                                 <a href="{{ route('tenant.finance.collector-collections.show', array_merge(['collector' => $row->collector_id], request()->query(), ['reseller_id' => $row->reseller_id ?: 0])) }}" 
                                    class="h-[28px] px-2.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-xs font-semibold shadow-xs transition inline-flex items-center justify-center gap-1.5 cursor-pointer"
                                    title="View Itemized Receipts List for this Collector">
                                     <i class="fas fa-list-check text-[10px]"></i>
-                                    <span>তালিকা দেখুন</span>
+                                    <span>View Details</span>
                                 </a>
                             </td>
                         </tr>
