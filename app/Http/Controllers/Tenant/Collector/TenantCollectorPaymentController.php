@@ -127,24 +127,52 @@ class TenantCollectorPaymentController extends Controller
                         ->orderBy('due_date', 'asc')
                         ->get();
 
-                    $remainingRelief = $totalRelief;
-                    foreach ($openInvoices as $inv) {
-                        if ($remainingRelief <= 0) break;
-                        $invPayable = max(0, (float)$inv->total_payable - (float)$inv->paid_amount);
-                        if ($remainingRelief >= $invPayable) {
-                            $inv->paid_amount = $inv->total_payable;
-                            $inv->due_amount = 0.00;
-                            $inv->status = 'paid';
-                            $remainingRelief -= $invPayable;
-                        } else {
-                            $inv->paid_amount = (float)$inv->paid_amount + $remainingRelief;
-                            $inv->due_amount = max(0, (float)$inv->total_payable - (float)$inv->paid_amount);
-                            $inv->status = 'partially_paid';
-                            $remainingRelief = 0;
+                    if ($openInvoices->count() > 0) {
+                        $remainingRelief = $totalRelief;
+                        foreach ($openInvoices as $inv) {
+                            if ($remainingRelief <= 0) break;
+                            $invPayable = max(0, (float)$inv->total_payable - (float)$inv->paid_amount);
+                            if ($remainingRelief >= $invPayable) {
+                                $inv->paid_amount = $inv->total_payable;
+                                $inv->due_amount = 0.00;
+                                $inv->status = 'paid';
+                                $remainingRelief -= $invPayable;
+                            } else {
+                                $inv->paid_amount = (float)$inv->paid_amount + $remainingRelief;
+                                $inv->due_amount = max(0, (float)$inv->total_payable - (float)$inv->paid_amount);
+                                $inv->status = 'partially_paid';
+                                $remainingRelief = 0;
+                            }
+                            $inv->paid_at = now();
+                            $inv->payment_method = $method;
+                            $inv->save();
                         }
-                        $inv->paid_at = now();
-                        $inv->payment_method = $method;
-                        $inv->save();
+                    } else {
+                        // Generate official settled invoice record for this payment
+                        $billingMonth = Carbon::now()->format('Y-m');
+                        $invoiceNo = TenantCustomerInvoice::generateInvoiceNo($tenantId, $billingMonth);
+                        TenantCustomerInvoice::create([
+                            'tenant_id' => $tenantId,
+                            'customer_id' => $customer->id,
+                            'reseller_id' => $customer->reseller_id,
+                            'package_id' => $customer->package_id ?? $customer->internet_package_id,
+                            'billing_month' => $billingMonth,
+                            'invoice_no' => $invoiceNo,
+                            'amount' => $amount,
+                            'discount' => $discount,
+                            'vat_tax' => 0.00,
+                            'total_payable' => $amount,
+                            'paid_amount' => $amount,
+                            'due_amount' => 0.00,
+                            'status' => 'paid',
+                            'issue_date' => Carbon::today(),
+                            'due_date' => Carbon::today(),
+                            'paid_at' => now(),
+                            'payment_method' => $method,
+                            'created_by' => $collectorId,
+                            'notes' => "POS Bill Collection Payment #{$payment->id} ({$trxId})",
+                            'auto_generated' => false,
+                        ]);
                     }
                 }
             } catch (\Throwable $invEx) {
