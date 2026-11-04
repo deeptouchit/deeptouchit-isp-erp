@@ -181,14 +181,19 @@
 
     {{-- 3. SEARCH & MULTI-FILTER TOOLBAR (Customer-Standard 2-Tier Architecture & Uniform h-[34px] - AGENTS.md Rule 2.C) --}}
     @php
-        $activeMoreCount = collect([$overdueFilter !== 'all' ? $overdueFilter : null, $packageFilter !== 'all' ? $packageFilter : null])->filter()->count();
+        $activeMoreCount = collect([
+            $overdueFilter !== 'all' ? $overdueFilter : null, 
+            $packageFilter !== 'all' ? $packageFilter : null,
+            $zoneFilter !== 'all' ? $zoneFilter : null,
+            ($targetDateType === 'custom' || !empty($customDate)) ? 'custom' : null
+        ])->filter()->count();
         $isMoreOpen = $activeMoreCount > 0;
     @endphp
     <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5">
         <form method="GET" action="{{ route('tenant.finance.billing-catchup') }}" id="catchupFilterForm" @submit.prevent="submitSearchNow()" class="space-y-2.5">
             
-            {{-- Tier 1: Primary Filter Bar (Uniform h-[34px] & Responsive Wrapping) --}}
-            <div class="flex flex-wrap items-center gap-2">
+            {{-- Tier 1: Primary Filter Bar (Strictly 1 Single Row on md+ screens - AGENTS.md Rule 2.C) --}}
+            <div class="flex flex-col md:flex-row items-stretch md:items-center gap-2">
                 
                 {{-- Intelligent Live Search Box (Instant Client-Side & Debounced Server Search) --}}
                 <div class="relative flex-1 min-w-[200px]">
@@ -216,13 +221,19 @@
                     </button>
                 </div>
 
-                {{-- Target Expiry Date Selector (Dynamic Date-Specific Catch-Up) --}}
-                <div class="w-full sm:w-48 flex-shrink-0">
+                {{-- Primary Dropdown 1: Target Expiry Date Selector --}}
+                <div class="w-full md:w-52 flex-shrink-0">
                     <select name="target_date_type" 
                             id="targetDateTypeSelect"
                             x-model="targetDateType"
-                            @change="$nextTick(() => { if (targetDateType !== 'custom') $el.closest('form').submit() })"
-                            class="w-full h-[34px] px-2 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-semibold text-slate-800">
+                            @change="$nextTick(() => { 
+                                if (targetDateType === 'custom') { 
+                                    showMoreFilters = true; 
+                                } else { 
+                                    $el.closest('form').submit(); 
+                                } 
+                            })"
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-semibold text-slate-800 cursor-pointer">
                         <option value="all" {{ $targetDateType === 'all' ? 'selected' : '' }}>🌐 All Queue ({{ number_format($totalUninvoicedCount) }})</option>
                         <option value="today" {{ $targetDateType === 'today' ? 'selected' : '' }}>⚡ Expires Today ({{ number_format($todayExpiringCount) }})</option>
                         <option value="tomorrow" {{ $targetDateType === 'tomorrow' ? 'selected' : '' }}>⏳ Expires Tomorrow</option>
@@ -232,23 +243,13 @@
                     </select>
                 </div>
 
-                {{-- Custom Date Picker (Visible when custom chosen) --}}
-                <div x-show="targetDateType === 'custom'" x-cloak class="w-full sm:w-36 flex-shrink-0">
-                    <input type="date" 
-                           name="custom_date" 
-                           value="{{ $customDate }}"
-                           onchange="this.form.submit()"
-                           class="w-full h-[34px] px-2 bg-white border border-cyan-400 rounded-lg text-xs font-mono text-slate-800 focus:outline-hidden"
-                           title="Select exact expiry date to target">
-                </div>
-
-                {{-- Partner Filter --}}
+                {{-- Primary Dropdown 2: Partner Filter (if not reseller) --}}
                 @if(!$isResellerUser)
-                <div class="w-full sm:w-44 flex-shrink-0">
+                <div class="w-full md:w-40 flex-shrink-0">
                     <select name="partner_id" 
                             id="partnerFilterSelect"
                             onchange="this.form.submit()"
-                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700">
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700 cursor-pointer">
                         <option value="all">All Partners / Scope</option>
                         <option value="direct" {{ $partnerFilter === 'direct' ? 'selected' : '' }}>🏢 Direct (No Partner)</option>
                         @foreach($resellers as $reseller)
@@ -260,25 +261,11 @@
                 </div>
                 @endif
 
-                {{-- Zone / Area Filter --}}
-                <div class="w-full sm:w-36 flex-shrink-0">
-                    <select name="zone_id" 
-                            onchange="this.form.submit()"
-                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700">
-                        <option value="all">All Zones / Areas</option>
-                        @foreach($zones as $z)
-                            <option value="{{ $z->id }}" {{ (string)$zoneFilter === (string)$z->id ? 'selected' : '' }}>
-                                {{ $z->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-
                 {{-- Pagination Per-Page Selector --}}
-                <div class="w-full sm:w-28 flex-shrink-0">
+                <div class="w-full md:w-24 flex-shrink-0">
                     <select name="per_page" 
                             onchange="this.form.submit()"
-                            class="w-full h-[34px] px-2 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700">
+                            class="w-full h-[34px] px-2 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700 cursor-pointer">
                         <option value="15" {{ request('per_page', $perPage) == 15 ? 'selected' : '' }}>15 / page</option>
                         <option value="20" {{ request('per_page', $perPage) == 20 ? 'selected' : '' }}>20 / page</option>
                         <option value="30" {{ request('per_page', $perPage) == 30 ? 'selected' : '' }}>30 / page</option>
@@ -293,7 +280,7 @@
                         @click="showMoreFilters = !showMoreFilters" 
                         :class="showMoreFilters || {{ $activeMoreCount }} > 0 ? 'bg-cyan-50 text-cyan-700 border-cyan-300 ring-1 ring-cyan-200' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'"
                         class="h-[34px] py-0 px-2.5 rounded-lg border text-xs font-medium transition flex items-center justify-center gap-1.5 flex-shrink-0 cursor-pointer shadow-2xs"
-                        title="Toggle Overdue Range & Package Filters">
+                        title="Toggle Zone, Package & Custom Date Filters">
                     <i class="fas fa-sliders-h text-[10px]"></i>
                     <span>More Filters</span>
                     @if($activeMoreCount > 0)
@@ -305,8 +292,8 @@
                        :class="showMoreFilters ? 'fa-chevron-up text-cyan-600' : 'fa-chevron-down text-slate-400'"></i>
                 </button>
 
-                {{-- Filter & Reset Sequence (Strict AGENTS.md Rule 2.C) --}}
-                <div class="flex items-center gap-1.5 flex-shrink-0 sm:ml-auto">
+                {{-- Strict Filter & Reset Sequence (Strict AGENTS.md Rule 2.C - Far Right Aligned on md+) --}}
+                <div class="flex items-center gap-1.5 flex-shrink-0 md:ml-auto">
                     <button type="submit" 
                             class="h-[34px] bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-0 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" 
                             title="Apply Filters">
@@ -322,7 +309,7 @@
                 </div>
             </div>
 
-            {{-- Tier 2: Secondary Filters Drawer --}}
+            {{-- Tier 2: Secondary Filters Drawer (AGENTS.md Rule 2.C) --}}
             <div x-show="showMoreFilters" 
                  x-cloak 
                  x-transition:enter="transition ease-out duration-200"
@@ -330,15 +317,27 @@
                  x-transition:enter-end="opacity-100 translate-y-0"
                  class="pt-2 border-t border-slate-100 flex flex-wrap items-center gap-2">
                 
-                {{-- Overdue / Expiry Range Filter --}}
-                <div class="w-full sm:w-48 flex-shrink-0">
-                    <select name="overdue_range" 
-                            onchange="this.form.submit()" 
-                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700">
-                        <option value="all">All Expiry Cycles</option>
-                        <option value="upcoming" {{ $overdueFilter === 'upcoming' ? 'selected' : '' }}>⏳ Upcoming (Due in 1-3 Days)</option>
-                        <option value="overdue_1_7" {{ $overdueFilter === 'overdue_1_7' ? 'selected' : '' }}>⚠️ Overdue (1 to 7 Days)</option>
-                        <option value="overdue_8_plus" {{ $overdueFilter === 'overdue_8_plus' ? 'selected' : '' }}>🚨 Critical Overdue (8+ Days)</option>
+                {{-- Custom Date Picker (Visible when custom chosen) --}}
+                <div x-show="targetDateType === 'custom'" x-cloak class="w-full sm:w-44 flex-shrink-0">
+                    <input type="date" 
+                           name="custom_date" 
+                           value="{{ $customDate }}"
+                           onchange="this.form.submit()"
+                           class="w-full h-[34px] px-2.5 bg-white border border-cyan-400 rounded-lg text-xs font-mono text-slate-800 focus:outline-hidden"
+                           title="Select exact expiry date to target">
+                </div>
+
+                {{-- Zone / Area Filter --}}
+                <div class="w-full sm:w-44 flex-shrink-0">
+                    <select name="zone_id" 
+                            onchange="this.form.submit()"
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700 cursor-pointer">
+                        <option value="all">All Zones / Areas</option>
+                        @foreach($zones as $z)
+                            <option value="{{ $z->id }}" {{ (string)$zoneFilter === (string)$z->id ? 'selected' : '' }}>
+                                {{ $z->name }}
+                            </option>
+                        @endforeach
                     </select>
                 </div>
 
@@ -346,13 +345,25 @@
                 <div class="w-full sm:w-48 flex-shrink-0">
                     <select name="package_id" 
                             onchange="this.form.submit()" 
-                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700">
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700 cursor-pointer">
                         <option value="all">All Internet Packages</option>
                         @foreach($packages as $p)
                             <option value="{{ $p->id }}" {{ (string)$packageFilter === (string)$p->id ? 'selected' : '' }}>
                                 {{ $p->name }} (@currency($p->price))
                             </option>
                         @endforeach
+                    </select>
+                </div>
+
+                {{-- Overdue / Expiry Range Secondary Filter --}}
+                <div class="w-full sm:w-48 flex-shrink-0">
+                    <select name="overdue_range" 
+                            onchange="this.form.submit()" 
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700 cursor-pointer">
+                        <option value="all">All Overdue Ranges</option>
+                        <option value="upcoming" {{ $overdueFilter === 'upcoming' ? 'selected' : '' }}>⏳ Upcoming (Due in 1-3 Days)</option>
+                        <option value="overdue_1_7" {{ $overdueFilter === 'overdue_1_7' ? 'selected' : '' }}>⚠️ Overdue (1 to 7 Days)</option>
+                        <option value="overdue_8_plus" {{ $overdueFilter === 'overdue_8_plus' ? 'selected' : '' }}>🚨 Critical Overdue (8+ Days)</option>
                     </select>
                 </div>
             </div>
