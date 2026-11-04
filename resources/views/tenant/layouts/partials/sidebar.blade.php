@@ -724,8 +724,18 @@
                 <!-- 2. Invoices -->
                 <a href="{{ Route::has('tenant.finance.invoices') ? route('tenant.finance.invoices') : '#' }}" 
                    x-show="!filterQuery || 'customer invoices bills monthly automated invoices custom due dates billing'.includes(filterQuery.toLowerCase())"
-                   class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ request()->routeIs('tenant.finance.invoices*') ? 'border-amber-200 bg-amber-50/80 text-amber-700 font-bold border-l-4 border-l-amber-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
+                   class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ request()->routeIs('tenant.finance.invoices*') && !request()->routeIs('tenant.finance.billing-catchup*') ? 'border-amber-200 bg-amber-50/80 text-amber-700 font-bold border-l-4 border-l-amber-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
                     Invoices
+                </a>
+
+                <!-- 2.1 Billing Catch-Up & Uninvoiced Queue -->
+                <a href="{{ Route::has('tenant.finance.billing-catchup') ? route('tenant.finance.billing-catchup') : '#' }}" 
+                   x-show="!filterQuery || 'billing catch up catchup uninvoiced missed invoices auto billing generate cron recovery queue audit'.includes(filterQuery.toLowerCase())"
+                   class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ request()->routeIs('tenant.finance.billing-catchup*') ? 'border-amber-200 bg-amber-50/80 text-amber-700 font-bold border-l-4 border-l-amber-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
+                    <div class="flex items-center justify-between">
+                        <span>Billing Catch-Up</span>
+                        <span class="px-1.5 py-0.2 rounded text-[9px] font-mono font-bold bg-amber-100 text-amber-800 border border-amber-200">Queue</span>
+                    </div>
                 </a>
                 @endif
 

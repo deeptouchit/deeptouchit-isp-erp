@@ -11,6 +11,8 @@ use App\Models\TenantInternetPackage;
 use App\Models\TenantReseller;
 use App\Models\TenantRouter;
 use App\Models\TenantActivityLog;
+use App\Models\AutomationLog;
+use App\Models\TenantCoverageZone;
 use App\Models\User;
 use App\Services\Network\MikrotikApiService;
 use App\Services\Network\RadiusService;
@@ -697,5 +699,253 @@ class TenantCustomerInvoiceController extends Controller
         }
 
         return back()->with('success', "Invoice '{$invNo}' deleted successfully.");
+    }
+
+    /**
+     * Display Billing Catch-Up & Uninvoiced Queue.
+     * Identifies all subscribers needing a subscription invoice for their current/upcoming cycle.
+     */
+    public function billingCatchUp(Request $request): View
+    {
+        $tenant = $this->getTenant();
+        $user = Auth::user();
+        $isResellerUser = $user && ($user->isResellerUser() || !empty($user->reseller_id));
+        $userResellerId = $user?->reseller_id;
+
+        // 1. Inputs & Filters
+        $search = trim($request->input('search', ''));
+        $partnerFilter = $request->input('partner_id', 'all');
+        $zoneFilter = $request->input('zone_id', 'all');
+        $overdueFilter = $request->input('overdue_range', 'all'); // upcoming, overdue_1_7, overdue_8_plus
+        $packageFilter = $request->input('package_id', 'all');
+        $perPage = $request->input('per_page', 20);
+
+        $leadDays = 3;
+        $targetDate = Carbon::today()->addDays($leadDays);
+
+        // 2. Base Uninvoiced Query
+        $baseQuery = TenantCustomer::where('tenant_id', $tenant->id)
+            ->whereIn('status', ['active', 'due', 'suspended', 'expired'])
+            ->whereNotNull('expiry_date')
+            ->whereDate('expiry_date', '<=', $targetDate)
+            ->whereNotExists(function ($sub) use ($tenant) {
+                $sub->select(DB::raw(1))
+                    ->from('tenant_customer_invoices')
+                    ->whereColumn('tenant_customer_invoices.customer_id', 'tenant_customers.id')
+                    ->where('tenant_customer_invoices.tenant_id', $tenant->id)
+                    ->where(function ($q) {
+                        $q->whereRaw("tenant_customer_invoices.billing_month = DATE_FORMAT(tenant_customers.expiry_date, '%Y-%m')")
+                          ->orWhereRaw("DATE(tenant_customer_invoices.due_date) = DATE(tenant_customers.expiry_date)");
+                    });
+            });
+
+        if ($isResellerUser) {
+            $baseQuery->where('reseller_id', $userResellerId);
+        }
+
+        // 3. 6 KPI Cards Stats Calculation
+        $totalUninvoicedCount = (clone $baseQuery)->count();
+        $totalUnbilledAmount = (float) (clone $baseQuery)->sum(DB::raw("COALESCE(monthly_bill, 0)"));
+        $directCount = (clone $baseQuery)->whereNull('reseller_id')->count();
+        $partnerCount = (clone $baseQuery)->whereNotNull('reseller_id')->count();
+
+        // Automation Cron Engine Health & Last Run
+        $lastCronLog = AutomationLog::where('tenant_id', $tenant->id)->latest('id')->first();
+        $lastCronRunText = $lastCronLog?->created_at ? $lastCronLog->created_at->diffForHumans() : 'No Cron Log';
+        $isCronHealthy = $lastCronLog && $lastCronLog->created_at->diffInHours(now()) <= 26;
+
+        // 4. Partner-Wise Breakdown Grouping
+        $partnerBreakdownQuery = (clone $baseQuery)
+            ->select('reseller_id', DB::raw('count(*) as count'), DB::raw('sum(COALESCE(monthly_bill, 0)) as amount'))
+            ->groupBy('reseller_id')
+            ->with('reseller')
+            ->get();
+
+        // 5. Apply User Filters for Table Display
+        $query = (clone $baseQuery)->with(['package', 'zone', 'reseller']);
+
+        if (!empty($search)) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('username', 'like', "%{$search}%")
+                  ->orWhere('phone', 'like', "%{$search}%")
+                  ->orWhere('customer_id', 'like', "%{$search}%");
+            });
+        }
+
+        if ($partnerFilter === 'direct') {
+            $query->whereNull('reseller_id');
+        } elseif ($partnerFilter !== 'all' && !empty($partnerFilter)) {
+            $query->where('reseller_id', (int)$partnerFilter);
+        }
+
+        if ($zoneFilter !== 'all' && !empty($zoneFilter)) {
+            $query->where('zone_id', (int)$zoneFilter);
+        }
+
+        if ($packageFilter !== 'all' && !empty($packageFilter)) {
+            $query->where('package_id', (int)$packageFilter);
+        }
+
+        if ($overdueFilter === 'upcoming') {
+            $query->whereDate('expiry_date', '>', Carbon::today());
+        } elseif ($overdueFilter === 'overdue_1_7') {
+            $query->whereDate('expiry_date', '<=', Carbon::today())
+                  ->whereDate('expiry_date', '>=', Carbon::today()->subDays(7));
+        } elseif ($overdueFilter === 'overdue_8_plus') {
+            $query->whereDate('expiry_date', '<', Carbon::today()->subDays(7));
+        }
+
+        // Order by oldest expiry date first
+        $query->orderBy('expiry_date', 'asc');
+
+        if ($perPage === 'all') {
+            $total = (clone $query)->count();
+            $subscribers = $query->paginate($total > 0 ? $total : 20)->withQueryString();
+        } else {
+            $perPageInt = in_array((int)$perPage, [15, 20, 30, 50, 100, 250, 500], true) ? (int)$perPage : 20;
+            $subscribers = $query->paginate($perPageInt)->withQueryString();
+        }
+
+        // Auxiliary Filter Lists
+        $resellers = TenantReseller::where('tenant_id', $tenant->id)->orderBy('name')->get();
+        $zones = TenantCoverageZone::where('tenant_id', $tenant->id)->orderBy('name')->get();
+        $packages = TenantInternetPackage::where('tenant_id', $tenant->id)->orderBy('price')->get();
+        $currencySymbol = '৳';
+
+        return view('tenant.finance.billing_catchup', compact(
+            'tenant',
+            'subscribers',
+            'totalUninvoicedCount',
+            'totalUnbilledAmount',
+            'directCount',
+            'partnerCount',
+            'lastCronRunText',
+            'isCronHealthy',
+            'partnerBreakdownQuery',
+            'resellers',
+            'zones',
+            'packages',
+            'currencySymbol',
+            'search',
+            'partnerFilter',
+            'zoneFilter',
+            'overdueFilter',
+            'packageFilter',
+            'perPage',
+            'isResellerUser'
+        ));
+    }
+
+    /**
+     * Execute Batch or Single Catch-Up Invoicing
+     */
+    public function executeBillingCatchUp(Request $request): JsonResponse
+    {
+        $tenant = $this->getTenant();
+        $user = Auth::user();
+        $isResellerUser = $user && ($user->isResellerUser() || !empty($user->reseller_id));
+        $userResellerId = $user?->reseller_id;
+
+        $customerIds = $request->input('customer_ids', []);
+        $scope = $request->input('scope', 'selected'); // 'selected', 'partner', 'all'
+        $targetResellerId = $request->input('partner_id');
+
+        $leadDays = 3;
+        $targetDate = Carbon::today()->addDays($leadDays);
+
+        $query = TenantCustomer::where('tenant_id', $tenant->id)
+            ->whereIn('status', ['active', 'due', 'suspended', 'expired'])
+            ->whereNotNull('expiry_date')
+            ->whereDate('expiry_date', '<=', $targetDate);
+
+        if ($isResellerUser) {
+            $query->where('reseller_id', $userResellerId);
+        } elseif ($scope === 'partner') {
+            if ($targetResellerId === 'direct') {
+                $query->whereNull('reseller_id');
+            } elseif (!empty($targetResellerId) && $targetResellerId !== 'all') {
+                $query->where('reseller_id', (int)$targetResellerId);
+            }
+        } elseif ($scope === 'selected' && !empty($customerIds)) {
+            $query->whereIn('id', (array)$customerIds);
+        }
+
+        $candidates = $query->get();
+        $generatedCount = 0;
+        $skippedCount = 0;
+        $totalBilled = 0.00;
+
+        $radiusService = new RadiusService();
+
+        foreach ($candidates as $customer) {
+            $billingMonth = Carbon::parse($customer->expiry_date)->format('Y-m');
+            $targetExpiryDate = Carbon::parse($customer->expiry_date);
+
+            // Check if invoice already exists
+            $exists = TenantCustomerInvoice::where('tenant_id', $tenant->id)
+                ->where('customer_id', $customer->id)
+                ->where(function ($q) use ($billingMonth, $targetExpiryDate) {
+                    $q->where('billing_month', $billingMonth)
+                      ->orWhereDate('due_date', $targetExpiryDate->toDateString());
+                })
+                ->exists();
+
+            if ($exists) {
+                $skippedCount++;
+                continue;
+            }
+
+            $monthlyBill = (float)($customer->monthly_bill > 0 ? $customer->monthly_bill : ($customer->package?->price ?? 0.00));
+            if ($monthlyBill <= 0) {
+                continue;
+            }
+
+            $invoiceNo = TenantCustomerInvoice::generateInvoiceNo($tenant->id, $billingMonth);
+
+            TenantCustomerInvoice::create([
+                'tenant_id' => $tenant->id,
+                'reseller_id' => $customer->reseller_id,
+                'customer_id' => $customer->id,
+                'invoice_no' => $invoiceNo,
+                'billing_month' => $billingMonth,
+                'package_id' => $customer->package_id,
+                'package_name' => $customer->package_display_name ?: ($customer->package?->name ?? 'Internet Package'),
+                'amount' => $monthlyBill,
+                'discount' => 0.00,
+                'vat_tax' => 0.00,
+                'total_payable' => $monthlyBill,
+                'total_amount' => $monthlyBill,
+                'paid_amount' => 0.00,
+                'due_amount' => $monthlyBill,
+                'issue_date' => Carbon::today()->toDateString(),
+                'due_date' => $targetExpiryDate->toDateString(),
+                'status' => 'unpaid',
+                'auto_generated' => true,
+                'notes' => 'Catch-up cycle subscription invoice.',
+                'created_by' => Auth::id() ?: null,
+            ]);
+
+            $customer->due_amount = (float)($customer->due_amount ?? 0) + $monthlyBill;
+            $customer->save();
+
+            $generatedCount++;
+            $totalBilled += $monthlyBill;
+
+            // FreeRADIUS AAA Sync
+            try {
+                $radiusService->syncCustomerSubscriber($customer);
+            } catch (\Exception $e) {
+                // Non-blocking
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'generated_count' => $generatedCount,
+            'skipped_count' => $skippedCount,
+            'total_billed' => $totalBilled,
+            'message' => "Successfully generated {$generatedCount} catch-up invoices totaling ৳" . number_format($totalBilled, 2) . "." . ($skippedCount > 0 ? " ({$skippedCount} skipped as already invoiced)" : ""),
+        ]);
     }
 }

@@ -332,6 +332,8 @@ Route::middleware(['web'])->group(function () {
         Route::prefix('admin/finance')->name('tenant.finance.')->middleware('permission:billing.invoices,billing.collect,billing.cash_handover,billing.wholesale,billing.gateways,billing.expenses,billing.ledger')->group(function () {
             // 1. Customer Invoices & Bills
             Route::get('/invoices', [TenantCustomerInvoiceController::class, 'index'])->name('invoices');
+            Route::get('/billing-catchup', [TenantCustomerInvoiceController::class, 'billingCatchUp'])->name('billing-catchup');
+            Route::post('/billing-catchup/execute', [TenantCustomerInvoiceController::class, 'executeBillingCatchUp'])->name('billing-catchup.execute');
             Route::post('/invoices', [TenantCustomerInvoiceController::class, 'store'])->name('invoices.store');
             Route::post('/invoices/generate-monthly', [TenantCustomerInvoiceController::class, 'generateMonthlyInvoices'])->name('invoices.generate-monthly');
             Route::get('/invoices/{id}', [TenantCustomerInvoiceController::class, 'show'])->whereNumber('id')->name('invoices.show');
