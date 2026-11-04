@@ -713,30 +713,32 @@
                    class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ request()->routeIs('tenant.finance.billing-catchup*') ? 'border-amber-200 bg-amber-50/80 text-amber-700 font-bold border-l-4 border-l-amber-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
                     <div class="flex items-center justify-between">
                         <span>Billing Catch-Up</span>
-                        <span class="px-1.5 py-0.2 rounded text-[9px] font-mono font-bold bg-amber-100 text-amber-800 border border-amber-200">Queue</span>
                     </div>
                 </a>
                 @endif
 
-                <!-- 2. Due Invoices (Due & Expired List) -->
+                <!-- 2. Due Invoices (Generated but Unpaid Invoices) -->
                 @php
-                    $isCollectorActive = request()->routeIs('tenant.collector.due-customers*') 
-                        || request()->routeIs('tenant.collector.collect*') 
-                        || request()->routeIs('tenant.finance.collector*')
-                        || request()->is('admin/collector/due-customers*')
-                        || request()->is('admin/collector/collect*');
+                    $isDueInvoicesActive = request()->routeIs('tenant.finance.invoices*') 
+                        && !request()->routeIs('tenant.finance.billing-catchup*') 
+                        && in_array(request('status'), ['due', 'unpaid', 'overdue', 'partially_paid']);
                 @endphp
-                <a href="{{ Route::has('tenant.collector.due-customers') ? route('tenant.collector.due-customers') : route('tenant.dashboard') }}" 
-                   x-show="!filterQuery || 'due invoices unpaid expired list collector hub field collection counter bill payments validity cut'.includes(filterQuery.toLowerCase())"
-                   class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ $isCollectorActive ? 'border-amber-200 bg-amber-50/80 text-amber-700 font-bold border-l-4 border-l-amber-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
+                <a href="{{ Route::has('tenant.finance.invoices') ? route('tenant.finance.invoices', ['status' => 'due']) : '#' }}" 
+                   x-show="!filterQuery || 'due invoices unpaid pending customer bills ledger'.includes(filterQuery.toLowerCase())"
+                   class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ $isDueInvoicesActive ? 'border-amber-200 bg-amber-50/80 text-amber-700 font-bold border-l-4 border-l-amber-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
                     Due Invoices
                 </a>
 
                 @if(!auth()->user()->isCollector() || auth()->user()->isIspAdmin() || auth()->user()->isOwner())
-                <!-- 3. Paid Invoices (Invoices Master Ledger) -->
-                <a href="{{ Route::has('tenant.finance.invoices') ? route('tenant.finance.invoices') : '#' }}" 
-                   x-show="!filterQuery || 'paid invoices customer bills monthly automated invoices custom due dates billing ledger'.includes(filterQuery.toLowerCase())"
-                   class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ request()->routeIs('tenant.finance.invoices*') && !request()->routeIs('tenant.finance.billing-catchup*') ? 'border-amber-200 bg-amber-50/80 text-amber-700 font-bold border-l-4 border-l-amber-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
+                <!-- 3. Paid Invoices (Paid Invoices Ledger) -->
+                @php
+                    $isPaidInvoicesActive = request()->routeIs('tenant.finance.invoices*') 
+                        && !request()->routeIs('tenant.finance.billing-catchup*') 
+                        && (request('status') === 'paid' || (!request()->has('status') && !$isDueInvoicesActive));
+                @endphp
+                <a href="{{ Route::has('tenant.finance.invoices') ? route('tenant.finance.invoices', ['status' => 'paid']) : '#' }}" 
+                   x-show="!filterQuery || 'paid invoices customer bills monthly billing ledger'.includes(filterQuery.toLowerCase())"
+                   class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ $isPaidInvoicesActive ? 'border-amber-200 bg-amber-50/80 text-amber-700 font-bold border-l-4 border-l-amber-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
                     Paid Invoices
                 </a>
                 @endif

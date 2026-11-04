@@ -167,7 +167,12 @@ class TenantCustomerInvoiceController extends Controller
 
         // 4. Status Filter
         $statusFilter = $request->input('status', 'all');
-        if ($statusFilter === 'paid') {
+        if ($statusFilter === 'due') {
+            $query->where(function ($q) {
+                $q->whereIn('status', ['unpaid', 'partially_paid', 'overdue'])
+                  ->orWhere('due_amount', '>', 0);
+            })->where('status', '!=', 'cancelled');
+        } elseif ($statusFilter === 'paid') {
             $query->where('status', 'paid');
         } elseif ($statusFilter === 'unpaid') {
             $query->where('status', 'unpaid');

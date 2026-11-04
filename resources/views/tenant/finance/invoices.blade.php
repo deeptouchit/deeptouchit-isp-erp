@@ -63,7 +63,15 @@
             <div class="w-7 h-7 rounded-md bg-amber-50 text-amber-600 border border-amber-100 flex items-center justify-center text-xs flex-shrink-0">
                 <i class="fas fa-file-invoice-dollar"></i>
             </div>
-            <h1 class="text-xs sm:text-sm font-bold text-slate-900 tracking-tight">Customer Invoices &amp; Billing Ledger</h1>
+            <h1 class="text-xs sm:text-sm font-bold text-slate-900 tracking-tight">
+                @if(($statusFilter ?? '') === 'due')
+                    Due Invoices &amp; Unpaid Bills
+                @elseif(($statusFilter ?? '') === 'paid')
+                    Paid Invoices &amp; Billing Ledger
+                @else
+                    Customer Invoices &amp; Billing Ledger
+                @endif
+            </h1>
         </div>
 
         <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap">
@@ -218,13 +226,14 @@
                 </div>
 
                 {{-- Status Filter --}}
-                <div class="w-full sm:w-32 flex-shrink-0">
+                <div class="w-full sm:w-36 flex-shrink-0">
                     <select name="status" 
                             onchange="this.form.submit()"
-                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700">
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700 cursor-pointer">
                         <option value="all" {{ ($statusFilter ?? 'all') === 'all' ? 'selected' : '' }}>All Status</option>
-                        <option value="paid" {{ ($statusFilter ?? '') === 'paid' ? 'selected' : '' }}>Paid</option>
-                        <option value="unpaid" {{ ($statusFilter ?? '') === 'unpaid' ? 'selected' : '' }}>Unpaid</option>
+                        <option value="due" {{ ($statusFilter ?? '') === 'due' ? 'selected' : '' }}>Due (Unpaid & Partial)</option>
+                        <option value="paid" {{ ($statusFilter ?? '') === 'paid' ? 'selected' : '' }}>Paid Only</option>
+                        <option value="unpaid" {{ ($statusFilter ?? '') === 'unpaid' ? 'selected' : '' }}>Unpaid Only</option>
                         <option value="partially_paid" {{ ($statusFilter ?? '') === 'partially_paid' ? 'selected' : '' }}>Partially Paid</option>
                         <option value="overdue" {{ ($statusFilter ?? '') === 'overdue' ? 'selected' : '' }}>Overdue</option>
                         <option value="cancelled" {{ ($statusFilter ?? '') === 'cancelled' ? 'selected' : '' }}>Cancelled</option>
@@ -285,7 +294,7 @@
                         <i class="fas fa-filter text-[10px]"></i>
                         <span>Filter</span>
                     </button>
-                    <a href="{{ route('tenant.finance.invoices') }}" 
+                    <a href="{{ ($statusFilter ?? '') === 'due' ? route('tenant.finance.invoices', ['status' => 'due']) : (($statusFilter ?? '') === 'paid' ? route('tenant.finance.invoices', ['status' => 'paid']) : route('tenant.finance.invoices')) }}" 
                        class="h-[34px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-0 px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer" 
                        title="Reset Filters">
                         <i class="fas fa-rotate-left text-[10px]"></i>
