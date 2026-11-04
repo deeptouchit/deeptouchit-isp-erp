@@ -447,4 +447,67 @@ class TenantCollectorDashboardController extends Controller
 
         return back()->with('success', "দৈনিক ক্যাশ হ্যান্ডওভার রিকোয়েস্ট (" . number_format((float)$request->amount, 2) . " ৳) সফলভাবে জমা দেওয়া হয়েছে।");
     }
+
+    /**
+     * Show Dedicated Full-Page POS Billing & Payment Counter for a Subscriber.
+     */
+    public function showCollectPage(Request $request, $customerId): View
+    {
+        $tenant = $this->getTenant();
+        $authUser = Auth::user();
+
+        $customer = TenantCustomer::where('tenant_id', $tenant->id)
+            ->with(['package', 'router', 'coverageZone', 'zone'])
+            ->findOrFail($customerId);
+
+        // Recent payment history for this customer (latest 5)
+        $recentPayments = TenantCustomerPayment::where('tenant_id', $tenant->id)
+            ->where('customer_id', $customer->id)
+            ->with('collector')
+            ->latest('id')
+            ->limit(5)
+            ->get();
+
+        // Recent unpaid/due invoices
+        $unpaidInvoices = [];
+        if (class_exists('App\Models\TenantCustomerInvoice')) {
+            $unpaidInvoices = \App\Models\TenantCustomerInvoice::where('tenant_id', $tenant->id)
+                ->where('customer_id', $customer->id)
+                ->whereIn('status', ['unpaid', 'partially_paid', 'due', 'overdue'])
+                ->orderBy('due_date', 'asc')
+                ->limit(6)
+                ->get();
+        }
+
+        // Live MikroTik Session Check (defensive)
+        $isOnline = false;
+        try {
+            if ($customer->router_id && !empty($customer->username) && class_exists('App\Services\Network\MikrotikApiService')) {
+                // Quick check if customer is marked online
+                $isOnline = $customer->status === 'active' && ($customer->last_online_at && Carbon::parse($customer->last_online_at)->diffInMinutes(now()) < 15);
+            }
+        } catch (\Throwable $e) {}
+
+        return view('tenant.collector.collect', compact(
+            'tenant',
+            'authUser',
+            'customer',
+            'recentPayments',
+            'unpaidInvoices',
+            'isOnline'
+        ));
+    }
+
+    /**
+     * Show Dedicated 58mm / 80mm POS Thermal Receipt Slip.
+     */
+    public function showThermalReceipt(Request $request, $paymentId): View
+    {
+        $tenant = $this->getTenant();
+        $payment = TenantCustomerPayment::where('tenant_id', $tenant->id)
+            ->with(['customer.package', 'customer.coverageZone', 'collector'])
+            ->findOrFail($paymentId);
+
+        return view('tenant.collector.thermal_receipt', compact('tenant', 'payment'));
+    }
 }

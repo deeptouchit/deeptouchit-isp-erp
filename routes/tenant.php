@@ -258,6 +258,8 @@ Route::middleware(['web'])->group(function () {
             Route::get('/dashboard', fn() => redirect()->route('tenant.dashboard'))->name('dashboard');
             Route::get('/due-customers', [TenantCollectorDashboardController::class, 'dueCustomers'])->name('due-customers');
             Route::get('/due-customers/print', [TenantCollectorDashboardController::class, 'printDueSheet'])->name('due-customers.print');
+            Route::get('/collect/{customer}', [TenantCollectorDashboardController::class, 'showCollectPage'])->whereNumber('customer')->name('collect-page');
+            Route::get('/receipt/{payment}', [TenantCollectorDashboardController::class, 'showThermalReceipt'])->whereNumber('payment')->name('receipt');
             Route::get('/handover', [TenantCollectorDashboardController::class, 'handover'])->name('handover');
             Route::post('/handover', [TenantCollectorDashboardController::class, 'submitHandover'])->name('handover.submit');
             Route::post('/handover/store', [TenantCollectorDashboardController::class, 'submitHandover'])->name('handover.store');
@@ -360,6 +362,8 @@ Route::middleware(['web'])->group(function () {
             Route::get('/collector/dashboard', [TenantCollectorDashboardController::class, 'index'])->name('collector.dashboard');
             Route::get('/collector/due-customers', [TenantCollectorDashboardController::class, 'dueCustomers'])->name('collector.due-customers');
             Route::get('/collector/due-customers/print', [TenantCollectorDashboardController::class, 'printDueSheet'])->name('collector.due-customers.print');
+            Route::get('/collector/collect/{customer}', [TenantCollectorDashboardController::class, 'showCollectPage'])->whereNumber('customer')->name('collector.collect-page');
+            Route::get('/collector/receipt/{payment}', [TenantCollectorDashboardController::class, 'showThermalReceipt'])->whereNumber('payment')->name('collector.receipt');
             Route::get('/collector/handover', [TenantCollectorDashboardController::class, 'handover'])->name('collector.handover');
             Route::post('/collector/handover', [TenantCollectorDashboardController::class, 'submitHandover'])->name('collector.handover.submit');
             Route::post('/collector/collect', [TenantCollectorPaymentController::class, 'collectBill'])->name('collector.collect');
