@@ -684,7 +684,12 @@
         <!-- 6. Main Menu: Billing, Collection & Accounts (ERP & Finance) -->
         @if(auth()->user() && (auth()->user()->isOwner() || auth()->user()->isIspAdmin() || auth()->user()->isCollector() || auth()->user()->hasRole('isp_collector', 'collector') || auth()->user()->hasPermission('billing.invoices') || auth()->user()->hasPermission('billing.collect') || auth()->user()->hasPermission('billing.cash_handover') || auth()->user()->hasPermission('billing.wholesale') || auth()->user()->hasPermission('billing.gateways') || auth()->user()->hasPermission('billing.expenses') || auth()->user()->hasPermission('billing.ledger')))
         @php
-            $isFinanceActive = request()->routeIs('tenant.finance*') || request()->routeIs('tenant.collector*') || request()->routeIs('tenant.accounts*') || request()->routeIs('tenant.erp*');
+            $isFinanceActive = request()->routeIs('tenant.finance*') 
+                || request()->routeIs('tenant.collector*') 
+                || request()->routeIs('tenant.accounts*') 
+                || request()->routeIs('tenant.erp*')
+                || request()->is('admin/collector*')
+                || request()->is('admin/finance*');
         @endphp
         <div x-data="{ open: {{ $isFinanceActive ? 'true' : 'false' }} }" 
              x-show="!filterQuery || 'billing collection accounts erp finance invoices bills receipts payments cash handover closing collector hub due wholesale gateway bkash nagad rocket sslcommerz income expense expenses ledger trial balance profit loss statement'.includes(filterQuery.toLowerCase())"
@@ -702,9 +707,16 @@
             <!-- Sub-menu Items -->
             <div x-show="open || filterQuery" x-collapse class="pl-2.5 pr-0.5 space-y-1" style="{{ $isFinanceActive ? '' : 'display: none;' }}">
                 <!-- 1. Collector Hub -->
+                @php
+                    $isCollectorActive = request()->routeIs('tenant.collector.due-customers*') 
+                        || request()->routeIs('tenant.collector.collect*') 
+                        || request()->routeIs('tenant.finance.collector*')
+                        || request()->is('admin/collector/due-customers*')
+                        || request()->is('admin/collector/collect*');
+                @endphp
                 <a href="{{ Route::has('tenant.collector.due-customers') ? route('tenant.collector.due-customers') : route('tenant.dashboard') }}" 
                    x-show="!filterQuery || 'collector hub field collection counter bill payments due expired validity cut'.includes(filterQuery.toLowerCase())"
-                   class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ request()->routeIs('tenant.collector.due-customers') ? 'border-amber-200 bg-amber-50/80 text-amber-700 font-bold border-l-4 border-l-amber-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
+                   class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ $isCollectorActive ? 'border-amber-200 bg-amber-50/80 text-amber-700 font-bold border-l-4 border-l-amber-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
                     Due &amp; Expired List
                 </a>
 
