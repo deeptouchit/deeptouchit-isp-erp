@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Tenant;
 use App\Services\Billing\IspCustomerAutomationService;
 use Illuminate\Console\Command;
 
@@ -13,7 +14,7 @@ class IspSubscriberAutomationCommand extends Command
      * @var string
      */
     protected $signature = 'isp:process-subscribers 
-                            {--mode=auto : Running mode: auto (dynamic from UI settings), midnight, reminder, autocut, billing, or all}
+                            {--mode=auto : Running mode: auto (dynamic from UI settings), midnight, reminder, autocut, billing, audit, or all}
                             {--tenant= : Optional specific Tenant ID}';
 
     /**
@@ -46,10 +47,26 @@ class IspSubscriberAutomationCommand extends Command
             $this->line("⏳ Running Midnight Batch (Invoice Generation & Auto-Cut Expiry Enforcement)...");
             $result = $service->runMidnightBatch($tenantId);
             $this->info("✅ " . $result['summary']);
+
+            if ($mode === 'all') {
+                $this->line("🔍 Running FreeRADIUS AAA Integrity Audit...");
+                $tenants = $tenantId ? Tenant::where('id', $tenantId)->get() : Tenant::all();
+                foreach ($tenants as $t) {
+                    $auditRes = $service->auditFreeRadiusIntegrity($t);
+                    $this->info("✅ [Tenant: {$t->name}] " . $auditRes['summary']);
+                }
+            }
         } elseif ($mode === 'reminder') {
             $this->line("⏳ Running Daytime Reminders Batch (SMS Dispatcher)...");
             $result = $service->runDaytimeReminders($tenantId);
             $this->info("✅ " . $result['summary']);
+        } elseif ($mode === 'audit' || $mode === 'radius-audit') {
+            $this->line("🔍 Running FreeRADIUS AAA Integrity Audit & Self-Healing...");
+            $tenants = $tenantId ? Tenant::where('id', $tenantId)->get() : Tenant::all();
+            foreach ($tenants as $t) {
+                $result = $service->auditFreeRadiusIntegrity($t);
+                $this->info("✅ [Tenant: {$t->name}] " . $result['summary']);
+            }
         }
 
         $this->info("🎉 ISP Subscriber Automation finished successfully.");

@@ -95,6 +95,7 @@ class IspCustomerAutomationService
 
     /**
      * Generate Invoices for a Tenant based on UI Lead Days
+     * Self-healing: captures all upcoming expiring users AND any previously missed cycle subscribers.
      */
     public function generateInvoicesForTenant(Tenant $tenant, TenantAutomationSetting $settings, string $triggeredBy = 'cron'): array
     {
@@ -107,19 +108,35 @@ class IspCustomerAutomationService
         $invoicesGenerated = 0;
         $errors = [];
 
+        // Self-Healing Range Query: Catches all upcoming subscribers due within lead days AND anyone previously missed
         $upcomingSubscribers = TenantCustomer::where('tenant_id', $tenant->id)
-            ->where('status', 'active')
-            ->whereDate('expiry_date', $targetExpiryDate->toDateString())
+            ->whereIn('status', ['active', 'due', 'suspended', 'expired'])
+            ->whereNotNull('expiry_date')
+            ->whereDate('expiry_date', '<=', $targetExpiryDate)
+            ->whereNotExists(function ($sub) use ($tenant) {
+                $sub->select(DB::raw(1))
+                    ->from('tenant_customer_invoices')
+                    ->whereColumn('tenant_customer_invoices.customer_id', 'tenant_customers.id')
+                    ->where('tenant_customer_invoices.tenant_id', $tenant->id)
+                    ->where(function ($q) {
+                        $q->whereRaw("tenant_customer_invoices.billing_month = DATE_FORMAT(tenant_customers.expiry_date, '%Y-%m')")
+                          ->orWhereRaw("DATE(tenant_customer_invoices.due_date) = DATE(tenant_customers.expiry_date)");
+                    });
+            })
+            ->with(['package', 'reseller'])
             ->get();
 
         foreach ($upcomingSubscribers as $customer) {
             try {
-                // Idempotency check: No duplicate invoices for same cycle
+                $cycleMonth = Carbon::parse($customer->expiry_date)->format('Y-m');
+                $customerTargetExpiry = Carbon::parse($customer->expiry_date);
+
+                // Double check idempotency
                 $existingInvoice = TenantCustomerInvoice::where('tenant_id', $tenant->id)
                     ->where('customer_id', $customer->id)
-                    ->where(function ($q) use ($billingMonth, $targetExpiryDate) {
-                        $q->where('billing_month', $billingMonth)
-                          ->orWhereDate('due_date', $targetExpiryDate->toDateString());
+                    ->where(function ($q) use ($cycleMonth, $customerTargetExpiry) {
+                        $q->where('billing_month', $cycleMonth)
+                          ->orWhereDate('due_date', $customerTargetExpiry->toDateString());
                     })
                     ->first();
 
@@ -128,29 +145,45 @@ class IspCustomerAutomationService
                         ? $customer->monthly_bill 
                         : ($customer->package?->price ?? 0));
 
-                    $invoiceNo = TenantCustomerInvoice::generateInvoiceNo($tenant->id, $billingMonth);
+                    if ($monthlyBill <= 0) {
+                        continue;
+                    }
+
+                    $invoiceNo = TenantCustomerInvoice::generateInvoiceNo($tenant->id, $cycleMonth);
 
                     TenantCustomerInvoice::create([
                         'tenant_id' => $tenant->id,
                         'reseller_id' => $customer->reseller_id,
                         'customer_id' => $customer->id,
                         'invoice_no' => $invoiceNo,
-                        'billing_month' => $billingMonth,
+                        'billing_month' => $cycleMonth,
                         'package_id' => $customer->package_id,
-                        'package_name' => $customer->mikrotik_profile_name,
+                        'package_name' => $customer->package_display_name ?: ($customer->package?->name ?? 'Internet Package'),
                         'amount' => $monthlyBill,
                         'discount' => 0.00,
                         'vat_tax' => 0.00,
                         'total_payable' => $monthlyBill,
+                        'total_amount' => $monthlyBill,
                         'paid_amount' => 0.00,
                         'due_amount' => $monthlyBill,
                         'issue_date' => $today->toDateString(),
-                        'due_date' => $targetExpiryDate->toDateString(),
+                        'due_date' => $customerTargetExpiry->toDateString(),
                         'status' => 'unpaid',
                         'auto_generated' => true,
-                        'notes' => "Auto-generated {$leadDays}-day advance subscription bill for cycle {$billingMonth}.",
+                        'notes' => "Auto-generated {$leadDays}-day cycle subscription bill for {$cycleMonth}.",
                         'created_by' => null,
                     ]);
+
+                    // Update customer due amount
+                    $customer->due_amount = (float)($customer->due_amount ?? 0) + $monthlyBill;
+                    $customer->save();
+
+                    // FreeRADIUS AAA Sync
+                    try {
+                        $this->radiusService->syncCustomerSubscriber($customer);
+                    } catch (\Throwable $rErr) {
+                        Log::warning("IspAutomation: FreeRADIUS sync warning for {$customer->username}: " . $rErr->getMessage());
+                    }
 
                     $invoicesGenerated++;
                 }
@@ -182,6 +215,7 @@ class IspCustomerAutomationService
 
     /**
      * Enforce Auto-Cut on Expired Subscribers based on Grace Period & Threshold from UI
+     * Controlled 100% via FreeRADIUS AAA (radcheck Auth-Type := Reject & RADIUS CoA Disconnect on Port 3799)
      */
     public function enforceAutoCutForTenant(Tenant $tenant, TenantAutomationSetting $settings, string $triggeredBy = 'cron'): array
     {
@@ -196,8 +230,10 @@ class IspCustomerAutomationService
         $errors = [];
 
         $expiredSubscribers = TenantCustomer::where('tenant_id', $tenant->id)
-            ->where('status', 'active')
+            ->whereIn('status', ['active', 'due'])
+            ->whereNotNull('expiry_date')
             ->whereDate('expiry_date', '<=', $cutDateThreshold->toDateString())
+            ->where('due_amount', '>', $minThreshold)
             ->get();
 
         foreach ($expiredSubscribers as $customer) {
@@ -207,24 +243,40 @@ class IspCustomerAutomationService
                 $customer->save();
                 $expiredCount++;
 
-                // Disconnect in MikroTik Router
-                if ($customer->router) {
-                    try {
-                        if ($settings->auto_cut_action === 'disable_secret') {
-                            $this->mikrotikService->togglePppSecret($customer->router, $customer->username, true);
-                        }
-                        $this->mikrotikService->terminateActiveSession($customer->router, $customer->username);
-                        $disconnectedCount++;
-                    } catch (\Throwable $mError) {
-                        Log::warning("IspAutomation: MikroTik disconnect warning for {$customer->username}: " . $mError->getMessage());
-                    }
-                }
-
-                // Sync in FreeRADIUS
+                // 1. FreeRADIUS AAA Sync: Reject Authentication (radcheck Auth-Type := Reject)
                 try {
                     $this->radiusService->syncCustomerSubscriber($customer);
                 } catch (\Throwable $rError) {
                     Log::warning("IspAutomation: RADIUS sync warning for {$customer->username}: " . $rError->getMessage());
+                }
+
+                // 2. FreeRADIUS AAA Disconnect: Terminate active live session via CoA Disconnect-Request (UDP Port 3799)
+                try {
+                    $activeSession = DB::table('radacct')
+                        ->where('tenant_id', $tenant->id)
+                        ->where('username', $customer->username)
+                        ->whereNull('acctstoptime')
+                        ->first();
+
+                    if ($activeSession && !empty($activeSession->nasipaddress)) {
+                        $nas = DB::table('nas')
+                            ->where('tenant_id', $tenant->id)
+                            ->where('nasname', $activeSession->nasipaddress)
+                            ->first();
+                        $nasSecret = $nas?->secret ?: ($customer->router?->decrypted_radius_secret ?: 'radiussecret');
+                        $res = $this->radiusService->disconnectUser($customer->username, $activeSession->nasipaddress, $nasSecret, 3799);
+                        if (!empty($res['success'])) {
+                            $disconnectedCount++;
+                        }
+                    } elseif ($customer->router && !empty($customer->router->ip_address)) {
+                        $nasSecret = $customer->router->decrypted_radius_secret ?: 'radiussecret';
+                        $res = $this->radiusService->disconnectUser($customer->username, $customer->router->ip_address, $nasSecret, 3799);
+                        if (!empty($res['success'])) {
+                            $disconnectedCount++;
+                        }
+                    }
+                } catch (\Throwable $coaErr) {
+                    Log::warning("IspAutomation: CoA Disconnect warning for {$customer->username}: " . $coaErr->getMessage());
                 }
 
                 // Optional Cut SMS
@@ -246,9 +298,9 @@ class IspCustomerAutomationService
                     'module' => 'customer',
                     'entity_type' => TenantCustomer::class,
                     'entity_id' => $customer->id,
-                    'description' => "Customer '{$customer->username}' auto-suspended on {$today->toDateString()} via Auto-Cut rules (Grace: {$graceDays}d).",
+                    'description' => "Customer '{$customer->username}' auto-suspended on {$today->toDateString()} via FreeRADIUS Auto-Cut rules (Grace: {$graceDays}d).",
                     'ip_address' => '127.0.0.1',
-                    'user_agent' => 'Auto-Cut Engine',
+                    'user_agent' => 'FreeRADIUS Auto-Cut Engine',
                 ]);
 
             } catch (\Throwable $e) {
@@ -556,6 +608,83 @@ class IspCustomerAutomationService
             'filename' => $backup?->filename,
             'size' => $backup?->formatted_size,
             'summary' => empty($errors) ? "Auto-Backup: Created '{$backup->filename}' ({$backup->formatted_size})." : "Auto-Backup Failed.",
+            'errors' => $errors,
+        ];
+    }
+
+    /**
+     * Audit and self-heal FreeRADIUS AAA consistency for all subscribers
+     */
+    public function auditFreeRadiusIntegrity(Tenant $tenant): array
+    {
+        $startTime = microtime(true);
+        $auditedCount = 0;
+        $repairedCount = 0;
+        $errors = [];
+
+        // 1. Sync all NAS clients (Routers) into `nas` table
+        try {
+            $this->radiusService->syncNasClients($tenant);
+        } catch (\Throwable $nasErr) {
+            $errors[] = "NAS sync error: " . $nasErr->getMessage();
+        }
+
+        // 2. Audit all subscribers
+        $subscribers = TenantCustomer::where('tenant_id', $tenant->id)
+            ->whereNotNull('username')
+            ->where('username', '!=', '')
+            ->with('package')
+            ->get();
+
+        foreach ($subscribers as $customer) {
+            $auditedCount++;
+            try {
+                $username = $customer->username;
+                $effectiveStatus = $customer->effective_status;
+                $shouldBeDisabled = in_array($effectiveStatus, ['disabled', 'suspended', 'expired']);
+
+                $radcheck = DB::table('radcheck')
+                    ->where('tenant_id', $tenant->id)
+                    ->where('username', $username)
+                    ->first();
+
+                $needsRepair = false;
+
+                if (!$radcheck) {
+                    $needsRepair = true;
+                } elseif ($shouldBeDisabled && ($radcheck->attribute !== 'Auth-Type' || $radcheck->value !== 'Reject')) {
+                    $needsRepair = true;
+                } elseif (!$shouldBeDisabled && $radcheck->attribute === 'Auth-Type' && $radcheck->value === 'Reject') {
+                    $needsRepair = true;
+                }
+
+                if ($needsRepair) {
+                    $this->radiusService->syncCustomerSubscriber($customer);
+                    $repairedCount++;
+                }
+            } catch (\Throwable $e) {
+                $errors[] = "Audit error for {$customer->username}: " . $e->getMessage();
+            }
+        }
+
+        $duration = (int) round((microtime(true) - $startTime) * 1000);
+
+        AutomationLog::create([
+            'tenant_id' => $tenant->id,
+            'task_name' => 'FreeRADIUS AAA Audit & Self-Healing',
+            'triggered_by' => 'audit',
+            'status' => empty($errors) ? 'success' : 'warning',
+            'duration_ms' => $duration,
+            'metrics' => ['audited' => $auditedCount, 'repaired' => $repairedCount],
+            'output_summary' => "FreeRADIUS Audit: Audited {$auditedCount} subscribers, repaired {$repairedCount} discrepancies.",
+            'created_at' => now(),
+        ]);
+
+        return [
+            'task' => 'radius_audit',
+            'audited_count' => $auditedCount,
+            'repaired_count' => $repairedCount,
+            'summary' => "FreeRADIUS Audit complete: {$auditedCount} audited, {$repairedCount} discrepancies repaired.",
             'errors' => $errors,
         ];
     }
