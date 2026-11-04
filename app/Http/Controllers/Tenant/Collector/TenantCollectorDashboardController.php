@@ -8,6 +8,8 @@ use App\Models\TenantCoverageZone;
 use App\Models\TenantCustomer;
 use App\Models\TenantCustomerPayment;
 use App\Models\TenantDailyCashHandover;
+use App\Models\TenantInternetPackage;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -124,7 +126,7 @@ class TenantCollectorDashboardController extends Controller
     }
 
     /**
-     * Display Area Due Customers for Collector.
+     * Display Area Due Customers for Collector & Management.
      */
     public function dueCustomers(Request $request): View
     {
@@ -132,14 +134,17 @@ class TenantCollectorDashboardController extends Controller
         $tenant = $this->getTenant();
         $tenantId = $tenant?->id;
         $collectorId = $authUser->id;
+        $isCollector = $authUser->isCollector();
 
+        // 1. Inputs & Filters
         $search = trim($request->input('search', ''));
         $zoneFilter = $request->input('zone_id', 'all');
-        $perPage = (int) $request->input('per_page', 20);
-        if (!in_array($perPage, [10, 20, 50, 100], true)) {
-            $perPage = 20;
-        }
+        $packageFilter = $request->input('package_id', 'all');
+        $dueStatusFilter = $request->input('due_status', 'all_due'); // all_due, expired_only, due_only, high_due
+        $collectorFilter = $request->input('collector_id', 'all');
+        $perPage = $request->input('per_page', 20);
 
+        // 2. Base Query
         $query = TenantCustomer::where('tenant_id', $tenantId)
             ->where(function ($q) {
                 $q->where('due_amount', '>', 0)
@@ -147,44 +152,97 @@ class TenantCollectorDashboardController extends Controller
             })
             ->with(['package', 'zone']);
 
+        // Collector Scoping: If user is collector, filter to assigned customers if any assigned
+        if ($isCollector) {
+            $hasSpecificAssignments = TenantCustomer::where('tenant_id', $tenantId)
+                ->where('assigned_collector_id', $collectorId)
+                ->exists();
+            if ($hasSpecificAssignments) {
+                $query->where('assigned_collector_id', $collectorId);
+            }
+        } elseif ($collectorFilter !== 'all' && !empty($collectorFilter)) {
+            $query->where('assigned_collector_id', $collectorFilter);
+        }
+
+        // Zone filter
         if ($zoneFilter !== 'all' && !empty($zoneFilter)) {
             $query->where('zone_id', $zoneFilter);
         }
 
+        // Package filter
+        if ($packageFilter !== 'all' && !empty($packageFilter)) {
+            $query->where('internet_package_id', $packageFilter);
+        }
+
+        // Due status filter
+        if ($dueStatusFilter === 'expired_only') {
+            $query->where('status', 'expired');
+        } elseif ($dueStatusFilter === 'due_only') {
+            $query->where('status', 'due');
+        } elseif ($dueStatusFilter === 'high_due') {
+            $query->where('due_amount', '>=', 1000);
+        }
+
+        // Search text
         if (!empty($search)) {
             $query->where(function ($q) use ($search) {
                 $q->where('username', 'like', "%{$search}%")
                   ->orWhere('name', 'like', "%{$search}%")
                   ->orWhere('phone', 'like', "%{$search}%")
-                  ->orWhere('customer_id', 'like', "%{$search}%");
+                  ->orWhere('customer_id', 'like', "%{$search}%")
+                  ->orWhere('ip_address', 'like', "%{$search}%")
+                  ->orWhere('address', 'like', "%{$search}%");
             });
         }
 
-        $customers = $query->orderByDesc('due_amount')->paginate($perPage)->withQueryString();
+        // 3. Pagination
+        $query->orderByDesc('due_amount');
+        if ($perPage === 'all') {
+            $count = (clone $query)->count();
+            $customers = $query->paginate($count > 0 ? $count : 20)->withQueryString();
+        } else {
+            $perPageInt = in_array((int)$perPage, [10, 15, 20, 30, 50, 100, 250, 500], true) ? (int)$perPage : 20;
+            $customers = $query->paginate($perPageInt)->withQueryString();
+        }
 
-        $zones = TenantCoverageZone::where('tenant_id', $tenantId)->get();
+        // 4. Auxiliary Lists for Filters
+        $zones = TenantCoverageZone::where('tenant_id', $tenantId)->orderBy('name')->get();
+        $packages = TenantInternetPackage::where('tenant_id', $tenantId)->orderBy('price')->get();
+        $collectors = User::where('tenant_id', $tenantId)->whereIn('role', ['isp_collector', 'collector', 'reseller_collector'])->orderBy('name')->get();
 
+        // 5. High-Performance KPI Strip
         $baseCustomers = TenantCustomer::where('tenant_id', $tenantId);
+        if ($isCollector && isset($hasSpecificAssignments) && $hasSpecificAssignments) {
+            $baseCustomers->where('assigned_collector_id', $collectorId);
+        }
+
         $totalDueCustomers = (clone $baseCustomers)->where(function ($q) {
             $q->where('due_amount', '>', 0)->orWhereIn('status', ['due', 'expired']);
         })->count();
         $totalDueAmount = (float) (clone $baseCustomers)->sum('due_amount');
 
-        $todayCollected = (float) TenantCustomerPayment::where('tenant_id', $tenantId)
-            ->where('collected_by', $collectorId)
-            ->whereDate('created_at', today())
-            ->sum('amount');
+        // Today collected
+        $todayPaymentQuery = TenantCustomerPayment::where('tenant_id', $tenantId)
+            ->whereDate('created_at', today());
+        if ($isCollector) {
+            $todayPaymentQuery->where('collected_by', $collectorId);
+        }
+        $todayCollected = (float) $todayPaymentQuery->sum('amount');
 
-        $totalCashCollected = (float) TenantCustomerPayment::where('tenant_id', $tenantId)
-            ->where('collected_by', $collectorId)
-            ->where('payment_method', 'cash')
-            ->sum('amount');
+        // Cash In Hand Calculation (un-handed cash)
+        $cashPaymentQuery = TenantCustomerPayment::where('tenant_id', $tenantId)
+            ->where('payment_method', 'cash');
+        if ($isCollector) {
+            $cashPaymentQuery->where('collected_by', $collectorId);
+        }
+        $totalCashCollected = (float) $cashPaymentQuery->sum('amount');
 
-        $totalApprovedHandovers = (float) TenantDailyCashHandover::where('tenant_id', $tenantId)
-            ->where('collector_id', $collectorId)
-            ->whereIn('status', ['approved', 'verified'])
-            ->sum('handed_over_amount');
-
+        $handoverQuery = TenantDailyCashHandover::where('tenant_id', $tenantId)
+            ->whereIn('status', ['approved', 'verified']);
+        if ($isCollector) {
+            $handoverQuery->where('collector_id', $collectorId);
+        }
+        $totalApprovedHandovers = (float) $handoverQuery->sum('handed_over_amount');
         $cashInHand = max(0, $totalCashCollected - $totalApprovedHandovers);
 
         $expiredCustomers = (clone $baseCustomers)->where('status', 'expired')->count();
@@ -206,11 +264,96 @@ class TenantCollectorDashboardController extends Controller
             'authUser',
             'customers',
             'zones',
+            'packages',
+            'collectors',
             'stats',
             'search',
             'zoneFilter',
+            'packageFilter',
+            'dueStatusFilter',
+            'collectorFilter',
             'perPage',
-            'currencySymbol'
+            'currencySymbol',
+            'isCollector'
+        ));
+    }
+
+    /**
+     * Print Printable Field Due Sheet for Collector.
+     */
+    public function printDueSheet(Request $request): View
+    {
+        $authUser = Auth::user();
+        $tenant = $this->getTenant();
+        $tenantId = $tenant?->id;
+        $collectorId = $authUser->id;
+        $isCollector = $authUser->isCollector();
+
+        $search = trim($request->input('search', ''));
+        $zoneFilter = $request->input('zone_id', 'all');
+        $packageFilter = $request->input('package_id', 'all');
+        $dueStatusFilter = $request->input('due_status', 'all_due');
+        $collectorFilter = $request->input('collector_id', 'all');
+
+        $query = TenantCustomer::where('tenant_id', $tenantId)
+            ->where(function ($q) {
+                $q->where('due_amount', '>', 0)
+                  ->orWhereIn('status', ['due', 'expired']);
+            })
+            ->with(['package', 'zone']);
+
+        if ($isCollector) {
+            $hasSpecificAssignments = TenantCustomer::where('tenant_id', $tenantId)
+                ->where('assigned_collector_id', $collectorId)
+                ->exists();
+            if ($hasSpecificAssignments) {
+                $query->where('assigned_collector_id', $collectorId);
+            }
+        } elseif ($collectorFilter !== 'all' && !empty($collectorFilter)) {
+            $query->where('assigned_collector_id', $collectorFilter);
+        }
+
+        if ($zoneFilter !== 'all' && !empty($zoneFilter)) {
+            $query->where('zone_id', $zoneFilter);
+        }
+
+        if ($packageFilter !== 'all' && !empty($packageFilter)) {
+            $query->where('internet_package_id', $packageFilter);
+        }
+
+        if ($dueStatusFilter === 'expired_only') {
+            $query->where('status', 'expired');
+        } elseif ($dueStatusFilter === 'due_only') {
+            $query->where('status', 'due');
+        } elseif ($dueStatusFilter === 'high_due') {
+            $query->where('due_amount', '>=', 1000);
+        }
+
+        if (!empty($search)) {
+            $query->where(function ($q) use ($search) {
+                $q->where('username', 'like', "%{$search}%")
+                  ->orWhere('name', 'like', "%{$search}%")
+                  ->orWhere('phone', 'like', "%{$search}%")
+                  ->orWhere('customer_id', 'like', "%{$search}%")
+                  ->orWhere('address', 'like', "%{$search}%");
+            });
+        }
+
+        $customers = $query->orderByDesc('due_amount')->get();
+        $totalDue = $customers->sum('due_amount');
+
+        $activeZone = $zoneFilter !== 'all' ? TenantCoverageZone::find($zoneFilter) : null;
+        $activeCollector = ($collectorFilter !== 'all' && !empty($collectorFilter)) ? User::find($collectorFilter) : ($isCollector ? $authUser : null);
+
+        return view('tenant.collector.due_customers_print', compact(
+            'tenant',
+            'authUser',
+            'customers',
+            'totalDue',
+            'activeZone',
+            'activeCollector',
+            'search',
+            'dueStatusFilter'
         ));
     }
 

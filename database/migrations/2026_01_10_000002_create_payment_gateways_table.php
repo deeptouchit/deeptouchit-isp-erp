@@ -129,3 +129,4 @@ return new class extends Migration
         Schema::dropIfExists('payment_gateways');
     }
 };
+

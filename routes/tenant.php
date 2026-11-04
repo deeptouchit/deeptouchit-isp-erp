@@ -358,9 +358,11 @@ Route::middleware(['web'])->group(function () {
             // 3b. Collector Portal & Hub
             Route::get('/collector/dashboard', [TenantCollectorDashboardController::class, 'index'])->name('collector.dashboard');
             Route::get('/collector/due-customers', [TenantCollectorDashboardController::class, 'dueCustomers'])->name('collector.due-customers');
+            Route::get('/collector/due-customers/print', [TenantCollectorDashboardController::class, 'printDueSheet'])->name('collector.due-customers.print');
             Route::get('/collector/handover', [TenantCollectorDashboardController::class, 'handover'])->name('collector.handover');
             Route::post('/collector/handover', [TenantCollectorDashboardController::class, 'submitHandover'])->name('collector.handover.submit');
             Route::post('/collector/collect', [TenantCollectorPaymentController::class, 'collectBill'])->name('collector.collect');
+            Route::post('/collector/collect-bill', [TenantCollectorPaymentController::class, 'collectBill'])->name('collector.collect-bill');
 
             // 4. Reseller Wholesale Billing
             Route::get('/wholesale-billing', [TenantWholesaleBillingController::class, 'index'])->name('wholesale-billing');
