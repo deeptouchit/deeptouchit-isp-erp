@@ -320,11 +320,41 @@ class ResellerCustomerController extends Controller
                 'billing_cycle_date' => $validated['billing_cycle_date'] ?? now()->toDateString(),
                 'expiry_date' => $validated['expiry_date'] ?? now()->addMonth()->toDateString(),
                 'status' => $validated['status'],
-                'due_amount' => 0.00,
+                'due_amount' => $monthlyBill > 0 ? $monthlyBill : 0.00,
                 'wallet_balance' => 0.00,
                 'remarks' => $validated['remarks'] ?? null,
             ]);
         });
+
+        // Automated Opening Subscription Invoice Generation
+        if ($monthlyBill > 0) {
+            $billingMonth = Carbon::now()->format('Y-m');
+            $invoiceNo = TenantCustomerInvoice::generateInvoiceNo($tenantId, $billingMonth);
+            $dueDate = !empty($validated['expiry_date']) ? Carbon::parse($validated['expiry_date'])->toDateString() : Carbon::today()->addDays(3)->toDateString();
+
+            TenantCustomerInvoice::create([
+                'tenant_id' => $tenantId,
+                'reseller_id' => $customer->reseller_id,
+                'customer_id' => $customer->id,
+                'invoice_no' => $invoiceNo,
+                'billing_month' => $billingMonth,
+                'package_id' => $customer->package_id,
+                'package_name' => $customer->package_display_name ?: ($package?->name ?? 'Internet Package'),
+                'amount' => $monthlyBill,
+                'discount' => 0.00,
+                'vat_tax' => 0.00,
+                'total_payable' => $monthlyBill,
+                'total_amount' => $monthlyBill,
+                'paid_amount' => 0.00,
+                'due_amount' => $monthlyBill,
+                'issue_date' => Carbon::today()->toDateString(),
+                'due_date' => $dueDate,
+                'status' => 'unpaid',
+                'auto_generated' => true,
+                'notes' => 'Opening Internet Package Subscription Invoice',
+                'created_by' => Auth::id() ?: null,
+            ]);
+        }
 
         // Sync to MikroTik Router & FreeRADIUS
         $mikrotikMsg = '';
