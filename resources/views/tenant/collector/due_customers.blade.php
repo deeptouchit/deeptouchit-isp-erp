@@ -397,13 +397,6 @@
                 </tbody>
             </table>
         </div>
-                                <p class="text-[11px] text-slate-400 mt-0.5">All assigned subscribers in this area have zero outstanding dues.</p>
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
 
         {{-- Pagination --}}
         @if($customers->hasPages())
