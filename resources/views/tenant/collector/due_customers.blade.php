@@ -29,7 +29,7 @@
         
         <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap">
             {{-- Print Field Due Sheet Button --}}
-            <a href="{{ route('tenant.collector.due-customers.print', request()->query()) }}" 
+            <a href="{{ Route::has('tenant.collector.due-customers.print') ? route('tenant.collector.due-customers.print', request()->query()) : url('/admin/collector/due-customers/print?' . http_build_query(request()->query())) }}" 
                target="_blank"
                class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200/80 transition inline-flex items-center gap-1.5 shadow-2xs cursor-pointer"
                title="{{ __('Print Offline Field Collection Sheet') }}">

@@ -257,6 +257,7 @@ Route::middleware(['web'])->group(function () {
         Route::prefix('admin/collector')->name('tenant.collector.')->group(function () {
             Route::get('/dashboard', fn() => redirect()->route('tenant.dashboard'))->name('dashboard');
             Route::get('/due-customers', [TenantCollectorDashboardController::class, 'dueCustomers'])->name('due-customers');
+            Route::get('/due-customers/print', [TenantCollectorDashboardController::class, 'printDueSheet'])->name('due-customers.print');
             Route::get('/handover', [TenantCollectorDashboardController::class, 'handover'])->name('handover');
             Route::post('/handover', [TenantCollectorDashboardController::class, 'submitHandover'])->name('handover.submit');
             Route::post('/handover/store', [TenantCollectorDashboardController::class, 'submitHandover'])->name('handover.store');
