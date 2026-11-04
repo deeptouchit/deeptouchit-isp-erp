@@ -743,11 +743,11 @@
                 </a>
                 @endif
 
-                <!-- 4. Collections Report -->
-                <a href="{{ Route::has('tenant.finance.payments') ? route('tenant.finance.payments') : '#' }}" 
-                   x-show="!filterQuery || 'collection report collections receipts instant money receipt sms notification pos collection bill receive'.includes(filterQuery.toLowerCase())"
-                   class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ request()->routeIs('tenant.finance.payments*') ? 'border-amber-200 bg-amber-50/80 text-amber-700 font-bold border-l-4 border-l-amber-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
-                    Collection Report
+                <!-- 4. Collector Collections (কালেক্টর আদায় সারাংশ) -->
+                <a href="{{ Route::has('tenant.finance.collector-collections') ? route('tenant.finance.collector-collections') : '#' }}" 
+                   x-show="!filterQuery || 'collector collections report receipts payments money summary আদায় কালেক্টর পার্টনার'.includes(filterQuery.toLowerCase())"
+                   class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ request()->routeIs('tenant.finance.collector-collections*') ? 'border-amber-200 bg-amber-50/80 text-amber-700 font-bold border-l-4 border-l-amber-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
+                    Collector Collections
                 </a>
 
                 <!-- 5. Cash Handover -->

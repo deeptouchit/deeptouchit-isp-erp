@@ -31,6 +31,7 @@ use App\Http\Controllers\Tenant\Customer\TenantCustomerPaymentController;
 use App\Http\Controllers\Tenant\Customer\TenantCoverageZoneController;
 use App\Http\Controllers\Tenant\Finance\TenantCustomerInvoiceController;
 use App\Http\Controllers\Tenant\Finance\TenantCustomerPaymentReceiptController;
+use App\Http\Controllers\Tenant\Finance\TenantCollectorCollectionReportController;
 use App\Http\Controllers\Tenant\Finance\TenantCashHandoverController;
 use App\Http\Controllers\Tenant\Finance\TenantWholesaleBillingController;
 use App\Http\Controllers\Tenant\Finance\TenantGatewayTransactionController;
@@ -350,6 +351,11 @@ Route::middleware(['web'])->group(function () {
             Route::post('/payments/{id}/void', [TenantCustomerPaymentReceiptController::class, 'voidPayment'])->whereNumber('id')->name('payments.void');
             Route::post('/payments/{id}/approve', [TenantCustomerPaymentReceiptController::class, 'approvePayment'])->whereNumber('id')->name('payments.approve');
             Route::post('/payments/{id}/reject', [TenantCustomerPaymentReceiptController::class, 'rejectPayment'])->whereNumber('id')->name('payments.reject');
+
+            // 2b. Collector Collections Summary & Receipts Audit
+            Route::get('/collector-collections', [TenantCollectorCollectionReportController::class, 'index'])->name('collector-collections');
+            Route::get('/collector-collections/details', [TenantCollectorCollectionReportController::class, 'getDetails'])->name('collector-collections.details');
+            Route::get('/collector-collections/export', [TenantCollectorCollectionReportController::class, 'exportCsv'])->name('collector-collections.export');
 
             // 3. Daily Cash Handover & Closing
             Route::get('/cash-handover', [TenantCashHandoverController::class, 'index'])->name('cash-handover');
