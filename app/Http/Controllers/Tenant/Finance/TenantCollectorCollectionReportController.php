@@ -159,7 +159,6 @@ class TenantCollectorCollectionReportController extends Controller
 
         // 5. Load Dropdown Options
         $resellers = TenantReseller::where('tenant_id', $tenant->id)
-            ->where('is_active', true)
             ->orderBy('name')
             ->get(['id', 'name', 'code']);
 
@@ -429,3 +428,4 @@ class TenantCollectorCollectionReportController extends Controller
         return [$startDate, $endDate, $label];
     }
 }
+
