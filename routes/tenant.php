@@ -354,8 +354,8 @@ Route::middleware(['web'])->group(function () {
 
             // 2b. Collector Collections Summary & Receipts Audit
             Route::get('/collector-collections', [TenantCollectorCollectionReportController::class, 'index'])->name('collector-collections');
-            Route::get('/collector-collections/details', [TenantCollectorCollectionReportController::class, 'getDetails'])->name('collector-collections.details');
             Route::get('/collector-collections/export', [TenantCollectorCollectionReportController::class, 'exportCsv'])->name('collector-collections.export');
+            Route::get('/collector-collections/{collector}', [TenantCollectorCollectionReportController::class, 'showDetails'])->name('collector-collections.show');
 
             // 3. Daily Cash Handover & Closing
             Route::get('/cash-handover', [TenantCashHandoverController::class, 'index'])->name('cash-handover');

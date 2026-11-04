@@ -409,15 +409,14 @@
                                 @currency($row->total_amount)
                             </td>
 
-                            {{-- 7. Action: View Details / তালিকা দেখুন --}}
+                            {{-- 7. Action: View Details Full Page / তালিকা দেখুন --}}
                             <td class="text-center whitespace-nowrap">
-                                <button type="button" 
-                                        @click="openDetailsModal({{ $row->collector_id }}, {{ $row->reseller_id ?: 0 }})"
-                                        class="h-[28px] px-2.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-xs font-semibold shadow-xs transition inline-flex items-center justify-center gap-1.5 cursor-pointer"
-                                        title="View All Itemized Receipts for this Collector">
+                                <a href="{{ route('tenant.finance.collector-collections.show', array_merge(['collector' => $row->collector_id], request()->query(), ['reseller_id' => $row->reseller_id ?: 0])) }}" 
+                                   class="h-[28px] px-2.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-xs font-semibold shadow-xs transition inline-flex items-center justify-center gap-1.5 cursor-pointer"
+                                   title="View Itemized Receipts List for this Collector">
                                     <i class="fas fa-list-check text-[10px]"></i>
                                     <span>তালিকা দেখুন</span>
-                                </button>
+                                </a>
                             </td>
                         </tr>
                     @empty
@@ -441,121 +440,6 @@
         @endif
     </div>
 
-    {{-- 5. NATURAL SMART MODAL: Itemized Payment Receipts List (AGENTS.md Rule 3) --}}
-    <div x-show="showReceiptsModal" 
-         x-cloak 
-         class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4"
-         x-transition:enter="transition ease-out duration-200"
-         x-transition:enter-start="opacity-0"
-         x-transition:enter-end="opacity-100"
-         x-transition:leave="transition ease-in duration-150"
-         x-transition:leave-start="opacity-100"
-         x-transition:leave-end="opacity-0">
-
-        <div class="bg-white rounded-xl border border-slate-200/90 shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]"
-             @click.away="showReceiptsModal = false">
-            
-            {{-- Modal Header --}}
-            <div class="bg-slate-50/80 border-b border-slate-200 px-4 py-3 flex items-center justify-between flex-shrink-0">
-                <div class="flex items-center gap-2.5">
-                    <div class="w-7 h-7 rounded-lg bg-cyan-50 text-cyan-600 border border-cyan-100 flex items-center justify-center text-xs flex-shrink-0">
-                        <i class="fas fa-file-invoice-dollar"></i>
-                    </div>
-                    <div>
-                        <h3 class="text-xs font-semibold text-slate-800 flex items-center gap-2">
-                            <span>কালেক্টর আদায় বিস্তারিত তালিকা</span>
-                            <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-cyan-100 text-cyan-800" x-text="modalData.period_label"></span>
-                        </h3>
-                        <p class="text-[10.5px] text-slate-500 font-normal">
-                            কালেক্টর: <b class="text-slate-800" x-text="modalData.collector_name"></b> | পাটনার: <b class="text-slate-800" x-text="modalData.partner_name"></b>
-                        </p>
-                    </div>
-                </div>
-                <button type="button" 
-                        @click="showReceiptsModal = false" 
-                        class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center cursor-pointer">
-                    <i class="fas fa-times text-xs"></i>
-                </button>
-            </div>
-
-            {{-- Modal Body (Scrollable Table) --}}
-            <div class="p-3 overflow-y-auto flex-1">
-                {{-- Loading State --}}
-                <div x-show="isLoadingModal" class="py-12 text-center text-slate-500">
-                    <i class="fas fa-spinner fa-spin text-2xl text-cyan-600 mb-2"></i>
-                    <p class="text-xs">Loading itemized collection receipts...</p>
-                </div>
-
-                {{-- Table View --}}
-                <div x-show="!isLoadingModal">
-                    <div class="border border-slate-200 rounded-lg overflow-hidden">
-                        <table class="saas-table">
-                            <thead>
-                                <tr>
-                                    <th class="w-10 text-center no-sort">#</th>
-                                    <th class="text-left font-semibold">রিসিট নং (Receipt No)</th>
-                                    <th class="text-left font-semibold">গ্রাহকের আইডি ও নাম</th>
-                                    <th class="text-left font-semibold">মোবাইল</th>
-                                    <th class="text-left font-semibold">প্যাকেজ</th>
-                                    <th class="text-right font-semibold">টাকা (Amount)</th>
-                                    <th class="text-center font-semibold">মেথড</th>
-                                    <th class="text-left font-semibold">তারিখ ও সময়</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <template x-for="(item, index) in modalData.payments" :key="item.id">
-                                    <tr class="hover:bg-slate-50/70">
-                                        <td class="text-center font-mono text-xs text-slate-500" x-text="index + 1"></td>
-                                        <td class="whitespace-nowrap font-mono font-bold text-cyan-700 text-xs">
-                                            <a :href="item.receipt_url" target="_blank" class="hover:underline flex items-center gap-1" title="View Full Receipt Voucher">
-                                                <i class="fas fa-receipt text-[10px]"></i>
-                                                <span x-text="item.invoice_no"></span>
-                                            </a>
-                                        </td>
-                                        <td class="whitespace-nowrap text-xs">
-                                            <span class="font-semibold text-slate-900" x-text="item.customer_name"></span>
-                                            <span class="text-[10px] text-slate-400 font-mono block leading-none mt-0.5" x-text="item.customer_username"></span>
-                                        </td>
-                                        <td class="whitespace-nowrap font-mono text-xs text-slate-600" x-text="item.customer_phone"></td>
-                                        <td class="whitespace-nowrap text-xs text-slate-700 font-medium" x-text="item.package_name"></td>
-                                        <td class="text-right whitespace-nowrap font-mono font-bold text-xs text-emerald-600">
-                                            ৳<span x-text="item.amount.toLocaleString()"></span>
-                                        </td>
-                                        <td class="text-center whitespace-nowrap font-mono text-[10px]">
-                                            <span class="px-1.5 py-0.5 rounded font-bold" 
-                                                  :class="item.payment_method === 'CASH' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'"
-                                                  x-text="item.payment_method"></span>
-                                        </td>
-                                        <td class="whitespace-nowrap font-mono text-[11px] text-slate-500" x-text="item.paid_at"></td>
-                                    </tr>
-                                </template>
-                                <tr x-show="modalData.payments.length === 0">
-                                    <td colspan="8" class="text-center py-6 text-slate-400 text-xs">
-                                        No itemized receipts found for this selection.
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            {{-- Modal Footer --}}
-            <div class="px-4 py-2.5 bg-slate-50/80 border-t border-slate-200 flex items-center justify-between flex-shrink-0">
-                <div class="flex items-center gap-3 text-xs">
-                    <span class="text-slate-600">মোট রিসিট: <b class="font-mono text-slate-900" x-text="modalData.total_count"></b> টি</span>
-                    <span class="text-slate-400">|</span>
-                    <span class="text-slate-600">সর্বমোট আদায়: <b class="font-mono text-emerald-600 font-bold">৳<span x-text="modalData.total_amount.toLocaleString()"></span></b></span>
-                </div>
-                <button type="button" 
-                        @click="showReceiptsModal = false" 
-                        class="border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs px-3.5 py-1.5 rounded-lg transition cursor-pointer">
-                    Close
-                </button>
-            </div>
-        </div>
-    </div>
-
 </div>
 @endsection
 
@@ -569,18 +453,6 @@ function collectorCollectionsManager() {
         searchDebounceTimer: null,
         totalMatchingRows: null,
         isSearching: false,
-        
-        // Modal state
-        showReceiptsModal: false,
-        isLoadingModal: false,
-        modalData: {
-            collector_name: '',
-            partner_name: '',
-            period_label: '',
-            total_count: 0,
-            total_amount: 0,
-            payments: []
-        },
 
         handleLiveSearch(query) {
             this.searchQuery = query;
@@ -634,36 +506,9 @@ function collectorCollectionsManager() {
                 const form = document.getElementById('collectorFilterForm');
                 if (form) form.submit();
             });
-        },
-
-        async openDetailsModal(collectorId, resellerId) {
-            this.showReceiptsModal = true;
-            this.isLoadingModal = true;
-
-            try {
-                const params = new URLSearchParams({
-                    collector_id: collectorId,
-                    reseller_id: resellerId,
-                    period: this.periodType,
-                    month: '{{ $selectedMonth }}',
-                    year: '{{ $selectedYear }}',
-                    date_from: '{{ $dateFrom }}',
-                    date_to: '{{ $dateTo }}'
-                });
-
-                const response = await fetch(`{{ route('tenant.finance.collector-collections.details') }}?${params.toString()}`);
-                const data = await response.json();
-
-                if (data.success) {
-                    this.modalData = data;
-                }
-            } catch (err) {
-                console.error('Failed to load itemized receipts:', err);
-            } finally {
-                this.isLoadingModal = false;
-            }
         }
     };
 }
 </script>
 @endpush
+

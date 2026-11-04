@@ -198,8 +198,133 @@ class TenantCollectorCollectionReportController extends Controller
     }
 
     /**
+     * Display Itemized Collection Receipts Full Page for a Specific Collector & Partner
+     * (কালেক্টর আদায় বিস্তারিত তালিকা - Dedicated Full Page View)
+     */
+    public function showDetails(Request $request, $collectorId): View
+    {
+        $tenant = $this->getTenant();
+        $resellerId = $request->get('reseller_id', '0');
+        $period = $request->get('period', 'monthly');
+        $selectedMonth = $request->get('month', Carbon::now()->format('Y-m'));
+        $selectedYear = $request->get('year', Carbon::now()->format('Y'));
+        $dateFrom = $request->get('date_from', '');
+        $dateTo = $request->get('date_to', '');
+        $paymentMethod = $request->get('payment_method', 'all');
+        $search = trim($request->get('search', ''));
+        $perPage = (int) $request->get('per_page', 20);
+        if (!in_array($perPage, [10, 15, 20, 30, 50, 100, 250, 500])) {
+            $perPage = 20;
+        }
+
+        // 1. Resolve Date Range
+        [$startDate, $endDate, $periodLabel] = $this->resolveDateWindow($period, $selectedMonth, $selectedYear, $dateFrom, $dateTo);
+
+        // 2. Resolve Collector & Partner Identity
+        $collector = null;
+        $collectorName = 'Direct / System';
+        $collectorPhone = '';
+        $collectorRole = 'System';
+        if ($collectorId !== '0' && $collectorId !== 'direct' && !empty($collectorId)) {
+            $collector = User::where('tenant_id', $tenant->id)->find($collectorId);
+            if ($collector) {
+                $collectorName = $collector->name;
+                $collectorPhone = $collector->phone ?? '';
+                $collectorRole = ucwords(str_replace('_', ' ', $collector->role ?? 'Collector'));
+            }
+        }
+
+        $partner = null;
+        $partnerName = 'Direct HQ';
+        if ($resellerId !== '0' && $resellerId !== 'direct' && !empty($resellerId)) {
+            $partner = TenantReseller::where('tenant_id', $tenant->id)->find($resellerId);
+            if ($partner) {
+                $partnerName = $partner->name . ($partner->code ? " ({$partner->code})" : '');
+            }
+        }
+
+        // 3. Base Payments Query for this Collector & Scope
+        $baseQuery = TenantCustomerPayment::where('tenant_id', $tenant->id)
+            ->where('status', '!=', 'void');
+
+        if ($collectorId === '0' || $collectorId === 'direct') {
+            $baseQuery->whereNull('collected_by');
+        } else {
+            $baseQuery->where('collected_by', (int) $collectorId);
+        }
+
+        if ($resellerId === '0' || $resellerId === 'direct') {
+            $baseQuery->whereNull('reseller_id');
+        } elseif (!empty($resellerId) && $resellerId !== 'all') {
+            $baseQuery->where('reseller_id', (int) $resellerId);
+        }
+
+        if ($startDate && $endDate) {
+            $baseQuery->whereBetween('paid_at', [$startDate, $endDate]);
+        }
+
+        // KPI metrics for this collector's session
+        $totalAmount = (float) (clone $baseQuery)->sum('amount');
+        $totalCount = (int) (clone $baseQuery)->count();
+        $cashAmount = (float) (clone $baseQuery)->where('payment_method', 'cash')->sum('amount');
+        $digitalAmount = (float) (clone $baseQuery)->where('payment_method', '!=', 'cash')->sum('amount');
+        $uniqueCustomersCount = (int) (clone $baseQuery)->distinct('customer_id')->count('customer_id');
+        $avgAmount = $totalCount > 0 ? round($totalAmount / $totalCount, 2) : 0;
+
+        // 4. Filtered Paginated Query
+        $paymentsQuery = (clone $baseQuery)
+            ->with(['customer:id,customer_id,username,name,phone,package_id', 'customer.package:id,name,price']);
+
+        if ($paymentMethod !== 'all' && !empty($paymentMethod)) {
+            $paymentsQuery->where('payment_method', $paymentMethod);
+        }
+
+        if (!empty($search)) {
+            $paymentsQuery->where(function ($q) use ($search) {
+                $q->where('invoice_no', 'like', "%{$search}%")
+                  ->orWhereHas('customer', function ($cq) use ($search) {
+                      $cq->where('name', 'like', "%{$search}%")
+                         ->orWhere('username', 'like', "%{$search}%")
+                         ->orWhere('customer_id', 'like', "%{$search}%")
+                         ->orWhere('phone', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        $payments = $paymentsQuery->orderByDesc('paid_at')->paginate($perPage)->withQueryString();
+
+        return view('tenant.finance.collector_collection_details', compact(
+            'tenant',
+            'collectorId',
+            'collector',
+            'collectorName',
+            'collectorPhone',
+            'collectorRole',
+            'resellerId',
+            'partner',
+            'partnerName',
+            'period',
+            'periodLabel',
+            'selectedMonth',
+            'selectedYear',
+            'dateFrom',
+            'dateTo',
+            'paymentMethod',
+            'search',
+            'perPage',
+            'totalAmount',
+            'totalCount',
+            'cashAmount',
+            'digitalAmount',
+            'uniqueCustomersCount',
+            'avgAmount',
+            'payments'
+        ));
+    }
+
+    /**
      * Get Itemized Payment Receipts List for a Specific Collector & Partner Row
-     * Used for Modal Drill-down (একশন -> ওই সব তালিকা)
+     * Used for API / Quick Fetch
      */
     public function getDetails(Request $request): JsonResponse
     {
