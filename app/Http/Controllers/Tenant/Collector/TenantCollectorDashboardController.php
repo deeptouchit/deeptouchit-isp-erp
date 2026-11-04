@@ -10,6 +10,7 @@ use App\Models\TenantCustomerPayment;
 use App\Models\TenantDailyCashHandover;
 use App\Models\TenantInternetPackage;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -144,12 +145,28 @@ class TenantCollectorDashboardController extends Controller
         $collectorFilter = $request->input('collector_id', 'all');
         $perPage = $request->input('per_page', 20);
 
-        // 2. Base Query
+        // Core Closures: Standard definition of Expired and Due
+        $isExpiredClosure = function ($q) {
+            $q->whereIn('status', ['expired', 'suspended'])
+              ->orWhere(function ($sub) {
+                  $sub->whereNotNull('expiry_date')
+                      ->whereDate('expiry_date', '<=', Carbon::today());
+              });
+        };
+
+        $isDueClosure = function ($q) {
+            $q->where('due_amount', '>', 0)
+              ->orWhere('status', 'due');
+        };
+
+        $isDueOrExpiredClosure = function ($q) use ($isDueClosure, $isExpiredClosure) {
+            $q->where($isDueClosure)
+              ->orWhere($isExpiredClosure);
+        };
+
+        // 2. Base Query: Include both Outstanding Due AND Expired lines
         $query = TenantCustomer::where('tenant_id', $tenantId)
-            ->where(function ($q) {
-                $q->where('due_amount', '>', 0)
-                  ->orWhereIn('status', ['due', 'expired']);
-            })
+            ->where($isDueOrExpiredClosure)
             ->with(['package', 'zone']);
 
         // Collector Scoping: If user is collector, filter to assigned customers if any assigned
@@ -174,11 +191,17 @@ class TenantCollectorDashboardController extends Controller
             $query->where('internet_package_id', $packageFilter);
         }
 
-        // Due status filter
+        // Due / Expired status filter
         if ($dueStatusFilter === 'expired_only') {
-            $query->where('status', 'expired');
+            $query->where($isExpiredClosure);
         } elseif ($dueStatusFilter === 'due_only') {
-            $query->where('status', 'due');
+            $query->where($isDueClosure)->where(function ($q) {
+                $q->whereNotIn('status', ['expired', 'suspended'])
+                  ->where(function ($sub) {
+                      $sub->whereNull('expiry_date')
+                          ->orWhereDate('expiry_date', '>', Carbon::today());
+                  });
+            });
         } elseif ($dueStatusFilter === 'high_due') {
             $query->where('due_amount', '>=', 1000);
         }
@@ -195,8 +218,8 @@ class TenantCollectorDashboardController extends Controller
             });
         }
 
-        // 3. Pagination
-        $query->orderByDesc('due_amount');
+        // 3. Smart Sorting: Positive Dues first, then Expired with 0 dues
+        $query->orderByRaw("CASE WHEN due_amount > 0 THEN 0 ELSE 1 END, due_amount DESC, expiry_date ASC");
         if ($perPage === 'all') {
             $count = (clone $query)->count();
             $customers = $query->paginate($count > 0 ? $count : 20)->withQueryString();
@@ -216,9 +239,7 @@ class TenantCollectorDashboardController extends Controller
             $baseCustomers->where('assigned_collector_id', $collectorId);
         }
 
-        $totalDueCustomers = (clone $baseCustomers)->where(function ($q) {
-            $q->where('due_amount', '>', 0)->orWhereIn('status', ['due', 'expired']);
-        })->count();
+        $totalDueCustomers = (clone $baseCustomers)->where($isDueOrExpiredClosure)->count();
         $totalDueAmount = (float) (clone $baseCustomers)->sum('due_amount');
 
         // Today collected
@@ -245,8 +266,14 @@ class TenantCollectorDashboardController extends Controller
         $totalApprovedHandovers = (float) $handoverQuery->sum('handed_over_amount');
         $cashInHand = max(0, $totalCashCollected - $totalApprovedHandovers);
 
-        $expiredCustomers = (clone $baseCustomers)->where('status', 'expired')->count();
-        $activeSubscribers = (clone $baseCustomers)->where('status', 'active')->count();
+        $expiredCustomers = (clone $baseCustomers)->where($isExpiredClosure)->count();
+        $activeSubscribers = (clone $baseCustomers)->where($isDueClosure)->where(function ($q) {
+            $q->whereNotIn('status', ['expired', 'suspended'])
+              ->where(function ($sub) {
+                  $sub->whereNull('expiry_date')
+                      ->orWhereDate('expiry_date', '>', Carbon::today());
+              });
+        })->count();
 
         $stats = [
             'total_due_customers' => $totalDueCustomers,
@@ -295,11 +322,26 @@ class TenantCollectorDashboardController extends Controller
         $dueStatusFilter = $request->input('due_status', 'all_due');
         $collectorFilter = $request->input('collector_id', 'all');
 
+        $isExpiredClosure = function ($q) {
+            $q->whereIn('status', ['expired', 'suspended'])
+              ->orWhere(function ($sub) {
+                  $sub->whereNotNull('expiry_date')
+                      ->whereDate('expiry_date', '<=', Carbon::today());
+              });
+        };
+
+        $isDueClosure = function ($q) {
+            $q->where('due_amount', '>', 0)
+              ->orWhere('status', 'due');
+        };
+
+        $isDueOrExpiredClosure = function ($q) use ($isDueClosure, $isExpiredClosure) {
+            $q->where($isDueClosure)
+              ->orWhere($isExpiredClosure);
+        };
+
         $query = TenantCustomer::where('tenant_id', $tenantId)
-            ->where(function ($q) {
-                $q->where('due_amount', '>', 0)
-                  ->orWhereIn('status', ['due', 'expired']);
-            })
+            ->where($isDueOrExpiredClosure)
             ->with(['package', 'zone']);
 
         if ($isCollector) {
@@ -322,9 +364,15 @@ class TenantCollectorDashboardController extends Controller
         }
 
         if ($dueStatusFilter === 'expired_only') {
-            $query->where('status', 'expired');
+            $query->where($isExpiredClosure);
         } elseif ($dueStatusFilter === 'due_only') {
-            $query->where('status', 'due');
+            $query->where($isDueClosure)->where(function ($q) {
+                $q->whereNotIn('status', ['expired', 'suspended'])
+                  ->where(function ($sub) {
+                      $sub->whereNull('expiry_date')
+                          ->orWhereDate('expiry_date', '>', Carbon::today());
+                  });
+            });
         } elseif ($dueStatusFilter === 'high_due') {
             $query->where('due_amount', '>=', 1000);
         }
@@ -339,7 +387,7 @@ class TenantCollectorDashboardController extends Controller
             });
         }
 
-        $customers = $query->orderByDesc('due_amount')->get();
+        $customers = $query->orderByRaw("CASE WHEN due_amount > 0 THEN 0 ELSE 1 END, due_amount DESC, expiry_date ASC")->get();
         $totalDue = $customers->sum('due_amount');
 
         $activeZone = $zoneFilter !== 'all' ? TenantCoverageZone::find($zoneFilter) : null;

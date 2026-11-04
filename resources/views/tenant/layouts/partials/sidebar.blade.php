@@ -703,9 +703,9 @@
             <div x-show="open || filterQuery" x-collapse class="pl-2.5 pr-0.5 space-y-1" style="{{ $isFinanceActive ? '' : 'display: none;' }}">
                 <!-- 1. Collector Hub -->
                 <a href="{{ Route::has('tenant.collector.due-customers') ? route('tenant.collector.due-customers') : route('tenant.dashboard') }}" 
-                   x-show="!filterQuery || 'collector hub field collection counter bill payments due'.includes(filterQuery.toLowerCase())"
+                   x-show="!filterQuery || 'collector hub field collection counter bill payments due expired validity cut'.includes(filterQuery.toLowerCase())"
                    class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ request()->routeIs('tenant.collector.due-customers') ? 'border-amber-200 bg-amber-50/80 text-amber-700 font-bold border-l-4 border-l-amber-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
-                    Collector Due List
+                    Due &amp; Expired List
                 </a>
 
                 @if(!auth()->user()->isCollector() || auth()->user()->isIspAdmin() || auth()->user()->isOwner())

@@ -1,6 +1,6 @@
 @extends('tenant.layouts.app')
 
-@section('title', 'Area Due Customers - ' . ($tenant->company_name ?? $tenant->name ?? 'ISP Management'))
+@section('title', 'Area Due & Expired Customers - ' . ($tenant->company_name ?? $tenant->name ?? 'ISP Management'))
 
 @push('styles')
     <style>
@@ -24,7 +24,7 @@
             <div class="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 border border-rose-100 flex items-center justify-center text-sm shadow-2xs flex-shrink-0">
                 <i class="fas fa-file-invoice-dollar"></i>
             </div>
-            <h1 class="text-sm font-bold text-slate-800 tracking-tight">Area Due Customers</h1>
+            <h1 class="text-sm font-bold text-slate-800 tracking-tight">Area Due & Expired Customers</h1>
         </div>
         
         <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap">
@@ -56,10 +56,10 @@
 
     {{-- 2. KPI SUMMARY STRIP (Strictly 6 Cards - AGENTS.md Rule 2.B) --}}
     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
-        {{-- Card 1: Due Customers Count --}}
+        {{-- Card 1: Due & Expired Customers Count --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Due Subscribers</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Due & Expired</span>
                 <span class="text-[13px] font-bold font-mono text-rose-600 leading-tight block truncate">{{ number_format($stats['total_due_customers']) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border border-rose-200 bg-rose-50 text-rose-600 flex items-center justify-center flex-shrink-0">
@@ -285,6 +285,7 @@
                         <th class="text-left font-semibold">Mobile Number</th>
                         <th class="text-left font-semibold">Area</th>
                         <th class="text-left font-semibold">Package</th>
+                        <th class="text-center font-semibold">Status</th>
                         <th class="text-right font-semibold">Monthly Bill</th>
                         <th class="text-right font-semibold">Due Amount</th>
                         <th class="w-24 text-center no-sort">Action</th>
@@ -300,7 +301,13 @@
                             } else {
                                 $intlPhone = $cleanPhone;
                             }
-                            $waMessage = rawurlencode("Dear Customer ({$customer->username}), your internet bill due is Tk " . number_format($dueAmt, 2) . ". Please pay your bill to keep your internet connection active. Thank you - " . ($tenant->company_name ?? 'ISP'));
+                            $waAmount = $dueAmt > 0 ? $dueAmt : ($customer->monthly_bill ?? ($customer->package?->price ?? 0));
+                            $waMessage = rawurlencode("Dear Customer ({$customer->username}), your internet bill is Tk " . number_format($waAmount, 2) . ". Please pay your bill to keep your internet connection active. Thank you - " . ($tenant->company_name ?? 'ISP'));
+
+                            $rawStatus = strtolower($customer->status ?? '');
+                            $isExpired = in_array($rawStatus, ['expired', 'suspended']) 
+                                || ($customer->expiry_date && \Carbon\Carbon::parse($customer->expiry_date)->endOfDay()->isPast());
+                            $hasDue = $dueAmt > 0 || $rawStatus === 'due';
                         @endphp
                         <tr>
                             {{-- 1. Index --}}
@@ -355,17 +362,42 @@
                                 {{ $customer->package_display_name }}
                             </td>
 
-                            {{-- 8. Monthly Bill / Price --}}
+                            {{-- 8. Status Badge (Strict Single Line) --}}
+                            <td class="text-center whitespace-nowrap">
+                                @if($isExpired && $hasDue)
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 inline-flex items-center gap-1">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                                        <span>Expired &amp; Due</span>
+                                    </span>
+                                @elseif($isExpired)
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 inline-flex items-center gap-1">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                                        <span>Expired</span>
+                                    </span>
+                                @elseif($hasDue)
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 inline-flex items-center gap-1">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                                        <span>Due</span>
+                                    </span>
+                                @else
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 inline-flex items-center gap-1">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                        <span>Active</span>
+                                    </span>
+                                @endif
+                            </td>
+
+                            {{-- 9. Monthly Bill / Price --}}
                             <td class="text-right whitespace-nowrap font-mono font-semibold text-xs text-slate-700">
                                 @currency($customer->monthly_bill ?? ($customer->package?->price ?? 0))
                             </td>
 
-                            {{-- 9. Due Amount --}}
-                            <td class="text-right whitespace-nowrap font-mono font-bold text-xs text-rose-600">
+                            {{-- 10. Due Amount --}}
+                            <td class="text-right whitespace-nowrap font-mono font-bold text-xs {{ $dueAmt > 0 ? 'text-rose-600' : 'text-slate-500' }}">
                                 @currency($dueAmt)
                             </td>
 
-                            {{-- 10. Action: Direct Full-Page Terminal Link (No Modal) --}}
+                            {{-- 11. Action: Direct Full-Page Terminal Link (No Modal) --}}
                             <td class="text-center whitespace-nowrap">
                                 <a href="{{ route('tenant.collector.collect-page', $customer->id) }}" 
                                    class="h-[28px] px-2.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-xs font-semibold shadow-xs transition inline-flex items-center justify-center gap-1.5 cursor-pointer"
@@ -377,10 +409,10 @@
                         </tr>
                     @empty
                         <tr class="no-record-row">
-                            <td colspan="10" class="text-center py-8 text-slate-400">
+                            <td colspan="11" class="text-center py-8 text-slate-400">
                                 <i class="fas fa-circle-check text-2xl mb-1.5 block text-emerald-500"></i>
-                                <span class="font-medium text-slate-600 text-xs">No due customers found in the selected scope.</span>
-                                <p class="text-[11px] text-slate-400 mt-0.5">All assigned subscribers in this area have zero outstanding dues.</p>
+                                <span class="font-medium text-slate-600 text-xs">No due or expired customers found in the selected scope.</span>
+                                <p class="text-[11px] text-slate-400 mt-0.5">All assigned subscribers in this area are active with zero outstanding dues.</p>
                             </td>
                         </tr>
                     @endforelse

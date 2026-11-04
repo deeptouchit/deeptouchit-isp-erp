@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Field Due Sheet - {{ $tenant->company_name ?? 'ISP Management' }}</title>
+    <title>Field Due &amp; Expired Sheet - {{ $tenant->company_name ?? 'ISP Management' }}</title>
     
     {{-- Project Typography & Web Fonts --}}
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -175,9 +175,9 @@
     {{-- Control Bar --}}
     <div class="no-print">
         <div>
-            <strong style="font-size: 13px;">Field Collection Due Sheet</strong>
+            <strong style="font-size: 13px;">Field Collection Due &amp; Expired Sheet</strong>
             <span style="color: #64748b; font-size: 11px; margin-left: 8px;">
-                Total {{ number_format(count($customers)) }} Due Subscribers
+                Total {{ number_format(count($customers)) }} Due &amp; Expired Subscribers
             </span>
         </div>
         <div style="display: flex; gap: 8px;">
