@@ -744,6 +744,8 @@ class TenantCustomerInvoiceController extends Controller
         $partnerFilter = $request->input('partner_id', 'all');
         $zoneFilter = $request->input('zone_id', 'all');
         $overdueFilter = $request->input('overdue_range', 'all'); // upcoming, overdue_1_7, overdue_8_plus
+        $targetDateType = $request->input('target_date_type', 'all'); // 'all', 'today', 'tomorrow', 'next_3_days', 'overdue', 'custom'
+        $customDate = $request->input('custom_date', '');
         $packageFilter = $request->input('package_id', 'all');
         $perPage = $request->input('per_page', 20);
 
@@ -774,6 +776,9 @@ class TenantCustomerInvoiceController extends Controller
         // 3. 6 KPI Cards Stats Calculation
         $totalUninvoicedCount = (clone $baseQuery)->count();
         $totalUnbilledAmount = (float) (clone $baseQuery)->sum(DB::raw("COALESCE(monthly_bill, 0)"));
+        $todayExpiringCount = (clone $baseQuery)->whereDate('expiry_date', Carbon::today())->count();
+        $alreadyOverdueCount = (clone $baseQuery)->whereDate('expiry_date', '<', Carbon::today())->count();
+        $upcoming3DaysCount = (clone $baseQuery)->whereDate('expiry_date', '>', Carbon::today())->whereDate('expiry_date', '<=', Carbon::today()->addDays(3))->count();
         $directCount = (clone $baseQuery)->whereNull('reseller_id')->count();
         $partnerCount = (clone $baseQuery)->whereNotNull('reseller_id')->count();
 
@@ -791,6 +796,20 @@ class TenantCustomerInvoiceController extends Controller
 
         // 5. Apply User Filters for Table Display
         $query = (clone $baseQuery)->with(['package', 'zone', 'reseller']);
+
+        // Explicit Target Date Filter
+        if ($targetDateType === 'today') {
+            $query->whereDate('expiry_date', Carbon::today());
+        } elseif ($targetDateType === 'tomorrow') {
+            $query->whereDate('expiry_date', Carbon::tomorrow());
+        } elseif ($targetDateType === 'next_3_days') {
+            $query->whereDate('expiry_date', '>', Carbon::today())
+                  ->whereDate('expiry_date', '<=', Carbon::today()->addDays(3));
+        } elseif ($targetDateType === 'overdue') {
+            $query->whereDate('expiry_date', '<', Carbon::today());
+        } elseif ($targetDateType === 'custom' && !empty($customDate)) {
+            $query->whereDate('expiry_date', Carbon::parse($customDate)->toDateString());
+        }
 
         if (!empty($search)) {
             $query->where(function ($q) use ($search) {
@@ -815,14 +834,20 @@ class TenantCustomerInvoiceController extends Controller
             $query->where('package_id', (int)$packageFilter);
         }
 
-        if ($overdueFilter === 'upcoming') {
-            $query->whereDate('expiry_date', '>', Carbon::today());
-        } elseif ($overdueFilter === 'overdue_1_7') {
-            $query->whereDate('expiry_date', '<=', Carbon::today())
-                  ->whereDate('expiry_date', '>=', Carbon::today()->subDays(7));
-        } elseif ($overdueFilter === 'overdue_8_plus') {
-            $query->whereDate('expiry_date', '<', Carbon::today()->subDays(7));
+        if ($targetDateType === 'all' && $overdueFilter !== 'all') {
+            if ($overdueFilter === 'upcoming') {
+                $query->whereDate('expiry_date', '>', Carbon::today());
+            } elseif ($overdueFilter === 'overdue_1_7') {
+                $query->whereDate('expiry_date', '<=', Carbon::today())
+                      ->whereDate('expiry_date', '>=', Carbon::today()->subDays(7));
+            } elseif ($overdueFilter === 'overdue_8_plus') {
+                $query->whereDate('expiry_date', '<', Carbon::today()->subDays(7));
+            }
         }
+
+        // Active filtered scope count & amount (for dynamic generate button)
+        $filteredTargetCount = (clone $query)->count();
+        $filteredTargetAmount = (float) (clone $query)->sum(DB::raw("COALESCE(monthly_bill, 0)"));
 
         // Order by oldest expiry date first
         $query->orderBy('expiry_date', 'asc');
@@ -841,11 +866,36 @@ class TenantCustomerInvoiceController extends Controller
         $packages = TenantInternetPackage::where('tenant_id', $tenant->id)->orderBy('price')->get();
         $currencySymbol = '৳';
 
+        $generateBtnText = match($targetDateType) {
+            'today' => "Generate Today's Bills (" . number_format($filteredTargetCount) . ")",
+            'tomorrow' => "Generate Tomorrow's Bills (" . number_format($filteredTargetCount) . ")",
+            'next_3_days' => "Generate Next 3 Days (" . number_format($filteredTargetCount) . ")",
+            'overdue' => "Generate Overdue Catch-Up (" . number_format($filteredTargetCount) . ")",
+            'custom' => "Generate for " . (!empty($customDate) ? Carbon::parse($customDate)->format('d M') : 'Date') . " (" . number_format($filteredTargetCount) . ")",
+            default => "Generate All Catch-Up Invoices (" . number_format($filteredTargetCount) . ")",
+        };
+
+        $targetDateLabel = match($targetDateType) {
+            'today' => "Today's Expiring Subscribers (" . Carbon::today()->format('d M Y') . ")",
+            'tomorrow' => "Tomorrow's Expiring Subscribers (" . Carbon::tomorrow()->format('d M Y') . ")",
+            'next_3_days' => "Next 3 Days Subscribers",
+            'overdue' => "Past Overdue Subscribers",
+            'custom' => "Subscribers Expiring on " . (!empty($customDate) ? Carbon::parse($customDate)->format('d M Y') : 'Selected Date'),
+            default => "All Uninvoiced Queue",
+        };
+
         return view('tenant.finance.billing_catchup', compact(
             'tenant',
             'subscribers',
             'totalUninvoicedCount',
             'totalUnbilledAmount',
+            'todayExpiringCount',
+            'alreadyOverdueCount',
+            'upcoming3DaysCount',
+            'filteredTargetCount',
+            'filteredTargetAmount',
+            'generateBtnText',
+            'targetDateLabel',
             'directCount',
             'partnerCount',
             'lastCronRunText',
@@ -859,6 +909,8 @@ class TenantCustomerInvoiceController extends Controller
             'partnerFilter',
             'zoneFilter',
             'overdueFilter',
+            'targetDateType',
+            'customDate',
             'packageFilter',
             'perPage',
             'isResellerUser'
@@ -876,8 +928,10 @@ class TenantCustomerInvoiceController extends Controller
         $userResellerId = $user?->reseller_id;
 
         $customerIds = $request->input('customer_ids', []);
-        $scope = $request->input('scope', 'selected'); // 'selected', 'partner', 'all'
+        $scope = $request->input('scope', 'selected'); // 'selected', 'partner', 'all', 'filtered'
         $targetResellerId = $request->input('partner_id');
+        $targetDateType = $request->input('target_date_type', 'all');
+        $customDate = $request->input('custom_date');
 
         $settings = TenantAutomationSetting::firstOrCreate(['tenant_id' => $tenant->id]);
         $leadDays = (int) ($settings->billing_generation_day ?: 3);
@@ -885,8 +939,23 @@ class TenantCustomerInvoiceController extends Controller
 
         $query = TenantCustomer::where('tenant_id', $tenant->id)
             ->whereIn('status', ['active', 'due', 'suspended', 'expired'])
-            ->whereNotNull('expiry_date')
-            ->whereDate('expiry_date', '<=', $targetDate);
+            ->whereNotNull('expiry_date');
+
+        // Apply Target Date Criteria
+        if ($targetDateType === 'today') {
+            $query->whereDate('expiry_date', Carbon::today());
+        } elseif ($targetDateType === 'tomorrow') {
+            $query->whereDate('expiry_date', Carbon::tomorrow());
+        } elseif ($targetDateType === 'next_3_days') {
+            $query->whereDate('expiry_date', '>', Carbon::today())
+                  ->whereDate('expiry_date', '<=', Carbon::today()->addDays(3));
+        } elseif ($targetDateType === 'overdue') {
+            $query->whereDate('expiry_date', '<', Carbon::today());
+        } elseif ($targetDateType === 'custom' && !empty($customDate)) {
+            $query->whereDate('expiry_date', Carbon::parse($customDate)->toDateString());
+        } else {
+            $query->whereDate('expiry_date', '<=', $targetDate);
+        }
 
         if ($isResellerUser) {
             $query->where('reseller_id', $userResellerId);
@@ -982,6 +1051,15 @@ class TenantCustomerInvoiceController extends Controller
             }
         }
 
+        $targetLabel = match($targetDateType) {
+            'today' => 'Today (' . Carbon::today()->format('d M') . ')',
+            'tomorrow' => 'Tomorrow (' . Carbon::tomorrow()->format('d M') . ')',
+            'next_3_days' => 'Next 3 Days',
+            'overdue' => 'Already Overdue',
+            'custom' => !empty($customDate) ? Carbon::parse($customDate)->format('d M Y') : 'Custom Date',
+            default => 'All Catch-Up Queue',
+        };
+
         // Activity Trail
         if ($generatedCount > 0) {
             TenantActivityLog::create([
@@ -990,12 +1068,13 @@ class TenantCustomerInvoiceController extends Controller
                 'actor_id' => Auth::id() ?: 1,
                 'actor_name' => Auth::user()?->name ?: 'System',
                 'event_type' => 'CATCHUP_BILLING_EXECUTED',
-                'description' => "Executed Catch-Up Billing: {$generatedCount} invoices created totaling ৳" . number_format($totalBilled, 2),
+                'description' => "Executed Catch-Up Billing for [{$targetLabel}]: {$generatedCount} invoices created totaling ৳" . number_format($totalBilled, 2),
                 'ip_address' => $request->ip(),
                 'user_agent' => $request->userAgent(),
                 'metadata' => [
                     'generated_count' => $generatedCount,
                     'total_billed' => $totalBilled,
+                    'target_label' => $targetLabel,
                     'scope' => $scope,
                 ],
             ]);
@@ -1006,7 +1085,8 @@ class TenantCustomerInvoiceController extends Controller
             'generated_count' => $generatedCount,
             'skipped_count' => $skippedCount,
             'total_billed' => $totalBilled,
-            'message' => "Successfully generated {$generatedCount} catch-up invoices totaling ৳" . number_format($totalBilled, 2) . "." . ($skippedCount > 0 ? " ({$skippedCount} skipped as already invoiced)" : ""),
+            'target_label' => $targetLabel,
+            'message' => "Successfully generated {$generatedCount} catch-up invoices for [{$targetLabel}] totaling ৳" . number_format($totalBilled, 2) . "." . ($skippedCount > 0 ? " ({$skippedCount} skipped as already invoiced/zero bill)" : ""),
         ]);
     }
 }

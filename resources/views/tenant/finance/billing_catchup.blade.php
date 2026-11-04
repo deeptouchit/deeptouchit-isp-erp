@@ -40,15 +40,15 @@
                 <span x-text="isGenerating ? 'Generating...' : `Generate Selected (${selectedIds.length})`"></span>
             </button>
 
-            {{-- Batch Generate All Pending Invoices --}}
-            @if($totalUninvoicedCount > 0)
+            {{-- Batch Generate Targeted Scope Invoices --}}
+            @if($filteredTargetCount > 0)
             <button type="button" 
-                    @click="confirmBatchGenerate('all')"
+                    @click="confirmBatchGenerate('filtered')"
                     :disabled="isGenerating"
                     class="px-3 py-1.5 bg-cyan-600 hover:bg-cyan-700 disabled:opacity-50 text-white rounded-lg text-xs font-semibold shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer"
-                    title="Generate Invoices for All Uninvoiced Subscribers">
+                    title="Generate Invoices for Current Target Scope: {{ $targetDateLabel }}">
                 <i class="fas" :class="isGenerating ? 'fa-spinner fa-spin' : 'fa-bolt'"></i>
-                <span x-text="isGenerating ? 'Processing...' : 'Generate All Catch-Up Invoices'"></span>
+                <span x-text="isGenerating ? 'Processing...' : '{{ $generateBtnText }}'"></span>
             </button>
             @endif
         </div>
@@ -56,58 +56,66 @@
 
     {{-- 2. KPI SUMMARY STRIP (Strictly 6 Cards - AGENTS.md Rule 2.B) --}}
     <div id="catchupKpiStrip" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
-        {{-- Card 1: Uninvoiced Subscribers Count --}}
-        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
+        {{-- Card 1: Total Uninvoiced Queue --}}
+        <div @click="filterByTargetDate('all')" 
+             class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 hover:border-slate-300 shadow-xs flex items-center justify-between cursor-pointer transition {{ $targetDateType === 'all' ? 'ring-2 ring-cyan-500/20 bg-cyan-50/20' : '' }}"
+             title="Click to view all uninvoiced subscribers">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Uninvoiced Queue</span>
-                <span class="text-[13px] font-bold font-mono text-amber-600 leading-tight block truncate">{{ number_format($totalUninvoicedCount) }}</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Total Queue</span>
+                <span class="text-[13px] font-bold font-mono text-slate-900 leading-tight block truncate">{{ number_format($totalUninvoicedCount) }}</span>
+            </div>
+            <div class="w-6 h-6 rounded-md text-[10px] border border-slate-200 bg-slate-50 text-slate-600 flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-list-check"></i>
+            </div>
+        </div>
+
+        {{-- Card 2: Expires Today (Direct Click Filter) --}}
+        <div @click="filterByTargetDate('today')" 
+             class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 hover:border-amber-400 shadow-xs flex items-center justify-between cursor-pointer transition {{ $targetDateType === 'today' ? 'ring-2 ring-amber-500 bg-amber-50/40' : '' }}"
+             title="Click to filter subscribers expiring today">
+            <div class="min-w-0 pr-1">
+                <span class="text-[9px] font-bold uppercase tracking-wider text-amber-700 block truncate">Expires Today</span>
+                <span class="text-[13px] font-bold font-mono text-amber-600 leading-tight block truncate">{{ number_format($todayExpiringCount) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border border-amber-200 bg-amber-50 text-amber-600 flex items-center justify-center flex-shrink-0">
                 <i class="fas fa-clock"></i>
             </div>
         </div>
 
-        {{-- Card 2: Unbilled Volume --}}
+        {{-- Card 3: Already Overdue --}}
+        <div @click="filterByTargetDate('overdue')" 
+             class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 hover:border-rose-400 shadow-xs flex items-center justify-between cursor-pointer transition {{ $targetDateType === 'overdue' ? 'ring-2 ring-rose-500 bg-rose-50/40' : '' }}"
+             title="Click to filter past overdue subscribers">
+            <div class="min-w-0 pr-1">
+                <span class="text-[9px] font-bold uppercase tracking-wider text-rose-700 block truncate">Already Overdue</span>
+                <span class="text-[13px] font-bold font-mono text-rose-600 leading-tight block truncate">{{ number_format($alreadyOverdueCount) }}</span>
+            </div>
+            <div class="w-6 h-6 rounded-md text-[10px] border border-rose-200 bg-rose-50 text-rose-600 flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-triangle-exclamation"></i>
+            </div>
+        </div>
+
+        {{-- Card 4: Upcoming 1-3 Days --}}
+        <div @click="filterByTargetDate('next_3_days')" 
+             class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 hover:border-cyan-400 shadow-xs flex items-center justify-between cursor-pointer transition {{ $targetDateType === 'next_3_days' ? 'ring-2 ring-cyan-500 bg-cyan-50/40' : '' }}"
+             title="Click to filter subscribers expiring in next 1 to 3 days">
+            <div class="min-w-0 pr-1">
+                <span class="text-[9px] font-medium uppercase tracking-wider text-cyan-800 block truncate">Upcoming (1-3d)</span>
+                <span class="text-[13px] font-bold font-mono text-cyan-700 leading-tight block truncate">{{ number_format($upcoming3DaysCount) }}</span>
+            </div>
+            <div class="w-6 h-6 rounded-md text-[10px] border border-cyan-200 bg-cyan-50 text-cyan-600 flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-hourglass-half"></i>
+            </div>
+        </div>
+
+        {{-- Card 5: Unbilled Volume --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
                 <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Unbilled Volume</span>
-                <span class="text-[13px] font-bold font-mono text-rose-600 leading-tight block truncate">@currency($totalUnbilledAmount)</span>
+                <span class="text-[13px] font-bold font-mono text-emerald-700 leading-tight block truncate">@currency($totalUnbilledAmount)</span>
             </div>
-            <div class="w-6 h-6 rounded-md text-[10px] border border-rose-200 bg-rose-50 text-rose-600 flex items-center justify-center flex-shrink-0">
+            <div class="w-6 h-6 rounded-md text-[10px] border border-emerald-200 bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0">
                 <i class="fas fa-hand-holding-dollar"></i>
-            </div>
-        </div>
-
-        {{-- Card 3: Direct Retail Users --}}
-        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
-            <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Direct Retail</span>
-                <span class="text-[13px] font-bold font-mono text-slate-800 leading-tight block truncate">{{ number_format($directCount) }}</span>
-            </div>
-            <div class="w-6 h-6 rounded-md text-[10px] border border-slate-200 bg-slate-50 text-slate-600 flex items-center justify-center flex-shrink-0">
-                <i class="fas fa-building"></i>
-            </div>
-        </div>
-
-        {{-- Card 4: Partner / Reseller Users --}}
-        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
-            <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-purple-700 block truncate">Partner Users</span>
-                <span class="text-[13px] font-bold font-mono text-purple-600 leading-tight block truncate">{{ number_format($partnerCount) }}</span>
-            </div>
-            <div class="w-6 h-6 rounded-md text-[10px] border border-purple-200 bg-purple-50 text-purple-600 flex items-center justify-center flex-shrink-0">
-                <i class="fas fa-handshake"></i>
-            </div>
-        </div>
-
-        {{-- Card 5: Last Automation Cron --}}
-        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
-            <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Last Auto Cron</span>
-                <span class="text-[12px] font-semibold text-slate-700 leading-tight block truncate">{{ $lastCronRunText }}</span>
-            </div>
-            <div class="w-6 h-6 rounded-md text-[10px] border border-slate-200 bg-slate-50 text-slate-600 flex items-center justify-center flex-shrink-0">
-                <i class="fas fa-server"></i>
             </div>
         </div>
 
@@ -116,7 +124,7 @@
             <div class="min-w-0 pr-1">
                 <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Cron Health</span>
                 <span class="text-[12px] font-bold leading-tight block truncate {{ $isCronHealthy ? 'text-emerald-600' : 'text-amber-600' }}">
-                    {{ $isCronHealthy ? '🟢 Healthy' : '⚠️ Delayed' }}
+                    {{ $isCronHealthy ? '🟢 Healthy' : '⚠️ Attention' }}
                 </span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border {{ $isCronHealthy ? 'border-emerald-200 bg-emerald-50 text-emerald-600' : 'border-amber-200 bg-amber-50 text-amber-600' }} flex items-center justify-center flex-shrink-0">
@@ -206,6 +214,32 @@
                             title="Clear Search">
                         <i class="fas fa-times-circle"></i>
                     </button>
+                </div>
+
+                {{-- Target Expiry Date Selector (Dynamic Date-Specific Catch-Up) --}}
+                <div class="w-full sm:w-48 flex-shrink-0">
+                    <select name="target_date_type" 
+                            id="targetDateTypeSelect"
+                            x-model="targetDateType"
+                            @change="$nextTick(() => { if (targetDateType !== 'custom') $el.closest('form').submit() })"
+                            class="w-full h-[34px] px-2 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-semibold text-slate-800">
+                        <option value="all" {{ $targetDateType === 'all' ? 'selected' : '' }}>🌐 All Queue ({{ number_format($totalUninvoicedCount) }})</option>
+                        <option value="today" {{ $targetDateType === 'today' ? 'selected' : '' }}>⚡ Expires Today ({{ number_format($todayExpiringCount) }})</option>
+                        <option value="tomorrow" {{ $targetDateType === 'tomorrow' ? 'selected' : '' }}>⏳ Expires Tomorrow</option>
+                        <option value="next_3_days" {{ $targetDateType === 'next_3_days' ? 'selected' : '' }}>📅 Next 3 Days ({{ number_format($upcoming3DaysCount) }})</option>
+                        <option value="overdue" {{ $targetDateType === 'overdue' ? 'selected' : '' }}>⚠️ Already Overdue ({{ number_format($alreadyOverdueCount) }})</option>
+                        <option value="custom" {{ $targetDateType === 'custom' ? 'selected' : '' }}>🗓️ Pick Specific Date...</option>
+                    </select>
+                </div>
+
+                {{-- Custom Date Picker (Visible when custom chosen) --}}
+                <div x-show="targetDateType === 'custom'" x-cloak class="w-full sm:w-36 flex-shrink-0">
+                    <input type="date" 
+                           name="custom_date" 
+                           value="{{ $customDate }}"
+                           onchange="this.form.submit()"
+                           class="w-full h-[34px] px-2 bg-white border border-cyan-400 rounded-lg text-xs font-mono text-slate-800 focus:outline-hidden"
+                           title="Select exact expiry date to target">
                 </div>
 
                 {{-- Partner Filter --}}
@@ -491,12 +525,29 @@ function billingCatchUpManager() {
         activeMenu: null,
         showMoreFilters: {{ $isMoreOpen ? 'true' : 'false' }},
         searchQuery: @json($search ?? ''),
+        targetDateType: '{{ $targetDateType }}',
+        customDate: '{{ $customDate }}',
+        targetDateLabel: '{{ $targetDateLabel }}',
+        filteredCount: {{ $filteredTargetCount }},
+        filteredAmount: {{ $filteredTargetAmount }},
         searchDebounceTimer: null,
         totalMatchingRows: null,
         isSearching: false,
         isGenerating: false,
         selectedIds: [],
         pageCustomerIds: @json($subscribers->pluck('id')),
+
+        filterByTargetDate(type) {
+            this.targetDateType = type;
+            const form = document.getElementById('catchupFilterForm');
+            if (form) {
+                const select = form.querySelector('#targetDateTypeSelect');
+                if (select) {
+                    select.value = type;
+                }
+                form.submit();
+            }
+        },
 
         get isAllSelected() {
             if (this.pageCustomerIds.length === 0) return false;
@@ -662,36 +713,41 @@ function billingCatchUpManager() {
         async confirmBatchGenerate(scope, partnerId = null, partnerName = '', partnerCount = 0) {
             let title = 'Execute Billing Catch-Up?';
             let htmlText = '';
+            let payload = {
+                scope: scope,
+                target_date_type: this.targetDateType,
+                custom_date: this.customDate
+            };
 
             if (scope === 'selected') {
                 htmlText = `Generate subscription invoices for <b>${this.selectedIds.length}</b> selected subscribers?`;
+                payload.customer_ids = this.selectedIds;
             } else if (scope === 'partner') {
                 htmlText = `Generate subscription invoices for all <b>${partnerCount}</b> uninvoiced subscribers of <b>${partnerName}</b>?`;
+                payload.partner_id = partnerId;
             } else {
-                htmlText = `Generate subscription invoices for <b>all {{ number_format($totalUninvoicedCount) }}</b> subscribers currently in the queue?`;
+                htmlText = `<div class="text-left space-y-1.5 p-2 bg-slate-50 rounded-lg border border-slate-200">
+                    <div class="flex justify-between text-xs"><span class="text-slate-500">Target Date Scope:</span><b class="text-cyan-700 font-semibold">${this.targetDateLabel}</b></div>
+                    <div class="flex justify-between text-xs"><span class="text-slate-500">Subscribers to Bill:</span><b class="font-mono text-slate-800">${this.filteredCount} Subscribers</b></div>
+                    <div class="flex justify-between text-xs"><span class="text-slate-500">Estimated Total:</span><b class="font-mono text-emerald-600 font-bold">৳${this.filteredAmount.toLocaleString()}</b></div>
+                </div>
+                <p class="text-xs text-slate-600 mt-2">Are you sure you want to generate subscription invoices for these subscribers?</p>`;
             }
 
             const result = await Swal.fire({
                 title: title,
                 html: htmlText,
-                icon: 'warning',
+                icon: 'question',
                 showCancelButton: true,
                 confirmButtonColor: '#0891b2',
                 cancelButtonColor: '#64748b',
-                confirmButtonText: 'Yes, Generate All'
+                confirmButtonText: 'Yes, Generate Invoices'
             });
 
             if (!result.isConfirmed) return;
 
             this.isGenerating = true;
             try {
-                const payload = { scope: scope };
-                if (scope === 'selected') {
-                    payload.customer_ids = this.selectedIds;
-                } else if (scope === 'partner') {
-                    payload.partner_id = partnerId;
-                }
-
                 const res = await fetch(`{{ route('tenant.finance.billing-catchup.execute') }}`, {
                     method: 'POST',
                     headers: {
