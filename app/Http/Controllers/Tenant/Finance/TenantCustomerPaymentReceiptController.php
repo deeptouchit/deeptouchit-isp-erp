@@ -58,8 +58,8 @@ class TenantCustomerPaymentReceiptController extends Controller
 
         $allResellers = TenantReseller::where('tenant_id', $tenant->id)->orderBy('name')->get();
         $allCollectors = $isCollector 
-            ? User::where('id', $user->id)->get(['id', 'name', 'email'])
-            : User::where('tenant_id', $tenant->id)->orderBy('name')->get(['id', 'name', 'email']);
+            ? User::where('id', $user->id)->get(['id', 'name', 'email', 'role'])
+            : User::where('tenant_id', $tenant->id)->orderBy('name')->get(['id', 'name', 'email', 'role']);
 
         // Customer selection query for collection modal (Select2 formatted)
         $custSelectQuery = TenantCustomer::where('tenant_id', $tenant->id)
@@ -95,7 +95,7 @@ class TenantCustomerPaymentReceiptController extends Controller
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');
         $perPage = (int) $request->input('per_page', 20);
-        if (!in_array($perPage, [10, 20, 50, 100])) {
+        if (!in_array($perPage, [10, 15, 20, 30, 50, 100, 250, 500])) {
             $perPage = 20;
         }
 

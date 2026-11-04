@@ -37,20 +37,20 @@
 <div class="space-y-3" x-data="paymentManager()" @scroll.window="activeMenu = null" @resize.window="activeMenu = null">
 
     <!-- 1. Top Header Bar (Icon + Title + Action Buttons ONLY - AGENTS.md Rule 2.A) -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-white p-3 sm:px-4 sm:py-3 rounded-xl border border-slate-200/90 shadow-2xs">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-white p-3 rounded-md border border-slate-200 shadow-2xs">
         <div class="flex items-center gap-2.5">
-            <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center text-sm shadow-2xs">
-                <i class="fas fa-receipt"></i>
+            <div class="w-7 h-7 rounded-md bg-cyan-50 text-cyan-600 border border-cyan-100 flex items-center justify-center text-xs flex-shrink-0">
+                <i class="fas fa-file-invoice-dollar"></i>
             </div>
-            <h1 class="text-sm sm:text-base font-bold text-slate-800 tracking-tight">
-                Payment Collections &amp; Receipts
+            <h1 class="text-xs sm:text-sm font-bold text-slate-900 tracking-tight">
+                Collection Report &amp; Money Receipts
             </h1>
         </div>
 
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap">
             <!-- Export CSV -->
             <a href="{{ route('tenant.finance.payments.export', request()->query()) }}" 
-               class="border border-slate-300 hover:bg-slate-50 text-slate-700 font-medium text-xs px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow-2xs">
+               class="h-[34px] border border-slate-200/90 hover:bg-slate-50 text-slate-700 font-medium text-xs px-3 rounded-lg transition inline-flex items-center gap-1.5 shadow-2xs cursor-pointer">
                 <i class="fas fa-file-csv text-emerald-600 text-xs"></i>
                 <span class="hidden sm:inline">Export</span> CSV
             </a>
@@ -58,9 +58,9 @@
             <!-- Collect Payment Button -->
             <button type="button" 
                     @click="openCollectModal()" 
-                    class="bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs px-3.5 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow-xs cursor-pointer">
+                    class="h-[34px] bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs px-3.5 rounded-lg transition inline-flex items-center gap-1.5 shadow-xs cursor-pointer">
                 <i class="fas fa-plus text-xs"></i>
-                <span>Collect Payment</span>
+                <span>+ Collect Payment</span>
             </button>
         </div>
     </div>
@@ -119,185 +119,241 @@
             </div>
         </div>
 
-        <!-- Card 5: Cash vs Digital Split -->
+        <!-- Card 5: Cash Collection -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between min-w-0">
             <div class="min-w-0">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Cash / Digital</span>
-                <span class="text-[11.5px] font-bold font-mono text-amber-700 leading-tight block truncate" title="Cash: @currency($cashCollections) | Digital: @currency($digitalCollections)">
-                    @currency($cashCollections) <span class="text-slate-400 font-normal">/</span> @currency($digitalCollections)
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Cash in Hand</span>
+                <span class="text-[13px] font-bold font-mono text-amber-700 leading-tight block truncate">
+                    @currency($cashCollections)
                 </span>
             </div>
             <div class="w-6 h-6 rounded-md bg-amber-50 text-amber-600 border border-amber-100 flex items-center justify-center text-[10px] flex-shrink-0">
-                <i class="fas fa-money-bill-transfer"></i>
+                <i class="fas fa-money-bill-wave"></i>
             </div>
         </div>
 
-        <!-- Card 6: Total Discount Given -->
+        <!-- Card 6: Digital & Online Collection -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between min-w-0">
             <div class="min-w-0">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Total Discount</span>
-                <span class="text-[13px] font-bold font-mono text-rose-700 leading-tight block truncate">
-                    @currency($totalDiscountGiven)
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Digital &amp; Online</span>
+                <span class="text-[13px] font-bold font-mono text-purple-700 leading-tight block truncate">
+                    @currency($digitalCollections)
                 </span>
             </div>
-            <div class="w-6 h-6 rounded-md bg-rose-50 text-rose-600 border border-rose-100 flex items-center justify-center text-[10px] flex-shrink-0">
-                <i class="fas fa-tags"></i>
+            <div class="w-6 h-6 rounded-md bg-purple-50 text-purple-600 border border-purple-100 flex items-center justify-center text-[10px] flex-shrink-0">
+                <i class="fas fa-mobile-screen-button"></i>
             </div>
         </div>
     </div>
 
-    <!-- 3. Search & Multi-Filter Toolbar (AGENTS.md Rule 2.C) -->
-    <div class="bg-white p-2.5 sm:p-3 rounded-xl border border-slate-200 shadow-2xs space-y-2.5">
-        <form method="GET" action="{{ route('tenant.finance.payments') }}" class="space-y-2">
+    <!-- 3. Search & Multi-Filter Toolbar (Customer-Standard 2-Tier Architecture & Uniform h-[34px] - AGENTS.md Rule 2.C) -->
+    @php
+        $activeMoreCount = collect([
+            (!empty($dateFrom) && $period === 'custom') ? $dateFrom : null,
+            (!empty($dateTo) && $period === 'custom') ? $dateTo : null,
+            ($methodFilter !== 'all' && !empty($methodFilter)) ? $methodFilter : null,
+            (!$isResellerUser && !$isCollector && $selectedResellerId !== 'all' && !empty($selectedResellerId)) ? $selectedResellerId : null,
+            ($statusFilter !== 'all' && !empty($statusFilter)) ? $statusFilter : null,
+            ($selectedMonth !== 'all' && !empty($selectedMonth)) ? $selectedMonth : null,
+        ])->filter()->count();
+        $isMoreOpen = $activeMoreCount > 0;
+    @endphp
+    <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5"
+         x-data="{ 
+             showMoreFilters: {{ $isMoreOpen ? 'true' : 'false' }}, 
+             searchQuery: '{{ addslashes($search ?? '') }}'
+         }">
+        <form method="GET" action="{{ route('tenant.finance.payments') }}" id="paymentsFilterForm" class="space-y-2.5">
             
-            <!-- Row 1: Search Box, Quick Period Preset, Day to Day Date Range -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-2 items-center">
+            {{-- Tier 1: Primary Filter Bar (Strictly 1 Single Row on md+ screens - AGENTS.md Rule 2.C) --}}
+            <div class="flex flex-col md:flex-row items-stretch md:items-center gap-2">
                 
-                <!-- Search Box (4 Cols) -->
-                <div class="md:col-span-4 relative">
-                    <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none">
-                        <i class="fas fa-search"></i>
-                    </span>
+                {{-- Intelligent Live Search Box --}}
+                <div class="relative flex-1 min-w-[200px]">
+                    <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-xs pointer-events-none transition-colors"
+                       :class="searchQuery ? 'text-cyan-600 font-bold' : 'text-slate-400'"></i>
                     <input type="text" 
                            name="search" 
-                           value="{{ $search }}" 
-                           placeholder="Receipt No, Name, Username, Phone, Trx ID..." 
-                           class="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 placeholder-slate-400 focus:bg-white focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition shadow-2xs">
+                           x-model="searchQuery"
+                           placeholder="Search Receipt No, Name, Username, Phone, Trx ID..." 
+                           class="w-full h-[34px] pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition placeholder:text-slate-400 font-medium"
+                           autocomplete="off">
+                    <button type="button" 
+                            x-show="searchQuery && searchQuery.length > 0" 
+                            x-cloak
+                            @click="searchQuery = ''; $nextTick(() => $el.closest('form').submit())"
+                            class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500 p-0.5 text-xs transition cursor-pointer"
+                            title="Clear Search">
+                        <i class="fas fa-times-circle"></i>
+                    </button>
                 </div>
 
-                <!-- Quick Period Preset (2 Cols) -->
-                <div class="md:col-span-2">
-                    <select name="period" 
-                            x-model="filterPeriod" 
-                            @change="handlePeriodChange($event.target.value)" 
-                            class="w-full px-2.5 py-1.5 text-xs font-medium text-slate-700 bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:border-cyan-500 transition shadow-2xs">
-                        <option value="today">Today (আজ)</option>
-                        <option value="yesterday">Yesterday (গতকাল)</option>
-                        <option value="this_week">This Week (এই সপ্তাহ)</option>
-                        <option value="this_month">This Month (চলতি মাস)</option>
-                        <option value="last_month">Last Month (গত মাস)</option>
-                        <option value="custom">Custom Range (দিন-তারিখ)</option>
-                        <option value="all">All Records (সব সময়)</option>
-                    </select>
-                </div>
-
-                <!-- Date From (3 Cols) -->
-                <div class="md:col-span-3 relative">
-                    <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[9.5px] uppercase font-bold text-slate-400 pointer-events-none">From</span>
-                    <input type="date" 
-                           name="date_from" 
-                           x-model="filterDateFrom" 
-                           @input="filterPeriod = 'custom'"
-                           class="w-full pl-11 pr-2 py-1.5 text-xs font-mono bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:border-cyan-500 transition shadow-2xs">
-                </div>
-
-                <!-- Date To (3 Cols) -->
-                <div class="md:col-span-3 relative">
-                    <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[9.5px] uppercase font-bold text-slate-400 pointer-events-none">To</span>
-                    <input type="date" 
-                           name="date_to" 
-                           x-model="filterDateTo" 
-                           @input="filterPeriod = 'custom'"
-                           class="w-full pl-8 pr-2 py-1.5 text-xs font-mono bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:border-cyan-500 transition shadow-2xs">
-                </div>
-
-            </div>
-
-            <!-- Row 2: Secondary Dropdowns (Reseller, Collector, Method, Status, Per Page) + Strict Filter & Reset Buttons -->
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 items-center pt-1 border-t border-slate-100">
-                
-                <!-- Reseller Scope Filter (if HQ Admin) -->
-                @if(!$isResellerUser && !$isCollector)
-                    <div>
-                        <select name="reseller_id" 
-                                onchange="this.form.submit()" 
-                                class="w-full px-2 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:border-cyan-500 transition shadow-2xs">
-                            <option value="all" {{ $selectedResellerId === 'all' ? 'selected' : '' }}>All Network</option>
-                            <option value="isp" {{ $selectedResellerId === 'isp' ? 'selected' : '' }}>HQ Direct</option>
-                            @foreach($allResellers ?? [] as $r)
-                                <option value="{{ $r->id }}" {{ (string)$selectedResellerId === (string)$r->id ? 'selected' : '' }}>
-                                    {{ $r->code ?: $r->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                @endif
-
-                <!-- Collector / Staff Filter -->
+                {{-- Primary Dropdown 1: Collector / Staff Filter (Crucial for কালেক্টর-ভিত্তিক আদায়) --}}
                 @if(!$isCollector)
-                <div class="{{ $isResellerUser ? 'col-span-1' : '' }}">
+                <div class="w-full md:w-48 flex-shrink-0">
                     <select name="collector_id" 
-                            onchange="this.form.submit()" 
-                            class="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:border-cyan-500 transition shadow-2xs">
-                        <option value="all" {{ $collectorFilter === 'all' ? 'selected' : '' }}>All Collectors</option>
-                        @foreach($allCollectors ?? [] as $collector)
-                            <option value="{{ $collector->id }}" {{ (string)$collectorFilter === (string)$collector->id ? 'selected' : '' }}>
-                                {{ $collector->name }}
+                            onchange="this.form.submit()"
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-semibold text-slate-800 cursor-pointer">
+                        <option value="all">👤 All Collectors / Staff</option>
+                        @foreach($allCollectors ?? [] as $col)
+                            <option value="{{ $col->id }}" {{ (string)$collectorFilter === (string)$col->id ? 'selected' : '' }}>
+                                {{ $col->name }}
                             </option>
                         @endforeach
                     </select>
                 </div>
                 @endif
 
-                <!-- Payment Method Filter -->
-                <div>
-                    <select name="method" 
-                            onchange="this.form.submit()" 
-                            class="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:border-cyan-500 transition shadow-2xs">
-                        <option value="all" {{ $methodFilter === 'all' ? 'selected' : '' }}>All Methods</option>
-                        <option value="cash" {{ $methodFilter === 'cash' ? 'selected' : '' }}>Cash in Hand</option>
-                        <option value="bangla_qr" {{ $methodFilter === 'bangla_qr' ? 'selected' : '' }}>Bangla QR</option>
-                        <option value="bkash" {{ $methodFilter === 'bkash' ? 'selected' : '' }}>bKash (MFS)</option>
-                        <option value="nagad" {{ $methodFilter === 'nagad' ? 'selected' : '' }}>Nagad (MFS)</option>
-                        <option value="rocket" {{ $methodFilter === 'rocket' ? 'selected' : '' }}>Rocket (MFS)</option>
-                        <option value="bank_transfer" {{ $methodFilter === 'bank_transfer' ? 'selected' : '' }}>Bank Transfer</option>
-                        <option value="pos" {{ $methodFilter === 'pos' ? 'selected' : '' }}>Card / POS</option>
-                        <option value="online" {{ $methodFilter === 'online' ? 'selected' : '' }}>Online Gateway</option>
-                        <option value="reseller_wallet" {{ $methodFilter === 'reseller_wallet' ? 'selected' : '' }}>Reseller Wallet</option>
+                {{-- Primary Dropdown 2: Period Preset --}}
+                <div class="w-full md:w-36 flex-shrink-0">
+                    <select name="period" 
+                            x-model="filterPeriod"
+                            @change="if (filterPeriod === 'custom') { showMoreFilters = true; } else { handlePeriodChange(filterPeriod); $nextTick(() => $el.closest('form').submit()); }"
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-semibold text-slate-800 cursor-pointer">
+                        <option value="today">📅 Today</option>
+                        <option value="yesterday">⏳ Yesterday</option>
+                        <option value="this_week">📆 This Week</option>
+                        <option value="this_month">🗓️ This Month</option>
+                        <option value="last_month">📊 Last Month</option>
+                        <option value="custom">📅 Custom Date...</option>
+                        <option value="all">🌐 All Time</option>
                     </select>
                 </div>
 
-                <!-- Status Filter -->
-                <div>
+                {{-- Pagination Per-Page Selector --}}
+                <div class="w-full md:w-24 flex-shrink-0">
+                    <select name="per_page" 
+                            onchange="this.form.submit()"
+                            class="w-full h-[34px] px-2 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700 cursor-pointer">
+                        <option value="15" {{ $perPage == 15 ? 'selected' : '' }}>15 / page</option>
+                        <option value="20" {{ $perPage == 20 ? 'selected' : '' }}>20 / page</option>
+                        <option value="30" {{ $perPage == 30 ? 'selected' : '' }}>30 / page</option>
+                        <option value="50" {{ $perPage == 50 ? 'selected' : '' }}>50 / page</option>
+                        <option value="100" {{ $perPage == 100 ? 'selected' : '' }}>100 / page</option>
+                    </select>
+                </div>
+
+                {{-- More Filters Accordion Toggle Button --}}
+                <button type="button" 
+                        @click="showMoreFilters = !showMoreFilters" 
+                        :class="showMoreFilters || {{ $activeMoreCount }} > 0 ? 'bg-cyan-50 text-cyan-700 border-cyan-300 ring-1 ring-cyan-200' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'"
+                        class="h-[34px] py-0 px-2.5 rounded-lg border text-xs font-medium transition flex items-center justify-center gap-1.5 flex-shrink-0 cursor-pointer shadow-2xs"
+                        title="Toggle Date Range, Method, Partner & Status Filters">
+                    <i class="fas fa-sliders-h text-[10px]"></i>
+                    <span>More Filters</span>
+                    @if($activeMoreCount > 0)
+                        <span class="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-cyan-600 text-white leading-none">
+                            {{ $activeMoreCount }}
+                        </span>
+                    @endif
+                    <i class="fas text-[9px] transition-transform duration-200" 
+                       :class="showMoreFilters ? 'fa-chevron-up text-cyan-600' : 'fa-chevron-down text-slate-400'"></i>
+                </button>
+
+                {{-- Strict Filter & Reset Button Sequence (Rule 2.C - Far Right on md+) --}}
+                <div class="flex items-center gap-1.5 flex-shrink-0 md:ml-auto">
+                    <button type="submit" 
+                            class="h-[34px] bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-0 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" 
+                            title="Apply Filters">
+                        <i class="fas fa-filter text-[10px]"></i>
+                        <span>Filter</span>
+                    </button>
+                    <a href="{{ route('tenant.finance.payments') }}" 
+                       class="h-[34px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-0 px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer" 
+                       title="Reset Filters">
+                        <i class="fas fa-rotate-left text-[10px]"></i>
+                        <span>Reset</span>
+                    </a>
+                </div>
+            </div>
+
+            {{-- Tier 2: Secondary Filters Drawer --}}
+            <div x-show="showMoreFilters" 
+                 x-cloak 
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0 -translate-y-2"
+                 x-transition:enter-end="opacity-100 translate-y-0"
+                 class="pt-2 border-t border-slate-100 flex flex-wrap items-center gap-2">
+                
+                {{-- Date From (Custom Range) --}}
+                <div class="w-full sm:w-40 flex-shrink-0 relative">
+                    <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[9px] uppercase font-bold text-slate-400 pointer-events-none">From</span>
+                    <input type="date" 
+                           name="date_from" 
+                           x-model="filterDateFrom" 
+                           @input="filterPeriod = 'custom'"
+                           class="w-full h-[34px] pl-11 pr-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
+                </div>
+
+                {{-- Date To (Custom Range) --}}
+                <div class="w-full sm:w-40 flex-shrink-0 relative">
+                    <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[9px] uppercase font-bold text-slate-400 pointer-events-none">To</span>
+                    <input type="date" 
+                           name="date_to" 
+                           x-model="filterDateTo" 
+                           @input="filterPeriod = 'custom'"
+                           class="w-full h-[34px] pl-8 pr-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
+                </div>
+
+                {{-- Payment Method --}}
+                <div class="w-full sm:w-40 flex-shrink-0">
+                    <select name="method" 
+                            onchange="this.form.submit()" 
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700 cursor-pointer">
+                        <option value="all">All Payment Methods</option>
+                        <option value="cash" {{ $methodFilter === 'cash' ? 'selected' : '' }}>💵 Cash in Hand</option>
+                        <option value="bkash" {{ $methodFilter === 'bkash' ? 'selected' : '' }}>📱 bKash</option>
+                        <option value="nagad" {{ $methodFilter === 'nagad' ? 'selected' : '' }}>📱 Nagad</option>
+                        <option value="rocket" {{ $methodFilter === 'rocket' ? 'selected' : '' }}>📱 Rocket</option>
+                        <option value="bangla_qr" {{ $methodFilter === 'bangla_qr' ? 'selected' : '' }}>🔲 Bangla QR</option>
+                        <option value="bank_transfer" {{ $methodFilter === 'bank_transfer' ? 'selected' : '' }}>🏦 Bank Transfer</option>
+                        <option value="pos" {{ $methodFilter === 'pos' ? 'selected' : '' }}>💳 Card / POS</option>
+                        <option value="online" {{ $methodFilter === 'online' ? 'selected' : '' }}>🌐 Online Gateway</option>
+                    </select>
+                </div>
+
+                {{-- Billing Month --}}
+                <div class="w-full sm:w-36 flex-shrink-0">
+                    <select name="month" 
+                            onchange="this.form.submit()" 
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700 cursor-pointer">
+                        <option value="all">All Billing Months</option>
+                        @foreach($availableMonths as $m)
+                            <option value="{{ $m }}" {{ (string)$selectedMonth === (string)$m ? 'selected' : '' }}>
+                                {{ \Carbon\Carbon::parse($m . '-01')->format('M Y') }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                {{-- Status Filter --}}
+                <div class="w-full sm:w-36 flex-shrink-0">
                     <select name="status" 
                             onchange="this.form.submit()" 
-                            class="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:border-cyan-500 transition shadow-2xs">
-                        <option value="all" {{ ($statusFilter ?? 'all') === 'all' ? 'selected' : '' }}>All Statuses</option>
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700 cursor-pointer">
+                        <option value="all" {{ ($statusFilter ?? 'all') === 'all' ? 'selected' : '' }}>All Status</option>
                         <option value="paid" {{ ($statusFilter ?? '') === 'paid' ? 'selected' : '' }}>Paid / Settled</option>
                         <option value="pending" {{ ($statusFilter ?? '') === 'pending' ? 'selected' : '' }}>Pending Approval</option>
                         <option value="void" {{ ($statusFilter ?? '') === 'void' ? 'selected' : '' }}>Voided</option>
                     </select>
                 </div>
 
-                <!-- Per Page -->
-                <div>
-                    <select name="per_page" 
+                {{-- Reseller Scope Filter (if HQ Admin) --}}
+                @if(!$isResellerUser && !$isCollector)
+                <div class="w-full sm:w-44 flex-shrink-0">
+                    <select name="reseller_id" 
                             onchange="this.form.submit()" 
-                            class="w-full px-2 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:border-cyan-500 transition shadow-2xs">
-                        <option value="10" {{ $perPage == 10 ? 'selected' : '' }}>Show 10 Rows</option>
-                        <option value="20" {{ $perPage == 20 ? 'selected' : '' }}>Show 20 Rows</option>
-                        <option value="50" {{ $perPage == 50 ? 'selected' : '' }}>Show 50 Rows</option>
-                        <option value="100" {{ $perPage == 100 ? 'selected' : '' }}>Show 100 Rows</option>
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700 cursor-pointer">
+                        <option value="all" {{ $selectedResellerId === 'all' ? 'selected' : '' }}>All Network Scope</option>
+                        <option value="isp" {{ $selectedResellerId === 'isp' ? 'selected' : '' }}>Direct HQ</option>
+                        @foreach($allResellers ?? [] as $r)
+                            <option value="{{ $r->id }}" {{ (string)$selectedResellerId === (string)$r->id ? 'selected' : '' }}>
+                                {{ $r->name }} ({{ $r->code ?: 'Partner' }})
+                            </option>
+                        @endforeach
                     </select>
                 </div>
-
-                <!-- Strict Filter & Reset Buttons (AGENTS.md Rule 2.C) -->
-                <div class="flex items-center gap-1.5 {{ $isResellerUser ? 'col-span-2' : 'col-span-2 sm:col-span-1' }}">
-                    <button type="submit" 
-                            class="w-1/2 bg-cyan-600 hover:bg-cyan-700 text-white text-xs px-3 py-1.5 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 font-semibold cursor-pointer" 
-                            title="Apply Filters">
-                        <i class="fas fa-filter text-[10px]"></i>
-                        <span>Filter</span>
-                    </button>
-
-                    <a href="{{ route('tenant.finance.payments') }}" 
-                       class="w-1/2 py-1.5 px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-lg border border-slate-200/80 transition inline-flex items-center justify-center gap-1 cursor-pointer" 
-                       title="Reset Filters">
-                        <i class="fas fa-rotate-left text-[10px]"></i>
-                        <span>Reset</span>
-                    </a>
-                </div>
-
+                @endif
             </div>
 
         </form>
@@ -309,14 +365,15 @@
             <table class="saas-table">
                 <thead>
                     <tr>
-                        <th class="w-10 text-center">#</th>
+                        <th class="w-8 text-center no-sort">#</th>
                         <th class="w-36">Receipt / MR No</th>
-                        <th>Subscriber Name</th>
-                        <th class="w-28">Billing Month</th>
-                        <th class="w-32">Method</th>
-                        <th class="text-right w-28">Amount</th>
+                        <th>Subscriber</th>
+                        <th class="w-36">Collected By</th>
+                        <th class="w-24 text-center">Billing Month</th>
+                        <th class="w-32">Payment Method</th>
+                        <th class="text-right w-28">Collected Amount</th>
                         <th class="text-center w-24">Status</th>
-                        <th class="no-sort text-center w-10">Action</th>
+                        <th class="no-sort text-center w-8">Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -341,23 +398,23 @@
                         @endphp
                         <tr>
                             <!-- 0. Row Index -->
-                            <td class="text-center font-mono text-slate-500">{{ $payments->firstItem() + $index }}</td>
+                            <td class="text-center font-mono text-slate-500 whitespace-nowrap">{{ $payments->firstItem() + $index }}</td>
 
                             <!-- 1. Receipt / MR No (Click to open Print / Detail Modal) -->
-                            <td class="font-mono text-amber-800 font-bold">
+                            <td class="font-mono text-cyan-800 font-bold whitespace-nowrap">
                                 <button type="button" 
                                         @click="openReceiptModal({{ $p->id }})" 
-                                        class="hover:underline hover:text-amber-600 cursor-pointer flex items-center gap-1"
-                                        title="Click to view and print Money Receipt">
-                                    <i class="fas fa-file-invoice text-[10px] text-amber-500"></i>
+                                        class="hover:underline hover:text-cyan-600 cursor-pointer flex items-center gap-1.5"
+                                        title="Click to view & print Money Receipt">
+                                    <i class="fas fa-file-invoice text-[10px] text-cyan-600"></i>
                                     <span>{{ $p->invoice_no }}</span>
                                 </button>
                             </td>
 
                             <!-- 2. Subscriber Name (Strict Single Data per Cell) -->
-                            <td class="font-medium text-slate-900">
+                            <td class="font-medium text-slate-900 whitespace-nowrap">
                                 @if($p->customer)
-                                    <a href="{{ route('tenant.customers.show', $p->customer->id) }}" class="hover:underline hover:text-amber-600">
+                                    <a href="{{ route('tenant.customers.show', $p->customer->id) }}" class="hover:underline hover:text-cyan-600">
                                         {{ $p->customer->name }}
                                     </a>
                                 @else
@@ -365,45 +422,53 @@
                                 @endif
                             </td>
 
-                            <!-- 3. Billing Month -->
-                            <td class="font-mono text-slate-700">
+                            <!-- 3. Collected By (Crucial for কালেক্টর-ভিত্তিক আদায় রিপোর্ট) -->
+                            <td class="whitespace-nowrap text-slate-700">
+                                <div class="flex items-center gap-1.5">
+                                    <i class="fas fa-user-check text-[10px] text-slate-400"></i>
+                                    <span class="font-medium text-xs">{{ $p->collector?->name ?? 'Direct / System' }}</span>
+                                </div>
+                            </td>
+
+                            <!-- 4. Billing Month -->
+                            <td class="text-center font-mono text-slate-700 whitespace-nowrap">
                                 {{ $p->formatted_month }}
                             </td>
 
-                            <!-- 4. Payment Method -->
-                            <td>
-                                <span class="inline-flex items-center gap-1.5 text-slate-700">
-                                    <i class="{{ $p->method_icon }} text-xs"></i>
+                            <!-- 5. Payment Method -->
+                            <td class="whitespace-nowrap">
+                                <span class="inline-flex items-center gap-1.5 text-slate-700 text-xs">
+                                    <i class="{{ $p->method_icon }} text-[11px] text-slate-500"></i>
                                     <span>{{ $p->payment_method_name }}</span>
                                 </span>
                             </td>
 
-                            <!-- 5. Collected Amount -->
-                            <td class="text-right font-mono font-bold text-emerald-700">
+                            <!-- 6. Collected Amount -->
+                            <td class="text-right font-mono font-bold text-emerald-700 whitespace-nowrap">
                                 @currency($p->amount)
                             </td>
 
-                            <!-- 6. Status -->
-                            <td class="text-center">
+                            <!-- 7. Status -->
+                            <td class="text-center whitespace-nowrap">
                                 <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold border {{ $badge['class'] }}">
                                     <span class="w-1.5 h-1.5 rounded-full {{ $badge['dot'] }}"></span>
                                     <span>{{ $badge['label'] }}</span>
                                 </span>
                             </td>
 
-                            <!-- 7. 3-Dot Action Button (Strictly Single Button in Row) -->
-                            <td class="text-center">
+                            <!-- 8. 3-Dot Action Button (Strictly Single Button in Row) -->
+                            <td class="text-center whitespace-nowrap">
                                 <button type="button" 
                                         @click="toggleMenu(@js($paymentJson), $event)" 
                                         class="w-6 h-6 rounded-md hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition flex items-center justify-center mx-auto cursor-pointer"
-                                        title="Payment Actions">
+                                        title="Actions">
                                     <i class="fas fa-ellipsis-v text-[10px]"></i>
                                 </button>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="text-center py-10 text-slate-400">
+                            <td colspan="9" class="text-center py-10 text-slate-400">
                                 <div class="flex flex-col items-center justify-center gap-2">
                                     <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 text-base">
                                         <i class="fas fa-receipt"></i>
@@ -411,7 +476,7 @@
                                     <p class="text-xs font-medium text-slate-600">No payment collections found matching your criteria.</p>
                                     <button type="button" 
                                             @click="openCollectModal()" 
-                                            class="text-xs text-amber-600 font-semibold hover:underline">
+                                            class="text-xs text-cyan-600 font-semibold hover:underline cursor-pointer">
                                         + Collect New Payment
                                     </button>
                                 </div>
