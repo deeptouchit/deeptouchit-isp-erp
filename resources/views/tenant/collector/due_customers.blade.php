@@ -13,18 +13,18 @@
 @section('content')
 <div class="space-y-3" x-data="dueCustomersManager()" @scroll.window="activeMenu = null" @resize.window="activeMenu = null">
     
-    {{-- 1. TOP HEADER BAR (Strict AGENTS.md Rule 2.A: Icon + Title + Action buttons ONLY) --}}
+    {{-- 1. TOP HEADER BAR --}}
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-white px-4 py-2.5 rounded-xl border border-slate-200/90 shadow-2xs">
         <div class="flex items-center gap-2.5">
             <a href="{{ route('tenant.collector.dashboard') }}" 
                class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-xs transition shadow-2xs cursor-pointer"
-               title="{{ __('Back to Collector Hub') }}">
+               title="Back to Collector Hub">
                 <i class="fas fa-arrow-left"></i>
             </a>
             <div class="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 border border-rose-100 flex items-center justify-center text-sm shadow-2xs flex-shrink-0">
                 <i class="fas fa-file-invoice-dollar"></i>
             </div>
-            <h1 class="text-sm font-bold text-slate-800 tracking-tight">{{ __('Area Due Customers') }}</h1>
+            <h1 class="text-sm font-bold text-slate-800 tracking-tight">Area Due Customers</h1>
         </div>
         
         <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap">
@@ -32,24 +32,24 @@
             <a href="{{ Route::has('tenant.collector.due-customers.print') ? route('tenant.collector.due-customers.print', request()->query()) : url('/admin/collector/due-customers/print?' . http_build_query(request()->query())) }}" 
                target="_blank"
                class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200/80 transition inline-flex items-center gap-1.5 shadow-2xs cursor-pointer"
-               title="{{ __('Print Offline Field Collection Sheet') }}">
+               title="Print Offline Field Collection Sheet">
                 <i class="fas fa-print text-cyan-600 text-[11px]"></i>
-                <span>{{ __('Print Due Sheet') }}</span>
+                <span>Print Due Sheet</span>
             </a>
 
             {{-- Daily Cash Handover Quick Access --}}
             <a href="{{ route('tenant.collector.handover') }}" 
                class="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 rounded-lg text-xs font-semibold border border-amber-200/90 transition inline-flex items-center gap-1.5 shadow-2xs cursor-pointer"
-               title="{{ __('Submit Cash in Hand to Office') }}">
+               title="Submit Cash in Hand to Office">
                 <i class="fas fa-hand-holding-dollar text-amber-600 text-[11px]"></i>
-                <span>{{ __('Handover Cash') }}</span>
+                <span>Handover Cash</span>
             </a>
 
             {{-- Hub Shortcut --}}
             <a href="{{ route('tenant.collector.dashboard') }}" 
                class="px-3 py-1.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-xs font-semibold transition inline-flex items-center gap-1.5 shadow-xs cursor-pointer">
                 <i class="fas fa-gauge-high text-[11px]"></i>
-                <span>{{ __('Collector Hub') }}</span>
+                <span>Collector Hub</span>
             </a>
         </div>
     </div>
@@ -59,7 +59,7 @@
         {{-- Card 1: Due Customers Count --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Due Subscribers') }}</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Due Subscribers</span>
                 <span class="text-[13px] font-bold font-mono text-rose-600 leading-tight block truncate">{{ number_format($stats['total_due_customers']) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border border-rose-200 bg-rose-50 text-rose-600 flex items-center justify-center flex-shrink-0">
@@ -70,7 +70,7 @@
         {{-- Card 2: Total Due Volume --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Total Due Amount') }}</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Total Due Amount</span>
                 <span class="text-[13px] font-bold font-mono text-rose-700 leading-tight block truncate">@currency($stats['total_due_amount'])</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border border-rose-200 bg-rose-50 text-rose-600 flex items-center justify-center flex-shrink-0">
@@ -81,7 +81,7 @@
         {{-- Card 3: Today Collected --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-emerald-700 block truncate">{{ __('Today Collected') }}</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-emerald-700 block truncate">Today Collected</span>
                 <span class="text-[13px] font-bold font-mono text-emerald-600 leading-tight block truncate">@currency($stats['today_collected'])</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border border-emerald-200 bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0">
@@ -92,7 +92,7 @@
         {{-- Card 4: Cash in Hand --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-amber-700 block truncate">{{ __('Cash In Hand') }}</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-amber-700 block truncate">Cash In Hand</span>
                 <span class="text-[13px] font-bold font-mono text-amber-600 leading-tight block truncate">@currency($stats['cash_in_hand'])</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border border-amber-200 bg-amber-50 text-amber-600 flex items-center justify-center flex-shrink-0" title="Unhanded collected cash in pocket">
@@ -103,7 +103,7 @@
         {{-- Card 5: Expired Lines --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Expired / Cut') }}</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Expired / Cut</span>
                 <span class="text-[13px] font-bold font-mono text-slate-700 leading-tight block truncate">{{ number_format($stats['expired_customers']) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border border-slate-200 bg-slate-50 text-slate-600 flex items-center justify-center flex-shrink-0">
@@ -114,7 +114,7 @@
         {{-- Card 6: Active Lines with Due --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-cyan-700 block truncate">{{ __('Active (With Due)') }}</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-cyan-700 block truncate">Active (With Due)</span>
                 <span class="text-[13px] font-bold font-mono text-cyan-700 leading-tight block truncate">{{ number_format($stats['active_subscribers']) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border border-cyan-200 bg-cyan-50 text-cyan-600 flex items-center justify-center flex-shrink-0">
@@ -143,7 +143,7 @@
                            name="search" 
                            id="dueSearchInput"
                            x-model="searchQuery"
-                           placeholder="{{ __('Search Username, Name, Phone, ID, Address...') }}" 
+                           placeholder="Search Username, Name, Phone, ID, Address..." 
                            class="w-full h-[34px] pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition placeholder:text-slate-400"
                            autocomplete="off">
                     <button type="button" 
@@ -151,7 +151,7 @@
                             x-cloak
                             @click="searchQuery = ''; $nextTick(() => $el.closest('form').submit())"
                             class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500 p-0.5 text-xs transition cursor-pointer"
-                            title="{{ __('Clear Search') }}">
+                            title="Clear Search">
                         <i class="fas fa-times-circle"></i>
                     </button>
                 </div>
@@ -161,7 +161,7 @@
                     <select name="zone_id" 
                             onchange="this.form.submit()"
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700">
-                        <option value="all">{{ __('All Zones / Areas') }}</option>
+                        <option value="all">All Zones / Areas</option>
                         @foreach($zones as $z)
                             <option value="{{ $z->id }}" {{ (string)$zoneFilter === (string)$z->id ? 'selected' : '' }}>
                                 {{ $z->name }}
@@ -175,10 +175,10 @@
                     <select name="due_status" 
                             onchange="this.form.submit()"
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700">
-                        <option value="all_due" {{ $dueStatusFilter === 'all_due' ? 'selected' : '' }}>{{ __('All Dues & Expired') }}</option>
-                        <option value="due_only" {{ $dueStatusFilter === 'due_only' ? 'selected' : '' }}>🟢 {{ __('Active Lines (Due)') }}</option>
-                        <option value="expired_only" {{ $dueStatusFilter === 'expired_only' ? 'selected' : '' }}>🔴 {{ __('Expired Lines') }}</option>
-                        <option value="high_due" {{ $dueStatusFilter === 'high_due' ? 'selected' : '' }}>⚠️ {{ __('High Due (Tk 1000+)') }}</option>
+                        <option value="all_due" {{ $dueStatusFilter === 'all_due' ? 'selected' : '' }}>All Dues & Expired</option>
+                        <option value="due_only" {{ $dueStatusFilter === 'due_only' ? 'selected' : '' }}>🟢 Active Lines (Due)</option>
+                        <option value="expired_only" {{ $dueStatusFilter === 'expired_only' ? 'selected' : '' }}>🔴 Expired Lines</option>
+                        <option value="high_due" {{ $dueStatusFilter === 'high_due' ? 'selected' : '' }}>⚠️ High Due (Tk 1000+)</option>
                     </select>
                 </div>
 
@@ -187,13 +187,13 @@
                     <select name="per_page" 
                             onchange="this.form.submit()"
                             class="w-full h-[34px] px-2 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700">
-                        <option value="15" {{ request('per_page', $perPage) == 15 ? 'selected' : '' }}>15 / {{ __('page') }}</option>
-                        <option value="20" {{ request('per_page', $perPage) == 20 ? 'selected' : '' }}>20 / {{ __('page') }}</option>
-                        <option value="30" {{ request('per_page', $perPage) == 30 ? 'selected' : '' }}>30 / {{ __('page') }}</option>
-                        <option value="50" {{ request('per_page', $perPage) == 50 ? 'selected' : '' }}>50 / {{ __('page') }}</option>
-                        <option value="100" {{ request('per_page', $perPage) == 100 ? 'selected' : '' }}>100 / {{ __('page') }}</option>
-                        <option value="250" {{ request('per_page', $perPage) == 250 ? 'selected' : '' }}>250 / {{ __('page') }}</option>
-                        <option value="all" {{ request('per_page', $perPage) === 'all' ? 'selected' : '' }}>{{ __('All Subscribers') }}</option>
+                        <option value="15" {{ request('per_page', $perPage) == 15 ? 'selected' : '' }}>15 / page</option>
+                        <option value="20" {{ request('per_page', $perPage) == 20 ? 'selected' : '' }}>20 / page</option>
+                        <option value="30" {{ request('per_page', $perPage) == 30 ? 'selected' : '' }}>30 / page</option>
+                        <option value="50" {{ request('per_page', $perPage) == 50 ? 'selected' : '' }}>50 / page</option>
+                        <option value="100" {{ request('per_page', $perPage) == 100 ? 'selected' : '' }}>100 / page</option>
+                        <option value="250" {{ request('per_page', $perPage) == 250 ? 'selected' : '' }}>250 / page</option>
+                        <option value="all" {{ request('per_page', $perPage) === 'all' ? 'selected' : '' }}>All Subscribers</option>
                     </select>
                 </div>
 
@@ -202,9 +202,9 @@
                         @click="showMoreFilters = !showMoreFilters" 
                         :class="showMoreFilters || {{ $activeMoreCount }} > 0 ? 'bg-cyan-50 text-cyan-700 border-cyan-300 ring-1 ring-cyan-200' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'"
                         class="h-[34px] py-0 px-2.5 rounded-lg border text-xs font-medium transition flex items-center justify-center gap-1.5 flex-shrink-0 cursor-pointer shadow-2xs"
-                        title="{{ __('Toggle Package & Collector Filters') }}">
+                        title="Toggle Package & Collector Filters">
                     <i class="fas fa-sliders-h text-[10px]"></i>
-                    <span>{{ __('More Filters') }}</span>
+                    <span>More Filters</span>
                     @if($activeMoreCount > 0)
                         <span class="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-cyan-600 text-white leading-none">
                             {{ $activeMoreCount }}
@@ -218,15 +218,15 @@
                 <div class="flex items-center gap-1.5 flex-shrink-0 sm:ml-auto">
                     <button type="submit" 
                             class="h-[34px] bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-0 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" 
-                            title="{{ __('Apply Filters') }}">
+                            title="Apply Filters">
                         <i class="fas fa-filter text-[10px]"></i>
-                        <span>{{ __('Filter') }}</span>
+                        <span>Filter</span>
                     </button>
                     <a href="{{ route('tenant.collector.due-customers') }}" 
                        class="h-[34px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-0 px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer" 
-                       title="{{ __('Reset Filters') }}">
+                       title="Reset Filters">
                         <i class="fas fa-rotate-left text-[10px]"></i>
-                        <span>{{ __('Reset') }}</span>
+                        <span>Reset</span>
                     </a>
                 </div>
             </div>
@@ -244,7 +244,7 @@
                     <select name="package_id" 
                             onchange="this.form.submit()" 
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700">
-                        <option value="all">{{ __('All Internet Packages') }}</option>
+                        <option value="all">All Internet Packages</option>
                         @foreach($packages as $p)
                             <option value="{{ $p->id }}" {{ (string)$packageFilter === (string)$p->id ? 'selected' : '' }}>
                                 {{ $p->name }} (@currency($p->price))
@@ -259,7 +259,7 @@
                     <select name="collector_id" 
                             onchange="this.form.submit()" 
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700">
-                        <option value="all">{{ __('All Field Collectors') }}</option>
+                        <option value="all">All Field Collectors</option>
                         @foreach($collectors as $c)
                             <option value="{{ $c->id }}" {{ (string)($collectorFilter ?? '') === (string)$c->id ? 'selected' : '' }}>
                                 <i class="fas fa-user"></i> {{ $c->name }} ({{ $c->phone ?: 'Staff' }})
@@ -279,20 +279,20 @@
                 <thead>
                     <tr>
                         <th class="w-10 text-center no-sort">#</th>
-                        <th class="text-left">{{ __('Customer ID') }}</th>
-                        <th class="text-left">{{ __('Customer Name') }}</th>
-                        <th class="text-left">{{ __('Mobile Number') }}</th>
-                        <th class="text-left">{{ __('Area') }}</th>
-                        <th class="text-left">{{ __('Package') }}</th>
-                        <th class="text-right">{{ __('Monthly Bill') }}</th>
-                        <th class="text-right">{{ __('Due Amount') }}</th>
-                        <th class="w-24 text-center no-sort">{{ __('Action') }}</th>
+                        <th class="text-left font-semibold">Customer ID</th>
+                        <th class="text-left font-semibold">Customer Name</th>
+                        <th class="text-left font-semibold">Guardian Name</th>
+                        <th class="text-left font-semibold">Mobile Number</th>
+                        <th class="text-left font-semibold">Area</th>
+                        <th class="text-left font-semibold">Package</th>
+                        <th class="text-right font-semibold">Monthly Bill</th>
+                        <th class="text-right font-semibold">Due Amount</th>
+                        <th class="w-24 text-center no-sort">Action</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($customers as $index => $customer)
                         @php
-                            $isExpired = $customer->status === 'expired';
                             $dueAmt = (float)($customer->due_amount ?? 0);
                             $cleanPhone = preg_replace('/[^0-9]/', '', $customer->phone ?? '');
                             if (str_starts_with($cleanPhone, '0')) {
@@ -311,26 +311,17 @@
                                 {{ $customer->customer_id ?: $customer->username }}
                             </td>
 
-                            {{-- 3. Customer Name --}}
-                            <td class="whitespace-nowrap">
-                                <div class="flex items-center gap-1.5 flex-nowrap whitespace-nowrap">
-                                    <span class="font-medium text-slate-900 text-xs">{{ $customer->name ?: $customer->username }}</span>
-                                    @if(!empty($customer->name) && $customer->username !== $customer->name)
-                                        <span class="text-[10px] text-slate-400 font-mono">({{ $customer->username }})</span>
-                                    @endif
-                                    @if($isExpired)
-                                        <span class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-rose-50 text-rose-700 border border-rose-200/80 leading-none">
-                                            Expired
-                                        </span>
-                                    @else
-                                        <span class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/80 leading-none">
-                                            Active
-                                        </span>
-                                    @endif
-                                </div>
+                            {{-- 3. Customer Name (Clean - No email, code or extra tags) --}}
+                            <td class="whitespace-nowrap font-medium text-slate-900 text-xs">
+                                {{ $customer->name ?: $customer->username }}
                             </td>
 
-                            {{-- 4. Mobile Number --}}
+                            {{-- 4. Guardian Name --}}
+                            <td class="whitespace-nowrap font-sans text-slate-700 text-xs">
+                                {{ $customer->father_name ?: '—' }}
+                            </td>
+
+                            {{-- 5. Mobile Number --}}
                             <td class="whitespace-nowrap">
                                 <div class="flex items-center gap-1.5 flex-nowrap whitespace-nowrap">
                                     @if(!empty($customer->phone))
@@ -354,31 +345,27 @@
                                 </div>
                             </td>
 
-                            {{-- 5. Area --}}
-                            <td class="whitespace-nowrap">
-                                <span class="font-medium text-slate-700 text-xs">{{ $customer->zone?->name ?? 'Default Area' }}</span>
+                            {{-- 6. Area (Properly resolve string attribute, relation or address) --}}
+                            <td class="whitespace-nowrap font-medium text-slate-700 text-xs">
+                                {{ (is_object($customer->zone) ? ($customer->zone->name ?? '') : $customer->zone) ?: ($customer->coverageZone?->name ?: ($customer->address ?: '—')) }}
                             </td>
 
-                            {{-- 6. Package --}}
-                            <td class="whitespace-nowrap">
-                                <span class="font-medium text-slate-800 text-xs">{{ $customer->package_display_name }}</span>
+                            {{-- 7. Package --}}
+                            <td class="whitespace-nowrap font-medium text-slate-800 text-xs">
+                                {{ $customer->package_display_name }}
                             </td>
 
-                            {{-- 7. Monthly Bill / Price --}}
-                            <td class="text-right whitespace-nowrap">
-                                <span class="font-mono font-semibold text-xs text-slate-700">
-                                    @currency($customer->monthly_bill ?? ($customer->package?->price ?? 0))
-                                </span>
+                            {{-- 8. Monthly Bill / Price --}}
+                            <td class="text-right whitespace-nowrap font-mono font-semibold text-xs text-slate-700">
+                                @currency($customer->monthly_bill ?? ($customer->package?->price ?? 0))
                             </td>
 
-                            {{-- 8. Due Amount --}}
-                            <td class="text-right whitespace-nowrap">
-                                <span class="font-mono font-bold text-xs text-rose-600">
-                                    @currency($dueAmt)
-                                </span>
+                            {{-- 9. Due Amount --}}
+                            <td class="text-right whitespace-nowrap font-mono font-bold text-xs text-rose-600">
+                                @currency($dueAmt)
                             </td>
 
-                            {{-- 9. Action --}}
+                            {{-- 10. Action --}}
                             <td class="text-center whitespace-nowrap">
                                 <button type="button" 
                                         @click="openCollectModal({
@@ -400,9 +387,16 @@
                         </tr>
                     @empty
                         <tr class="no-record-row">
-                            <td colspan="9" class="text-center py-8 text-slate-400">
+                            <td colspan="10" class="text-center py-8 text-slate-400">
                                 <i class="fas fa-circle-check text-2xl mb-1.5 block text-emerald-500"></i>
                                 <span class="font-medium text-slate-600 text-xs">No due customers found in the selected scope.</span>
+                                <p class="text-[11px] text-slate-400 mt-0.5">All assigned subscribers in this area have zero outstanding dues.</p>
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
                                 <p class="text-[11px] text-slate-400 mt-0.5">All assigned subscribers in this area have zero outstanding dues.</p>
                             </td>
                         </tr>
@@ -442,10 +436,10 @@
                     </div>
                     <div>
                         <h3 class="text-xs font-semibold text-slate-800">
-                            {{ __('Collect Customer Bill') }}
+                            Collect Customer Bill
                         </h3>
                         <p class="text-[10.5px] text-slate-500 font-normal">
-                            {{ __('Receive field payment, update ledger, and auto-renew subscriber line') }}
+                            Receive field payment, update ledger, and auto-renew subscriber line
                         </p>
                     </div>
                 </div>
@@ -474,7 +468,7 @@
                         </div>
                     </div>
                     <div class="text-right">
-                        <span class="text-[9px] uppercase font-semibold text-slate-500 block">{{ __('Total Due') }}</span>
+                        <span class="text-[9px] uppercase font-semibold text-slate-500 block">Total Due</span>
                         <span class="font-bold font-mono text-sm text-rose-600" x-text="'Tk ' + Number(selectedCustomer?.due_amount || 0).toFixed(2)"></span>
                     </div>
                 </div>
@@ -483,18 +477,18 @@
                 <div>
                     <div class="flex items-center justify-between mb-1">
                         <label class="block text-[11px] font-semibold text-slate-700">
-                            {{ __('Collection Amount (Tk)') }} <span class="text-rose-500">*</span>
+                            Collection Amount (Tk) <span class="text-rose-500">*</span>
                         </label>
                         <div class="flex items-center gap-1">
                             <button type="button" 
                                     @click="setPreset('full')" 
                                     class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition cursor-pointer">
-                                {{ __('Full Due') }}
+                                Full Due
                             </button>
                             <button type="button" 
                                     @click="setPreset('monthly')" 
                                     class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-cyan-50 text-cyan-700 border border-cyan-200 hover:bg-cyan-100 transition cursor-pointer">
-                                {{ __('1 Month') }}
+                                1 Month
                             </button>
                         </div>
                     </div>
@@ -510,7 +504,7 @@
                 <div class="grid grid-cols-2 gap-2.5">
                     <div>
                         <label class="block text-[11px] font-semibold text-slate-700 mb-1">
-                            {{ __('Payment Method') }} <span class="text-rose-500">*</span>
+                            Payment Method <span class="text-rose-500">*</span>
                         </label>
                         <select x-model="paymentMethod" 
                                 required 
@@ -525,7 +519,7 @@
 
                     <div>
                         <label class="block text-[11px] font-semibold text-slate-700 mb-1">
-                            {{ __('Discount / Waiver (Tk)') }}
+                            Discount / Waiver (Tk)
                         </label>
                         <input type="number" 
                                x-model="collectDiscount" 
@@ -539,7 +533,7 @@
                 {{-- Online Transaction ID (Shown if non-cash) --}}
                 <div x-show="paymentMethod !== 'cash'" x-cloak>
                     <label class="block text-[11px] font-semibold text-slate-700 mb-1">
-                        {{ __('Transaction / TrxID') }}
+                        Transaction / TrxID
                     </label>
                     <input type="text" 
                            x-model="trxId" 
@@ -550,11 +544,11 @@
                 {{-- Collector Note --}}
                 <div>
                     <label class="block text-[11px] font-semibold text-slate-700 mb-1">
-                        {{ __('Collection Note (Optional)') }}
+                        Collection Note (Optional)
                     </label>
                     <input type="text" 
                            x-model="notes" 
-                           placeholder="{{ __('e.g. Received at customer doorstep') }}" 
+                           placeholder="e.g. Received at customer doorstep" 
                            class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-cyan-500 shadow-2xs">
                 </div>
 
@@ -564,7 +558,7 @@
                             @click="showCollectModal = false" 
                             :disabled="isSubmitting"
                             class="border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs px-3.5 py-1.5 rounded-lg transition cursor-pointer">
-                        {{ __('Cancel') }}
+                        Cancel
                     </button>
                     
                     <button type="submit" 
@@ -572,7 +566,7 @@
                             class="bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs px-4 py-1.5 rounded-lg shadow-xs transition cursor-pointer flex items-center gap-1.5 disabled:opacity-50">
                         <i class="fas fa-spinner fa-spin" x-show="isSubmitting" x-cloak></i>
                         <i class="fas fa-check" x-show="!isSubmitting"></i>
-                        <span>{{ __('Confirm Payment') }}</span>
+                        <span>Confirm Payment</span>
                     </button>
                 </div>
             </form>
@@ -594,25 +588,25 @@
             </div>
             
             <div>
-                <h3 class="text-sm font-bold text-slate-800">{{ __('Payment Collected Successfully!') }}</h3>
+                <h3 class="text-sm font-bold text-slate-800">Payment Collected Successfully!</h3>
                 <p class="text-xs text-slate-500 mt-1" x-text="receiptMessage"></p>
             </div>
 
             <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/80 text-xs space-y-1 text-left font-mono">
                 <div class="flex justify-between">
-                    <span class="text-slate-500">{{ __('Subscriber:') }}</span>
+                    <span class="text-slate-500">Subscriber:</span>
                     <span class="font-bold text-slate-800" x-text="receiptData?.username"></span>
                 </div>
                 <div class="flex justify-between">
-                    <span class="text-slate-500">{{ __('Amount Paid:') }}</span>
+                    <span class="text-slate-500">Amount Paid:</span>
                     <span class="font-bold text-emerald-600" x-text="'Tk ' + Number(receiptData?.amount || 0).toFixed(2)"></span>
                 </div>
                 <div class="flex justify-between">
-                    <span class="text-slate-500">{{ __('Method:') }}</span>
+                    <span class="text-slate-500">Method:</span>
                     <span class="font-bold text-slate-700 uppercase" x-text="receiptData?.payment_method"></span>
                 </div>
                 <div class="flex justify-between border-t border-slate-200 pt-1">
-                    <span class="text-slate-500">{{ __('Remaining Due:') }}</span>
+                    <span class="text-slate-500">Remaining Due:</span>
                     <span class="font-bold text-rose-600" x-text="'Tk ' + Number(receiptData?.remaining_due || 0).toFixed(2)"></span>
                 </div>
             </div>
@@ -621,13 +615,13 @@
                 <button type="button" 
                         @click="showReceiptModal = false; window.location.reload();" 
                         class="px-4 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-lg border border-slate-200 transition cursor-pointer">
-                    {{ __('Close') }}
+                    Close
                 </button>
                 <button type="button" 
                         @click="printReceipt(receiptData)" 
                         class="px-4 py-1.5 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                     <i class="fas fa-print"></i>
-                    <span>{{ __('Print Thermal Slip') }}</span>
+                    <span>Print Thermal Slip</span>
                 </button>
             </div>
         </div>
