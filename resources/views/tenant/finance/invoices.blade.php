@@ -67,14 +67,6 @@
         </div>
 
         <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-            <!-- Generate Monthly Invoices Button -->
-            <button type="button" 
-                    @click="openGenerateModal()" 
-                    class="px-3 py-1.5 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer">
-                <i class="fas fa-arrows-rotate text-[11px]"></i>
-                <span>+ Generate Monthly Bills</span>
-            </button>
-
             <!-- Create Custom Invoice Button -->
             <button type="button" 
                     @click="openCreateModal()" 
@@ -606,121 +598,7 @@
         </div>
     </div>
 
-    <!-- 6. Production-Grade Natural Modal: Generate Monthly Bills -->
-    <div x-show="generateModal.open" 
-         x-cloak 
-         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs"
-         x-transition:enter="transition ease-out duration-200"
-         x-transition:enter-start="opacity-0"
-         x-transition:enter-end="opacity-100"
-         x-transition:leave="transition ease-in duration-150"
-         x-transition:leave-start="opacity-100"
-         x-transition:leave-end="opacity-0"
-         style="display: none;">
-        
-        <div class="bg-white rounded-xl border border-slate-200/90 shadow-2xl w-full max-w-md overflow-hidden"
-             @click.away="if (!generateModal.loading) generateModal.open = false"
-             x-transition:enter="transition ease-out duration-200 transform"
-             x-transition:enter-start="opacity-0 scale-95"
-             x-transition:enter-end="opacity-100 scale-100"
-             x-transition:leave="transition ease-in duration-150 transform"
-             x-transition:leave-start="opacity-100 scale-100"
-             x-transition:leave-end="opacity-0 scale-95">
-            
-            <!-- Soft Natural Header -->
-            <div class="bg-slate-50/80 border-b border-slate-200 px-4 py-3 flex items-center justify-between">
-                <div class="flex items-center gap-2.5">
-                    <div class="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center justify-center text-xs flex-shrink-0 shadow-2xs">
-                        <i class="fas fa-arrows-rotate"></i>
-                    </div>
-                    <div>
-                        <h3 class="text-xs font-semibold text-slate-800">Generate Monthly Invoices &amp; Bills</h3>
-                        <p class="text-[10.5px] text-slate-500 font-normal">Automate recurring bill generation for all active subscribers</p>
-                    </div>
-                </div>
-                <button type="button" 
-                        @click="generateModal.open = false" 
-                        :disabled="generateModal.loading"
-                        class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center cursor-pointer">
-                    <i class="fas fa-times text-xs"></i>
-                </button>
-            </div>
-
-            <!-- Modal Form -->
-            <form @submit.prevent="submitGenerateMonthly()">
-                <div class="p-4 space-y-3.5 text-xs">
-                    
-                    <div class="p-3 bg-indigo-50/60 rounded-lg border border-indigo-100 flex items-start gap-2.5 text-indigo-900">
-                        <i class="fas fa-circle-info text-indigo-600 mt-0.5 text-xs"></i>
-                        <span class="text-[11px] leading-relaxed">
-                            This will create monthly billing invoices for all eligible active &amp; due subscribers based on their assigned internet package fee.
-                        </span>
-                    </div>
-
-                    <!-- Billing Month -->
-                    <div class="space-y-1">
-                        <label class="block text-slate-700 font-semibold text-[11px]">
-                            Billing Month (YYYY-MM) <span class="text-rose-500">*</span>
-                        </label>
-                        <input type="month" 
-                               x-model="generateModal.form.billing_month" 
-                               required 
-                               class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 text-slate-800 focus:bg-white focus:border-cyan-500 transition">
-                    </div>
-
-                    <!-- Due Date -->
-                    <div class="space-y-1">
-                        <label class="block text-slate-700 font-semibold text-[11px]">
-                            Payment Due Date <span class="text-rose-500">*</span>
-                        </label>
-                        <input type="date" 
-                               x-model="generateModal.form.due_date" 
-                               required 
-                               class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 text-slate-800 focus:bg-white focus:border-cyan-500 transition">
-                    </div>
-
-                    @if(!$isResellerUser)
-                        <!-- Target Scope -->
-                        <div class="space-y-1">
-                            <label class="block text-slate-700 font-semibold text-[11px]">
-                                Target Scope / Sub-ISP Partner
-                            </label>
-                            <select x-model="generateModal.form.reseller_id" 
-                                    class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 text-slate-800 focus:bg-white focus:border-cyan-500 transition">
-                                <option value="all">All Subscribers (HQ Direct + All Partners)</option>
-                                <option value="isp">ISP HQ Direct Subscribers Only</option>
-                                @foreach($allResellers ?? [] as $r)
-                                    <option value="{{ $r->id }}">
-                                        Partner: {{ $r->code ? "[{$r->code}] " : '' }}{{ $r->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-                    @endif
-
-                </div>
-
-                <!-- Footer -->
-                <div class="px-4 py-2.5 bg-slate-50/80 border-t border-slate-200 flex items-center justify-between">
-                    <button type="button" 
-                            @click="generateModal.open = false" 
-                            :disabled="generateModal.loading"
-                            class="border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs px-3.5 py-1.5 rounded-lg transition shadow-2xs cursor-pointer">
-                        Cancel
-                    </button>
-
-                    <button type="submit" 
-                            :disabled="generateModal.loading"
-                            class="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-medium text-xs px-4 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow-xs cursor-pointer">
-                        <i class="fas" :class="generateModal.loading ? 'fa-spinner fa-spin' : 'fa-arrows-rotate'"></i>
-                        <span x-text="generateModal.loading ? 'Generating Invoices...' : 'Generate Invoices Now'"></span>
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- 7. Production-Grade Natural Modal: Create Custom Invoice -->
+    <!-- 6. Production-Grade Natural Modal: Create Custom Invoice -->
     <div x-show="createModal.open" 
          x-cloak 
          class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs"
@@ -1426,16 +1304,6 @@ function invoiceManager() {
             }
         },
 
-        generateModal: {
-            open: false,
-            loading: false,
-            form: {
-                billing_month: '{{ Carbon\Carbon::now()->format('Y-m') }}',
-                due_date: '{{ Carbon\Carbon::now()->endOfMonth()->toDateString() }}',
-                reseller_id: 'all'
-            }
-        },
-
         customersList: @json($allCustomers ?? []),
 
         createModal: {
@@ -1504,42 +1372,6 @@ function invoiceManager() {
             this.createModal.form.customer_id = '';
             this.createModal.customerSearch = '';
             this.createModal.customerDropdownOpen = false;
-        },
-
-        openGenerateModal() {
-            this.generateModal.form = {
-                billing_month: '{{ Carbon\Carbon::now()->format('Y-m') }}',
-                due_date: '{{ Carbon\Carbon::now()->endOfMonth()->toDateString() }}',
-                reseller_id: 'all'
-            };
-            this.generateModal.open = true;
-        },
-
-        async submitGenerateMonthly() {
-            this.generateModal.loading = true;
-            try {
-                const res = await fetch(`{{ route('tenant.finance.invoices.generate-monthly') }}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify(this.generateModal.form)
-                });
-                const data = await res.json();
-                if (res.ok && data.success) {
-                    this.showToast(data.message, 'success');
-                    this.generateModal.open = false;
-                    setTimeout(() => window.location.reload(), 700);
-                } else {
-                    this.showToast(data.message || 'Generation failed.', 'error');
-                }
-            } catch (err) {
-                this.showToast('Network error while generating invoices.', 'error');
-            } finally {
-                this.generateModal.loading = false;
-            }
         },
 
         openCreateModal() {
