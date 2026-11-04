@@ -128,28 +128,32 @@
         $activeMoreCount = collect([$packageFilter !== 'all' ? $packageFilter : null, ($collectorFilter ?? 'all') !== 'all' ? $collectorFilter : null])->filter()->count();
         $isMoreOpen = $activeMoreCount > 0;
     @endphp
-    <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5"
-         x-data="{ showMoreFilters: {{ $isMoreOpen ? 'true' : 'false' }}, searchQuery: '{{ addslashes($search) }}' }">
+    <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5">
         <form method="GET" action="{{ route('tenant.collector.due-customers') }}" id="dueFilterForm" class="space-y-2.5">
             
             {{-- Tier 1: Primary Filter Bar (Uniform h-[34px] & Responsive Wrapping) --}}
             <div class="flex flex-wrap items-center gap-2">
                 
-                {{-- Intelligent Live Search Box --}}
+                {{-- Intelligent Live Search Box (Instant Client-Side & Debounced Server Search) --}}
                 <div class="relative flex-1 min-w-[200px]">
+                    <i class="fas fa-spinner fa-spin absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-cyan-600 pointer-events-none"
+                       x-show="isSearching" x-cloak></i>
                     <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-xs pointer-events-none transition-colors"
-                       :class="searchQuery ? 'text-cyan-600 font-bold' : 'text-slate-400'"></i>
+                       :class="searchQuery ? 'text-cyan-600 font-bold' : 'text-slate-400'"
+                       x-show="!isSearching"></i>
                     <input type="text" 
                            name="search" 
                            id="dueSearchInput"
                            x-model="searchQuery"
+                           @input="handleLiveSearch($event.target.value)"
+                           @keydown.enter.prevent="submitSearchNow()"
                            placeholder="Search Username, Name, Phone, ID, Address..." 
-                           class="w-full h-[34px] pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition placeholder:text-slate-400"
+                           class="w-full h-[34px] pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition placeholder:text-slate-400 font-medium"
                            autocomplete="off">
                     <button type="button" 
                             x-show="searchQuery && searchQuery.length > 0" 
                             x-cloak
-                            @click="searchQuery = ''; $nextTick(() => $el.closest('form').submit())"
+                            @click="clearLiveSearch()"
                             class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500 p-0.5 text-xs transition cursor-pointer"
                             title="Clear Search">
                         <i class="fas fa-times-circle"></i>
@@ -292,6 +296,13 @@
                     </tr>
                 </thead>
                 <tbody>
+                    <tr x-show="searchQuery && totalMatchingRows === 0" x-cloak class="no-record-row">
+                        <td colspan="11" class="text-center py-6 text-slate-500 bg-slate-50/50">
+                            <i class="fas fa-spinner fa-spin text-cyan-600 mr-1.5" x-show="isSearching"></i>
+                            <i class="fas fa-search text-slate-400 mr-1.5" x-show="!isSearching"></i>
+                            <span class="text-xs font-medium">No matching subscribers found on this page. Searching entire database...</span>
+                        </td>
+                    </tr>
                     @forelse($customers as $index => $customer)
                         @php
                             $dueAmt = (float)($customer->due_amount ?? 0);
@@ -435,7 +446,78 @@
 <script>
 function dueCustomersManager() {
     return {
-        activeMenu: null
+        activeMenu: null,
+        showMoreFilters: {{ $isMoreOpen ? 'true' : 'false' }},
+        searchQuery: @json($search ?? ''),
+        searchDebounceTimer: null,
+        totalMatchingRows: null,
+        isSearching: false,
+
+        init() {
+            if (this.searchQuery) {
+                this.$nextTick(() => {
+                    this.filterRowsOnly(this.searchQuery);
+                    const input = document.getElementById('dueSearchInput');
+                    if (input) {
+                        input.focus();
+                        input.setSelectionRange(input.value.length, input.value.length);
+                    }
+                });
+            }
+        },
+
+        handleLiveSearch(val) {
+            this.searchQuery = val;
+            this.filterRowsOnly(val);
+
+            // Debounced full database search across all pages
+            clearTimeout(this.searchDebounceTimer);
+            this.isSearching = true;
+            this.searchDebounceTimer = setTimeout(() => {
+                const form = document.getElementById('dueFilterForm');
+                if (form) {
+                    form.submit();
+                }
+            }, 500);
+        },
+
+        filterRowsOnly(val) {
+            const term = (val || '').trim().toLowerCase();
+            const rows = document.querySelectorAll('.saas-table tbody tr:not(.no-record-row)');
+            let matchCount = 0;
+            rows.forEach(row => {
+                const text = row.innerText.toLowerCase();
+                const matches = !term || text.includes(term);
+                row.style.display = matches ? '' : 'none';
+                if (matches) matchCount++;
+            });
+            this.totalMatchingRows = term ? matchCount : null;
+        },
+
+        clearLiveSearch() {
+            this.searchQuery = '';
+            clearTimeout(this.searchDebounceTimer);
+            const rows = document.querySelectorAll('.saas-table tbody tr:not(.no-record-row)');
+            rows.forEach(row => {
+                row.style.display = '';
+            });
+            this.totalMatchingRows = null;
+            this.isSearching = false;
+            const form = document.getElementById('dueFilterForm');
+            if (form) {
+                const input = form.querySelector('input[name="search"]');
+                if (input) input.value = '';
+                form.submit();
+            }
+        },
+
+        submitSearchNow() {
+            clearTimeout(this.searchDebounceTimer);
+            const form = document.getElementById('dueFilterForm');
+            if (form) {
+                form.submit();
+            }
+        }
     };
 }
 </script>
