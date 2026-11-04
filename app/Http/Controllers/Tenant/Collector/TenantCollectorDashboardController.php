@@ -9,6 +9,7 @@ use App\Models\TenantCustomer;
 use App\Models\TenantCustomerPayment;
 use App\Models\TenantDailyCashHandover;
 use App\Models\TenantInternetPackage;
+use App\Models\TenantReseller;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
@@ -143,6 +144,7 @@ class TenantCollectorDashboardController extends Controller
         $packageFilter = $request->input('package_id', 'all');
         $dueStatusFilter = $request->input('due_status', 'all_due'); // all_due, expired_only, due_only, high_due
         $collectorFilter = $request->input('collector_id', 'all');
+        $resellerFilter = $request->input('reseller_id', 'all');
         $perPage = $request->input('per_page', 20);
 
         // Core Closures: Standard definition of Expired and Due
@@ -167,7 +169,7 @@ class TenantCollectorDashboardController extends Controller
         // 2. Base Query: Include both Outstanding Due AND Expired lines
         $query = TenantCustomer::where('tenant_id', $tenantId)
             ->where($isDueOrExpiredClosure)
-            ->with(['package', 'zone']);
+            ->with(['package', 'zone', 'reseller']);
 
         // Collector Scoping: If user is collector, filter to assigned customers if any assigned
         if ($isCollector) {
@@ -179,6 +181,13 @@ class TenantCollectorDashboardController extends Controller
             }
         } elseif ($collectorFilter !== 'all' && !empty($collectorFilter)) {
             $query->where('assigned_collector_id', $collectorFilter);
+        }
+
+        // Reseller / Partner filter
+        if ($resellerFilter === 'direct') {
+            $query->whereNull('reseller_id');
+        } elseif ($resellerFilter !== 'all' && !empty($resellerFilter)) {
+            $query->where('reseller_id', $resellerFilter);
         }
 
         // Zone filter
@@ -232,6 +241,7 @@ class TenantCollectorDashboardController extends Controller
         $zones = TenantCoverageZone::where('tenant_id', $tenantId)->orderBy('name')->get();
         $packages = TenantInternetPackage::where('tenant_id', $tenantId)->orderBy('price')->get();
         $collectors = User::where('tenant_id', $tenantId)->whereIn('role', ['isp_collector', 'collector', 'reseller_collector'])->orderBy('name')->get();
+        $resellers = TenantReseller::where('tenant_id', $tenantId)->orderBy('name')->get();
 
         // 5. High-Performance KPI Strip
         $baseCustomers = TenantCustomer::where('tenant_id', $tenantId);
@@ -293,12 +303,14 @@ class TenantCollectorDashboardController extends Controller
             'zones',
             'packages',
             'collectors',
+            'resellers',
             'stats',
             'search',
             'zoneFilter',
             'packageFilter',
             'dueStatusFilter',
             'collectorFilter',
+            'resellerFilter',
             'perPage',
             'currencySymbol',
             'isCollector'
@@ -321,6 +333,7 @@ class TenantCollectorDashboardController extends Controller
         $packageFilter = $request->input('package_id', 'all');
         $dueStatusFilter = $request->input('due_status', 'all_due');
         $collectorFilter = $request->input('collector_id', 'all');
+        $resellerFilter = $request->input('reseller_id', 'all');
 
         $isExpiredClosure = function ($q) {
             $q->whereIn('status', ['expired', 'suspended'])
@@ -342,7 +355,7 @@ class TenantCollectorDashboardController extends Controller
 
         $query = TenantCustomer::where('tenant_id', $tenantId)
             ->where($isDueOrExpiredClosure)
-            ->with(['package', 'zone']);
+            ->with(['package', 'zone', 'reseller']);
 
         if ($isCollector) {
             $hasSpecificAssignments = TenantCustomer::where('tenant_id', $tenantId)
@@ -353,6 +366,12 @@ class TenantCollectorDashboardController extends Controller
             }
         } elseif ($collectorFilter !== 'all' && !empty($collectorFilter)) {
             $query->where('assigned_collector_id', $collectorFilter);
+        }
+
+        if ($resellerFilter === 'direct') {
+            $query->whereNull('reseller_id');
+        } elseif ($resellerFilter !== 'all' && !empty($resellerFilter)) {
+            $query->where('reseller_id', $resellerFilter);
         }
 
         if ($zoneFilter !== 'all' && !empty($zoneFilter)) {

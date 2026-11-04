@@ -125,7 +125,7 @@
 
     {{-- 3. SEARCH & MULTI-FILTER TOOLBAR (Customer-Standard 2-Tier Architecture & Uniform h-[34px] - AGENTS.md Rule 2.C) --}}
     @php
-        $activeMoreCount = collect([$packageFilter !== 'all' ? $packageFilter : null, ($collectorFilter ?? 'all') !== 'all' ? $collectorFilter : null])->filter()->count();
+        $activeMoreCount = collect([$packageFilter !== 'all' ? $packageFilter : null, ($collectorFilter ?? 'all') !== 'all' ? $collectorFilter : null, ($resellerFilter ?? 'all') !== 'all' ? $resellerFilter : null])->filter()->count();
         $isMoreOpen = $activeMoreCount > 0;
     @endphp
     <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5">
@@ -257,6 +257,23 @@
                     </select>
                 </div>
 
+                {{-- Partner / Reseller Filter --}}
+                @if(isset($resellers) && count($resellers) > 0)
+                <div class="w-full sm:w-48 flex-shrink-0">
+                    <select name="reseller_id" 
+                            onchange="this.form.submit()" 
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700">
+                        <option value="all">All Partners / Resellers</option>
+                        <option value="direct" {{ ($resellerFilter ?? '') === 'direct' ? 'selected' : '' }}>Direct (No Partner)</option>
+                        @foreach($resellers as $reseller)
+                            <option value="{{ $reseller->id }}" {{ (string)($resellerFilter ?? '') === (string)$reseller->id ? 'selected' : '' }}>
+                                {{ $reseller->name }} ({{ $reseller->code ?: 'Reseller' }})
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                @endif
+
                 {{-- Collector Scoping (Admin / Manager Only) --}}
                 @if(!$isCollector && count($collectors) > 0)
                 <div class="w-full sm:w-52 flex-shrink-0">
@@ -288,6 +305,7 @@
                         <th class="text-left font-semibold">Guardian Name</th>
                         <th class="text-left font-semibold">Mobile Number</th>
                         <th class="text-left font-semibold">Area</th>
+                        <th class="text-left font-semibold">Partner</th>
                         <th class="text-left font-semibold">Package</th>
                         <th class="text-center font-semibold">Status</th>
                         <th class="text-right font-semibold">Monthly Bill</th>
@@ -297,7 +315,7 @@
                 </thead>
                 <tbody>
                     <tr x-show="searchQuery && totalMatchingRows === 0" x-cloak class="no-record-row">
-                        <td colspan="11" class="text-center py-6 text-slate-500 bg-slate-50/50">
+                        <td colspan="12" class="text-center py-6 text-slate-500 bg-slate-50/50">
                             <i class="fas fa-spinner fa-spin text-cyan-600 mr-1.5" x-show="isSearching"></i>
                             <i class="fas fa-search text-slate-400 mr-1.5" x-show="!isSearching"></i>
                             <span class="text-xs font-medium">No matching subscribers found on this page. Searching entire database...</span>
@@ -368,6 +386,21 @@
                                 {{ (is_object($customer->zone) ? ($customer->zone->name ?? '') : $customer->zone) ?: ($customer->coverageZone?->name ?: ($customer->address ?: '—')) }}
                             </td>
 
+                            {{-- 7. Partner / Reseller (Strict Single Line & No Wrap) --}}
+                            <td class="font-mono whitespace-nowrap text-xs">
+                                @if($customer->reseller)
+                                    <span class="inline-flex items-center gap-1 text-cyan-800 font-semibold" title="{{ $customer->reseller->name }}">
+                                        <i class="fas fa-handshake text-cyan-600 text-[10px]"></i>
+                                        <span>{{ $customer->reseller->code ?: $customer->reseller->name }}</span>
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center gap-1 text-slate-600 font-medium" title="HQ Direct Retail">
+                                        <i class="fas fa-building text-slate-400 text-[10px]"></i>
+                                        <span>Direct</span>
+                                    </span>
+                                @endif
+                            </td>
+
                             {{-- 7. Package --}}
                             <td class="whitespace-nowrap font-medium text-slate-800 text-xs">
                                 {{ $customer->package_display_name }}
@@ -420,7 +453,7 @@
                         </tr>
                     @empty
                         <tr class="no-record-row">
-                            <td colspan="11" class="text-center py-8 text-slate-400">
+                            <td colspan="12" class="text-center py-8 text-slate-400">
                                 <i class="fas fa-circle-check text-2xl mb-1.5 block text-emerald-500"></i>
                                 <span class="font-medium text-slate-600 text-xs">No due or expired customers found in the selected scope.</span>
                                 <p class="text-[11px] text-slate-400 mt-0.5">All assigned subscribers in this area are active with zero outstanding dues.</p>

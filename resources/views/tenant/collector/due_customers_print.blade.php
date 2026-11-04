@@ -226,6 +226,7 @@
                 <th style="width: 95px;">Guardian Name</th>
                 <th style="width: 90px;">Mobile Number</th>
                 <th style="width: 95px;">Area</th>
+                <th style="width: 80px;">Partner</th>
                 <th style="width: 85px;">Package</th>
                 <th class="text-right" style="width: 70px;">Monthly Bill</th>
                 <th class="text-right" style="width: 75px;">Due Amount</th>
@@ -242,6 +243,7 @@
                     <td>{{ $customer->father_name ?: '—' }}</td>
                     <td class="font-mono">{{ $customer->phone ?? '—' }}</td>
                     <td>{{ (is_object($customer->zone) ? ($customer->zone->name ?? '') : $customer->zone) ?: ($customer->coverageZone?->name ?: ($customer->address ?: '—')) }}</td>
+                    <td class="font-mono">{{ $customer->reseller ? ($customer->reseller->code ?: $customer->reseller->name) : 'Direct' }}</td>
                     <td>{{ $customer->package_display_name }}</td>
                     <td class="text-right font-mono">
                         {{ number_format((float)($customer->monthly_bill ?? ($customer->package?->price ?? 0)), 2) }}
@@ -254,7 +256,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="11" class="text-center" style="padding: 20px;">
+                    <td colspan="12" class="text-center" style="padding: 20px;">
                         No due subscribers found for the selected scope.
                     </td>
                 </tr>
