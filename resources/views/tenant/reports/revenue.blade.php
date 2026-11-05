@@ -127,15 +127,51 @@
         </div>
     </div>
 
-    {{-- 3. SEARCH & MULTI-FILTER TOOLBAR (2-Row Day-to-Day Layout) --}}
-    <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-xs">
+    {{-- 3. SEARCH & MULTI-FILTER TOOLBAR (Customer-Standard 2-Tier Filter System - AGENTS.md Rule 2.C) --}}
+    @php
+        $activeMoreCount = 0;
+        if (!empty($zoneId) && $zoneId !== 'all') $activeMoreCount++;
+        if (!empty($packageId) && $packageId !== 'all') $activeMoreCount++;
+        if ($preset === 'custom' || (!empty(request('date_from')) || !empty(request('date_to')))) $activeMoreCount++;
+        $isMoreOpen = $activeMoreCount > 0;
+    @endphp
+
+    <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5"
+         x-data="{ 
+             showMoreFilters: {{ $isMoreOpen ? 'true' : 'false' }}, 
+             selectedPreset: '{{ $preset }}',
+             dateFrom: '{{ request('date_from', request('start_date', $from->toDateString())) }}',
+             dateTo: '{{ request('date_to', request('end_date', $to->toDateString())) }}',
+             searchQuery: '{{ addslashes(request('search', '')) }}' 
+         }">
         <form method="GET" action="{{ route('tenant.reports.revenue') }}" class="space-y-2.5">
-            {{-- Row 1: Period Preset, Date From, Date To, Revenue Stream Scope --}}
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
-                {{-- Filter 1: Date Range Preset --}}
-                <div>
-                    <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Period Preset</label>
-                    <select name="preset" x-model="selectedPreset" @change="handlePeriodChange($event.target.value)" class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 py-1.5 focus:bg-white focus:border-cyan-500 focus:outline-none transition">
+            {{-- 1st Tier: Primary Single Row (Uniform h-[34px]) --}}
+            <div class="flex flex-col md:flex-row items-stretch md:items-center gap-2">
+                {{-- Intelligent Search Box --}}
+                <div class="relative flex-1 min-w-[200px]">
+                    <div class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
+                        <i class="fas fa-magnifying-glass text-xs" :class="searchQuery ? 'text-cyan-600 font-bold' : 'text-slate-400'"></i>
+                    </div>
+                    <input type="text" 
+                           name="search" 
+                           x-model="searchQuery"
+                           placeholder="Filter matrix or keyword..." 
+                           class="w-full h-[34px] pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs">
+                    <button type="button" 
+                            x-show="searchQuery && searchQuery.length > 0" 
+                            @click="searchQuery = ''; $nextTick(() => $el.closest('form').submit())" 
+                            class="absolute inset-y-0 right-0 pr-2 flex items-center text-slate-400 hover:text-slate-600 transition cursor-pointer"
+                            title="Clear search">
+                        <i class="fas fa-times-circle text-xs"></i>
+                    </button>
+                </div>
+
+                {{-- Period Preset Selector --}}
+                <div class="w-full md:w-44 flex-shrink-0">
+                    <select name="preset" 
+                            x-model="selectedPreset" 
+                            @change="handlePeriodChange($event.target.value); $nextTick(() => $el.closest('form').submit())"
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs cursor-pointer">
                         <option value="today" {{ $preset === 'today' ? 'selected' : '' }}>Today</option>
                         <option value="yesterday" {{ $preset === 'yesterday' ? 'selected' : '' }}>Yesterday</option>
                         <option value="this_week" {{ $preset === 'this_week' ? 'selected' : '' }}>This Week</option>
@@ -149,38 +185,85 @@
                     </select>
                 </div>
 
-                {{-- Filter 2: Date From --}}
-                <div>
-                    <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Date From</label>
-                    <input type="date" name="date_from" x-model="dateFrom" class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 py-1.5 focus:bg-white focus:border-cyan-500 focus:outline-none transition font-mono">
-                </div>
-
-                {{-- Filter 3: Date To --}}
-                <div>
-                    <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Date To</label>
-                    <input type="date" name="date_to" x-model="dateTo" class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 py-1.5 focus:bg-white focus:border-cyan-500 focus:outline-none transition font-mono">
-                </div>
-
-                {{-- Filter 4: Revenue Stream Scope --}}
-                <div>
-                    <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Revenue Stream</label>
-                    <select name="stream" class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 py-1.5 focus:bg-white focus:border-cyan-500 focus:outline-none transition">
-                        <option value="all" {{ $stream === 'all' ? 'selected' : '' }}>All Business Streams (Combined)</option>
+                {{-- Revenue Stream Scope --}}
+                <div class="w-full md:w-52 flex-shrink-0">
+                    <select name="stream" 
+                            onchange="this.form.submit()"
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs cursor-pointer">
+                        <option value="all" {{ $stream === 'all' ? 'selected' : '' }}>All Streams (Combined)</option>
                         <option value="retail" {{ $stream === 'retail' ? 'selected' : '' }}>Retail Subscribers Billing</option>
-                        <option value="wholesale" {{ $stream === 'wholesale' ? 'selected' : '' }}>Sub-ISP Reseller Wholesale</option>
-                        <option value="recharge" {{ $stream === 'recharge' ? 'selected' : '' }}>Reseller Wallet Recharges</option>
-                        <option value="gateway" {{ $stream === 'gateway' ? 'selected' : '' }}>Digital Payment Gateways (bKash/Nagad/SSL)</option>
-                        <option value="direct" {{ $stream === 'direct' ? 'selected' : '' }}>Direct &amp; Other Incomes</option>
+                        <option value="wholesale" {{ $stream === 'wholesale' ? 'selected' : '' }}>Sub-ISP Wholesale</option>
+                        <option value="recharge" {{ $stream === 'recharge' ? 'selected' : '' }}>Wallet Recharges</option>
+                        <option value="gateway" {{ $stream === 'gateway' ? 'selected' : '' }}>Payment Gateways</option>
+                        <option value="direct" {{ $stream === 'direct' ? 'selected' : '' }}>Direct Incomes</option>
                     </select>
+                </div>
+
+                {{-- More Filters Accordion Button --}}
+                <button type="button" 
+                        @click="showMoreFilters = !showMoreFilters" 
+                        class="h-[34px] py-0 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-xs rounded-lg border border-slate-200 transition flex items-center justify-center gap-1.5 flex-shrink-0 cursor-pointer">
+                    <i class="fas fa-sliders text-[11px] text-slate-500"></i>
+                    <span>More Filters</span>
+                    @if($activeMoreCount > 0)
+                        <span class="w-4 h-4 rounded-full bg-cyan-600 text-white text-[9px] font-bold flex items-center justify-center font-mono">
+                            {{ $activeMoreCount }}
+                        </span>
+                    @endif
+                    <i class="fas fa-chevron-down text-[9px] transition-transform duration-200" :class="showMoreFilters ? 'rotate-180 text-cyan-600' : 'text-slate-400'"></i>
+                </button>
+
+                {{-- Strict Action Buttons Sequence: [Filter] FIRST, [Reset] SECOND --}}
+                <div class="flex items-center gap-1.5 flex-shrink-0 md:ml-auto">
+                    <button type="submit" 
+                            class="h-[34px] py-0 px-3 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer flex-shrink-0" 
+                            title="Apply Filters">
+                        <i class="fas fa-filter text-[10px]"></i>
+                        <span>Filter</span>
+                    </button>
+                    <a href="{{ route('tenant.reports.revenue') }}" 
+                       class="h-[34px] py-0 px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer flex-shrink-0" 
+                       title="Reset All Filters">
+                        <i class="fas fa-rotate-left text-[10px]"></i>
+                        <span>Reset</span>
+                    </a>
                 </div>
             </div>
 
-            {{-- Row 2: Coverage Zone, Package Profile, Action Buttons --}}
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
-                {{-- Filter 5: Zone Selector --}}
+            {{-- 2nd Tier: Secondary Filters Drawer --}}
+            <div x-show="showMoreFilters" 
+                 x-cloak 
+                 x-transition:enter="transition ease-out duration-150"
+                 x-transition:enter-start="opacity-0 -translate-y-1"
+                 x-transition:enter-end="opacity-100 translate-y-0"
+                 x-transition:leave="transition ease-in duration-100"
+                 x-transition:leave-start="opacity-100 translate-y-0"
+                 x-transition:leave-end="opacity-0 -translate-y-1"
+                 class="pt-2 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2">
+
+                {{-- Date From --}}
                 <div>
-                    <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Coverage Zone</label>
-                    <select name="zone_id" class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 py-1.5 focus:bg-white focus:border-cyan-500 focus:outline-none transition">
+                    <input type="date" 
+                           name="date_from" 
+                           x-model="dateFrom" 
+                           title="From Date"
+                           class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs font-mono">
+                </div>
+
+                {{-- Date To --}}
+                <div>
+                    <input type="date" 
+                           name="date_to" 
+                           x-model="dateTo" 
+                           title="To Date"
+                           class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs font-mono">
+                </div>
+
+                {{-- Coverage Zone --}}
+                <div>
+                    <select name="zone_id" 
+                            onchange="this.form.submit()"
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs cursor-pointer">
                         <option value="all">All Coverage Zones</option>
                         @foreach($allZones as $z)
                             <option value="{{ $z->id }}" {{ (string)$zoneId === (string)$z->id ? 'selected' : '' }}>{{ $z->name }}</option>
@@ -188,34 +271,23 @@
                     </select>
                 </div>
 
-                {{-- Filter 6: Package Selector --}}
+                {{-- Internet Package --}}
                 <div>
-                    <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Internet Package</label>
-                    <select name="package_id" class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 py-1.5 focus:bg-white focus:border-cyan-500 focus:outline-none transition">
+                    <select name="package_id" 
+                            onchange="this.form.submit()"
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs cursor-pointer">
                         <option value="all">All Internet Packages</option>
                         @foreach($allPackages as $p)
                             <option value="{{ $p->id }}" {{ (string)$packageId === (string)$p->id ? 'selected' : '' }}>{{ $p->name }}</option>
                         @endforeach
                     </select>
                 </div>
-
-                {{-- Filter 7: Action Buttons (Strict Universal Standard) --}}
-                <div class="flex items-end gap-1.5">
-                    <button type="submit" class="flex-1 py-1.5 px-3 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-xs font-semibold shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" title="Apply Filters">
-                        <i class="fas fa-filter text-[10px]"></i>
-                        <span>Filter</span>
-                    </button>
-                    <a href="{{ route('tenant.reports.revenue') }}" class="py-1.5 px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer" title="Reset Filters">
-                        <i class="fas fa-rotate-left text-[10px]"></i>
-                        <span>Reset</span>
-                    </a>
-                </div>
             </div>
         </form>
     </div>
 
-    {{-- 4. MASTER 12-MONTH HISTORICAL GROWTH TABLE (<table class="saas-table">) --}}
-    <div class="bg-white rounded-lg border border-slate-200 shadow-xs overflow-hidden">
+    {{-- 4. MASTER 12-MONTH HISTORICAL GROWTH TABLE (<table class="saas-table"> - AGENTS.md Rule 2.D) --}}
+    <div class="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden">
         <div class="px-3.5 py-2.5 border-b border-slate-200 flex items-center justify-between bg-slate-50/60">
             <div class="flex items-center gap-2">
                 <i class="fas fa-table-columns text-slate-500 text-xs"></i>
@@ -224,22 +296,22 @@
             <span class="text-[11px] text-slate-500 font-medium">Month-over-Month (MoM) Financial &amp; Base Analytics</span>
         </div>
 
-        <div class="overflow-x-auto min-h-[260px]">
+        <div class="overflow-x-auto">
             <table class="saas-table">
                 <thead>
                     <tr>
-                        <th class="w-24">Month</th>
-                        <th class="text-right">Retail</th>
-                        <th class="text-right">Wholesale</th>
-                        <th class="text-right">Direct</th>
-                        <th class="text-right font-bold text-slate-900">Total Rev</th>
-                        <th class="text-right text-rose-700">Expense</th>
-                        <th class="text-right">Net Profit</th>
-                        <th class="text-center w-16">Margin</th>
-                        <th class="text-center w-20">MoM %</th>
-                        <th class="text-center w-20">Subs</th>
-                        <th class="text-right w-20">ARPU</th>
-                        <th class="no-sort w-14 text-center">Action</th>
+                        <th class="w-24 text-center font-semibold">Month</th>
+                        <th class="text-center font-semibold">Retail</th>
+                        <th class="text-center font-semibold">Wholesale</th>
+                        <th class="text-center font-semibold">Direct</th>
+                        <th class="text-center font-semibold font-bold text-slate-900">Total Rev</th>
+                        <th class="text-center font-semibold text-rose-700">Expense</th>
+                        <th class="text-center font-semibold">Net Profit</th>
+                        <th class="text-center font-semibold w-16">Margin</th>
+                        <th class="text-center font-semibold w-20">MoM %</th>
+                        <th class="text-center font-semibold w-20">Subs</th>
+                        <th class="text-center font-semibold w-20">ARPU</th>
+                        <th class="no-sort w-14 text-center font-semibold">Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -325,8 +397,21 @@
                     @empty
                         <tr>
                             <td colspan="12" class="text-center py-10 text-slate-400">
-                                <i class="fas fa-chart-line text-3xl mb-2 text-slate-300 block"></i>
-                                <span class="text-xs font-medium">No historical revenue data recorded for this ISP workspace.</span>
+                                <div class="max-w-xs mx-auto space-y-2">
+                                    <div class="w-12 h-12 rounded-xl bg-slate-50 border border-slate-200/80 text-slate-400 flex items-center justify-center mx-auto text-lg shadow-2xs">
+                                        <i class="fas fa-chart-line text-slate-400"></i>
+                                    </div>
+                                    <div class="space-y-0.5">
+                                        <h3 class="text-xs font-semibold text-slate-700">No Revenue Data</h3>
+                                        <p class="text-[11px] text-slate-400 font-normal">No historical revenue matrix recorded for the selected filter range.</p>
+                                    </div>
+                                    <div class="pt-1">
+                                        <a href="{{ route('tenant.reports.revenue') }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-xs font-semibold shadow-xs transition cursor-pointer">
+                                            <i class="fas fa-rotate-left text-[10px]"></i>
+                                            <span>Reset Filters</span>
+                                        </a>
+                                    </div>
+                                </div>
                             </td>
                         </tr>
                     @endforelse
