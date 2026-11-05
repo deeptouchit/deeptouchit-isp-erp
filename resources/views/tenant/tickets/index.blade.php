@@ -21,14 +21,14 @@
         <div class="flex items-center gap-2 flex-wrap">
             {{-- Refresh Button --}}
             <a href="{{ route('tenant.tickets.index') }}" 
-               class="bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 font-medium text-xs px-3 py-1.5 rounded-lg shadow-2xs transition inline-flex items-center gap-1.5 cursor-pointer">
+               class="h-[34px] bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 font-medium text-xs px-3 py-0 rounded-lg shadow-2xs transition inline-flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-rotate text-slate-500 text-[11px]"></i>
                 <span>Refresh</span>
             </a>
 
             {{-- Create Ticket Primary Button --}}
             <a href="{{ route('tenant.tickets.create') }}" 
-               class="bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs px-3.5 py-1.5 rounded-lg shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer">
+               class="h-[34px] bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs px-3.5 py-0 rounded-lg shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-plus text-[11px]"></i>
                 <span>Open New Ticket</span>
             </a>
@@ -41,7 +41,7 @@
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
                 <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Total Tickets</span>
-                <span class="text-[13px] font-bold font-mono text-slate-800 leading-tight block">
+                <span class="text-[13px] font-bold font-mono text-slate-800 leading-tight block truncate">
                     {{ number_format($stats['total']) }}
                 </span>
             </div>
@@ -54,7 +54,7 @@
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
                 <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Open / New</span>
-                <span class="text-[13px] font-bold font-mono text-blue-700 leading-tight block">
+                <span class="text-[13px] font-bold font-mono text-blue-700 leading-tight block truncate">
                     {{ number_format($stats['open']) }}
                 </span>
             </div>
@@ -67,7 +67,7 @@
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
                 <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">In Progress</span>
-                <span class="text-[13px] font-bold font-mono text-indigo-700 leading-tight block">
+                <span class="text-[13px] font-bold font-mono text-indigo-700 leading-tight block truncate">
                     {{ number_format($stats['in_progress']) }}
                 </span>
             </div>
@@ -80,7 +80,7 @@
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
                 <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Answered</span>
-                <span class="text-[13px] font-bold font-mono text-purple-700 leading-tight block">
+                <span class="text-[13px] font-bold font-mono text-purple-700 leading-tight block truncate">
                     {{ number_format($stats['answered']) }}
                 </span>
             </div>
@@ -93,7 +93,7 @@
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
                 <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Urgent / High</span>
-                <span class="text-[13px] font-bold font-mono {{ $stats['urgent'] > 0 ? 'text-rose-600' : 'text-slate-700' }} leading-tight block">
+                <span class="text-[13px] font-bold font-mono {{ $stats['urgent'] > 0 ? 'text-rose-600' : 'text-slate-700' }} leading-tight block truncate">
                     {{ number_format($stats['urgent']) }}
                 </span>
             </div>
@@ -106,7 +106,7 @@
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
                 <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Resolved / Closed</span>
-                <span class="text-[13px] font-bold font-mono text-emerald-700 leading-tight block">
+                <span class="text-[13px] font-bold font-mono text-emerald-700 leading-tight block truncate">
                     {{ number_format($stats['closed']) }}
                 </span>
             </div>
@@ -116,47 +116,40 @@
         </div>
     </div>
 
-    {{-- 3. SEARCH & MULTI-FILTER TOOLBAR --}}
-    <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-xs">
-        <form method="GET" action="{{ route('tenant.tickets.index') }}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2.5">
-            {{-- Filter 1: Universal Search --}}
-            <div class="lg:col-span-2">
-                <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Search Ticket / Subject</label>
-                <div class="relative">
-                    <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                    <input type="text" name="search" value="{{ $search }}" placeholder="Search by ticket #, issue subject..." class="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:border-cyan-500 focus:outline-none transition">
+    {{-- 3. SEARCH & MULTI-FILTER TOOLBAR (Customer-Standard 2-Tier Filter System - Rule 2.C) --}}
+    @php
+        $isMoreOpen = (request()->filled('department') && request('department') !== 'all')
+            || (request()->filled('priority') && request('priority') !== 'all');
+        $activeMoreCount = 0;
+        if (request()->filled('department') && request('department') !== 'all') $activeMoreCount++;
+        if (request()->filled('priority') && request('priority') !== 'all') $activeMoreCount++;
+    @endphp
+
+    <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5"
+         x-data="{ showMoreFilters: {{ $isMoreOpen ? 'true' : 'false' }}, searchQuery: '{{ addslashes(request('search', '')) }}' }">
+        <form method="GET" action="{{ route('tenant.tickets.index') }}" class="space-y-2.5">
+            {{-- 1st Tier: Primary Single Row --}}
+            <div class="flex flex-col md:flex-row items-stretch md:items-center gap-2">
+                {{-- Intelligent Live Search Box with Dynamic Icon & 1-Click Clear Button --}}
+                <div class="relative flex-1 min-w-[200px]">
+                    <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-xs transition"
+                       :class="searchQuery ? 'text-blue-600 font-bold' : 'text-slate-400'"></i>
+                    <input type="text" 
+                           name="search" 
+                           x-model="searchQuery" 
+                           placeholder="Search by ticket #, issue subject..." 
+                           class="w-full h-[34px] pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-blue-500 focus:outline-hidden transition">
+                    <button type="button" 
+                            x-show="searchQuery && searchQuery.length > 0" 
+                            @click="searchQuery = ''; $nextTick(() => $el.closest('form').submit())"
+                            x-cloak
+                            class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer">
+                        <i class="fas fa-times text-xs"></i>
+                    </button>
                 </div>
-            </div>
 
-            {{-- Filter 2: Department --}}
-            <div>
-                <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Department</label>
-                <select name="department" class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 py-1.5 focus:bg-white focus:border-cyan-500 focus:outline-none transition">
-                    <option value="all">All Departments</option>
-                    <option value="technical" {{ $department === 'technical' ? 'selected' : '' }}>Technical &amp; NOC</option>
-                    <option value="billing" {{ $department === 'billing' ? 'selected' : '' }}>Billing &amp; Accounts</option>
-                    <option value="sms_gateway" {{ $department === 'sms_gateway' ? 'selected' : '' }}>SMS Gateway API</option>
-                    <option value="payment_gateway" {{ $department === 'payment_gateway' ? 'selected' : '' }}>Payment Gateway</option>
-                    <option value="general" {{ $department === 'general' ? 'selected' : '' }}>General Support</option>
-                </select>
-            </div>
-
-            {{-- Filter 3: Priority --}}
-            <div>
-                <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Priority</label>
-                <select name="priority" class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 py-1.5 focus:bg-white focus:border-cyan-500 focus:outline-none transition">
-                    <option value="all">All Priorities</option>
-                    <option value="urgent" {{ $priority === 'urgent' ? 'selected' : '' }}>🔥 Urgent Escalation</option>
-                    <option value="high" {{ $priority === 'high' ? 'selected' : '' }}>High Priority</option>
-                    <option value="medium" {{ $priority === 'medium' ? 'selected' : '' }}>Medium</option>
-                    <option value="low" {{ $priority === 'low' ? 'selected' : '' }}>Low</option>
-                </select>
-            </div>
-
-            {{-- Filter 4: Status --}}
-            <div>
-                <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Status</label>
-                <select name="status" class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 py-1.5 focus:bg-white focus:border-cyan-500 focus:outline-none transition">
+                {{-- Status Filter --}}
+                <select name="status" class="w-full md:w-44 h-[34px] bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 focus:bg-white focus:border-blue-500 focus:outline-hidden transition flex-shrink-0">
                     <option value="all" {{ $status === 'all' ? 'selected' : '' }}>All Statuses</option>
                     <option value="open" {{ $status === 'open' ? 'selected' : '' }}>Active / Open</option>
                     <option value="in_progress" {{ $status === 'in_progress' ? 'selected' : '' }}>In Progress</option>
@@ -164,18 +157,63 @@
                     <option value="resolved" {{ $status === 'resolved' ? 'selected' : '' }}>Resolved</option>
                     <option value="closed" {{ $status === 'closed' ? 'selected' : '' }}>Closed</option>
                 </select>
+
+                {{-- Pagination Selector (per_page) --}}
+                <select name="per_page" class="w-full md:w-28 h-[34px] bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 focus:bg-white focus:border-blue-500 focus:outline-hidden transition flex-shrink-0">
+                    @foreach([15, 20, 30, 50, 100, 250] as $cnt)
+                        <option value="{{ $cnt }}" {{ (int)$perPage === $cnt ? 'selected' : '' }}>{{ $cnt }} / page</option>
+                    @endforeach
+                </select>
+
+                {{-- "More Filters" Accordion Toggle Button --}}
+                <button type="button" 
+                        @click="showMoreFilters = !showMoreFilters" 
+                        class="h-[34px] py-0 px-2.5 bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold text-xs rounded-lg border border-slate-200 transition flex items-center justify-center gap-1.5 cursor-pointer flex-shrink-0">
+                    <i class="fas fa-sliders text-[11px] text-slate-500"></i>
+                    <span>More</span>
+                    @if($activeMoreCount > 0)
+                        <span class="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-blue-600 text-white leading-none">{{ $activeMoreCount }}</span>
+                    @endif
+                    <i class="fas text-[9px] transition-transform" :class="showMoreFilters ? 'fa-chevron-up text-blue-600' : 'fa-chevron-down text-slate-400'"></i>
+                </button>
+
+                {{-- Strict Sequence: [Filter] FIRST, [Reset] SECOND --}}
+                <div class="flex items-center gap-1.5 flex-shrink-0 md:ml-auto">
+                    <button type="submit" class="h-[34px] py-0 px-3.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" title="Apply Filters">
+                        <i class="fas fa-filter text-[10px]"></i>
+                        <span>Filter</span>
+                    </button>
+                    <a href="{{ route('tenant.tickets.index') }}" class="h-[34px] py-0 px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer" title="Reset Filters">
+                        <i class="fas fa-rotate-left text-[10px]"></i>
+                        <span>Reset</span>
+                    </a>
+                </div>
             </div>
 
-            {{-- Filter & Reset Buttons (Strict Universal Standard - AGENTS.md Rule 2.C) --}}
-            <div class="flex items-end gap-1.5">
-                <button type="submit" class="flex-1 py-1.5 px-3 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-xs font-semibold shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" title="Apply Filters">
-                    <i class="fas fa-filter text-[10px]"></i>
-                    <span>Filter</span>
-                </button>
-                <a href="{{ route('tenant.tickets.index') }}" class="py-1.5 px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer" title="Reset Filters">
-                    <i class="fas fa-rotate-left text-[10px]"></i>
-                    <span>Reset</span>
-                </a>
+            {{-- 2nd Tier: Secondary Filters Drawer --}}
+            <div x-show="showMoreFilters" x-cloak x-transition class="pt-2 border-t border-slate-100 flex flex-wrap items-center gap-2">
+                {{-- Department --}}
+                <div class="w-full sm:w-52">
+                    <select name="department" class="w-full h-[34px] bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 focus:bg-white focus:border-blue-500 focus:outline-hidden transition">
+                        <option value="all">All Departments</option>
+                        <option value="technical" {{ $department === 'technical' ? 'selected' : '' }}>Technical &amp; NOC</option>
+                        <option value="billing" {{ $department === 'billing' ? 'selected' : '' }}>Billing &amp; Accounts</option>
+                        <option value="sms_gateway" {{ $department === 'sms_gateway' ? 'selected' : '' }}>SMS Gateway API</option>
+                        <option value="payment_gateway" {{ $department === 'payment_gateway' ? 'selected' : '' }}>Payment Gateway</option>
+                        <option value="general" {{ $department === 'general' ? 'selected' : '' }}>General Support</option>
+                    </select>
+                </div>
+
+                {{-- Priority --}}
+                <div class="w-full sm:w-48">
+                    <select name="priority" class="w-full h-[34px] bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 focus:bg-white focus:border-blue-500 focus:outline-hidden transition">
+                        <option value="all">All Priorities</option>
+                        <option value="urgent" {{ $priority === 'urgent' ? 'selected' : '' }}>🔥 Urgent Escalation</option>
+                        <option value="high" {{ $priority === 'high' ? 'selected' : '' }}>High Priority</option>
+                        <option value="medium" {{ $priority === 'medium' ? 'selected' : '' }}>Medium</option>
+                        <option value="low" {{ $priority === 'low' ? 'selected' : '' }}>Low</option>
+                    </select>
+                </div>
             </div>
         </form>
     </div>
@@ -186,14 +224,14 @@
             <table class="saas-table">
                 <thead>
                     <tr>
-                        <th class="w-10 text-center">SL</th>
-                        <th>Ticket #</th>
-                        <th>Subject &amp; Issue Summary</th>
-                        <th>Department</th>
-                        <th class="text-center">Priority</th>
-                        <th class="text-center">Status</th>
-                        <th>Last Activity</th>
-                        <th class="w-14 text-center no-sort">Action</th>
+                        <th class="w-10 text-center font-semibold">#</th>
+                        <th class="w-28 text-center font-semibold">Ticket #</th>
+                        <th class="text-center font-semibold">Subject &amp; Issue Summary</th>
+                        <th class="text-center font-semibold">Department</th>
+                        <th class="w-24 text-center font-semibold">Priority</th>
+                        <th class="w-24 text-center font-semibold">Status</th>
+                        <th class="w-32 text-center font-semibold">Last Activity</th>
+                        <th class="w-14 text-center font-semibold no-sort">Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -205,21 +243,21 @@
                             <td class="text-center text-slate-400 font-mono">{{ $tickets->firstItem() + $idx }}</td>
                             
                             {{-- Ticket Number (Single data) --}}
-                            <td class="font-mono font-bold text-blue-700">
+                            <td class="text-center font-mono font-bold text-blue-700">
                                 <a href="{{ route('tenant.tickets.show', $t->id) }}" class="hover:underline">
                                     {{ $t->ticket_number }}
                                 </a>
                             </td>
 
                             {{-- Subject (Single data) --}}
-                            <td class="font-semibold text-slate-800">
+                            <td class="text-left font-semibold text-slate-800">
                                 <a href="{{ route('tenant.tickets.show', $t->id) }}" class="hover:text-blue-600 transition">
                                     {{ $t->subject }}
                                 </a>
                             </td>
 
                             {{-- Department (Single data) --}}
-                            <td class="text-slate-600 text-[11px]">
+                            <td class="text-left text-slate-600 text-[11px]">
                                 {{ $t->department_name }}
                             </td>
 
@@ -241,7 +279,7 @@
                             </td>
 
                             {{-- Last Activity --}}
-                            <td class="text-slate-500 font-mono text-[11px]">
+                            <td class="text-center text-slate-500 font-mono text-[11px]">
                                 {{ ($t->last_reply_at ?? $t->updated_at)->locale('en')->diffForHumans() }}
                             </td>
 
@@ -257,15 +295,25 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="text-center py-8 text-slate-400">
-                                <div class="flex flex-col items-center justify-center gap-2">
-                                    <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 text-sm">
-                                        <i class="fas fa-headset"></i>
+                            <td colspan="8" class="text-center py-10">
+                                <div class="max-w-xs mx-auto text-center space-y-2">
+                                    <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 mx-auto">
+                                        <i class="fas fa-headset text-base"></i>
                                     </div>
-                                    <span class="text-xs font-medium text-slate-500">No support tickets found matching your filters.</span>
-                                    <a href="{{ route('tenant.tickets.create') }}" class="mt-1 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs transition">
-                                        Open New Ticket
-                                    </a>
+                                    <p class="text-xs font-semibold text-slate-700">No Support Tickets Found</p>
+                                    <p class="text-[11px] text-slate-500">No support inquiries match your current search or filter criteria.</p>
+                                    <div class="flex items-center justify-center gap-2 pt-1">
+                                        @if(request()->anyFilled(['search', 'department', 'priority', 'status']))
+                                            <a href="{{ route('tenant.tickets.index') }}" class="inline-flex items-center gap-1 text-xs text-blue-600 font-semibold hover:underline">
+                                                <i class="fas fa-rotate-left text-[10px]"></i>
+                                                <span>Clear Filters</span>
+                                            </a>
+                                        @endif
+                                        <a href="{{ route('tenant.tickets.create') }}" class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-xs transition inline-flex items-center gap-1">
+                                            <i class="fas fa-plus text-[10px]"></i>
+                                            <span>Open New Ticket</span>
+                                        </a>
+                                    </div>
                                 </div>
                             </td>
                         </tr>
@@ -275,7 +323,7 @@
         </div>
 
         @if($tickets->hasPages())
-        <div class="px-3.5 py-2 border-t border-slate-200 bg-slate-50/50 flex items-center justify-between">
+        <div class="px-3.5 py-2.5 border-t border-slate-200 bg-slate-50/50 flex items-center justify-between">
             <span class="text-[11px] text-slate-500">
                 Showing {{ $tickets->firstItem() }} to {{ $tickets->lastItem() }} of {{ $tickets->total() }} Tickets
             </span>
@@ -335,7 +383,7 @@
          x-cloak 
          class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs"
          @keydown.escape.window="quickModalOpen = false">
-        <div class="bg-white rounded-xl border border-slate-200/90 shadow-2xl w-full max-w-lg overflow-hidden" 
+        <div class="bg-white rounded-xl border border-slate-200/90 shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-150" 
              @click.away="quickModalOpen = false">
             {{-- Modal Header --}}
             <div class="bg-slate-50/80 border-b border-slate-200 px-4 py-3 flex items-center justify-between">
