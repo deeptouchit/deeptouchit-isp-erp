@@ -307,7 +307,7 @@
 
     {{-- 4. Master Compact Table (<table class="saas-table"> - AGENTS.md Rule 2.D) --}}
     <div class="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden">
-        <div class="overflow-x-auto min-h-[300px]">
+        <div class="overflow-x-auto">
             <table class="saas-table">
                 <thead>
                     <tr>
@@ -390,8 +390,25 @@
                     @empty
                         <tr>
                             <td colspan="9" class="text-center py-10 text-slate-400">
-                                <i class="fas fa-file-invoice text-3xl mb-2 text-slate-300 block"></i>
-                                <span class="text-xs font-medium">No wholesale invoices found for the selected criteria.</span>
+                                <div class="max-w-xs mx-auto space-y-2">
+                                    <div class="w-12 h-12 rounded-xl bg-slate-50 border border-slate-200/80 text-slate-400 flex items-center justify-center mx-auto text-lg shadow-2xs">
+                                        <i class="fas fa-file-invoice-dollar text-slate-400"></i>
+                                    </div>
+                                    <div class="space-y-0.5">
+                                        <h3 class="text-xs font-semibold text-slate-700">No Wholesale Invoices Found</h3>
+                                        <p class="text-[11px] text-slate-400 font-normal">No monthly billing records exist yet for sub-ISPs or resellers.</p>
+                                    </div>
+                                    <div class="pt-1 flex items-center justify-center gap-2">
+                                        <button type="button" @click="openBatchGenerateModal()" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-xs font-semibold shadow-xs transition cursor-pointer">
+                                            <i class="fas fa-bolt text-[10px]"></i>
+                                            <span>Generate Bills</span>
+                                        </button>
+                                        <button type="button" @click="openCreateModal()" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200/80 rounded-lg text-xs font-semibold transition cursor-pointer">
+                                            <i class="fas fa-plus text-[10px]"></i>
+                                            <span>Create Custom</span>
+                                        </button>
+                                    </div>
+                                </div>
                             </td>
                         </tr>
                     @endforelse
