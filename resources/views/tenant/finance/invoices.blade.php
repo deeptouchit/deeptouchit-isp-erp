@@ -393,7 +393,6 @@
                         <th class="text-left font-semibold">Package</th>
                         <th class="text-right font-semibold">Bill (Tk)</th>
                         <th class="text-right font-semibold">Paid (Tk)</th>
-                        <th class="text-left font-semibold">Collector</th>
                         <th class="text-center font-semibold">Status</th>
                         <th class="text-left font-semibold">Paid At</th>
                         <th class="w-14 text-center no-sort">Action</th>
@@ -401,7 +400,7 @@
                 </thead>
                 <tbody>
                     <tr x-show="searchQuery && totalMatchingRows === 0" x-cloak class="no-record-row">
-                        <td colspan="14" class="text-center py-6 text-slate-500 bg-slate-50/50">
+                        <td colspan="13" class="text-center py-6 text-slate-500 bg-slate-50/50">
                             <i class="fas fa-spinner fa-spin text-cyan-600 mr-1.5" x-show="isSearching"></i>
                             <i class="fas fa-search text-slate-400 mr-1.5" x-show="!isSearching"></i>
                             <span class="text-xs font-medium">No matching invoices found on this page. Searching entire database...</span>
@@ -501,24 +500,7 @@
                                 @currency($inv->paid_amount)
                             </td>
 
-                            <!-- 11. Collector -->
-                            <td class="whitespace-nowrap text-xs">
-                                @php
-                                    $collectedBy = $inv->payments->first()?->collector?->name 
-                                        ?: ($inv->creator?->name 
-                                        ?: ($inv->customer?->collector?->name ?: 'Direct / System'));
-                                @endphp
-                                @if($inv->payments->first()?->collector || $inv->creator || $inv->customer?->collector)
-                                    <span class="inline-flex items-center gap-1 font-medium text-slate-800">
-                                        <i class="fas fa-user-check text-[10px] text-cyan-600"></i>
-                                        <span>{{ $collectedBy }}</span>
-                                    </span>
-                                @else
-                                    <span class="text-slate-400 font-sans">Direct / System</span>
-                                @endif
-                            </td>
-
-                            <!-- 12. Status -->
+                            <!-- 11. Status -->
                             <td class="text-center whitespace-nowrap">
                                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold border {{ $statusBadge['class'] }} shadow-2xs">
                                     <span class="w-1.5 h-1.5 rounded-full {{ $statusBadge['dot'] }}"></span>
@@ -526,7 +508,7 @@
                                 </span>
                             </td>
 
-                            <!-- 13. Paid At -->
+                            <!-- 12. Paid At -->
                             <td class="font-mono text-slate-700 whitespace-nowrap text-xs">
                                 @if($inv->paid_at)
                                     <span class="inline-flex items-center gap-1 text-slate-700">
@@ -538,7 +520,7 @@
                                 @endif
                             </td>
 
-                            <!-- 14. Action -->
+                            <!-- 13. Action -->
                             <td class="text-center whitespace-nowrap">
                                 <button type="button" 
                                         @click="toggleMenu({{ Js::from($invData) }}, $event)" 
@@ -549,7 +531,7 @@
                         </tr>
                     @empty
                         <tr class="no-record-row">
-                            <td colspan="14" class="px-4 py-8 text-center text-slate-400 text-xs italic bg-slate-50/50">
+                            <td colspan="13" class="px-4 py-8 text-center text-slate-400 text-xs italic bg-slate-50/50">
                                 <i class="fas fa-file-invoice text-2xl text-slate-300 mb-2 block"></i>
                                 No customer invoices found for the selected scope.
                             </td>
