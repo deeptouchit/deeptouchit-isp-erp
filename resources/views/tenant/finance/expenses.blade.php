@@ -390,7 +390,7 @@
 
                             {{-- Action 3-Dot Button --}}
                             <td class="text-center">
-                                <button type="button" @click.stop="toggleMenu({{ $v->toJson() }}, $event)" 
+                                <button type="button" @click.stop="toggleMenu({{ json_encode($v) }}, $event)" 
                                         class="w-6 h-6 rounded-md hover:bg-slate-100 text-slate-500 hover:text-slate-700 inline-flex items-center justify-center transition cursor-pointer">
                                     <i class="fas fa-ellipsis-v text-[10px]"></i>
                                 </button>
