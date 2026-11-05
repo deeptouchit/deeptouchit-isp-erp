@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Tenant\Collector;
 
 use App\Http\Controllers\Controller;
 use App\Models\Tenant;
+use App\Models\TenantActivityLog;
 use App\Models\TenantCoverageZone;
 use App\Models\TenantCustomer;
 use App\Models\TenantCustomerPayment;
@@ -15,6 +16,7 @@ use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class TenantCollectorDashboardController extends Controller
@@ -446,22 +448,39 @@ class TenantCollectorDashboardController extends Controller
             ->paginate($perPage)
             ->withQueryString();
 
+        // 1. Calculate actual Un-handed Cash in Hand (whereNull('handover_id'))
+        $availableCashInHand = (float) TenantCustomerPayment::where('tenant_id', $tenantId)
+            ->where('collected_by', $collectorId)
+            ->whereNull('handover_id')
+            ->where('payment_method', 'cash')
+            ->whereNotIn('status', ['void', 'refunded', 'cancelled'])
+            ->sum('amount');
+
+        // Total cash collected by this collector
         $totalCashCollected = (float) TenantCustomerPayment::where('tenant_id', $tenantId)
             ->where('collected_by', $collectorId)
             ->where('payment_method', 'cash')
+            ->whereNotIn('status', ['void', 'refunded', 'cancelled'])
             ->sum('amount');
 
+        // Total approved handovers
         $totalApprovedHandovers = (float) TenantDailyCashHandover::where('tenant_id', $tenantId)
             ->where('collector_id', $collectorId)
             ->whereIn('status', ['approved', 'verified'])
             ->sum('handed_over_amount');
 
+        // Pending submission handovers
         $pendingSubmissionHandovers = (float) TenantDailyCashHandover::where('tenant_id', $tenantId)
             ->where('collector_id', $collectorId)
             ->where('status', 'pending')
             ->sum('handed_over_amount');
 
-        $availableCashInHand = max(0, $totalCashCollected - $totalApprovedHandovers);
+        // Today collected (all payment methods)
+        $todayCollected = (float) TenantCustomerPayment::where('tenant_id', $tenantId)
+            ->where('collected_by', $collectorId)
+            ->whereDate('paid_at', today())
+            ->whereNotIn('status', ['void', 'refunded', 'cancelled'])
+            ->sum('amount');
 
         $stats = [
             'available_cash_in_hand' => $availableCashInHand,
@@ -469,7 +488,7 @@ class TenantCollectorDashboardController extends Controller
             'total_approved_handed' => $totalApprovedHandovers,
             'total_cash_collected' => $totalCashCollected,
             'total_handovers_count' => TenantDailyCashHandover::where('tenant_id', $tenantId)->where('collector_id', $collectorId)->count(),
-            'today_collected' => (float) TenantCustomerPayment::where('tenant_id', $tenantId)->where('collected_by', $collectorId)->whereDate('created_at', today())->sum('amount'),
+            'today_collected' => $todayCollected,
         ];
 
         $currencySymbol = '৳';
@@ -498,21 +517,75 @@ class TenantCollectorDashboardController extends Controller
             'notes' => 'nullable|string|max:500',
         ]);
 
-        $count = TenantDailyCashHandover::where('tenant_id', $tenant->id)->count() + 1;
-        $handoverNo = 'HND-' . date('Ymd') . '-' . str_pad($count, 3, '0', STR_PAD_LEFT);
+        $handedOverAmount = (float) $request->amount;
+        $handoverDate = now()->toDateString();
 
-        TenantDailyCashHandover::create([
-            'tenant_id' => $tenant->id,
-            'handover_no' => $handoverNo,
-            'collector_id' => $authUser->id,
-            'handover_date' => now()->toDateString(),
-            'system_collected_amount' => (float) $request->amount,
-            'handed_over_amount' => (float) $request->amount,
-            'notes' => $request->notes ?: "HQ cash handover by {$authUser->name}",
-            'status' => 'pending',
-        ]);
+        DB::beginTransaction();
+        try {
+            // Retrieve all un-handed cash payments for this collector
+            $cashPayments = TenantCustomerPayment::where('tenant_id', $tenant->id)
+                ->where('collected_by', $authUser->id)
+                ->whereNull('handover_id')
+                ->where('payment_method', 'cash')
+                ->whereNotIn('status', ['void', 'refunded', 'cancelled'])
+                ->get();
 
-        return back()->with('success', "দৈনিক ক্যাশ হ্যান্ডওভার রিকোয়েস্ট (" . number_format((float)$request->amount, 2) . " ৳) সফলভাবে জমা দেওয়া হয়েছে।");
+            $systemCash = (float) $cashPayments->sum('amount');
+            $shortage = max(0, $systemCash - $handedOverAmount);
+            $excess = max(0, $handedOverAmount - $systemCash);
+
+            $handoverNo = TenantDailyCashHandover::generateHandoverNo($tenant->id, $handoverDate);
+
+            $handover = TenantDailyCashHandover::create([
+                'tenant_id' => $tenant->id,
+                'handover_no' => $handoverNo,
+                'collector_id' => $authUser->id,
+                'handover_date' => $handoverDate,
+                'shift_type' => 'daily',
+                'system_collected_amount' => $systemCash,
+                'handed_over_amount' => $handedOverAmount,
+                'shortage_amount' => $shortage,
+                'excess_amount' => $excess,
+                'total_receipts_count' => $cashPayments->count(),
+                'notes' => $request->notes ?: "HQ cash handover submitted by {$authUser->name}",
+                'status' => 'pending',
+            ]);
+
+            // Lock constituent payments to prevent double-counting
+            if ($cashPayments->isNotEmpty()) {
+                TenantCustomerPayment::whereIn('id', $cashPayments->pluck('id'))
+                    ->update(['handover_id' => $handover->id]);
+            }
+
+            // Audit Log
+            TenantActivityLog::create([
+                'tenant_id' => $tenant->id,
+                'actor_type' => 'App\Models\User',
+                'actor_id' => $authUser->id,
+                'actor_name' => $authUser->name,
+                'event_type' => 'CASH_HANDOVER_SUBMITTED',
+                'description' => "Collector '{$authUser->name}' submitted cash handover {$handoverNo} (৳" . number_format($handedOverAmount, 2) . "). Locked {$cashPayments->count()} cash receipt(s).",
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'metadata' => [
+                    'handover_id' => $handover->id,
+                    'handover_no' => $handoverNo,
+                    'handed_over_amount' => $handedOverAmount,
+                    'system_collected_amount' => $systemCash,
+                    'shortage_amount' => $shortage,
+                    'excess_amount' => $excess,
+                    'locked_receipts_count' => $cashPayments->count(),
+                ],
+            ]);
+
+            DB::commit();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            throw $e;
+        }
+
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
+        return back()->with('success', "দৈনিক ক্যাশ হ্যান্ডওভার ভাউচার {$handoverNo} ({$currencySymbol}" . number_format($handedOverAmount, 2) . ") সফলভাবে জমা দেওয়া হয়েছে এবং যাচাইয়ের জন্য অপেক্ষমাণ।");
     }
 
     /**

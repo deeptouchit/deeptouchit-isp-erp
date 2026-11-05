@@ -46,6 +46,11 @@ class TenantCustomerPayment extends Model
         return $this->belongsTo(User::class, 'collected_by');
     }
 
+    public function handover(): BelongsTo
+    {
+        return $this->belongsTo(TenantDailyCashHandover::class, 'handover_id');
+    }
+
     /**
      * Generate Unique Serialized Money Receipt / Invoice Number (e.g. REC-202609-1001)
      */

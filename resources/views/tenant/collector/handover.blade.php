@@ -107,27 +107,27 @@
             <table class="saas-table">
                 <thead>
                     <tr>
-                        <th class="w-10 text-center">#</th>
-                        <th>{{ __('Date') }}</th>
-                        <th class="text-right">{{ __('Handover Amount') }}</th>
-                        <th>{{ __('Notes') }}</th>
-                        <th>{{ __('Verified By') }}</th>
-                        <th class="text-center">{{ __('Status') }}</th>
+                        <th class="w-10 text-center no-sort">#</th>
+                        <th class="text-center font-semibold">{{ __('Date') }}</th>
+                        <th class="text-center font-semibold">{{ __('Handover Amount') }}</th>
+                        <th class="text-center font-semibold">{{ __('Notes') }}</th>
+                        <th class="text-center font-semibold">{{ __('Verified By') }}</th>
+                        <th class="text-center font-semibold">{{ __('Status') }}</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($handovers as $index => $item)
                         <tr>
-                            <td class="text-center font-mono text-slate-500">{{ $handovers->firstItem() + $index }}</td>
-                            <td class="font-mono text-slate-800">
+                            <td class="text-center font-mono text-slate-500 whitespace-nowrap">{{ $handovers->firstItem() + $index }}</td>
+                            <td class="text-center font-mono text-slate-800 whitespace-nowrap">
                                 {{ $item->handover_date ? \Carbon\Carbon::parse($item->handover_date)->format('d M Y') : '—' }}
                             </td>
-                            <td class="text-right font-mono font-bold text-slate-900">
+                            <td class="text-right font-mono font-bold text-slate-900 whitespace-nowrap">
                                 @currency($item->amount)
                             </td>
-                            <td class="text-slate-600 text-xs">{{ $item->notes ?: '—' }}</td>
-                            <td class="font-medium text-slate-800">{{ $item->verifier?->name ?? '—' }}</td>
-                            <td class="text-center">
+                            <td class="text-left text-slate-600 text-xs whitespace-nowrap">{{ $item->notes ?: '—' }}</td>
+                            <td class="text-left font-medium text-slate-800 whitespace-nowrap">{{ $item->verifier?->name ?? '—' }}</td>
+                            <td class="text-center whitespace-nowrap">
                                 @if($item->status === 'approved' || $item->status === 'verified')
                                     <span class="px-2 py-0.5 rounded text-[10px] font-bold font-mono bg-emerald-50 text-emerald-700 border border-emerald-200">{{ __('Verified') }}</span>
                                 @elseif($item->status === 'pending')

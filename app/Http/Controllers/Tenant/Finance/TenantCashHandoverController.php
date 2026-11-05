@@ -176,12 +176,17 @@ class TenantCashHandoverController extends Controller
         $collectorId = (int) $request->input('collector_id', Auth::id());
         $date = $request->input('date', Carbon::today()->toDateString());
 
-        $payments = TenantCustomerPayment::where('tenant_id', $tenant->id)
+        // Core Accounting Query: All un-handed customer payments for this collector
+        $query = TenantCustomerPayment::where('tenant_id', $tenant->id)
             ->where('collected_by', $collectorId)
-            ->whereDate('paid_at', $date)
-            ->whereIn('status', ['completed', 'paid', 'approved'])
-            ->with('customer:id,customer_id,name,username,phone')
-            ->get();
+            ->whereNull('handover_id')
+            ->whereNotIn('status', ['void', 'refunded', 'cancelled']);
+
+        if (!empty($date)) {
+            $query->whereDate('paid_at', '<=', $date);
+        }
+
+        $payments = $query->with('customer:id,customer_id,name,username,phone')->get();
 
         $cashPayments = $payments->where('payment_method', 'cash');
         $digitalPayments = $payments->where('payment_method', '!=', 'cash');
@@ -189,12 +194,12 @@ class TenantCashHandoverController extends Controller
         $cashTotal = (float) $cashPayments->sum('amount');
         $digitalTotal = (float) $digitalPayments->sum('amount');
         $discountTotal = (float) $payments->sum('discount');
-        $receiptsCount = $payments->count();
+        $receiptsCount = $cashPayments->count();
 
-        // Check if a handover voucher already exists for this collector and date
-        $existingHandover = TenantDailyCashHandover::where('tenant_id', $tenant->id)
+        // Check if a pending handover voucher already exists for this collector
+        $pendingHandover = TenantDailyCashHandover::where('tenant_id', $tenant->id)
             ->where('collector_id', $collectorId)
-            ->where('handover_date', $date)
+            ->where('status', 'pending')
             ->first();
 
         $currencySymbol = $tenant->currency_symbol ?? '৳';
@@ -210,10 +215,10 @@ class TenantCashHandoverController extends Controller
             'discount_total' => $discountTotal,
             'discount_total_formatted' => $currencySymbol . number_format($discountTotal, 2),
             'receipts_count' => $receiptsCount,
-            'has_existing' => (bool) $existingHandover,
-            'existing_status' => $existingHandover?->status,
-            'existing_handover_no' => $existingHandover?->handover_no,
-            'receipts' => $payments->map(function ($p) use ($currencySymbol) {
+            'has_existing' => (bool) $pendingHandover,
+            'existing_status' => $pendingHandover?->status,
+            'existing_handover_no' => $pendingHandover?->handover_no,
+            'receipts' => $cashPayments->map(function ($p) use ($currencySymbol) {
                 return [
                     'id' => $p->id,
                     'invoice_no' => $p->invoice_no,
@@ -226,7 +231,7 @@ class TenantCashHandoverController extends Controller
                     'payment_method_name' => $p->payment_method_name,
                     'paid_time' => $p->paid_at ? $p->paid_at->format('h:i A') : '--',
                 ];
-            }),
+            })->values(),
         ]);
     }
 
@@ -251,64 +256,86 @@ class TenantCashHandoverController extends Controller
         $shiftType = $validated['shift_type'];
         $handedOverAmount = (float) $validated['handed_over_amount'];
 
-        // 1. Calculate actual system collections for this collector on this date
-        $payments = TenantCustomerPayment::where('tenant_id', $tenant->id)
-            ->where('collected_by', $collectorId)
-            ->whereDate('paid_at', $handoverDate)
-            ->whereIn('status', ['completed', 'paid', 'approved'])
-            ->get();
+        DB::beginTransaction();
+        try {
+            // 1. Calculate actual unhanded system collections for this collector up to handover_date
+            $paymentsQuery = TenantCustomerPayment::where('tenant_id', $tenant->id)
+                ->where('collected_by', $collectorId)
+                ->whereNull('handover_id')
+                ->whereNotIn('status', ['void', 'refunded', 'cancelled']);
 
-        $systemCash = (float) $payments->where('payment_method', 'cash')->sum('amount');
-        $digitalTotal = (float) $payments->where('payment_method', '!=', 'cash')->sum('amount');
-        $receiptsCount = $payments->count();
+            if (!empty($handoverDate)) {
+                $paymentsQuery->whereDate('paid_at', '<=', $handoverDate);
+            }
 
-        // 2. Discrepancy Calculation
-        $shortage = max(0, $systemCash - $handedOverAmount);
-        $excess = max(0, $handedOverAmount - $systemCash);
+            $allPayments = $paymentsQuery->get();
+            $cashPayments = $allPayments->where('payment_method', 'cash');
+            $digitalPayments = $allPayments->where('payment_method', '!=', 'cash');
 
-        // 3. Generate Handover Number
-        $handoverNo = TenantDailyCashHandover::generateHandoverNo($tenant->id, $handoverDate);
+            $systemCash = (float) $cashPayments->sum('amount');
+            $digitalTotal = (float) $digitalPayments->sum('amount');
+            $receiptsCount = $cashPayments->count();
 
-        // 4. Create Handover Record
-        $handover = TenantDailyCashHandover::create([
-            'tenant_id' => $tenant->id,
-            'handover_no' => $handoverNo,
-            'collector_id' => $collectorId,
-            'handover_date' => $handoverDate,
-            'shift_type' => $shiftType,
-            'system_collected_amount' => $systemCash,
-            'handed_over_amount' => $handedOverAmount,
-            'shortage_amount' => $shortage,
-            'excess_amount' => $excess,
-            'digital_collected_amount' => $digitalTotal,
-            'total_receipts_count' => $receiptsCount,
-            'denominations' => $validated['denominations'] ?? null,
-            'status' => 'pending',
-            'notes' => $validated['notes'] ?? "Daily cash handover for {$handoverDate}",
-        ]);
+            // 2. Discrepancy Calculation
+            $shortage = max(0, $systemCash - $handedOverAmount);
+            $excess = max(0, $handedOverAmount - $systemCash);
 
-        $collector = User::find($collectorId);
+            // 3. Generate Handover Number
+            $handoverNo = TenantDailyCashHandover::generateHandoverNo($tenant->id, $handoverDate);
 
-        // 5. Audit Log
-        TenantActivityLog::create([
-            'tenant_id' => $tenant->id,
-            'actor_type' => 'App\Models\User',
-            'actor_id' => Auth::id() ?: 1,
-            'actor_name' => Auth::user()?->name ?: 'Admin',
-            'event_type' => 'CASH_HANDOVER_SUBMITTED',
-            'description' => "Submitted cash handover voucher {$handoverNo} for collector '{$collector?->name}'. Handed: ৳" . number_format($handedOverAmount, 2) . " (System Cash: ৳" . number_format($systemCash, 2) . ").",
-            'ip_address' => $request->ip(),
-            'user_agent' => $request->userAgent(),
-            'metadata' => [
-                'handover_id' => $handover->id,
+            // 4. Create Handover Record
+            $handover = TenantDailyCashHandover::create([
+                'tenant_id' => $tenant->id,
                 'handover_no' => $handoverNo,
                 'collector_id' => $collectorId,
-                'handed_over_amount' => $handedOverAmount,
+                'handover_date' => $handoverDate,
+                'shift_type' => $shiftType,
                 'system_collected_amount' => $systemCash,
+                'handed_over_amount' => $handedOverAmount,
                 'shortage_amount' => $shortage,
                 'excess_amount' => $excess,
-            ],
-        ]);
+                'digital_collected_amount' => $digitalTotal,
+                'total_receipts_count' => $receiptsCount,
+                'denominations' => $validated['denominations'] ?? null,
+                'status' => 'pending',
+                'notes' => $validated['notes'] ?? "Daily cash handover for {$handoverDate}",
+            ]);
+
+            // 5. Lock constituent cash payments to prevent double-counting or re-submission
+            if ($cashPayments->isNotEmpty()) {
+                TenantCustomerPayment::whereIn('id', $cashPayments->pluck('id'))
+                    ->update(['handover_id' => $handover->id]);
+            }
+
+            $collector = User::find($collectorId);
+
+            // 6. Audit Log
+            TenantActivityLog::create([
+                'tenant_id' => $tenant->id,
+                'actor_type' => 'App\Models\User',
+                'actor_id' => Auth::id() ?: 1,
+                'actor_name' => Auth::user()?->name ?: 'Admin',
+                'event_type' => 'CASH_HANDOVER_SUBMITTED',
+                'description' => "Submitted cash handover voucher {$handoverNo} for collector '{$collector?->name}'. Handed: ৳" . number_format($handedOverAmount, 2) . " (System Cash: ৳" . number_format($systemCash, 2) . "). Locked {$receiptsCount} receipt(s).",
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'metadata' => [
+                    'handover_id' => $handover->id,
+                    'handover_no' => $handoverNo,
+                    'collector_id' => $collectorId,
+                    'handed_over_amount' => $handedOverAmount,
+                    'system_collected_amount' => $systemCash,
+                    'shortage_amount' => $shortage,
+                    'excess_amount' => $excess,
+                    'locked_receipts_count' => $receiptsCount,
+                ],
+            ]);
+
+            DB::commit();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            throw $e;
+        }
 
         $currencySymbol = $tenant->currency_symbol ?? '৳';
         $msg = "Cash handover voucher {$handoverNo} ({$currencySymbol}" . number_format($handedOverAmount, 2) . ") submitted successfully and awaiting manager verification.";
@@ -337,13 +364,22 @@ class TenantCashHandoverController extends Controller
 
         $currencySymbol = $tenant->currency_symbol ?? '৳';
 
-        // Load constituent money receipts
+        // Load constituent money receipts tagged with this handover
         $payments = TenantCustomerPayment::where('tenant_id', $tenant->id)
-            ->where('collected_by', $handover->collector_id)
-            ->whereDate('paid_at', $handover->handover_date->toDateString())
-            ->whereIn('status', ['completed', 'paid', 'approved'])
+            ->where('handover_id', $handover->id)
             ->with('customer:id,customer_id,name,username,phone')
             ->get();
+
+        // Fallback for older legacy handover records created before handover_id was populated
+        if ($payments->isEmpty()) {
+            $payments = TenantCustomerPayment::where('tenant_id', $tenant->id)
+                ->where('collected_by', $handover->collector_id)
+                ->whereDate('paid_at', $handover->handover_date->toDateString())
+                ->where('payment_method', 'cash')
+                ->whereNotIn('status', ['void', 'refunded', 'cancelled'])
+                ->with('customer:id,customer_id,name,username,phone')
+                ->get();
+        }
 
         $voucherData = [
             'id' => $handover->id,
@@ -400,7 +436,7 @@ class TenantCashHandoverController extends Controller
                     'payment_method_name' => $p->payment_method_name,
                     'paid_time' => $p->paid_at ? $p->paid_at->format('h:i A') : '--',
                 ];
-            }),
+            })->values(),
         ];
 
         return response()->json([
@@ -410,7 +446,7 @@ class TenantCashHandoverController extends Controller
     }
 
     /**
-     * Verify and Approve Handover Voucher (Transfers to Vault)
+     * Verify and Approve Handover Voucher (Transfers to Vault & locks payments)
      */
     public function approve(Request $request, int $id): JsonResponse|RedirectResponse
     {
@@ -426,22 +462,49 @@ class TenantCashHandoverController extends Controller
 
         $remarks = $request->input('manager_remarks', 'Verified physical cash and approved into ISP vault.');
 
-        $handover->status = 'approved';
-        $handover->verified_by = Auth::id() ?: 1;
-        $handover->verified_at = Carbon::now();
-        $handover->manager_remarks = $remarks;
-        $handover->save();
+        DB::beginTransaction();
+        try {
+            $handover->status = 'approved';
+            $handover->verified_by = Auth::id() ?: 1;
+            $handover->verified_at = Carbon::now();
+            $handover->manager_remarks = $remarks;
+            $handover->save();
 
-        // Audit Log
-        TenantActivityLog::create([
-            'tenant_id' => $tenant->id,
-            'actor_type' => 'App\Models\User',
-            'actor_id' => Auth::id() ?: 1,
-            'actor_name' => Auth::user()?->name ?: 'Admin',
-            'event_type' => 'CASH_HANDOVER_APPROVED',
-            'description' => "Approved cash handover voucher {$handover->handover_no} (৳" . number_format($handover->handed_over_amount, 2) . ") for collector '{$handover->collector?->name}'.",
-            'ip_address' => $request->ip(),
-        ]);
+            // For legacy records created before handover_id was set, link matching cash payments
+            if ($handover->payments()->count() === 0) {
+                TenantCustomerPayment::where('tenant_id', $tenant->id)
+                    ->where('collected_by', $handover->collector_id)
+                    ->whereDate('paid_at', $handover->handover_date->toDateString())
+                    ->where('payment_method', 'cash')
+                    ->whereNull('handover_id')
+                    ->whereNotIn('status', ['void', 'refunded', 'cancelled'])
+                    ->update(['handover_id' => $handover->id]);
+            }
+
+            // Audit Log
+            TenantActivityLog::create([
+                'tenant_id' => $tenant->id,
+                'actor_type' => 'App\Models\User',
+                'actor_id' => Auth::id() ?: 1,
+                'actor_name' => Auth::user()?->name ?: 'Admin',
+                'event_type' => 'CASH_HANDOVER_APPROVED',
+                'description' => "Approved cash handover voucher {$handover->handover_no} (৳" . number_format($handover->handed_over_amount, 2) . ") for collector '{$handover->collector?->name}'.",
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'metadata' => [
+                    'handover_id' => $handover->id,
+                    'handover_no' => $handover->handover_no,
+                    'collector_id' => $handover->collector_id,
+                    'handed_over_amount' => (float) $handover->handed_over_amount,
+                    'shortage_amount' => (float) $handover->shortage_amount,
+                ],
+            ]);
+
+            DB::commit();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            throw $e;
+        }
 
         $currencySymbol = $tenant->currency_symbol ?? '৳';
         $msg = "Cash handover voucher {$handover->handover_no} ({$currencySymbol}" . number_format($handover->handed_over_amount, 2) . ") has been approved successfully and transferred into the vault.";
@@ -457,7 +520,7 @@ class TenantCashHandoverController extends Controller
     }
 
     /**
-     * Reject Handover Voucher
+     * Reject Handover Voucher (Unlocks constituent payments)
      */
     public function reject(Request $request, int $id): JsonResponse|RedirectResponse
     {
@@ -466,21 +529,39 @@ class TenantCashHandoverController extends Controller
 
         $remarks = $request->input('manager_remarks', 'Cash discrepancy not resolved / rejected by accounts manager.');
 
-        $handover->status = 'rejected';
-        $handover->verified_by = Auth::id() ?: 1;
-        $handover->verified_at = Carbon::now();
-        $handover->manager_remarks = $remarks;
-        $handover->save();
+        DB::beginTransaction();
+        try {
+            $handover->status = 'rejected';
+            $handover->verified_by = Auth::id() ?: 1;
+            $handover->verified_at = Carbon::now();
+            $handover->manager_remarks = $remarks;
+            $handover->save();
 
-        TenantActivityLog::create([
-            'tenant_id' => $tenant->id,
-            'actor_type' => 'App\Models\User',
-            'actor_id' => Auth::id() ?: 1,
-            'actor_name' => Auth::user()?->name ?: 'Admin',
-            'event_type' => 'CASH_HANDOVER_REJECTED',
-            'description' => "Rejected cash handover voucher {$handover->handover_no}. Reason: {$remarks}",
-            'ip_address' => $request->ip(),
-        ]);
+            // Unlock constituent payments so they return to collector's un-handed balance
+            TenantCustomerPayment::where('handover_id', $handover->id)
+                ->update(['handover_id' => null]);
+
+            TenantActivityLog::create([
+                'tenant_id' => $tenant->id,
+                'actor_type' => 'App\Models\User',
+                'actor_id' => Auth::id() ?: 1,
+                'actor_name' => Auth::user()?->name ?: 'Admin',
+                'event_type' => 'CASH_HANDOVER_REJECTED',
+                'description' => "Rejected cash handover voucher {$handover->handover_no}. Reason: {$remarks}. Unlocked constituent cash payments.",
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'metadata' => [
+                    'handover_id' => $handover->id,
+                    'handover_no' => $handover->handover_no,
+                    'collector_id' => $handover->collector_id,
+                ],
+            ]);
+
+            DB::commit();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            throw $e;
+        }
 
         $msg = "Cash handover voucher {$handover->handover_no} has been rejected.";
 
