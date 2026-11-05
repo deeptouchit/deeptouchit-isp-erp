@@ -140,6 +140,7 @@ class TenantCollectorCollectionReportController extends Controller
         $query->select(
             DB::raw('COALESCE(p.collected_by, 0) as collector_id'),
             DB::raw("DATE_FORMAT(COALESCE(p.paid_at, p.created_at), '%Y-%m') as collection_month"),
+            DB::raw('CASE WHEN p.collected_by IS NULL THEN "SYS-00" ELSE COALESCE(u.staff_id, CONCAT("COL-", LPAD(p.collected_by, 4, "0"))) END as collector_code'),
             DB::raw('COALESCE(u.name, "Direct / System") as collector_name'),
             DB::raw('u.phone as collector_phone'),
             DB::raw('u.role as collector_role'),
@@ -153,13 +154,32 @@ class TenantCollectorCollectionReportController extends Controller
             DB::raw('MIN(p.paid_at) as first_payment_at'),
             DB::raw('MAX(p.paid_at) as last_payment_at')
         )
-        ->groupBy('p.collected_by', DB::raw("DATE_FORMAT(COALESCE(p.paid_at, p.created_at), '%Y-%m')"), 'u.name', 'u.phone', 'u.role', 'p.reseller_id', 'r.name', 'r.code')
+        ->groupBy('p.collected_by', DB::raw("DATE_FORMAT(COALESCE(p.paid_at, p.created_at), '%Y-%m')"), 'u.staff_id', 'u.name', 'u.phone', 'u.role', 'p.reseller_id', 'r.name', 'r.code')
         ->orderByDesc('collection_month')
         ->orderByDesc('total_amount');
 
         $rows = $query->paginate($perPage)->withQueryString();
 
-        // 5. Load Dropdown Options
+        // 5. Pre-calculate Assigned Coverage Zones / Areas per Collector
+        $assignedAreasMap = DB::table(DB::raw('(
+            SELECT staff_id as user_id, id as zone_id 
+            FROM tenant_coverage_zones 
+            WHERE tenant_id = ' . (int)$tenant->id . ' AND staff_id IS NOT NULL
+            UNION
+            SELECT assigned_collector_id as user_id, zone_id 
+            FROM tenant_customers 
+            WHERE tenant_id = ' . (int)$tenant->id . ' AND assigned_collector_id IS NOT NULL AND zone_id IS NOT NULL
+        ) as u_zones'))
+        ->groupBy('user_id')
+        ->pluck(DB::raw('COUNT(DISTINCT zone_id)'), 'user_id')
+        ->toArray();
+
+        $rows->getCollection()->transform(function ($row) use ($assignedAreasMap) {
+            $row->assigned_areas_count = $row->collector_id ? ($assignedAreasMap[$row->collector_id] ?? 0) : 0;
+            return $row;
+        });
+
+        // 6. Load Dropdown Options
         $resellers = TenantReseller::where('tenant_id', $tenant->id)
             ->orderBy('name')
             ->get(['id', 'name', 'code']);
@@ -465,7 +485,9 @@ class TenantCollectorCollectionReportController extends Controller
         }
 
         $rows = $query->select(
+            DB::raw('COALESCE(p.collected_by, 0) as collector_id'),
             DB::raw("DATE_FORMAT(COALESCE(p.paid_at, p.created_at), '%Y-%m') as collection_month"),
+            DB::raw('CASE WHEN p.collected_by IS NULL THEN "SYS-00" ELSE COALESCE(u.staff_id, CONCAT("COL-", LPAD(p.collected_by, 4, "0"))) END as collector_code'),
             DB::raw('COALESCE(u.name, "Direct / System") as collector_name'),
             DB::raw('u.phone as collector_phone'),
             DB::raw('COALESCE(r.name, "Direct HQ") as partner_name'),
@@ -474,10 +496,23 @@ class TenantCollectorCollectionReportController extends Controller
             DB::raw('SUM(CASE WHEN p.payment_method = "cash" THEN p.amount ELSE 0 END) as cash_amount'),
             DB::raw('SUM(CASE WHEN p.payment_method != "cash" THEN p.amount ELSE 0 END) as digital_amount')
         )
-        ->groupBy('p.collected_by', DB::raw("DATE_FORMAT(COALESCE(p.paid_at, p.created_at), '%Y-%m')"), 'u.name', 'u.phone', 'p.reseller_id', 'r.name')
+        ->groupBy('p.collected_by', DB::raw("DATE_FORMAT(COALESCE(p.paid_at, p.created_at), '%Y-%m')"), 'u.staff_id', 'u.name', 'u.phone', 'p.reseller_id', 'r.name')
         ->orderByDesc('collection_month')
         ->orderByDesc('total_amount')
         ->get();
+
+        $exportAreasMap = DB::table(DB::raw('(
+            SELECT staff_id as user_id, id as zone_id 
+            FROM tenant_coverage_zones 
+            WHERE tenant_id = ' . (int)$tenant->id . ' AND staff_id IS NOT NULL
+            UNION
+            SELECT assigned_collector_id as user_id, zone_id 
+            FROM tenant_customers 
+            WHERE tenant_id = ' . (int)$tenant->id . ' AND assigned_collector_id IS NOT NULL AND zone_id IS NOT NULL
+        ) as u_zones'))
+        ->groupBy('user_id')
+        ->pluck(DB::raw('COUNT(DISTINCT zone_id)'), 'user_id')
+        ->toArray();
 
         $filename = 'collector_collections_' . date('Y_m_d_His') . '.csv';
         $headers = [
@@ -485,18 +520,21 @@ class TenantCollectorCollectionReportController extends Controller
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
         ];
 
-        return response()->stream(function () use ($rows, $periodLabel) {
+        return response()->stream(function () use ($rows, $periodLabel, $exportAreasMap) {
             $handle = fopen('php://output', 'w');
             fprintf($handle, chr(0xEF) . chr(0xBB) . chr(0xBF)); // UTF-8 BOM
-            fputcsv($handle, ['#', 'Month', 'Collector Name', 'Mobile', 'Partner', 'Total Receipts', 'Total Collected (Tk)']);
+            fputcsv($handle, ['#', 'Month', 'Collector Code', 'Collector Name', 'Mobile', 'Assigned Areas', 'Partner', 'Total Receipts', 'Total Collected (Tk)']);
 
             foreach ($rows as $idx => $r) {
                 $monthStr = $r->collection_month ? Carbon::parse($r->collection_month . '-01')->format('F Y') : $periodLabel;
+                $areasCount = $r->collector_id ? ($exportAreasMap[$r->collector_id] ?? 0) : 0;
                 fputcsv($handle, [
                     $idx + 1,
                     $monthStr,
+                    $r->collector_code,
                     $r->collector_name,
                     $r->collector_phone ?? '—',
+                    $areasCount,
                     $r->partner_name,
                     $r->total_count,
                     number_format($r->total_amount, 2, '.', ''),

@@ -336,8 +336,10 @@
                     <tr>
                         <th class="w-10 text-center no-sort">#</th>
                         <th class="text-center font-semibold">Month</th>
+                        <th class="text-center font-semibold">Code</th>
                         <th class="text-center font-semibold">Collector Name</th>
                         <th class="text-center font-semibold">Mobile</th>
+                        <th class="text-center font-semibold">Assigned Areas</th>
                         <th class="text-center font-semibold">Partner</th>
                         <th class="text-center font-semibold">Total</th>
                         <th class="text-center font-semibold">Total Collected</th>
@@ -346,7 +348,7 @@
                 </thead>
                 <tbody>
                     <tr x-show="searchQuery && totalMatchingRows === 0" x-cloak class="no-record-row">
-                        <td colspan="8" class="text-center py-6 text-slate-500 bg-slate-50/50">
+                        <td colspan="10" class="text-center py-6 text-slate-500 bg-slate-50/50">
                             <i class="fas fa-spinner fa-spin text-cyan-600 mr-1.5" x-show="isSearching"></i>
                             <i class="fas fa-search text-slate-400 mr-1.5" x-show="!isSearching"></i>
                             <span class="text-xs font-medium">No matching collectors found for this filter scope.</span>
@@ -359,7 +361,7 @@
                                 ? \Carbon\Carbon::parse($row->collection_month . '-01')->format('F Y') 
                                 : $periodLabel;
                         @endphp
-                        <tr class="hover:bg-slate-50/70 transition-colors" data-search-text="{{ strtolower($row->collector_name . ' ' . $row->collector_phone . ' ' . $row->partner_name . ' ' . $monthName) }}">
+                        <tr class="hover:bg-slate-50/70 transition-colors" data-search-text="{{ strtolower($row->collector_name . ' ' . ($row->collector_code ?? '') . ' ' . $row->collector_phone . ' ' . $row->partner_name . ' ' . $monthName) }}">
                             {{-- 1. Index (#) --}}
                             <td class="w-10 text-center font-mono text-xs text-slate-500">
                                 {{ $rowNum }}
@@ -370,17 +372,30 @@
                                 {{ $monthName }}
                             </td>
 
-                            {{-- 3. Collector Name (কালেক্টর নাম) --}}
+                            {{-- 3. Code (কালেক্টর কোড) --}}
+                            <td class="text-center font-mono font-bold text-cyan-800 text-xs whitespace-nowrap">
+                                {{ $row->collector_code }}
+                            </td>
+
+                            {{-- 4. Collector Name (কালেক্টর নাম) --}}
                             <td class="text-left font-medium text-slate-800 text-xs whitespace-nowrap">
                                 <span class="font-semibold text-slate-900">{{ $row->collector_name }}</span>
                             </td>
 
-                            {{-- 4. Mobile (মোবাইল) --}}
+                            {{-- 5. Mobile (মোবাইল) --}}
                             <td class="text-center font-mono text-slate-700 whitespace-nowrap text-xs">
                                 {{ $row->collector_phone ?: '—' }}
                             </td>
 
-                            {{-- 5. Partner (পাটনার) --}}
+                            {{-- 6. Assigned Areas (এসাইকৃত এরিয়া সংখ্যা) --}}
+                            <td class="text-center whitespace-nowrap font-mono text-xs">
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full {{ ($row->assigned_areas_count ?? 0) > 0 ? 'bg-cyan-50 text-cyan-800 border border-cyan-200/90 font-bold' : 'bg-slate-100 text-slate-500' }}" title="Total Assigned Coverage Zones / Areas">
+                                    <i class="fas fa-map-marker-alt text-[9px] text-cyan-600"></i>
+                                    <span>{{ number_format($row->assigned_areas_count ?? 0) }}</span>
+                                </span>
+                            </td>
+
+                            {{-- 7. Partner (পাটনার) --}}
                             <td class="text-left whitespace-nowrap text-xs text-slate-700 font-medium">
                                 @if($row->reseller_id)
                                     <span class="text-cyan-800 font-semibold" title="{{ $row->partner_name }}">
@@ -391,17 +406,17 @@
                                 @endif
                             </td>
 
-                            {{-- 6. Total (টোটাল) --}}
+                            {{-- 8. Total (টোটাল) --}}
                             <td class="text-center whitespace-nowrap font-mono font-bold text-xs text-slate-800">
                                 {{ number_format($row->total_count) }}
                             </td>
 
-                            {{-- 7. Total Collected (টোটাল কালেকটেড) --}}
+                            {{-- 9. Total Collected (টোটাল কালেকটেড) --}}
                             <td class="text-right whitespace-nowrap font-mono font-bold text-xs text-emerald-600">
                                 @currency($row->total_amount)
                             </td>
 
-                            {{-- 8. Action (একাশন) --}}
+                            {{-- 10. Action (একাশন) --}}
                             <td class="text-center whitespace-nowrap">
                                 <a href="{{ route('tenant.finance.collector-collections.show', array_merge(['collector' => $row->collector_id], request()->query(), ['reseller_id' => $row->reseller_id ?: 0, 'month' => $row->collection_month ?? request('month')])) }}" 
                                    class="h-[28px] px-2.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-xs font-semibold shadow-xs transition inline-flex items-center justify-center gap-1.5 cursor-pointer"
@@ -413,7 +428,7 @@
                         </tr>
                     @empty
                         <tr class="no-record-row">
-                            <td colspan="8" class="text-center py-8 text-slate-400">
+                            <td colspan="10" class="text-center py-8 text-slate-400">
                                 <i class="fas fa-inbox text-2xl mb-1.5 block text-slate-300"></i>
                                 <span class="font-medium text-slate-600 text-xs">No collections found for this selected period and filters.</span>
                                 <p class="text-[11px] text-slate-400 mt-0.5">Try changing the period or clearing search filters to see all historical records.</p>
