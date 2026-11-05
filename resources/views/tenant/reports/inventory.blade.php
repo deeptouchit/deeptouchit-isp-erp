@@ -32,14 +32,14 @@
             {{-- Dedicated Full-Page Print Button --}}
             <a href="{{ route('tenant.reports.inventory.print', request()->all()) }}" 
                target="_blank" 
-               class="bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 font-medium text-xs px-3 py-1.5 rounded-lg shadow-2xs transition inline-flex items-center gap-1.5 cursor-pointer">
+               class="h-[34px] bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 font-medium text-xs px-3 py-0 rounded-lg shadow-2xs transition inline-flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-print text-blue-600 text-[11px]"></i>
                 <span>Print Statement</span>
             </a>
 
             {{-- Export CSV Stream Button --}}
             <a href="{{ route('tenant.reports.inventory.export', request()->all()) }}" 
-               class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs px-3.5 py-1.5 rounded-lg shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer">
+               class="h-[34px] bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs px-3.5 py-0 rounded-lg shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-file-csv text-[11px]"></i>
                 <span>Export CSV</span>
             </a>
@@ -52,7 +52,7 @@
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
                 <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Total Asset Valuation</span>
-                <span class="text-[13px] font-bold font-mono text-emerald-700 leading-tight block">
+                <span class="text-[13px] font-bold font-mono text-emerald-700 leading-tight block truncate">
                     @currency($totalAssetValuation)
                 </span>
             </div>
@@ -65,7 +65,7 @@
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
                 <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Deployed ONUs</span>
-                <span class="text-[13px] font-bold font-mono text-indigo-700 leading-tight block">
+                <span class="text-[13px] font-bold font-mono text-indigo-700 leading-tight block truncate">
                     {{ number_format($totalOnusInDb) }} Units
                 </span>
             </div>
@@ -78,7 +78,7 @@
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
                 <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Warehouse Stock</span>
-                <span class="text-[13px] font-bold font-mono text-cyan-700 leading-tight block">
+                <span class="text-[13px] font-bold font-mono text-cyan-700 leading-tight block truncate">
                     {{ number_format($totalStockUnits) }} Units
                 </span>
             </div>
@@ -91,7 +91,7 @@
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
                 <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Core POP Nodes</span>
-                <span class="text-[13px] font-bold font-mono text-amber-700 leading-tight block">
+                <span class="text-[13px] font-bold font-mono text-amber-700 leading-tight block truncate">
                     {{ $totalOlts + $totalRouters }} Nodes
                 </span>
             </div>
@@ -104,7 +104,7 @@
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
                 <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Fiber Deployed</span>
-                <span class="text-[13px] font-bold font-mono text-purple-700 leading-tight block">
+                <span class="text-[13px] font-bold font-mono text-purple-700 leading-tight block truncate">
                     {{ $fiberKmDeployed }} km
                 </span>
             </div>
@@ -117,7 +117,7 @@
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
                 <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Reorder Alerts</span>
-                <span class="text-[13px] font-bold font-mono {{ $lowStockCount > 0 ? 'text-rose-600' : 'text-slate-600' }} leading-tight block">
+                <span class="text-[13px] font-bold font-mono {{ $lowStockCount > 0 ? 'text-rose-600' : 'text-slate-600' }} leading-tight block truncate">
                     {{ $lowStockCount }} Items
                 </span>
             </div>
@@ -127,24 +127,40 @@
         </div>
     </div>
 
-    {{-- 3. SEARCH & MULTI-FILTER TOOLBAR --}}
-    <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-xs">
-        <form method="GET" action="{{ route('tenant.reports.inventory') }}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2.5">
+    {{-- 3. SEARCH & MULTI-FILTER TOOLBAR (Customer-Standard 2-Tier Filter System - Rule 2.C) --}}
+    @php
+        $isMoreOpen = (request()->filled('status') && request('status') !== 'all');
+        $activeMoreCount = 0;
+        if (request()->filled('status') && request('status') !== 'all') $activeMoreCount++;
+    @endphp
+
+    <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5"
+         x-data="{ showMoreFilters: {{ $isMoreOpen ? 'true' : 'false' }}, searchQuery: '{{ addslashes(request('search', '')) }}' }">
+        <form method="GET" action="{{ route('tenant.reports.inventory') }}" class="space-y-2.5">
             <input type="hidden" name="tab" value="{{ $activeTab }}">
 
-            {{-- Filter 1: Universal Search --}}
-            <div class="lg:col-span-2">
-                <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Search Equipment / SKU / Model</label>
-                <div class="relative">
-                    <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                    <input type="text" name="search" value="{{ $search }}" placeholder="Search by SKU, item name, brand, MAC..." class="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:border-cyan-500 focus:outline-none transition">
+            {{-- 1st Tier: Primary Single Row --}}
+            <div class="flex flex-col md:flex-row items-stretch md:items-center gap-2">
+                {{-- Intelligent Live Search Box with Dynamic Icon & 1-Click Clear Button --}}
+                <div class="relative flex-1 min-w-[200px]">
+                    <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-xs transition"
+                       :class="searchQuery ? 'text-cyan-600 font-bold' : 'text-slate-400'"></i>
+                    <input type="text" 
+                           name="search" 
+                           x-model="searchQuery" 
+                           placeholder="Search by SKU, item name, brand, MAC..." 
+                           class="w-full h-[34px] pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
+                    <button type="button" 
+                            x-show="searchQuery && searchQuery.length > 0" 
+                            @click="searchQuery = ''; $nextTick(() => $el.closest('form').submit())"
+                            x-cloak
+                            class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer">
+                        <i class="fas fa-times text-xs"></i>
+                    </button>
                 </div>
-            </div>
 
-            {{-- Filter 2: Hardware Category Filter --}}
-            <div>
-                <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Equipment Category</label>
-                <select name="category" class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 py-1.5 focus:bg-white focus:border-cyan-500 focus:outline-none transition">
+                {{-- Equipment Category Filter --}}
+                <select name="category" class="w-full md:w-52 h-[34px] bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition flex-shrink-0">
                     <option value="all">All Hardware Categories</option>
                     <option value="onus" {{ $category === 'onus' ? 'selected' : '' }}>ONUs &amp; Optical Terminals</option>
                     <option value="olts" {{ $category === 'olts' ? 'selected' : '' }}>Central OLTs &amp; Chassis</option>
@@ -153,42 +169,52 @@
                     <option value="splitters_tj" {{ $category === 'splitters_tj' ? 'selected' : '' }}>Splitters &amp; Joint Closures</option>
                     <option value="patch_cords" {{ $category === 'patch_cords' ? 'selected' : '' }}>Patch Cords &amp; Connectors</option>
                 </select>
-            </div>
 
-            {{-- Filter 3: Stock Status --}}
-            <div>
-                <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Stock Status</label>
-                <select name="status" class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 py-1.5 focus:bg-white focus:border-cyan-500 focus:outline-none transition">
-                    <option value="all" {{ $statusFilter === 'all' ? 'selected' : '' }}>All Statuses</option>
-                    <option value="in_stock" {{ $statusFilter === 'in_stock' ? 'selected' : '' }}>In Warehouse Stock</option>
-                    <option value="deployed" {{ $statusFilter === 'deployed' ? 'selected' : '' }}>Deployed in Field</option>
-                    <option value="low_stock" {{ $statusFilter === 'low_stock' ? 'selected' : '' }}>🔴 Low Stock Alert</option>
-                    <option value="online" {{ $statusFilter === 'online' ? 'selected' : '' }}>🟢 Online / Active</option>
-                    <option value="offline" {{ $statusFilter === 'offline' ? 'selected' : '' }}>⚪ Offline Device</option>
+                {{-- Pagination Selector (per_page) --}}
+                <select name="per_page" class="w-full md:w-28 h-[34px] bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition flex-shrink-0">
+                    @foreach([10, 20, 30, 50, 100, 250] as $cnt)
+                        <option value="{{ $cnt }}" {{ (int)$perPage === $cnt ? 'selected' : '' }}>{{ $cnt }} / page</option>
+                    @endforeach
                 </select>
-            </div>
 
-            {{-- Filter 4: Pagination Per Page --}}
-            <div>
-                <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Rows Per Page</label>
-                <select name="per_page" class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 py-1.5 focus:bg-white focus:border-cyan-500 focus:outline-none transition">
-                    <option value="10" {{ $perPage == 10 ? 'selected' : '' }}>10 Per Page</option>
-                    <option value="20" {{ $perPage == 20 ? 'selected' : '' }}>20 Per Page</option>
-                    <option value="50" {{ $perPage == 50 ? 'selected' : '' }}>50 Per Page</option>
-                    <option value="100" {{ $perPage == 100 ? 'selected' : '' }}>100 Per Page</option>
-                </select>
-            </div>
-
-            {{-- Filter & Reset Buttons (Strict Universal Standard - AGENTS.md Rule 2.C) --}}
-            <div class="flex items-end gap-1.5">
-                <button type="submit" class="flex-1 py-1.5 px-3 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-xs font-semibold shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" title="Apply Filters">
-                    <i class="fas fa-filter text-[10px]"></i>
-                    <span>Filter</span>
+                {{-- "More Filters" Accordion Toggle Button --}}
+                <button type="button" 
+                        @click="showMoreFilters = !showMoreFilters" 
+                        class="h-[34px] py-0 px-2.5 bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold text-xs rounded-lg border border-slate-200 transition flex items-center justify-center gap-1.5 cursor-pointer flex-shrink-0">
+                    <i class="fas fa-sliders text-[11px] text-slate-500"></i>
+                    <span>More</span>
+                    @if($activeMoreCount > 0)
+                        <span class="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-cyan-600 text-white leading-none">{{ $activeMoreCount }}</span>
+                    @endif
+                    <i class="fas text-[9px] transition-transform" :class="showMoreFilters ? 'fa-chevron-up text-cyan-600' : 'fa-chevron-down text-slate-400'"></i>
                 </button>
-                <a href="{{ route('tenant.reports.inventory') }}" class="py-1.5 px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer" title="Reset Filters">
-                    <i class="fas fa-rotate-left text-[10px]"></i>
-                    <span>Reset</span>
-                </a>
+
+                {{-- Strict Sequence: [Filter] FIRST, [Reset] SECOND --}}
+                <div class="flex items-center gap-1.5 flex-shrink-0 md:ml-auto">
+                    <button type="submit" class="h-[34px] py-0 px-3.5 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" title="Apply Filters">
+                        <i class="fas fa-filter text-[10px]"></i>
+                        <span>Filter</span>
+                    </button>
+                    <a href="{{ route('tenant.reports.inventory') }}" class="h-[34px] py-0 px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer" title="Reset Filters">
+                        <i class="fas fa-rotate-left text-[10px]"></i>
+                        <span>Reset</span>
+                    </a>
+                </div>
+            </div>
+
+            {{-- 2nd Tier: Secondary Filters Drawer --}}
+            <div x-show="showMoreFilters" x-cloak x-transition class="pt-2 border-t border-slate-100 flex flex-wrap items-center gap-2">
+                {{-- Stock Status --}}
+                <div class="w-full sm:w-52">
+                    <select name="status" class="w-full h-[34px] bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
+                        <option value="all" {{ $statusFilter === 'all' ? 'selected' : '' }}>All Equipment Statuses</option>
+                        <option value="in_stock" {{ $statusFilter === 'in_stock' ? 'selected' : '' }}>In Warehouse Stock</option>
+                        <option value="deployed" {{ $statusFilter === 'deployed' ? 'selected' : '' }}>Deployed in Field</option>
+                        <option value="low_stock" {{ $statusFilter === 'low_stock' ? 'selected' : '' }}>🔴 Low Stock Alert</option>
+                        <option value="online" {{ $statusFilter === 'online' ? 'selected' : '' }}>🟢 Online / Active Device</option>
+                        <option value="offline" {{ $statusFilter === 'offline' ? 'selected' : '' }}>⚪ Offline Device</option>
+                    </select>
+                </div>
             </div>
         </form>
     </div>
@@ -236,19 +262,19 @@
             <table class="saas-table">
                 <thead>
                     <tr>
-                        <th class="w-10 text-center">SL</th>
-                        <th>Item SKU</th>
-                        <th>Equipment Description</th>
-                        <th>Category</th>
-                        <th>Brand</th>
-                        <th class="text-center">Unit</th>
-                        <th class="text-right">In Stock</th>
-                        <th class="text-right">Deployed</th>
-                        <th class="text-right">Total Units</th>
-                        <th class="text-right">Unit Price</th>
-                        <th class="text-right">Total Valuation</th>
-                        <th class="text-center">Stock Status</th>
-                        <th class="w-14 text-center no-sort">Action</th>
+                        <th class="w-10 text-center font-semibold">#</th>
+                        <th class="text-center font-semibold">Item SKU</th>
+                        <th class="text-center font-semibold">Equipment Description</th>
+                        <th class="text-center font-semibold">Category</th>
+                        <th class="text-center font-semibold">Brand</th>
+                        <th class="text-center font-semibold">Unit</th>
+                        <th class="text-center font-semibold">In Stock</th>
+                        <th class="text-center font-semibold">Deployed</th>
+                        <th class="text-center font-semibold">Total Units</th>
+                        <th class="text-center font-semibold">Unit Price</th>
+                        <th class="text-center font-semibold">Total Valuation</th>
+                        <th class="text-center font-semibold">Stock Status</th>
+                        <th class="w-14 text-center font-semibold no-sort">Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -262,10 +288,10 @@
                         @endphp
                         <tr>
                             <td class="text-center text-slate-400 font-mono">{{ $idx + 1 }}</td>
-                            <td class="font-mono text-cyan-800 font-bold">{{ $item['sku'] }}</td>
-                            <td class="font-medium text-slate-800">{{ $item['item_name'] }}</td>
-                            <td class="text-slate-600 text-[11px]">{{ $item['category'] }}</td>
-                            <td class="font-semibold text-slate-700">{{ $item['brand'] }}</td>
+                            <td class="text-center font-mono text-cyan-800 font-bold">{{ $item['sku'] }}</td>
+                            <td class="text-left font-medium text-slate-800">{{ $item['item_name'] }}</td>
+                            <td class="text-left text-slate-600 text-[11px]">{{ $item['category'] }}</td>
+                            <td class="text-left font-semibold text-slate-700">{{ $item['brand'] }}</td>
                             <td class="text-center text-slate-500">{{ $item['unit'] }}</td>
                             <td class="text-right font-mono font-bold {{ $isLowStock ? 'text-rose-600' : 'text-slate-700' }}">
                                 {{ number_format($item['in_stock']) }}
@@ -306,9 +332,20 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="13" class="text-center py-6 text-slate-400">
-                                <i class="fas fa-box-open text-2xl mb-1 text-slate-300 block"></i>
-                                <span>No equipment or hardware items found matching your filters.</span>
+                            <td colspan="13" class="text-center py-10">
+                                <div class="max-w-xs mx-auto text-center space-y-2">
+                                    <div class="w-10 h-10 rounded-full bg-slate-100 text-slate-400 mx-auto flex items-center justify-center">
+                                        <i class="fas fa-box-open text-base"></i>
+                                    </div>
+                                    <p class="text-xs font-semibold text-slate-700">No Equipment Records Found</p>
+                                    <p class="text-[11px] text-slate-500">No hardware or stock items matched your filter parameters.</p>
+                                    @if(request()->anyFilled(['search', 'category', 'status']))
+                                        <a href="{{ route('tenant.reports.inventory') }}" class="inline-flex items-center gap-1 text-xs text-cyan-700 font-semibold hover:underline mt-1">
+                                            <i class="fas fa-rotate-left text-[10px]"></i>
+                                            <span>Clear All Filters</span>
+                                        </a>
+                                    @endif
+                                </div>
                             </td>
                         </tr>
                     @endforelse
@@ -336,18 +373,18 @@
             <table class="saas-table">
                 <thead>
                     <tr>
-                        <th class="w-10 text-center">SL</th>
-                        <th>Device Name</th>
-                        <th>Vendor / Brand</th>
-                        <th>Model</th>
-                        <th>MAC Address</th>
-                        <th>PON Port</th>
-                        <th>OLT Node</th>
-                        <th>PPPoE / Client</th>
-                        <th class="text-right">RX Power</th>
-                        <th class="text-right">TX Power</th>
-                        <th class="text-center">Optical State</th>
-                        <th class="w-14 text-center no-sort">Action</th>
+                        <th class="w-10 text-center font-semibold">#</th>
+                        <th class="text-center font-semibold">Device Name</th>
+                        <th class="text-center font-semibold">Vendor / Brand</th>
+                        <th class="text-center font-semibold">Model</th>
+                        <th class="text-center font-semibold">MAC Address</th>
+                        <th class="text-center font-semibold">PON Port</th>
+                        <th class="text-center font-semibold">OLT Node</th>
+                        <th class="text-center font-semibold">PPPoE / Client</th>
+                        <th class="text-center font-semibold">RX Power</th>
+                        <th class="text-center font-semibold">TX Power</th>
+                        <th class="text-center font-semibold">Optical State</th>
+                        <th class="w-14 text-center font-semibold no-sort">Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -359,13 +396,13 @@
                         @endphp
                         <tr>
                             <td class="text-center text-slate-400 font-mono">{{ $customerOnus->firstItem() + $idx }}</td>
-                            <td class="font-bold text-slate-800">{{ $onu->name ?: 'ONU-' . $onu->id }}</td>
-                            <td class="font-semibold text-slate-700">{{ $onu->vendor ?: 'Generic' }}</td>
-                            <td class="text-slate-600 font-mono text-[11px]">{{ $onu->model ?: 'XPON-1GE' }}</td>
-                            <td class="font-mono text-cyan-800 font-semibold">{{ $onu->mac_address ?: 'N/A' }}</td>
-                            <td class="font-mono text-slate-700 text-center">{{ $onu->pon_port ?: 'EPON0/1' }}</td>
-                            <td class="text-slate-700">{{ $onu->olt_name ?: 'Main Central OLT' }}</td>
-                            <td class="font-mono text-slate-800">{{ $onu->pppoe_username ?: ($onu->desc ?: 'Active Subscriber') }}</td>
+                            <td class="text-left font-bold text-slate-800">{{ $onu->name ?: 'ONU-' . $onu->id }}</td>
+                            <td class="text-left font-semibold text-slate-700">{{ $onu->vendor ?: 'Generic' }}</td>
+                            <td class="text-center text-slate-600 font-mono text-[11px]">{{ $onu->model ?: 'XPON-1GE' }}</td>
+                            <td class="text-center font-mono text-cyan-800 font-semibold">{{ $onu->mac_address ?: 'N/A' }}</td>
+                            <td class="text-center font-mono text-slate-700">{{ $onu->pon_port ?: 'EPON0/1' }}</td>
+                            <td class="text-left text-slate-700">{{ $onu->olt_name ?: 'Main Central OLT' }}</td>
+                            <td class="text-left font-mono text-slate-800">{{ $onu->pppoe_username ?: ($onu->desc ?: 'Active Subscriber') }}</td>
                             <td class="text-right font-mono {{ $rxColor }}">
                                 {{ $onu->rx_power_dbm ? $onu->rx_power_dbm . ' dBm' : '-19.4 dBm' }}
                             </td>
@@ -396,9 +433,20 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="12" class="text-center py-6 text-slate-400">
-                                <i class="fas fa-plug text-2xl mb-1 text-slate-300 block"></i>
-                                <span>No deployed ONUs found matching your filters.</span>
+                            <td colspan="12" class="text-center py-10">
+                                <div class="max-w-xs mx-auto text-center space-y-2">
+                                    <div class="w-10 h-10 rounded-full bg-slate-100 text-slate-400 mx-auto flex items-center justify-center">
+                                        <i class="fas fa-plug text-base"></i>
+                                    </div>
+                                    <p class="text-xs font-semibold text-slate-700">No Deployed ONUs Found</p>
+                                    <p class="text-[11px] text-slate-500">No customer ONUs matched your filter criteria.</p>
+                                    @if(request()->anyFilled(['search', 'category', 'status']))
+                                        <a href="{{ route('tenant.reports.inventory') }}" class="inline-flex items-center gap-1 text-xs text-cyan-700 font-semibold hover:underline mt-1">
+                                            <i class="fas fa-rotate-left text-[10px]"></i>
+                                            <span>Clear All Filters</span>
+                                        </a>
+                                    @endif
+                                </div>
                             </td>
                         </tr>
                     @endforelse
@@ -407,7 +455,7 @@
         </div>
 
         @if($customerOnus->hasPages())
-        <div class="px-3.5 py-2 border-t border-slate-200 bg-slate-50/50 flex items-center justify-between">
+        <div class="px-3.5 py-2.5 border-t border-slate-200 bg-slate-50/50 flex items-center justify-between">
             <span class="text-[11px] text-slate-500">
                 Showing {{ $customerOnus->firstItem() }} to {{ $customerOnus->lastItem() }} of {{ $customerOnus->total() }} ONUs
             </span>
@@ -431,25 +479,25 @@
                     <table class="saas-table">
                         <thead>
                             <tr>
-                                <th class="w-10 text-center">SL</th>
-                                <th>OLT Name</th>
-                                <th>Brand / Vendor</th>
-                                <th>Model &amp; Chassis</th>
-                                <th>IP Address</th>
-                                <th class="text-center">PON Ports</th>
-                                <th class="text-right">Total ONUs</th>
-                                <th class="text-right">Online ONUs</th>
-                                <th class="text-center">Node Status</th>
+                                <th class="w-10 text-center font-semibold">#</th>
+                                <th class="text-center font-semibold">OLT Name</th>
+                                <th class="text-center font-semibold">Brand / Vendor</th>
+                                <th class="text-center font-semibold">Model &amp; Chassis</th>
+                                <th class="text-center font-semibold">IP Address</th>
+                                <th class="text-center font-semibold">PON Ports</th>
+                                <th class="text-center font-semibold">Total ONUs</th>
+                                <th class="text-center font-semibold">Online ONUs</th>
+                                <th class="text-center font-semibold">Node Status</th>
                             </tr>
                         </thead>
                         <tbody>
                             @forelse($coreOlts as $i => $olt)
                                 <tr>
                                     <td class="text-center text-slate-400 font-mono">{{ $i + 1 }}</td>
-                                    <td class="font-bold text-slate-800">{{ $olt->name }}</td>
-                                    <td class="font-semibold text-slate-700">{{ $olt->brand ?: ($olt->vendor ?: 'Generic') }}</td>
-                                    <td class="font-mono text-slate-600 text-[11px]">{{ $olt->model ?: 'EPON-8P-Chassis' }}</td>
-                                    <td class="font-mono text-cyan-800 font-bold">{{ $olt->ip_address }}</td>
+                                    <td class="text-left font-bold text-slate-800">{{ $olt->name }}</td>
+                                    <td class="text-left font-semibold text-slate-700">{{ $olt->brand ?: ($olt->vendor ?: 'Generic') }}</td>
+                                    <td class="text-center font-mono text-slate-600 text-[11px]">{{ $olt->model ?: 'EPON-8P-Chassis' }}</td>
+                                    <td class="text-center font-mono text-cyan-800 font-bold">{{ $olt->ip_address }}</td>
                                     <td class="text-center font-mono text-slate-700">{{ $olt->total_pon_ports ?: ($olt->pon_ports_count ?: 8) }} Ports</td>
                                     <td class="text-right font-mono font-bold text-indigo-700">{{ number_format($olt->total_onus_count) }}</td>
                                     <td class="text-right font-mono font-bold text-emerald-700">{{ number_format($olt->online_onus_count) }}</td>
@@ -462,7 +510,12 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="9" class="text-center py-4 text-slate-400">No OLT devices recorded.</td>
+                                    <td colspan="9" class="text-center py-6 text-slate-400">
+                                        <div class="max-w-xs mx-auto text-center space-y-1">
+                                            <i class="fas fa-server text-xl text-slate-300 block"></i>
+                                            <p class="text-xs font-semibold text-slate-700">No OLT Devices Configured</p>
+                                        </div>
+                                    </td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -480,25 +533,25 @@
                     <table class="saas-table">
                         <thead>
                             <tr>
-                                <th class="w-10 text-center">SL</th>
-                                <th>Router Name</th>
-                                <th>Hardware Model</th>
-                                <th>RouterOS</th>
-                                <th>Management IP</th>
-                                <th>API / CoA Port</th>
-                                <th class="text-center">Uptime</th>
-                                <th class="text-center">Status</th>
+                                <th class="w-10 text-center font-semibold">#</th>
+                                <th class="text-center font-semibold">Router Name</th>
+                                <th class="text-center font-semibold">Hardware Model</th>
+                                <th class="text-center font-semibold">RouterOS</th>
+                                <th class="text-center font-semibold">Management IP</th>
+                                <th class="text-center font-semibold">API / CoA Port</th>
+                                <th class="text-center font-semibold">Uptime</th>
+                                <th class="text-center font-semibold">Status</th>
                             </tr>
                         </thead>
                         <tbody>
                             @forelse($coreRouters as $i => $rtr)
                                 <tr>
                                     <td class="text-center text-slate-400 font-mono">{{ $i + 1 }}</td>
-                                    <td class="font-bold text-slate-800">{{ $rtr->name }}</td>
-                                    <td class="font-mono text-indigo-800 font-semibold">{{ $rtr->model ?: 'MikroTik CCR2004' }}</td>
-                                    <td class="font-mono text-slate-600 text-[11px]">{{ $rtr->ros_version ?: 'v7.14.2' }}</td>
-                                    <td class="font-mono text-cyan-800 font-bold">{{ $rtr->ip_address }}</td>
-                                    <td class="font-mono text-slate-600 text-[11px]">{{ $rtr->api_port ?: '8728' }} / {{ $rtr->coa_port ?: '3799' }}</td>
+                                    <td class="text-left font-bold text-slate-800">{{ $rtr->name }}</td>
+                                    <td class="text-left font-mono text-indigo-800 font-semibold">{{ $rtr->model ?: 'MikroTik CCR2004' }}</td>
+                                    <td class="text-center font-mono text-slate-600 text-[11px]">{{ $rtr->ros_version ?: 'v7.14.2' }}</td>
+                                    <td class="text-center font-mono text-cyan-800 font-bold">{{ $rtr->ip_address }}</td>
+                                    <td class="text-center font-mono text-slate-600 text-[11px]">{{ $rtr->api_port ?: '8728' }} / {{ $rtr->coa_port ?: '3799' }}</td>
                                     <td class="text-center font-mono text-slate-600 text-[11px]">{{ $rtr->uptime ?: '48d 12h' }}</td>
                                     <td class="text-center">
                                         <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -509,7 +562,12 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="8" class="text-center py-4 text-slate-400">No core routers recorded.</td>
+                                    <td colspan="8" class="text-center py-6 text-slate-400">
+                                        <div class="max-w-xs mx-auto text-center space-y-1">
+                                            <i class="fas fa-network-wired text-xl text-slate-300 block"></i>
+                                            <p class="text-xs font-semibold text-slate-700">No Core Routers Recorded</p>
+                                        </div>
+                                    </td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -525,17 +583,17 @@
             <table class="saas-table">
                 <thead>
                     <tr>
-                        <th class="w-10 text-center">SL</th>
-                        <th>Item SKU</th>
-                        <th>Consumable / Passive Item</th>
-                        <th>Brand / Grade</th>
-                        <th class="text-center">Unit</th>
-                        <th class="text-right">Warehouse Stock</th>
-                        <th class="text-right">In-Field Deployed</th>
-                        <th class="text-right">Total Units</th>
-                        <th class="text-right">Unit Price</th>
-                        <th class="text-right">Total Valuation</th>
-                        <th class="text-center">Stock Health</th>
+                        <th class="w-10 text-center font-semibold">#</th>
+                        <th class="text-center font-semibold">Item SKU</th>
+                        <th class="text-center font-semibold">Consumable / Passive Item</th>
+                        <th class="text-center font-semibold">Brand / Grade</th>
+                        <th class="text-center font-semibold">Unit</th>
+                        <th class="text-center font-semibold">Warehouse Stock</th>
+                        <th class="text-center font-semibold">In-Field Deployed</th>
+                        <th class="text-center font-semibold">Total Units</th>
+                        <th class="text-center font-semibold">Unit Price</th>
+                        <th class="text-center font-semibold">Total Valuation</th>
+                        <th class="text-center font-semibold">Stock Health</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -549,9 +607,9 @@
                         @endphp
                         <tr>
                             <td class="text-center text-slate-400 font-mono">{{ $idx + 1 }}</td>
-                            <td class="font-mono text-cyan-800 font-bold">{{ $p['sku'] }}</td>
-                            <td class="font-medium text-slate-800">{{ $p['item_name'] }}</td>
-                            <td class="font-semibold text-slate-700">{{ $p['brand'] }}</td>
+                            <td class="text-center font-mono text-cyan-800 font-bold">{{ $p['sku'] }}</td>
+                            <td class="text-left font-medium text-slate-800">{{ $p['item_name'] }}</td>
+                            <td class="text-left font-semibold text-slate-700">{{ $p['brand'] }}</td>
                             <td class="text-center text-slate-500">{{ $p['unit'] }}</td>
                             <td class="text-right font-mono font-bold {{ $isLow ? 'text-rose-600' : 'text-slate-700' }}">
                                 {{ number_format($p['in_stock']) }}
@@ -584,7 +642,15 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="11" class="text-center py-6 text-slate-400">No passive network items found.</td>
+                            <td colspan="11" class="text-center py-10">
+                                <div class="max-w-xs mx-auto text-center space-y-2">
+                                    <div class="w-10 h-10 rounded-full bg-slate-100 text-slate-400 mx-auto flex items-center justify-center">
+                                        <i class="fas fa-circle-nodes text-base"></i>
+                                    </div>
+                                    <p class="text-xs font-semibold text-slate-700">No Passive Items Found</p>
+                                    <p class="text-[11px] text-slate-500">No passive network consumables recorded.</p>
+                                </div>
+                            </td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -695,7 +761,7 @@
          x-cloak 
          class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs"
          @keydown.escape.window="itemModalOpen = false">
-        <div class="bg-white rounded-xl border border-slate-200/90 shadow-2xl w-full max-w-lg overflow-hidden" 
+        <div class="bg-white rounded-xl border border-slate-200/90 shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-150" 
              @click.away="itemModalOpen = false">
             {{-- Modal Header --}}
             <div class="bg-slate-50/80 border-b border-slate-200 px-4 py-3 flex items-center justify-between">
@@ -737,11 +803,11 @@
                 <div class="p-3 bg-slate-50 rounded-lg border border-slate-200/80 flex items-center justify-between text-xs">
                     <div>
                         <span class="text-[10px] text-slate-500 font-semibold uppercase block">Unit Price</span>
-                        <span class="font-mono text-slate-800 font-bold" x-text="'{{ $currencySymbol ?? '৳' }} ' + (selectedItem?.unit_price || 0).toLocaleString()"></span>
+                        <span class="font-mono text-slate-800 font-bold" x-text="'৳ ' + (selectedItem?.unit_price || 0).toLocaleString()"></span>
                     </div>
                     <div class="text-right">
                         <span class="text-[10px] text-slate-500 font-semibold uppercase block">Total Asset Value</span>
-                        <span class="font-mono text-emerald-700 font-bold text-sm" x-text="'{{ $currencySymbol ?? '৳' }} ' + (((selectedItem?.in_stock || 0) + (selectedItem?.deployed || 0)) * (selectedItem?.unit_price || 0)).toLocaleString()"></span>
+                        <span class="font-mono text-emerald-700 font-bold text-sm" x-text="'৳ ' + (((selectedItem?.in_stock || 0) + (selectedItem?.deployed || 0)) * (selectedItem?.unit_price || 0)).toLocaleString()"></span>
                     </div>
                 </div>
             </div>
@@ -760,7 +826,7 @@
          x-cloak 
          class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs"
          @keydown.escape.window="onuModalOpen = false">
-        <div class="bg-white rounded-xl border border-slate-200/90 shadow-2xl w-full max-w-lg overflow-hidden" 
+        <div class="bg-white rounded-xl border border-slate-200/90 shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-150" 
              @click.away="onuModalOpen = false">
             {{-- Modal Header --}}
             <div class="bg-slate-50/80 border-b border-slate-200 px-4 py-3 flex items-center justify-between">
