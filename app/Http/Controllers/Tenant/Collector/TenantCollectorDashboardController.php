@@ -439,9 +439,10 @@ class TenantCollectorDashboardController extends Controller
         $isAdmin = $authUser && ($authUser->isOwner() || $authUser->isIspAdmin());
 
         $allCollectors = User::where('tenant_id', $tenantId)->orderBy('name')->get(['id', 'name', 'email', 'role']);
+        $allResellers = TenantReseller::where('tenant_id', $tenantId)->orderBy('name')->get(['id', 'name']);
 
         $query = TenantDailyCashHandover::where('tenant_id', $tenantId)
-            ->with(['collector', 'verifier']);
+            ->with(['collector.reseller', 'verifier']);
 
         // 1. Collector Scope / Filter
         $collectorFilter = $request->input('collector_id', $isAdmin ? 'all' : (string) $authUser->id);
@@ -450,6 +451,16 @@ class TenantCollectorDashboardController extends Controller
             $query->where('collector_id', $authUser->id);
         } elseif ($collectorFilter !== 'all' && !empty($collectorFilter)) {
             $query->where('collector_id', (int) $collectorFilter);
+        }
+
+        // 1b. Partner / Reseller Filter
+        $partnerFilter = $request->input('partner_id', 'all');
+        if (!empty($partnerFilter) && $partnerFilter !== 'all') {
+            if ($partnerFilter === 'hq') {
+                $query->whereHas('collector', fn($cq) => $cq->whereNull('reseller_id'));
+            } else {
+                $query->whereHas('collector', fn($cq) => $cq->where('reseller_id', (int) $partnerFilter));
+            }
         }
 
         // 2. Status Filter
@@ -524,6 +535,7 @@ class TenantCollectorDashboardController extends Controller
 
         // 6. Active More Filters Count
         $activeMoreCount = 0;
+        if (!empty($partnerFilter) && $partnerFilter !== 'all') $activeMoreCount++;
         if (!empty($period) && $period !== 'all') $activeMoreCount++;
         if (!empty($dateFrom)) $activeMoreCount++;
         if (!empty($dateTo)) $activeMoreCount++;
@@ -582,6 +594,8 @@ class TenantCollectorDashboardController extends Controller
             'currencySymbol',
             'isAdmin',
             'allCollectors',
+            'allResellers',
+            'partnerFilter',
             'collectorFilter',
             'statusFilter',
             'shiftFilter',
@@ -699,7 +713,7 @@ class TenantCollectorDashboardController extends Controller
     {
         $tenant = $this->getTenant();
         $handover = TenantDailyCashHandover::where('tenant_id', $tenant->id)
-            ->with(['collector', 'verifier'])
+            ->with(['collector.reseller', 'verifier'])
             ->findOrFail($id);
 
         $currencySymbol = $tenant->currency_symbol ?? '৳';
@@ -734,6 +748,8 @@ class TenantCollectorDashboardController extends Controller
             'system_collected_formatted' => $currencySymbol . number_format($handover->system_collected_amount, 2),
             'handed_over_amount' => (float) $handover->handed_over_amount,
             'handed_over_formatted' => $currencySymbol . number_format($handover->handed_over_amount, 2),
+            'remaining_amount' => max(0, (float) ($handover->system_collected_amount > 0 ? $handover->system_collected_amount : $handover->handed_over_amount) - (float) $handover->handed_over_amount),
+            'remaining_formatted' => $currencySymbol . number_format(max(0, (float) ($handover->system_collected_amount > 0 ? $handover->system_collected_amount : $handover->handed_over_amount) - (float) $handover->handed_over_amount), 2),
             'shortage_amount' => (float) $handover->shortage_amount,
             'shortage_formatted' => $currencySymbol . number_format($handover->shortage_amount, 2),
             'excess_amount' => (float) $handover->excess_amount,
@@ -751,7 +767,9 @@ class TenantCollectorDashboardController extends Controller
                 'id' => $handover->collector?->id,
                 'name' => $handover->collector?->name ?? 'Staff Collector',
                 'email' => $handover->collector?->email ?? '--',
+                'partner_name' => $handover->collector?->reseller?->name ?? 'ISP Core (HQ)',
             ],
+            'partner_name' => $handover->collector?->reseller?->name ?? 'ISP Core (HQ)',
             'verifier' => $handover->verifier ? [
                 'id' => $handover->verifier->id,
                 'name' => $handover->verifier->name,

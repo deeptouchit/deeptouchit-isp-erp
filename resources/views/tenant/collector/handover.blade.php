@@ -285,6 +285,21 @@
                            class="w-full h-[34px] px-2.5 bg-white border border-slate-200 rounded-lg text-xs font-mono text-slate-800 focus:outline-hidden focus:border-cyan-500">
                 </div>
 
+                <!-- Partner / Reseller Filter -->
+                <div class="w-full sm:w-44 flex-shrink-0">
+                    <select name="partner_id" 
+                            onchange="this.form.submit()"
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition cursor-pointer">
+                        <option value="all" {{ ($partnerFilter ?? 'all') === 'all' ? 'selected' : '' }}>All Partners / HQ</option>
+                        <option value="hq" {{ ($partnerFilter ?? '') === 'hq' ? 'selected' : '' }}>ISP Core (HQ)</option>
+                        @foreach($allResellers ?? [] as $reseller)
+                            <option value="{{ $reseller->id }}" {{ (string)($partnerFilter ?? '') === (string)$reseller->id ? 'selected' : '' }}>
+                                {{ $reseller->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
                 <!-- Shift Filter -->
                 <div class="w-full sm:w-44 flex-shrink-0">
                     <select name="shift" 
@@ -310,8 +325,11 @@
                     <tr>
                         <th class="w-10 text-center no-sort">#</th>
                         <th class="text-center font-semibold">Voucher #</th>
+                        <th class="text-center font-semibold">Partner</th>
                         <th class="text-center font-semibold">Collector Staff</th>
-                        <th class="text-center font-semibold">Handed Amount</th>
+                        <th class="text-center font-semibold">Collected</th>
+                        <th class="text-center font-semibold">Handed Over</th>
+                        <th class="text-center font-semibold">Remaining in Hand</th>
                         <th class="text-center font-semibold">Received By</th>
                         <th class="text-center font-semibold">Status</th>
                         <th class="text-center font-semibold">Date &amp; Time</th>
@@ -323,13 +341,20 @@
                         @php
                             $badge = $item->status_badge;
                             $disc = $item->discrepancy_badge;
+                            $partnerName = $item->collector?->reseller?->name ?? 'ISP Core (HQ)';
+                            $systemCollected = (float) ($item->system_collected_amount > 0 ? $item->system_collected_amount : $item->handed_over_amount);
+                            $handedOver = (float) $item->handed_over_amount;
+                            $remainingInHand = max(0, $systemCollected - $handedOver);
+
                             $rowItemJson = [
                                 'id' => $item->id,
                                 'handover_no' => $item->handover_no,
+                                'partner_name' => $partnerName,
                                 'collector_id' => $item->collector_id,
                                 'collector_name' => $item->collector?->name ?? 'Staff Collector',
-                                'system_collected_amount' => (float) $item->system_collected_amount,
-                                'handed_over_amount' => (float) $item->handed_over_amount,
+                                'system_collected_amount' => $systemCollected,
+                                'handed_over_amount' => $handedOver,
+                                'remaining_amount' => $remainingInHand,
                                 'shortage_amount' => (float) $item->shortage_amount,
                                 'excess_amount' => (float) $item->excess_amount,
                                 'status' => $item->status,
@@ -354,7 +379,22 @@
                                 </button>
                             </td>
 
-                            <!-- 2. Collector Staff (কোন কালেক্টর এর টাকা) -->
+                            <!-- 2. Partner (ISP Core HQ vs Franchise Partner) -->
+                            <td class="text-left font-medium text-slate-800 whitespace-nowrap text-xs">
+                                @if($item->collector?->reseller)
+                                    <span class="inline-flex items-center gap-1 text-cyan-800 font-semibold">
+                                        <i class="fas fa-handshake text-[10px] text-cyan-600"></i>
+                                        <span>{{ $item->collector->reseller->name }}</span>
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center gap-1 text-slate-600">
+                                        <i class="fas fa-building text-[10px] text-slate-400"></i>
+                                        <span>ISP Core (HQ)</span>
+                                    </span>
+                                @endif
+                            </td>
+
+                            <!-- 3. Collector Staff (কোন কালেক্টর এর টাকা) -->
                             <td class="text-left font-semibold text-slate-800 whitespace-nowrap text-xs">
                                 <div class="flex items-center gap-1.5">
                                     <i class="fas fa-user text-[10px] text-slate-400"></i>
@@ -362,12 +402,31 @@
                                 </div>
                             </td>
 
-                            <!-- 3. Handed Over Amount (Right Align - Accounting Standard) -->
-                            <td class="text-right font-mono font-bold text-slate-900 whitespace-nowrap text-xs">
-                                @currency($item->amount)
+                            <!-- 4. Collected Amount (আদায়কৃত টাকা - Right Align Accounting Standard) -->
+                            <td class="text-right font-mono font-medium text-slate-800 whitespace-nowrap text-xs">
+                                @currency($systemCollected)
                             </td>
 
-                            <!-- 4. Received / Verified By (কে গ্রহণ করলো) -->
+                            <!-- 5. Handed Over Amount (জমা দেওয়া টাকা - Right Align Accounting Standard) -->
+                            <td class="text-right font-mono font-bold text-emerald-700 whitespace-nowrap text-xs">
+                                @currency($handedOver)
+                            </td>
+
+                            <!-- 6. Remaining in Hand (অবশিষ্ট ক্যাশ - Right Align Accounting Standard) -->
+                            <td class="text-right font-mono whitespace-nowrap text-xs">
+                                @if($remainingInHand > 0)
+                                    <span class="inline-flex items-center gap-1 text-amber-700 font-bold bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200" title="Cash still in collector custody">
+                                        <i class="fas fa-wallet text-[9px] text-amber-500"></i>
+                                        <span>@currency($remainingInHand)</span>
+                                    </span>
+                                @else
+                                    <span class="text-slate-400 font-mono">
+                                        @currency(0)
+                                    </span>
+                                @endif
+                            </td>
+
+                            <!-- 7. Received / Verified By (কে গ্রহণ করলো) -->
                             <td class="text-left font-medium text-slate-700 whitespace-nowrap text-xs">
                                 @if($item->verifier)
                                     <span class="inline-flex items-center gap-1 text-slate-800">
@@ -379,7 +438,7 @@
                                 @endif
                             </td>
 
-                            <!-- 5. Status Badge -->
+                            <!-- 8. Status Badge -->
                             <td class="text-center whitespace-nowrap">
                                 <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold border {{ $badge['class'] }}">
                                     <span class="w-1.5 h-1.5 rounded-full {{ $badge['dot'] }}"></span>
@@ -387,12 +446,12 @@
                                 </span>
                             </td>
 
-                            <!-- 6. Date & Time (তারিখ কলামে সময় সহ) -->
+                            <!-- 9. Date & Time (তারিখ কলামে সময় সহ) -->
                             <td class="text-center font-mono text-slate-700 text-xs whitespace-nowrap">
                                 {{ $item->created_at ? $item->created_at->format('d M Y, h:i A') : ($item->handover_date ? $item->handover_date->format('d M Y') : '—') }}
                             </td>
 
-                            <!-- 7. Action Column (Rule 2.E 3-Dot Floating Action Menu) -->
+                            <!-- 10. Action Column (Rule 2.E 3-Dot Floating Action Menu) -->
                             <td class="text-center whitespace-nowrap no-sort">
                                 <button type="button" 
                                         @click="toggleMenu({{ json_encode($rowItemJson) }}, $event)" 
@@ -404,7 +463,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="text-center py-8 text-slate-400">
+                            <td colspan="11" class="text-center py-8 text-slate-400">
                                 <i class="fas fa-vault text-2xl mb-1.5 block text-slate-300"></i>
                                 <span class="text-xs font-medium">No cash handover records found.</span>
                             </td>
@@ -672,13 +731,27 @@
                             <span class="font-mono text-emerald-800" x-text="approveModal.handover?.handover_no"></span>
                         </div>
                         <div class="flex justify-between font-bold">
+                            <span>Partner:</span>
+                            <span class="text-slate-800" x-text="approveModal.handover?.partner_name || 'ISP Core (HQ)'"></span>
+                        </div>
+                        <div class="flex justify-between font-bold">
                             <span>Collector:</span>
                             <span x-text="approveModal.handover?.collector_name"></span>
+                        </div>
+                        <div class="flex justify-between font-bold">
+                            <span>Collected Amount:</span>
+                            <span class="font-mono text-slate-800" x-text="'{{ $currencySymbol ?? '৳' }}' + parseFloat(approveModal.handover?.system_collected_amount || 0).toFixed(2)"></span>
                         </div>
                         <div class="flex justify-between font-bold">
                             <span>Handed Over Cash:</span>
                             <span class="font-mono text-emerald-700" x-text="'{{ $currencySymbol ?? '৳' }}' + parseFloat(approveModal.handover?.handed_over_amount || 0).toFixed(2)"></span>
                         </div>
+                        <template x-if="parseFloat(approveModal.handover?.remaining_amount || 0) > 0">
+                            <div class="flex justify-between font-bold text-amber-700">
+                                <span>Remaining in Hand:</span>
+                                <span class="font-mono" x-text="'{{ $currencySymbol ?? '৳' }}' + parseFloat(approveModal.handover?.remaining_amount || 0).toFixed(2)"></span>
+                            </div>
+                        </template>
                     </div>
 
                     <div>
@@ -773,6 +846,10 @@
                         <!-- Collector & Shift Info -->
                         <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200/80 space-y-1 text-[11px]">
                             <div class="flex items-center justify-between">
+                                <span class="text-slate-500">Partner:</span>
+                                <span class="font-bold text-slate-900" x-text="voucherModal.handover.partner_name || 'ISP Core (HQ)'"></span>
+                            </div>
+                            <div class="flex items-center justify-between">
                                 <span class="text-slate-500">Collector Staff:</span>
                                 <span class="font-bold text-slate-900" x-text="voucherModal.handover.collector.name"></span>
                             </div>
@@ -796,6 +873,12 @@
                                 <span>Handed Over Physical Cash:</span>
                                 <span class="font-bold text-emerald-700" x-text="voucherModal.handover.handed_over_formatted"></span>
                             </div>
+                            <template x-if="voucherModal.handover.remaining_amount > 0">
+                                <div class="flex items-center justify-between text-amber-700 font-bold">
+                                    <span>Remaining Cash in Hand:</span>
+                                    <span x-text="voucherModal.handover.remaining_formatted"></span>
+                                </div>
+                            </template>
                             <template x-if="voucherModal.handover.shortage_amount > 0">
                                 <div class="flex items-center justify-between text-rose-700 font-bold">
                                     <span>Shortage Amount:</span>
