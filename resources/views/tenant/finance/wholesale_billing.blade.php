@@ -128,27 +128,126 @@
         </div>
     </div>
 
-    {{-- 3. Search & Multi-Filter Toolbar (AGENTS.md Rule 2.C) --}}
-    <div class="bg-white p-2.5 rounded-xl border border-slate-200 shadow-2xs">
-        <form method="GET" action="{{ route('tenant.finance.wholesale-billing') }}" class="space-y-2">
-            <!-- Row 1: Search, Period Preset & Date Range -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-2">
-                <!-- Search Box -->
-                <div class="md:col-span-4 relative">
-                    <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+    {{-- 3. Search & Multi-Filter Toolbar (Customer-Standard 2-Tier Filter System - AGENTS.md Rule 2.C) --}}
+    <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5"
+         x-data="{ 
+             showMoreFilters: {{ ($isMoreOpen ?? false) ? 'true' : 'false' }}, 
+             searchQuery: '{{ addslashes(request('search', '')) }}' 
+         }">
+        <form method="GET" action="{{ route('tenant.finance.wholesale-billing') }}" class="space-y-2.5">
+            <!-- Tier 1: Primary Filter Bar (Single Uniform Line on md+) -->
+            <div class="flex flex-col md:flex-row items-stretch md:items-center gap-2">
+                <!-- Intelligent Live Search Box -->
+                <div class="relative flex-1 min-w-[200px]">
+                    <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-xs transition-colors pointer-events-none"
+                       :class="searchQuery ? 'text-cyan-600 font-bold' : 'text-slate-400'"></i>
                     <input type="text" 
                            name="search" 
-                           value="{{ $search }}" 
-                           placeholder="Invoice #, Reseller, Notes..." 
-                           class="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 placeholder-slate-400 focus:bg-white focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition">
+                           x-model="searchQuery" 
+                           placeholder="Search invoice #, reseller name, notes..." 
+                           class="w-full h-[34px] pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 placeholder-slate-400 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs">
+                    <!-- 1-Click Clear Button -->
+                    <button type="button" 
+                            x-show="searchQuery && searchQuery.length > 0" 
+                            @click="searchQuery = ''; $nextTick(() => $el.closest('form').submit())" 
+                            class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500 text-xs transition cursor-pointer p-0.5">
+                        <i class="fas fa-times-circle"></i>
+                    </button>
                 </div>
 
+                <!-- Primary Dropdown 1: Reseller / Sub-ISP Filter -->
+                <div class="w-full md:w-48 flex-shrink-0">
+                    @if(!$isResellerUser)
+                    <select name="reseller_id" 
+                            onchange="this.form.submit()"
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition cursor-pointer">
+                        <option value="all">All Sub-ISPs / Resellers</option>
+                        @foreach($allResellers as $res)
+                            <option value="{{ $res->id }}" {{ $selectedResellerId == (string)$res->id ? 'selected' : '' }}>
+                                {{ $res->name }} ({{ $res->code }})
+                            </option>
+                        @endforeach
+                    </select>
+                    @else
+                    <div class="h-[34px] px-2.5 bg-slate-100 border border-slate-200 rounded-lg text-xs text-slate-600 flex items-center truncate">
+                        {{ $tenant->company_name ?? 'My Invoices' }}
+                    </div>
+                    @endif
+                </div>
+
+                <!-- Primary Dropdown 2: Status Filter -->
+                <div class="w-full md:w-36 flex-shrink-0">
+                    <select name="status" 
+                            onchange="this.form.submit()"
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition cursor-pointer">
+                        <option value="all" {{ ($selectedStatus ?? 'all') === 'all' ? 'selected' : '' }}>All Statuses</option>
+                        <option value="PAID" {{ ($selectedStatus ?? '') === 'PAID' ? 'selected' : '' }}>Paid</option>
+                        <option value="UNPAID" {{ ($selectedStatus ?? '') === 'UNPAID' ? 'selected' : '' }}>Unpaid</option>
+                        <option value="PARTIAL" {{ ($selectedStatus ?? '') === 'PARTIAL' ? 'selected' : '' }}>Partial</option>
+                        <option value="CANCELLED" {{ ($selectedStatus ?? '') === 'CANCELLED' ? 'selected' : '' }}>Cancelled</option>
+                    </select>
+                </div>
+
+                <!-- Pagination Selector (per_page) -->
+                <div class="w-full md:w-24 flex-shrink-0">
+                    <select name="per_page" 
+                            onchange="this.form.submit()"
+                            class="w-full h-[34px] px-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition cursor-pointer">
+                        <option value="10" {{ $perPage == 10 ? 'selected' : '' }}>10 / page</option>
+                        <option value="20" {{ $perPage == 20 ? 'selected' : '' }}>20 / page</option>
+                        <option value="50" {{ $perPage == 50 ? 'selected' : '' }}>50 / page</option>
+                        <option value="100" {{ $perPage == 100 ? 'selected' : '' }}>100 / page</option>
+                    </select>
+                </div>
+
+                <!-- "More Filters" Accordion Toggle Button -->
+                <button type="button" 
+                        @click="showMoreFilters = !showMoreFilters" 
+                        :class="showMoreFilters || {{ $activeMoreCount ?? 0 }} > 0 ? 'bg-cyan-50 text-cyan-700 border-cyan-300 ring-1 ring-cyan-200' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'"
+                        class="h-[34px] py-0 px-2.5 rounded-lg border text-xs font-medium transition flex items-center justify-center gap-1.5 flex-shrink-0 cursor-pointer shadow-2xs"
+                        title="Toggle Period, Date & Billing Month Filters">
+                    <i class="fas fa-sliders-h text-[10px]"></i>
+                    <span>More Filters</span>
+                    @if(($activeMoreCount ?? 0) > 0)
+                        <span class="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-cyan-600 text-white leading-none">
+                            {{ $activeMoreCount }}
+                        </span>
+                    @endif
+                    <i class="fas text-[9px] transition-transform duration-200" 
+                       :class="showMoreFilters ? 'fa-chevron-up text-cyan-600' : 'fa-chevron-down text-slate-400'"></i>
+                </button>
+
+                <!-- Strict Filter & Reset Button Sequence (AGENTS.md Rule 2.C - Far Right Aligned on md+) -->
+                <div class="flex items-center gap-1.5 flex-shrink-0 md:ml-auto">
+                    <button type="submit" 
+                            class="h-[34px] bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-0 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" 
+                            title="Apply Filters">
+                        <i class="fas fa-filter text-[10px]"></i>
+                        <span>Filter</span>
+                    </button>
+                    <a href="{{ route('tenant.finance.wholesale-billing') }}" 
+                       class="h-[34px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-0 px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer" 
+                       title="Reset Filters">
+                        <i class="fas fa-rotate-left text-[10px]"></i>
+                        <span>Reset</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Tier 2: Secondary Filters Drawer -->
+            <div x-show="showMoreFilters" 
+                 x-cloak 
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0 -translate-y-2"
+                 x-transition:enter-end="opacity-100 translate-y-0"
+                 class="pt-2 border-t border-slate-100 flex flex-wrap items-center gap-2">
+                
                 <!-- Quick Period Preset -->
-                <div class="md:col-span-2">
+                <div class="w-full sm:w-40 flex-shrink-0">
                     <select name="period" 
                             id="periodSelect"
                             onchange="handlePeriodChange(this.value)"
-                            class="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:border-cyan-500 transition font-medium">
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition cursor-pointer">
                         <option value="all" {{ ($period ?? '') === 'all' || empty($period) ? 'selected' : '' }}>All Dates</option>
                         <option value="today" {{ ($period ?? '') === 'today' ? 'selected' : '' }}>Today</option>
                         <option value="yesterday" {{ ($period ?? '') === 'yesterday' ? 'selected' : '' }}>Yesterday</option>
@@ -160,183 +259,137 @@
                 </div>
 
                 <!-- Date From -->
-                <div class="md:col-span-3">
-                    <div class="relative">
-                        <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none">
-                            <i class="fas fa-calendar-day"></i>
-                        </span>
-                        <input type="date" 
-                               name="date_from" 
-                               id="dateFromInput"
-                               value="{{ $dateFrom }}" 
-                               title="From Date"
-                               class="w-full pl-8 pr-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:border-cyan-500 transition">
-                    </div>
+                <div class="w-full sm:w-36 flex-shrink-0">
+                    <input type="date" 
+                           name="date_from" 
+                           id="dateFromInput"
+                           value="{{ $dateFrom }}" 
+                           onchange="this.form.submit()"
+                           title="From Date"
+                           class="w-full h-[34px] px-2.5 bg-white border border-slate-200 rounded-lg text-xs font-mono text-slate-800 focus:outline-hidden focus:border-cyan-500">
                 </div>
 
                 <!-- Date To -->
-                <div class="md:col-span-3">
-                    <div class="relative">
-                        <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none">
-                            <i class="fas fa-calendar-check"></i>
-                        </span>
-                        <input type="date" 
-                               name="date_to" 
-                               id="dateToInput"
-                               value="{{ $dateTo }}" 
-                               title="To Date"
-                               class="w-full pl-8 pr-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:border-cyan-500 transition">
-                    </div>
-                </div>
-            </div>
-
-            <!-- Row 2: Reseller, Month, Type, Status, Per Page & Action Buttons -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-2 pt-1 border-t border-slate-100">
-                <!-- Sub-ISP Reseller Filter -->
-                <div class="md:col-span-3">
-                    @if(!$isResellerUser)
-                    <select name="reseller_id" class="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:border-cyan-500 transition">
-                        <option value="all">All Sub-ISPs</option>
-                        @foreach($allResellers as $res)
-                            <option value="{{ $res->id }}" {{ $selectedResellerId == (string)$res->id ? 'selected' : '' }}>
-                                {{ $res->name }} ({{ $res->code }})
-                            </option>
-                        @endforeach
-                    </select>
-                    @else
-                    <div class="px-2.5 py-1.5 text-xs bg-slate-100 border border-slate-200 rounded-lg text-slate-600 truncate">
-                        {{ $tenant->company_name ?? 'My Invoices' }}
-                    </div>
-                    @endif
+                <div class="w-full sm:w-36 flex-shrink-0">
+                    <input type="date" 
+                           name="date_to" 
+                           id="dateToInput"
+                           value="{{ $dateTo }}" 
+                           onchange="this.form.submit()"
+                           title="To Date"
+                           class="w-full h-[34px] px-2.5 bg-white border border-slate-200 rounded-lg text-xs font-mono text-slate-800 focus:outline-hidden focus:border-cyan-500">
                 </div>
 
-                <!-- Month Filter -->
-                <div class="md:col-span-2">
+                <!-- Billing Month -->
+                <div class="w-full sm:w-36 flex-shrink-0">
                     <input type="month" 
                            name="month" 
                            value="{{ $selectedMonth !== 'all' ? $selectedMonth : '' }}" 
+                           onchange="this.form.submit()"
                            title="Billing Month"
-                           class="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:border-cyan-500 transition">
+                           class="w-full h-[34px] px-2.5 bg-white border border-slate-200 rounded-lg text-xs font-mono text-slate-800 focus:outline-hidden focus:border-cyan-500">
                 </div>
 
                 <!-- Invoice Type Filter -->
-                <div class="md:col-span-2">
-                    <select name="type" class="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:border-cyan-500 transition">
-                        <option value="all" {{ $selectedType === 'all' ? 'selected' : '' }}>All Invoice Types</option>
-                        <option value="BANDWIDTH_WHOLESALE" {{ $selectedType === 'BANDWIDTH_WHOLESALE' ? 'selected' : '' }}>Bandwidth Wholesale</option>
-                        <option value="PANEL_SOFTWARE_FEE" {{ $selectedType === 'PANEL_SOFTWARE_FEE' ? 'selected' : '' }}>Software / Panel Fee</option>
-                        <option value="MANUAL_CHARGE" {{ $selectedType === 'MANUAL_CHARGE' ? 'selected' : '' }}>Manual Custom Charge</option>
+                <div class="w-full sm:w-48 flex-shrink-0">
+                    <select name="type" 
+                            onchange="this.form.submit()"
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition cursor-pointer">
+                        <option value="all" {{ ($selectedType ?? 'all') === 'all' ? 'selected' : '' }}>All Invoice Types</option>
+                        <option value="BANDWIDTH_WHOLESALE" {{ ($selectedType ?? '') === 'BANDWIDTH_WHOLESALE' ? 'selected' : '' }}>Bandwidth Wholesale</option>
+                        <option value="PANEL_SOFTWARE_FEE" {{ ($selectedType ?? '') === 'PANEL_SOFTWARE_FEE' ? 'selected' : '' }}>Software / Panel Fee</option>
+                        <option value="MANUAL_CHARGE" {{ ($selectedType ?? '') === 'MANUAL_CHARGE' ? 'selected' : '' }}>Manual Custom Charge</option>
                     </select>
-                </div>
-
-                <!-- Payment Status Filter -->
-                <div class="md:col-span-2">
-                    <select name="status" class="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:border-cyan-500 transition">
-                        <option value="all" {{ $selectedStatus === 'all' ? 'selected' : '' }}>All Statuses</option>
-                        <option value="PAID" {{ $selectedStatus === 'PAID' ? 'selected' : '' }}>Paid</option>
-                        <option value="UNPAID" {{ $selectedStatus === 'UNPAID' ? 'selected' : '' }}>Unpaid</option>
-                        <option value="PARTIAL" {{ $selectedStatus === 'PARTIAL' ? 'selected' : '' }}>Partial</option>
-                        <option value="CANCELLED" {{ $selectedStatus === 'CANCELLED' ? 'selected' : '' }}>Cancelled</option>
-                    </select>
-                </div>
-
-                <!-- Per Page -->
-                <div class="md:col-span-1">
-                    <select name="per_page" class="w-full px-2 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:border-cyan-500 transition">
-                        <option value="10" {{ $perPage == 10 ? 'selected' : '' }}>10</option>
-                        <option value="20" {{ $perPage == 20 ? 'selected' : '' }}>20</option>
-                        <option value="50" {{ $perPage == 50 ? 'selected' : '' }}>50</option>
-                        <option value="100" {{ $perPage == 100 ? 'selected' : '' }}>100</option>
-                    </select>
-                </div>
-
-                <!-- Strict Action Buttons: [Filter] FIRST, [Reset] SECOND (AGENTS.md Rule 2.C) -->
-                <div class="md:col-span-2 flex items-center justify-end gap-1.5">
-                    <button type="submit" 
-                            class="flex-1 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-1.5 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" 
-                            title="Apply Filters">
-                        <i class="fas fa-filter text-[10px]"></i>
-                        <span>Filter</span>
-                    </button>
-                    <a href="{{ route('tenant.finance.wholesale-billing') }}" 
-                       class="py-1.5 px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-lg border border-slate-200/80 transition inline-flex items-center justify-center gap-1 cursor-pointer flex-shrink-0" 
-                       title="Reset Filters">
-                        <i class="fas fa-rotate-left text-[10px]"></i>
-                        <span>Reset</span>
-                    </a>
                 </div>
             </div>
         </form>
     </div>
 
-    {{-- 4. Master Compact Table (<table class="saas-table"> - Clean Single-Line Core Columns) --}}
-    <div class="bg-white rounded-lg border border-slate-200 shadow-xs overflow-hidden">
+    {{-- 4. Master Compact Table (<table class="saas-table"> - AGENTS.md Rule 2.D) --}}
+    <div class="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden">
         <div class="overflow-x-auto min-h-[300px]">
             <table class="saas-table">
                 <thead>
                     <tr>
-                        <th class="w-10 text-center">#</th>
-                        <th class="w-36">Invoice No</th>
-                        <th>Sub-ISP / Reseller</th>
-                        <th class="w-28">Billing Month</th>
-                        <th class="text-right w-28">Total Amount</th>
-                        <th class="text-right w-28">Due Amount</th>
-                        <th class="text-center w-28">Payment Status</th>
-                        <th class="no-sort w-12 text-center">Action</th>
+                        <th class="w-10 text-center no-sort">#</th>
+                        <th class="text-center font-semibold">Invoice #</th>
+                        <th class="text-center font-semibold">Sub-ISP / Reseller</th>
+                        <th class="text-center font-semibold">Billing Month</th>
+                        <th class="text-center font-semibold">Total Amount</th>
+                        <th class="text-center font-semibold">Paid Amount</th>
+                        <th class="text-center font-semibold">Due Amount</th>
+                        <th class="text-center font-semibold">Status</th>
+                        <th class="w-14 text-center no-sort">Action</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($invoices as $index => $inv)
                         <tr>
-                            {{-- Row index --}}
-                            <td class="text-center font-mono text-slate-500">{{ $invoices->firstItem() + $index }}</td>
+                            {{-- 0. Row Index --}}
+                            <td class="text-center font-mono text-slate-500 whitespace-nowrap">
+                                {{ $invoices->firstItem() + $index }}
+                            </td>
 
-                            {{-- Invoice No (Clickable to open View Details / Print Modal) --}}
-                            <td>
-                                <button type="button" @click="viewInvoice({{ $inv->id }})" class="font-mono font-bold text-cyan-800 hover:text-cyan-600 hover:underline cursor-pointer">
-                                    {{ $inv->invoice_no }}
+                            {{-- 1. Invoice No (Clickable to open View Details / Print Modal) --}}
+                            <td class="text-center font-mono text-cyan-800 font-bold whitespace-nowrap text-xs">
+                                <button type="button" 
+                                        @click="viewInvoice({{ $inv->id }})" 
+                                        class="hover:text-cyan-600 hover:underline cursor-pointer inline-flex items-center gap-1"
+                                        title="View & Print Wholesale Invoice">
+                                    <i class="fas fa-file-invoice text-[10px] text-cyan-600"></i>
+                                    <span>{{ $inv->invoice_no }}</span>
                                 </button>
                             </td>
 
-                            {{-- Sub-ISP / Reseller Name --}}
-                            <td>
-                                <span class="font-semibold text-slate-800">{{ $inv->reseller?->name ?? 'Unknown Reseller' }}</span>
+                            {{-- 2. Sub-ISP / Reseller Name (Left Align Textual) --}}
+                            <td class="text-left font-semibold text-slate-800 whitespace-nowrap text-xs">
+                                <div class="flex items-center gap-1.5">
+                                    <i class="fas fa-network-wired text-[10px] text-slate-400"></i>
+                                    <span>{{ $inv->reseller?->name ?? 'Unknown Reseller' }}</span>
+                                </div>
                             </td>
 
-                            {{-- Billing Month --}}
-                            <td class="font-mono text-slate-700">
+                            {{-- 3. Billing Month (Center Align) --}}
+                            <td class="text-center font-mono text-slate-700 text-xs whitespace-nowrap">
                                 {{ $inv->billing_month ? \Carbon\Carbon::parse($inv->billing_month)->format('M Y') : '--' }}
                             </td>
 
-                            {{-- Total Amount --}}
-                            <td class="text-right font-mono font-bold text-slate-900">
+                            {{-- 4. Total Amount (Right Align - Accounting Standard) --}}
+                            <td class="text-right font-mono font-bold text-slate-900 whitespace-nowrap text-xs">
                                 @currency($inv->amount)
                             </td>
 
-                            {{-- Due Amount --}}
-                            <td class="text-right font-mono font-bold {{ $inv->due_amount > 0 ? 'text-rose-600' : 'text-slate-400' }}">
+                            {{-- 5. Paid Amount (Right Align - Accounting Standard) --}}
+                            <td class="text-right font-mono font-semibold text-emerald-700 whitespace-nowrap text-xs">
+                                @currency($inv->paid_amount)
+                            </td>
+
+                            {{-- 6. Due Amount (Right Align - Accounting Standard) --}}
+                            <td class="text-right font-mono font-bold whitespace-nowrap text-xs {{ $inv->due_amount > 0 ? 'text-rose-700' : 'text-slate-400' }}">
                                 @currency($inv->due_amount)
                             </td>
 
-                            {{-- Payment Status Badge --}}
-                            <td class="text-center">
+                            {{-- 7. Payment Status Badge (Center Align) --}}
+                            <td class="text-center whitespace-nowrap">
                                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold border {{ $inv->status_badge['class'] }}">
                                     <i class="fas {{ $inv->status_badge['icon'] }} text-[9px]"></i>
                                     <span>{{ $inv->status_badge['label'] }}</span>
                                 </span>
                             </td>
 
-                            {{-- Action 3-Dot Button --}}
-                            <td class="text-center">
-                                <button type="button" @click.stop="toggleMenu({{ $inv->toJson() }}, $event)" 
-                                        class="w-6 h-6 rounded-md hover:bg-slate-100 text-slate-500 hover:text-slate-700 inline-flex items-center justify-center transition cursor-pointer">
-                                    <i class="fas fa-ellipsis-v text-[10px]"></i>
+                            {{-- 8. Action 3-Dot Button (Center Align) --}}
+                            <td class="text-center whitespace-nowrap no-sort">
+                                <button type="button" 
+                                        @click.stop="toggleMenu({{ $inv->toJson() }}, $event)" 
+                                        class="w-7 h-7 rounded-lg hover:bg-slate-100 text-slate-600 hover:text-slate-900 flex items-center justify-center transition cursor-pointer mx-auto"
+                                        title="Invoice Actions">
+                                    <i class="fas fa-ellipsis-v text-[11px]"></i>
                                 </button>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="text-center py-10 text-slate-400">
+                            <td colspan="9" class="text-center py-10 text-slate-400">
                                 <i class="fas fa-file-invoice text-3xl mb-2 text-slate-300 block"></i>
                                 <span class="text-xs font-medium">No wholesale invoices found for the selected criteria.</span>
                             </td>

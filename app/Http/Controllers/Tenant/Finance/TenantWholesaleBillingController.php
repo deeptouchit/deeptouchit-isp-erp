@@ -165,6 +165,15 @@ class TenantWholesaleBillingController extends Controller
         }
         $invoices = $query->orderBy('id', 'desc')->paginate($perPage)->withQueryString();
 
+        // 9. Active Secondary Filters Count (AGENTS.md Rule 2.C)
+        $activeMoreCount = 0;
+        if (!empty($selectedType) && $selectedType !== 'all') $activeMoreCount++;
+        if (!empty($selectedMonth) && $selectedMonth !== 'all') $activeMoreCount++;
+        if (!empty($period) && $period !== 'all') $activeMoreCount++;
+        if (!empty($dateFrom)) $activeMoreCount++;
+        if (!empty($dateTo)) $activeMoreCount++;
+        $isMoreOpen = $activeMoreCount > 0;
+
         return view('tenant.finance.wholesale_billing', compact(
             'tenant',
             'invoices',
@@ -180,6 +189,8 @@ class TenantWholesaleBillingController extends Controller
             'selectedStatus',
             'search',
             'perPage',
+            'activeMoreCount',
+            'isMoreOpen',
             'totalInvoicedAmount',
             'totalCollectedAmount',
             'totalDueAmount',
