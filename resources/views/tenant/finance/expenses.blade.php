@@ -64,7 +64,7 @@
         </div>
     </div>
 
-    {{-- 2. KPI Summary Strip (Strictly 6 Cards) --}}
+    {{-- 2. KPI Summary Strip (Strictly 6 Cards - AGENTS.md Rule 2.B) --}}
     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
         {{-- Card 1: Total Expenses --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between gap-2">
@@ -77,49 +77,49 @@
             </div>
         </div>
 
-        {{-- Card 2: Direct Incomes --}}
+        {{-- Card 2: Customer Collections --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between gap-2">
             <div class="min-w-0">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Direct Incomes</span>
-                <span class="text-[13px] font-bold font-mono text-emerald-700 leading-tight block truncate">@currency($totalIncome)</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Customer Collections</span>
+                <span class="text-[13px] font-bold font-mono text-emerald-700 leading-tight block truncate">@currency($customerCollections)</span>
+            </div>
+            <div class="w-6 h-6 rounded-md bg-emerald-50 border border-emerald-100 text-emerald-600 flex items-center justify-center text-[10px] flex-shrink-0">
+                <i class="fas fa-users"></i>
+            </div>
+        </div>
+
+        {{-- Card 3: Wholesale & Direct --}}
+        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between gap-2">
+            <div class="min-w-0">
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Wholesale &amp; Direct</span>
+                <span class="text-[13px] font-bold font-mono text-cyan-800 leading-tight block truncate">@currency($wholesaleAndDirect)</span>
+            </div>
+            <div class="w-6 h-6 rounded-md bg-cyan-50 border border-cyan-100 text-cyan-700 flex items-center justify-center text-[10px] flex-shrink-0">
+                <i class="fas fa-network-wired"></i>
+            </div>
+        </div>
+
+        {{-- Card 4: Gross Total Income --}}
+        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between gap-2">
+            <div class="min-w-0">
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Gross Total Income</span>
+                <span class="text-[13px] font-bold font-mono text-emerald-700 leading-tight block truncate">@currency($grossTotalIncome)</span>
             </div>
             <div class="w-6 h-6 rounded-md bg-emerald-50 border border-emerald-100 text-emerald-600 flex items-center justify-center text-[10px] flex-shrink-0">
                 <i class="fas fa-arrow-trend-up"></i>
             </div>
         </div>
 
-        {{-- Card 3: Net Cash Flow --}}
+        {{-- Card 5: Real Net Cash Flow --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between gap-2">
             <div class="min-w-0">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Net Cash Flow</span>
-                <span class="text-[13px] font-bold font-mono {{ $netCashFlow >= 0 ? 'text-cyan-800' : 'text-rose-700' }} leading-tight block truncate">
-                    @currency($netCashFlow)
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Real Net Cash Flow</span>
+                <span class="text-[13px] font-bold font-mono {{ $realNetCashFlow >= 0 ? 'text-teal-700' : 'text-rose-700' }} leading-tight block truncate">
+                    @currency($realNetCashFlow)
                 </span>
             </div>
-            <div class="w-6 h-6 rounded-md bg-cyan-50 border border-cyan-100 text-cyan-700 flex items-center justify-center text-[10px] flex-shrink-0">
-                <i class="fas fa-money-bill-transfer"></i>
-            </div>
-        </div>
-
-        {{-- Card 4: Approved Vouchers --}}
-        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between gap-2">
-            <div class="min-w-0">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Approved Vouchers</span>
-                <span class="text-[13px] font-bold font-mono text-teal-700 leading-tight block truncate">{{ number_format($approvedCount) }}</span>
-            </div>
-            <div class="w-6 h-6 rounded-md bg-teal-50 border border-teal-100 text-teal-600 flex items-center justify-center text-[10px] flex-shrink-0">
-                <i class="fas fa-circle-check"></i>
-            </div>
-        </div>
-
-        {{-- Card 5: Pending Approvals --}}
-        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between gap-2">
-            <div class="min-w-0">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Pending Approval</span>
-                <span class="text-[13px] font-bold font-mono text-amber-700 leading-tight block truncate">{{ number_format($pendingCount) }}</span>
-            </div>
-            <div class="w-6 h-6 rounded-md bg-amber-50 border border-amber-100 text-amber-600 flex items-center justify-center text-[10px] flex-shrink-0">
-                <i class="fas fa-clock"></i>
+            <div class="w-6 h-6 rounded-md {{ $realNetCashFlow >= 0 ? 'bg-teal-50 border-teal-100 text-teal-600' : 'bg-rose-50 border-rose-100 text-rose-600' }} border flex items-center justify-center text-[10px] flex-shrink-0">
+                <i class="fas fa-scale-balanced"></i>
             </div>
         </div>
 
@@ -172,14 +172,17 @@
                     </button>
                 </div>
 
-                {{-- Primary Filter: Voucher Type --}}
-                <div class="w-full md:w-40 flex-shrink-0">
+                {{-- Primary Filter: Voucher & Revenue Stream Type --}}
+                <div class="w-full md:w-44 flex-shrink-0">
                     <select name="type" 
                             onchange="this.form.submit()"
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs cursor-pointer">
-                        <option value="all" {{ $selectedType === 'all' ? 'selected' : '' }}>All Voucher Types</option>
-                        <option value="EXPENSE" {{ $selectedType === 'EXPENSE' ? 'selected' : '' }}>Expense (Debit)</option>
-                        <option value="INCOME" {{ $selectedType === 'INCOME' ? 'selected' : '' }}>Direct Income (Credit)</option>
+                        <option value="all" {{ $selectedType === 'all' ? 'selected' : '' }}>All Transactions</option>
+                        <option value="EXPENSE" {{ $selectedType === 'EXPENSE' ? 'selected' : '' }}>Expenses &amp; Upstream (Debit)</option>
+                        <option value="INCOME" {{ $selectedType === 'INCOME' ? 'selected' : '' }}>All Revenues &amp; Incomes (Credit)</option>
+                        <option value="CUSTOMER_COLLECTION" {{ $selectedType === 'CUSTOMER_COLLECTION' ? 'selected' : '' }}>Retail Customer Billing</option>
+                        <option value="WHOLESALE" {{ $selectedType === 'WHOLESALE' ? 'selected' : '' }}>Reseller Wholesale Billing</option>
+                        <option value="DIRECT_INCOME" {{ $selectedType === 'DIRECT_INCOME' ? 'selected' : '' }}>Direct Other Incomes</option>
                     </select>
                 </div>
 
@@ -350,16 +353,16 @@
                             {{-- Row index --}}
                             <td class="text-center font-mono text-slate-500">{{ $vouchers->firstItem() + $index }}</td>
 
-                            {{-- Voucher No (Clickable to open View/Print Voucher Modal) --}}
+                            {{-- Voucher / Receipt No --}}
                             <td class="text-center">
-                                <button type="button" @click="viewVoucher({{ $v->id }})" class="font-mono font-bold {{ $v->type === 'INCOME' ? 'text-emerald-700 hover:text-emerald-600' : 'text-rose-700 hover:text-rose-600' }} hover:underline cursor-pointer">
+                                <button type="button" @click="viewVoucher({{ $v->raw_id ?? $v->id }}, '{{ $v->source ?? 'voucher' }}')" class="font-mono font-bold {{ $v->type === 'INCOME' ? 'text-emerald-700 hover:text-emerald-600' : 'text-rose-700 hover:text-rose-600' }} hover:underline cursor-pointer">
                                     {{ $v->voucher_no }}
                                 </button>
                             </td>
 
                             {{-- Account Head / Category --}}
                             <td class="text-left">
-                                <span class="font-medium text-slate-800">{{ $v->category?->name ?? 'General Head' }}</span>
+                                <span class="font-medium text-slate-800">{{ $v->category_name ?? ($v->category?->name ?? 'General Head') }}</span>
                             </td>
 
                             {{-- Description / Title --}}
@@ -444,36 +447,38 @@
         
         {{-- Group 1: Diagnostics & Print --}}
         <div class="py-1">
-            <button type="button" @click="viewVoucher(activeMenu.id); activeMenu = null;" class="w-full px-3 py-1.5 text-left hover:bg-slate-50 flex items-center gap-2 text-slate-700 transition cursor-pointer">
+            <button type="button" @click="viewVoucher(activeMenu.raw_id || activeMenu.id, activeMenu.source || 'voucher'); activeMenu = null;" class="w-full px-3 py-1.5 text-left hover:bg-slate-50 flex items-center gap-2 text-slate-700 transition cursor-pointer">
                 <i class="fas fa-print w-3.5 text-cyan-600 text-[11px]"></i>
-                <span>View &amp; Print Voucher</span>
+                <span x-text="activeMenu.source === 'customer_payment' ? 'View & Print Money Receipt' : (activeMenu.source === 'wholesale' ? 'View & Print Wholesale Invoice' : 'View & Print Voucher')"></span>
             </button>
             <button type="button" @click="copyVoucherNo(activeMenu.voucher_no); activeMenu = null;" class="w-full px-3 py-1.5 text-left hover:bg-slate-50 flex items-center gap-2 text-slate-700 transition cursor-pointer">
                 <i class="fas fa-copy w-3.5 text-slate-500 text-[11px]"></i>
-                <span>Copy Voucher Number</span>
+                <span>Copy Ref / Voucher #</span>
             </button>
         </div>
 
-        {{-- Group 2: Management & Approval --}}
-        <div class="py-1">
-            <template x-if="activeMenu && activeMenu.status === 'PENDING'">
-                <div>
-                    <button type="button" @click="approveVoucher(activeMenu.id); activeMenu = null;" class="w-full px-3 py-1.5 text-left hover:bg-emerald-50 flex items-center gap-2 text-emerald-700 font-semibold transition cursor-pointer">
-                        <i class="fas fa-check w-3.5 text-emerald-600 text-[11px]"></i>
-                        <span>Approve Voucher</span>
-                    </button>
-                    <button type="button" @click="rejectVoucher(activeMenu.id); activeMenu = null;" class="w-full px-3 py-1.5 text-left hover:bg-rose-50 flex items-center gap-2 text-rose-600 transition cursor-pointer">
-                        <i class="fas fa-ban w-3.5 text-rose-500 text-[11px]"></i>
-                        <span>Reject Voucher</span>
-                    </button>
-                </div>
-            </template>
+        {{-- Group 2: Management & Approval (For manual vouchers only) --}}
+        <template x-if="activeMenu && (activeMenu.is_voucher || activeMenu.source === 'voucher')">
+            <div class="py-1 border-t border-slate-100">
+                <template x-if="activeMenu.status === 'PENDING'">
+                    <div>
+                        <button type="button" @click="approveVoucher(activeMenu.raw_id || activeMenu.id); activeMenu = null;" class="w-full px-3 py-1.5 text-left hover:bg-emerald-50 flex items-center gap-2 text-emerald-700 font-semibold transition cursor-pointer">
+                            <i class="fas fa-check w-3.5 text-emerald-600 text-[11px]"></i>
+                            <span>Approve Voucher</span>
+                        </button>
+                        <button type="button" @click="rejectVoucher(activeMenu.raw_id || activeMenu.id); activeMenu = null;" class="w-full px-3 py-1.5 text-left hover:bg-rose-50 flex items-center gap-2 text-rose-600 transition cursor-pointer">
+                            <i class="fas fa-ban w-3.5 text-rose-500 text-[11px]"></i>
+                            <span>Reject Voucher</span>
+                        </button>
+                    </div>
+                </template>
 
-            <button type="button" @click="deleteVoucher(activeMenu.id); activeMenu = null;" class="w-full px-3 py-1.5 text-left hover:bg-rose-50 flex items-center gap-2 text-rose-600 transition cursor-pointer">
-                <i class="fas fa-trash-can w-3.5 text-rose-500 text-[11px]"></i>
-                <span>Delete Voucher</span>
-            </button>
-        </div>
+                <button type="button" @click="deleteVoucher(activeMenu.raw_id || activeMenu.id); activeMenu = null;" class="w-full px-3 py-1.5 text-left hover:bg-rose-50 flex items-center gap-2 text-rose-600 transition cursor-pointer">
+                    <i class="fas fa-trash-can w-3.5 text-rose-500 text-[11px]"></i>
+                    <span>Delete Voucher</span>
+                </button>
+            </div>
+        </template>
     </div>
 
     {{-- MODAL 1: Record Expense / Income Voucher Modal --}}
@@ -999,9 +1004,9 @@
                 }
             },
 
-            async viewVoucher(id) {
+            async viewVoucher(id, source = 'voucher') {
                 try {
-                    const url = "{{ url('admin/finance/expenses') }}/" + id;
+                    const url = "{{ url('admin/finance/expenses') }}/" + id + "?source=" + source;
                     const res = await fetch(url, {
                         headers: { 'Accept': 'application/json' }
                     });
