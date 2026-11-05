@@ -241,19 +241,24 @@
                 <thead>
                     <tr>
                         <th class="w-10 text-center no-sort">#</th>
-                        <th class="text-left font-semibold">Receipt No</th>
-                        <th class="text-left font-semibold">Customer ID &amp; Name</th>
-                        <th class="text-left font-semibold">Mobile Phone</th>
-                        <th class="text-left font-semibold">Package Profile</th>
-                        <th class="text-right font-semibold">Amount</th>
-                        <th class="text-center font-semibold">Method</th>
-                        <th class="text-left font-semibold">Paid At</th>
-                        <th class="w-24 text-center no-sort">Action</th>
+                        <th class="text-center font-semibold">Invoice #</th>
+                        <th class="text-center font-semibold">Cust ID</th>
+                        <th class="text-center font-semibold">Customer</th>
+                        <th class="text-center font-semibold">Guardian</th>
+                        <th class="text-center font-semibold">Area</th>
+                        <th class="text-center font-semibold">Partner</th>
+                        <th class="text-center font-semibold">Package</th>
+                        <th class="text-center font-semibold">Bill (Tk)</th>
+                        <th class="text-center font-semibold">Paid (Tk)</th>
+                        <th class="text-center font-semibold">Collector</th>
+                        <th class="text-center font-semibold">Status</th>
+                        <th class="text-center font-semibold">Paid At</th>
+                        <th class="w-14 text-center no-sort">Action</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr x-show="searchQuery && totalMatchingRows === 0" x-cloak class="no-record-row">
-                        <td colspan="9" class="text-center py-6 text-slate-500 bg-slate-50/50">
+                        <td colspan="14" class="text-center py-6 text-slate-500 bg-slate-50/50">
                             <i class="fas fa-spinner fa-spin text-cyan-600 mr-1.5" x-show="isSearching"></i>
                             <i class="fas fa-search text-slate-400 mr-1.5" x-show="!isSearching"></i>
                             <span class="text-xs font-medium">No matching receipts found for this search.</span>
@@ -262,76 +267,129 @@
                     @forelse($payments as $index => $p)
                         @php
                             $rowNum = $payments->firstItem() ? ($payments->firstItem() + $index) : ($index + 1);
-                            $cleanReceiptNo = $p->invoice_no ?: ('REC-' . str_pad($p->id, 5, '0', STR_PAD_LEFT));
-                            $searchPayload = strtolower($cleanReceiptNo . ' ' . ($p->customer?->customer_id ?? '') . ' ' . ($p->customer?->username ?? '') . ' ' . ($p->customer?->name ?? '') . ' ' . ($p->customer?->phone ?? ''));
+                            $cleanInvoiceNo = $p->invoice?->invoice_no ?: ($p->receipt_no ?: ($p->invoice_no ?: 'REC-' . str_pad($p->id, 5, '0', STR_PAD_LEFT)));
+                            $custName = $p->customer?->name ?: ($p->customer?->username ?? 'Unknown');
+                            $custId = $p->customer?->customer_id ?: ($p->customer?->username ?? '—');
+                            $guardian = $p->customer?->father_name ?: '—';
+                            $area = $p->customer?->zone?->name ?: ($p->customer?->address ?: '—');
+                            $partnerCode = $p->reseller ? ($p->reseller->code ?: $p->reseller->name) : 'Direct HQ';
+                            $pkgName = $p->customer?->package_display_name ?: ($p->customer?->package?->name ?: '—');
+                            $billAmount = $p->invoice ? (float) $p->invoice->total_payable : (float) $p->amount;
+                            $paidAmount = (float) $p->amount;
+                            $collectorDisplay = $p->collector?->name ?: ($collectorName ?? 'Direct / System');
+                            $searchPayload = strtolower($cleanInvoiceNo . ' ' . $custId . ' ' . $custName . ' ' . $guardian . ' ' . $area . ' ' . $partnerCode . ' ' . $pkgName . ' ' . ($p->customer?->phone ?? ''));
                         @endphp
                         <tr class="hover:bg-slate-50/70 transition-colors" data-search-text="{{ $searchPayload }}">
                             {{-- 1. Index --}}
-                            <td class="w-10 text-center font-mono text-xs text-slate-500">
+                            <td class="text-center font-mono text-slate-500 whitespace-nowrap">
                                 {{ $rowNum }}
                             </td>
 
-                            {{-- 2. Receipt No --}}
-                            <td class="whitespace-nowrap font-mono font-bold text-cyan-700 text-xs">
-                                <a href="{{ route('tenant.finance.payments.show', $p->id) }}" target="_blank" class="hover:underline inline-flex items-center gap-1" title="View Full Money Receipt">
-                                    <i class="fas fa-receipt text-[10px]"></i>
-                                    <span>{{ $cleanReceiptNo }}</span>
+                            {{-- 2. Invoice # --}}
+                            <td class="text-center font-mono text-cyan-800 font-bold whitespace-nowrap">
+                                <a href="{{ route('tenant.finance.payments.show', $p->id) }}" target="_blank" class="hover:underline hover:text-cyan-600 inline-flex items-center gap-1" title="View / Print Receipt">
+                                    <i class="fas fa-file-invoice text-[10px] text-cyan-600"></i>
+                                    <span>{{ $cleanInvoiceNo }}</span>
                                 </a>
                             </td>
 
-                            {{-- 3. Customer ID & Name --}}
-                            <td class="whitespace-nowrap text-xs">
-                                <div class="flex items-center gap-1.5">
-                                    <span class="font-semibold text-slate-900">{{ $p->customer?->name ?? 'Unknown' }}</span>
-                                    <span class="text-[10px] text-slate-400 font-mono">({{ $p->customer?->customer_id ?: ($p->customer?->username ?: 'N/A') }})</span>
-                                </div>
+                            {{-- 3. Cust ID --}}
+                            <td class="text-center font-mono font-bold text-slate-800 text-xs whitespace-nowrap">
+                                {{ $custId }}
                             </td>
 
-                            {{-- 4. Mobile Phone --}}
-                            <td class="whitespace-nowrap font-mono text-xs text-slate-600">
-                                {{ $p->customer?->phone ?: '—' }}
+                            {{-- 4. Customer --}}
+                            <td class="font-medium text-slate-900 whitespace-nowrap text-xs text-left">
+                                @if($p->customer)
+                                    <a href="{{ route('tenant.customers.show', $p->customer->id) }}" class="hover:underline hover:text-cyan-700">
+                                        {{ $custName }}
+                                    </a>
+                                @else
+                                    <span class="text-slate-400 font-sans">Deleted Subscriber</span>
+                                @endif
                             </td>
 
-                            {{-- 5. Package Profile --}}
-                            <td class="whitespace-nowrap text-xs font-medium text-slate-700">
-                                {{ $p->customer?->package?->name ?: 'Standard Plan' }}
+                            {{-- 5. Guardian --}}
+                            <td class="text-slate-700 whitespace-nowrap text-xs text-left">
+                                {{ $guardian }}
                             </td>
 
-                            {{-- 6. Amount Collected --}}
-                            <td class="text-right whitespace-nowrap font-mono font-bold text-xs text-emerald-600">
-                                @currency($p->amount)
+                            {{-- 6. Area --}}
+                            <td class="text-slate-700 whitespace-nowrap text-xs text-left">
+                                {{ $area }}
                             </td>
 
-                            {{-- 7. Payment Method --}}
-                            <td class="text-center whitespace-nowrap font-mono text-[10px]">
-                                @php
-                                    $method = strtolower($p->payment_method ?? 'cash');
-                                    $isCash = $method === 'cash';
-                                @endphp
-                                <span class="px-2 py-0.5 rounded font-bold uppercase {{ $isCash ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800' }}">
-                                    {{ $p->payment_method ?: 'CASH' }}
+                            {{-- 7. Partner --}}
+                            <td class="text-center font-mono whitespace-nowrap text-xs">
+                                @if($p->reseller)
+                                    <span class="inline-flex items-center gap-1 text-cyan-800 font-semibold" title="{{ $p->reseller->name }}">
+                                        <i class="fas fa-handshake text-cyan-600 text-[10px]"></i>
+                                        <span>{{ $p->reseller->code ?: $p->reseller->name }}</span>
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center gap-1 text-slate-600 font-medium" title="Direct Retail HQ">
+                                        <i class="fas fa-building text-slate-400 text-[10px]"></i>
+                                        <span>Direct</span>
+                                    </span>
+                                @endif
+                            </td>
+
+                            {{-- 8. Package --}}
+                            <td class="font-medium text-slate-800 whitespace-nowrap text-xs text-left">
+                                {{ $pkgName }}
+                            </td>
+
+                            {{-- 9. Bill (Tk) --}}
+                            <td class="text-right font-mono font-semibold text-slate-800 whitespace-nowrap text-xs">
+                                @currency($billAmount)
+                            </td>
+
+                            {{-- 10. Paid (Tk) --}}
+                            <td class="text-right font-mono font-semibold text-emerald-600 whitespace-nowrap text-xs">
+                                @currency($paidAmount)
+                            </td>
+
+                            {{-- 11. Collector --}}
+                            <td class="text-center whitespace-nowrap text-xs">
+                                <span class="inline-flex items-center gap-1 font-medium text-slate-800">
+                                    <i class="fas fa-user-check text-[10px] text-cyan-600"></i>
+                                    <span>{{ $collectorDisplay }}</span>
                                 </span>
                             </td>
 
-                            {{-- 8. Paid Date & Time --}}
-                            <td class="whitespace-nowrap font-mono text-[11px] text-slate-500">
-                                {{ $p->paid_at ? $p->paid_at->format('d M Y, h:i A') : '—' }}
+                            {{-- 12. Status --}}
+                            <td class="text-center whitespace-nowrap">
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold border bg-emerald-50 text-emerald-700 border-emerald-200 shadow-2xs">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                    <span>Paid</span>
+                                </span>
                             </td>
 
-                            {{-- 9. Action: Print Receipt Voucher --}}
+                            {{-- 13. Paid At --}}
+                            <td class="text-center font-mono text-slate-700 whitespace-nowrap text-xs">
+                                @if($p->paid_at)
+                                    <span class="inline-flex items-center gap-1 text-slate-700">
+                                        <i class="fas fa-clock text-emerald-600 text-[10px]"></i>
+                                        <span>{{ \Carbon\Carbon::parse($p->paid_at)->format('d M Y, h:i A') }}</span>
+                                    </span>
+                                @else
+                                    <span class="text-slate-400 font-sans">—</span>
+                                @endif
+                            </td>
+
+                            {{-- 14. Action --}}
                             <td class="text-center whitespace-nowrap">
                                 <a href="{{ route('tenant.finance.payments.show', $p->id) }}" 
                                    target="_blank"
-                                   class="h-[28px] px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200/80 transition inline-flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
-                                   title="Open / Print Money Receipt Voucher">
-                                    <i class="fas fa-print text-cyan-600 text-[10px]"></i>
-                                    <span>Receipt</span>
+                                   class="w-6 h-6 rounded-md hover:bg-slate-100 text-slate-500 hover:text-cyan-700 transition inline-flex items-center justify-center cursor-pointer"
+                                   title="View / Print Receipt">
+                                    <i class="fas fa-print text-[11px]"></i>
                                 </a>
                             </td>
                         </tr>
                     @empty
                         <tr class="no-record-row">
-                            <td colspan="9" class="text-center py-8 text-slate-400">
+                            <td colspan="14" class="text-center py-8 text-slate-400">
                                 <i class="fas fa-inbox text-2xl mb-1.5 block text-slate-300"></i>
                                 <span class="font-medium text-slate-600 text-xs">No payment receipts found for this collector in this period.</span>
                             </td>

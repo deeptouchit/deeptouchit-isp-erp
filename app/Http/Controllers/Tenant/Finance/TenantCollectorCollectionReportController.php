@@ -275,7 +275,15 @@ class TenantCollectorCollectionReportController extends Controller
 
         // 4. Filtered Paginated Query
         $paymentsQuery = (clone $baseQuery)
-            ->with(['customer:id,customer_id,username,name,phone,package_id', 'customer.package:id,name,price']);
+            ->with([
+                'customer:id,customer_id,username,name,father_name,zone_id,address,package_id,reseller_id,phone',
+                'customer.zone:id,name',
+                'customer.package:id,name,package_name,mikrotik_profile',
+                'customer.reseller:id,name,code',
+                'invoice:id,invoice_no,total_payable,paid_amount,status,paid_at',
+                'reseller:id,name,code',
+                'collector:id,name,phone'
+            ]);
 
         if ($paymentMethod !== 'all' && !empty($paymentMethod)) {
             $paymentsQuery->where('payment_method', $paymentMethod);
