@@ -335,17 +335,18 @@
                 <thead>
                     <tr>
                         <th class="w-10 text-center no-sort">#</th>
-                        <th class="text-left font-semibold">Collector Name</th>
-                        <th class="text-left font-semibold">Partner / Scope</th>
-                        <th class="text-left font-semibold">Billing Period</th>
-                        <th class="text-center font-semibold">Total Receipts</th>
-                        <th class="text-right font-semibold">Total Collected</th>
-                        <th class="w-28 text-center no-sort">Action</th>
+                        <th class="text-center font-semibold">Month</th>
+                        <th class="text-center font-semibold">Collector Name</th>
+                        <th class="text-center font-semibold">Mobile</th>
+                        <th class="text-center font-semibold">Partner</th>
+                        <th class="text-center font-semibold">Total</th>
+                        <th class="text-center font-semibold">Total Collected</th>
+                        <th class="w-24 text-center no-sort">Action</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr x-show="searchQuery && totalMatchingRows === 0" x-cloak class="no-record-row">
-                        <td colspan="7" class="text-center py-6 text-slate-500 bg-slate-50/50">
+                        <td colspan="8" class="text-center py-6 text-slate-500 bg-slate-50/50">
                             <i class="fas fa-spinner fa-spin text-cyan-600 mr-1.5" x-show="isSearching"></i>
                             <i class="fas fa-search text-slate-400 mr-1.5" x-show="!isSearching"></i>
                             <span class="text-xs font-medium">No matching collectors found for this filter scope.</span>
@@ -354,64 +355,55 @@
                     @forelse($rows as $index => $row)
                         @php
                             $rowNum = $rows->firstItem() ? ($rows->firstItem() + $index) : ($index + 1);
+                            $monthName = $row->collection_month 
+                                ? \Carbon\Carbon::parse($row->collection_month . '-01')->format('F Y') 
+                                : $periodLabel;
                         @endphp
-                        <tr class="hover:bg-slate-50/70 transition-colors" data-search-text="{{ strtolower($row->collector_name . ' ' . $row->collector_phone . ' ' . $row->partner_name) }}">
-                            {{-- 1. Index --}}
+                        <tr class="hover:bg-slate-50/70 transition-colors" data-search-text="{{ strtolower($row->collector_name . ' ' . $row->collector_phone . ' ' . $row->partner_name . ' ' . $monthName) }}">
+                            {{-- 1. Index (#) --}}
                             <td class="w-10 text-center font-mono text-xs text-slate-500">
                                 {{ $rowNum }}
                             </td>
 
-                            {{-- 2. Collector Name --}}
-                            <td class="font-medium text-slate-800 text-xs whitespace-nowrap">
-                                <div class="flex items-center gap-1.5">
-                                    <div class="w-6 h-6 rounded-md bg-cyan-50 text-cyan-700 border border-cyan-100 flex items-center justify-center text-[10px] flex-shrink-0">
-                                        <i class="fas fa-user-tie"></i>
-                                    </div>
-                                    <span class="font-semibold text-slate-900">{{ $row->collector_name }}</span>
-                                    @if(!empty($row->collector_phone))
-                                        <span class="text-[10px] text-slate-400 font-mono">({{ $row->collector_phone }})</span>
-                                    @endif
-                                </div>
+                            {{-- 2. Month (মাসের নাম) --}}
+                            <td class="text-center whitespace-nowrap text-xs font-mono font-medium text-slate-700">
+                                {{ $monthName }}
                             </td>
 
-                            {{-- 3. Partner --}}
-                            <td class="whitespace-nowrap text-xs font-mono">
+                            {{-- 3. Collector Name (কালেক্টর নাম) --}}
+                            <td class="text-left font-medium text-slate-800 text-xs whitespace-nowrap">
+                                <span class="font-semibold text-slate-900">{{ $row->collector_name }}</span>
+                            </td>
+
+                            {{-- 4. Mobile (মোবাইল) --}}
+                            <td class="text-center font-mono text-slate-700 whitespace-nowrap text-xs">
+                                {{ $row->collector_phone ?: '—' }}
+                            </td>
+
+                            {{-- 5. Partner (পাটনার) --}}
+                            <td class="text-left whitespace-nowrap text-xs text-slate-700 font-medium">
                                 @if($row->reseller_id)
-                                    <span class="inline-flex items-center gap-1 text-cyan-800 font-semibold" title="{{ $row->partner_name }}">
-                                        <i class="fas fa-handshake text-cyan-600 text-[10px]"></i>
-                                        <span>{{ $row->partner_code ?: $row->partner_name }}</span>
+                                    <span class="text-cyan-800 font-semibold" title="{{ $row->partner_name }}">
+                                        {{ $row->partner_code ?: $row->partner_name }}
                                     </span>
                                 @else
-                                    <span class="inline-flex items-center gap-1 text-slate-600 font-medium" title="Direct Retail HQ">
-                                        <i class="fas fa-building text-slate-400 text-[10px]"></i>
-                                        <span>Direct HQ</span>
-                                    </span>
+                                    <span class="text-slate-600">Direct HQ</span>
                                 @endif
                             </td>
 
-                            {{-- 4. Period / Month --}}
-                            <td class="whitespace-nowrap text-xs font-medium text-slate-700">
-                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200/80 font-mono text-[11px]">
-                                    <i class="fas fa-calendar-day text-slate-400 text-[9px]"></i>
-                                    <span>{{ $periodLabel }}</span>
-                                </span>
-                            </td>
-
-                            {{-- 5. Total Count --}}
+                            {{-- 6. Total (টোটাল) --}}
                             <td class="text-center whitespace-nowrap font-mono font-bold text-xs text-slate-800">
-                                <span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-800 border border-slate-200/90">
-                                    {{ number_format($row->total_count) }}
-                                </span>
+                                {{ number_format($row->total_count) }}
                             </td>
 
-                            {{-- 6. Total Amount --}}
+                            {{-- 7. Total Collected (টোটাল কালেকটেড) --}}
                             <td class="text-right whitespace-nowrap font-mono font-bold text-xs text-emerald-600">
                                 @currency($row->total_amount)
                             </td>
 
-                            {{-- 7. Action: View Details Full Page --}}
+                            {{-- 8. Action (একাশন) --}}
                             <td class="text-center whitespace-nowrap">
-                                <a href="{{ route('tenant.finance.collector-collections.show', array_merge(['collector' => $row->collector_id], request()->query(), ['reseller_id' => $row->reseller_id ?: 0])) }}" 
+                                <a href="{{ route('tenant.finance.collector-collections.show', array_merge(['collector' => $row->collector_id], request()->query(), ['reseller_id' => $row->reseller_id ?: 0, 'month' => $row->collection_month ?? request('month')])) }}" 
                                    class="h-[28px] px-2.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-xs font-semibold shadow-xs transition inline-flex items-center justify-center gap-1.5 cursor-pointer"
                                    title="View Itemized Receipts List for this Collector">
                                     <i class="fas fa-list-check text-[10px]"></i>
@@ -421,7 +413,7 @@
                         </tr>
                     @empty
                         <tr class="no-record-row">
-                            <td colspan="7" class="text-center py-8 text-slate-400">
+                            <td colspan="8" class="text-center py-8 text-slate-400">
                                 <i class="fas fa-inbox text-2xl mb-1.5 block text-slate-300"></i>
                                 <span class="font-medium text-slate-600 text-xs">No collections found for this selected period and filters.</span>
                                 <p class="text-[11px] text-slate-400 mt-0.5">Try changing the period or clearing search filters to see all historical records.</p>

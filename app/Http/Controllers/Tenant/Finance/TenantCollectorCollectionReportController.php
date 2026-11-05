@@ -139,6 +139,7 @@ class TenantCollectorCollectionReportController extends Controller
         // Select and Grouping
         $query->select(
             DB::raw('COALESCE(p.collected_by, 0) as collector_id'),
+            DB::raw("DATE_FORMAT(COALESCE(p.paid_at, p.created_at), '%Y-%m') as collection_month"),
             DB::raw('COALESCE(u.name, "Direct / System") as collector_name'),
             DB::raw('u.phone as collector_phone'),
             DB::raw('u.role as collector_role'),
@@ -152,7 +153,8 @@ class TenantCollectorCollectionReportController extends Controller
             DB::raw('MIN(p.paid_at) as first_payment_at'),
             DB::raw('MAX(p.paid_at) as last_payment_at')
         )
-        ->groupBy('p.collected_by', 'u.name', 'u.phone', 'u.role', 'p.reseller_id', 'r.name', 'r.code')
+        ->groupBy('p.collected_by', DB::raw("DATE_FORMAT(COALESCE(p.paid_at, p.created_at), '%Y-%m')"), 'u.name', 'u.phone', 'u.role', 'p.reseller_id', 'r.name', 'r.code')
+        ->orderByDesc('collection_month')
         ->orderByDesc('total_amount');
 
         $rows = $query->paginate($perPage)->withQueryString();
@@ -455,6 +457,7 @@ class TenantCollectorCollectionReportController extends Controller
         }
 
         $rows = $query->select(
+            DB::raw("DATE_FORMAT(COALESCE(p.paid_at, p.created_at), '%Y-%m') as collection_month"),
             DB::raw('COALESCE(u.name, "Direct / System") as collector_name'),
             DB::raw('u.phone as collector_phone'),
             DB::raw('COALESCE(r.name, "Direct HQ") as partner_name'),
@@ -463,7 +466,8 @@ class TenantCollectorCollectionReportController extends Controller
             DB::raw('SUM(CASE WHEN p.payment_method = "cash" THEN p.amount ELSE 0 END) as cash_amount'),
             DB::raw('SUM(CASE WHEN p.payment_method != "cash" THEN p.amount ELSE 0 END) as digital_amount')
         )
-        ->groupBy('p.collected_by', 'u.name', 'u.phone', 'p.reseller_id', 'r.name')
+        ->groupBy('p.collected_by', DB::raw("DATE_FORMAT(COALESCE(p.paid_at, p.created_at), '%Y-%m')"), 'u.name', 'u.phone', 'p.reseller_id', 'r.name')
+        ->orderByDesc('collection_month')
         ->orderByDesc('total_amount')
         ->get();
 
@@ -476,18 +480,17 @@ class TenantCollectorCollectionReportController extends Controller
         return response()->stream(function () use ($rows, $periodLabel) {
             $handle = fopen('php://output', 'w');
             fprintf($handle, chr(0xEF) . chr(0xBB) . chr(0xBF)); // UTF-8 BOM
-            fputcsv($handle, ['#', 'Collector Name', 'Collector Phone', 'Partner', 'Period', 'Total Receipts', 'Cash Amount (Tk)', 'Digital Amount (Tk)', 'Total Collected (Tk)']);
+            fputcsv($handle, ['#', 'Month', 'Collector Name', 'Mobile', 'Partner', 'Total Receipts', 'Total Collected (Tk)']);
 
             foreach ($rows as $idx => $r) {
+                $monthStr = $r->collection_month ? Carbon::parse($r->collection_month . '-01')->format('F Y') : $periodLabel;
                 fputcsv($handle, [
                     $idx + 1,
+                    $monthStr,
                     $r->collector_name,
                     $r->collector_phone ?? '—',
                     $r->partner_name,
-                    $periodLabel,
                     $r->total_count,
-                    number_format($r->cash_amount, 2, '.', ''),
-                    number_format($r->digital_amount, 2, '.', ''),
                     number_format($r->total_amount, 2, '.', ''),
                 ]);
             }
