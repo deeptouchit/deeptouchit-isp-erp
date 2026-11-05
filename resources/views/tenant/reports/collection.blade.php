@@ -46,13 +46,13 @@
         </div>
     </div>
 
-    {{-- 2. KPI SUMMARY STRIP (Strictly 6 Cards) --}}
+    {{-- 2. KPI SUMMARY STRIP (Strictly 6 Cards - AGENTS.md Rule 2.B) --}}
     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
         {{-- Card 1: Total Billed Amount --}}
-        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
-            <div class="min-w-0 pr-1">
+        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between gap-2">
+            <div class="min-w-0">
                 <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Total Billed</span>
-                <span class="text-[13px] font-bold font-mono text-indigo-700 leading-tight block">
+                <span class="text-[13px] font-bold font-mono text-indigo-700 leading-tight block truncate">
                     @currency($totalBilled)
                 </span>
             </div>
@@ -62,10 +62,10 @@
         </div>
 
         {{-- Card 2: Total Collected (Received) --}}
-        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
-            <div class="min-w-0 pr-1">
+        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between gap-2">
+            <div class="min-w-0">
                 <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Total Collected</span>
-                <span class="text-[13px] font-bold font-mono text-emerald-700 leading-tight block">
+                <span class="text-[13px] font-bold font-mono text-emerald-700 leading-tight block truncate">
                     @currency($totalCollected)
                 </span>
             </div>
@@ -75,10 +75,10 @@
         </div>
 
         {{-- Card 3: Total Outstanding Due --}}
-        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
-            <div class="min-w-0 pr-1">
+        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between gap-2">
+            <div class="min-w-0">
                 <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Outstanding Due</span>
-                <span class="text-[13px] font-bold font-mono text-rose-700 leading-tight block">
+                <span class="text-[13px] font-bold font-mono text-rose-700 leading-tight block truncate">
                     @currency($totalDue)
                 </span>
             </div>
@@ -88,10 +88,10 @@
         </div>
 
         {{-- Card 4: Collection Efficiency % --}}
-        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
-            <div class="min-w-0 pr-1">
+        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between gap-2">
+            <div class="min-w-0">
                 <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Recovery Rate</span>
-                <span class="text-[13px] font-bold font-mono text-cyan-700 leading-tight block">
+                <span class="text-[13px] font-bold font-mono text-cyan-700 leading-tight block truncate">
                     {{ $collectionEfficiency }}%
                 </span>
             </div>
@@ -101,11 +101,11 @@
         </div>
 
         {{-- Card 5: Due Subscribers Count --}}
-        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
-            <div class="min-w-0 pr-1">
+        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between gap-2">
+            <div class="min-w-0">
                 <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Due Subscribers</span>
-                <span class="text-[13px] font-bold font-mono text-amber-700 leading-tight block">
-                    {{ number_format($dueSubscribersCount) }} Users
+                <span class="text-[13px] font-bold font-mono text-amber-700 leading-tight block truncate">
+                    {{ number_format($dueSubscribersCount) }}
                 </span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border border-amber-200 bg-amber-50 text-amber-600 flex items-center justify-center flex-shrink-0">
@@ -114,10 +114,10 @@
         </div>
 
         {{-- Card 6: Discounts / Waivers --}}
-        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
-            <div class="min-w-0 pr-1">
+        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between gap-2">
+            <div class="min-w-0">
                 <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Total Discounts</span>
-                <span class="text-[13px] font-bold font-mono text-purple-700 leading-tight block">
+                <span class="text-[13px] font-bold font-mono text-purple-700 leading-tight block truncate">
                     @currency($totalDiscount)
                 </span>
             </div>
@@ -127,17 +127,55 @@
         </div>
     </div>
 
-    {{-- 3. SEARCH & MULTI-FILTER TOOLBAR (2-Row Day-to-Day Layout) --}}
-    <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-xs">
+    {{-- 3. SEARCH & MULTI-FILTER TOOLBAR (Customer-Standard 2-Tier Filter System - AGENTS.md Rule 2.C) --}}
+    @php
+        $activeMoreCount = 0;
+        if (!empty($collectorId) && $collectorId !== 'all') $activeMoreCount++;
+        if (!empty($packageId) && $packageId !== 'all') $activeMoreCount++;
+        if (!empty($statusFilter) && $statusFilter !== 'all') $activeMoreCount++;
+        if ($preset === 'custom' || (!empty(request('date_from')) || !empty(request('date_to')))) $activeMoreCount++;
+        if (!empty(request('per_page')) && request('per_page') != 20) $activeMoreCount++;
+        $isMoreOpen = $activeMoreCount > 0;
+    @endphp
+
+    <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5"
+         x-data="{ 
+             showMoreFilters: {{ $isMoreOpen ? 'true' : 'false' }}, 
+             selectedPreset: '{{ $preset }}',
+             dateFrom: '{{ request('date_from', request('start_date', $from->toDateString())) }}',
+             dateTo: '{{ request('date_to', request('end_date', $to->toDateString())) }}',
+             searchQuery: '{{ addslashes(request('search', '')) }}' 
+         }">
         <form method="GET" action="{{ route('tenant.reports.collection') }}" class="space-y-2.5">
             <input type="hidden" name="tab" value="{{ $activeTab }}">
 
-            {{-- Row 1: Period Preset, Date From, Date To, Revenue Stream Scope --}}
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
-                {{-- Filter 1: Period Preset --}}
-                <div>
-                    <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Period Preset</label>
-                    <select name="preset" x-model="selectedPreset" @change="handlePeriodChange($event.target.value)" class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 py-1.5 focus:bg-white focus:border-cyan-500 focus:outline-none transition">
+            {{-- 1st Tier: Primary Single Row (Uniform h-[34px]) --}}
+            <div class="flex flex-col md:flex-row items-stretch md:items-center gap-2">
+                {{-- Intelligent Live Search Box --}}
+                <div class="relative flex-1 min-w-[200px]">
+                    <div class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
+                        <i class="fas fa-magnifying-glass text-xs" :class="searchQuery ? 'text-cyan-600 font-bold' : 'text-slate-400'"></i>
+                    </div>
+                    <input type="text" 
+                           name="search" 
+                           x-model="searchQuery"
+                           placeholder="Search customer, ID, phone, username..." 
+                           class="w-full h-[34px] pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs">
+                    <button type="button" 
+                            x-show="searchQuery && searchQuery.length > 0" 
+                            @click="searchQuery = ''; $nextTick(() => $el.closest('form').submit())" 
+                            class="absolute inset-y-0 right-0 pr-2 flex items-center text-slate-400 hover:text-slate-600 transition cursor-pointer"
+                            title="Clear search">
+                        <i class="fas fa-times-circle text-xs"></i>
+                    </button>
+                </div>
+
+                {{-- Period Preset Selector --}}
+                <div class="w-full md:w-36 flex-shrink-0">
+                    <select name="preset" 
+                            x-model="selectedPreset" 
+                            @change="handlePeriodChange($event.target.value); $nextTick(() => $el.closest('form').submit())"
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs cursor-pointer">
                         <option value="today" {{ $preset === 'today' ? 'selected' : '' }}>Today</option>
                         <option value="yesterday" {{ $preset === 'yesterday' ? 'selected' : '' }}>Yesterday</option>
                         <option value="this_week" {{ $preset === 'this_week' ? 'selected' : '' }}>This Week</option>
@@ -151,37 +189,11 @@
                     </select>
                 </div>
 
-                {{-- Filter 2: Date From --}}
-                <div>
-                    <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Date From</label>
-                    <input type="date" name="date_from" x-model="dateFrom" class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 py-1.5 focus:bg-white focus:border-cyan-500 focus:outline-none transition font-mono">
-                </div>
-
-                {{-- Filter 3: Date To --}}
-                <div>
-                    <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Date To</label>
-                    <input type="date" name="date_to" x-model="dateTo" class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 py-1.5 focus:bg-white focus:border-cyan-500 focus:outline-none transition font-mono">
-                </div>
-
-                {{-- Filter 4: Business Stream Scope --}}
-                <div>
-                    <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Collection Scope</label>
-                    <select name="stream" class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 py-1.5 focus:bg-white focus:border-cyan-500 focus:outline-none transition">
-                        <option value="all" {{ ($stream ?? 'all') === 'all' ? 'selected' : '' }}>All Streams (Retail + Wholesale + Direct)</option>
-                        <option value="retail" {{ ($stream ?? 'all') === 'retail' ? 'selected' : '' }}>Retail Subscribers Collection Only</option>
-                        <option value="wholesale" {{ ($stream ?? 'all') === 'wholesale' ? 'selected' : '' }}>Sub-ISP Wholesale Billing &amp; Recharges</option>
-                        <option value="gateway" {{ ($stream ?? 'all') === 'gateway' ? 'selected' : '' }}>Digital Payment Gateways (bKash/Nagad/SSL)</option>
-                        <option value="direct" {{ ($stream ?? 'all') === 'direct' ? 'selected' : '' }}>Direct &amp; Other Incomes Only</option>
-                    </select>
-                </div>
-            </div>
-
-            {{-- Row 2: Zone, Collector, Package, Status, Action Buttons --}}
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5">
-                {{-- Filter 5: Zone Selector --}}
-                <div>
-                    <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Coverage Zone</label>
-                    <select name="zone_id" class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 py-1.5 focus:bg-white focus:border-cyan-500 focus:outline-none transition">
+                {{-- Coverage Zone --}}
+                <div class="w-full md:w-40 flex-shrink-0">
+                    <select name="zone_id" 
+                            onchange="this.form.submit()"
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs cursor-pointer">
                         <option value="all">All Coverage Zones</option>
                         @foreach($allZones as $z)
                             <option value="{{ $z->id }}" {{ (string)$zoneId === (string)$z->id ? 'selected' : '' }}>{{ $z->name }}</option>
@@ -189,10 +201,79 @@
                     </select>
                 </div>
 
-                {{-- Filter 6: Collector Staff Selector --}}
+                {{-- Per Page Selector --}}
+                <div class="w-full md:w-28 flex-shrink-0">
+                    <select name="per_page" 
+                            onchange="this.form.submit()"
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs cursor-pointer">
+                        <option value="15" {{ $perPage == 15 ? 'selected' : '' }}>15 / page</option>
+                        <option value="20" {{ $perPage == 20 ? 'selected' : '' }}>20 / page</option>
+                        <option value="30" {{ $perPage == 30 ? 'selected' : '' }}>30 / page</option>
+                        <option value="50" {{ $perPage == 50 ? 'selected' : '' }}>50 / page</option>
+                        <option value="100" {{ $perPage == 100 ? 'selected' : '' }}>100 / page</option>
+                    </select>
+                </div>
+
+                {{-- More Filters Accordion Button --}}
+                <button type="button" 
+                        @click="showMoreFilters = !showMoreFilters" 
+                        class="h-[34px] py-0 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-xs rounded-lg border border-slate-200 transition flex items-center justify-center gap-1.5 flex-shrink-0 cursor-pointer">
+                    <i class="fas fa-sliders text-[11px] text-slate-500"></i>
+                    <span>More Filters</span>
+                    @if($activeMoreCount > 0)
+                        <span class="w-4 h-4 rounded-full bg-cyan-600 text-white text-[9px] font-bold flex items-center justify-center font-mono">
+                            {{ $activeMoreCount }}
+                        </span>
+                    @endif
+                    <i class="fas fa-chevron-down text-[9px] transition-transform duration-200" :class="showMoreFilters ? 'rotate-180 text-cyan-600' : 'text-slate-400'"></i>
+                </button>
+
+                {{-- Strict Action Buttons Sequence: [Filter] FIRST, [Reset] SECOND --}}
+                <div class="flex items-center gap-1.5 flex-shrink-0 md:ml-auto">
+                    <button type="submit" 
+                            class="h-[34px] py-0 px-3 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer flex-shrink-0" 
+                            title="Apply Filters">
+                        <i class="fas fa-filter text-[10px]"></i>
+                        <span>Filter</span>
+                    </button>
+                    <a href="{{ route('tenant.reports.collection', ['tab' => $activeTab]) }}" 
+                       class="h-[34px] py-0 px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer flex-shrink-0" 
+                       title="Reset All Filters">
+                        <i class="fas fa-rotate-left text-[10px]"></i>
+                        <span>Reset</span>
+                    </a>
+                </div>
+            </div>
+
+            {{-- 2nd Tier: Secondary Filters Drawer --}}
+            <div x-show="showMoreFilters" 
+                 x-cloak 
+                 x-transition:enter="transition ease-out duration-150"
+                 x-transition:enter-start="opacity-0 -translate-y-1"
+                 x-transition:enter-end="opacity-100 translate-y-0"
+                 x-transition:leave="transition ease-in duration-100"
+                 x-transition:leave-start="opacity-100 translate-y-0"
+                 x-transition:leave-end="opacity-0 -translate-y-1"
+                 class="pt-2 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-2">
+
+                {{-- Collection Stream Scope --}}
                 <div>
-                    <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Billing Collector</label>
-                    <select name="collector_id" class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 py-1.5 focus:bg-white focus:border-cyan-500 focus:outline-none transition">
+                    <select name="stream" 
+                            onchange="this.form.submit()"
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs cursor-pointer">
+                        <option value="all" {{ ($stream ?? 'all') === 'all' ? 'selected' : '' }}>All Collection Streams</option>
+                        <option value="retail" {{ ($stream ?? 'all') === 'retail' ? 'selected' : '' }}>Retail Subscribers</option>
+                        <option value="wholesale" {{ ($stream ?? 'all') === 'wholesale' ? 'selected' : '' }}>Sub-ISP Wholesale</option>
+                        <option value="gateway" {{ ($stream ?? 'all') === 'gateway' ? 'selected' : '' }}>Payment Gateways</option>
+                        <option value="direct" {{ ($stream ?? 'all') === 'direct' ? 'selected' : '' }}>Direct Incomes</option>
+                    </select>
+                </div>
+
+                {{-- Collector Staff --}}
+                <div>
+                    <select name="collector_id" 
+                            onchange="this.form.submit()"
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs cursor-pointer">
                         <option value="all">All Collectors</option>
                         @foreach($allCollectors as $col)
                             <option value="{{ $col->id }}" {{ (string)$collectorId === (string)$col->id ? 'selected' : '' }}>{{ $col->name }}</option>
@@ -200,10 +281,11 @@
                     </select>
                 </div>
 
-                {{-- Filter 7: Package Selector --}}
+                {{-- Internet Package --}}
                 <div>
-                    <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Internet Package</label>
-                    <select name="package_id" class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 py-1.5 focus:bg-white focus:border-cyan-500 focus:outline-none transition">
+                    <select name="package_id" 
+                            onchange="this.form.submit()"
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs cursor-pointer">
                         <option value="all">All Packages</option>
                         @foreach($allPackages as $pkg)
                             <option value="{{ $pkg->id }}" {{ (string)$packageId === (string)$pkg->id ? 'selected' : '' }}>{{ $pkg->name ?: $pkg->package_name }}</option>
@@ -211,11 +293,12 @@
                     </select>
                 </div>
 
-                {{-- Filter 8: Due Status --}}
+                {{-- Account Status --}}
                 <div>
-                    <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Account Status</label>
-                    <select name="status" class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 py-1.5 focus:bg-white focus:border-cyan-500 focus:outline-none transition">
-                        <option value="all" {{ $statusFilter === 'all' ? 'selected' : '' }}>All Accounts</option>
+                    <select name="status" 
+                            onchange="this.form.submit()"
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs cursor-pointer">
+                        <option value="all" {{ $statusFilter === 'all' ? 'selected' : '' }}>All Status</option>
                         <option value="due" {{ $statusFilter === 'due' ? 'selected' : '' }}>🔴 With Dues Only</option>
                         <option value="active" {{ $statusFilter === 'active' ? 'selected' : '' }}>🟢 Active Subscribers</option>
                         <option value="suspended" {{ $statusFilter === 'suspended' ? 'selected' : '' }}>🟡 Suspended Accounts</option>
@@ -223,16 +306,22 @@
                     </select>
                 </div>
 
-                {{-- Filter & Reset Buttons (Strict Universal Standard - AGENTS.md Rule 2.C) --}}
-                <div class="flex items-end gap-1.5">
-                    <button type="submit" class="flex-1 py-1.5 px-3 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-xs font-semibold shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" title="Apply Filters">
-                        <i class="fas fa-filter text-[10px]"></i>
-                        <span>Filter</span>
-                    </button>
-                    <a href="{{ route('tenant.reports.collection') }}" class="py-1.5 px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer" title="Reset Filters">
-                        <i class="fas fa-rotate-left text-[10px]"></i>
-                        <span>Reset</span>
-                    </a>
+                {{-- Date From --}}
+                <div>
+                    <input type="date" 
+                           name="date_from" 
+                           x-model="dateFrom" 
+                           title="From Date"
+                           class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs font-mono">
+                </div>
+
+                {{-- Date To --}}
+                <div>
+                    <input type="date" 
+                           name="date_to" 
+                           x-model="dateTo" 
+                           title="To Date"
+                           class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs font-mono">
                 </div>
             </div>
         </form>
@@ -286,47 +375,38 @@
                 </a>
             </div>
 
-            @if($activeTab === 'customers')
-                <div class="flex items-center gap-2">
-                    <form method="GET" action="{{ route('tenant.reports.collection') }}" class="flex items-center gap-1.5">
-                        <input type="hidden" name="tab" value="customers">
-                        <input type="hidden" name="preset" value="{{ $preset }}">
-                        <input type="hidden" name="date_from" value="{{ request('date_from', $from->toDateString()) }}">
-                        <input type="hidden" name="date_to" value="{{ request('date_to', $to->toDateString()) }}">
-                        <input type="hidden" name="zone_id" value="{{ $zoneId }}">
-                        <input type="hidden" name="collector_id" value="{{ $collectorId }}">
-                        <input type="hidden" name="status" value="{{ $statusFilter }}">
-                        <div class="relative">
-                            <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-[10px]"></i>
-                            <input type="text" name="search" value="{{ $search }}" placeholder="Search subscriber..." class="pl-7 pr-2.5 py-1 text-xs bg-white border border-slate-200 rounded-lg focus:border-cyan-500 focus:outline-none transition w-44">
-                        </div>
-                    </form>
+            @if($activeTab === 'customers' && !empty($search))
+                <div class="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
+                    <span>Filtering by: <strong class="text-cyan-700">"{{ $search }}"</strong></span>
+                    <a href="{{ route('tenant.reports.collection', array_merge(request()->except('search'), ['tab' => 'customers'])) }}" class="text-rose-600 hover:underline text-[11px] font-semibold">
+                        <i class="fas fa-times-circle"></i> Clear
+                    </a>
                 </div>
             @endif
         </div>
 
         {{-- TAB CONTENT 1: ZONE BREAKDOWN --}}
         @if($activeTab === 'zones')
-            <div class="overflow-x-auto min-h-[280px]">
+            <div class="overflow-x-auto">
                 <table class="saas-table">
                     <thead>
                         <tr>
-                            <th class="w-10 text-center">#</th>
-                            <th>Zone Name</th>
-                            <th class="w-24 text-center">Subscribers</th>
-                            <th class="w-24 text-center">Active</th>
-                            <th class="text-right w-28">Total Billed</th>
-                            <th class="text-right w-28 text-emerald-700 font-bold">Collected</th>
-                            <th class="text-right w-28 text-rose-700 font-bold">Total Due</th>
-                            <th class="text-center w-24">Recovery %</th>
-                            <th class="no-sort w-16 text-center">Action</th>
+                            <th class="w-10 text-center font-semibold">#</th>
+                            <th class="text-center font-semibold">Zone Name</th>
+                            <th class="w-24 text-center font-semibold">Subscribers</th>
+                            <th class="w-24 text-center font-semibold">Active</th>
+                            <th class="w-28 text-center font-semibold">Total Billed</th>
+                            <th class="w-28 text-center font-semibold text-emerald-700">Collected</th>
+                            <th class="w-28 text-center font-semibold text-rose-700">Total Due</th>
+                            <th class="w-24 text-center font-semibold">Recovery %</th>
+                            <th class="no-sort w-16 text-center font-semibold">Action</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($zoneMatrix as $idx => $z)
                             <tr>
                                 <td class="text-center font-mono text-slate-400">{{ $idx + 1 }}</td>
-                                <td class="font-bold text-slate-800">{{ $z['name'] }}</td>
+                                <td class="text-left font-bold text-slate-800">{{ $z['name'] }}</td>
                                 <td class="text-center font-mono font-semibold text-slate-700">{{ $z['subscribers_count'] }}</td>
                                 <td class="text-center font-mono font-semibold text-emerald-700">{{ $z['active_count'] }}</td>
                                 <td class="text-right font-mono font-medium text-slate-700">@currency($z['total_billed'])</td>
@@ -348,8 +428,21 @@
                         @empty
                             <tr>
                                 <td colspan="9" class="text-center py-10 text-slate-400">
-                                    <i class="fas fa-location-dot text-2xl mb-2 text-slate-300 block"></i>
-                                    <span class="text-xs font-medium">No zone breakdown data recorded in this workspace.</span>
+                                    <div class="max-w-xs mx-auto space-y-2">
+                                        <div class="w-12 h-12 rounded-xl bg-slate-50 border border-slate-200/80 text-slate-400 flex items-center justify-center mx-auto text-lg shadow-2xs">
+                                            <i class="fas fa-location-dot text-slate-400"></i>
+                                        </div>
+                                        <div class="space-y-0.5">
+                                            <h3 class="text-xs font-semibold text-slate-700">No Zone Data</h3>
+                                            <p class="text-[11px] text-slate-400 font-normal">No zone breakdown data recorded in this workspace.</p>
+                                        </div>
+                                        <div class="pt-1">
+                                            <a href="{{ route('tenant.reports.collection', ['tab' => 'zones']) }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-xs font-semibold shadow-xs transition cursor-pointer">
+                                                <i class="fas fa-rotate-left text-[10px]"></i>
+                                                <span>Reset Filters</span>
+                                            </a>
+                                        </div>
+                                    </div>
                                 </td>
                             </tr>
                         @endforelse
@@ -360,27 +453,27 @@
 
         {{-- TAB CONTENT 2: COLLECTOR PERFORMANCE --}}
         @if($activeTab === 'collectors')
-            <div class="overflow-x-auto min-h-[280px]">
+            <div class="overflow-x-auto">
                 <table class="saas-table">
                     <thead>
                         <tr>
-                            <th class="w-10 text-center">#</th>
-                            <th>Collector Staff</th>
-                            <th class="w-28">Designation</th>
-                            <th class="w-24 text-center">Assigned Users</th>
-                            <th class="text-right w-28">Target Billed</th>
-                            <th class="text-right w-28 text-emerald-700 font-bold">Collected</th>
-                            <th class="text-right w-28 text-rose-700 font-bold">Pending Due</th>
-                            <th class="text-center w-24">Recovery %</th>
-                            <th class="no-sort w-16 text-center">Action</th>
+                            <th class="w-10 text-center font-semibold">#</th>
+                            <th class="text-center font-semibold">Collector Staff</th>
+                            <th class="w-28 text-center font-semibold">Designation</th>
+                            <th class="w-24 text-center font-semibold">Assigned Users</th>
+                            <th class="w-28 text-center font-semibold">Target Billed</th>
+                            <th class="w-28 text-center font-semibold text-emerald-700">Collected</th>
+                            <th class="w-28 text-center font-semibold text-rose-700">Pending Due</th>
+                            <th class="w-24 text-center font-semibold">Recovery %</th>
+                            <th class="no-sort w-16 text-center font-semibold">Action</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($collectorMatrix as $idx => $col)
                             <tr>
                                 <td class="text-center font-mono text-slate-400">{{ $idx + 1 }}</td>
-                                <td class="font-bold text-slate-800">{{ $col['name'] }}</td>
-                                <td class="text-slate-600 text-xs">{{ $col['role'] }}</td>
+                                <td class="text-left font-bold text-slate-800">{{ $col['name'] }}</td>
+                                <td class="text-center text-slate-600 text-xs">{{ $col['role'] }}</td>
                                 <td class="text-center font-mono font-semibold text-slate-700">{{ $col['assigned_count'] }}</td>
                                 <td class="text-right font-mono font-medium text-slate-700">@currency($col['target_billed'])</td>
                                 <td class="text-right font-mono font-bold text-emerald-700 bg-emerald-50/20">@currency($col['total_collected'])</td>
@@ -401,8 +494,21 @@
                         @empty
                             <tr>
                                 <td colspan="9" class="text-center py-10 text-slate-400">
-                                    <i class="fas fa-user-tie text-2xl mb-2 text-slate-300 block"></i>
-                                    <span class="text-xs font-medium">No billing collector staff found.</span>
+                                    <div class="max-w-xs mx-auto space-y-2">
+                                        <div class="w-12 h-12 rounded-xl bg-slate-50 border border-slate-200/80 text-slate-400 flex items-center justify-center mx-auto text-lg shadow-2xs">
+                                            <i class="fas fa-user-tie text-slate-400"></i>
+                                        </div>
+                                        <div class="space-y-0.5">
+                                            <h3 class="text-xs font-semibold text-slate-700">No Collectors Found</h3>
+                                            <p class="text-[11px] text-slate-400 font-normal">No billing collector staff found in this workspace.</p>
+                                        </div>
+                                        <div class="pt-1">
+                                            <a href="{{ route('tenant.reports.collection', ['tab' => 'collectors']) }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-xs font-semibold shadow-xs transition cursor-pointer">
+                                                <i class="fas fa-rotate-left text-[10px]"></i>
+                                                <span>Reset Filters</span>
+                                            </a>
+                                        </div>
+                                    </div>
                                 </td>
                             </tr>
                         @endforelse
@@ -413,27 +519,27 @@
 
         {{-- TAB CONTENT 3: PACKAGE BREAKDOWN --}}
         @if($activeTab === 'packages')
-            <div class="overflow-x-auto min-h-[280px]">
+            <div class="overflow-x-auto">
                 <table class="saas-table">
                     <thead>
                         <tr>
-                            <th class="w-10 text-center">#</th>
-                            <th>Package Name</th>
-                            <th class="w-20 text-center">Speed</th>
-                            <th class="text-right w-24">Price</th>
-                            <th class="w-24 text-center">Subscribers</th>
-                            <th class="text-right w-28">Monthly Bill</th>
-                            <th class="text-right w-28 text-emerald-700 font-bold">Collected</th>
-                            <th class="text-right w-28 text-rose-700 font-bold">Total Due</th>
-                            <th class="text-center w-24">Recovery %</th>
-                            <th class="no-sort w-16 text-center">Action</th>
+                            <th class="w-10 text-center font-semibold">#</th>
+                            <th class="text-center font-semibold">Package Name</th>
+                            <th class="w-20 text-center font-semibold">Speed</th>
+                            <th class="w-24 text-center font-semibold">Price</th>
+                            <th class="w-24 text-center font-semibold">Subscribers</th>
+                            <th class="w-28 text-center font-semibold">Monthly Bill</th>
+                            <th class="w-28 text-center font-semibold text-emerald-700">Collected</th>
+                            <th class="w-28 text-center font-semibold text-rose-700">Total Due</th>
+                            <th class="w-24 text-center font-semibold">Recovery %</th>
+                            <th class="no-sort w-16 text-center font-semibold">Action</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($packageMatrix as $idx => $pkg)
                             <tr>
                                 <td class="text-center font-mono text-slate-400">{{ $idx + 1 }}</td>
-                                <td class="font-bold text-slate-800">{{ $pkg['name'] }}</td>
+                                <td class="text-left font-bold text-slate-800">{{ $pkg['name'] }}</td>
                                 <td class="text-center font-mono text-cyan-700 font-semibold">{{ $pkg['speed'] }}</td>
                                 <td class="text-right font-mono text-slate-700">@currency($pkg['price'])</td>
                                 <td class="text-center font-mono font-semibold text-slate-700">{{ $pkg['subscribers_count'] }}</td>
@@ -456,8 +562,21 @@
                         @empty
                             <tr>
                                 <td colspan="10" class="text-center py-10 text-slate-400">
-                                    <i class="fas fa-cubes text-2xl mb-2 text-slate-300 block"></i>
-                                    <span class="text-xs font-medium">No package analytics found.</span>
+                                    <div class="max-w-xs mx-auto space-y-2">
+                                        <div class="w-12 h-12 rounded-xl bg-slate-50 border border-slate-200/80 text-slate-400 flex items-center justify-center mx-auto text-lg shadow-2xs">
+                                            <i class="fas fa-cubes text-slate-400"></i>
+                                        </div>
+                                        <div class="space-y-0.5">
+                                            <h3 class="text-xs font-semibold text-slate-700">No Packages Found</h3>
+                                            <p class="text-[11px] text-slate-400 font-normal">No package analytics found in this workspace.</p>
+                                        </div>
+                                        <div class="pt-1">
+                                            <a href="{{ route('tenant.reports.collection', ['tab' => 'packages']) }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-xs font-semibold shadow-xs transition cursor-pointer">
+                                                <i class="fas fa-rotate-left text-[10px]"></i>
+                                                <span>Reset Filters</span>
+                                            </a>
+                                        </div>
+                                    </div>
                                 </td>
                             </tr>
                         @endforelse
@@ -468,26 +587,26 @@
 
         {{-- TAB CONTENT 4: SUB-ISP WHOLESALE RESELLERS --}}
         @if($activeTab === 'resellers')
-            <div class="overflow-x-auto min-h-[280px]">
+            <div class="overflow-x-auto">
                 <table class="saas-table">
                     <thead>
                         <tr>
-                            <th class="w-10 text-center">#</th>
-                            <th>Reseller / Sub-ISP</th>
-                            <th class="w-20 text-center">Type</th>
-                            <th class="text-right w-24">Wallet</th>
-                            <th class="text-right w-28">Period Billed</th>
-                            <th class="text-right w-28 text-emerald-700 font-bold">Collected</th>
-                            <th class="text-right w-28 text-rose-700 font-bold">Total Due</th>
-                            <th class="text-center w-24">Recovery %</th>
-                            <th class="no-sort w-16 text-center">Action</th>
+                            <th class="w-10 text-center font-semibold">#</th>
+                            <th class="text-center font-semibold">Reseller / Sub-ISP</th>
+                            <th class="w-20 text-center font-semibold">Type</th>
+                            <th class="w-24 text-center font-semibold">Wallet</th>
+                            <th class="w-28 text-center font-semibold">Period Billed</th>
+                            <th class="w-28 text-center font-semibold text-emerald-700">Collected</th>
+                            <th class="w-28 text-center font-semibold text-rose-700">Total Due</th>
+                            <th class="w-24 text-center font-semibold">Recovery %</th>
+                            <th class="no-sort w-16 text-center font-semibold">Action</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($wholesaleMatrix ?? [] as $idx => $res)
                             <tr>
                                 <td class="text-center font-mono text-slate-400">{{ $idx + 1 }}</td>
-                                <td class="font-bold text-slate-800">
+                                <td class="text-left font-bold text-slate-800">
                                     <a href="{{ url('admin/resellers/' . $res['id']) }}" class="text-cyan-800 hover:underline">
                                         {{ $res['name'] }}
                                     </a>
@@ -518,8 +637,21 @@
                         @empty
                             <tr>
                                 <td colspan="9" class="text-center py-10 text-slate-400">
-                                    <i class="fas fa-network-wired text-2xl mb-2 text-slate-300 block"></i>
-                                    <span class="text-xs font-medium">No Sub-ISP reseller accounts found.</span>
+                                    <div class="max-w-xs mx-auto space-y-2">
+                                        <div class="w-12 h-12 rounded-xl bg-slate-50 border border-slate-200/80 text-slate-400 flex items-center justify-center mx-auto text-lg shadow-2xs">
+                                            <i class="fas fa-network-wired text-slate-400"></i>
+                                        </div>
+                                        <div class="space-y-0.5">
+                                            <h3 class="text-xs font-semibold text-slate-700">No Resellers Found</h3>
+                                            <p class="text-[11px] text-slate-400 font-normal">No Sub-ISP reseller accounts found in this period.</p>
+                                        </div>
+                                        <div class="pt-1">
+                                            <a href="{{ route('tenant.reports.collection', ['tab' => 'resellers']) }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-xs font-semibold shadow-xs transition cursor-pointer">
+                                                <i class="fas fa-rotate-left text-[10px]"></i>
+                                                <span>Reset Filters</span>
+                                            </a>
+                                        </div>
+                                    </div>
                                 </td>
                             </tr>
                         @endforelse
@@ -530,17 +662,17 @@
 
         {{-- TAB CONTENT 5: PAYMENT GATEWAYS BREAKDOWN --}}
         @if($activeTab === 'gateways')
-            <div class="overflow-x-auto min-h-[280px]">
+            <div class="overflow-x-auto">
                 <table class="saas-table">
                     <thead>
                         <tr>
-                            <th class="w-10 text-center">#</th>
-                            <th>Payment Channel / Gateway</th>
-                            <th class="w-24 text-center">Category</th>
-                            <th class="text-center w-28">Transactions</th>
-                            <th class="text-right w-36 text-emerald-700 font-bold">Total Inflow</th>
-                            <th class="text-center w-28">Share %</th>
-                            <th class="no-sort w-16 text-center">Action</th>
+                            <th class="w-10 text-center font-semibold">#</th>
+                            <th class="text-center font-semibold">Payment Channel / Gateway</th>
+                            <th class="w-24 text-center font-semibold">Category</th>
+                            <th class="w-28 text-center font-semibold">Transactions</th>
+                            <th class="w-36 text-center font-semibold text-emerald-700">Total Inflow</th>
+                            <th class="w-28 text-center font-semibold">Share %</th>
+                            <th class="no-sort w-16 text-center font-semibold">Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -590,8 +722,21 @@
                         @empty
                             <tr>
                                 <td colspan="7" class="text-center py-10 text-slate-400">
-                                    <i class="fas fa-credit-card text-2xl mb-2 text-slate-300 block"></i>
-                                    <span class="text-xs font-medium">No payment inflow records logged in this period.</span>
+                                    <div class="max-w-xs mx-auto space-y-2">
+                                        <div class="w-12 h-12 rounded-xl bg-slate-50 border border-slate-200/80 text-slate-400 flex items-center justify-center mx-auto text-lg shadow-2xs">
+                                            <i class="fas fa-credit-card text-slate-400"></i>
+                                        </div>
+                                        <div class="space-y-0.5">
+                                            <h3 class="text-xs font-semibold text-slate-700">No Inflow Records</h3>
+                                            <p class="text-[11px] text-slate-400 font-normal">No payment inflow records logged in this period.</p>
+                                        </div>
+                                        <div class="pt-1">
+                                            <a href="{{ route('tenant.reports.collection', ['tab' => 'gateways']) }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-xs font-semibold shadow-xs transition cursor-pointer">
+                                                <i class="fas fa-rotate-left text-[10px]"></i>
+                                                <span>Reset Filters</span>
+                                            </a>
+                                        </div>
+                                    </div>
                                 </td>
                             </tr>
                         @endforelse
@@ -602,34 +747,34 @@
 
         {{-- TAB CONTENT 6: SUBSCRIBERS DUE LEDGER --}}
         @if($activeTab === 'customers')
-            <div class="overflow-x-auto min-h-[300px]">
+            <div class="overflow-x-auto">
                 <table class="saas-table">
                     <thead>
                         <tr>
-                            <th class="w-24">Customer ID</th>
-                            <th>Subscriber Name</th>
-                            <th>PPPoE User</th>
-                            <th>Zone</th>
-                            <th>Package</th>
-                            <th class="text-right w-24">Monthly Bill</th>
-                            <th class="text-right w-24 text-rose-700 font-bold">Due Amount</th>
-                            <th class="w-24 text-center">Status</th>
-                            <th class="w-28">Collector</th>
-                            <th class="no-sort w-14 text-center">Action</th>
+                            <th class="w-24 text-center font-semibold">Customer ID</th>
+                            <th class="text-center font-semibold">Subscriber Name</th>
+                            <th class="text-center font-semibold">PPPoE User</th>
+                            <th class="text-center font-semibold">Zone</th>
+                            <th class="text-center font-semibold">Package</th>
+                            <th class="w-24 text-center font-semibold">Monthly Bill</th>
+                            <th class="w-24 text-center font-semibold text-rose-700">Due Amount</th>
+                            <th class="w-24 text-center font-semibold">Status</th>
+                            <th class="w-28 text-center font-semibold">Collector</th>
+                            <th class="no-sort w-14 text-center font-semibold">Action</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($customerRecords as $cust)
                             <tr>
-                                <td class="font-mono font-bold text-slate-800">
+                                <td class="text-center font-mono font-bold text-slate-800">
                                     <a href="{{ route('tenant.customers.show', $cust->id) }}" class="text-cyan-700 hover:underline">
                                         {{ $cust->customer_id ?? ('CUST-' . $cust->id) }}
                                     </a>
                                 </td>
-                                <td class="font-semibold text-slate-800">{{ $cust->name }}</td>
-                                <td class="font-mono text-slate-600">{{ $cust->username }}</td>
-                                <td class="text-slate-600">{{ $cust->coverageZone?->name ?? 'Default Area' }}</td>
-                                <td class="text-slate-600">{{ $cust->package?->name ?? $cust->package_name }}</td>
+                                <td class="text-left font-semibold text-slate-800">{{ $cust->name }}</td>
+                                <td class="text-left font-mono text-slate-600">{{ $cust->username }}</td>
+                                <td class="text-left text-slate-600">{{ $cust->coverageZone?->name ?? 'Default Area' }}</td>
+                                <td class="text-left text-slate-600">{{ $cust->package?->name ?? $cust->package_name }}</td>
                                 <td class="text-right font-mono font-medium text-slate-700">@currency($cust->monthly_bill)</td>
                                 <td class="text-right font-mono font-bold {{ $cust->due_amount > 0 ? 'text-rose-700 bg-rose-50/30' : 'text-slate-400' }}">
                                     @currency($cust->due_amount)
@@ -645,7 +790,7 @@
                                         <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700 uppercase">{{ $cust->status }}</span>
                                     @endif
                                 </td>
-                                <td class="text-slate-600 truncate">{{ $cust->collector?->name ?? 'Unassigned' }}</td>
+                                <td class="text-left text-slate-600 truncate">{{ $cust->collector?->name ?? 'Unassigned' }}</td>
                                 <td class="text-center">
                                     <button type="button" 
                                             @click="toggleMenu({{ json_encode($cust) }}, $event)"
@@ -657,8 +802,21 @@
                         @empty
                             <tr>
                                 <td colspan="10" class="text-center py-10 text-slate-400">
-                                    <i class="fas fa-users-slash text-3xl mb-2 text-slate-300 block"></i>
-                                    <span class="text-xs font-medium">No subscriber records found matching current filters.</span>
+                                    <div class="max-w-xs mx-auto space-y-2">
+                                        <div class="w-12 h-12 rounded-xl bg-slate-50 border border-slate-200/80 text-slate-400 flex items-center justify-center mx-auto text-lg shadow-2xs">
+                                            <i class="fas fa-users-slash text-slate-400"></i>
+                                        </div>
+                                        <div class="space-y-0.5">
+                                            <h3 class="text-xs font-semibold text-slate-700">No Subscribers Found</h3>
+                                            <p class="text-[11px] text-slate-400 font-normal">No subscriber records found matching current filters.</p>
+                                        </div>
+                                        <div class="pt-1">
+                                            <a href="{{ route('tenant.reports.collection', ['tab' => 'customers']) }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-xs font-semibold shadow-xs transition cursor-pointer">
+                                                <i class="fas fa-rotate-left text-[10px]"></i>
+                                                <span>Reset Filters</span>
+                                            </a>
+                                        </div>
+                                    </div>
                                 </td>
                             </tr>
                         @endforelse
