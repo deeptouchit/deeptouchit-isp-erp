@@ -9,25 +9,25 @@
 @section('content')
 <div class="space-y-3" x-data="financialLedgerManager()" @scroll.window="activeMenu = null" @resize.window="activeMenu = null">
 
-    {{-- 1. TOP HEADER BAR (Title + Action Buttons ONLY) --}}
-    <div class="bg-white px-3.5 py-2.5 rounded-xl border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-2.5">
-        <div class="flex items-center gap-2.5">
-            <div class="w-8 h-8 rounded-lg bg-cyan-50 border border-cyan-200 text-cyan-700 flex items-center justify-center font-bold text-xs shadow-2xs">
+    {{-- 1. Top Header Bar (Strict AGENTS.md Rule 2.A: Title + Action Buttons ONLY) --}}
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 pb-1 border-b border-slate-200/80">
+        <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-lg bg-cyan-50 border border-cyan-200 text-cyan-700 flex items-center justify-center font-bold text-sm shadow-2xs">
                 <i class="fas fa-book-open"></i>
             </div>
-            <h1 class="text-sm font-bold text-slate-800 tracking-tight">Financial Statements &amp; General Ledger</h1>
+            <h1 class="text-base font-bold text-slate-800 tracking-tight">Financial Statements &amp; General Ledger</h1>
         </div>
         
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-1.5">
             <a href="{{ route('tenant.finance.ledger.export', request()->query()) }}" 
-               class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs flex items-center gap-1.5 transition shadow-2xs">
-                <i class="fas fa-file-csv text-emerald-600"></i>
+               class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-lg text-xs font-semibold shadow-2xs transition">
+                <i class="fas fa-file-csv text-emerald-600 text-[11px]"></i>
                 <span>Export CSV</span>
             </a>
             <a href="{{ route('tenant.finance.ledger.print', request()->query()) }}" 
                target="_blank" 
-               class="px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs flex items-center gap-1.5 transition shadow-2xs">
-                <i class="fas fa-print"></i>
+               class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs rounded-lg shadow-xs transition">
+                <i class="fas fa-print text-[11px]"></i>
                 <span>Print Statement</span>
             </a>
         </div>
@@ -114,8 +114,17 @@
         </div>
     </div>
 
-    {{-- 3. SEARCH, STATEMENT TABS & FILTER BAR --}}
-    <div class="bg-white p-2.5 rounded-xl border border-slate-200 shadow-xs space-y-2">
+    {{-- 3. Search, Statement Tabs & Customer-Standard 2-Tier Filter System (AGENTS.md Rule 2.C) --}}
+    @php
+        $activeMoreCount = 0;
+        if (!empty(request('method')) && request('method') !== 'all') $activeMoreCount++;
+        if (request()->filled('date_from')) $activeMoreCount++;
+        if (request()->filled('date_to')) $activeMoreCount++;
+        $isMoreOpen = $activeMoreCount > 0;
+    @endphp
+
+    <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5"
+         x-data="{ showMoreFilters: {{ $isMoreOpen ? 'true' : 'false' }}, searchQuery: '{{ addslashes(request('search', '')) }}' }">
         {{-- Statement Tab Switcher --}}
         <div class="flex items-center gap-1 border-b border-slate-100 pb-2 overflow-x-auto">
             <a href="{{ route('tenant.finance.ledger', array_merge(request()->query(), ['tab' => 'ledger'])) }}" 
@@ -140,28 +149,38 @@
             </a>
         </div>
 
-        {{-- Filter Row --}}
-        <form method="GET" action="{{ route('tenant.finance.ledger') }}" class="space-y-2">
+        {{-- 2-Tier Filter Form --}}
+        <form method="GET" action="{{ route('tenant.finance.ledger') }}" id="ledgerFilterForm" class="space-y-2">
             <input type="hidden" name="tab" value="{{ $tab }}">
 
-            <!-- Row 1: Search Box, Period Preset & Date Range -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-2">
-                <!-- Search Box -->
-                <div class="md:col-span-4 relative">
-                    <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+            {{-- 1st Tier: Primary Single Row (Strict Uniform Height h-[34px]) --}}
+            <div class="flex flex-col md:flex-row items-stretch md:items-center gap-2">
+                {{-- Intelligent Live Search Box --}}
+                <div class="relative flex-1 min-w-[200px]">
+                    <span class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none transition-colors duration-150"
+                          :class="searchQuery ? 'text-cyan-600 font-bold' : 'text-slate-400'">
+                        <i class="fas fa-search text-xs"></i>
+                    </span>
                     <input type="text" 
                            name="search" 
-                           value="{{ request('search') }}" 
+                           x-model="searchQuery" 
                            placeholder="Search voucher, receipt, client, narrative..." 
-                           class="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition">
+                           class="w-full h-[34px] pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs placeholder-slate-400 text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs">
+                    <button type="button" 
+                            x-show="searchQuery && searchQuery.length > 0" 
+                            x-cloak
+                            @click="searchQuery = ''; $nextTick(() => $el.closest('form').submit())" 
+                            class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-slate-600 cursor-pointer transition">
+                        <i class="fas fa-times-circle text-xs"></i>
+                    </button>
                 </div>
 
-                <!-- Period Filter -->
-                <div class="md:col-span-2">
+                {{-- Primary Filter: Reporting Period Preset --}}
+                <div class="w-full md:w-40 flex-shrink-0">
                     <select name="period" 
                             id="periodSelect"
-                            onchange="handlePeriodChange(this.value)"
-                            class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 transition font-medium">
+                            onchange="handlePeriodChange(this.value); this.form.submit();"
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs cursor-pointer">
                         <option value="today" {{ $period === 'today' ? 'selected' : '' }}>Today</option>
                         <option value="yesterday" {{ $period === 'yesterday' ? 'selected' : '' }}>Yesterday</option>
                         <option value="this_week" {{ $period === 'this_week' ? 'selected' : '' }}>This Week</option>
@@ -174,46 +193,69 @@
                     </select>
                 </div>
 
-                <!-- Date From -->
-                <div class="md:col-span-3">
-                    <div class="relative">
-                        <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none">
-                            <i class="fas fa-calendar-day"></i>
-                        </span>
-                        <input type="date" 
-                               name="date_from" 
-                               id="dateFromInput"
-                               value="{{ $dateFrom ?? ($startDate ? \Carbon\Carbon::parse($startDate)->format('Y-m-d') : '') }}" 
-                               title="From Date"
-                               class="w-full pl-8 pr-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 transition">
-                    </div>
+                {{-- Pagination Selector (per_page) --}}
+                <div class="w-full md:w-28 flex-shrink-0">
+                    <select name="per_page" 
+                            onchange="this.form.submit()"
+                            class="w-full h-[34px] px-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs cursor-pointer">
+                        <option value="20" {{ request('per_page', '20') == '20' ? 'selected' : '' }}>20 / page</option>
+                        <option value="50" {{ request('per_page') == '50' ? 'selected' : '' }}>50 / page</option>
+                        <option value="100" {{ request('per_page') == '100' ? 'selected' : '' }}>100 / page</option>
+                    </select>
                 </div>
 
-                <!-- Date To -->
-                <div class="md:col-span-3">
-                    <div class="relative">
-                        <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none">
-                            <i class="fas fa-calendar-check"></i>
+                {{-- "More Filters" Accordion Toggle Button --}}
+                <button type="button" 
+                        @click="showMoreFilters = !showMoreFilters"
+                        class="h-[34px] py-0 px-3 rounded-lg border text-xs font-semibold flex items-center justify-center gap-1.5 transition shadow-2xs cursor-pointer flex-shrink-0"
+                        :class="showMoreFilters || {{ $isMoreOpen ? 'true' : 'false' }} ? 'bg-cyan-50/80 border-cyan-300 text-cyan-700' : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700'">
+                    <i class="fas fa-sliders text-[11px]"></i>
+                    <span>More Filters</span>
+                    @if($activeMoreCount > 0)
+                        <span class="w-4 h-4 rounded-full bg-cyan-600 text-white text-[9px] font-bold flex items-center justify-center ml-0.5">
+                            {{ $activeMoreCount }}
                         </span>
-                        <input type="date" 
-                               name="date_to" 
-                               id="dateToInput"
-                               value="{{ $dateTo ?? ($endDate ? \Carbon\Carbon::parse($endDate)->format('Y-m-d') : '') }}" 
-                               title="To Date"
-                               class="w-full pl-8 pr-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 transition">
-                    </div>
+                    @endif
+                    <i class="fas text-[9px] ml-0.5 transition-transform duration-150"
+                       :class="showMoreFilters ? 'fa-chevron-up text-cyan-600' : 'fa-chevron-down text-slate-400'"></i>
+                </button>
+
+                {{-- Strict Action Buttons Sequence: [Filter] FIRST, [Reset] SECOND (AGENTS.md Rule 2.C) --}}
+                <div class="flex items-center gap-1.5 flex-shrink-0 md:ml-auto">
+                    <button type="submit" 
+                            class="h-[34px] py-0 px-3 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" 
+                            title="Apply Filters">
+                        <i class="fas fa-filter text-[10px]"></i>
+                        <span>Filter</span>
+                    </button>
+                    <a href="{{ route('tenant.finance.ledger', ['tab' => $tab]) }}" 
+                       class="h-[34px] py-0 px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer flex-shrink-0" 
+                       title="Reset All Filters">
+                        <i class="fas fa-rotate-left text-[10px]"></i>
+                        <span>Reset</span>
+                    </a>
                 </div>
             </div>
 
-            <!-- Row 2: Method / Channel, Per Page & Action Buttons -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-2 pt-1 border-t border-slate-100">
-                <!-- Payment Method -->
-                <div class="md:col-span-5">
+            {{-- 2nd Tier: Secondary Filters Drawer --}}
+            <div x-show="showMoreFilters" 
+                 x-cloak 
+                 x-transition:enter="transition ease-out duration-150"
+                 x-transition:enter-start="opacity-0 -translate-y-1"
+                 x-transition:enter-end="opacity-100 translate-y-0"
+                 x-transition:leave="transition ease-in duration-100"
+                 x-transition:leave-start="opacity-100 translate-y-0"
+                 x-transition:leave-end="opacity-0 -translate-y-1"
+                 class="pt-2 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-3 gap-2">
+
+                {{-- Channel / Method --}}
+                <div>
                     <select name="method" 
-                            class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 transition">
+                            onchange="this.form.submit()"
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs cursor-pointer">
                         <option value="all">All Channels / Methods</option>
                         <option value="cash" {{ request('method') === 'cash' ? 'selected' : '' }}>Cash</option>
-                        <option value="bank" {{ request('method') === 'bank' ? 'selected' : '' }}>Bank Wire / Cheque</option>
+                        <option value="bank" {{ request('method') === 'bank' ? 'selected' : '' }}>Bank Wire / Transfer</option>
                         <option value="bkash" {{ request('method') === 'bkash' ? 'selected' : '' }}>bKash</option>
                         <option value="nagad" {{ request('method') === 'nagad' ? 'selected' : '' }}>Nagad</option>
                         <option value="rocket" {{ request('method') === 'rocket' ? 'selected' : '' }}>Rocket</option>
@@ -221,30 +263,24 @@
                     </select>
                 </div>
 
-                <!-- Per Page -->
-                <div class="md:col-span-3">
-                    <select name="per_page" 
-                            class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 transition">
-                        <option value="20" {{ request('per_page', '20') == '20' ? 'selected' : '' }}>20 per page</option>
-                        <option value="50" {{ request('per_page') == '50' ? 'selected' : '' }}>50 per page</option>
-                        <option value="100" {{ request('per_page') == '100' ? 'selected' : '' }}>100 per page</option>
-                    </select>
+                {{-- Date From --}}
+                <div>
+                    <input type="date" 
+                           name="date_from" 
+                           id="dateFromInput"
+                           value="{{ $dateFrom ?? ($startDate ? \Carbon\Carbon::parse($startDate)->format('Y-m-d') : '') }}" 
+                           title="From Date"
+                           class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs">
                 </div>
 
-                <!-- Strict Action Buttons: [Filter] FIRST, [Reset] SECOND (AGENTS.md Rule 2.C) -->
-                <div class="md:col-span-4 flex items-center justify-end gap-1.5">
-                    <button type="submit" 
-                            class="flex-1 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-1.5 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" 
-                            title="Apply Filters">
-                        <i class="fas fa-filter text-[10px]"></i>
-                        <span>Filter</span>
-                    </button>
-                    <a href="{{ route('tenant.finance.ledger', ['tab' => $tab]) }}" 
-                       class="py-1.5 px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-lg border border-slate-200/80 transition inline-flex items-center justify-center gap-1 cursor-pointer flex-shrink-0" 
-                       title="Reset Filters">
-                        <i class="fas fa-rotate-left text-[10px]"></i>
-                        <span>Reset</span>
-                    </a>
+                {{-- Date To --}}
+                <div>
+                    <input type="date" 
+                           name="date_to" 
+                           id="dateToInput"
+                           value="{{ $dateTo ?? ($endDate ? \Carbon\Carbon::parse($endDate)->format('Y-m-d') : '') }}" 
+                           title="To Date"
+                           class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs">
                 </div>
             </div>
         </form>
@@ -263,21 +299,21 @@
             </div>
         </div>
 
-        {{-- Master Table --}}
-        <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+        {{-- Master Table (<table class="saas-table"> - AGENTS.md Rule 2.D) --}}
+        <div class="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="saas-table">
                     <thead>
                         <tr>
-                            <th class="w-10 text-center">#</th>
-                            <th class="w-32">Date &amp; Time</th>
-                            <th class="w-32">Voucher / Ref</th>
-                            <th>Account Head</th>
-                            <th>Particulars / Description</th>
-                            <th class="text-right w-28">Debit (Out -)</th>
-                            <th class="text-right w-28">Credit (In +)</th>
-                            <th class="text-right w-32">Balance</th>
-                            <th class="w-12 text-center no-sort">Action</th>
+                            <th class="w-10 text-center font-semibold">#</th>
+                            <th class="w-32 text-center font-semibold">DATE &amp; TIME</th>
+                            <th class="w-32 text-center font-semibold">VOUCHER / REF</th>
+                            <th class="w-44 text-center font-semibold">ACCOUNT HEAD</th>
+                            <th class="text-center font-semibold">PARTICULARS / DESCRIPTION</th>
+                            <th class="w-28 text-center font-semibold">DEBIT (OUT -)</th>
+                            <th class="w-28 text-center font-semibold">CREDIT (IN +)</th>
+                            <th class="w-32 text-center font-semibold">BALANCE</th>
+                            <th class="w-12 text-center font-semibold no-sort">ACTION</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -289,26 +325,26 @@
                                 </td>
 
                                 {{-- 2. Date & Time --}}
-                                <td class="font-mono text-slate-600">
+                                <td class="text-center font-mono text-slate-600 text-xs">
                                     {{ $item['date'] }}
                                 </td>
 
                                 {{-- 3. Voucher / Ref No --}}
-                                <td>
+                                <td class="text-center">
                                     <button type="button" 
                                             @click="viewEntry(@js($item))" 
-                                            class="font-mono font-bold text-cyan-700 hover:text-cyan-900 hover:underline">
+                                            class="font-mono font-bold text-cyan-700 hover:text-cyan-900 hover:underline cursor-pointer">
                                         {{ $item['ref_no'] }}
                                     </button>
                                 </td>
 
                                 {{-- 4. Account Head --}}
-                                <td class="font-medium text-slate-800">
+                                <td class="text-left font-medium text-slate-800">
                                     {{ $item['category'] }}
                                 </td>
 
                                 {{-- 5. Particulars / Narrative --}}
-                                <td class="text-slate-600 truncate max-w-xs" title="{{ $item['description'] }}">
+                                <td class="text-left text-slate-600 truncate max-w-xs" title="{{ $item['description'] }}">
                                     {{ $item['description'] }}
                                 </td>
 
@@ -339,16 +375,23 @@
                                 <td class="text-center">
                                     <button type="button" 
                                             @click="toggleMenu(@js($item), $event)" 
-                                            class="w-7 h-7 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition">
+                                            class="w-6 h-6 rounded-md hover:bg-slate-100 text-slate-500 hover:text-slate-700 inline-flex items-center justify-center transition cursor-pointer">
                                         <i class="fas fa-ellipsis-v text-[10px]"></i>
                                     </button>
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="9" class="text-center py-8 text-slate-400">
-                                    <i class="fas fa-receipt text-2xl mb-1 block text-slate-300"></i>
-                                    No financial ledger transactions recorded in this period.
+                                <td colspan="9" class="text-center py-10 text-slate-400">
+                                    <div class="max-w-xs mx-auto space-y-2">
+                                        <div class="w-12 h-12 rounded-xl bg-slate-50 border border-slate-200/80 text-slate-400 flex items-center justify-center mx-auto text-lg shadow-2xs">
+                                            <i class="fas fa-receipt text-slate-400"></i>
+                                        </div>
+                                        <div class="space-y-0.5">
+                                            <h3 class="text-xs font-semibold text-slate-700">No Ledger Transactions Found</h3>
+                                            <p class="text-[11px] text-slate-400 font-normal">No financial ledger entries recorded matching the selected criteria.</p>
+                                        </div>
+                                    </div>
                                 </td>
                             </tr>
                         @endforelse
@@ -546,13 +589,13 @@
                 <table class="saas-table">
                     <thead>
                         <tr>
-                            <th class="w-10 text-center">#</th>
-                            <th class="w-28">Head Code</th>
-                            <th>Account Head Title</th>
-                            <th class="w-24">Type</th>
-                            <th class="text-right w-32">Debit (Expense)</th>
-                            <th class="text-right w-32">Credit (Revenue)</th>
-                            <th class="text-right w-32">Net Total</th>
+                            <th class="w-10 text-center font-semibold">#</th>
+                            <th class="w-28 text-center font-semibold">HEAD CODE</th>
+                            <th class="text-center font-semibold">ACCOUNT HEAD TITLE</th>
+                            <th class="w-24 text-center font-semibold">TYPE</th>
+                            <th class="w-32 text-center font-semibold">DEBIT (EXPENSE)</th>
+                            <th class="w-32 text-center font-semibold">CREDIT (REVENUE)</th>
+                            <th class="w-32 text-center font-semibold">NET TOTAL</th>
                         </tr>
                     </thead>
                     <tbody>
