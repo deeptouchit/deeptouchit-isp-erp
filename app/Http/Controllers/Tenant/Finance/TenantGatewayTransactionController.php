@@ -185,6 +185,16 @@ class TenantGatewayTransactionController extends Controller
             $allGateways = collect();
         }
 
+        // 9. Active Secondary Filters Count (AGENTS.md Rule 2.C)
+        $activeMoreCount = 0;
+        if (!empty($selectedPurpose) && $selectedPurpose !== 'all') $activeMoreCount++;
+        if (!empty($period) && $period !== 'all') $activeMoreCount++;
+        if (!empty($dateFrom)) $activeMoreCount++;
+        if (!empty($dateTo)) $activeMoreCount++;
+        if (!empty($selectedMonth) && $selectedMonth !== 'all') $activeMoreCount++;
+        if (!empty($selectedDate)) $activeMoreCount++;
+        $isMoreOpen = $activeMoreCount > 0;
+
         return view('tenant.finance.gateway_transactions', compact(
             'tenant',
             'transactions',
@@ -201,6 +211,8 @@ class TenantGatewayTransactionController extends Controller
             'selectedDate',
             'search',
             'perPage',
+            'activeMoreCount',
+            'isMoreOpen',
             'totalSuccessVolume',
             'successCount',
             'totalGatewayFees',

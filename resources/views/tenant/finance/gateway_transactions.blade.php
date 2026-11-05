@@ -100,27 +100,136 @@
         </div>
     </div>
 
-    {{-- 3. Search & Multi-Filter Toolbar (AGENTS.md Rule 2.C) --}}
-    <div class="bg-white p-2.5 rounded-xl border border-slate-200 shadow-2xs">
-        <form method="GET" action="{{ route('tenant.finance.gateway-transactions') }}" class="space-y-2">
-            <!-- Row 1: Search Box, Period Preset & Date Range -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-2">
-                <!-- Search Box -->
-                <div class="md:col-span-4 relative">
-                    <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+    {{-- 3. Search & Multi-Filter Toolbar (Customer-Standard 2-Tier Filter System - AGENTS.md Rule 2.C) --}}
+    <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5"
+         x-data="{ 
+             showMoreFilters: {{ ($isMoreOpen ?? false) ? 'true' : 'false' }}, 
+             searchQuery: '{{ addslashes(request('search', '')) }}' 
+         }">
+        <form method="GET" action="{{ route('tenant.finance.gateway-transactions') }}" class="space-y-2.5">
+            <!-- Tier 1: Primary Filter Bar (Single Uniform Line on md+) -->
+            <div class="flex flex-col md:flex-row items-stretch md:items-center gap-2">
+                <!-- Intelligent Live Search Box -->
+                <div class="relative flex-1 min-w-[200px]">
+                    <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-xs transition-colors pointer-events-none"
+                       :class="searchQuery ? 'text-cyan-600 font-bold' : 'text-slate-400'"></i>
                     <input type="text" 
                            name="search" 
-                           value="{{ $search }}" 
-                           placeholder="TrxID, Gateway Ref, Payer Phone/Name..." 
-                           class="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 placeholder-slate-400 focus:bg-white focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition">
+                           x-model="searchQuery" 
+                           placeholder="Search TrxID, Gateway Ref, Payer phone/name..." 
+                           class="w-full h-[34px] pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 placeholder-slate-400 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs">
+                    <!-- 1-Click Clear Button -->
+                    <button type="button" 
+                            x-show="searchQuery && searchQuery.length > 0" 
+                            @click="searchQuery = ''; $nextTick(() => $el.closest('form').submit())" 
+                            class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500 text-xs transition cursor-pointer p-0.5">
+                        <i class="fas fa-times-circle"></i>
+                    </button>
+                </div>
+
+                <!-- Primary Dropdown 1: Gateway Channel Filter -->
+                <div class="w-full md:w-36 flex-shrink-0">
+                    <select name="gateway" 
+                            onchange="this.form.submit()"
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition cursor-pointer">
+                        <option value="all">All Gateways</option>
+                        <option value="bkash" {{ $selectedGateway === 'bkash' ? 'selected' : '' }}>bKash PGW</option>
+                        <option value="nagad" {{ $selectedGateway === 'nagad' ? 'selected' : '' }}>Nagad Direct</option>
+                        <option value="rocket" {{ $selectedGateway === 'rocket' ? 'selected' : '' }}>Rocket (DBBL)</option>
+                        <option value="sslcommerz" {{ $selectedGateway === 'sslcommerz' ? 'selected' : '' }}>SSLCommerz</option>
+                        <option value="shurjopay" {{ $selectedGateway === 'shurjopay' ? 'selected' : '' }}>ShurjoPay</option>
+                        <option value="stripe" {{ $selectedGateway === 'stripe' ? 'selected' : '' }}>Stripe</option>
+                    </select>
+                </div>
+
+                <!-- Primary Dropdown 2: Status Filter -->
+                <div class="w-full md:w-36 flex-shrink-0">
+                    <select name="status" 
+                            onchange="this.form.submit()"
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition cursor-pointer">
+                        <option value="all" {{ ($selectedStatus ?? 'all') === 'all' ? 'selected' : '' }}>All Statuses</option>
+                        <option value="SUCCESS" {{ ($selectedStatus ?? '') === 'SUCCESS' ? 'selected' : '' }}>Success / Cleared</option>
+                        <option value="PENDING" {{ ($selectedStatus ?? '') === 'PENDING' ? 'selected' : '' }}>Pending / Processing</option>
+                        <option value="FAILED" {{ ($selectedStatus ?? '') === 'FAILED' ? 'selected' : '' }}>Failed</option>
+                        <option value="CANCELLED" {{ ($selectedStatus ?? '') === 'CANCELLED' ? 'selected' : '' }}>Cancelled</option>
+                        <option value="REFUNDED" {{ ($selectedStatus ?? '') === 'REFUNDED' ? 'selected' : '' }}>Refunded</option>
+                    </select>
+                </div>
+
+                <!-- Pagination Selector (per_page) -->
+                <div class="w-full md:w-24 flex-shrink-0">
+                    <select name="per_page" 
+                            onchange="this.form.submit()"
+                            class="w-full h-[34px] px-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition cursor-pointer">
+                        <option value="10" {{ $perPage == 10 ? 'selected' : '' }}>10 / page</option>
+                        <option value="20" {{ $perPage == 20 ? 'selected' : '' }}>20 / page</option>
+                        <option value="50" {{ $perPage == 50 ? 'selected' : '' }}>50 / page</option>
+                        <option value="100" {{ $perPage == 100 ? 'selected' : '' }}>100 / page</option>
+                    </select>
+                </div>
+
+                <!-- "More Filters" Accordion Toggle Button -->
+                <button type="button" 
+                        @click="showMoreFilters = !showMoreFilters" 
+                        :class="showMoreFilters || {{ $activeMoreCount ?? 0 }} > 0 ? 'bg-cyan-50 text-cyan-700 border-cyan-300 ring-1 ring-cyan-200' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'"
+                        class="h-[34px] py-0 px-2.5 rounded-lg border text-xs font-medium transition flex items-center justify-center gap-1.5 flex-shrink-0 cursor-pointer shadow-2xs"
+                        title="Toggle Purpose, Period & Date Range Filters">
+                    <i class="fas fa-sliders-h text-[10px]"></i>
+                    <span>More Filters</span>
+                    @if(($activeMoreCount ?? 0) > 0)
+                        <span class="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-cyan-600 text-white leading-none">
+                            {{ $activeMoreCount }}
+                        </span>
+                    @endif
+                    <i class="fas text-[9px] transition-transform duration-200" 
+                       :class="showMoreFilters ? 'fa-chevron-up text-cyan-600' : 'fa-chevron-down text-slate-400'"></i>
+                </button>
+
+                <!-- Strict Filter & Reset Button Sequence (AGENTS.md Rule 2.C - Far Right Aligned on md+) -->
+                <div class="flex items-center gap-1.5 flex-shrink-0 md:ml-auto">
+                    <button type="submit" 
+                            class="h-[34px] bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-0 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" 
+                            title="Apply Filters">
+                        <i class="fas fa-filter text-[10px]"></i>
+                        <span>Filter</span>
+                    </button>
+                    <a href="{{ route('tenant.finance.gateway-transactions') }}" 
+                       class="h-[34px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-0 px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer" 
+                       title="Reset Filters">
+                        <i class="fas fa-rotate-left text-[10px]"></i>
+                        <span>Reset</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Tier 2: Secondary Filters Drawer -->
+            <div x-show="showMoreFilters" 
+                 x-cloak 
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0 -translate-y-2"
+                 x-transition:enter-end="opacity-100 translate-y-0"
+                 class="pt-2 border-t border-slate-100 flex flex-wrap items-center gap-2">
+                
+                <!-- Purpose / Category Filter -->
+                <div class="w-full sm:w-48 flex-shrink-0">
+                    <select name="purpose" 
+                            onchange="this.form.submit()"
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition cursor-pointer">
+                        <option value="all" {{ ($selectedPurpose ?? 'all') === 'all' ? 'selected' : '' }}>All Categories</option>
+                        <option value="CUSTOMER_BILL" {{ ($selectedPurpose ?? '') === 'CUSTOMER_BILL' ? 'selected' : '' }}>Subscriber Monthly Bill</option>
+                        <option value="CUSTOMER_RECHARGE" {{ ($selectedPurpose ?? '') === 'CUSTOMER_RECHARGE' ? 'selected' : '' }}>Prepaid Recharge</option>
+                        <option value="RESELLER_TOPUP" {{ ($selectedPurpose ?? '') === 'RESELLER_TOPUP' ? 'selected' : '' }}>Sub-ISP Wallet Recharge</option>
+                        <option value="RESELLER_INVOICE" {{ ($selectedPurpose ?? '') === 'RESELLER_INVOICE' ? 'selected' : '' }}>Wholesale Bandwidth Invoice</option>
+                        <option value="MANUAL" {{ ($selectedPurpose ?? '') === 'MANUAL' ? 'selected' : '' }}>Manual Web Payment</option>
+                    </select>
                 </div>
 
                 <!-- Quick Period Preset -->
-                <div class="md:col-span-2">
+                <div class="w-full sm:w-40 flex-shrink-0">
                     <select name="period" 
                             id="periodSelect"
                             onchange="handlePeriodChange(this.value)"
-                            class="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:border-cyan-500 transition font-medium">
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition cursor-pointer">
                         <option value="all" {{ ($period ?? '') === 'all' || empty($period) ? 'selected' : '' }}>All Dates</option>
                         <option value="today" {{ ($period ?? '') === 'today' ? 'selected' : '' }}>Today</option>
                         <option value="yesterday" {{ ($period ?? '') === 'yesterday' ? 'selected' : '' }}>Yesterday</option>
@@ -132,192 +241,150 @@
                 </div>
 
                 <!-- Date From -->
-                <div class="md:col-span-3">
-                    <div class="relative">
-                        <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none">
-                            <i class="fas fa-calendar-day"></i>
-                        </span>
-                        <input type="date" 
-                               name="date_from" 
-                               id="dateFromInput"
-                               value="{{ $dateFrom }}" 
-                               title="From Date"
-                               class="w-full pl-8 pr-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:border-cyan-500 transition">
-                    </div>
+                <div class="w-full sm:w-36 flex-shrink-0">
+                    <input type="date" 
+                           name="date_from" 
+                           id="dateFromInput"
+                           value="{{ $dateFrom }}" 
+                           onchange="this.form.submit()"
+                           title="From Date"
+                           class="w-full h-[34px] px-2.5 bg-white border border-slate-200 rounded-lg text-xs font-mono text-slate-800 focus:outline-hidden focus:border-cyan-500">
                 </div>
 
                 <!-- Date To -->
-                <div class="md:col-span-3">
-                    <div class="relative">
-                        <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none">
-                            <i class="fas fa-calendar-check"></i>
-                        </span>
-                        <input type="date" 
-                               name="date_to" 
-                               id="dateToInput"
-                               value="{{ $dateTo }}" 
-                               title="To Date"
-                               class="w-full pl-8 pr-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:border-cyan-500 transition">
-                    </div>
-                </div>
-            </div>
-
-            <!-- Row 2: Gateway, Purpose, Status, Month, Per Page & Action Buttons -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-2 pt-1 border-t border-slate-100">
-                <!-- Gateway Channel Filter -->
-                <div class="md:col-span-2">
-                    <select name="gateway" class="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:border-cyan-500 transition">
-                        <option value="all">All Gateways</option>
-                        <option value="bkash" {{ $selectedGateway === 'bkash' ? 'selected' : '' }}>bKash PGW</option>
-                        <option value="nagad" {{ $selectedGateway === 'nagad' ? 'selected' : '' }}>Nagad Direct</option>
-                        <option value="rocket" {{ $selectedGateway === 'rocket' ? 'selected' : '' }}>Rocket (DBBL)</option>
-                        <option value="sslcommerz" {{ $selectedGateway === 'sslcommerz' ? 'selected' : '' }}>SSLCommerz</option>
-                        <option value="shurjopay" {{ $selectedGateway === 'shurjopay' ? 'selected' : '' }}>ShurjoPay</option>
-                        <option value="stripe" {{ $selectedGateway === 'stripe' ? 'selected' : '' }}>Stripe</option>
-                    </select>
+                <div class="w-full sm:w-36 flex-shrink-0">
+                    <input type="date" 
+                           name="date_to" 
+                           id="dateToInput"
+                           value="{{ $dateTo }}" 
+                           onchange="this.form.submit()"
+                           title="To Date"
+                           class="w-full h-[34px] px-2.5 bg-white border border-slate-200 rounded-lg text-xs font-mono text-slate-800 focus:outline-hidden focus:border-cyan-500">
                 </div>
 
-                <!-- Purpose / Category Filter -->
-                <div class="md:col-span-3">
-                    <select name="purpose" class="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:border-cyan-500 transition">
-                        <option value="all" {{ $selectedPurpose === 'all' ? 'selected' : '' }}>All Categories</option>
-                        <option value="CUSTOMER_BILL" {{ $selectedPurpose === 'CUSTOMER_BILL' ? 'selected' : '' }}>Subscriber Monthly Bill</option>
-                        <option value="CUSTOMER_RECHARGE" {{ $selectedPurpose === 'CUSTOMER_RECHARGE' ? 'selected' : '' }}>Prepaid Recharge</option>
-                        <option value="RESELLER_TOPUP" {{ $selectedPurpose === 'RESELLER_TOPUP' ? 'selected' : '' }}>Sub-ISP Wallet Recharge</option>
-                        <option value="RESELLER_INVOICE" {{ $selectedPurpose === 'RESELLER_INVOICE' ? 'selected' : '' }}>Wholesale Bandwidth Invoice</option>
-                        <option value="MANUAL" {{ $selectedPurpose === 'MANUAL' ? 'selected' : '' }}>Manual Web Payment</option>
-                    </select>
-                </div>
-
-                <!-- Status Filter -->
-                <div class="md:col-span-2">
-                    <select name="status" class="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:border-cyan-500 transition">
-                        <option value="all" {{ $selectedStatus === 'all' ? 'selected' : '' }}>All Statuses</option>
-                        <option value="SUCCESS" {{ $selectedStatus === 'SUCCESS' ? 'selected' : '' }}>Success / Cleared</option>
-                        <option value="PENDING" {{ $selectedStatus === 'PENDING' ? 'selected' : '' }}>Pending / Processing</option>
-                        <option value="FAILED" {{ $selectedStatus === 'FAILED' ? 'selected' : '' }}>Failed</option>
-                        <option value="CANCELLED" {{ $selectedStatus === 'CANCELLED' ? 'selected' : '' }}>Cancelled</option>
-                        <option value="REFUNDED" {{ $selectedStatus === 'REFUNDED' ? 'selected' : '' }}>Refunded</option>
-                    </select>
-                </div>
-
-                <!-- Month Filter -->
-                <div class="md:col-span-2">
+                <!-- Billing Month -->
+                <div class="w-full sm:w-36 flex-shrink-0">
                     <input type="month" 
                            name="month" 
                            value="{{ $selectedMonth !== 'all' ? $selectedMonth : '' }}" 
+                           onchange="this.form.submit()"
                            title="Billing Month"
-                           class="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:border-cyan-500 transition">
-                </div>
-
-                <!-- Per Page Pagination -->
-                <div class="md:col-span-1">
-                    <select name="per_page" class="w-full px-2 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:border-cyan-500 transition">
-                        <option value="10" {{ $perPage == 10 ? 'selected' : '' }}>10</option>
-                        <option value="20" {{ $perPage == 20 ? 'selected' : '' }}>20</option>
-                        <option value="50" {{ $perPage == 50 ? 'selected' : '' }}>50</option>
-                        <option value="100" {{ $perPage == 100 ? 'selected' : '' }}>100</option>
-                    </select>
-                </div>
-
-                <!-- Strict Action Buttons: [Filter] FIRST, [Reset] SECOND (AGENTS.md Rule 2.C) -->
-                <div class="md:col-span-2 flex items-center justify-end gap-1.5">
-                    <button type="submit" 
-                            class="flex-1 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-1.5 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" 
-                            title="Apply Filters">
-                        <i class="fas fa-filter text-[10px]"></i>
-                        <span>Filter</span>
-                    </button>
-                    <a href="{{ route('tenant.finance.gateway-transactions') }}" 
-                       class="py-1.5 px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-lg border border-slate-200/80 transition inline-flex items-center justify-center gap-1 cursor-pointer flex-shrink-0" 
-                       title="Reset Filters">
-                        <i class="fas fa-rotate-left text-[10px]"></i>
-                        <span>Reset</span>
-                    </a>
+                           class="w-full h-[34px] px-2.5 bg-white border border-slate-200 rounded-lg text-xs font-mono text-slate-800 focus:outline-hidden focus:border-cyan-500">
                 </div>
             </div>
         </form>
     </div>
 
-    {{-- 4. Master Compact Table (<table class="saas-table"> - Clean Single-Line Core Columns) --}}
-    <div class="bg-white rounded-lg border border-slate-200 shadow-xs overflow-hidden">
-        <div class="overflow-x-auto min-h-[300px]">
+    {{-- 4. Master Compact Table (<table class="saas-table"> - AGENTS.md Rule 2.D) --}}
+    <div class="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden">
+        <div class="overflow-x-auto">
             <table class="saas-table">
                 <thead>
                     <tr>
-                        <th class="w-10 text-center">#</th>
-                        <th class="w-40">Transaction ID</th>
-                        <th class="w-36">Channel</th>
-                        <th>Subscriber / Reseller</th>
-                        <th class="text-right w-28">Amount</th>
-                        <th class="text-center w-28">Status</th>
-                        <th class="w-36">Date &amp; Time</th>
-                        <th class="no-sort w-12 text-center">Action</th>
+                        <th class="w-10 text-center no-sort">#</th>
+                        <th class="text-center font-semibold">Transaction ID</th>
+                        <th class="text-center font-semibold">Channel</th>
+                        <th class="text-center font-semibold">Party / Customer</th>
+                        <th class="text-center font-semibold">Category / Purpose</th>
+                        <th class="text-center font-semibold">Gross Amount</th>
+                        <th class="text-center font-semibold">Net Settled</th>
+                        <th class="text-center font-semibold">Status</th>
+                        <th class="text-center font-semibold">Date &amp; Time</th>
+                        <th class="w-14 text-center no-sort">Action</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($transactions as $index => $trx)
                         <tr>
-                            {{-- Row index --}}
-                            <td class="text-center font-mono text-slate-500">{{ $transactions->firstItem() + $index }}</td>
+                            {{-- 0. Row index --}}
+                            <td class="text-center font-mono text-slate-500 whitespace-nowrap">{{ $transactions->firstItem() + $index }}</td>
 
-                            {{-- Transaction ID (Clickable to open View Details Modal) --}}
-                            <td>
-                                <button type="button" @click="viewDetails({{ $trx->id }})" class="font-mono font-bold text-cyan-800 hover:text-cyan-600 hover:underline cursor-pointer">
-                                    {{ $trx->transaction_id }}
+                            {{-- 1. Transaction ID (Clickable to open View Details Modal) --}}
+                            <td class="text-center font-mono font-bold text-cyan-800 whitespace-nowrap text-xs">
+                                <button type="button" 
+                                        @click="viewDetails({{ $trx->id }})" 
+                                        class="hover:text-cyan-600 hover:underline cursor-pointer inline-flex items-center gap-1"
+                                        title="View Full Transaction Details">
+                                    <i class="fas fa-receipt text-[10px] text-cyan-600"></i>
+                                    <span>{{ $trx->transaction_id }}</span>
                                 </button>
                             </td>
 
-                            {{-- Gateway Channel Badge --}}
-                            <td>
+                            {{-- 2. Gateway Channel Badge (Center Align) --}}
+                            <td class="text-center whitespace-nowrap">
                                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10.5px] font-semibold border {{ $trx->gateway_badge['class'] }}">
                                     <i class="fas {{ $trx->gateway_badge['icon'] }} text-[9px]"></i>
                                     <span>{{ $trx->gateway_badge['label'] }}</span>
                                 </span>
                             </td>
 
-                            {{-- Subscriber / Reseller Party --}}
-                            <td>
+                            {{-- 3. Subscriber / Reseller Party (Left Align Textual) --}}
+                            <td class="text-left font-semibold text-slate-800 whitespace-nowrap text-xs">
                                 @if($trx->customer)
-                                    <span class="font-semibold text-slate-800">{{ $trx->customer->name }}</span>
+                                    <div class="flex items-center gap-1.5">
+                                        <i class="fas fa-user text-[10px] text-slate-400"></i>
+                                        <span>{{ $trx->customer->name }}</span>
+                                    </div>
                                 @elseif($trx->reseller)
-                                    <span class="font-semibold text-purple-800">{{ $trx->reseller->name }}</span>
+                                    <div class="flex items-center gap-1.5">
+                                        <i class="fas fa-network-wired text-[10px] text-purple-600"></i>
+                                        <span class="text-purple-800">{{ $trx->reseller->name }}</span>
+                                    </div>
                                 @else
-                                    <span class="text-slate-500">Direct Web User</span>
+                                    <span class="text-slate-500 italic">Direct Web User</span>
                                 @endif
                             </td>
 
-                            {{-- Gross Amount --}}
-                            <td class="text-right font-mono font-bold text-slate-900">
+                            {{-- 4. Category / Purpose (Left Align Textual) --}}
+                            <td class="text-left font-medium text-slate-600 whitespace-nowrap text-xs">
+                                {{ $trx->purpose_label }}
+                            </td>
+
+                            {{-- 5. Gross Amount (Right Align - Accounting Standard) --}}
+                            <td class="text-right font-mono font-bold text-slate-900 whitespace-nowrap text-xs">
                                 @currency($trx->amount)
                             </td>
 
-                            {{-- Status Badge --}}
-                            <td class="text-center">
+                            {{-- 6. Net Settled (Right Align - Accounting Standard) --}}
+                            <td class="text-right font-mono font-semibold text-emerald-700 whitespace-nowrap text-xs">
+                                @currency($trx->net_amount ?: $trx->amount)
+                            </td>
+
+                            {{-- 7. Status Badge (Center Align) --}}
+                            <td class="text-center whitespace-nowrap">
                                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold border {{ $trx->status_badge['class'] }}">
                                     <i class="fas {{ $trx->status_badge['icon'] }} text-[9px]"></i>
                                     <span>{{ $trx->status_badge['label'] }}</span>
                                 </span>
                             </td>
 
-                            {{-- Date & Time --}}
-                            <td class="font-mono text-slate-600 text-[11px]">
-                                {{ $trx->created_at->format('d M, Y h:i A') }}
+                            {{-- 8. Date & Time (Center Align) --}}
+                            <td class="text-center font-mono text-slate-700 text-xs whitespace-nowrap">
+                                {{ $trx->created_at->format('d M Y, h:i A') }}
                             </td>
 
-                            {{-- Action 3-Dot Button --}}
-                            <td class="text-center">
-                                <button type="button" @click.stop="toggleMenu({{ $trx->toJson() }}, $event)" 
-                                        class="w-6 h-6 rounded-md hover:bg-slate-100 text-slate-500 hover:text-slate-700 inline-flex items-center justify-center transition cursor-pointer">
-                                    <i class="fas fa-ellipsis-v text-[10px]"></i>
+                            {{-- 9. Action 3-Dot Button (Center Align) --}}
+                            <td class="text-center whitespace-nowrap no-sort">
+                                <button type="button" 
+                                        @click.stop="toggleMenu({{ $trx->toJson() }}, $event)" 
+                                        class="w-7 h-7 rounded-lg hover:bg-slate-100 text-slate-600 hover:text-slate-900 flex items-center justify-center transition cursor-pointer mx-auto"
+                                        title="Transaction Actions">
+                                    <i class="fas fa-ellipsis-v text-[11px]"></i>
                                 </button>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="text-center py-10 text-slate-400">
-                                <i class="fas fa-network-wired text-3xl mb-2 text-slate-300 block"></i>
-                                <span class="text-xs font-medium">No online gateway transactions recorded yet.</span>
+                            <td colspan="10" class="text-center py-10 text-slate-400">
+                                <div class="max-w-xs mx-auto space-y-2">
+                                    <div class="w-12 h-12 rounded-xl bg-slate-50 border border-slate-200/80 text-slate-400 flex items-center justify-center mx-auto text-lg shadow-2xs">
+                                        <i class="fas fa-receipt text-slate-400"></i>
+                                    </div>
+                                    <div class="space-y-0.5">
+                                        <h3 class="text-xs font-semibold text-slate-700">No Gateway Transactions Found</h3>
+                                        <p class="text-[11px] text-slate-400 font-normal">No digital gateway payments match your selected filter criteria.</p>
+                                    </div>
+                                </div>
                             </td>
                         </tr>
                     @endforelse

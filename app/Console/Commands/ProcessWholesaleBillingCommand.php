@@ -75,3 +75,4 @@ class ProcessWholesaleBillingCommand extends Command
         return Command::SUCCESS;
     }
 }
+
