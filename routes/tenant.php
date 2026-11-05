@@ -272,6 +272,17 @@ Route::middleware(['web'])->group(function () {
             Route::post('/collect-bill', [TenantCollectorPaymentController::class, 'collectBill'])->name('collect-bill');
         });
 
+        // 4c. Direct Collector Handover Aliases (Prefix: collector)
+        Route::prefix('collector')->group(function () {
+            Route::get('/handover', [TenantCollectorDashboardController::class, 'handover']);
+            Route::post('/handover', [TenantCollectorDashboardController::class, 'submitHandover']);
+            Route::post('/handover/store', [TenantCollectorDashboardController::class, 'submitHandover']);
+            Route::get('/handover/{id}', [TenantCollectorDashboardController::class, 'showHandover'])->whereNumber('id');
+            Route::post('/handover/{id}/approve', [TenantCollectorDashboardController::class, 'approveHandover'])->whereNumber('id');
+            Route::post('/handover/{id}/update', [TenantCollectorDashboardController::class, 'updateHandover'])->whereNumber('id');
+            Route::post('/handover/{id}/delete', [TenantCollectorDashboardController::class, 'deleteHandover'])->whereNumber('id');
+        });
+
         // 5. Customer Management (CRM & Subscribers) Routes (Prefix: admin/customers)
         Route::prefix('admin/customers')->name('tenant.customers.')->middleware('permission:customers.view,customers.create,customers.edit,customers.delete')->group(function () {
             Route::get('/', [TenantCustomerController::class, 'index'])->name('index');

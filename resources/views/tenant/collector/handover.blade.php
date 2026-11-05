@@ -505,7 +505,7 @@
             </div>
 
             <!-- Form -->
-            <form action="{{ route('tenant.collector.handover.submit') }}" method="POST" class="p-4 space-y-3.5 text-xs">
+            <form action="{{ url()->current() }}" method="POST" class="p-4 space-y-3.5 text-xs">
                 @csrf
                 <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200/80 flex items-center justify-between text-xs">
                     <span class="text-slate-600 font-medium">Un-handed Cash in Hand:</span>
@@ -982,6 +982,10 @@ function collectorHandoverManager() {
             };
         },
 
+        getBaseUrl() {
+            return window.location.pathname.replace(/\/+$/, '');
+        },
+
         openSubmitModal() {
             this.submitModal.open = true;
         },
@@ -1001,7 +1005,7 @@ function collectorHandoverManager() {
             this.editModal.loading = true;
 
             try {
-                const res = await fetch(`{{ url('/collector/handover') }}/${this.editModal.handover.id}/update`, {
+                const res = await fetch(`${this.getBaseUrl()}/${this.editModal.handover.id}/update`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1012,16 +1016,33 @@ function collectorHandoverManager() {
                 });
                 const data = await res.json();
                 if (res.ok && data.success) {
-                    if (typeof Swal !== 'undefined') {
-                        Swal.fire({ icon: 'success', title: data.message, timer: 1500, showConfirmButton: false });
-                    }
                     this.editModal.open = false;
-                    setTimeout(() => window.location.reload(), 600);
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Updated!',
+                        text: data.message || 'Handover voucher updated successfully.',
+                        timer: 1800,
+                        showConfirmButton: false,
+                        customClass: { popup: 'rounded-xl text-xs font-sans shadow-2xl' }
+                    });
+                    setTimeout(() => window.location.reload(), 700);
                 } else {
-                    alert(data.message || 'Failed to update handover.');
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Update Failed',
+                        text: data.message || 'Failed to update handover voucher.',
+                        confirmButtonColor: '#0891b2',
+                        customClass: { popup: 'rounded-xl text-xs font-sans' }
+                    });
                 }
             } catch (err) {
-                alert('Network error updating handover.');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Network Error',
+                    text: 'Failed to communicate with the server.',
+                    confirmButtonColor: '#0891b2',
+                    customClass: { popup: 'rounded-xl text-xs font-sans' }
+                });
             } finally {
                 this.editModal.loading = false;
             }
@@ -1038,7 +1059,7 @@ function collectorHandoverManager() {
             this.approveModal.loading = true;
 
             try {
-                const res = await fetch(`{{ url('/collector/handover') }}/${this.approveModal.handover.id}/approve`, {
+                const res = await fetch(`${this.getBaseUrl()}/${this.approveModal.handover.id}/approve`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1049,47 +1070,93 @@ function collectorHandoverManager() {
                 });
                 const data = await res.json();
                 if (res.ok && data.success) {
-                    if (typeof Swal !== 'undefined') {
-                        Swal.fire({ icon: 'success', title: data.message, timer: 1500, showConfirmButton: false });
-                    }
                     this.approveModal.open = false;
-                    setTimeout(() => window.location.reload(), 600);
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Approved!',
+                        text: data.message || 'Cash handover approved successfully into vault.',
+                        timer: 1800,
+                        showConfirmButton: false,
+                        customClass: { popup: 'rounded-xl text-xs font-sans shadow-2xl' }
+                    });
+                    setTimeout(() => window.location.reload(), 700);
                 } else {
-                    alert(data.message || 'Failed to approve handover.');
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Approval Failed',
+                        text: data.message || 'Failed to approve handover voucher.',
+                        confirmButtonColor: '#0891b2',
+                        customClass: { popup: 'rounded-xl text-xs font-sans' }
+                    });
                 }
             } catch (err) {
-                alert('Network error approving handover.');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Network Error',
+                    text: 'Failed to communicate with the server.',
+                    confirmButtonColor: '#0891b2',
+                    customClass: { popup: 'rounded-xl text-xs font-sans' }
+                });
             } finally {
                 this.approveModal.loading = false;
             }
         },
 
-        async confirmDelete(item) {
-            if (!confirm(`Are you sure you want to delete handover voucher "${item.handover_no}"? All associated cash receipts will be unlocked.`)) {
-                return;
-            }
-
-            try {
-                const res = await fetch(`{{ url('/collector/handover') }}/${item.id}/delete`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                        'Accept': 'application/json'
-                    }
-                });
-                const data = await res.json();
-                if (res.ok && data.success) {
-                    if (typeof Swal !== 'undefined') {
-                        Swal.fire({ icon: 'success', title: data.message, timer: 1500, showConfirmButton: false });
-                    }
-                    setTimeout(() => window.location.reload(), 600);
-                } else {
-                    alert(data.message || 'Failed to delete handover.');
+        confirmDelete(item) {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: `Do you want to delete handover voucher "${item.handover_no}"? All associated cash receipts will be unlocked and returned to collector cash.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#e11d48',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Yes, Delete Voucher',
+                cancelButtonText: 'Cancel',
+                customClass: {
+                    popup: 'rounded-xl text-xs font-sans shadow-2xl'
                 }
-            } catch (err) {
-                alert('Network error deleting handover.');
-            }
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    try {
+                        const res = await fetch(`${this.getBaseUrl()}/${item.id}/delete`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                'Accept': 'application/json'
+                            }
+                        });
+                        const data = await res.json();
+                        if (res.ok && data.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Deleted!',
+                                text: data.message || 'Handover voucher deleted successfully.',
+                                timer: 1800,
+                                showConfirmButton: false,
+                                customClass: { popup: 'rounded-xl text-xs font-sans shadow-2xl' }
+                            });
+                            setTimeout(() => window.location.reload(), 700);
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Delete Failed',
+                                text: data.message || 'Failed to delete handover.',
+                                confirmButtonColor: '#0891b2',
+                                customClass: { popup: 'rounded-xl text-xs font-sans' }
+                            });
+                        }
+                    } catch (err) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Network Error',
+                            text: 'Failed to communicate with the server.',
+                            confirmButtonColor: '#0891b2',
+                            customClass: { popup: 'rounded-xl text-xs font-sans' }
+                        });
+                    }
+                }
+            });
         },
 
         async openVoucherModal(id) {
@@ -1098,7 +1165,7 @@ function collectorHandoverManager() {
             this.voucherModal.open = true;
 
             try {
-                const res = await fetch(`{{ url('/collector/handover') }}/${id}`, {
+                const res = await fetch(`${this.getBaseUrl()}/${id}`, {
                     headers: {
                         'Accept': 'application/json',
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
@@ -1108,12 +1175,24 @@ function collectorHandoverManager() {
                 if (res.ok && data.success) {
                     this.voucherModal.handover = data.handover;
                 } else {
-                    alert('Failed to load handover voucher details.');
                     this.voucherModal.open = false;
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: data.message || 'Failed to load voucher details.',
+                        confirmButtonColor: '#0891b2',
+                        customClass: { popup: 'rounded-xl text-xs font-sans' }
+                    });
                 }
             } catch (err) {
-                alert('Network error loading handover voucher.');
                 this.voucherModal.open = false;
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Network Error',
+                    text: 'Failed to load voucher details.',
+                    confirmButtonColor: '#0891b2',
+                    customClass: { popup: 'rounded-xl text-xs font-sans' }
+                });
             } finally {
                 this.voucherModal.loading = false;
             }
