@@ -10,6 +10,7 @@ use App\Models\TenantResellerInvoice;
 use App\Models\TenantResellerWalletTransaction;
 use App\Models\TenantActivityLog;
 use App\Models\User;
+use App\Services\Billing\WholesaleBillingAutomationService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -343,7 +344,7 @@ class TenantWholesaleBillingController extends Controller
     /**
      * Batch Generate Monthly Wholesale Invoices for Sub-ISPs (Bandwidth Trunk + Panel Charges)
      */
-    public function generateMonthlyBills(Request $request): JsonResponse|RedirectResponse
+    public function generateMonthlyBills(Request $request, WholesaleBillingAutomationService $service): JsonResponse|RedirectResponse
     {
         $tenant = $this->getTenant();
         $user = Auth::user();
@@ -355,211 +356,28 @@ class TenantWholesaleBillingController extends Controller
             'due_date' => 'nullable|date',
         ]);
 
-        $monthDate = Carbon::createFromFormat('Y-m', $validated['billing_month'])->startOfMonth();
+        $resellerId = $validated['reseller_id'] !== 'all' ? (int) $validated['reseller_id'] : null;
         $autoDeduct = !empty($validated['auto_deduct_wallet']);
-        $dueDate = $validated['due_date'] ? Carbon::parse($validated['due_date'])->toDateString() : $monthDate->copy()->addDays(10)->toDateString();
 
-        $resellerQuery = TenantReseller::where('tenant_id', $tenant->id)
-            ->where('status', 'active')
-            ->with(['bandwidthAllocation']);
+        $result = $service->generateMonthlyBillsForTenant(
+            $tenant,
+            $validated['billing_month'],
+            $autoDeduct,
+            $resellerId,
+            $user?->id
+        );
 
-        if ($validated['reseller_id'] !== 'all') {
-            $resellerQuery->where('id', (int) $validated['reseller_id']);
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => $result['success'],
+                'message' => $result['message'],
+                'count' => $result['generated_count'],
+                'total_billed' => $result['total_billed'],
+            ], $result['success'] ? 200 : 422);
         }
 
-        $resellers = $resellerQuery->get();
-        if ($resellers->isEmpty()) {
-            if ($request->wantsJson()) {
-                return response()->json(['success' => false, 'message' => 'No active resellers found to bill.'], 422);
-            }
-            return back()->with('error', 'No active resellers found.');
-        }
-
-        $generatedCount = 0;
-        $totalBilled = 0.0;
-        $totalPaid = 0.0;
-
-        DB::beginTransaction();
-        try {
-            foreach ($resellers as $reseller) {
-                // Check if wholesale bandwidth invoice already generated for this month
-                $alreadyBilled = TenantResellerInvoice::where('tenant_id', $tenant->id)
-                    ->where('reseller_id', $reseller->id)
-                    ->where('type', 'BANDWIDTH_WHOLESALE')
-                    ->whereDate('billing_month', $monthDate->toDateString())
-                    ->exists();
-
-                if ($alreadyBilled) {
-                    continue;
-                }
-
-                $bw = $reseller->bandwidthAllocation;
-                $items = [];
-                $subtotal = 0.0;
-
-                // 1. Bandwidth line items
-                if ($bw && $bw->status === 'ACTIVE') {
-                    $rate = (float) ($bw->rate_per_mbps ?: 0);
-                    $globalMbps = (float) ($bw->global_bandwidth_mbps ?: 0);
-                    $bdixMbps = (float) ($bw->bdix_bandwidth_mbps ?: 0);
-                    $ggcMbps = (float) ($bw->ggc_bandwidth_mbps ?: 0);
-                    $fnaMbps = (float) ($bw->fna_bandwidth_mbps ?: 0);
-                    $otherMbps = (float) ($bw->other_bandwidth_mbps ?: 0);
-                    $fixedMonthly = (float) ($bw->monthly_bill_amount ?: 0);
-
-                    if ($fixedMonthly > 0) {
-                        $items[] = [
-                            'description' => "Dedicated Wholesale Bandwidth Trunk ({$bw->formatted_total_bandwidth} - {$bw->allocation_type})",
-                            'qty' => 1,
-                            'unit' => 'Month',
-                            'unit_price' => $fixedMonthly,
-                            'total' => $fixedMonthly,
-                        ];
-                        $subtotal += $fixedMonthly;
-                    } else {
-                        if ($globalMbps > 0) {
-                            $lineCost = round($globalMbps * $rate, 2);
-                            $items[] = [
-                                'description' => "Global Internet Bandwidth (CIR Dedicated 1:1)",
-                                'qty' => $globalMbps,
-                                'unit' => 'Mbps',
-                                'unit_price' => $rate,
-                                'total' => $lineCost,
-                            ];
-                            $subtotal += $lineCost;
-                        }
-                        if ($bdixMbps > 0) {
-                            $bdixRate = round($rate * 0.25, 2); // 25% of global rate or standard BDIX rate
-                            $lineCost = round($bdixMbps * $bdixRate, 2);
-                            $items[] = [
-                                'description' => "BDIX National Peering Bandwidth",
-                                'qty' => $bdixMbps,
-                                'unit' => 'Mbps',
-                                'unit_price' => $bdixRate,
-                                'total' => $lineCost,
-                            ];
-                            $subtotal += $lineCost;
-                        }
-                        if ($ggcMbps > 0) {
-                            $cdnRate = round($rate * 0.15, 2);
-                            $lineCost = round($ggcMbps * $cdnRate, 2);
-                            $items[] = [
-                                'description' => "Google GGC / YouTube Peering Cache",
-                                'qty' => $ggcMbps,
-                                'unit' => 'Mbps',
-                                'unit_price' => $cdnRate,
-                                'total' => $lineCost,
-                            ];
-                            $subtotal += $lineCost;
-                        }
-                        if ($fnaMbps > 0) {
-                            $cdnRate = round($rate * 0.15, 2);
-                            $lineCost = round($fnaMbps * $cdnRate, 2);
-                            $items[] = [
-                                'description' => "Facebook FNA Peering Cache",
-                                'qty' => $fnaMbps,
-                                'unit' => 'Mbps',
-                                'unit_price' => $cdnRate,
-                                'total' => $lineCost,
-                            ];
-                            $subtotal += $lineCost;
-                        }
-                    }
-                }
-
-                // 2. Panel Software Charge line item
-                $panelCharge = (float) ($reseller->monthly_panel_charge ?: 0);
-                if ($panelCharge > 0) {
-                    $items[] = [
-                        'description' => "Reseller SaaS Portal License & Cloud Software Maintenance",
-                        'qty' => 1,
-                        'unit' => 'Month',
-                        'unit_price' => $panelCharge,
-                        'total' => $panelCharge,
-                    ];
-                    $subtotal += $panelCharge;
-                }
-
-                // If no billable items and no panel fee, skip
-                if (empty($items) || $subtotal <= 0) {
-                    continue;
-                }
-
-                $totalAmount = $subtotal;
-                $invoiceNo = TenantResellerInvoice::generateInvoiceNo($tenant->id);
-
-                // Check wallet debit
-                $canDeduct = false;
-                if ($autoDeduct && ((float)$reseller->wallet_balance + (float)$reseller->credit_limit) >= $totalAmount) {
-                    $canDeduct = true;
-                    $balBefore = (float) $reseller->wallet_balance;
-                    $reseller->decrement('wallet_balance', $totalAmount);
-                    $balAfter = (float) $reseller->wallet_balance;
-
-                    TenantResellerWalletTransaction::create([
-                        'tenant_id' => $tenant->id,
-                        'reseller_id' => $reseller->id,
-                        'trx_id' => TenantResellerWalletTransaction::generateTrxId($tenant->id),
-                        'type' => 'DEBIT',
-                        'amount' => $totalAmount,
-                        'balance_before' => $balBefore,
-                        'balance_after' => $balAfter,
-                        'payment_method' => 'WALLET_DEDUCT',
-                        'reference_no' => $invoiceNo,
-                        'description' => "Monthly wholesale billing for " . $monthDate->format('F Y'),
-                        'created_by' => $user?->id,
-                    ]);
-                    $totalPaid += $totalAmount;
-                }
-
-                TenantResellerInvoice::create([
-                    'tenant_id' => $tenant->id,
-                    'reseller_id' => $reseller->id,
-                    'invoice_no' => $invoiceNo,
-                    'billing_month' => $monthDate->toDateString(),
-                    'type' => 'BANDWIDTH_WHOLESALE',
-                    'subtotal' => $subtotal,
-                    'discount' => 0.00,
-                    'vat_tax' => 0.00,
-                    'amount' => $totalAmount,
-                    'paid_amount' => $canDeduct ? $totalAmount : 0.00,
-                    'due_amount' => $canDeduct ? 0.00 : $totalAmount,
-                    'payment_status' => $canDeduct ? 'PAID' : 'UNPAID',
-                    'payment_method' => $canDeduct ? 'WALLET_DEDUCT' : null,
-                    'paid_at' => $canDeduct ? now() : null,
-                    'period_start' => $monthDate->toDateString(),
-                    'period_end' => $monthDate->copy()->endOfMonth()->toDateString(),
-                    'due_date' => $dueDate,
-                    'notes' => "Monthly wholesale bandwidth & panel subscription for " . $monthDate->format('F Y'),
-                    'item_details' => $items,
-                    'created_by' => $user?->id,
-                ]);
-
-                $generatedCount++;
-                $totalBilled += $totalAmount;
-            }
-
-            DB::commit();
-
-            $msg = "Generated {$generatedCount} wholesale invoices for " . $monthDate->format('F Y') . " (Total: ৳" . number_format($totalBilled, 2) . ", Auto-Deducted: ৳" . number_format($totalPaid, 2) . ").";
-
-            if ($request->wantsJson()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => $msg,
-                    'count' => $generatedCount,
-                    'total_billed' => $totalBilled,
-                ]);
-            }
-
-            return redirect()->route('tenant.finance.wholesale-billing')->with('success', $msg);
-        } catch (\Throwable $e) {
-            DB::rollBack();
-            if ($request->wantsJson()) {
-                return response()->json(['success' => false, 'message' => 'Batch generation failed: ' . $e->getMessage()], 500);
-            }
-            return back()->with('error', 'Batch generation failed: ' . $e->getMessage());
-        }
+        return redirect()->route('tenant.finance.wholesale-billing')
+            ->with($result['success'] ? 'success' : 'error', $result['message']);
     }
 
     /**

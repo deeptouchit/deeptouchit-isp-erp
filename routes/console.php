@@ -23,6 +23,14 @@ Schedule::command('billing:process-subscriptions --triggered-by=cron')
     ->withoutOverlapping(60)
     ->runInBackground();
 
+// 2b. Master Wholesale Reseller Billing Engine (Monthly on 1st at 00:10 AM)
+// Evaluates dedicated bandwidth CIR trunks & SaaS panel maintenance fees for all Sub-ISPs,
+// auto-generates itemized wholesale invoices, and executes prepaid wallet settlements.
+Schedule::command('billing:process-wholesale')
+    ->monthlyOn(1, '00:10')
+    ->withoutOverlapping(60)
+    ->runInBackground();
+
 // 3. Staged Multi-Channel Reminder Dispatcher (Daily at 09:00 AM)
 // Sends email & SMS notifications for upcoming, due today, and past due invoices.
 Schedule::command('billing:process-subscriptions --triggered-by=cron_reminder')
