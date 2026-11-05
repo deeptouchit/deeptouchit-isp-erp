@@ -537,10 +537,10 @@
                                     @change="fetchCollectorLiveCash()" 
                                     required 
                                     class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 text-slate-800 focus:bg-white focus:border-amber-500 transition">
-                                <option value="">-- Select Collector Staff --</option>
+                                <option value="">-- Select Collector Staff / Cashier --</option>
                                 @foreach($allCollectors ?? [] as $c)
                                     <option value="{{ $c->id }}">
-                                        {{ $c->name }} ({{ $c->email }})
+                                        {{ $c->name }} ({{ $c->isCollector() ? 'Field Collector' : ($c->isIspAdmin() || $c->isOwner() ? 'Admin / Direct Vault' : ucfirst($c->role ?? 'Staff')) }})
                                     </option>
                                 @endforeach
                             </select>

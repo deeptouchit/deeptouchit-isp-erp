@@ -524,6 +524,10 @@ class TenantCollectorDashboardController extends Controller
         $handoverDate = now()->toDateString();
         $hasHandoverCol = Schema::hasColumn('tenant_customer_payments', 'handover_id');
 
+        // Admin/Owner cash collections are auto-vaulted (Directly Approved into Vault)
+        $isAdminUser = $authUser && ($authUser->isOwner() || $authUser->isIspAdmin());
+        $status = $isAdminUser ? 'approved' : 'pending';
+
         DB::beginTransaction();
         try {
             // Retrieve all un-handed cash payments for this collector
@@ -551,8 +555,11 @@ class TenantCollectorDashboardController extends Controller
                 'shortage_amount' => $shortage,
                 'excess_amount' => $excess,
                 'total_receipts_count' => $cashPayments->count(),
-                'notes' => $request->notes ?: "HQ cash handover submitted by {$authUser->name}",
-                'status' => 'pending',
+                'notes' => $request->notes ?: ($isAdminUser ? "Admin direct office vault cash closing by {$authUser->name}" : "HQ cash handover submitted by {$authUser->name}"),
+                'status' => $status,
+                'verified_by' => $isAdminUser ? $authUser->id : null,
+                'verified_at' => $isAdminUser ? now() : null,
+                'manager_remarks' => $isAdminUser ? 'Auto-approved Admin direct vault cash closing' : null,
             ]);
 
             // Lock constituent payments to prevent double-counting
@@ -567,8 +574,10 @@ class TenantCollectorDashboardController extends Controller
                 'actor_type' => 'App\Models\User',
                 'actor_id' => $authUser->id,
                 'actor_name' => $authUser->name,
-                'event_type' => 'CASH_HANDOVER_SUBMITTED',
-                'description' => "Collector '{$authUser->name}' submitted cash handover {$handoverNo} (৳" . number_format($handedOverAmount, 2) . "). Locked {$cashPayments->count()} cash receipt(s).",
+                'event_type' => $isAdminUser ? 'CASH_HANDOVER_APPROVED' : 'CASH_HANDOVER_SUBMITTED',
+                'description' => $isAdminUser
+                    ? "Admin '{$authUser->name}' closed and auto-approved cash voucher {$handoverNo} (৳" . number_format($handedOverAmount, 2) . ") directly into vault. Locked {$cashPayments->count()} cash receipt(s)."
+                    : "Collector '{$authUser->name}' submitted cash handover {$handoverNo} (৳" . number_format($handedOverAmount, 2) . "). Locked {$cashPayments->count()} cash receipt(s).",
                 'ip_address' => $request->ip(),
                 'user_agent' => $request->userAgent(),
                 'metadata' => [
@@ -578,6 +587,7 @@ class TenantCollectorDashboardController extends Controller
                     'system_collected_amount' => $systemCash,
                     'shortage_amount' => $shortage,
                     'excess_amount' => $excess,
+                    'status' => $status,
                     'locked_receipts_count' => $cashPayments->count(),
                 ],
             ]);
@@ -589,7 +599,11 @@ class TenantCollectorDashboardController extends Controller
         }
 
         $currencySymbol = $tenant->currency_symbol ?? '৳';
-        return back()->with('success', "দৈনিক ক্যাশ হ্যান্ডওভার ভাউচার {$handoverNo} ({$currencySymbol}" . number_format($handedOverAmount, 2) . ") সফলভাবে জমা দেওয়া হয়েছে এবং যাচাইয়ের জন্য অপেক্ষমাণ।");
+        $successMsg = $isAdminUser
+            ? "অ্যাডমিন ক্যাশ ভাউচার {$handoverNo} ({$currencySymbol}" . number_format($handedOverAmount, 2) . ") সরাসরি ভোল্টে জমা এবং সফলভাবে অ্যাপ্রুভ করা হয়েছে।"
+            : "দৈনিক ক্যাশ হ্যান্ডওভার ভাউচার {$handoverNo} ({$currencySymbol}" . number_format($handedOverAmount, 2) . ") সফলভাবে জমা দেওয়া হয়েছে এবং যাচাইয়ের জন্য অপেক্ষমাণ।";
+
+        return back()->with('success', $successMsg);
     }
 
     /**

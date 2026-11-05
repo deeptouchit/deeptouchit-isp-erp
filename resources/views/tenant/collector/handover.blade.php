@@ -176,8 +176,13 @@
                         <i class="fas fa-vault"></i>
                     </div>
                     <div>
-                        <h3 class="text-xs font-semibold text-slate-800">{{ __('Submit Daily Cash Handover') }}</h3>
-                        <p class="text-[10.5px] text-slate-500 font-normal">{{ __('Submit collected cash to Manager / Accounts') }}</p>
+                        @if($authUser->isOwner() || $authUser->isIspAdmin())
+                            <h3 class="text-xs font-semibold text-slate-800">{{ __('Admin Cash Closing to Vault') }}</h3>
+                            <p class="text-[10.5px] text-slate-500 font-normal">{{ __('Close daily cash drawer & auto-approve directly into vault') }}</p>
+                        @else
+                            <h3 class="text-xs font-semibold text-slate-800">{{ __('Submit Daily Cash Handover') }}</h3>
+                            <p class="text-[10.5px] text-slate-500 font-normal">{{ __('Submit collected cash to Manager / Accounts') }}</p>
+                        @endif
                     </div>
                 </div>
                 <button type="button" @click="showHandoverModal = false" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center cursor-pointer">
@@ -203,7 +208,7 @@
                     <label class="block text-[11px] font-semibold text-slate-700 mb-1">
                         {{ __('Notes / Remarks') }}
                     </label>
-                    <input type="text" name="notes" placeholder="e.g. Evening shift cash handover" class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-purple-500 shadow-2xs">
+                    <input type="text" name="notes" placeholder="e.g. {{ ($authUser->isOwner() || $authUser->isIspAdmin()) ? 'Admin daily drawer closing' : 'Evening shift cash handover' }}" class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-purple-500 shadow-2xs">
                 </div>
 
                 <div class="pt-3 border-t border-slate-200 flex items-center justify-end gap-2 -mx-4 -mb-4 p-3 bg-slate-50/80">
@@ -211,7 +216,7 @@
                         {{ __('Cancel') }}
                     </button>
                     <button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white font-medium text-xs px-4 py-1.5 rounded-lg shadow-xs transition cursor-pointer">
-                        {{ __('Submit to Manager') }}
+                        {{ ($authUser->isOwner() || $authUser->isIspAdmin()) ? __('Approve & Transfer to Vault') : __('Submit to Manager') }}
                     </button>
                 </div>
             </form>

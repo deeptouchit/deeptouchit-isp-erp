@@ -46,7 +46,7 @@ class TenantCashHandoverController extends Controller
         $user = Auth::user();
         $isResellerUser = $user && ($user->isResellerUser() || !empty($user->reseller_id));
 
-        $allCollectors = User::where('tenant_id', $tenant->id)->orderBy('name')->get(['id', 'name', 'email']);
+        $allCollectors = User::where('tenant_id', $tenant->id)->orderBy('name')->get(['id', 'name', 'email', 'role']);
 
         $query = TenantDailyCashHandover::where('tenant_id', $tenant->id)
             ->with(['collector', 'verifier']);
@@ -285,10 +285,15 @@ class TenantCashHandoverController extends Controller
             $shortage = max(0, $systemCash - $handedOverAmount);
             $excess = max(0, $handedOverAmount - $systemCash);
 
-            // 3. Generate Handover Number
+            // 3. Admin / Owner direct cash collection auto-vaulting check
+            $collector = User::find($collectorId);
+            $isCollectorAdmin = $collector && ($collector->isOwner() || $collector->isIspAdmin());
+            $status = $isCollectorAdmin ? 'approved' : 'pending';
+
+            // 4. Generate Handover Number
             $handoverNo = TenantDailyCashHandover::generateHandoverNo($tenant->id, $handoverDate);
 
-            // 4. Create Handover Record
+            // 5. Create Handover Record
             $handover = TenantDailyCashHandover::create([
                 'tenant_id' => $tenant->id,
                 'handover_no' => $handoverNo,
@@ -302,26 +307,29 @@ class TenantCashHandoverController extends Controller
                 'digital_collected_amount' => $digitalTotal,
                 'total_receipts_count' => $receiptsCount,
                 'denominations' => $validated['denominations'] ?? null,
-                'status' => 'pending',
-                'notes' => $validated['notes'] ?? "Daily cash handover for {$handoverDate}",
+                'status' => $status,
+                'verified_by' => $isCollectorAdmin ? (Auth::id() ?: 1) : null,
+                'verified_at' => $isCollectorAdmin ? Carbon::now() : null,
+                'manager_remarks' => $isCollectorAdmin ? 'Auto-approved Admin direct office vault collection' : null,
+                'notes' => $validated['notes'] ?? ($isCollectorAdmin ? "Admin direct office vault cash closing for {$handoverDate}" : "Daily cash handover for {$handoverDate}"),
             ]);
 
-            // 5. Lock constituent cash payments to prevent double-counting or re-submission
+            // 6. Lock constituent cash payments to prevent double-counting or re-submission
             if ($hasHandoverCol && $cashPayments->isNotEmpty()) {
                 TenantCustomerPayment::whereIn('id', $cashPayments->pluck('id'))
                     ->update(['handover_id' => $handover->id]);
             }
 
-            $collector = User::find($collectorId);
-
-            // 6. Audit Log
+            // 7. Audit Log
             TenantActivityLog::create([
                 'tenant_id' => $tenant->id,
                 'actor_type' => 'App\Models\User',
                 'actor_id' => Auth::id() ?: 1,
                 'actor_name' => Auth::user()?->name ?: 'Admin',
-                'event_type' => 'CASH_HANDOVER_SUBMITTED',
-                'description' => "Submitted cash handover voucher {$handoverNo} for collector '{$collector?->name}'. Handed: ৳" . number_format($handedOverAmount, 2) . " (System Cash: ৳" . number_format($systemCash, 2) . "). Locked {$receiptsCount} receipt(s).",
+                'event_type' => $isCollectorAdmin ? 'CASH_HANDOVER_APPROVED' : 'CASH_HANDOVER_SUBMITTED',
+                'description' => $isCollectorAdmin
+                    ? "Admin '{$collector?->name}' closed and auto-approved cash handover {$handoverNo} (৳" . number_format($handedOverAmount, 2) . ") directly into vault. Locked {$receiptsCount} receipt(s)."
+                    : "Submitted cash handover voucher {$handoverNo} for collector '{$collector?->name}'. Handed: ৳" . number_format($handedOverAmount, 2) . " (System Cash: ৳" . number_format($systemCash, 2) . "). Locked {$receiptsCount} receipt(s).",
                 'ip_address' => $request->ip(),
                 'user_agent' => $request->userAgent(),
                 'metadata' => [
@@ -332,6 +340,7 @@ class TenantCashHandoverController extends Controller
                     'system_collected_amount' => $systemCash,
                     'shortage_amount' => $shortage,
                     'excess_amount' => $excess,
+                    'status' => $status,
                     'locked_receipts_count' => $receiptsCount,
                 ],
             ]);
@@ -343,7 +352,9 @@ class TenantCashHandoverController extends Controller
         }
 
         $currencySymbol = $tenant->currency_symbol ?? '৳';
-        $msg = "Cash handover voucher {$handoverNo} ({$currencySymbol}" . number_format($handedOverAmount, 2) . ") submitted successfully and awaiting manager verification.";
+        $msg = $isCollectorAdmin
+            ? "অ্যাডমিন ক্যাশ ভাউচার {$handoverNo} ({$currencySymbol}" . number_format($handedOverAmount, 2) . ") সরাসরি ভোল্টে জমা এবং সফলভাবে অ্যাপ্রুভ করা হয়েছে।"
+            : "Cash handover voucher {$handoverNo} ({$currencySymbol}" . number_format($handedOverAmount, 2) . ") submitted successfully and awaiting manager verification.";
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
