@@ -751,7 +751,7 @@
                 </a>
 
                 <!-- 5. Cash Handover -->
-                <a href="{{ Route::has('tenant.collector.handover') ? route('tenant.collector.handover') : (Route::has('tenant.finance.cash-handover') ? route('tenant.finance.cash-handover') : '#') }}" 
+                <a href="{{ Route::has('tenant.finance.cash-handover') ? route('tenant.finance.cash-handover') : (Route::has('tenant.collector.handover') ? route('tenant.collector.handover') : '#') }}" 
                    x-show="!filterQuery || 'daily cash handover closing collector manager verification cash approval vault'.includes(filterQuery.toLowerCase())"
                    class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ request()->routeIs('tenant.finance.cash-handover*') || request()->routeIs('tenant.collector.handover*') ? 'border-amber-200 bg-amber-50/80 text-amber-700 font-bold border-l-4 border-l-amber-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
                     Cash Handover

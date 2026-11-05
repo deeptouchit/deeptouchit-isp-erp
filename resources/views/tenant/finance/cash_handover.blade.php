@@ -141,77 +141,47 @@
         </div>
     </div>
 
-    <!-- 3. Search & Multi-Filter Toolbar (AGENTS.md Rule 2.C) -->
-    <div class="bg-white p-2.5 rounded-xl border border-slate-200 shadow-2xs">
-        <form method="GET" action="{{ route('tenant.finance.cash-handover') }}" class="space-y-2">
-            <!-- Row 1: Search & Date / Period Filters -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-2">
-                <!-- Search Box -->
-                <div class="md:col-span-4 relative">
-                    <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs">
+    @php
+        $isMoreOpen = (!empty($dateFrom) && !empty($dateTo)) || (!empty($period) && $period !== 'all') || (!empty($shiftFilter) && $shiftFilter !== 'all');
+        $activeMoreCount = (!empty($dateFrom) ? 1 : 0) + (!empty($period) && $period !== 'all' ? 1 : 0) + (!empty($shiftFilter) && $shiftFilter !== 'all' ? 1 : 0);
+    @endphp
+
+    <!-- 3. Search & Multi-Filter Toolbar (AGENTS.md Rule 2.C - 2-Tier System) -->
+    <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5" 
+         x-data="{ 
+             showMoreFilters: {{ $isMoreOpen ? 'true' : 'false' }}, 
+             searchQuery: '{{ addslashes($search ?? '') }}' 
+         }">
+        <form method="GET" action="{{ route('tenant.finance.cash-handover') }}" id="cashHandoverFilterForm">
+            <!-- Tier 1: Primary Filter Bar (Single Row on md+) -->
+            <div class="flex flex-col md:flex-row items-stretch md:items-center gap-2">
+                <!-- Intelligent Live Search Box -->
+                <div class="relative flex-1 min-w-[200px]">
+                    <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs transition-colors pointer-events-none"
+                          :class="searchQuery ? 'text-cyan-600 font-bold' : 'text-slate-400'">
                         <i class="fas fa-search"></i>
                     </span>
                     <input type="text" 
                            name="search" 
-                           value="{{ $search }}" 
-                           placeholder="Voucher No, Collector, Remarks..." 
-                           class="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 placeholder-slate-400 focus:bg-white focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition">
+                           x-model="searchQuery" 
+                           placeholder="Search Voucher #, Staff, Notes..." 
+                           class="w-full h-[34px] pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition placeholder:text-slate-400 font-medium">
+                    <button type="button" 
+                            x-show="searchQuery && searchQuery.length > 0" 
+                            x-cloak
+                            @click="searchQuery = ''; $nextTick(() => $el.closest('form').submit())"
+                            class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500 p-0.5 text-xs transition cursor-pointer"
+                            title="Clear Search">
+                        <i class="fas fa-times-circle"></i>
+                    </button>
                 </div>
 
-                <!-- Quick Period Preset -->
-                <div class="md:col-span-2">
-                    <select name="period" 
-                            id="periodSelect"
-                            onchange="handlePeriodChange(this.value)"
-                            class="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:border-cyan-500 transition font-medium">
-                        <option value="all" {{ ($period ?? '') === 'all' || empty($period) ? 'selected' : '' }}>All Dates</option>
-                        <option value="today" {{ ($period ?? '') === 'today' ? 'selected' : '' }}>Today</option>
-                        <option value="yesterday" {{ ($period ?? '') === 'yesterday' ? 'selected' : '' }}>Yesterday</option>
-                        <option value="this_week" {{ ($period ?? '') === 'this_week' ? 'selected' : '' }}>This Week</option>
-                        <option value="this_month" {{ ($period ?? '') === 'this_month' ? 'selected' : '' }}>This Month</option>
-                        <option value="last_month" {{ ($period ?? '') === 'last_month' ? 'selected' : '' }}>Last Month</option>
-                        <option value="custom" {{ ($period ?? '') === 'custom' ? 'selected' : '' }}>Custom Range</option>
-                    </select>
-                </div>
-
-                <!-- Date From -->
-                <div class="md:col-span-3">
-                    <div class="relative">
-                        <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none">
-                            <i class="fas fa-calendar-day"></i>
-                        </span>
-                        <input type="date" 
-                               name="date_from" 
-                               id="dateFromInput"
-                               value="{{ $dateFrom }}" 
-                               title="From Date"
-                               class="w-full pl-8 pr-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:border-cyan-500 transition">
-                    </div>
-                </div>
-
-                <!-- Date To -->
-                <div class="md:col-span-3">
-                    <div class="relative">
-                        <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none">
-                            <i class="fas fa-calendar-check"></i>
-                        </span>
-                        <input type="date" 
-                               name="date_to" 
-                               id="dateToInput"
-                               value="{{ $dateTo }}" 
-                               title="To Date"
-                               class="w-full pl-8 pr-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:border-cyan-500 transition">
-                    </div>
-                </div>
-            </div>
-
-            <!-- Row 2: Collector, Shift, Status, Per Page & Action Buttons -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-2 pt-1 border-t border-slate-100">
-                <!-- Collector Filter -->
-                <div class="md:col-span-3">
+                <!-- Primary Dropdown 1: Collector / Staff -->
+                <div class="w-full md:w-44 flex-shrink-0">
                     <select name="collector_id" 
-                            class="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:border-cyan-500 transition">
-                        <option value="all" {{ $collectorFilter === 'all' ? 'selected' : '' }}>All Staff / Collectors</option>
+                            onchange="this.form.submit()"
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition cursor-pointer">
+                        <option value="all">All Staff / Collectors</option>
                         @foreach($allCollectors ?? [] as $c)
                             <option value="{{ $c->id }}" {{ (string)$collectorFilter === (string)$c->id ? 'selected' : '' }}>
                                 {{ $c->name }}
@@ -220,10 +190,114 @@
                     </select>
                 </div>
 
+                <!-- Primary Dropdown 2: Status -->
+                <div class="w-full md:w-36 flex-shrink-0">
+                    <select name="status" 
+                            onchange="this.form.submit()"
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition cursor-pointer">
+                        <option value="all">All Statuses</option>
+                        <option value="pending" {{ $statusFilter === 'pending' ? 'selected' : '' }}>Pending Verification</option>
+                        <option value="approved" {{ $statusFilter === 'approved' ? 'selected' : '' }}>Approved in Vault</option>
+                        <option value="rejected" {{ $statusFilter === 'rejected' ? 'selected' : '' }}>Rejected</option>
+                    </select>
+                </div>
+
+                <!-- Per Page Selector -->
+                <div class="w-full md:w-24 flex-shrink-0">
+                    <select name="per_page" 
+                            onchange="this.form.submit()"
+                            class="w-full h-[34px] px-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition cursor-pointer">
+                        <option value="10" {{ $perPage == 10 ? 'selected' : '' }}>10 / page</option>
+                        <option value="20" {{ $perPage == 20 ? 'selected' : '' }}>20 / page</option>
+                        <option value="50" {{ $perPage == 50 ? 'selected' : '' }}>50 / page</option>
+                        <option value="100" {{ $perPage == 100 ? 'selected' : '' }}>100 / page</option>
+                    </select>
+                </div>
+
+                <!-- More Filters Toggle Button -->
+                <button type="button" 
+                        @click="showMoreFilters = !showMoreFilters" 
+                        :class="showMoreFilters || {{ $activeMoreCount }} > 0 ? 'bg-cyan-50 text-cyan-700 border-cyan-300 ring-1 ring-cyan-200' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'"
+                        class="h-[34px] py-0 px-2.5 rounded-lg border text-xs font-medium transition flex items-center justify-center gap-1.5 flex-shrink-0 cursor-pointer shadow-2xs"
+                        title="Toggle Period, Shift & Specific Date Filters">
+                    <i class="fas fa-sliders-h text-[10px]"></i>
+                    <span>More Filters</span>
+                    @if($activeMoreCount > 0)
+                        <span class="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-cyan-600 text-white leading-none">
+                            {{ $activeMoreCount }}
+                        </span>
+                    @endif
+                    <i class="fas text-[9px] transition-transform duration-200" 
+                       :class="showMoreFilters ? 'fa-chevron-up text-cyan-600' : 'fa-chevron-down text-slate-400'"></i>
+                </button>
+
+                <!-- Strict Filter & Reset Sequence (AGENTS.md Rule 2.C - Far Right Aligned on md+) -->
+                <div class="flex items-center gap-1.5 flex-shrink-0 md:ml-auto">
+                    <button type="submit" 
+                            class="h-[34px] bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-0 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" 
+                            title="Apply Filters">
+                        <i class="fas fa-filter text-[10px]"></i>
+                        <span>Filter</span>
+                    </button>
+                    <a href="{{ route('tenant.finance.cash-handover') }}" 
+                       class="h-[34px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-0 px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer" 
+                       title="Reset Filters">
+                        <i class="fas fa-rotate-left text-[10px]"></i>
+                        <span>Reset</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Tier 2: Secondary Filters Drawer -->
+            <div x-show="showMoreFilters" 
+                 x-cloak 
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0 -translate-y-2"
+                 x-transition:enter-end="opacity-100 translate-y-0"
+                 class="pt-2 border-t border-slate-100 flex flex-wrap items-center gap-2">
+                <!-- Quick Period Preset -->
+                <div class="w-full sm:w-40 flex-shrink-0">
+                    <select name="period" 
+                            id="periodSelect"
+                            onchange="handlePeriodChange(this.value)"
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition cursor-pointer">
+                        <option value="all" {{ ($period ?? '') === 'all' || empty($period) ? 'selected' : '' }}>All Time Range</option>
+                        <option value="today" {{ ($period ?? '') === 'today' ? 'selected' : '' }}>Today</option>
+                        <option value="yesterday" {{ ($period ?? '') === 'yesterday' ? 'selected' : '' }}>Yesterday</option>
+                        <option value="this_week" {{ ($period ?? '') === 'this_week' ? 'selected' : '' }}>This Week</option>
+                        <option value="this_month" {{ ($period ?? '') === 'this_month' ? 'selected' : '' }}>This Month</option>
+                        <option value="last_month" {{ ($period ?? '') === 'last_month' ? 'selected' : '' }}>Last Month</option>
+                        <option value="custom" {{ ($period ?? '') === 'custom' ? 'selected' : '' }}>Custom Date Range</option>
+                    </select>
+                </div>
+
+                <!-- Date From -->
+                <div class="w-full sm:w-40 flex-shrink-0">
+                    <input type="date" 
+                           name="date_from" 
+                           id="dateFromInput"
+                           value="{{ $dateFrom }}" 
+                           onchange="this.form.submit()"
+                           title="Date From"
+                           class="w-full h-[34px] px-2.5 bg-white border border-slate-200 rounded-lg text-xs font-mono text-slate-800 focus:outline-hidden focus:border-cyan-500">
+                </div>
+
+                <!-- Date To -->
+                <div class="w-full sm:w-40 flex-shrink-0">
+                    <input type="date" 
+                           name="date_to" 
+                           id="dateToInput"
+                           value="{{ $dateTo }}" 
+                           onchange="this.form.submit()"
+                           title="Date To"
+                           class="w-full h-[34px] px-2.5 bg-white border border-slate-200 rounded-lg text-xs font-mono text-slate-800 focus:outline-hidden focus:border-cyan-500">
+                </div>
+
                 <!-- Shift Filter -->
-                <div class="md:col-span-3">
+                <div class="w-full sm:w-44 flex-shrink-0">
                     <select name="shift" 
-                            class="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:border-cyan-500 transition">
+                            onchange="this.form.submit()"
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition cursor-pointer">
                         <option value="all" {{ $shiftFilter === 'all' ? 'selected' : '' }}>All Shifts</option>
                         <option value="daily" {{ $shiftFilter === 'daily' ? 'selected' : '' }}>Daily Closing</option>
                         <option value="morning" {{ $shiftFilter === 'morning' ? 'selected' : '' }}>Morning Shift</option>
@@ -231,45 +305,6 @@
                         <option value="night" {{ $shiftFilter === 'night' ? 'selected' : '' }}>Night Shift</option>
                         <option value="full_day" {{ $shiftFilter === 'full_day' ? 'selected' : '' }}>Full Day Closing</option>
                     </select>
-                </div>
-
-                <!-- Status Filter -->
-                <div class="md:col-span-2">
-                    <select name="status" 
-                            class="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:border-cyan-500 transition">
-                        <option value="all" {{ $statusFilter === 'all' ? 'selected' : '' }}>All Statuses</option>
-                        <option value="pending" {{ $statusFilter === 'pending' ? 'selected' : '' }}>Pending Verification</option>
-                        <option value="approved" {{ $statusFilter === 'approved' ? 'selected' : '' }}>Approved</option>
-                        <option value="rejected" {{ $statusFilter === 'rejected' ? 'selected' : '' }}>Rejected</option>
-                    </select>
-                </div>
-
-                <!-- Per Page -->
-                <div class="md:col-span-1">
-                    <select name="per_page" 
-                            class="w-full px-2 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:border-cyan-500 transition">
-                        <option value="10" {{ $perPage == 10 ? 'selected' : '' }}>10</option>
-                        <option value="20" {{ $perPage == 20 ? 'selected' : '' }}>20</option>
-                        <option value="50" {{ $perPage == 50 ? 'selected' : '' }}>50</option>
-                        <option value="100" {{ $perPage == 100 ? 'selected' : '' }}>100</option>
-                    </select>
-                </div>
-
-                <!-- Strict Action Buttons: [Filter] FIRST, [Reset] SECOND (AGENTS.md Rule 2.C) -->
-                <div class="md:col-span-3 flex items-center justify-end gap-1.5">
-                    <button type="submit" 
-                            class="flex-1 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-1.5 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" 
-                            title="Apply Filters">
-                        <i class="fas fa-filter text-[10px]"></i>
-                        <span>Filter</span>
-                    </button>
-
-                    <a href="{{ route('tenant.finance.cash-handover') }}" 
-                       class="py-1.5 px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-lg border border-slate-200/80 transition inline-flex items-center justify-center gap-1 cursor-pointer flex-shrink-0" 
-                       title="Reset Filters">
-                        <i class="fas fa-rotate-left text-[10px]"></i>
-                        <span>Reset</span>
-                    </a>
                 </div>
             </div>
         </form>
@@ -281,14 +316,14 @@
             <table class="saas-table">
                 <thead>
                     <tr>
-                        <th class="w-10 text-center">#</th>
-                        <th class="w-36">Voucher No</th>
-                        <th>Collector Staff</th>
-                        <th class="text-right w-28">Handed Over</th>
-                        <th class="w-32 text-center">Discrepancy</th>
-                        <th class="text-center w-28">Status</th>
-                        <th class="w-28">Date</th>
-                        <th class="no-sort text-center w-10">Action</th>
+                        <th class="w-10 text-center no-sort">#</th>
+                        <th class="text-center font-semibold">Voucher #</th>
+                        <th class="text-center font-semibold">Collector Staff</th>
+                        <th class="text-center font-semibold">Handed Over</th>
+                        <th class="text-center font-semibold">Discrepancy</th>
+                        <th class="text-center font-semibold">Status</th>
+                        <th class="text-center font-semibold">Date</th>
+                        <th class="w-14 text-center no-sort">Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -311,13 +346,13 @@
                         @endphp
                         <tr>
                             <!-- 0. Row Index -->
-                            <td class="text-center font-mono text-slate-500">{{ $handovers->firstItem() + $index }}</td>
+                            <td class="text-center font-mono text-slate-500 whitespace-nowrap">{{ $handovers->firstItem() + $index }}</td>
 
                             <!-- 1. Voucher No (Click to open Print / Detail Modal) -->
-                            <td class="font-mono text-amber-800 font-bold">
+                            <td class="text-center font-mono text-amber-800 font-bold whitespace-nowrap">
                                 <button type="button" 
                                         @click="openVoucherModal({{ $h->id }})" 
-                                        class="hover:underline hover:text-amber-600 cursor-pointer flex items-center gap-1"
+                                        class="hover:underline hover:text-amber-600 cursor-pointer inline-flex items-center gap-1"
                                         title="Click to view & print Handover Voucher">
                                     <i class="fas fa-file-invoice-dollar text-[10px] text-amber-500"></i>
                                     <span>{{ $h->handover_no }}</span>
@@ -325,17 +360,17 @@
                             </td>
 
                             <!-- 2. Collector Staff (Strict Single Data per Cell) -->
-                            <td class="font-semibold text-slate-900">
+                            <td class="text-left font-semibold text-slate-900 whitespace-nowrap text-xs">
                                 {{ $h->collector?->name ?? 'Unknown Staff' }}
                             </td>
 
                             <!-- 3. Handed Over Amount -->
-                            <td class="text-right font-mono font-bold text-emerald-700">
+                            <td class="text-right font-mono font-bold text-emerald-700 whitespace-nowrap text-xs">
                                 @currency($h->handed_over_amount)
                             </td>
 
                             <!-- 4. Shortage / Excess Discrepancy -->
-                            <td class="text-center font-mono text-[11px]">
+                            <td class="text-center font-mono text-xs whitespace-nowrap">
                                 @if($h->shortage_amount > 0)
                                     <span class="inline-flex items-center gap-1 text-rose-700 font-bold bg-rose-50 border border-rose-200 px-1.5 py-0.5 rounded">
                                         <i class="fas fa-arrow-trend-down text-[9px]"></i>
@@ -352,7 +387,7 @@
                             </td>
 
                             <!-- 5. Status -->
-                            <td class="text-center">
+                            <td class="text-center whitespace-nowrap">
                                 <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold border {{ $badge['class'] }}">
                                     <span class="w-1.5 h-1.5 rounded-full {{ $badge['dot'] }}"></span>
                                     <span>{{ $badge['label'] }}</span>
@@ -360,15 +395,15 @@
                             </td>
 
                             <!-- 6. Date -->
-                            <td class="font-mono text-slate-700 text-xs">
+                            <td class="text-center font-mono text-slate-700 text-xs whitespace-nowrap">
                                 {{ $h->handover_date->format('d M Y') }}
                             </td>
 
                             <!-- 7. 3-Dot Action Button -->
-                            <td class="text-center">
+                            <td class="text-center whitespace-nowrap">
                                 <button type="button" 
                                         @click="toggleMenu(@js($handoverJson), $event)" 
-                                        class="w-6 h-6 rounded-md hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition flex items-center justify-center mx-auto cursor-pointer"
+                                        class="w-6 h-6 rounded-md hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition inline-flex items-center justify-center cursor-pointer"
                                         title="Handover Actions">
                                     <i class="fas fa-ellipsis-v text-[10px]"></i>
                                 </button>
