@@ -14,6 +14,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -176,10 +177,12 @@ class TenantCashHandoverController extends Controller
         $collectorId = (int) $request->input('collector_id', Auth::id());
         $date = $request->input('date', Carbon::today()->toDateString());
 
+        $hasHandoverCol = Schema::hasColumn('tenant_customer_payments', 'handover_id');
+
         // Core Accounting Query: All un-handed customer payments for this collector
         $query = TenantCustomerPayment::where('tenant_id', $tenant->id)
             ->where('collected_by', $collectorId)
-            ->whereNull('handover_id')
+            ->when($hasHandoverCol, fn($q) => $q->whereNull('handover_id'))
             ->whereNotIn('status', ['void', 'refunded', 'cancelled']);
 
         if (!empty($date)) {
@@ -256,12 +259,14 @@ class TenantCashHandoverController extends Controller
         $shiftType = $validated['shift_type'];
         $handedOverAmount = (float) $validated['handed_over_amount'];
 
+        $hasHandoverCol = Schema::hasColumn('tenant_customer_payments', 'handover_id');
+
         DB::beginTransaction();
         try {
             // 1. Calculate actual unhanded system collections for this collector up to handover_date
             $paymentsQuery = TenantCustomerPayment::where('tenant_id', $tenant->id)
                 ->where('collected_by', $collectorId)
-                ->whereNull('handover_id')
+                ->when($hasHandoverCol, fn($q) => $q->whereNull('handover_id'))
                 ->whereNotIn('status', ['void', 'refunded', 'cancelled']);
 
             if (!empty($handoverDate)) {
@@ -302,7 +307,7 @@ class TenantCashHandoverController extends Controller
             ]);
 
             // 5. Lock constituent cash payments to prevent double-counting or re-submission
-            if ($cashPayments->isNotEmpty()) {
+            if ($hasHandoverCol && $cashPayments->isNotEmpty()) {
                 TenantCustomerPayment::whereIn('id', $cashPayments->pluck('id'))
                     ->update(['handover_id' => $handover->id]);
             }
@@ -364,11 +369,16 @@ class TenantCashHandoverController extends Controller
 
         $currencySymbol = $tenant->currency_symbol ?? '৳';
 
+        $hasHandoverCol = Schema::hasColumn('tenant_customer_payments', 'handover_id');
+
         // Load constituent money receipts tagged with this handover
-        $payments = TenantCustomerPayment::where('tenant_id', $tenant->id)
-            ->where('handover_id', $handover->id)
-            ->with('customer:id,customer_id,name,username,phone')
-            ->get();
+        $payments = collect();
+        if ($hasHandoverCol) {
+            $payments = TenantCustomerPayment::where('tenant_id', $tenant->id)
+                ->where('handover_id', $handover->id)
+                ->with('customer:id,customer_id,name,username,phone')
+                ->get();
+        }
 
         // Fallback for older legacy handover records created before handover_id was populated
         if ($payments->isEmpty()) {
@@ -462,6 +472,8 @@ class TenantCashHandoverController extends Controller
 
         $remarks = $request->input('manager_remarks', 'Verified physical cash and approved into ISP vault.');
 
+        $hasHandoverCol = Schema::hasColumn('tenant_customer_payments', 'handover_id');
+
         DB::beginTransaction();
         try {
             $handover->status = 'approved';
@@ -471,7 +483,7 @@ class TenantCashHandoverController extends Controller
             $handover->save();
 
             // For legacy records created before handover_id was set, link matching cash payments
-            if ($handover->payments()->count() === 0) {
+            if ($hasHandoverCol && $handover->payments()->count() === 0) {
                 TenantCustomerPayment::where('tenant_id', $tenant->id)
                     ->where('collected_by', $handover->collector_id)
                     ->whereDate('paid_at', $handover->handover_date->toDateString())
@@ -529,6 +541,8 @@ class TenantCashHandoverController extends Controller
 
         $remarks = $request->input('manager_remarks', 'Cash discrepancy not resolved / rejected by accounts manager.');
 
+        $hasHandoverCol = Schema::hasColumn('tenant_customer_payments', 'handover_id');
+
         DB::beginTransaction();
         try {
             $handover->status = 'rejected';
@@ -538,8 +552,10 @@ class TenantCashHandoverController extends Controller
             $handover->save();
 
             // Unlock constituent payments so they return to collector's un-handed balance
-            TenantCustomerPayment::where('handover_id', $handover->id)
-                ->update(['handover_id' => null]);
+            if ($hasHandoverCol) {
+                TenantCustomerPayment::where('handover_id', $handover->id)
+                    ->update(['handover_id' => null]);
+            }
 
             TenantActivityLog::create([
                 'tenant_id' => $tenant->id,

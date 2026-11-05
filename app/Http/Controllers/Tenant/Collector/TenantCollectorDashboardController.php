@@ -17,6 +17,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 
 class TenantCollectorDashboardController extends Controller
@@ -448,10 +449,12 @@ class TenantCollectorDashboardController extends Controller
             ->paginate($perPage)
             ->withQueryString();
 
-        // 1. Calculate actual Un-handed Cash in Hand (whereNull('handover_id'))
+        // 1. Calculate actual Un-handed Cash in Hand (whereNull('handover_id') if column exists)
+        $hasHandoverCol = Schema::hasColumn('tenant_customer_payments', 'handover_id');
+
         $availableCashInHand = (float) TenantCustomerPayment::where('tenant_id', $tenantId)
             ->where('collected_by', $collectorId)
-            ->whereNull('handover_id')
+            ->when($hasHandoverCol, fn($q) => $q->whereNull('handover_id'))
             ->where('payment_method', 'cash')
             ->whereNotIn('status', ['void', 'refunded', 'cancelled'])
             ->sum('amount');
@@ -519,13 +522,14 @@ class TenantCollectorDashboardController extends Controller
 
         $handedOverAmount = (float) $request->amount;
         $handoverDate = now()->toDateString();
+        $hasHandoverCol = Schema::hasColumn('tenant_customer_payments', 'handover_id');
 
         DB::beginTransaction();
         try {
             // Retrieve all un-handed cash payments for this collector
             $cashPayments = TenantCustomerPayment::where('tenant_id', $tenant->id)
                 ->where('collected_by', $authUser->id)
-                ->whereNull('handover_id')
+                ->when($hasHandoverCol, fn($q) => $q->whereNull('handover_id'))
                 ->where('payment_method', 'cash')
                 ->whereNotIn('status', ['void', 'refunded', 'cancelled'])
                 ->get();
@@ -552,7 +556,7 @@ class TenantCollectorDashboardController extends Controller
             ]);
 
             // Lock constituent payments to prevent double-counting
-            if ($cashPayments->isNotEmpty()) {
+            if ($hasHandoverCol && $cashPayments->isNotEmpty()) {
                 TenantCustomerPayment::whereIn('id', $cashPayments->pluck('id'))
                     ->update(['handover_id' => $handover->id]);
             }
