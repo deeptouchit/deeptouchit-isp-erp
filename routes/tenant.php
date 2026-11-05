@@ -264,6 +264,10 @@ Route::middleware(['web'])->group(function () {
             Route::get('/handover', [TenantCollectorDashboardController::class, 'handover'])->name('handover');
             Route::post('/handover', [TenantCollectorDashboardController::class, 'submitHandover'])->name('handover.submit');
             Route::post('/handover/store', [TenantCollectorDashboardController::class, 'submitHandover'])->name('handover.store');
+            Route::get('/handover/{id}', [TenantCollectorDashboardController::class, 'showHandover'])->whereNumber('id')->name('handover.show');
+            Route::post('/handover/{id}/approve', [TenantCollectorDashboardController::class, 'approveHandover'])->whereNumber('id')->name('handover.approve');
+            Route::post('/handover/{id}/update', [TenantCollectorDashboardController::class, 'updateHandover'])->whereNumber('id')->name('handover.update');
+            Route::post('/handover/{id}/delete', [TenantCollectorDashboardController::class, 'deleteHandover'])->whereNumber('id')->name('handover.delete');
             Route::post('/collect', [TenantCollectorPaymentController::class, 'collectBill'])->name('collect');
             Route::post('/collect-bill', [TenantCollectorPaymentController::class, 'collectBill'])->name('collect-bill');
         });
@@ -374,6 +378,11 @@ Route::middleware(['web'])->group(function () {
             Route::get('/collector/receipt/{payment}', [TenantCollectorDashboardController::class, 'showThermalReceipt'])->whereNumber('payment')->name('collector.receipt');
             Route::get('/collector/handover', [TenantCollectorDashboardController::class, 'handover'])->name('collector.handover');
             Route::post('/collector/handover', [TenantCollectorDashboardController::class, 'submitHandover'])->name('collector.handover.submit');
+            Route::get('/collector/handover/{id}', [TenantCollectorDashboardController::class, 'showHandover'])->whereNumber('id')->name('collector.handover.show');
+            Route::post('/collector/handover/{id}/approve', [TenantCollectorDashboardController::class, 'approveHandover'])->whereNumber('id')->name('collector.handover.approve');
+            Route::post('/collector/handover/{id}/update', [TenantCollectorDashboardController::class, 'updateHandover'])->whereNumber('id')->name('collector.handover.update');
+            Route::post('/collector/handover/{id}/delete', [TenantCollectorDashboardController::class, 'deleteHandover'])->whereNumber('id')->name('collector.handover.delete');
+            Route::delete('/collector/handover/{id}', [TenantCollectorDashboardController::class, 'deleteHandover'])->whereNumber('id')->name('collector.handover.destroy');
             Route::post('/collector/collect', [TenantCollectorPaymentController::class, 'collectBill'])->name('collector.collect');
             Route::post('/collector/collect-bill', [TenantCollectorPaymentController::class, 'collectBill'])->name('collector.collect-bill');
 

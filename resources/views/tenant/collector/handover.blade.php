@@ -1,227 +1,1128 @@
 @extends('tenant.layouts.app')
 
-@section('title', 'Daily Cash Handover - ' . ($tenant->company_name ?? 'ISP Management'))
+@section('title', 'Collector Daily Cash Handover - ' . ($tenant->company_name ?? $tenant->name))
 
 @push('styles')
-    {{-- Page Specific Styles --}}
+<style>
+    /* Specialized Thermal POS & A4 Handover Print Styles */
+    @media print {
+        body * {
+            visibility: hidden;
+        }
+        #printableCollectorHandoverArea, #printableCollectorHandoverArea * {
+            visibility: visible;
+        }
+        #printableCollectorHandoverArea {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            background: white !important;
+        }
+        .no-print {
+            display: none !important;
+        }
+    }
+</style>
 @endpush
 
 @section('content')
-<div class="space-y-3" x-data="{ showHandoverModal: false }">
-    
-    {{-- 1. TOP HEADER BAR (AGENTS.md Rule 2.A: Icon + Title + Action buttons ONLY) --}}
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-white px-4 py-2.5 rounded-xl border border-slate-200 shadow-xs">
+<div class="space-y-3" x-data="collectorHandoverManager()" @scroll.window="activeMenu = null" @resize.window="activeMenu = null">
+
+    <!-- 1. Top Header Bar (AGENTS.md Rule 2.A: Icon + Title + Action buttons ONLY - Strictly No Subtitles) -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-white p-3 sm:px-4 sm:py-3 rounded-xl border border-slate-200/90 shadow-2xs">
         <div class="flex items-center gap-2.5">
             <a href="{{ route('tenant.dashboard') }}" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-xs transition shadow-2xs">
                 <i class="fas fa-arrow-left"></i>
             </a>
-            <div class="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 border border-purple-100 flex items-center justify-center text-sm shadow-2xs flex-shrink-0">
+            <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center text-sm shadow-2xs">
                 <i class="fas fa-vault"></i>
             </div>
-            <h1 class="text-sm font-bold text-slate-800 tracking-tight">{{ __('Daily Cash Handover') }}</h1>
+            <h1 class="text-sm sm:text-base font-bold text-slate-800 tracking-tight">
+                Collector Daily Cash Handover
+            </h1>
         </div>
+
         <div class="flex items-center gap-2">
-            <button type="button" @click="showHandoverModal = true" class="px-3.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-semibold shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer">
+            <!-- Submit Handover Button -->
+            <button type="button" 
+                    @click="openSubmitModal()" 
+                    class="bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs px-3.5 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow-xs cursor-pointer">
                 <i class="fas fa-paper-plane text-xs"></i>
-                <span>{{ __('Submit Cash Handover') }}</span>
+                <span>Submit Cash Handover</span>
             </button>
         </div>
     </div>
 
-    {{-- 2. KPI SUMMARY STRIP (Strictly 6 Cards - AGENTS.md Rule 2.B) --}}
+    <!-- 2. KPI Summary Strip (Strictly 6 Cards - AGENTS.md Rule 2.B) -->
     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
-        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
+        <!-- Card 1: Cash in Hand -->
+        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between min-w-0">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Cash in Hand') }}</span>
-                <span class="text-[13px] font-bold font-mono text-amber-700 leading-tight block truncate">@currency($stats['available_cash_in_hand'])</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Cash in Hand</span>
+                <span class="text-[13px] font-bold font-mono text-amber-700 leading-tight block truncate">
+                    @currency($stats['available_cash_in_hand'])
+                </span>
             </div>
-            <div class="w-6 h-6 rounded-md text-[10px] border border-amber-200 bg-amber-50 text-amber-600 flex items-center justify-center flex-shrink-0">
+            <div class="w-6 h-6 rounded-md bg-amber-50 text-amber-600 border border-amber-100 flex items-center justify-center text-[10px] flex-shrink-0">
                 <i class="fas fa-wallet"></i>
             </div>
         </div>
 
-        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
+        <!-- Card 2: Pending Approval -->
+        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between min-w-0">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Pending Approval') }}</span>
-                <span class="text-[13px] font-bold font-mono text-cyan-700 leading-tight block truncate">@currency($stats['pending_approval'])</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Pending Approval</span>
+                <span class="text-[13px] font-bold font-mono text-cyan-700 leading-tight block truncate">
+                    @currency($stats['pending_approval'])
+                </span>
             </div>
-            <div class="w-6 h-6 rounded-md text-[10px] border border-cyan-200 bg-cyan-50 text-cyan-600 flex items-center justify-center flex-shrink-0">
+            <div class="w-6 h-6 rounded-md bg-cyan-50 text-cyan-600 border border-cyan-100 flex items-center justify-center text-[10px] flex-shrink-0">
                 <i class="fas fa-hourglass-half"></i>
             </div>
         </div>
 
-        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
+        <!-- Card 3: Approved in Vault -->
+        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between min-w-0">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Approved Handed') }}</span>
-                <span class="text-[13px] font-bold font-mono text-emerald-600 leading-tight block truncate">@currency($stats['total_approved_handed'])</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Approved in Vault</span>
+                <span class="text-[13px] font-bold font-mono text-emerald-700 leading-tight block truncate">
+                    @currency($stats['total_approved_handed'])
+                </span>
             </div>
-            <div class="w-6 h-6 rounded-md text-[10px] border border-emerald-200 bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0">
+            <div class="w-6 h-6 rounded-md bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center text-[10px] flex-shrink-0">
                 <i class="fas fa-circle-check"></i>
             </div>
         </div>
 
-        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
+        <!-- Card 4: Total Cash Closed -->
+        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between min-w-0">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Total Cash') }}</span>
-                <span class="text-[13px] font-bold font-mono text-slate-800 leading-tight block truncate">@currency($stats['total_cash_collected'])</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Total Cash</span>
+                <span class="text-[13px] font-bold font-mono text-slate-800 leading-tight block truncate">
+                    @currency($stats['total_cash_collected'])
+                </span>
             </div>
-            <div class="w-6 h-6 rounded-md text-[10px] border border-slate-200 bg-slate-50 text-slate-600 flex items-center justify-center flex-shrink-0">
+            <div class="w-6 h-6 rounded-md bg-slate-50 text-slate-600 border border-slate-200 flex items-center justify-center text-[10px] flex-shrink-0">
                 <i class="fas fa-money-bill-transfer"></i>
             </div>
         </div>
 
-        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
+        <!-- Card 5: Total Handovers Count -->
+        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between min-w-0">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Handover Count') }}</span>
-                <span class="text-[13px] font-bold font-mono text-purple-700 leading-tight block truncate">{{ number_format($stats['total_handovers_count']) }}</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Handover Count</span>
+                <span class="text-[13px] font-bold font-mono text-purple-700 leading-tight block truncate">
+                    {{ number_format($stats['total_handovers_count']) }}
+                </span>
             </div>
-            <div class="w-6 h-6 rounded-md text-[10px] border border-purple-200 bg-purple-50 text-purple-600 flex items-center justify-center flex-shrink-0">
+            <div class="w-6 h-6 rounded-md bg-purple-50 text-purple-600 border border-purple-100 flex items-center justify-center text-[10px] flex-shrink-0">
                 <i class="fas fa-receipt"></i>
             </div>
         </div>
 
-        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
+        <!-- Card 6: Today Collected -->
+        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between min-w-0">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Today Collected') }}</span>
-                <span class="text-[13px] font-bold font-mono text-emerald-700 leading-tight block truncate">@currency($stats['today_collected'])</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Today Collected</span>
+                <span class="text-[13px] font-bold font-mono text-emerald-700 leading-tight block truncate">
+                    @currency($stats['today_collected'])
+                </span>
             </div>
-            <div class="w-6 h-6 rounded-md text-[10px] border border-emerald-200 bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0">
+            <div class="w-6 h-6 rounded-md bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center text-[10px] flex-shrink-0">
                 <i class="fas fa-calendar-day"></i>
             </div>
         </div>
     </div>
 
-    {{-- 3. MASTER COMPACT TABLE (AGENTS.md Rule 2.D: Max 5-7 Columns) --}}
-    <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
-        <div class="p-3 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
-            <div class="flex items-center gap-2">
-                <i class="fas fa-clock-rotate-left text-purple-600 text-xs"></i>
-                <h3 class="text-xs font-bold text-slate-800">{{ __('My Cash Handover History') }}</h3>
-                <span class="px-2 py-0.5 rounded-full bg-slate-200 text-slate-700 text-[10px] font-bold font-mono">
-                    {{ $handovers->total() }}
-                </span>
-            </div>
-        </div>
+    <!-- 3. Search & Multi-Filter Toolbar (AGENTS.md Rule 2.C: 2-Tier Architecture, Uniform h-[34px], Strict Filter then Reset Sequence) -->
+    @php
+        $isMoreOpen = $activeMoreCount > 0;
+    @endphp
+    <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5" 
+         x-data="{ showMoreFilters: {{ $isMoreOpen ? 'true' : 'false' }}, searchQuery: '{{ addslashes($search ?? '') }}' }">
+        <form method="GET" action="{{ url()->current() }}" id="handoverFilterForm">
+            <!-- Tier 1: Primary Single Row -->
+            <div class="flex flex-col md:flex-row items-stretch md:items-center gap-2">
+                
+                <!-- Intelligent Live Search Box -->
+                <div class="relative flex-1 min-w-[200px]">
+                    <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-xs transition-colors" 
+                       :class="searchQuery ? 'text-cyan-600 font-bold' : 'text-slate-400'"></i>
+                    <input type="text" 
+                           name="search" 
+                           x-model="searchQuery" 
+                           placeholder="Search voucher #, notes, or collector name..." 
+                           class="w-full h-[34px] pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 placeholder-slate-400 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs">
+                    <button type="button" 
+                            x-show="searchQuery && searchQuery.length > 0" 
+                            @click="searchQuery = ''; $nextTick(() => $el.closest('form').submit())" 
+                            class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer p-0.5">
+                        <i class="fas fa-times-circle text-xs"></i>
+                    </button>
+                </div>
 
+                <!-- Collector Staff Filter -->
+                <div class="w-full md:w-48 flex-shrink-0">
+                    <select name="collector_id" 
+                            onchange="this.form.submit()"
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition cursor-pointer">
+                        @if($isAdmin)
+                            <option value="all" {{ ($collectorFilter ?? 'all') === 'all' ? 'selected' : '' }}>All Collector Staff</option>
+                            @foreach($allCollectors ?? [] as $c)
+                                <option value="{{ $c->id }}" {{ (string) ($collectorFilter ?? '') === (string) $c->id ? 'selected' : '' }}>
+                                    {{ $c->name }} ({{ $c->isCollector() ? 'Collector' : ($c->isIspAdmin() || $c->isOwner() ? 'Admin' : ucfirst($c->role ?? 'Staff')) }})
+                                </option>
+                            @endforeach
+                        @else
+                            <option value="{{ $authUser->id }}" selected>{{ $authUser->name }} (My Collections)</option>
+                        @endif
+                    </select>
+                </div>
+
+                <!-- Status Filter -->
+                <div class="w-full md:w-36 flex-shrink-0">
+                    <select name="status" 
+                            onchange="this.form.submit()"
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition cursor-pointer">
+                        <option value="all" {{ ($statusFilter ?? 'all') === 'all' ? 'selected' : '' }}>All Status</option>
+                        <option value="pending" {{ ($statusFilter ?? '') === 'pending' ? 'selected' : '' }}>Pending Verification</option>
+                        <option value="approved" {{ ($statusFilter ?? '') === 'approved' ? 'selected' : '' }}>Approved in Vault</option>
+                        <option value="rejected" {{ ($statusFilter ?? '') === 'rejected' ? 'selected' : '' }}>Rejected</option>
+                    </select>
+                </div>
+
+                <!-- Per Page Selector -->
+                <div class="w-full md:w-24 flex-shrink-0">
+                    <select name="per_page" 
+                            onchange="this.form.submit()"
+                            class="w-full h-[34px] px-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition cursor-pointer">
+                        <option value="10" {{ $perPage == 10 ? 'selected' : '' }}>10 / page</option>
+                        <option value="20" {{ $perPage == 20 ? 'selected' : '' }}>20 / page</option>
+                        <option value="50" {{ $perPage == 50 ? 'selected' : '' }}>50 / page</option>
+                        <option value="100" {{ $perPage == 100 ? 'selected' : '' }}>100 / page</option>
+                    </select>
+                </div>
+
+                <!-- More Filters Toggle Button -->
+                <button type="button" 
+                        @click="showMoreFilters = !showMoreFilters" 
+                        :class="showMoreFilters || {{ $activeMoreCount }} > 0 ? 'bg-cyan-50 text-cyan-700 border-cyan-300 ring-1 ring-cyan-200' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'"
+                        class="h-[34px] py-0 px-2.5 rounded-lg border text-xs font-medium transition flex items-center justify-center gap-1.5 flex-shrink-0 cursor-pointer shadow-2xs"
+                        title="Toggle Period, Shift & Specific Date Filters">
+                    <i class="fas fa-sliders-h text-[10px]"></i>
+                    <span>More Filters</span>
+                    @if($activeMoreCount > 0)
+                        <span class="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-cyan-600 text-white leading-none">
+                            {{ $activeMoreCount }}
+                        </span>
+                    @endif
+                    <i class="fas text-[9px] transition-transform duration-200" 
+                       :class="showMoreFilters ? 'fa-chevron-up text-cyan-600' : 'fa-chevron-down text-slate-400'"></i>
+                </button>
+
+                <!-- Strict Filter & Reset Button Sequence (AGENTS.md Rule 2.C - Far Right Aligned on md+) -->
+                <div class="flex items-center gap-1.5 flex-shrink-0 md:ml-auto">
+                    <button type="submit" 
+                            class="h-[34px] bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-0 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" 
+                            title="Apply Filters">
+                        <i class="fas fa-filter text-[10px]"></i>
+                        <span>Filter</span>
+                    </button>
+                    <a href="{{ url()->current() }}" 
+                       class="h-[34px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-0 px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer" 
+                       title="Reset Filters">
+                        <i class="fas fa-rotate-left text-[10px]"></i>
+                        <span>Reset</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Tier 2: Secondary Filters Drawer -->
+            <div x-show="showMoreFilters" 
+                 x-cloak 
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0 -translate-y-2"
+                 x-transition:enter-end="opacity-100 translate-y-0"
+                 class="pt-2 border-t border-slate-100 flex flex-wrap items-center gap-2">
+                <!-- Quick Period Preset -->
+                <div class="w-full sm:w-40 flex-shrink-0">
+                    <select name="period" 
+                            id="collectorPeriodSelect"
+                            onchange="handleCollectorPeriodChange(this.value)"
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition cursor-pointer">
+                        <option value="all" {{ ($period ?? '') === 'all' || empty($period) ? 'selected' : '' }}>All Time Range</option>
+                        <option value="today" {{ ($period ?? '') === 'today' ? 'selected' : '' }}>Today</option>
+                        <option value="yesterday" {{ ($period ?? '') === 'yesterday' ? 'selected' : '' }}>Yesterday</option>
+                        <option value="this_week" {{ ($period ?? '') === 'this_week' ? 'selected' : '' }}>This Week</option>
+                        <option value="this_month" {{ ($period ?? '') === 'this_month' ? 'selected' : '' }}>This Month</option>
+                        <option value="last_month" {{ ($period ?? '') === 'last_month' ? 'selected' : '' }}>Last Month</option>
+                        <option value="custom" {{ ($period ?? '') === 'custom' ? 'selected' : '' }}>Custom Date Range</option>
+                    </select>
+                </div>
+
+                <!-- Date From -->
+                <div class="w-full sm:w-40 flex-shrink-0">
+                    <input type="date" 
+                           name="date_from" 
+                           id="collectorDateFromInput"
+                           value="{{ $dateFrom }}" 
+                           onchange="this.form.submit()"
+                           title="Date From"
+                           class="w-full h-[34px] px-2.5 bg-white border border-slate-200 rounded-lg text-xs font-mono text-slate-800 focus:outline-hidden focus:border-cyan-500">
+                </div>
+
+                <!-- Date To -->
+                <div class="w-full sm:w-40 flex-shrink-0">
+                    <input type="date" 
+                           name="date_to" 
+                           id="collectorDateToInput"
+                           value="{{ $dateTo }}" 
+                           onchange="this.form.submit()"
+                           title="Date To"
+                           class="w-full h-[34px] px-2.5 bg-white border border-slate-200 rounded-lg text-xs font-mono text-slate-800 focus:outline-hidden focus:border-cyan-500">
+                </div>
+
+                <!-- Shift Filter -->
+                <div class="w-full sm:w-44 flex-shrink-0">
+                    <select name="shift" 
+                            onchange="this.form.submit()"
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition cursor-pointer">
+                        <option value="all" {{ ($shiftFilter ?? 'all') === 'all' ? 'selected' : '' }}>All Shifts</option>
+                        <option value="daily" {{ ($shiftFilter ?? '') === 'daily' ? 'selected' : '' }}>Daily Closing</option>
+                        <option value="morning" {{ ($shiftFilter ?? '') === 'morning' ? 'selected' : '' }}>Morning Shift</option>
+                        <option value="evening" {{ ($shiftFilter ?? '') === 'evening' ? 'selected' : '' }}>Evening Shift</option>
+                        <option value="night" {{ ($shiftFilter ?? '') === 'night' ? 'selected' : '' }}>Night Shift</option>
+                        <option value="full_day" {{ ($shiftFilter ?? '') === 'full_day' ? 'selected' : '' }}>Full Day Closing</option>
+                    </select>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- 4. Master Compact Table (.saas-table Pure CSS System - AGENTS.md Rule 2.D) -->
+    <div class="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden">
         <div class="overflow-x-auto">
             <table class="saas-table">
                 <thead>
                     <tr>
                         <th class="w-10 text-center no-sort">#</th>
-                        <th class="text-center font-semibold">{{ __('Date') }}</th>
-                        <th class="text-center font-semibold">{{ __('Handover Amount') }}</th>
-                        <th class="text-center font-semibold">{{ __('Notes') }}</th>
-                        <th class="text-center font-semibold">{{ __('Verified By') }}</th>
-                        <th class="text-center font-semibold">{{ __('Status') }}</th>
+                        <th class="text-center font-semibold">Voucher #</th>
+                        <th class="text-center font-semibold">Collector Staff</th>
+                        <th class="text-center font-semibold">Handed Amount</th>
+                        <th class="text-center font-semibold">Received By</th>
+                        <th class="text-center font-semibold">Status</th>
+                        <th class="text-center font-semibold">Date &amp; Time</th>
+                        <th class="w-14 text-center no-sort">Action</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($handovers as $index => $item)
+                        @php
+                            $badge = $item->status_badge;
+                            $disc = $item->discrepancy_badge;
+                            $rowItemJson = [
+                                'id' => $item->id,
+                                'handover_no' => $item->handover_no,
+                                'collector_id' => $item->collector_id,
+                                'collector_name' => $item->collector?->name ?? 'Staff Collector',
+                                'system_collected_amount' => (float) $item->system_collected_amount,
+                                'handed_over_amount' => (float) $item->handed_over_amount,
+                                'shortage_amount' => (float) $item->shortage_amount,
+                                'excess_amount' => (float) $item->excess_amount,
+                                'status' => $item->status,
+                                'notes' => $item->notes ?? '',
+                                'shift_type' => $item->shift_type ?? 'daily',
+                            ];
+                        @endphp
                         <tr>
-                            <td class="text-center font-mono text-slate-500 whitespace-nowrap">{{ $handovers->firstItem() + $index }}</td>
-                            <td class="text-center font-mono text-slate-800 whitespace-nowrap">
-                                {{ $item->handover_date ? \Carbon\Carbon::parse($item->handover_date)->format('d M Y') : '—' }}
+                            <!-- 0. Row Index -->
+                            <td class="text-center font-mono text-slate-500 whitespace-nowrap">
+                                {{ $handovers->firstItem() + $index }}
                             </td>
-                            <td class="text-right font-mono font-bold text-slate-900 whitespace-nowrap">
+
+                            <!-- 1. Voucher Number -->
+                            <td class="text-center font-mono text-amber-800 font-bold whitespace-nowrap">
+                                <button type="button" 
+                                        @click="openVoucherModal({{ $item->id }})" 
+                                        class="hover:underline hover:text-amber-600 cursor-pointer inline-flex items-center gap-1"
+                                        title="View & Print Voucher Details">
+                                    <i class="fas fa-file-invoice-dollar text-[10px] text-amber-500"></i>
+                                    <span>{{ $item->handover_no }}</span>
+                                </button>
+                            </td>
+
+                            <!-- 2. Collector Staff (কোন কালেক্টর এর টাকা) -->
+                            <td class="text-left font-semibold text-slate-800 whitespace-nowrap text-xs">
+                                <div class="flex items-center gap-1.5">
+                                    <i class="fas fa-user text-[10px] text-slate-400"></i>
+                                    <span>{{ $item->collector?->name ?? 'Unknown Collector' }}</span>
+                                </div>
+                            </td>
+
+                            <!-- 3. Handed Over Amount (Right Align - Accounting Standard) -->
+                            <td class="text-right font-mono font-bold text-slate-900 whitespace-nowrap text-xs">
                                 @currency($item->amount)
                             </td>
-                            <td class="text-left text-slate-600 text-xs whitespace-nowrap">{{ $item->notes ?: '—' }}</td>
-                            <td class="text-left font-medium text-slate-800 whitespace-nowrap">{{ $item->verifier?->name ?? '—' }}</td>
-                            <td class="text-center whitespace-nowrap">
-                                @if($item->status === 'approved' || $item->status === 'verified')
-                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold font-mono bg-emerald-50 text-emerald-700 border border-emerald-200">{{ __('Verified') }}</span>
-                                @elseif($item->status === 'pending')
-                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold font-mono bg-amber-50 text-amber-700 border border-amber-200">{{ __('Pending') }}</span>
+
+                            <!-- 4. Received / Verified By (কে গ্রহণ করলো) -->
+                            <td class="text-left font-medium text-slate-700 whitespace-nowrap text-xs">
+                                @if($item->verifier)
+                                    <span class="inline-flex items-center gap-1 text-slate-800">
+                                        <i class="fas fa-user-check text-[10px] text-emerald-600"></i>
+                                        <span>{{ $item->verifier->name }}</span>
+                                    </span>
                                 @else
-                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold font-mono bg-rose-50 text-rose-700 border border-rose-200">{{ __('Rejected') }}</span>
+                                    <span class="text-slate-400 italic">Pending Reception</span>
                                 @endif
+                            </td>
+
+                            <!-- 5. Status Badge -->
+                            <td class="text-center whitespace-nowrap">
+                                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold border {{ $badge['class'] }}">
+                                    <span class="w-1.5 h-1.5 rounded-full {{ $badge['dot'] }}"></span>
+                                    <span>{{ $badge['label'] }}</span>
+                                </span>
+                            </td>
+
+                            <!-- 6. Date & Time (তারিখ কলামে সময় সহ) -->
+                            <td class="text-center font-mono text-slate-700 text-xs whitespace-nowrap">
+                                {{ $item->created_at ? $item->created_at->format('d M Y, h:i A') : ($item->handover_date ? $item->handover_date->format('d M Y') : '—') }}
+                            </td>
+
+                            <!-- 7. Action Column (Rule 2.E 3-Dot Floating Action Menu) -->
+                            <td class="text-center whitespace-nowrap no-sort">
+                                <button type="button" 
+                                        @click="toggleMenu({{ json_encode($rowItemJson) }}, $event)" 
+                                        class="w-7 h-7 rounded-lg hover:bg-slate-100 text-slate-600 hover:text-slate-900 flex items-center justify-center transition cursor-pointer mx-auto"
+                                        title="Handover Actions">
+                                    <i class="fas fa-ellipsis-v text-[11px]"></i>
+                                </button>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="text-center py-6 text-slate-400">
+                            <td colspan="8" class="text-center py-8 text-slate-400">
                                 <i class="fas fa-vault text-2xl mb-1.5 block text-slate-300"></i>
-                                <span>{{ __('No cash handovers submitted yet.') }}</span>
+                                <span class="text-xs font-medium">No cash handover records found.</span>
                             </td>
                         </tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
+
         @if($handovers->hasPages())
-            <div class="p-3 border-t border-slate-200 bg-slate-50/50">
+            <div class="p-2.5 border-t border-slate-200 bg-slate-50/50">
                 {{ $handovers->links() }}
             </div>
         @endif
     </div>
 
-    {{-- 4. SUBMIT CASH HANDOVER SOFT NATURAL MODAL (AGENTS.md Rule 3) --}}
-    <div x-show="showHandoverModal" 
-         x-transition:enter="transition ease-out duration-150"
+    <!-- 5. Global Floating 3-Dot Action Menu (AGENTS.md Rule 2.E) -->
+    <div x-show="activeMenu !== null" 
+         x-cloak 
+         @click.outside="activeMenu = null" 
+         class="fixed z-50 bg-white border border-slate-200 rounded-xl shadow-xl py-1.5 w-44 text-xs font-medium"
+         :style="`top: ${menuPos.top}; bottom: ${menuPos.bottom}; right: ${menuPos.right}; left: ${menuPos.left};`"
+         style="display: none;">
+        
+        <div class="px-3 py-1 border-b border-slate-100 text-[10px] font-bold text-slate-400 uppercase tracking-wider font-mono" 
+             x-text="activeMenu ? activeMenu.handover_no : ''">
+        </div>
+
+        <!-- 1. View Details & Print -->
+        <button type="button" 
+                @click="openVoucherModal(activeMenu.id); activeMenu = null" 
+                class="w-full px-3 py-1.5 text-left text-slate-700 hover:bg-amber-50 hover:text-amber-800 transition flex items-center gap-2 cursor-pointer">
+            <i class="fas fa-file-invoice-dollar text-[11px] text-amber-500 w-4"></i>
+            <span>View &amp; Print Details</span>
+        </button>
+
+        <!-- 2. Approve (Admin Only & Pending Only) -->
+        <template x-if="activeMenu && activeMenu.status === 'pending' && {{ $isAdmin ? 'true' : 'false' }}">
+            <button type="button" 
+                    @click="openApproveModal(activeMenu); activeMenu = null" 
+                    class="w-full px-3 py-1.5 text-left text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 transition flex items-center gap-2 cursor-pointer">
+                <i class="fas fa-check-circle text-[11px] text-emerald-500 w-4"></i>
+                <span>Approve to Vault</span>
+            </button>
+        </template>
+
+        <!-- 3. Edit Handover (Admin or Owner) -->
+        <template x-if="{{ $isAdmin ? 'true' : 'false' }} || (activeMenu && activeMenu.status === 'pending')">
+            <button type="button" 
+                    @click="openEditModal(activeMenu); activeMenu = null" 
+                    class="w-full px-3 py-1.5 text-left text-slate-700 hover:bg-cyan-50 hover:text-cyan-700 transition flex items-center gap-2 cursor-pointer">
+                <i class="fas fa-pen-to-square text-[11px] text-cyan-500 w-4"></i>
+                <span>Edit Handover</span>
+            </button>
+        </template>
+
+        <!-- 4. Delete Handover (Admin Only) -->
+        <template x-if="{{ $isAdmin ? 'true' : 'false' }}">
+            <div class="border-t border-slate-100 my-1"></div>
+            <button type="button" 
+                    @click="confirmDelete(activeMenu); activeMenu = null" 
+                    class="w-full px-3 py-1.5 text-left text-rose-600 hover:bg-rose-50 transition flex items-center gap-2 cursor-pointer">
+                <i class="fas fa-trash-can text-[11px] text-rose-500 w-4"></i>
+                <span>Delete Handover</span>
+            </button>
+        </template>
+    </div>
+
+    <!-- 6. Production-Grade Natural Modal: Submit Cash Handover (AGENTS.md Rule 3) -->
+    <div x-show="submitModal.open" 
+         x-cloak 
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs"
+         x-transition:enter="transition ease-out duration-200"
          x-transition:enter-start="opacity-0"
          x-transition:enter-end="opacity-100"
-         x-transition:leave="transition ease-in duration-100"
+         x-transition:leave="transition ease-in duration-150"
          x-transition:leave-start="opacity-100"
          x-transition:leave-end="opacity-0"
-         class="bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 fixed inset-0 z-50"
-         style="display: none;"
-         x-cloak>
+         style="display: none;">
         
         <div class="bg-white rounded-xl border border-slate-200/90 shadow-2xl w-full max-w-md overflow-hidden" 
-             @click.outside="showHandoverModal = false">
+             @click.away="submitModal.open = false">
             
+            <!-- Soft Header -->
             <div class="bg-slate-50/80 border-b border-slate-200 px-4 py-3 flex items-center justify-between">
                 <div class="flex items-center gap-2.5">
-                    <div class="w-7 h-7 rounded-lg bg-purple-50 text-purple-600 border border-purple-100 flex items-center justify-center text-xs flex-shrink-0">
+                    <div class="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 border border-amber-100 flex items-center justify-center text-xs flex-shrink-0">
                         <i class="fas fa-vault"></i>
                     </div>
                     <div>
-                        @if($authUser->isOwner() || $authUser->isIspAdmin())
-                            <h3 class="text-xs font-semibold text-slate-800">{{ __('Admin Cash Closing to Vault') }}</h3>
-                            <p class="text-[10.5px] text-slate-500 font-normal">{{ __('Close daily cash drawer & auto-approve directly into vault') }}</p>
-                        @else
-                            <h3 class="text-xs font-semibold text-slate-800">{{ __('Submit Daily Cash Handover') }}</h3>
-                            <p class="text-[10.5px] text-slate-500 font-normal">{{ __('Submit collected cash to Manager / Accounts') }}</p>
-                        @endif
+                        <h3 class="text-xs font-semibold text-slate-800">Submit Daily Cash Handover</h3>
+                        <p class="text-[10.5px] text-slate-500 font-normal">Close shift and submit physical cash to accounts</p>
                     </div>
                 </div>
-                <button type="button" @click="showHandoverModal = false" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center cursor-pointer">
+                <button type="button" @click="submitModal.open = false" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center cursor-pointer">
                     <i class="fas fa-times text-xs"></i>
                 </button>
             </div>
 
-            <form action="{{ route('tenant.collector.handover.store') }}" method="POST" class="p-4 space-y-3">
+            <!-- Form -->
+            <form action="{{ route('tenant.collector.handover.submit') }}" method="POST" class="p-4 space-y-3.5 text-xs">
                 @csrf
                 <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200/80 flex items-center justify-between text-xs">
-                    <span class="text-slate-600">{{ __('Current Cash in Hand') }}:</span>
+                    <span class="text-slate-600 font-medium">Un-handed Cash in Hand:</span>
                     <span class="font-bold font-mono text-amber-700">@currency($availableCashInHand)</span>
                 </div>
 
                 <div>
                     <label class="block text-[11px] font-semibold text-slate-700 mb-1">
-                        {{ __('Handover Amount') }} ({{ $currencySymbol ?? '৳' }}) <span class="text-rose-500">*</span>
+                        Handover Amount ({{ $currencySymbol ?? '৳' }}) <span class="text-rose-500">*</span>
                     </label>
-                    <input type="number" name="amount" value="{{ $availableCashInHand }}" step="0.01" min="1" required class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-purple-500 shadow-2xs font-mono">
+                    <input type="number" 
+                           name="amount" 
+                           value="{{ $availableCashInHand }}" 
+                           step="0.01" 
+                           min="1" 
+                           required 
+                           class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-amber-500 font-mono font-bold text-slate-800 shadow-2xs">
                 </div>
 
                 <div>
                     <label class="block text-[11px] font-semibold text-slate-700 mb-1">
-                        {{ __('Notes / Remarks') }}
+                        Notes / Remarks
                     </label>
-                    <input type="text" name="notes" placeholder="e.g. {{ ($authUser->isOwner() || $authUser->isIspAdmin()) ? 'Admin daily drawer closing' : 'Evening shift cash handover' }}" class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-purple-500 shadow-2xs">
+                    <input type="text" 
+                           name="notes" 
+                           placeholder="e.g. Daily shift collection handover" 
+                           class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-amber-500 shadow-2xs">
                 </div>
 
                 <div class="pt-3 border-t border-slate-200 flex items-center justify-end gap-2 -mx-4 -mb-4 p-3 bg-slate-50/80">
-                    <button type="button" @click="showHandoverModal = false" class="border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs px-3.5 py-1.5 rounded-lg transition cursor-pointer">
-                        {{ __('Cancel') }}
+                    <button type="button" 
+                            @click="submitModal.open = false" 
+                            class="border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs px-3.5 py-1.5 rounded-lg transition cursor-pointer">
+                        Cancel
                     </button>
-                    <button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white font-medium text-xs px-4 py-1.5 rounded-lg shadow-xs transition cursor-pointer">
-                        {{ ($authUser->isOwner() || $authUser->isIspAdmin()) ? __('Approve & Transfer to Vault') : __('Submit to Manager') }}
+                    <button type="submit" 
+                            class="bg-amber-600 hover:bg-amber-700 text-white font-medium text-xs px-4 py-1.5 rounded-lg shadow-xs transition cursor-pointer">
+                        {{ ($authUser->isOwner() || $authUser->isIspAdmin()) ? 'Approve & Transfer to Vault' : 'Submit Handover' }}
                     </button>
                 </div>
             </form>
         </div>
     </div>
 
+    <!-- 7. Production-Grade Natural Modal: Edit Handover -->
+    <div x-show="editModal.open" 
+         x-cloak 
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs"
+         style="display: none;">
+        
+        <div class="bg-white rounded-xl border border-slate-200/90 shadow-2xl w-full max-w-md overflow-hidden" 
+             @click.away="if (!editModal.loading) editModal.open = false">
+            
+            <div class="bg-slate-50/80 border-b border-slate-200 px-4 py-3 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <div class="w-7 h-7 rounded-lg bg-cyan-50 text-cyan-600 border border-cyan-100 flex items-center justify-center text-xs flex-shrink-0">
+                        <i class="fas fa-pen-to-square"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xs font-semibold text-slate-800">Edit Handover Voucher</h3>
+                        <p class="text-[10.5px] text-slate-500 font-normal">Adjust handover amount and closing notes</p>
+                    </div>
+                </div>
+                <button type="button" @click="editModal.open = false" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center cursor-pointer">
+                    <i class="fas fa-times text-xs"></i>
+                </button>
+            </div>
+
+            <form @submit.prevent="submitEditHandover()">
+                <div class="p-4 space-y-3.5 text-xs">
+                    <div class="p-2.5 rounded-lg bg-cyan-50 border border-cyan-200/80 space-y-1">
+                        <div class="flex justify-between font-bold text-slate-800">
+                            <span>Voucher No:</span>
+                            <span class="font-mono text-cyan-800" x-text="editModal.handover?.handover_no"></span>
+                        </div>
+                        <div class="flex justify-between text-slate-600">
+                            <span>System Cash:</span>
+                            <span class="font-mono font-bold" x-text="'{{ $currencySymbol ?? '৳' }}' + parseFloat(editModal.handover?.system_collected_amount || 0).toFixed(2)"></span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-700 mb-1">
+                            Handed Amount ({{ $currencySymbol ?? '৳' }}) <span class="text-rose-500">*</span>
+                        </label>
+                        <input type="number" 
+                               step="0.01" 
+                               min="0" 
+                               x-model="editModal.form.handed_over_amount" 
+                               required 
+                               class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-cyan-500 font-mono font-bold text-slate-800">
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-700 mb-1">
+                            Shift Type
+                        </label>
+                        <select x-model="editModal.form.shift_type" 
+                                class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-cyan-500">
+                            <option value="daily">Daily Closing</option>
+                            <option value="morning">Morning Shift</option>
+                            <option value="evening">Evening Shift</option>
+                            <option value="night">Night Shift</option>
+                            <option value="full_day">Full Day Closing</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-700 mb-1">
+                            Notes / Remarks
+                        </label>
+                        <input type="text" 
+                               x-model="editModal.form.notes" 
+                               class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-cyan-500">
+                    </div>
+                </div>
+
+                <div class="px-4 py-2.5 bg-slate-50/80 border-t border-slate-200 flex items-center justify-between">
+                    <button type="button" 
+                            @click="editModal.open = false" 
+                            class="border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs px-3.5 py-1.5 rounded-lg transition cursor-pointer">
+                        Cancel
+                    </button>
+                    <button type="submit" 
+                            :disabled="editModal.loading" 
+                            class="bg-cyan-600 hover:bg-cyan-700 text-white font-medium text-xs px-4 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
+                        <i class="fas" :class="editModal.loading ? 'fa-spinner fa-spin' : 'fa-check'"></i>
+                        <span x-text="editModal.loading ? 'Saving...' : 'Save Changes'"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 8. Production-Grade Natural Modal: Approve Handover -->
+    <div x-show="approveModal.open" 
+         x-cloak 
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs"
+         style="display: none;">
+        
+        <div class="bg-white rounded-xl border border-slate-200/90 shadow-2xl w-full max-w-sm overflow-hidden" 
+             @click.away="if (!approveModal.loading) approveModal.open = false">
+            
+            <div class="bg-slate-50/80 border-b border-slate-200 px-4 py-3 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <div class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center text-xs flex-shrink-0">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xs font-semibold text-slate-800">Verify &amp; Approve to Vault</h3>
+                        <p class="text-[10.5px] text-slate-500 font-normal">Transfer physical cash into ISP main vault</p>
+                    </div>
+                </div>
+                <button type="button" @click="approveModal.open = false" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center cursor-pointer">
+                    <i class="fas fa-times text-xs"></i>
+                </button>
+            </div>
+
+            <form @submit.prevent="submitApproveHandover()">
+                <div class="p-4 space-y-3 text-xs">
+                    <div class="p-2.5 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-900 space-y-1">
+                        <div class="flex justify-between font-bold">
+                            <span>Voucher No:</span>
+                            <span class="font-mono text-emerald-800" x-text="approveModal.handover?.handover_no"></span>
+                        </div>
+                        <div class="flex justify-between font-bold">
+                            <span>Collector:</span>
+                            <span x-text="approveModal.handover?.collector_name"></span>
+                        </div>
+                        <div class="flex justify-between font-bold">
+                            <span>Handed Over Cash:</span>
+                            <span class="font-mono text-emerald-700" x-text="'{{ $currencySymbol ?? '৳' }}' + parseFloat(approveModal.handover?.handed_over_amount || 0).toFixed(2)"></span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-slate-700 font-semibold text-[11px] mb-1">Verification Remarks</label>
+                        <input type="text" 
+                               x-model="approveModal.manager_remarks" 
+                               class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs p-2 text-slate-800 focus:bg-white focus:border-emerald-500">
+                    </div>
+                </div>
+
+                <div class="px-4 py-2.5 bg-slate-50/80 border-t border-slate-200 flex items-center justify-between">
+                    <button type="button" 
+                            @click="approveModal.open = false" 
+                            class="border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs px-3.5 py-1.5 rounded-lg transition cursor-pointer">
+                        Cancel
+                    </button>
+                    <button type="submit" 
+                            :disabled="approveModal.loading" 
+                            class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs px-4 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow-xs cursor-pointer">
+                        <i class="fas" :class="approveModal.loading ? 'fa-spinner fa-spin' : 'fa-check'"></i>
+                        <span x-text="approveModal.loading ? 'Approving...' : 'Approve &amp; Receive Cash'"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 9. Production-Grade Natural Modal: View / Print Handover Voucher (Dual Layout) -->
+    <div x-show="voucherModal.open" 
+         x-cloak 
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs"
+         style="display: none;">
+        
+        <div class="bg-white rounded-xl border border-slate-200/90 shadow-2xl w-full max-w-lg overflow-hidden" 
+             @click.away="voucherModal.open = false">
+            
+            <!-- Soft Header -->
+            <div class="bg-slate-50/80 border-b border-slate-200 px-4 py-3 flex items-center justify-between no-print">
+                <div class="flex items-center gap-2">
+                    <div class="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 border border-amber-100 flex items-center justify-center text-xs flex-shrink-0">
+                        <i class="fas fa-file-invoice-dollar"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xs font-semibold text-slate-800">Cash Handover Voucher</h3>
+                        <p class="text-[10.5px] text-slate-500 font-normal">Official shift closing &amp; vault transfer slip</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-1.5">
+                    <button type="button" 
+                            @click="printVoucher()" 
+                            class="bg-amber-600 hover:bg-amber-700 text-white font-medium text-xs px-3 py-1.5 rounded-lg transition flex items-center gap-1 shadow-xs cursor-pointer">
+                        <i class="fas fa-print text-xs"></i>
+                        <span>Print</span>
+                    </button>
+
+                    <button type="button" 
+                            @click="voucherModal.open = false" 
+                            class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center cursor-pointer">
+                        <i class="fas fa-times text-xs"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Printable Voucher Area -->
+            <div id="printableCollectorHandoverArea" class="p-5 text-xs text-slate-800 font-sans max-h-[75vh] overflow-y-auto">
+                <template x-if="voucherModal.handover">
+                    <div class="space-y-4">
+                        
+                        <!-- Company Header -->
+                        <div class="text-center border-b border-dashed border-slate-300 pb-3">
+                            <h2 class="text-base font-bold text-slate-900 tracking-tight" x-text="voucherModal.handover.company.name"></h2>
+                            <p class="text-[10.5px] text-slate-500 mt-0.5" x-text="voucherModal.handover.company.address"></p>
+                            <p class="text-[10.5px] text-slate-600 font-mono mt-0.5" x-text="'Helpline: ' + voucherModal.handover.company.phone"></p>
+                            <div class="mt-2 inline-block px-2.5 py-0.5 bg-slate-900 text-amber-400 font-mono font-bold text-[11px] rounded tracking-wider uppercase">
+                                Daily Cash Handover Voucher
+                            </div>
+                        </div>
+
+                        <!-- Meta Info Grid -->
+                        <div class="grid grid-cols-2 gap-2 text-[11px] font-mono border-b border-dashed border-slate-200 pb-2.5">
+                            <div>
+                                <span class="text-slate-400 block text-[9px] uppercase">Voucher No</span>
+                                <span class="font-bold text-slate-900" x-text="voucherModal.handover.handover_no"></span>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-slate-400 block text-[9px] uppercase">Handover Date &amp; Time</span>
+                                <span class="text-slate-800" x-text="voucherModal.handover.created_at_formatted"></span>
+                            </div>
+                        </div>
+
+                        <!-- Collector & Shift Info -->
+                        <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200/80 space-y-1 text-[11px]">
+                            <div class="flex items-center justify-between">
+                                <span class="text-slate-500">Collector Staff:</span>
+                                <span class="font-bold text-slate-900" x-text="voucherModal.handover.collector.name"></span>
+                            </div>
+                            <div class="flex items-center justify-between text-slate-500 text-[10.5px]">
+                                <span>Shift Type:</span>
+                                <span class="font-medium text-slate-800" x-text="voucherModal.handover.shift_label"></span>
+                            </div>
+                            <div class="flex items-center justify-between text-slate-500 text-[10.5px]">
+                                <span>Received By:</span>
+                                <span class="font-medium text-slate-800" x-text="voucherModal.handover.verifier?.name || 'Pending Reception'"></span>
+                            </div>
+                        </div>
+
+                        <!-- Amount Breakdown -->
+                        <div class="space-y-1.5 border-b border-dashed border-slate-200 pb-3 text-xs font-mono">
+                            <div class="flex items-center justify-between text-slate-600">
+                                <span>System Cash Collection:</span>
+                                <span class="font-bold text-slate-800" x-text="voucherModal.handover.system_collected_formatted"></span>
+                            </div>
+                            <div class="flex items-center justify-between text-slate-600">
+                                <span>Handed Over Physical Cash:</span>
+                                <span class="font-bold text-emerald-700" x-text="voucherModal.handover.handed_over_formatted"></span>
+                            </div>
+                            <template x-if="voucherModal.handover.shortage_amount > 0">
+                                <div class="flex items-center justify-between text-rose-700 font-bold">
+                                    <span>Shortage Amount:</span>
+                                    <span x-text="'-' + voucherModal.handover.shortage_formatted"></span>
+                                </div>
+                            </template>
+                            <template x-if="voucherModal.handover.excess_amount > 0">
+                                <div class="flex items-center justify-between text-indigo-700 font-bold">
+                                    <span>Excess Cash:</span>
+                                    <span x-text="'+' + voucherModal.handover.excess_formatted"></span>
+                                </div>
+                            </template>
+                        </div>
+
+                        <!-- Receipts List -->
+                        <template x-if="voucherModal.handover.receipts && voucherModal.handover.receipts.length > 0">
+                            <div class="space-y-1.5">
+                                <div class="flex items-center justify-between text-[11px] font-semibold text-slate-700">
+                                    <span>Locked Cash Receipts</span>
+                                    <span class="font-mono text-[10px]" x-text="voucherModal.handover.receipts.length + ' item(s)'"></span>
+                                </div>
+                                <div class="max-h-40 overflow-y-auto space-y-1 bg-slate-50 p-2 rounded-lg border border-slate-200/80">
+                                    <template x-for="r in voucherModal.handover.receipts" :key="r.id">
+                                        <div class="flex items-center justify-between text-[10.5px] border-b border-slate-200/60 pb-1">
+                                            <div>
+                                                <span class="font-mono font-bold text-slate-900" x-text="r.invoice_no"></span>
+                                                <span class="text-slate-500 block text-[9.5px]" x-text="r.customer_name + ' (' + r.customer_code + ')'"></span>
+                                            </div>
+                                            <div class="text-right font-mono">
+                                                <span class="font-bold text-slate-800" x-text="r.amount_formatted"></span>
+                                                <span class="text-slate-400 block text-[9px]" x-text="r.paid_time"></span>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- Signatures Zone -->
+                        <div class="pt-6 border-t border-slate-200 text-center space-y-4">
+                            <div class="grid grid-cols-2 gap-4 text-[10px] font-mono">
+                                <div>
+                                    <div class="w-24 border-b border-slate-300 mb-1 mx-auto"></div>
+                                    <span x-text="voucherModal.handover.collector.name"></span>
+                                    <span class="block text-[8.5px] text-slate-400">Collector Signature</span>
+                                </div>
+                                <div>
+                                    <div class="w-24 border-b border-slate-300 mb-1 mx-auto"></div>
+                                    <span x-text="voucherModal.handover.verifier?.name || 'Accounts Manager'"></span>
+                                    <span class="block text-[8.5px] text-slate-400">Received By / Vault Sign</span>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </template>
+            </div>
+
+            <!-- Footer -->
+            <div class="px-4 py-2.5 bg-slate-50/80 border-t border-slate-200 flex items-center justify-end gap-2 no-print">
+                <button type="button" 
+                        @click="voucherModal.open = false" 
+                        class="border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs px-3.5 py-1.5 rounded-lg transition cursor-pointer">
+                    Close
+                </button>
+                <button type="button" 
+                        @click="printVoucher()" 
+                        class="bg-amber-600 hover:bg-amber-700 text-white font-medium text-xs px-4 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow-xs cursor-pointer">
+                    <i class="fas fa-print"></i>
+                    <span>Print Voucher</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
 </div>
 @endsection
+
+@push('scripts')
+<script>
+function handleCollectorPeriodChange(val) {
+    const fromInput = document.getElementById('collectorDateFromInput');
+    const toInput = document.getElementById('collectorDateToInput');
+    if (!fromInput || !toInput) return;
+
+    const today = new Date();
+    const formatDate = (d) => {
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
+    if (val === 'today') {
+        fromInput.value = formatDate(today);
+        toInput.value = formatDate(today);
+    } else if (val === 'yesterday') {
+        const y = new Date();
+        y.setDate(y.getDate() - 1);
+        fromInput.value = formatDate(y);
+        toInput.value = formatDate(y);
+    } else if (val === 'this_week') {
+        const start = new Date(today);
+        const day = start.getDay();
+        const diff = start.getDate() - day + (day === 0 ? -6 : 1);
+        start.setDate(diff);
+        const end = new Date(start);
+        end.setDate(start.getDate() + 6);
+        fromInput.value = formatDate(start);
+        toInput.value = formatDate(end);
+    } else if (val === 'this_month') {
+        const start = new Date(today.getFullYear(), today.getMonth(), 1);
+        const end = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+        fromInput.value = formatDate(start);
+        toInput.value = formatDate(end);
+    } else if (val === 'last_month') {
+        const start = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+        const end = new Date(today.getFullYear(), today.getMonth(), 0);
+        fromInput.value = formatDate(start);
+        toInput.value = formatDate(end);
+    } else if (val === 'all') {
+        fromInput.value = '';
+        toInput.value = '';
+    }
+}
+
+function collectorHandoverManager() {
+    return {
+        activeMenu: null,
+        menuPos: { top: 'auto', bottom: 'auto', right: 'auto', left: 'auto' },
+
+        submitModal: {
+            open: false,
+        },
+
+        editModal: {
+            open: false,
+            loading: false,
+            handover: null,
+            form: {
+                handed_over_amount: '',
+                shift_type: 'daily',
+                notes: '',
+            }
+        },
+
+        approveModal: {
+            open: false,
+            loading: false,
+            handover: null,
+            manager_remarks: 'Verified physical cash and approved into vault.'
+        },
+
+        voucherModal: {
+            open: false,
+            loading: false,
+            handover: null
+        },
+
+        toggleMenu(item, event) {
+            if (this.activeMenu?.id === item.id) {
+                this.activeMenu = null;
+                return;
+            }
+            this.activeMenu = item;
+            const rect = event.currentTarget.getBoundingClientRect();
+            const dropdownHeight = 160;
+            const right = Math.max(10, window.innerWidth - rect.right);
+            let top = Math.round(rect.bottom) + 2;
+            let bottom = 'auto';
+
+            if (top + dropdownHeight > window.innerHeight) {
+                top = 'auto';
+                bottom = Math.max(10, window.innerHeight - Math.round(rect.top) + 2) + 'px';
+            } else {
+                top = `${top}px`;
+            }
+
+            this.menuPos = {
+                top: top,
+                bottom: bottom,
+                right: `${right}px`,
+                left: 'auto'
+            };
+        },
+
+        openSubmitModal() {
+            this.submitModal.open = true;
+        },
+
+        openEditModal(item) {
+            this.editModal.handover = item;
+            this.editModal.form = {
+                handed_over_amount: parseFloat(item.handed_over_amount || 0).toFixed(2),
+                shift_type: item.shift_type || 'daily',
+                notes: item.notes || '',
+            };
+            this.editModal.open = true;
+        },
+
+        async submitEditHandover() {
+            if (!this.editModal.handover?.id) return;
+            this.editModal.loading = true;
+
+            try {
+                const res = await fetch(`{{ url('/collector/handover') }}/${this.editModal.handover.id}/update`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(this.editModal.form)
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({ icon: 'success', title: data.message, timer: 1500, showConfirmButton: false });
+                    }
+                    this.editModal.open = false;
+                    setTimeout(() => window.location.reload(), 600);
+                } else {
+                    alert(data.message || 'Failed to update handover.');
+                }
+            } catch (err) {
+                alert('Network error updating handover.');
+            } finally {
+                this.editModal.loading = false;
+            }
+        },
+
+        openApproveModal(item) {
+            this.approveModal.handover = item;
+            this.approveModal.manager_remarks = 'Verified physical cash and approved into vault.';
+            this.approveModal.open = true;
+        },
+
+        async submitApproveHandover() {
+            if (!this.approveModal.handover?.id) return;
+            this.approveModal.loading = true;
+
+            try {
+                const res = await fetch(`{{ url('/collector/handover') }}/${this.approveModal.handover.id}/approve`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ manager_remarks: this.approveModal.manager_remarks })
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({ icon: 'success', title: data.message, timer: 1500, showConfirmButton: false });
+                    }
+                    this.approveModal.open = false;
+                    setTimeout(() => window.location.reload(), 600);
+                } else {
+                    alert(data.message || 'Failed to approve handover.');
+                }
+            } catch (err) {
+                alert('Network error approving handover.');
+            } finally {
+                this.approveModal.loading = false;
+            }
+        },
+
+        async confirmDelete(item) {
+            if (!confirm(`Are you sure you want to delete handover voucher "${item.handover_no}"? All associated cash receipts will be unlocked.`)) {
+                return;
+            }
+
+            try {
+                const res = await fetch(`{{ url('/collector/handover') }}/${item.id}/delete`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    }
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({ icon: 'success', title: data.message, timer: 1500, showConfirmButton: false });
+                    }
+                    setTimeout(() => window.location.reload(), 600);
+                } else {
+                    alert(data.message || 'Failed to delete handover.');
+                }
+            } catch (err) {
+                alert('Network error deleting handover.');
+            }
+        },
+
+        async openVoucherModal(id) {
+            this.voucherModal.loading = true;
+            this.voucherModal.handover = null;
+            this.voucherModal.open = true;
+
+            try {
+                const res = await fetch(`{{ url('/collector/handover') }}/${id}`, {
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    }
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    this.voucherModal.handover = data.handover;
+                } else {
+                    alert('Failed to load handover voucher details.');
+                    this.voucherModal.open = false;
+                }
+            } catch (err) {
+                alert('Network error loading handover voucher.');
+                this.voucherModal.open = false;
+            } finally {
+                this.voucherModal.loading = false;
+            }
+        },
+
+        printVoucher() {
+            window.print();
+        }
+    };
+}
+</script>
+@endpush
