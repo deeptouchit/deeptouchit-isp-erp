@@ -377,6 +377,9 @@
         </form>
     </div>
 
+    @php
+        $isDueOnly = in_array(request('status'), ['due', 'unpaid', 'overdue']);
+    @endphp
     <!-- 4. Master Table (<table class="saas-table"> Pure CSS System) -->
     <div id="invoicesTableCard" class="bg-white rounded-xl border border-slate-200/90 overflow-hidden shadow-2xs">
         <div class="overflow-x-auto">
@@ -393,6 +396,9 @@
                         <th class="text-center font-semibold">Package</th>
                         <th class="text-center font-semibold">Bill (Tk)</th>
                         <th class="text-center font-semibold">Paid (Tk)</th>
+                        @if(!$isDueOnly)
+                            <th class="text-center font-semibold">Collector</th>
+                        @endif
                         <th class="text-center font-semibold">Status</th>
                         <th class="text-center font-semibold">Paid At</th>
                         <th class="w-14 text-center no-sort">Action</th>
@@ -400,7 +406,7 @@
                 </thead>
                 <tbody>
                     <tr x-show="searchQuery && totalMatchingRows === 0" x-cloak class="no-record-row">
-                        <td colspan="13" class="text-center py-6 text-slate-500 bg-slate-50/50">
+                        <td colspan="{{ $isDueOnly ? 13 : 14 }}" class="text-center py-6 text-slate-500 bg-slate-50/50">
                             <i class="fas fa-spinner fa-spin text-cyan-600 mr-1.5" x-show="isSearching"></i>
                             <i class="fas fa-search text-slate-400 mr-1.5" x-show="!isSearching"></i>
                             <span class="text-xs font-medium">No matching invoices found on this page. Searching entire database...</span>
@@ -500,7 +506,21 @@
                                 @currency($inv->paid_amount)
                             </td>
 
-                            <!-- 11. Status -->
+                            @if(!$isDueOnly)
+                            <!-- 11. Collector (Visible for Paid and All Invoices) -->
+                            <td class="text-center whitespace-nowrap text-xs">
+                                @php
+                                    $collectedBy = $inv->payments->first()?->collector?->name 
+                                        ?: ($inv->creator?->name ?: 'Direct / System');
+                                @endphp
+                                <span class="inline-flex items-center gap-1 font-medium text-slate-800">
+                                    <i class="fas fa-user-check text-[10px] text-cyan-600"></i>
+                                    <span>{{ $collectedBy }}</span>
+                                </span>
+                            </td>
+                            @endif
+
+                            <!-- 12. Status -->
                             <td class="text-center whitespace-nowrap">
                                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold border {{ $statusBadge['class'] }} shadow-2xs">
                                     <span class="w-1.5 h-1.5 rounded-full {{ $statusBadge['dot'] }}"></span>
@@ -531,7 +551,7 @@
                         </tr>
                     @empty
                         <tr class="no-record-row">
-                            <td colspan="13" class="px-4 py-8 text-center text-slate-400 text-xs italic bg-slate-50/50">
+                            <td colspan="{{ $isDueOnly ? 13 : 14 }}" class="px-4 py-8 text-center text-slate-400 text-xs italic bg-slate-50/50">
                                 <i class="fas fa-file-invoice text-2xl text-slate-300 mb-2 block"></i>
                                 No customer invoices found for the selected scope.
                             </td>
