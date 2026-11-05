@@ -135,27 +135,60 @@
         </div>
     </div>
 
-    {{-- 3. Search & Multi-Filter Toolbar (AGENTS.md Rule 2.C) --}}
-    <div class="bg-white p-2.5 rounded-xl border border-slate-200 shadow-2xs">
-        <form method="GET" action="{{ route('tenant.finance.expenses') }}" class="space-y-2">
-            <!-- Row 1: Search Box, Period Preset & Date Range -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-2">
-                <!-- Search Box -->
-                <div class="md:col-span-4 relative">
-                    <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+    {{-- 3. Search & Multi-Filter Toolbar (Customer-Standard 2-Tier Filter System - AGENTS.md Rule 2.C) --}}
+    @php
+        $activeMoreCount = 0;
+        if (!empty($selectedCategory) && $selectedCategory !== 'all') $activeMoreCount++;
+        if (!empty($selectedMethod) && $selectedMethod !== 'all') $activeMoreCount++;
+        if (!empty($selectedStatus) && $selectedStatus !== 'all') $activeMoreCount++;
+        if (!empty($dateFrom)) $activeMoreCount++;
+        if (!empty($dateTo)) $activeMoreCount++;
+        if (!empty($selectedMonth) && $selectedMonth !== 'all') $activeMoreCount++;
+        $isMoreOpen = $activeMoreCount > 0;
+    @endphp
+
+    <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5"
+         x-data="{ showMoreFilters: {{ $isMoreOpen ? 'true' : 'false' }}, searchQuery: '{{ addslashes(request('search', '')) }}' }">
+        <form method="GET" action="{{ route('tenant.finance.expenses') }}" id="filterForm">
+            {{-- 1st Tier: Primary Single Row (Strict Uniform Height h-[34px]) --}}
+            <div class="flex flex-col md:flex-row items-stretch md:items-center gap-2">
+                {{-- Intelligent Live Search Box --}}
+                <div class="relative flex-1 min-w-[200px]">
+                    <span class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none transition-colors duration-150"
+                          :class="searchQuery ? 'text-cyan-600 font-bold' : 'text-slate-400'">
+                        <i class="fas fa-search text-xs"></i>
+                    </span>
                     <input type="text" 
                            name="search" 
-                           value="{{ $search }}" 
+                           x-model="searchQuery" 
                            placeholder="Voucher #, Title, Payee, Ref..." 
-                           class="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 placeholder-slate-400 focus:bg-white focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition">
+                           class="w-full h-[34px] pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs placeholder-slate-400 text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs">
+                    <button type="button" 
+                            x-show="searchQuery && searchQuery.length > 0" 
+                            x-cloak
+                            @click="searchQuery = ''; $nextTick(() => $el.closest('form').submit())" 
+                            class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-slate-600 cursor-pointer transition">
+                        <i class="fas fa-times-circle text-xs"></i>
+                    </button>
                 </div>
 
-                <!-- Quick Period Preset -->
-                <div class="md:col-span-2">
+                {{-- Primary Filter: Voucher Type --}}
+                <div class="w-full md:w-40 flex-shrink-0">
+                    <select name="type" 
+                            onchange="this.form.submit()"
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs cursor-pointer">
+                        <option value="all" {{ $selectedType === 'all' ? 'selected' : '' }}>All Voucher Types</option>
+                        <option value="EXPENSE" {{ $selectedType === 'EXPENSE' ? 'selected' : '' }}>Expense (Debit)</option>
+                        <option value="INCOME" {{ $selectedType === 'INCOME' ? 'selected' : '' }}>Direct Income (Credit)</option>
+                    </select>
+                </div>
+
+                {{-- Primary Filter: Quick Period Preset --}}
+                <div class="w-full md:w-36 flex-shrink-0">
                     <select name="period" 
                             id="periodSelect"
-                            onchange="handlePeriodChange(this.value)"
-                            class="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:border-cyan-500 transition font-medium">
+                            onchange="handlePeriodChange(this.value); this.form.submit();"
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs cursor-pointer">
                         <option value="all" {{ ($period ?? '') === 'all' || empty($period) ? 'selected' : '' }}>All Dates</option>
                         <option value="today" {{ ($period ?? '') === 'today' ? 'selected' : '' }}>Today</option>
                         <option value="yesterday" {{ ($period ?? '') === 'yesterday' ? 'selected' : '' }}>Yesterday</option>
@@ -166,51 +199,67 @@
                     </select>
                 </div>
 
-                <!-- Date From -->
-                <div class="md:col-span-3">
-                    <div class="relative">
-                        <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none">
-                            <i class="fas fa-calendar-day"></i>
-                        </span>
-                        <input type="date" 
-                               name="date_from" 
-                               id="dateFromInput"
-                               value="{{ $dateFrom }}" 
-                               title="From Date"
-                               class="w-full pl-8 pr-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:border-cyan-500 transition">
-                    </div>
-                </div>
-
-                <!-- Date To -->
-                <div class="md:col-span-3">
-                    <div class="relative">
-                        <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none">
-                            <i class="fas fa-calendar-check"></i>
-                        </span>
-                        <input type="date" 
-                               name="date_to" 
-                               id="dateToInput"
-                               value="{{ $dateTo }}" 
-                               title="To Date"
-                               class="w-full pl-8 pr-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:border-cyan-500 transition">
-                    </div>
-                </div>
-            </div>
-
-            <!-- Row 2: Type, Category, Method, Status, Month, Per Page & Action Buttons -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-2 pt-1 border-t border-slate-100">
-                <!-- Type Filter -->
-                <div class="md:col-span-2">
-                    <select name="type" class="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:border-cyan-500 transition">
-                        <option value="all" {{ $selectedType === 'all' ? 'selected' : '' }}>All Voucher Types</option>
-                        <option value="EXPENSE" {{ $selectedType === 'EXPENSE' ? 'selected' : '' }}>Expense (Debit)</option>
-                        <option value="INCOME" {{ $selectedType === 'INCOME' ? 'selected' : '' }}>Direct Income (Credit)</option>
+                {{-- Pagination Selector (per_page) --}}
+                <div class="w-full md:w-28 flex-shrink-0">
+                    <select name="per_page" 
+                            onchange="this.form.submit()"
+                            class="w-full h-[34px] px-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs cursor-pointer">
+                        <option value="10" {{ $perPage == 10 ? 'selected' : '' }}>10 / page</option>
+                        <option value="20" {{ $perPage == 20 ? 'selected' : '' }}>20 / page</option>
+                        <option value="50" {{ $perPage == 50 ? 'selected' : '' }}>50 / page</option>
+                        <option value="100" {{ $perPage == 100 ? 'selected' : '' }}>100 / page</option>
                     </select>
                 </div>
 
-                <!-- Category Filter -->
+                {{-- "More Filters" Accordion Toggle Button --}}
+                <button type="button" 
+                        @click="showMoreFilters = !showMoreFilters"
+                        class="h-[34px] py-0 px-3 rounded-lg border text-xs font-semibold flex items-center justify-center gap-1.5 transition shadow-2xs cursor-pointer flex-shrink-0"
+                        :class="showMoreFilters || {{ $isMoreOpen ? 'true' : 'false' }} ? 'bg-cyan-50/80 border-cyan-300 text-cyan-700' : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700'">
+                    <i class="fas fa-sliders text-[11px]"></i>
+                    <span>More Filters</span>
+                    @if($activeMoreCount > 0)
+                        <span class="w-4 h-4 rounded-full bg-cyan-600 text-white text-[9px] font-bold flex items-center justify-center ml-0.5">
+                            {{ $activeMoreCount }}
+                        </span>
+                    @endif
+                    <i class="fas text-[9px] ml-0.5 transition-transform duration-150"
+                       :class="showMoreFilters ? 'fa-chevron-up text-cyan-600' : 'fa-chevron-down text-slate-400'"></i>
+                </button>
+
+                {{-- Strict Action Buttons Sequence: [Filter] FIRST, [Reset] SECOND (AGENTS.md Rule 2.C) --}}
+                <div class="flex items-center gap-1.5 flex-shrink-0 md:ml-auto">
+                    <button type="submit" 
+                            class="h-[34px] py-0 px-3 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" 
+                            title="Apply Filters">
+                        <i class="fas fa-filter text-[10px]"></i>
+                        <span>Filter</span>
+                    </button>
+                    <a href="{{ route('tenant.finance.expenses') }}" 
+                       class="h-[34px] py-0 px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer flex-shrink-0" 
+                       title="Reset All Filters">
+                        <i class="fas fa-rotate-left text-[10px]"></i>
+                        <span>Reset</span>
+                    </a>
+                </div>
+            </div>
+
+            {{-- 2nd Tier: Secondary Filters Drawer --}}
+            <div x-show="showMoreFilters" 
+                 x-cloak 
+                 x-transition:enter="transition ease-out duration-150"
+                 x-transition:enter-start="opacity-0 -translate-y-1"
+                 x-transition:enter-end="opacity-100 translate-y-0"
+                 x-transition:leave="transition ease-in duration-100"
+                 x-transition:leave-start="opacity-100 translate-y-0"
+                 x-transition:leave-end="opacity-0 -translate-y-1"
+                 class="pt-2 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-2">
+
+                {{-- Category / Account Head --}}
                 <div class="md:col-span-2">
-                    <select name="category_id" class="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:border-cyan-500 transition">
+                    <select name="category_id" 
+                            onchange="this.form.submit()"
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs cursor-pointer">
                         <option value="all">All Account Heads</option>
                         <optgroup label="Expense Heads">
                             @foreach($allCategories->where('type', 'EXPENSE') as $c)
@@ -229,9 +278,11 @@
                     </select>
                 </div>
 
-                <!-- Method Filter -->
-                <div class="md:col-span-2">
-                    <select name="method" class="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:border-cyan-500 transition">
+                {{-- Payment Method --}}
+                <div>
+                    <select name="method" 
+                            onchange="this.form.submit()"
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs cursor-pointer">
                         <option value="all" {{ $selectedMethod === 'all' ? 'selected' : '' }}>All Methods</option>
                         <option value="CASH" {{ $selectedMethod === 'CASH' ? 'selected' : '' }}>Cash</option>
                         <option value="BANK" {{ $selectedMethod === 'BANK' ? 'selected' : '' }}>Bank Wire</option>
@@ -242,9 +293,11 @@
                     </select>
                 </div>
 
-                <!-- Status Filter -->
-                <div class="md:col-span-1">
-                    <select name="status" class="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:border-cyan-500 transition">
+                {{-- Status --}}
+                <div>
+                    <select name="status" 
+                            onchange="this.form.submit()"
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs cursor-pointer">
                         <option value="all" {{ $selectedStatus === 'all' ? 'selected' : '' }}>All Status</option>
                         <option value="APPROVED" {{ $selectedStatus === 'APPROVED' ? 'selected' : '' }}>Approved</option>
                         <option value="PENDING" {{ $selectedStatus === 'PENDING' ? 'selected' : '' }}>Pending</option>
@@ -252,58 +305,43 @@
                     </select>
                 </div>
 
-                <!-- Month Filter -->
-                <div class="md:col-span-2">
-                    <input type="month" 
-                           name="month" 
-                           value="{{ $selectedMonth !== 'all' ? $selectedMonth : '' }}" 
-                           title="Billing Month"
-                           class="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:border-cyan-500 transition">
+                {{-- Date From --}}
+                <div>
+                    <input type="date" 
+                           name="date_from" 
+                           id="dateFromInput"
+                           value="{{ $dateFrom }}" 
+                           title="From Date"
+                           class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs">
                 </div>
 
-                <!-- Per Page -->
-                <div class="md:col-span-1">
-                    <select name="per_page" class="w-full px-2 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:border-cyan-500 transition">
-                        <option value="10" {{ $perPage == 10 ? 'selected' : '' }}>10</option>
-                        <option value="20" {{ $perPage == 20 ? 'selected' : '' }}>20</option>
-                        <option value="50" {{ $perPage == 50 ? 'selected' : '' }}>50</option>
-                        <option value="100" {{ $perPage == 100 ? 'selected' : '' }}>100</option>
-                    </select>
-                </div>
-
-                <!-- Strict Action Buttons: [Filter] FIRST, [Reset] SECOND (AGENTS.md Rule 2.C) -->
-                <div class="md:col-span-2 flex items-center justify-end gap-1.5">
-                    <button type="submit" 
-                            class="flex-1 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-1.5 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" 
-                            title="Apply Filters">
-                        <i class="fas fa-filter text-[10px]"></i>
-                        <span>Filter</span>
-                    </button>
-                    <a href="{{ route('tenant.finance.expenses') }}" 
-                       class="py-1.5 px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-lg border border-slate-200/80 transition inline-flex items-center justify-center gap-1 cursor-pointer flex-shrink-0" 
-                       title="Reset Filters">
-                        <i class="fas fa-rotate-left text-[10px]"></i>
-                        <span>Reset</span>
-                    </a>
+                {{-- Date To --}}
+                <div>
+                    <input type="date" 
+                           name="date_to" 
+                           id="dateToInput"
+                           value="{{ $dateTo }}" 
+                           title="To Date"
+                           class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs">
                 </div>
             </div>
         </form>
     </div>
 
-    {{-- 4. Master Compact Table (<table class="saas-table"> - Clean Single-Line Core Columns) --}}
-    <div class="bg-white rounded-lg border border-slate-200 shadow-xs overflow-hidden">
-        <div class="overflow-x-auto min-h-[300px]">
+    {{-- 4. Master Compact Table (<table class="saas-table"> - AGENTS.md Rule 2.D) --}}
+    <div class="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden">
+        <div class="overflow-x-auto">
             <table class="saas-table">
                 <thead>
                     <tr>
-                        <th class="w-10 text-center">#</th>
-                        <th class="w-36">Voucher No</th>
-                        <th class="w-48">Account Head</th>
-                        <th>Description / Particulars</th>
-                        <th class="text-right w-28">Amount</th>
-                        <th class="text-center w-28">Status</th>
-                        <th class="w-28">Date</th>
-                        <th class="no-sort w-12 text-center">Action</th>
+                        <th class="w-10 text-center font-semibold">#</th>
+                        <th class="w-32 text-center font-semibold">VOUCHER #</th>
+                        <th class="w-44 text-center font-semibold">ACCOUNT HEAD</th>
+                        <th class="text-center font-semibold">DESCRIPTION / PARTICULARS</th>
+                        <th class="w-32 text-center font-semibold">AMOUNT</th>
+                        <th class="w-24 text-center font-semibold">STATUS</th>
+                        <th class="w-28 text-center font-semibold">DATE</th>
+                        <th class="no-sort w-12 text-center font-semibold">ACTION</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -313,20 +351,20 @@
                             <td class="text-center font-mono text-slate-500">{{ $vouchers->firstItem() + $index }}</td>
 
                             {{-- Voucher No (Clickable to open View/Print Voucher Modal) --}}
-                            <td>
+                            <td class="text-center">
                                 <button type="button" @click="viewVoucher({{ $v->id }})" class="font-mono font-bold {{ $v->type === 'INCOME' ? 'text-emerald-700 hover:text-emerald-600' : 'text-rose-700 hover:text-rose-600' }} hover:underline cursor-pointer">
                                     {{ $v->voucher_no }}
                                 </button>
                             </td>
 
                             {{-- Account Head / Category --}}
-                            <td>
+                            <td class="text-left">
                                 <span class="font-medium text-slate-800">{{ $v->category?->name ?? 'General Head' }}</span>
                             </td>
 
                             {{-- Description / Title --}}
-                            <td class="truncate max-w-xs" title="{{ $v->title }}">
-                                <span class="text-slate-900 font-semibold">{{ $v->title }}</span>
+                            <td class="text-left truncate max-w-xs" title="{{ $v->title }}">
+                                <span class="text-slate-900 font-medium">{{ $v->title }}</span>
                             </td>
 
                             {{-- Amount (Color-coded by type) --}}
@@ -343,7 +381,7 @@
                             </td>
 
                             {{-- Date --}}
-                            <td class="font-mono text-slate-600 text-xs">
+                            <td class="text-center font-mono text-slate-600 text-xs">
                                 {{ $v->transaction_date ? \Carbon\Carbon::parse($v->transaction_date)->format('d M Y') : '--' }}
                             </td>
 
@@ -358,8 +396,25 @@
                     @empty
                         <tr>
                             <td colspan="8" class="text-center py-10 text-slate-400">
-                                <i class="fas fa-money-bill-transfer text-3xl mb-2 text-slate-300 block"></i>
-                                <span class="text-xs font-medium">No income or expense vouchers found for the selected criteria.</span>
+                                <div class="max-w-xs mx-auto space-y-2">
+                                    <div class="w-12 h-12 rounded-xl bg-slate-50 border border-slate-200/80 text-slate-400 flex items-center justify-center mx-auto text-lg shadow-2xs">
+                                        <i class="fas fa-money-bill-transfer text-slate-400"></i>
+                                    </div>
+                                    <div class="space-y-0.5">
+                                        <h3 class="text-xs font-semibold text-slate-700">No Vouchers Found</h3>
+                                        <p class="text-[11px] text-slate-400 font-normal">No income or expense vouchers found for the selected criteria.</p>
+                                    </div>
+                                    <div class="pt-1 flex items-center justify-center gap-2">
+                                        <button type="button" @click="openVoucherModal('EXPENSE')" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-semibold shadow-xs transition cursor-pointer">
+                                            <i class="fas fa-minus-circle text-[10px]"></i>
+                                            <span>Record Expense</span>
+                                        </button>
+                                        <button type="button" @click="openVoucherModal('INCOME')" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-xs transition cursor-pointer">
+                                            <i class="fas fa-plus-circle text-[10px]"></i>
+                                            <span>Record Income</span>
+                                        </button>
+                                    </div>
+                                </div>
                             </td>
                         </tr>
                     @endforelse
