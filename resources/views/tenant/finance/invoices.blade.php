@@ -400,13 +400,15 @@
                             <th class="text-center font-semibold">Collector</th>
                         @endif
                         <th class="text-center font-semibold">Status</th>
-                        <th class="text-center font-semibold">Paid At</th>
+                        @if(!$isDueOnly)
+                            <th class="text-center font-semibold">Paid At</th>
+                        @endif
                         <th class="w-14 text-center no-sort">Action</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr x-show="searchQuery && totalMatchingRows === 0" x-cloak class="no-record-row">
-                        <td colspan="{{ $isDueOnly ? 13 : 14 }}" class="text-center py-6 text-slate-500 bg-slate-50/50">
+                        <td colspan="{{ $isDueOnly ? 12 : 14 }}" class="text-center py-6 text-slate-500 bg-slate-50/50">
                             <i class="fas fa-spinner fa-spin text-cyan-600 mr-1.5" x-show="isSearching"></i>
                             <i class="fas fa-search text-slate-400 mr-1.5" x-show="!isSearching"></i>
                             <span class="text-xs font-medium">No matching invoices found on this page. Searching entire database...</span>
@@ -528,7 +530,8 @@
                                 </span>
                             </td>
 
-                            <!-- 12. Paid At -->
+                            @if(!$isDueOnly)
+                            <!-- 13. Paid At -->
                             <td class="text-center font-mono text-slate-700 whitespace-nowrap text-xs">
                                 @if($inv->paid_at)
                                     <span class="inline-flex items-center gap-1 text-slate-700">
@@ -539,8 +542,9 @@
                                     <span class="text-slate-400 font-sans">—</span>
                                 @endif
                             </td>
+                            @endif
 
-                            <!-- 13. Action -->
+                            <!-- Action -->
                             <td class="text-center whitespace-nowrap">
                                 <button type="button" 
                                         @click="toggleMenu({{ Js::from($invData) }}, $event)" 
@@ -551,7 +555,7 @@
                         </tr>
                     @empty
                         <tr class="no-record-row">
-                            <td colspan="{{ $isDueOnly ? 13 : 14 }}" class="px-4 py-8 text-center text-slate-400 text-xs italic bg-slate-50/50">
+                            <td colspan="{{ $isDueOnly ? 12 : 14 }}" class="px-4 py-8 text-center text-slate-400 text-xs italic bg-slate-50/50">
                                 <i class="fas fa-file-invoice text-2xl text-slate-300 mb-2 block"></i>
                                 No customer invoices found for the selected scope.
                             </td>
