@@ -47,13 +47,13 @@
         </div>
     </div>
 
-    {{-- 2. KPI SUMMARY STRIP (Strictly 6 Cards) --}}
+    {{-- 2. KPI SUMMARY STRIP (Strictly 6 Cards - AGENTS.md Rule 2.B) --}}
     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
         {{-- Card 1: Peak Inflow (Download / RX) --}}
-        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
-            <div class="min-w-0 pr-1">
+        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between gap-2">
+            <div class="min-w-0">
                 <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Peak Inflow (RX)</span>
-                <span class="text-[13px] font-bold font-mono text-emerald-700 leading-tight block">
+                <span class="text-[13px] font-bold font-mono text-emerald-700 leading-tight block truncate">
                     {{ $peakDownloadMbps >= 1000 ? round($peakDownloadMbps / 1000, 2) . ' Gbps' : $peakDownloadMbps . ' Mbps' }}
                 </span>
             </div>
@@ -63,10 +63,10 @@
         </div>
 
         {{-- Card 2: Peak Outflow (Upload / TX) --}}
-        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
-            <div class="min-w-0 pr-1">
+        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between gap-2">
+            <div class="min-w-0">
                 <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Peak Outflow (TX)</span>
-                <span class="text-[13px] font-bold font-mono text-cyan-700 leading-tight block">
+                <span class="text-[13px] font-bold font-mono text-cyan-700 leading-tight block truncate">
                     {{ $peakUploadMbps >= 1000 ? round($peakUploadMbps / 1000, 2) . ' Gbps' : $peakUploadMbps . ' Mbps' }}
                 </span>
             </div>
@@ -76,10 +76,10 @@
         </div>
 
         {{-- Card 3: Allocated Subscribed Capacity --}}
-        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
-            <div class="min-w-0 pr-1">
+        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between gap-2">
+            <div class="min-w-0">
                 <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Allocated CIR</span>
-                <span class="text-[13px] font-bold font-mono text-indigo-700 leading-tight block">
+                <span class="text-[13px] font-bold font-mono text-indigo-700 leading-tight block truncate">
                     {{ $totalSubscribedBandwidthMbps >= 1000 ? round($totalSubscribedBandwidthMbps / 1000, 2) . ' Gbps' : $totalSubscribedBandwidthMbps . ' Mbps' }}
                 </span>
             </div>
@@ -89,10 +89,10 @@
         </div>
 
         {{-- Card 4: Upstream Trunk Utilization --}}
-        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
-            <div class="min-w-0 pr-1">
+        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between gap-2">
+            <div class="min-w-0">
                 <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Trunk Load</span>
-                <span class="text-[13px] font-bold font-mono text-amber-700 leading-tight block">
+                <span class="text-[13px] font-bold font-mono text-amber-700 leading-tight block truncate">
                     {{ $upstreamUtilizationPct }}%
                 </span>
             </div>
@@ -102,10 +102,10 @@
         </div>
 
         {{-- Card 5: BDIX Domestic Peering Peak --}}
-        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
-            <div class="min-w-0 pr-1">
+        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between gap-2">
+            <div class="min-w-0">
                 <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">BDIX Peering</span>
-                <span class="text-[13px] font-bold font-mono text-purple-700 leading-tight block">
+                <span class="text-[13px] font-bold font-mono text-purple-700 leading-tight block truncate">
                     {{ $bdixPeakMbps }} Mbps
                 </span>
             </div>
@@ -115,10 +115,10 @@
         </div>
 
         {{-- Card 6: Monitored Interface Count --}}
-        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
-            <div class="min-w-0 pr-1">
+        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between gap-2">
+            <div class="min-w-0">
                 <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Active Interfaces</span>
-                <span class="text-[13px] font-bold font-mono text-slate-800 leading-tight block">
+                <span class="text-[13px] font-bold font-mono text-slate-800 leading-tight block truncate">
                     {{ $activeInterfacesCount }} Ports
                 </span>
             </div>
@@ -128,64 +128,131 @@
         </div>
     </div>
 
-    {{-- 3. SEARCH & MULTI-FILTER TOOLBAR --}}
-    <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-xs">
-        <form method="GET" action="{{ route('tenant.reports.mrtg') }}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5">
-            {{-- Filter 1: Router Node Selector --}}
-            <div>
-                <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Router / POP Node</label>
-                <select name="router_id" class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 py-1.5 focus:bg-white focus:border-cyan-500 focus:outline-none transition">
-                    <option value="all">All Routers Combined</option>
-                    @foreach($allRouters as $r)
-                        <option value="{{ $r->id }}" {{ (string)$routerId === (string)$r->id ? 'selected' : '' }}>{{ $r->name }} ({{ $r->ip_address }})</option>
-                    @endforeach
-                </select>
-            </div>
+    {{-- 3. SEARCH & MULTI-FILTER TOOLBAR (Customer-Standard 2-Tier Filter System - AGENTS.md Rule 2.C) --}}
+    @php
+        $activeMoreCount = 0;
+        if (!empty($interfaceType) && $interfaceType !== 'all') $activeMoreCount++;
+        if (!empty($viewMode) && $viewMode !== 'both') $activeMoreCount++;
+        $isMoreOpen = $activeMoreCount > 0;
+    @endphp
 
-            {{-- Filter 2: Timescale Range Selector --}}
-            <div>
-                <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">MRTG Timeframe</label>
-                <select name="timescale" class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 py-1.5 focus:bg-white focus:border-cyan-500 focus:outline-none transition">
-                    <option value="daily" {{ $timescale === 'daily' ? 'selected' : '' }}>Daily (24 Hours Graph)</option>
-                    <option value="weekly" {{ $timescale === 'weekly' ? 'selected' : '' }}>Weekly (7 Days Graph)</option>
-                    <option value="monthly" {{ $timescale === 'monthly' ? 'selected' : '' }}>Monthly (30 Days Graph)</option>
-                    <option value="yearly" {{ $timescale === 'yearly' ? 'selected' : '' }}>Yearly (12 Months Continuous)</option>
-                    <option value="live" {{ $timescale === 'live' ? 'selected' : '' }}>Real-time Live Stream (10s Polling)</option>
-                </select>
-            </div>
+    <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5"
+         x-data="{ 
+             showMoreFilters: {{ $isMoreOpen ? 'true' : 'false' }}, 
+             searchQuery: '{{ addslashes(request('search', '')) }}' 
+         }">
+        <form method="GET" action="{{ route('tenant.reports.mrtg') }}" class="space-y-2.5">
+            {{-- 1st Tier: Primary Single Row (Uniform h-[34px]) --}}
+            <div class="flex flex-col md:flex-row items-stretch md:items-center gap-2">
+                {{-- Intelligent Live Search Box --}}
+                <div class="relative flex-1 min-w-[200px]">
+                    <div class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
+                        <i class="fas fa-magnifying-glass text-xs" :class="searchQuery ? 'text-cyan-600 font-bold' : 'text-slate-400'"></i>
+                    </div>
+                    <input type="text" 
+                           name="search" 
+                           x-model="searchQuery"
+                           placeholder="Filter interface port, router node, classification..." 
+                           class="w-full h-[34px] pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs">
+                    <button type="button" 
+                            x-show="searchQuery && searchQuery.length > 0" 
+                            @click="searchQuery = ''; $nextTick(() => $el.closest('form').submit())" 
+                            class="absolute inset-y-0 right-0 pr-2 flex items-center text-slate-400 hover:text-slate-600 transition cursor-pointer"
+                            title="Clear search">
+                        <i class="fas fa-times-circle text-xs"></i>
+                    </button>
+                </div>
 
-            {{-- Filter 3: Interface Classification --}}
-            <div>
-                <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Interface Type</label>
-                <select name="interface_type" class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 py-1.5 focus:bg-white focus:border-cyan-500 focus:outline-none transition">
-                    <option value="all" {{ $interfaceType === 'all' ? 'selected' : '' }}>All Trunk &amp; Client Ports</option>
-                    <option value="wan" {{ $interfaceType === 'wan' ? 'selected' : '' }}>Upstream IIG / ITC Only</option>
-                    <option value="bdix" {{ $interfaceType === 'bdix' ? 'selected' : '' }}>BDIX Domestic Peering Only</option>
-                    <option value="trunk" {{ $interfaceType === 'trunk' ? 'selected' : '' }}>OLT &amp; Reseller Trunks</option>
-                    <option value="lan" {{ $interfaceType === 'lan' ? 'selected' : '' }}>Retail PPPoE LAN Distribution</option>
-                </select>
-            </div>
+                {{-- Router / POP Node Selector --}}
+                <div class="w-full md:w-52 flex-shrink-0">
+                    <select name="router_id" 
+                            onchange="this.form.submit()"
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs cursor-pointer">
+                        <option value="all">All Routers Combined</option>
+                        @foreach($allRouters as $r)
+                            <option value="{{ $r->id }}" {{ (string)$routerId === (string)$r->id ? 'selected' : '' }}>{{ $r->name }} ({{ $r->ip_address }})</option>
+                        @endforeach
+                    </select>
+                </div>
 
-            {{-- Filter 4: View Mode --}}
-            <div>
-                <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Presentation Mode</label>
-                <select name="view_mode" class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 py-1.5 focus:bg-white focus:border-cyan-500 focus:outline-none transition">
-                    <option value="both" {{ $viewMode === 'both' ? 'selected' : '' }}>MRTG Graphs + Data Matrix</option>
-                    <option value="graph" {{ $viewMode === 'graph' ? 'selected' : '' }}>MRTG Graphs Only</option>
-                    <option value="table" {{ $viewMode === 'table' ? 'selected' : '' }}>Interface Data Table Only</option>
-                </select>
-            </div>
+                {{-- MRTG Timeframe Selector --}}
+                <div class="w-full md:w-48 flex-shrink-0">
+                    <select name="timescale" 
+                            onchange="this.form.submit()"
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs cursor-pointer">
+                        <option value="daily" {{ $timescale === 'daily' ? 'selected' : '' }}>Daily (24 Hours Graph)</option>
+                        <option value="weekly" {{ $timescale === 'weekly' ? 'selected' : '' }}>Weekly (7 Days Graph)</option>
+                        <option value="monthly" {{ $timescale === 'monthly' ? 'selected' : '' }}>Monthly (30 Days Graph)</option>
+                        <option value="yearly" {{ $timescale === 'yearly' ? 'selected' : '' }}>Yearly (12 Months)</option>
+                        <option value="live" {{ $timescale === 'live' ? 'selected' : '' }}>Real-time Live Stream</option>
+                    </select>
+                </div>
 
-            {{-- Filter & Reset Buttons (Strict Universal Standard - AGENTS.md Rule 2.C) --}}
-            <div class="flex items-end gap-1.5">
-                <button type="submit" class="flex-1 py-1.5 px-3 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-xs font-semibold shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" title="Apply Filters">
-                    <i class="fas fa-filter text-[10px]"></i>
-                    <span>Filter</span>
+                {{-- More Filters Accordion Button --}}
+                <button type="button" 
+                        @click="showMoreFilters = !showMoreFilters" 
+                        class="h-[34px] py-0 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-xs rounded-lg border border-slate-200 transition flex items-center justify-center gap-1.5 flex-shrink-0 cursor-pointer">
+                    <i class="fas fa-sliders text-[11px] text-slate-500"></i>
+                    <span>More Filters</span>
+                    @if($activeMoreCount > 0)
+                        <span class="w-4 h-4 rounded-full bg-cyan-600 text-white text-[9px] font-bold flex items-center justify-center font-mono">
+                            {{ $activeMoreCount }}
+                        </span>
+                    @endif
+                    <i class="fas fa-chevron-down text-[9px] transition-transform duration-200" :class="showMoreFilters ? 'rotate-180 text-cyan-600' : 'text-slate-400'"></i>
                 </button>
-                <a href="{{ route('tenant.reports.mrtg') }}" class="py-1.5 px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer" title="Reset Filters">
-                    <i class="fas fa-rotate-left text-[10px]"></i>
-                    <span>Reset</span>
-                </a>
+
+                {{-- Strict Action Buttons Sequence: [Filter] FIRST, [Reset] SECOND --}}
+                <div class="flex items-center gap-1.5 flex-shrink-0 md:ml-auto">
+                    <button type="submit" 
+                            class="h-[34px] py-0 px-3 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer flex-shrink-0" 
+                            title="Apply Filters">
+                        <i class="fas fa-filter text-[10px]"></i>
+                        <span>Filter</span>
+                    </button>
+                    <a href="{{ route('tenant.reports.mrtg') }}" 
+                       class="h-[34px] py-0 px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer flex-shrink-0" 
+                       title="Reset All Filters">
+                        <i class="fas fa-rotate-left text-[10px]"></i>
+                        <span>Reset</span>
+                    </a>
+                </div>
+            </div>
+
+            {{-- 2nd Tier: Secondary Filters Drawer --}}
+            <div x-show="showMoreFilters" 
+                 x-cloak 
+                 x-transition:enter="transition ease-out duration-150"
+                 x-transition:enter-start="opacity-0 -translate-y-1"
+                 x-transition:enter-end="opacity-100 translate-y-0"
+                 x-transition:leave="transition ease-in duration-100"
+                 x-transition:leave-start="opacity-100 translate-y-0"
+                 x-transition:leave-end="opacity-0 -translate-y-1"
+                 class="pt-2 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2">
+
+                {{-- Interface Classification --}}
+                <div>
+                    <select name="interface_type" 
+                            onchange="this.form.submit()"
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs cursor-pointer">
+                        <option value="all" {{ $interfaceType === 'all' ? 'selected' : '' }}>All Trunk &amp; Client Ports</option>
+                        <option value="wan" {{ $interfaceType === 'wan' ? 'selected' : '' }}>Upstream IIG / ITC Only</option>
+                        <option value="bdix" {{ $interfaceType === 'bdix' ? 'selected' : '' }}>BDIX Domestic Peering Only</option>
+                        <option value="trunk" {{ $interfaceType === 'trunk' ? 'selected' : '' }}>OLT &amp; Reseller Trunks</option>
+                        <option value="lan" {{ $interfaceType === 'lan' ? 'selected' : '' }}>Retail PPPoE LAN Distribution</option>
+                    </select>
+                </div>
+
+                {{-- View Mode --}}
+                <div>
+                    <select name="view_mode" 
+                            onchange="this.form.submit()"
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs cursor-pointer">
+                        <option value="both" {{ $viewMode === 'both' ? 'selected' : '' }}>MRTG Graphs + Data Matrix</option>
+                        <option value="graph" {{ $viewMode === 'graph' ? 'selected' : '' }}>MRTG Graphs Only</option>
+                        <option value="table" {{ $viewMode === 'table' ? 'selected' : '' }}>Interface Data Table Only</option>
+                    </select>
+                </div>
             </div>
         </form>
     </div>
@@ -268,36 +335,36 @@
                 <span class="text-[11px] text-slate-500 font-medium">Real-time Port Bandwidth, Capacity &amp; Utilization Logs</span>
             </div>
 
-            <div class="overflow-x-auto min-h-[220px]">
+            <div class="overflow-x-auto">
                 <table class="saas-table">
                     <thead>
                         <tr>
-                            <th class="w-10 text-center">#</th>
-                            <th>Interface Port</th>
-                            <th>Router Node</th>
-                            <th>Classification</th>
-                            <th class="w-28">Link Capacity</th>
-                            <th class="text-right w-24 text-emerald-700 font-bold">RX (In)</th>
-                            <th class="text-right w-24 text-cyan-700 font-bold">TX (Out)</th>
-                            <th class="text-right w-24">Peak RX</th>
-                            <th class="text-right w-24">Peak TX</th>
-                            <th class="text-center w-20">Load %</th>
-                            <th class="text-center w-16">Status</th>
-                            <th class="no-sort w-14 text-center">Action</th>
+                            <th class="w-10 text-center font-semibold">#</th>
+                            <th class="text-center font-semibold">Interface Port</th>
+                            <th class="text-center font-semibold">Router Node</th>
+                            <th class="text-center font-semibold">Classification</th>
+                            <th class="w-28 text-center font-semibold">Link Capacity</th>
+                            <th class="w-24 text-center font-semibold text-emerald-700">RX (In)</th>
+                            <th class="w-24 text-center font-semibold text-cyan-700">TX (Out)</th>
+                            <th class="w-24 text-center font-semibold">Peak RX</th>
+                            <th class="w-24 text-center font-semibold">Peak TX</th>
+                            <th class="w-20 text-center font-semibold">Load %</th>
+                            <th class="w-16 text-center font-semibold">Status</th>
+                            <th class="no-sort w-14 text-center font-semibold">Action</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($interfacesMatrix as $idx => $iface)
                             <tr>
                                 <td class="text-center font-mono text-slate-400">{{ $idx + 1 }}</td>
-                                <td class="font-bold text-slate-800 font-mono">{{ $iface['name'] }}</td>
-                                <td class="text-slate-600 font-medium">{{ $iface['router_name'] }}</td>
-                                <td>
+                                <td class="text-left font-bold text-slate-800 font-mono">{{ $iface['name'] }}</td>
+                                <td class="text-left text-slate-600 font-medium">{{ $iface['router_name'] }}</td>
+                                <td class="text-center">
                                     <span class="px-1.5 py-0.5 rounded text-[10.5px] font-semibold {{ $iface['type'] === 'wan' ? 'bg-indigo-100 text-indigo-800' : ($iface['type'] === 'bdix' ? 'bg-purple-100 text-purple-800' : ($iface['type'] === 'trunk' ? 'bg-cyan-100 text-cyan-800' : 'bg-slate-100 text-slate-700')) }}">
                                         {{ $iface['type_label'] }}
                                     </span>
                                 </td>
-                                <td class="font-mono text-slate-700 text-xs">{{ $iface['capacity_label'] }}</td>
+                                <td class="text-center font-mono text-slate-700 text-xs">{{ $iface['capacity_label'] }}</td>
                                 <td class="text-right font-mono font-bold text-emerald-700 bg-emerald-50/20">{{ $iface['rx_mbps'] }} M</td>
                                 <td class="text-right font-mono font-bold text-cyan-700 bg-cyan-50/20">{{ $iface['tx_mbps'] }} M</td>
                                 <td class="text-right font-mono text-slate-800">{{ $iface['peak_rx_mbps'] }} M</td>
@@ -324,8 +391,21 @@
                         @empty
                             <tr>
                                 <td colspan="12" class="text-center py-10 text-slate-400">
-                                    <i class="fas fa-ethernet text-2xl mb-2 text-slate-300 block"></i>
-                                    <span class="text-xs font-medium">No interface telemetry recorded.</span>
+                                    <div class="max-w-xs mx-auto space-y-2">
+                                        <div class="w-12 h-12 rounded-xl bg-slate-50 border border-slate-200/80 text-slate-400 flex items-center justify-center mx-auto text-lg shadow-2xs">
+                                            <i class="fas fa-ethernet text-slate-400"></i>
+                                        </div>
+                                        <div class="space-y-0.5">
+                                            <h3 class="text-xs font-semibold text-slate-700">No Interfaces Found</h3>
+                                            <p class="text-[11px] text-slate-400 font-normal">No interface telemetry records found matching selected criteria.</p>
+                                        </div>
+                                        <div class="pt-1">
+                                            <a href="{{ route('tenant.reports.mrtg') }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-xs font-semibold shadow-xs transition cursor-pointer">
+                                                <i class="fas fa-rotate-left text-[10px]"></i>
+                                                <span>Reset Filters</span>
+                                            </a>
+                                        </div>
+                                    </div>
                                 </td>
                             </tr>
                         @endforelse

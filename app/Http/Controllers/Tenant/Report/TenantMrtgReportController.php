@@ -43,6 +43,7 @@ class TenantMrtgReportController extends Controller
         $timescale = $request->get('timescale', 'daily'); // daily, weekly, monthly, yearly, live
         $interfaceType = $request->get('interface_type', 'all'); // all, wan, bdix, lan, trunk
         $viewMode = $request->get('view_mode', 'both'); // both, graph, table
+        $search = trim($request->get('search', ''));
 
         // 1. Load Routers
         $allRouters = TenantRouter::where('tenant_id', $tenant->id)->where('is_active', true)->orderBy('name')->get();
@@ -73,7 +74,7 @@ class TenantMrtgReportController extends Controller
         $upstreamUtilizationPct = round(($peakDownloadMbps / $contractedUpstreamCapacityMbps) * 100, 1);
 
         // 4. Interface Telemetry Matrix
-        $interfacesMatrix = $this->buildInterfaceMatrix($allRouters, $selectedRouter, $interfaceType);
+        $interfacesMatrix = $this->buildInterfaceMatrix($allRouters, $selectedRouter, $interfaceType, $search);
         $activeInterfacesCount = count($interfacesMatrix);
 
         // 5. Build MRTG Graph Series for Selected Timescale
@@ -129,6 +130,7 @@ class TenantMrtgReportController extends Controller
             'timescale',
             'interfaceType',
             'viewMode',
+            'search',
             'totalSubscribedBandwidthMbps',
             'contractedUpstreamCapacityMbps',
             'peakDownloadMbps',
@@ -266,7 +268,7 @@ class TenantMrtgReportController extends Controller
     /**
      * Build Standardized Interface Matrix with Live Rates
      */
-    protected function buildInterfaceMatrix($allRouters, ?TenantRouter $selectedRouter, string $filterType): array
+    protected function buildInterfaceMatrix($allRouters, ?TenantRouter $selectedRouter, string $filterType, string $search = ''): array
     {
         $matrix = [];
         $routerList = $selectedRouter ? collect([$selectedRouter]) : $allRouters;
@@ -303,6 +305,15 @@ class TenantMrtgReportController extends Controller
                     'status' => $iface['status'],
                 ];
             }
+        }
+
+        if (!empty($search)) {
+            $searchLower = strtolower($search);
+            $matrix = array_values(array_filter($matrix, function($item) use ($searchLower) {
+                return str_contains(strtolower($item['name']), $searchLower)
+                    || str_contains(strtolower($item['router_name']), $searchLower)
+                    || str_contains(strtolower($item['type_label']), $searchLower);
+            }));
         }
 
         return $matrix;
