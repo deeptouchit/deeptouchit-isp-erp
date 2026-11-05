@@ -384,17 +384,17 @@
                 <thead>
                     <tr>
                         <th class="w-10 text-center no-sort">#</th>
-                        <th class="text-left font-semibold">Invoice #</th>
-                        <th class="text-left font-semibold">Cust ID</th>
-                        <th class="text-left font-semibold">Customer</th>
-                        <th class="text-left font-semibold">Guardian</th>
-                        <th class="text-left font-semibold">Area</th>
-                        <th class="text-left font-semibold">Partner</th>
-                        <th class="text-left font-semibold">Package</th>
-                        <th class="text-right font-semibold">Bill (Tk)</th>
-                        <th class="text-right font-semibold">Paid (Tk)</th>
+                        <th class="text-center font-semibold">Invoice #</th>
+                        <th class="text-center font-semibold">Cust ID</th>
+                        <th class="text-center font-semibold">Customer</th>
+                        <th class="text-center font-semibold">Guardian</th>
+                        <th class="text-center font-semibold">Area</th>
+                        <th class="text-center font-semibold">Partner</th>
+                        <th class="text-center font-semibold">Package</th>
+                        <th class="text-center font-semibold">Bill (Tk)</th>
+                        <th class="text-center font-semibold">Paid (Tk)</th>
                         <th class="text-center font-semibold">Status</th>
-                        <th class="text-left font-semibold">Paid At</th>
+                        <th class="text-center font-semibold">Paid At</th>
                         <th class="w-14 text-center no-sort">Action</th>
                     </tr>
                 </thead>
@@ -434,7 +434,7 @@
                             </td>
 
                             <!-- 2. Invoice # (Clickable) -->
-                            <td class="font-mono text-cyan-800 font-bold whitespace-nowrap">
+                            <td class="text-center font-mono text-cyan-800 font-bold whitespace-nowrap">
                                 <button type="button" 
                                         @click="openViewModal({{ $inv->id }})" 
                                         class="hover:underline hover:text-cyan-600 cursor-pointer inline-flex items-center gap-1"
@@ -445,7 +445,7 @@
                             </td>
 
                             <!-- 3. Cust ID -->
-                            <td class="font-mono font-bold text-slate-800 text-xs whitespace-nowrap">
+                            <td class="text-center font-mono font-bold text-slate-800 text-xs whitespace-nowrap">
                                 {{ $inv->customer?->customer_id ?: ($inv->customer?->username ?? '—') }}
                             </td>
 
@@ -471,7 +471,7 @@
                             </td>
 
                             <!-- 7. Partner -->
-                            <td class="font-mono whitespace-nowrap text-xs">
+                            <td class="text-center font-mono whitespace-nowrap text-xs">
                                 @if($inv->reseller)
                                     <span class="inline-flex items-center gap-1 text-cyan-800 font-semibold" title="{{ $inv->reseller->name }}">
                                         <i class="fas fa-handshake text-cyan-600 text-[10px]"></i>
@@ -509,7 +509,7 @@
                             </td>
 
                             <!-- 12. Paid At -->
-                            <td class="font-mono text-slate-700 whitespace-nowrap text-xs">
+                            <td class="text-center font-mono text-slate-700 whitespace-nowrap text-xs">
                                 @if($inv->paid_at)
                                     <span class="inline-flex items-center gap-1 text-slate-700">
                                         <i class="fas fa-clock text-emerald-600 text-[10px]"></i>
