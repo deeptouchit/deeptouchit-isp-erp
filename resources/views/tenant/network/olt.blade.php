@@ -300,7 +300,9 @@
                         <th class="text-center font-semibold">Host IP &amp; Port</th>
                         <th class="text-center font-semibold">Parent Router</th>
                         <th class="text-center font-semibold">Model / Vendor</th>
-                        <th class="text-center font-semibold">PON &amp; ONUs</th>
+                        <th class="text-center font-semibold">PON Ports</th>
+                        <th class="text-center font-semibold">Total ONUs</th>
+                        <th class="text-center font-semibold">Online ONUs</th>
                         <th class="text-center font-semibold">Status</th>
                         <th class="w-10 text-center font-semibold no-sort">Action</th>
                     </tr>
@@ -359,24 +361,35 @@
                                 {{ $olt->model ?: ($olt->vendor ?: 'EPON OLT') }}
                             </td>
 
-                            <!-- 6. PON & ONUs (Center Align) -->
+                            <!-- 6. PON Ports (Center Align) -->
                             <td class="text-center font-mono whitespace-nowrap">
-                                <div class="inline-flex items-center gap-1.5">
-                                    <span class="px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200 text-[10px]" title="Total PON Ports">
-                                        {{ $olt->total_pon_ports ?: 8 }}P
-                                    </span>
-                                    <a href="{{ route('tenant.network.onu', ['olt_id' => $olt->id]) }}" 
-                                       class="px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 text-[10px] transition" 
-                                       title="Total ONUs">
-                                        {{ number_format($totalCount) }} ONUs
-                                    </a>
-                                    <span class="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px]" title="Online ONUs">
-                                        {{ number_format($onlineCount) }} On
-                                    </span>
-                                </div>
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
+                                    <i class="fas fa-plug text-[9px]"></i>
+                                    <span>{{ $olt->total_pon_ports ?: 8 }} PON</span>
+                                </span>
                             </td>
 
-                            <!-- 7. Status (Center Align) -->
+                            <!-- 7. Total ONUs (Center Align) -->
+                            <td class="text-center font-mono whitespace-nowrap">
+                                <a href="{{ route('tenant.network.onu', ['olt_id' => $olt->id]) }}" 
+                                   class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 transition" 
+                                   title="View all ONUs for {{ $olt->name }}">
+                                    <i class="fas fa-satellite-dish text-[9px]"></i>
+                                    <span>{{ number_format($totalCount) }} ONUs</span>
+                                </a>
+                            </td>
+
+                            <!-- 8. Online ONUs (Center Align) -->
+                            <td class="text-center font-mono whitespace-nowrap">
+                                <a href="{{ route('tenant.network.onu', ['olt_id' => $olt->id, 'status' => 'online']) }}" 
+                                   class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 transition" 
+                                   title="View Online ONUs for {{ $olt->name }}">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                    <span>{{ number_format($onlineCount) }} Online</span>
+                                </a>
+                            </td>
+
+                            <!-- 9. Status (Center Align) -->
                             <td class="text-center whitespace-nowrap">
                                 @if($olt->status === 'online')
                                     <span class="inline-flex items-center justify-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -391,7 +404,7 @@
                                 @endif
                             </td>
 
-                            <!-- 8. Actions (Center Align, Floating 3-Dot) -->
+                            <!-- 10. Actions (Center Align, Floating 3-Dot) -->
                             <td class="w-10 text-center whitespace-nowrap">
                                 <button type="button" 
                                         @click.stop="toggleMenu({{ Js::from($olt) }}, $event)" 
@@ -403,7 +416,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="py-10 text-center">
+                            <td colspan="10" class="py-10 text-center">
                                 <div class="max-w-md mx-auto space-y-2.5">
                                     <div class="w-10 h-10 rounded-xl bg-cyan-50 text-cyan-600 mx-auto flex items-center justify-center text-base border border-cyan-100 shadow-xs">
                                         <i class="fas fa-network-wired"></i>
