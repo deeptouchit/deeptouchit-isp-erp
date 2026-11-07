@@ -146,6 +146,18 @@ class InternetPackageController extends Controller
     }
 
     /**
+     * Show the form for creating a new Internet Package.
+     */
+    public function create(Request $request)
+    {
+        $tenant = $this->getTenant();
+        $routers = TenantRouter::where('tenant_id', $tenant->id)->where('is_active', true)->get(['id', 'name', 'ip_address', 'is_active']);
+        $ipPools = TenantIpPool::where('tenant_id', $tenant->id)->where('status', '!=', 'disabled')->get(['id', 'tenant_id', 'router_id', 'name', 'range_start', 'range_end', 'pool_type']);
+
+        return view('tenant.network.packages_create', compact('tenant', 'routers', 'ipPools'));
+    }
+
+    /**
      * Store a newly created Internet Package.
      */
     public function store(Request $request)
@@ -244,6 +256,19 @@ class InternetPackageController extends Controller
 
         return redirect()->route('tenant.network.packages')
             ->with('success', "Internet Package '{$package->package_name}' ({$package->name}) created{$syncNote}.");
+    }
+
+    /**
+     * Show the form for editing an existing Internet Package.
+     */
+    public function edit($id)
+    {
+        $tenant = $this->getTenant();
+        $package = TenantInternetPackage::where('tenant_id', $tenant->id)->findOrFail($id);
+        $routers = TenantRouter::where('tenant_id', $tenant->id)->where('is_active', true)->get(['id', 'name', 'ip_address', 'is_active']);
+        $ipPools = TenantIpPool::where('tenant_id', $tenant->id)->where('status', '!=', 'disabled')->get(['id', 'tenant_id', 'router_id', 'name', 'range_start', 'range_end', 'pool_type']);
+
+        return view('tenant.network.packages_edit', compact('tenant', 'package', 'routers', 'ipPools'));
     }
 
     /**

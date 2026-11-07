@@ -122,9 +122,11 @@ Route::middleware(['web'])->group(function () {
 
             // Bandwidth & Internet Packages Management
             Route::get('/packages', [InternetPackageController::class, 'index'])->name('packages');
+            Route::get('/packages/create', [InternetPackageController::class, 'create'])->name('packages.create');
             Route::post('/packages', [InternetPackageController::class, 'store'])->name('packages.store');
             Route::post('/packages/import-mikrotik', [InternetPackageController::class, 'importFromMikrotik'])->name('packages.import-mikrotik');
             Route::get('/packages/router-pools/{routerId}', [InternetPackageController::class, 'getRouterIpPools'])->name('packages.router-pools');
+            Route::get('/packages/{package}/edit', [InternetPackageController::class, 'edit'])->name('packages.edit');
             Route::put('/packages/{package}', [InternetPackageController::class, 'update'])->name('packages.update');
             Route::delete('/packages/{package}', [InternetPackageController::class, 'destroy'])->name('packages.destroy');
             Route::patch('/packages/{package}/toggle-status', [InternetPackageController::class, 'toggleStatus'])->name('packages.toggle-status');
