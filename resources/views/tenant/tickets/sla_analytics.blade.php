@@ -9,22 +9,22 @@
 @section('content')
 <div class="space-y-3" x-data="pageManager()" @scroll.window="activeMenu = null" @resize.window="activeMenu = null">
     
-    {{-- 1. TOP HEADER BAR --}}
+    {{-- 1. TOP HEADER BAR (Strict Rule 2.A: Title + Icon + Action Buttons ONLY. No subtitles/p tags) --}}
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-white p-3 rounded-xl border border-slate-200 shadow-xs">
         <div class="flex items-center gap-2.5">
-            <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center text-sm shadow-2xs flex-shrink-0">
+            <div class="w-8 h-8 rounded-lg bg-cyan-50 text-cyan-600 border border-cyan-100 flex items-center justify-center text-sm shadow-2xs flex-shrink-0">
                 <i class="fas fa-chart-pie"></i>
             </div>
             <h1 class="text-sm font-bold text-slate-800 tracking-tight">Staff Performance &amp; SLA Analytics</h1>
         </div>
         <div class="flex items-center gap-2">
-            <a href="{{ route('tenant.tickets.sla-analytics.print', ['period' => $period]) }}" target="_blank" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200/80 transition flex items-center gap-1.5 cursor-pointer">
+            <a href="{{ route('tenant.tickets.sla-analytics.print', ['period' => $period]) }}" target="_blank" class="h-[34px] py-0 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200/80 transition flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-print text-slate-500 text-xs"></i>
-                <span>Print Report</span>
+                <span>Print Audit Report</span>
             </a>
-            <a href="{{ route('tenant.tickets.sla-analytics.export') }}" class="px-3 py-1.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-xs font-semibold shadow-xs transition flex items-center gap-1.5 cursor-pointer">
+            <a href="{{ route('tenant.tickets.sla-analytics.export') }}" class="h-[34px] py-0 px-3 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-xs font-semibold shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-file-excel text-xs"></i>
-                <span>Export Excel</span>
+                <span>Export CSV</span>
             </a>
         </div>
     </div>
@@ -110,82 +110,131 @@
         </div>
     </div>
 
-    {{-- 3. SEARCH & MULTI-FILTER TOOLBAR --}}
-    <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-xs">
-        <form method="GET" action="{{ route('tenant.tickets.sla-analytics') }}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5">
-            {{-- Filter 1: Period Window --}}
-            <div>
-                <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Time Period</label>
-                <select name="period" class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 py-1.5 focus:bg-white focus:border-cyan-500 focus:outline-none transition">
+    {{-- 3. CUSTOMER-STANDARD 2-TIER FILTER SYSTEM (AGENTS.md Rule 2.C) --}}
+    <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5"
+         x-data="{ 
+             showMoreFilters: {{ $isMoreOpen ? 'true' : 'false' }}, 
+             searchQuery: '{{ addslashes(request('search', '')) }}' 
+         }">
+        <form method="GET" action="{{ route('tenant.tickets.sla-analytics') }}" class="space-y-2.5">
+            {{-- 1st Tier: Primary Single Row --}}
+            <div class="flex flex-col md:flex-row items-stretch md:items-center gap-2">
+                {{-- Intelligent Live Search Box --}}
+                <div class="relative flex-1 min-w-[200px]">
+                    <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-xs transition"
+                       :class="searchQuery ? 'text-cyan-600 font-bold' : 'text-slate-400'"></i>
+                    <input type="text" 
+                           name="search" 
+                           x-model="searchQuery"
+                           placeholder="Search by staff name, role, phone..."
+                           class="w-full h-[34px] pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
+                    <button type="button" 
+                            x-show="searchQuery && searchQuery.length > 0" 
+                            @click="searchQuery = ''; $nextTick(() => $el.closest('form').submit())"
+                            class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer">
+                        <i class="fas fa-times-circle text-xs"></i>
+                    </button>
+                </div>
+
+                {{-- Primary Filter: Time Period --}}
+                <select name="period" class="w-full md:w-36 h-[34px] bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                     <option value="7_days" {{ $period === '7_days' ? 'selected' : '' }}>Last 7 Days</option>
                     <option value="30_days" {{ $period === '30_days' ? 'selected' : '' }}>Last 30 Days</option>
                     <option value="90_days" {{ $period === '90_days' ? 'selected' : '' }}>Last 90 Days</option>
                     <option value="this_month" {{ $period === 'this_month' ? 'selected' : '' }}>This Month</option>
                     <option value="all" {{ $period === 'all' ? 'selected' : '' }}>All Time</option>
                 </select>
-            </div>
 
-            {{-- Filter 2: Staff / Engineer --}}
-            <div>
-                <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Staff Member</label>
-                <select name="engineer_id" class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 py-1.5 focus:bg-white focus:border-cyan-500 focus:outline-none transition">
-                    <option value="all">All Staff &amp; Engineers</option>
-                    @foreach($engineers as $eng)
-                        <option value="{{ $eng->id }}" {{ (string)$engineerId === (string)$eng->id ? 'selected' : '' }}>{{ $eng->name }} ({{ ucwords(str_replace('_', ' ', $eng->role ?? 'Staff')) }})</option>
-                    @endforeach
-                </select>
-            </div>
-
-            {{-- Filter 3: Channel / Department --}}
-            <div>
-                <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Support Channel</label>
-                <select name="channel" class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 py-1.5 focus:bg-white focus:border-cyan-500 focus:outline-none transition">
+                {{-- Primary Filter: Support Channel --}}
+                <select name="channel" class="w-full md:w-40 h-[34px] bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                     <option value="all" {{ $channel === 'all' ? 'selected' : '' }}>All Channels</option>
                     <option value="tickets" {{ $channel === 'tickets' ? 'selected' : '' }}>Support Tickets</option>
                     <option value="field_jobs" {{ $channel === 'field_jobs' ? 'selected' : '' }}>Field Jobs</option>
                     <option value="escalations" {{ $channel === 'escalations' ? 'selected' : '' }}>Reseller Escalations</option>
                 </select>
-            </div>
 
-            {{-- Filter 4: Universal Search --}}
-            <div>
-                <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Search Staff</label>
-                <div class="relative">
-                    <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                    <input type="text" name="search" value="{{ $search }}" placeholder="Search by name, role..." class="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:border-cyan-500 focus:outline-none transition">
+                {{-- Pagination Selector (per_page) --}}
+                <select name="per_page" class="w-full md:w-28 flex-shrink-0 h-[34px] bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
+                    <option value="10" {{ $perPage == 10 ? 'selected' : '' }}>10 / page</option>
+                    <option value="20" {{ $perPage == 20 ? 'selected' : '' }}>20 / page</option>
+                    <option value="30" {{ $perPage == 30 ? 'selected' : '' }}>30 / page</option>
+                    <option value="50" {{ $perPage == 50 ? 'selected' : '' }}>50 / page</option>
+                    <option value="100" {{ $perPage == 100 ? 'selected' : '' }}>100 / page</option>
+                </select>
+
+                {{-- "More Filters" Accordion Toggle Button --}}
+                <button type="button" 
+                        @click="showMoreFilters = !showMoreFilters"
+                        class="h-[34px] py-0 px-2.5 rounded-lg border text-xs font-semibold flex items-center justify-center gap-1.5 transition flex-shrink-0 cursor-pointer"
+                        :class="showMoreFilters || {{ $activeMoreCount > 0 ? 'true' : 'false' }} ? 'bg-cyan-50 border-cyan-300 text-cyan-800' : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'">
+                    <i class="fas fa-sliders text-xs"></i>
+                    <span>More Filters</span>
+                    @if($activeMoreCount > 0)
+                        <span class="w-4 h-4 rounded-full bg-cyan-600 text-white text-[9px] font-bold flex items-center justify-center">{{ $activeMoreCount }}</span>
+                    @endif
+                    <i class="fas text-[10px] transition-transform" :class="showMoreFilters ? 'fa-chevron-up text-cyan-600' : 'fa-chevron-down text-slate-400'"></i>
+                </button>
+
+                {{-- Strict Filter & Reset Buttons Sequence --}}
+                <div class="flex items-center gap-1.5 flex-shrink-0 md:ml-auto">
+                    <button type="submit" 
+                            class="h-[34px] py-0 px-3 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" 
+                            title="Apply Filters">
+                        <i class="fas fa-filter text-[10px]"></i>
+                        <span>Filter</span>
+                    </button>
+                    <a href="{{ route('tenant.tickets.sla-analytics') }}" 
+                       class="h-[34px] py-0 px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer" 
+                       title="Reset Filters">
+                        <i class="fas fa-rotate-left text-[10px]"></i>
+                        <span>Reset</span>
+                    </a>
                 </div>
             </div>
 
-            {{-- Filter & Reset Buttons (Strict Universal Standard - AGENTS.md Rule 2.C) --}}
-            <div class="flex items-end gap-1.5">
-                <button type="submit" class="flex-1 py-1.5 px-3 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-xs font-semibold shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" title="Apply Filters">
-                    <i class="fas fa-filter text-[10px]"></i>
-                    <span>Filter</span>
-                </button>
-                <a href="{{ route('tenant.tickets.sla-analytics') }}" class="py-1.5 px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer" title="Reset Filters">
-                    <i class="fas fa-rotate-left text-[10px]"></i>
-                    <span>Reset</span>
-                </a>
+            {{-- 2nd Tier: Secondary Filters Drawer --}}
+            <div x-show="showMoreFilters" x-cloak x-transition class="pt-2 border-t border-slate-100 flex flex-wrap items-center gap-2">
+                {{-- Staff / Engineer Filter --}}
+                <div class="w-full sm:w-60">
+                    <select name="engineer_id" class="w-full h-[34px] bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
+                        <option value="all">All Staff &amp; Engineers</option>
+                        @foreach($engineers as $eng)
+                            <option value="{{ $eng->id }}" {{ (string)$engineerId === (string)$eng->id ? 'selected' : '' }}>
+                                {{ $eng->name }} ({{ ucwords(str_replace('_', ' ', $eng->role ?? 'Staff')) }})
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                {{-- Performance Grade Filter --}}
+                <div class="w-full sm:w-44">
+                    <select name="grade" class="w-full h-[34px] bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
+                        <option value="all" {{ $grade === 'all' ? 'selected' : '' }}>All Performance Grades</option>
+                        <option value="A+" {{ $grade === 'A+' ? 'selected' : '' }}>Grade A+ (On-Time &ge; 95%)</option>
+                        <option value="A" {{ $grade === 'A' ? 'selected' : '' }}>Grade A (On-Time 90 - 94%)</option>
+                        <option value="B+" {{ $grade === 'B+' ? 'selected' : '' }}>Grade B+ (On-Time &lt; 90%)</option>
+                    </select>
+                </div>
             </div>
         </form>
     </div>
 
     {{-- 4. CATEGORY SLA ATTAINMENT MATRIX (Compact Overview Strip) --}}
-    <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs space-y-2.5">
+    <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-xs space-y-2">
         <div class="flex items-center justify-between">
             <div class="flex items-center gap-2">
-                <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
-                <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Problem Categories &amp; Solve Time</h3>
+                <span class="w-2 h-2 rounded-full bg-cyan-600"></span>
+                <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Problem Categories &amp; Resolution Benchmarks</h3>
             </div>
-            <span class="text-[10.5px] text-slate-500 font-medium">Target Time vs Actual Solve Time</span>
+            <span class="text-[10px] text-slate-400 font-medium font-mono">Target SLA vs Actual Average Performance</span>
         </div>
         
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
             @foreach($categoryBreakdown as $cat)
-                <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200/80 flex items-center justify-between">
+                <div class="p-2 bg-slate-50 rounded-lg border border-slate-200/80 flex items-center justify-between">
                     <div class="min-w-0 pr-2">
-                        <span class="text-xs font-bold text-slate-800 block truncate">{{ $cat['name'] }}</span>
-                        <div class="flex items-center gap-2 mt-0.5 text-[10.5px] text-slate-500 font-mono">
+                        <span class="text-xs font-semibold text-slate-800 block truncate">{{ $cat['name'] }}</span>
+                        <div class="flex items-center gap-1.5 mt-0.5 text-[10px] text-slate-500 font-mono">
                             <span>Target: {{ $cat['target'] }}</span>
                             <span>•</span>
                             <span class="text-indigo-700 font-semibold">Actual: {{ $cat['actual'] }}</span>
@@ -204,69 +253,74 @@
 
     {{-- 5. MASTER COMPACT TABLE (<table class="saas-table"> Pure CSS System) --}}
     <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+        {{-- Anti-min-h void rule: Natural container height without forced min-h --}}
         <div class="overflow-x-auto">
             <table class="saas-table">
                 <thead>
                     <tr>
-                        <th class="w-10 text-center">SL</th>
-                        <th>Staff Name</th>
-                        <th>Role / Position</th>
-                        <th class="text-center">Assigned</th>
-                        <th class="text-center">Resolved</th>
-                        <th class="text-center">Avg Solve Time</th>
-                        <th class="text-center">On-Time Rate</th>
-                        <th class="text-center">Rating</th>
-                        <th class="w-14 text-center no-sort">Action</th>
+                        <th class="w-10 text-center font-semibold">#</th>
+                        <th class="text-center font-semibold">Staff Name</th>
+                        <th class="text-center font-semibold">Role / Position</th>
+                        <th class="text-center font-semibold">Assigned</th>
+                        <th class="text-center font-semibold">Resolved</th>
+                        <th class="text-center font-semibold">Avg Solve Time</th>
+                        <th class="text-center font-semibold">On-Time Rate</th>
+                        <th class="text-center font-semibold">Rating</th>
+                        <th class="w-14 text-center font-semibold no-sort">Action</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($paginatedScorecards as $idx => $sc)
                         <tr>
-                            <td class="text-center text-slate-400 font-mono">{{ $paginatedScorecards->firstItem() + $idx }}</td>
+                            {{-- SL Index (Center) --}}
+                            <td class="text-center text-slate-400 font-mono whitespace-nowrap">{{ $paginatedScorecards->firstItem() + $idx }}</td>
                             
-                            {{-- Engineer Name (Single data, clickable) --}}
-                            <td class="font-semibold text-slate-800">
-                                <a href="javascript:void(0)" @click="showScorecardDetails(@js($sc))" class="hover:text-cyan-700 hover:underline">
-                                    {{ $sc->name }}
+                            {{-- Staff Name (Left-aligned, Single-line) --}}
+                            <td class="text-left font-semibold text-slate-800 whitespace-nowrap">
+                                <a href="javascript:void(0)" @click="showScorecardDetails(@js($sc))" class="text-slate-800 hover:text-cyan-700 hover:underline inline-flex items-center gap-1.5">
+                                    <div class="w-5 h-5 rounded-full bg-slate-100 border border-slate-200 text-slate-600 text-[10px] font-bold flex items-center justify-center flex-shrink-0">
+                                        {{ strtoupper(substr($sc->name, 0, 1)) }}
+                                    </div>
+                                    <span>{{ $sc->name }}</span>
                                 </a>
                             </td>
 
-                            {{-- Role (Single data) --}}
-                            <td class="text-slate-600 text-xs">
+                            {{-- Role / Position (Left-aligned, Single-line) --}}
+                            <td class="text-left text-slate-600 text-xs whitespace-nowrap">
                                 {{ $sc->role }}
                             </td>
 
-                            {{-- Assigned Tasks (Single data) --}}
-                            <td class="text-center font-mono font-bold text-slate-700">
+                            {{-- Assigned Tasks (Center / Number) --}}
+                            <td class="text-center font-mono font-bold text-slate-700 whitespace-nowrap">
                                 {{ $sc->assigned_count }}
                             </td>
 
-                            {{-- Resolved Tasks (Single data) --}}
-                            <td class="text-center font-mono font-bold text-indigo-700">
+                            {{-- Resolved Tasks (Center / Number) --}}
+                            <td class="text-center font-mono font-bold text-indigo-700 whitespace-nowrap">
                                 {{ $sc->resolved_count }}
                             </td>
 
-                            {{-- Avg Resolution Time (Single data) --}}
-                            <td class="text-center font-mono font-bold text-slate-800">
+                            {{-- Avg Resolution Time (Center / Number) --}}
+                            <td class="text-center font-mono font-bold text-slate-800 whitespace-nowrap">
                                 {{ $sc->avg_resolution_hours }}h
                             </td>
 
-                            {{-- SLA Compliance % (Single data) --}}
-                            <td class="text-center">
+                            {{-- SLA Compliance % (Center / Badge) --}}
+                            <td class="text-center whitespace-nowrap">
                                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border {{ $sc->compliance_rate >= 95 ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : ($sc->compliance_rate >= 90 ? 'border-blue-200 bg-blue-50 text-blue-700' : 'border-amber-200 bg-amber-50 text-amber-700') }}">
                                     <span>{{ $sc->compliance_rate }}%</span>
                                 </span>
                             </td>
 
-                            {{-- Rating Grade Badge --}}
-                            <td class="text-center">
+                            {{-- Rating Grade Badge (Center) --}}
+                            <td class="text-center whitespace-nowrap">
                                 <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold font-mono border {{ $sc->grade === 'A+' ? 'border-purple-200 bg-purple-50 text-purple-700' : 'border-slate-200 bg-slate-100 text-slate-700' }}">
                                     ★ {{ $sc->grade }}
                                 </span>
                             </td>
 
-                            {{-- 3-Dot Floating Action Menu Trigger --}}
-                            <td class="text-center">
+                            {{-- 3-Dot Floating Action Menu Trigger (Center) --}}
+                            <td class="text-center whitespace-nowrap">
                                 <button type="button" 
                                         @click="toggleMenu(@js($sc), $event)"
                                         class="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
@@ -277,12 +331,16 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="9" class="text-center py-8 text-slate-400">
+                            <td colspan="9" class="text-center py-10 text-slate-400">
                                 <div class="flex flex-col items-center justify-center gap-2">
                                     <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 text-sm">
                                         <i class="fas fa-user-gear"></i>
                                     </div>
-                                    <span class="text-xs font-medium text-slate-500">No staff performance records found.</span>
+                                    <span class="text-xs font-medium text-slate-600">No staff performance records found.</span>
+                                    <a href="{{ route('tenant.tickets.sla-analytics') }}" class="mt-1 inline-flex items-center gap-1 text-xs text-cyan-600 font-semibold hover:underline">
+                                        <i class="fas fa-rotate-left text-[10px]"></i>
+                                        <span>Reset All Filters</span>
+                                    </a>
                                 </div>
                             </td>
                         </tr>
@@ -293,7 +351,7 @@
 
         {{-- Pagination --}}
         @if($paginatedScorecards->hasPages())
-            <div class="p-3 border-t border-slate-200 bg-slate-50/50 flex items-center justify-between">
+            <div class="p-2.5 border-t border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-2">
                 <span class="text-xs text-slate-500">
                     Showing {{ $paginatedScorecards->firstItem() }} to {{ $paginatedScorecards->lastItem() }} of {{ $paginatedScorecards->total() }} staff members
                 </span>
@@ -339,17 +397,17 @@
         </div>
     </div>
 
-    {{-- MODAL: STAFF PERFORMANCE DETAILS MODAL --}}
+    {{-- 7. PRODUCTION-GRADE NATURAL MODALS (AGENTS.md Rule 3) --}}
     <div x-show="detailsModalOpen" 
          x-cloak 
          class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs"
          @keydown.escape.window="detailsModalOpen = false">
-        <div class="bg-white rounded-xl border border-slate-200/90 shadow-2xl w-full max-w-lg overflow-hidden" 
+        <div class="bg-white rounded-xl border border-slate-200/90 shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-150" 
              @click.away="detailsModalOpen = false">
             {{-- Modal Header --}}
             <div class="bg-slate-50/80 border-b border-slate-200 px-4 py-3 flex items-center justify-between">
                 <div class="flex items-center gap-2">
-                    <div class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center text-xs flex-shrink-0">
+                    <div class="w-7 h-7 rounded-lg bg-cyan-50 text-cyan-600 border border-cyan-100 flex items-center justify-center text-xs flex-shrink-0">
                         <i class="fas fa-user-check"></i>
                     </div>
                     <div>
@@ -382,19 +440,19 @@
 
                 {{-- Detailed Metrics Grid --}}
                 <div class="grid grid-cols-2 gap-2">
-                    <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200/80">
+                    <div class="p-2 bg-slate-50 rounded-lg border border-slate-200/80">
                         <span class="text-[10px] text-slate-500 font-semibold uppercase block">Avg Solve Time</span>
                         <span class="font-bold text-slate-800 font-mono text-xs" x-text="selectedScorecard?.avg_resolution_hours + ' Hours'"></span>
                     </div>
-                    <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200/80">
+                    <div class="p-2 bg-slate-50 rounded-lg border border-slate-200/80">
                         <span class="text-[10px] text-slate-500 font-semibold uppercase block">Overdue Tasks</span>
                         <span class="font-mono font-bold text-amber-600 text-xs" x-text="selectedScorecard?.breached_count + ' Tasks'"></span>
                     </div>
-                    <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200/80">
+                    <div class="p-2 bg-slate-50 rounded-lg border border-slate-200/80">
                         <span class="text-[10px] text-slate-500 font-semibold uppercase block">Customer Rating</span>
                         <span class="font-bold text-purple-700 font-mono text-xs" x-text="selectedScorecard?.csat_score + ' / 5.0 (Excellent)'"></span>
                     </div>
-                    <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200/80">
+                    <div class="p-2 bg-slate-50 rounded-lg border border-slate-200/80">
                         <span class="text-[10px] text-slate-500 font-semibold uppercase block">Performance Grade</span>
                         <span class="font-bold text-emerald-700 text-xs" x-text="selectedScorecard?.grade + ' (Top Performer)'"></span>
                     </div>
@@ -414,10 +472,10 @@
 
             {{-- Modal Footer --}}
             <div class="px-4 py-2.5 bg-slate-50/80 border-t border-slate-200 flex items-center justify-between">
-                <button type="button" @click="detailsModalOpen = false" class="border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs px-3.5 py-1.5 rounded-lg cursor-pointer">
+                <button type="button" @click="detailsModalOpen = false" class="h-[34px] py-0 border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs px-3.5 rounded-lg cursor-pointer transition">
                     Close
                 </button>
-                <a :href="`{{ route('tenant.tickets.sla-analytics.print') }}?engineer_id=${selectedScorecard?.id}&period={{ $period }}`" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs px-4 py-1.5 rounded-lg shadow-xs inline-flex items-center gap-1.5">
+                <a :href="`{{ route('tenant.tickets.sla-analytics.print') }}?engineer_id=${selectedScorecard?.id}&period={{ $period }}`" target="_blank" class="h-[34px] py-0 bg-cyan-600 hover:bg-cyan-700 text-white font-medium text-xs px-4 rounded-lg shadow-xs inline-flex items-center gap-1.5 transition">
                     <i class="fas fa-print text-xs"></i>
                     <span>Print Staff Report</span>
                 </a>

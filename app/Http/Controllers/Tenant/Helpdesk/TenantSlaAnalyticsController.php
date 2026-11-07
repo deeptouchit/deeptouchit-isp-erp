@@ -43,8 +43,15 @@ class TenantSlaAnalyticsController extends Controller
         $period = $request->get('period', '30_days'); // 7_days, 30_days, 90_days, this_month, all
         $channel = $request->get('channel', 'all'); // all, tickets, field_jobs, escalations, installations
         $engineerId = $request->get('engineer_id', 'all');
+        $grade = $request->get('grade', 'all');
         $search = trim($request->get('search', ''));
         $perPage = (int) $request->get('per_page', 20);
+
+        // Calculate active count for Tier 2 secondary filters
+        $activeMoreCount = 0;
+        if ($engineerId !== 'all' && !empty($engineerId)) $activeMoreCount++;
+        if ($grade !== 'all' && !empty($grade)) $activeMoreCount++;
+        $isMoreOpen = $activeMoreCount > 0;
 
         // 1. Date Range Filter
         $startDate = match ($period) {
@@ -221,6 +228,10 @@ class TenantSlaAnalyticsController extends Controller
             $scorecardCollection = $scorecardCollection->where('id', (int)$engineerId);
         }
 
+        if ($grade !== 'all' && !empty($grade)) {
+            $scorecardCollection = $scorecardCollection->where('grade', $grade);
+        }
+
         // Paginate in-memory collection cleanly
         $page = (int) $request->get('page', 1);
         $paginatedScorecards = new \Illuminate\Pagination\LengthAwarePaginator(
@@ -250,8 +261,11 @@ class TenantSlaAnalyticsController extends Controller
             'period',
             'channel',
             'engineerId',
+            'grade',
             'search',
-            'perPage'
+            'perPage',
+            'activeMoreCount',
+            'isMoreOpen'
         ));
     }
 
