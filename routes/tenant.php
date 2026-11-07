@@ -516,6 +516,7 @@ Route::middleware(['web'])->group(function () {
             Route::post('/installations/{id}/step', [TenantInstallationTaskController::class, 'updateStage'])->whereNumber('id')->name('installations.step');
             Route::get('/installations/{id}/print', [TenantInstallationTaskController::class, 'printActivationSlip'])->whereNumber('id')->name('installations.print');
             Route::get('/installations/export', [TenantInstallationTaskController::class, 'exportCsv'])->name('installations.export');
+            Route::delete('/installations/{id}', [TenantInstallationTaskController::class, 'destroy'])->whereNumber('id')->name('installations.destroy');
 
             // 4. Sub-ISP & Reseller Technical Escalations
             Route::get('/escalations', [TenantResellerEscalationController::class, 'index'])->name('escalations');

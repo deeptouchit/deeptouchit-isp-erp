@@ -42,6 +42,7 @@ class TenantInstallationTaskController extends Controller
         $stage = $request->get('stage', 'all');
         $zoneId = $request->get('zone_id', 'all');
         $technicianId = $request->get('technician_id', 'all');
+        $packageId = $request->get('package_id', 'all');
         $status = $request->get('status', 'all');
         $search = trim($request->get('search', ''));
         $perPage = (int) $request->get('per_page', 20);
@@ -87,11 +88,22 @@ class TenantInstallationTaskController extends Controller
             $query->where('assigned_technician_id', (int)$technicianId);
         }
 
+        if ($packageId !== 'all' && !empty($packageId)) {
+            $query->where('package_id', (int)$packageId);
+        }
+
         if ($status !== 'all' && !empty($status)) {
             $query->where('status', $status);
         }
 
         $tasks = $query->paginate($perPage)->withQueryString();
+
+        // Active more filters counter for 2-Tier customer standard filter
+        $activeMoreCount = 0;
+        if ($technicianId !== 'all' && !empty($technicianId)) $activeMoreCount++;
+        if ($packageId !== 'all' && !empty($packageId)) $activeMoreCount++;
+        if ($status !== 'all' && !empty($status)) $activeMoreCount++;
+        $isMoreOpen = $activeMoreCount > 0;
 
         // 3. Compute 6 Pipeline Stage KPIs
         $totalOrders = TenantInstallationTask::where('tenant_id', $tenantId)->count();
@@ -120,6 +132,9 @@ class TenantInstallationTaskController extends Controller
             'stage',
             'zoneId',
             'technicianId',
+            'packageId',
+            'activeMoreCount',
+            'isMoreOpen',
             'status',
             'search',
             'perPage'
@@ -228,6 +243,38 @@ class TenantInstallationTaskController extends Controller
         }
 
         return back()->with('success', "Installation {$task->task_number} progressed to {$task->stage_name}.");
+    }
+
+    /**
+     * Delete Installation Task (Super Admin / ISP Admin only)
+     */
+    public function destroy(Request $request, $id)
+    {
+        $tenant = $this->getTenant();
+        $authUser = auth()->user();
+
+        if (!$authUser || !$authUser->canDeleteTickets()) {
+            if ($request->wantsJson() || $request->ajax() || str_contains($request->header('Accept', ''), 'json')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized: Only Super Admin / ISP Admin can delete installation tasks.',
+                ], 403);
+            }
+            abort(403, 'Unauthorized: Only Super Admin / ISP Admin can delete installation tasks.');
+        }
+
+        $task = TenantInstallationTask::where('tenant_id', $tenant->id)->findOrFail($id);
+        $taskNo = $task->task_number;
+        $task->delete();
+
+        if ($request->wantsJson() || $request->ajax() || str_contains($request->header('Accept', ''), 'json')) {
+            return response()->json([
+                'success' => true,
+                'message' => "Installation Task #{$taskNo} deleted successfully.",
+            ]);
+        }
+
+        return back()->with('success', "Installation Task #{$taskNo} deleted successfully.");
     }
 
     /**
