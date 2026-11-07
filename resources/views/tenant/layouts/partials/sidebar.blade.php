@@ -996,9 +996,9 @@
                 </a>
 
                 <!-- 2. Users List -->
-                <a href="{{ Route::has('tenant.staff.index') ? route('tenant.staff.index') : '#' }}" 
-                   x-show="!filterQuery || 'users list all users directory staff employee accounts login credentials'.includes(filterQuery.toLowerCase())"
-                   class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ request()->routeIs('tenant.staff.index*') || request()->routeIs('tenant.users*') ? 'border-slate-300 bg-slate-100 text-slate-900 font-bold border-l-4 border-l-slate-700' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
+                <a href="{{ Route::has('tenant.users.index') ? route('tenant.users.index') : '#' }}" 
+                   x-show="!filterQuery || 'users list all users directory security logins staff employee accounts login credentials passwords'.includes(filterQuery.toLowerCase())"
+                   class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ request()->routeIs('tenant.users*') ? 'border-slate-300 bg-slate-100 text-slate-900 font-bold border-l-4 border-l-slate-700' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
                     Users List
                 </a>
 

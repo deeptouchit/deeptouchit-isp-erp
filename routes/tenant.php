@@ -235,8 +235,18 @@ Route::middleware(['web'])->group(function () {
             Route::post('/{reseller}/adjust-wallet', [ResellerDirectoryController::class, 'adjustWallet'])->whereNumber('reseller')->name('adjust-wallet');
         });
 
-        // Alias for Users List
-        Route::get('/admin/users', fn() => redirect()->route('tenant.staff.index'))->name('tenant.users.index');
+        // 10. System Users & Login Accounts (Prefix: admin/users)
+        Route::prefix('admin/users')->name('tenant.users.')->middleware('permission:settings.rbac,customers.view')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Tenant\Settings\TenantUserController::class, 'index'])->name('index');
+            Route::post('/', [\App\Http\Controllers\Tenant\Settings\TenantUserController::class, 'store'])->name('store');
+            Route::get('/export', [\App\Http\Controllers\Tenant\Settings\TenantUserController::class, 'exportCsv'])->name('export');
+            Route::get('/print', [\App\Http\Controllers\Tenant\Settings\TenantUserController::class, 'printReport'])->name('print');
+            Route::get('/{id}', [\App\Http\Controllers\Tenant\Settings\TenantUserController::class, 'show'])->whereNumber('id')->name('show');
+            Route::put('/{id}', [\App\Http\Controllers\Tenant\Settings\TenantUserController::class, 'update'])->whereNumber('id')->name('update');
+            Route::delete('/{id}', [\App\Http\Controllers\Tenant\Settings\TenantUserController::class, 'destroy'])->whereNumber('id')->name('destroy');
+            Route::post('/{id}/toggle-status', [\App\Http\Controllers\Tenant\Settings\TenantUserController::class, 'toggleStatus'])->whereNumber('id')->name('toggle-status');
+            Route::post('/{id}/reset-password', [\App\Http\Controllers\Tenant\Settings\TenantUserController::class, 'resetPassword'])->whereNumber('id')->name('reset-password');
+        });
 
         // 4. Staff Management & HRM Routes (Prefix: admin/staff)
         Route::prefix('admin/staff')->name('tenant.staff.')->middleware('permission:settings.rbac,customers.view')->group(function () {
