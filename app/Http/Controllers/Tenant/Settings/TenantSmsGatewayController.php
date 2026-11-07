@@ -37,13 +37,15 @@ class TenantSmsGatewayController extends Controller
         $tenant = $this->getTenant();
         $tenantId = $tenant->id;
 
-        $tab = $request->get('tab', 'templates'); // templates, logs
+        $tab = $request->get('tab', 'templates'); // templates, gateways, logs
         $search = trim($request->get('search', ''));
         $status = $request->get('status', 'all');
+        $type = $request->get('type', 'all');
         $perPage = (int) $request->get('per_page', 20);
 
-        // 1. Fetch Configured Notification Templates
+        // 1. Fetch Configured Notification Templates & Gateways
         $templates = TenantNotificationTemplate::where('tenant_id', $tenantId)->orderBy('id')->get();
+        $gateways = TenantSmsGateway::where('tenant_id', $tenantId)->orderByDesc('is_default')->orderBy('id')->get();
 
         // 2. Fetch SMS Delivery Logs with Filter
         $logsQuery = SmsLog::where('tenant_id', $tenantId)->latest('id');
@@ -60,34 +62,44 @@ class TenantSmsGatewayController extends Controller
             $logsQuery->where('status', $status);
         }
 
+        if ($type !== 'all' && !empty($type)) {
+            $logsQuery->where('sms_type', $type);
+        }
+
         $logs = $logsQuery->paginate($perPage)->withQueryString();
 
         // 3. Compute 6 KPI Stats
         $totalSmsCount = SmsLog::where('tenant_id', $tenantId)->count();
         $deliveredCount = SmsLog::where('tenant_id', $tenantId)->whereIn('status', ['delivered', 'success', 'sent'])->count();
         $failedCount = SmsLog::where('tenant_id', $tenantId)->where('status', 'failed')->count();
-        $totalCost = (float) SmsLog::where('tenant_id', $tenantId)->sum('total_cost');
         $activeTemplatesCount = $templates->where('is_active', true)->count();
+        $activeGatewaysCount = $gateways->where('is_active', true)->count();
         $deliveryRate = $totalSmsCount > 0 ? round(($deliveredCount / $totalSmsCount) * 100, 1) : 99.2;
-        $smsBalance = (float) ($tenant->sms_balance ?? 10090.50);
+        
+        $defaultGateway = $gateways->where('is_default', true)->first();
+        $senderMasking = $defaultGateway?->sender_id ?: ($tenant->sms_sender_id ?: ($tenant->name ?: 'Non-Masking'));
+        $totalGatewayBalance = (float) $gateways->where('channel_type', 'sms')->sum('balance');
+        $smsBalance = $totalGatewayBalance > 0 ? $totalGatewayBalance : (float) ($tenant->sms_balance ?? 10090.50);
 
         $stats = [
             'sms_balance' => $smsBalance,
-            'total_sent' => $totalSmsCount ?: 3420,
+            'total_sent' => $totalSmsCount,
             'delivery_rate' => $deliveryRate,
-            'sender_masking' => $tenant->sms_sender_id ?: ($tenant->name ?: 'Non-Masking'),
-            'active_templates' => $activeTemplatesCount ?: 7,
-            'failed_count' => $failedCount ?: 12,
+            'sender_masking' => $senderMasking,
+            'active_templates' => $activeTemplatesCount,
+            'active_gateways' => $activeGatewaysCount ?: count($gateways),
         ];
 
         return view('tenant.settings.sms_gateway', compact(
             'tenant',
             'templates',
+            'gateways',
             'logs',
             'stats',
             'tab',
             'search',
             'status',
+            'type',
             'perPage'
         ));
     }

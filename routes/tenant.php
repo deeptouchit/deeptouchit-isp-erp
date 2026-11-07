@@ -554,8 +554,12 @@ Route::middleware(['web'])->group(function () {
             Route::post('/profile/test-email', [TenantProfileController::class, 'testEmailConnection'])->name('profile.test-email');
             Route::get('/profile/print', [TenantProfileController::class, 'printCertificate'])->name('profile.print');
 
-            // 2. SMS & Notification Templates & Delivery Logs
+            // 2. SMS & Notification Templates, Gateways & Delivery Logs
             Route::get('/sms-gateway', [TenantSmsGatewayController::class, 'index'])->name('sms-gateway');
+            Route::post('/sms-gateway/gateways', [TenantSmsGatewayController::class, 'storeGateway'])->name('sms-gateway.gateways.store');
+            Route::put('/sms-gateway/gateways/{id}', [TenantSmsGatewayController::class, 'updateGateway'])->whereNumber('id')->name('sms-gateway.gateways.update');
+            Route::post('/sms-gateway/gateways/{id}/toggle-status', [TenantSmsGatewayController::class, 'toggleGatewayStatus'])->whereNumber('id')->name('sms-gateway.gateways.toggle-status');
+            Route::delete('/sms-gateway/gateways/{id}', [TenantSmsGatewayController::class, 'destroyGateway'])->whereNumber('id')->name('sms-gateway.gateways.delete');
             Route::put('/sms-gateway/templates/{id}', [TenantSmsGatewayController::class, 'updateTemplate'])->whereNumber('id')->name('sms-gateway.templates.update');
             Route::post('/sms-gateway/templates/{id}/toggle-status', [TenantSmsGatewayController::class, 'toggleTemplateStatus'])->whereNumber('id')->name('sms-gateway.templates.toggle-status');
             Route::post('/sms-gateway/test', [TenantSmsGatewayController::class, 'testDispatch'])->name('sms-gateway.test');
