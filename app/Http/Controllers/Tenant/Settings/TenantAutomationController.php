@@ -42,6 +42,7 @@ class TenantAutomationController extends Controller
         $tab = $request->get('tab', 'rules'); // rules, logs
         $search = trim($request->get('search', ''));
         $status = $request->get('status', 'all');
+        $trigger = $request->get('trigger', 'all');
         $perPage = (int) $request->get('per_page', 20);
 
         // 1. Get or Create Settings
@@ -86,6 +87,10 @@ class TenantAutomationController extends Controller
             $logsQuery->where('status', $status);
         }
 
+        if ($trigger !== 'all' && !empty($trigger)) {
+            $logsQuery->where('triggered_by', $trigger);
+        }
+
         $logs = $logsQuery->paginate($perPage)->withQueryString();
 
         // 3. Compute 6 KPI Stats
@@ -116,6 +121,7 @@ class TenantAutomationController extends Controller
             'tab',
             'search',
             'status',
+            'trigger',
             'perPage'
         ));
     }
@@ -191,6 +197,7 @@ class TenantAutomationController extends Controller
     {
         $tenant = $this->getTenant();
         $tenantId = $tenant->id;
+        $startTime = microtime(true);
 
         $automationService = app(\App\Services\Billing\IspCustomerAutomationService::class);
 
