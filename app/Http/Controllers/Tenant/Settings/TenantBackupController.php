@@ -53,7 +53,7 @@ class TenantBackupController extends Controller
         $triggerFilter = $request->input('trigger'); // 'all', 'manual_admin', 'scheduled_cron'
         $statusFilter = $request->input('status');
         $perPage = (int)$request->input('per_page', 20);
-        if (!in_array($perPage, [10, 20, 50, 100], true)) {
+        if (!in_array($perPage, [10, 15, 20, 30, 50, 100], true)) {
             $perPage = 20;
         }
 
