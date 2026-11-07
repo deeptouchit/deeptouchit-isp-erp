@@ -166,6 +166,13 @@ class TenantBillingController extends Controller
 
         $search = $request->input('search');
         $gateway = $request->input('gateway');
+        $status = $request->input('status');
+        $dateFrom = $request->input('date_from');
+        $dateTo = $request->input('date_to');
+        $perPage = (int) $request->input('per_page', 15);
+        if (!in_array($perPage, [10, 15, 20, 30, 50, 100], true)) {
+            $perPage = 15;
+        }
 
         $query = $tenant->payments()->with('invoice');
 
@@ -183,7 +190,19 @@ class TenantBillingController extends Controller
             $query->where('payment_method', $gateway);
         }
 
-        $payments = $query->latest('id')->paginate(15)->withQueryString();
+        if ($status) {
+            $query->where('status', $status);
+        }
+
+        if ($dateFrom) {
+            $query->whereDate('created_at', '>=', $dateFrom);
+        }
+
+        if ($dateTo) {
+            $query->whereDate('created_at', '<=', $dateTo);
+        }
+
+        $payments = $query->latest('id')->paginate($perPage)->withQueryString();
 
         // 6 KPI Financial Summary Metrics
         $baseQuery = $tenant->payments();
@@ -204,7 +223,11 @@ class TenantBillingController extends Controller
             'onlineCount',
             'manualCount',
             'search',
-            'gateway'
+            'gateway',
+            'status',
+            'perPage',
+            'dateFrom',
+            'dateTo'
         ));
     }
 
