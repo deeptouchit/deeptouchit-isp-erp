@@ -51,13 +51,13 @@
                 </form>
             @endif
 
-            @if(auth()->user() && (auth()->user()->isOwner() || auth()->user()->role === 'super_admin'))
+            @if(auth()->user() && auth()->user()->canDeleteTickets())
                 <form action="{{ route('tenant.tickets.destroy', $ticket->id) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to permanently delete ticket #{{ $ticket->ticket_number }}? All messages and attachments will be deleted permanently.')">
                     @csrf
                     @method('DELETE')
                     <button type="submit" 
                             class="h-[34px] bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 font-semibold text-xs px-3 py-0 rounded-lg shadow-2xs transition inline-flex items-center gap-1.5 cursor-pointer"
-                            title="Delete Ticket (Super Admin Only)">
+                            title="Delete Ticket (Admin Only)">
                         <i class="fas fa-trash-alt text-rose-600 text-[11px]"></i>
                         <span>Delete Ticket</span>
                     </button>

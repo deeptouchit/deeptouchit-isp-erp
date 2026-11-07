@@ -71,6 +71,22 @@ class User extends Authenticatable
         return $this->role === 'isp_admin';
     }
 
+    public function isSuperAdmin(): bool
+    {
+        return $this->isOwner()
+            || $this->isIspAdmin()
+            || in_array($this->role, ['owner', 'super_admin', 'isp_admin', 'admin'], true)
+            || str_contains(strtolower($this->admin_role ?? ''), 'admin');
+    }
+
+    public function canDeleteTickets(): bool
+    {
+        if ($this->isCollector() || $this->isTechnician()) {
+            return false;
+        }
+        return $this->isSuperAdmin();
+    }
+
     public function isResellerUser(): bool
     {
         return !empty($this->reseller_id) || str_starts_with($this->role ?? '', 'reseller_');

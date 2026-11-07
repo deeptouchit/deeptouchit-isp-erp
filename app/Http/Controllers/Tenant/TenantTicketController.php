@@ -443,15 +443,15 @@ class TenantTicketController extends Controller
         $tenant = $this->getTenant();
         $authUser = auth()->user();
 
-        // Strictly authorize Super Admin / Owner
-        if (!$authUser || (!$authUser->isOwner() && $authUser->role !== 'super_admin')) {
+        // Strictly authorize Super Admin / ISP Admin
+        if (!$authUser || !$authUser->canDeleteTickets()) {
             if ($request->wantsJson() || $request->ajax() || str_contains($request->header('Accept', ''), 'json')) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Unauthorized: Only Super Admin can delete support tickets.',
+                    'message' => 'Unauthorized: Only Super Admin / ISP Admin can delete support tickets.',
                 ], 403);
             }
-            abort(403, 'Unauthorized: Only Super Admin can delete support tickets.');
+            abort(403, 'Unauthorized: Only Super Admin / ISP Admin can delete support tickets.');
         }
 
         $ticket = SupportTicket::where('tenant_id', $tenant->id)->findOrFail($id);

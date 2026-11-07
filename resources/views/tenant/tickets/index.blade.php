@@ -376,7 +376,7 @@
                 </button>
             </template>
 
-            @if(auth()->user() && (auth()->user()->isOwner() || auth()->user()->role === 'super_admin'))
+            @if(auth()->user() && auth()->user()->canDeleteTickets())
                 <button type="button" 
                         @click="deleteTicketAction(activeMenu); activeMenu = null" 
                         class="w-full flex items-center gap-2 px-3 py-1.5 text-rose-600 hover:bg-rose-50 hover:text-rose-700 font-medium transition cursor-pointer">
