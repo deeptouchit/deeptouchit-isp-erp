@@ -2,35 +2,51 @@
 
 @section('title', 'Edit OLT Device - ' . $olt->name . ' - ' . ($tenant->company_name ?? $tenant->name))
 
-@section('content')
-<div class="max-w-4xl mx-auto space-y-4" x-data="oltEditForm()">
+@push('styles')
+    {{-- Page-specific CSS --}}
+@endpush
 
-    <!-- Top Header Bar -->
-    <div class="flex items-center justify-between bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+@section('content')
+<div class="space-y-3" x-data="oltEditForm()">
+
+    <!-- 1. Top Header Bar (Strict Rules: Icon + Title + Device Badge + Actions ONLY) -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
         <div class="flex items-center gap-3">
-            <a href="{{ route('tenant.network.olt') }}" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-xs transition cursor-pointer" title="Back to Fleet">
-                <i class="fas fa-arrow-left"></i>
-            </a>
-            <div>
-                <h1 class="text-sm font-bold text-slate-900 tracking-tight">Edit {{ $olt->name }} Device</h1>
+            <div class="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 border border-amber-100 flex items-center justify-center font-bold text-sm shadow-xs flex-shrink-0">
+                <i class="fas fa-pen-to-square"></i>
+            </div>
+            <div class="flex items-center gap-2">
+                <h2 class="text-sm font-bold text-slate-900 tracking-tight">Edit OLT Device</h2>
+                <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-cyan-50 text-cyan-700 border border-cyan-200 font-mono">
+                    {{ $olt->name }}
+                </span>
             </div>
         </div>
 
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 flex-shrink-0">
+            <!-- Test Connection Button -->
             <button type="button" 
                     @click="testConnection()" 
                     :disabled="testing"
-                    class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs shadow-xs transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50">
+                    class="h-[34px] px-3.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs shadow-xs transition inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50">
                 <i class="fas fa-bolt text-amber-400 text-xs" :class="{ 'fa-spin': testing }"></i>
                 <span x-text="testing ? 'Testing...' : 'Test Connection'"></span>
             </button>
+
+            <!-- Back to Fleet Button -->
+            <a href="{{ route('tenant.network.olt') }}"
+               class="h-[34px] px-3.5 rounded-lg border border-slate-200 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs shadow-2xs transition inline-flex items-center justify-center gap-1.5 cursor-pointer">
+                <i class="fas fa-arrow-left text-[10px]"></i>
+                <span>Back to Fleet</span>
+            </a>
         </div>
     </div>
 
     <!-- Live Connection Test Alert -->
     <div x-show="testResult" 
+         x-cloak
          x-transition
-         class="p-3.5 rounded-xl border text-xs flex items-center justify-between gap-3 shadow-xs"
+         class="p-3 rounded-xl border text-xs flex items-center justify-between gap-3 shadow-xs"
          :class="testResult?.success ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : 'bg-rose-50 border-rose-200 text-rose-900'"
          style="display: none;">
         <div class="flex items-center gap-2.5">
@@ -38,273 +54,295 @@
             <span class="font-medium" x-text="testResult?.message"></span>
             <span x-show="testResult?.latency_ms" class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-white/70 font-bold" x-text="testResult?.latency_ms + ' ms'"></span>
         </div>
-        <button type="button" @click="testResult = null" class="text-slate-400 hover:text-slate-600 text-xs">
+        <button type="button" @click="testResult = null" class="text-slate-400 hover:text-slate-600 text-xs cursor-pointer">
             <i class="fas fa-times"></i>
         </button>
     </div>
 
-    <!-- Main Edit Form -->
-    <form action="{{ route('tenant.network.olt.update', $olt->id) }}" method="POST" novalidate class="space-y-4">
-        @csrf
-        @method('PUT')
+    <!-- 2. Main Full-Width Form Card -->
+    <div class="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden">
+        <form action="{{ route('tenant.network.olt.update', $olt->id) }}" method="POST" novalidate class="p-4 space-y-4">
+            @csrf
+            @method('PUT')
 
-        <!-- Card 1: Device Information -->
-        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-4">
-            <div class="border-b border-slate-100 pb-2.5 flex items-center gap-2">
-                <i class="fas fa-server text-blue-600 text-xs"></i>
-                <h2 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Device Information</h2>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                <!-- Name -->
-                <div class="sm:col-span-2 space-y-1">
-                    <label class="block text-xs font-semibold text-slate-700">Device Name / Identifier <span class="text-rose-500">*</span></label>
-                    <input type="text" 
-                           name="name" 
-                           value="{{ old('name', $olt->name) }}"
-                           placeholder="e.g. Core POP - VSOL OLT" 
-                           class="w-full px-3 py-2 rounded-lg text-xs transition focus:ring-1 focus:ring-blue-500 focus:border-blue-500 focus:bg-white @error('name') border border-rose-500 ring-2 ring-rose-100 bg-rose-50/40 text-rose-900 @else bg-slate-50 border border-slate-200 text-slate-800 @enderror">
-                    @error('name')
-                        <p class="text-[11px] text-rose-600 font-semibold flex items-center gap-1 mt-1">
-                            <i class="fas fa-exclamation-circle text-[10px]"></i> {{ $message }}
-                        </p>
-                    @enderror
+            <!-- Section 1: Device Identification & Fleet Routing -->
+            <div class="p-3.5 bg-slate-50/70 rounded-xl border border-slate-200/80 space-y-3">
+                <div class="flex items-center gap-2 pb-2 border-b border-slate-200/60 text-slate-800">
+                    <span class="w-6 h-6 rounded-lg bg-cyan-100 text-cyan-700 flex items-center justify-center text-xs font-bold">1</span>
+                    <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Device Identification &amp; Fleet Routing</h3>
                 </div>
 
-                <!-- Parent MikroTik Router -->
-                <div class="sm:col-span-2 space-y-1">
-                    <label class="block text-xs font-semibold text-slate-700">Parent MikroTik Router</label>
-                    <select name="router_id" 
-                            class="w-full px-3 py-2 rounded-lg text-xs transition focus:ring-1 focus:ring-blue-500 focus:border-blue-500 focus:bg-white @error('router_id') border border-rose-500 ring-2 ring-rose-100 bg-rose-50/40 text-rose-900 @else bg-slate-50 border border-slate-200 text-slate-800 @enderror">
-                        <option value="">None (Standalone OLT)</option>
-                        @if(isset($routers))
-                            @foreach($routers as $router)
-                                <option value="{{ $router->id }}" {{ (string)old('router_id', $olt->router_id) === (string)$router->id ? 'selected' : '' }}>
-                                    {{ $router->name }} ({{ $router->ip_address }})
-                                </option>
-                            @endforeach
-                        @endif
-                    </select>
-                    @error('router_id')
-                        <p class="text-[11px] text-rose-600 font-semibold flex items-center gap-1 mt-1">
-                            <i class="fas fa-exclamation-circle text-[10px]"></i> {{ $message }}
-                        </p>
-                    @enderror
-                </div>
-
-                <!-- Vendor -->
-                <div class="space-y-1">
-                    <label class="block text-xs font-semibold text-slate-700">Hardware Vendor <span class="text-rose-500">*</span></label>
-                    <select name="vendor" 
-                            x-model="form.vendor" 
-                            @change="applyVendorPreset()"
-                            class="w-full px-3 py-2 rounded-lg text-xs transition focus:ring-1 focus:ring-blue-500 focus:border-blue-500 focus:bg-white @error('vendor') border border-rose-500 ring-2 ring-rose-100 bg-rose-50/40 text-rose-900 @else bg-slate-50 border border-slate-200 text-slate-800 @enderror">
-                        <option value="EPON OLT">EPON OLT (Standard FastCGI / C-Data)</option>
-                        <option value="VSOL">VSOL (V1600 Series / HTTPS Web API)</option>
-                        <option value="HSGQ">HSGQ (JSON-RPC Web API)</option>
-                        <option value="Core Link">Core Link (HA7302V / UniMars Socket)</option>
-                        <option value="BDCOM">BDCOM</option>
-                        <option value="Huawei">Huawei</option>
-                        <option value="ZTE">ZTE</option>
-                    </select>
-                    @error('vendor')
-                        <p class="text-[11px] text-rose-600 font-semibold flex items-center gap-1 mt-1">
-                            <i class="fas fa-exclamation-circle text-[10px]"></i> {{ $message }}
-                        </p>
-                    @enderror
-                </div>
-
-                <!-- Model -->
-                <div class="space-y-1">
-                    <label class="block text-xs font-semibold text-slate-700">Hardware Model</label>
-                    <input type="text" 
-                           name="model" 
-                           x-model="form.model"
-                           placeholder="e.g. V1600D4 / DN08EP / HA7302V" 
-                           class="w-full px-3 py-2 rounded-lg text-xs transition focus:ring-1 focus:ring-blue-500 focus:border-blue-500 focus:bg-white @error('model') border border-rose-500 ring-2 ring-rose-100 bg-rose-50/40 text-rose-900 @else bg-slate-50 border border-slate-200 text-slate-800 @enderror">
-                    @error('model')
-                        <p class="text-[11px] text-rose-600 font-semibold flex items-center gap-1 mt-1">
-                            <i class="fas fa-exclamation-circle text-[10px]"></i> {{ $message }}
-                        </p>
-                    @enderror
-                </div>
-
-                <!-- Total PON Ports -->
-                <div class="space-y-1">
-                    <label class="block text-xs font-semibold text-slate-700">Total PON Ports <span class="text-rose-500">*</span></label>
-                    <select name="total_pon_ports" 
-                            x-model="form.total_pon_ports"
-                            class="w-full px-3 py-2 rounded-lg text-xs transition focus:ring-1 focus:ring-blue-500 focus:border-blue-500 focus:bg-white @error('total_pon_ports') border border-rose-500 ring-2 ring-rose-100 bg-rose-50/40 text-rose-900 @else bg-slate-50 border border-slate-200 text-slate-800 @enderror">
-                        <option value="2">2 PON Ports</option>
-                        <option value="4">4 PON Ports</option>
-                        <option value="8">8 PON Ports</option>
-                        <option value="16">16 PON Ports</option>
-                    </select>
-                    @error('total_pon_ports')
-                        <p class="text-[11px] text-rose-600 font-semibold flex items-center gap-1 mt-1">
-                            <i class="fas fa-exclamation-circle text-[10px]"></i> {{ $message }}
-                        </p>
-                    @enderror
-                </div>
-
-                <!-- Connection Type -->
-                <div class="space-y-1">
-                    <label class="block text-xs font-semibold text-slate-700">Sync Protocol <span class="text-rose-500">*</span></label>
-                    <select name="connection_type" 
-                            x-model="form.connection_type"
-                            class="w-full px-3 py-2 rounded-lg text-xs transition focus:ring-1 focus:ring-blue-500 focus:border-blue-500 focus:bg-white @error('connection_type') border border-rose-500 ring-2 ring-rose-100 bg-rose-50/40 text-rose-900 @else bg-slate-50 border border-slate-200 text-slate-800 @enderror">
-                        <option value="web_api">REST Web API / Socket (FastCGI, JSON, HTTPS)</option>
-                        <option value="snmp">SNMP Only</option>
-                        <option value="hybrid">Hybrid (Web API + SNMP)</option>
-                    </select>
-                    @error('connection_type')
-                        <p class="text-[11px] text-rose-600 font-semibold flex items-center gap-1 mt-1">
-                            <i class="fas fa-exclamation-circle text-[10px]"></i> {{ $message }}
-                        </p>
-                    @enderror
-                </div>
-            </div>
-        </div>
-
-        <!-- Card 2: Web API Credentials -->
-        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-4">
-            <div class="border-b border-slate-100 pb-2.5 flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                    <i class="fas fa-lock text-purple-600 text-xs"></i>
-                    <h2 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Web API & Credentials</h2>
-                </div>
-                <span class="text-[11px] text-slate-400">Encrypted in database</span>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                <!-- IP Address -->
-                <div class="space-y-1">
-                    <label class="block text-xs font-semibold text-slate-700">IP Address / Host <span class="text-rose-500">*</span></label>
-                    <input type="text" 
-                           name="ip_address" 
-                           x-model="form.ip_address"
-                           placeholder="e.g. 103.59.177.137" 
-                           class="w-full px-3 py-2 rounded-lg text-xs font-mono transition focus:ring-1 focus:ring-blue-500 focus:border-blue-500 focus:bg-white @error('ip_address') border border-rose-500 ring-2 ring-rose-100 bg-rose-50/40 text-rose-900 @else bg-slate-50 border border-slate-200 text-slate-800 @enderror">
-                    @error('ip_address')
-                        <p class="text-[11px] text-rose-600 font-semibold flex items-center gap-1 mt-1">
-                            <i class="fas fa-exclamation-circle text-[10px]"></i> {{ $message }}
-                        </p>
-                    @enderror
-                </div>
-
-                <!-- Web Port -->
-                <div class="space-y-1">
-                    <label class="block text-xs font-semibold text-slate-700">Web Port <span class="text-rose-500">*</span></label>
-                    <input type="number" 
-                           name="web_port" 
-                           x-model="form.web_port"
-                           placeholder="80, 8081, 8082, 8083, 8084" 
-                           class="w-full px-3 py-2 rounded-lg text-xs font-mono transition focus:ring-1 focus:ring-blue-500 focus:border-blue-500 focus:bg-white @error('web_port') border border-rose-500 ring-2 ring-rose-100 bg-rose-50/40 text-rose-900 @else bg-slate-50 border border-slate-200 text-slate-800 @enderror">
-                    @error('web_port')
-                        <p class="text-[11px] text-rose-600 font-semibold flex items-center gap-1 mt-1">
-                            <i class="fas fa-exclamation-circle text-[10px]"></i> {{ $message }}
-                        </p>
-                    @enderror
-                </div>
-
-                <!-- Web Username -->
-                <div class="space-y-1">
-                    <label class="block text-xs font-semibold text-slate-700">Web Username <span class="text-rose-500">*</span></label>
-                    <input type="text" 
-                           name="web_username" 
-                           x-model="form.web_username"
-                           placeholder="admin or root" 
-                           class="w-full px-3 py-2 rounded-lg text-xs font-mono transition focus:ring-1 focus:ring-blue-500 focus:border-blue-500 focus:bg-white @error('web_username') border border-rose-500 ring-2 ring-rose-100 bg-rose-50/40 text-rose-900 @else bg-slate-50 border border-slate-200 text-slate-800 @enderror">
-                    @error('web_username')
-                        <p class="text-[11px] text-rose-600 font-semibold flex items-center gap-1 mt-1">
-                            <i class="fas fa-exclamation-circle text-[10px]"></i> {{ $message }}
-                        </p>
-                    @enderror
-                </div>
-
-                <!-- Web Password -->
-                <div class="space-y-1">
-                    <label class="block text-xs font-semibold text-slate-700">Web Password</label>
-                    <div class="relative">
-                        <input :type="showPassword ? 'text' : 'password'" 
-                               name="web_password" 
-                               x-model="form.web_password"
-                               placeholder="Leave blank to keep unchanged" 
-                               class="w-full pl-3 pr-8 py-2 rounded-lg text-xs font-mono transition focus:ring-1 focus:ring-blue-500 focus:border-blue-500 focus:bg-white @error('web_password') border border-rose-500 ring-2 ring-rose-100 bg-rose-50/40 text-rose-900 @else bg-slate-50 border border-slate-200 text-slate-800 @enderror">
-                        <button type="button" 
-                                @click="showPassword = !showPassword"
-                                class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition text-xs">
-                            <i :class="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
-                        </button>
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                    <!-- Device Name -->
+                    <div class="sm:col-span-2">
+                        <label class="block text-[11px] font-semibold text-slate-700 mb-1">
+                            Device Name / Identifier <span class="text-rose-500">*</span>
+                        </label>
+                        <input type="text" 
+                               name="name" 
+                               value="{{ old('name', $olt->name) }}"
+                               required
+                               placeholder="e.g. Core POP - VSOL OLT" 
+                               class="w-full h-[34px] px-3 bg-white border border-slate-200 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:border-cyan-500 font-medium" />
+                        @error('name')
+                            <p class="text-[10px] text-rose-500 mt-0.5">{{ $message }}</p>
+                        @enderror
                     </div>
-                    @error('web_password')
-                        <p class="text-[11px] text-rose-600 font-semibold flex items-center gap-1 mt-1">
-                            <i class="fas fa-exclamation-circle text-[10px]"></i> {{ $message }}
-                        </p>
-                    @enderror
+
+                    <!-- Parent MikroTik Router -->
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-700 mb-1">
+                            Parent MikroTik Router
+                        </label>
+                        <select name="router_id" 
+                                class="w-full h-[34px] px-2.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-700 focus:outline-hidden focus:border-cyan-500">
+                            <option value="">None (Standalone OLT)</option>
+                            @if(isset($routers))
+                                @foreach($routers as $router)
+                                    <option value="{{ $router->id }}" {{ (string)old('router_id', $olt->router_id) === (string)$router->id ? 'selected' : '' }}>
+                                        {{ $router->name }} ({{ $router->ip_address }})
+                                    </option>
+                                @endforeach
+                            @endif
+                        </select>
+                        @error('router_id')
+                            <p class="text-[10px] text-rose-500 mt-0.5">{{ $message }}</p>
+                        @enderror
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Card 3: Optional Settings (SNMP & Notes) -->
-        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-4">
-            <div class="border-b border-slate-100 pb-2.5 flex items-center gap-2">
-                <i class="fas fa-sliders-h text-emerald-600 text-xs"></i>
-                <h2 class="text-xs font-bold text-slate-800 uppercase tracking-wider">SNMP & Notes (Optional)</h2>
+            <!-- Section 2: Network Connectivity & Management API -->
+            <div class="p-3.5 bg-slate-50/70 rounded-xl border border-slate-200/80 space-y-3">
+                <div class="flex items-center gap-2 pb-2 border-b border-slate-200/60 text-slate-800">
+                    <span class="w-6 h-6 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs font-bold">2</span>
+                    <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Network Connectivity &amp; Management API</h3>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
+                    <!-- Host IP Address -->
+                    <div class="md:col-span-2">
+                        <label class="block text-[11px] font-semibold text-slate-700 mb-1">
+                            Host IP Address <span class="text-rose-500">*</span>
+                        </label>
+                        <input type="text" 
+                               name="ip_address" 
+                               x-model="form.ip_address"
+                               required
+                               placeholder="e.g. 192.168.8.100" 
+                               class="w-full h-[34px] px-3 bg-white border border-slate-200 rounded-lg text-xs font-mono font-semibold text-slate-800 focus:outline-hidden focus:border-cyan-500" />
+                        @error('ip_address')
+                            <p class="text-[10px] text-rose-500 mt-0.5">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <!-- Web Management Port -->
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-700 mb-1">
+                            Web API Port <span class="text-rose-500">*</span>
+                        </label>
+                        <input type="number" 
+                               name="web_port" 
+                               x-model="form.web_port"
+                               required
+                               placeholder="80" 
+                               class="w-full h-[34px] px-3 bg-white border border-slate-200 rounded-lg text-xs font-mono font-semibold text-slate-800 focus:outline-hidden focus:border-cyan-500" />
+                        @error('web_port')
+                            <p class="text-[10px] text-rose-500 mt-0.5">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <!-- Connection Type -->
+                    <div class="md:col-span-2">
+                        <label class="block text-[11px] font-semibold text-slate-700 mb-1">
+                            Connection Protocol <span class="text-rose-500">*</span>
+                        </label>
+                        <select name="connection_type" 
+                                x-model="form.connection_type"
+                                class="w-full h-[34px] px-2.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-700 focus:outline-hidden focus:border-cyan-500 font-semibold">
+                            <option value="web_api">Web Management API (HTTP REST/JSON)</option>
+                            <option value="snmp">SNMP (Simple Network Mgmt Protocol)</option>
+                            <option value="telnet">Telnet / CLI Terminal</option>
+                            <option value="hybrid">Hybrid (Web API + SNMP Polling)</option>
+                        </select>
+                        @error('connection_type')
+                            <p class="text-[10px] text-rose-500 mt-0.5">{{ $message }}</p>
+                        @enderror
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <!-- Web Username -->
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-700 mb-1">
+                            Management Username <span class="text-rose-500">*</span>
+                        </label>
+                        <input type="text" 
+                               name="web_username" 
+                               x-model="form.web_username"
+                               required
+                               placeholder="e.g. admin" 
+                               class="w-full h-[34px] px-3 bg-white border border-slate-200 rounded-lg text-xs font-mono text-slate-800 focus:outline-hidden focus:border-cyan-500" />
+                        @error('web_username')
+                            <p class="text-[10px] text-rose-500 mt-0.5">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <!-- Web Password -->
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-700 mb-1">
+                            Management Password <span class="text-slate-400 font-normal">(Leave blank to keep unchanged)</span>
+                        </label>
+                        <div class="relative">
+                            <input :type="showPassword ? 'text' : 'password'" 
+                                   name="web_password" 
+                                   x-model="form.web_password"
+                                   placeholder="••••••••" 
+                                   class="w-full h-[34px] pl-3 pr-8 bg-white border border-slate-200 rounded-lg text-xs font-mono text-slate-800 focus:outline-hidden focus:border-cyan-500" />
+                            <button type="button" 
+                                    @click="showPassword = !showPassword"
+                                    class="absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400 hover:text-slate-600 transition cursor-pointer">
+                                <i class="fas text-xs" :class="showPassword ? 'fa-eye-slash' : 'fa-eye'"></i>
+                            </button>
+                        </div>
+                        @error('web_password')
+                            <p class="text-[10px] text-rose-500 mt-0.5">{{ $message }}</p>
+                        @enderror
+                    </div>
+                </div>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-4 gap-3.5">
-                <div class="sm:col-span-3 space-y-1">
-                    <label class="block text-xs font-semibold text-slate-700">SNMP Read Community</label>
+            <!-- Section 3: Hardware Specifications & PON Capacity -->
+            <div class="p-3.5 bg-slate-50/70 rounded-xl border border-slate-200/80 space-y-3">
+                <div class="flex items-center gap-2 pb-2 border-b border-slate-200/60 text-slate-800">
+                    <span class="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs font-bold">3</span>
+                    <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Hardware Specifications &amp; PON Capacity</h3>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <!-- Hardware Vendor -->
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-700 mb-1">
+                            Hardware Vendor <span class="text-rose-500">*</span>
+                        </label>
+                        <select name="vendor" 
+                                x-model="form.vendor"
+                                @change="applyVendorPreset()"
+                                class="w-full h-[34px] px-2.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-700 focus:outline-hidden focus:border-cyan-500 font-semibold">
+                            <option value="EPON OLT">EPON OLT (Standard Chinese EPON)</option>
+                            <option value="VSOL">VSOL (V1600 Series EPON/GPON)</option>
+                            <option value="BDCOM">BDCOM (P3600 / GP3600)</option>
+                            <option value="HSGQ">HSGQ (G008 / E008 Series)</option>
+                            <option value="Core Link">Core Link (HA7302 Series)</option>
+                            <option value="Huawei">Huawei (SmartAX MA5608T/MA5800)</option>
+                            <option value="ZTE">ZTE (C300 / C320 Series)</option>
+                            <option value="FiberHome">FiberHome (AN5516 Series)</option>
+                        </select>
+                        @error('vendor')
+                            <p class="text-[10px] text-rose-500 mt-0.5">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <!-- Model Name -->
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-700 mb-1">
+                            Model Identifier <span class="text-rose-500">*</span>
+                        </label>
+                        <input type="text" 
+                               name="model" 
+                               x-model="form.model"
+                               required
+                               placeholder="e.g. DN08EP-EX-4S+" 
+                               class="w-full h-[34px] px-3 bg-white border border-slate-200 rounded-lg text-xs font-mono font-medium text-slate-800 focus:outline-hidden focus:border-cyan-500" />
+                        @error('model')
+                            <p class="text-[10px] text-rose-500 mt-0.5">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <!-- Total PON Ports -->
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-700 mb-1">
+                            Total PON Ports <span class="text-rose-500">*</span>
+                        </label>
+                        <input type="number" 
+                               name="total_pon_ports" 
+                               x-model="form.total_pon_ports"
+                               min="1" 
+                               max="64"
+                               required
+                               placeholder="8" 
+                               class="w-full h-[34px] px-3 bg-white border border-slate-200 rounded-lg text-xs font-mono font-bold text-purple-700 focus:outline-hidden focus:border-cyan-500" />
+                        @error('total_pon_ports')
+                            <p class="text-[10px] text-rose-500 mt-0.5">{{ $message }}</p>
+                        @enderror
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 4: SNMP Telemetry & Operational Notes -->
+            <div class="p-3.5 bg-slate-50/70 rounded-xl border border-slate-200/80 space-y-3">
+                <div class="flex items-center gap-2 pb-2 border-b border-slate-200/60 text-slate-800">
+                    <span class="w-6 h-6 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center text-xs font-bold">4</span>
+                    <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider">SNMP Telemetry &amp; Operational Notes</h3>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <!-- SNMP Port -->
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-700 mb-1">
+                            SNMP UDP Port <span class="text-slate-400 font-normal">(Default: 161)</span>
+                        </label>
+                        <input type="number" 
+                               name="snmp_port" 
+                               value="{{ old('snmp_port', $olt->snmp_port ?: '161') }}" 
+                               placeholder="161" 
+                               class="w-full h-[34px] px-3 bg-white border border-slate-200 rounded-lg text-xs font-mono text-slate-700 focus:outline-hidden focus:border-cyan-500" />
+                    </div>
+
+                    <!-- SNMP Read Community -->
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-700 mb-1">
+                            SNMP Read Community <span class="text-slate-400 font-normal">(Default: public)</span>
+                        </label>
+                        <input type="text" 
+                               name="snmp_community" 
+                               value="{{ old('snmp_community', $olt->snmp_community ?: 'public') }}" 
+                               placeholder="public" 
+                               class="w-full h-[34px] px-3 bg-white border border-slate-200 rounded-lg text-xs font-mono text-slate-700 focus:outline-hidden focus:border-cyan-500" />
+                    </div>
+                </div>
+
+                <!-- Operational Notes -->
+                <div>
+                    <label class="block text-[11px] font-semibold text-slate-700 mb-1">
+                        Operational Notes &amp; Physical Location <span class="text-slate-400 font-normal">(Optional)</span>
+                    </label>
                     <input type="text" 
-                           name="snmp_community" 
-                           value="{{ old('snmp_community', $olt->snmp_community ?: 'public') }}"
-                           placeholder="public" 
-                           class="w-full px-3 py-2 rounded-lg bg-slate-50 border text-xs font-mono focus:ring-1 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition @error('snmp_community') border-rose-400 bg-rose-50/30 @else border-slate-200 text-slate-800 @enderror">
-                    @error('snmp_community')
-                        <p class="text-[11px] text-rose-600 font-medium flex items-center gap-1 mt-1">
-                            <i class="fas fa-exclamation-circle text-[10px]"></i> {{ $message }}
-                        </p>
-                    @enderror
-                </div>
-
-                <div class="sm:col-span-1 space-y-1">
-                    <label class="block text-xs font-semibold text-slate-700">SNMP Port</label>
-                    <input type="number" 
-                           name="snmp_port" 
-                           value="{{ old('snmp_port', $olt->snmp_port ?: '161') }}"
-                           placeholder="161" 
-                           class="w-full px-3 py-2 rounded-lg bg-slate-50 border text-xs font-mono focus:ring-1 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition @error('snmp_port') border-rose-400 @else border-slate-200 text-slate-800 @enderror">
-                    @error('snmp_port')
-                        <p class="text-[11px] text-rose-600 font-medium flex items-center gap-1 mt-1">
-                            <i class="fas fa-exclamation-circle text-[10px]"></i> {{ $message }}
-                        </p>
-                    @enderror
-                </div>
-
-                <div class="sm:col-span-4 space-y-1">
-                    <label class="block text-xs font-semibold text-slate-700">Operational Notes</label>
-                    <textarea name="notes" 
-                              rows="2" 
-                              placeholder="Rack position, location, uplink details..." 
-                              class="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition resize-none">{{ old('notes', $olt->notes) }}</textarea>
+                           name="notes" 
+                           value="{{ old('notes', $olt->notes) }}"
+                           placeholder="e.g. Core POP Rack #2, Unit 4U, Primary fiber trunk to East Hub" 
+                           class="w-full h-[34px] px-3 bg-white border border-slate-200 rounded-lg text-xs text-slate-700 focus:outline-hidden focus:border-cyan-500" />
                 </div>
             </div>
-        </div>
 
-        <!-- Form Actions Bar -->
-        <div class="flex items-center justify-center pt-2">
-            <button type="submit" 
-                    class="px-8 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs shadow-sm hover:shadow transition transform active:scale-95 flex items-center gap-2 cursor-pointer">
-                <i class="fas fa-check text-xs"></i>
-                <span>Save Changes</span>
-            </button>
-        </div>
-
-    </form>
-
+            <!-- Form Actions Footer -->
+            <div class="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
+                <a href="{{ route('tenant.network.olt') }}"
+                   class="h-[34px] px-4 rounded-lg border border-slate-200 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs shadow-2xs transition inline-flex items-center justify-center gap-1.5 cursor-pointer">
+                    Cancel
+                </a>
+                <button type="submit" 
+                        class="h-[34px] px-5 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs shadow-xs transition inline-flex items-center justify-center gap-1.5 cursor-pointer">
+                    <i class="fas fa-check text-[10px]"></i>
+                    <span>Update OLT Gateway</span>
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
+@endsection
 
+@push('scripts')
 <script>
 function oltEditForm() {
     return {
@@ -341,6 +379,10 @@ function oltEditForm() {
             }
         },
         async testConnection() {
+            if (!this.form.ip_address) {
+                alert('Please enter Host IP Address to test connection.');
+                return;
+            }
             this.testing = true;
             this.testResult = null;
             try {
@@ -369,7 +411,7 @@ function oltEditForm() {
                 this.testing = false;
             }
         }
-    }
+    };
 }
 </script>
-@endsection
+@endpush
