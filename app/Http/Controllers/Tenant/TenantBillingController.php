@@ -85,6 +85,12 @@ class TenantBillingController extends Controller
 
         $search = $request->input('search');
         $status = $request->input('status');
+        $dateFrom = $request->input('date_from');
+        $dateTo = $request->input('date_to');
+        $perPage = (int) $request->input('per_page', 15);
+        if (!in_array($perPage, [10, 15, 20, 30, 50, 100], true)) {
+            $perPage = 15;
+        }
 
         $query = $tenant->invoices()->with(['plan', 'payments']);
 
@@ -98,10 +104,22 @@ class TenantBillingController extends Controller
         }
 
         if ($status) {
-            $query->where('status', $status);
+            if ($status === 'unpaid') {
+                $query->whereIn('status', ['unpaid', 'pending']);
+            } else {
+                $query->where('status', $status);
+            }
         }
 
-        $invoices = $query->latest('id')->paginate(15)->withQueryString();
+        if ($dateFrom) {
+            $query->whereDate('created_at', '>=', $dateFrom);
+        }
+
+        if ($dateTo) {
+            $query->whereDate('created_at', '<=', $dateTo);
+        }
+
+        $invoices = $query->latest('id')->paginate($perPage)->withQueryString();
 
         // 6 KPI Summary Metrics
         $baseQuery = $tenant->invoices();
@@ -129,7 +147,10 @@ class TenantBillingController extends Controller
             'totalDueAmount',
             'latestDueInvoice',
             'search',
-            'status'
+            'status',
+            'perPage',
+            'dateFrom',
+            'dateTo'
         ));
     }
 
