@@ -911,12 +911,12 @@
 
 
         <!-- 9. Main Menu: System Settings & Administration (Collapsible Sub-menu) -->
-        @if(auth()->user() && (auth()->user()->isOwner() || auth()->user()->isIspAdmin() || auth()->user()->hasPermission('settings.profile') || auth()->user()->hasPermission('settings.sms_gateway') || auth()->user()->hasPermission('settings.automation') || auth()->user()->hasPermission('settings.rbac') || auth()->user()->hasPermission('settings.backup') || auth()->user()->hasPermission('settings.audit_logs')))
+        @if(auth()->user() && (auth()->user()->isOwner() || auth()->user()->isIspAdmin() || auth()->user()->hasPermission('settings.profile') || auth()->user()->hasPermission('settings.sms_gateway') || auth()->user()->hasPermission('settings.automation') || auth()->user()->hasPermission('settings.backup') || auth()->user()->hasPermission('billing.gateways')))
         @php
-            $isSettingsActive = request()->routeIs('tenant.settings*') || request()->routeIs('tenant.system*') || request()->routeIs('tenant.admin*');
+            $isSettingsActive = request()->routeIs('tenant.settings.profile*') || request()->routeIs('tenant.settings.sms*') || request()->routeIs('tenant.settings.payment-gateways*') || request()->routeIs('tenant.settings.automation*') || request()->routeIs('tenant.settings.backup*');
         @endphp
         <div x-data="{ open: {{ $isSettingsActive ? 'true' : 'false' }} }" 
-             x-show="!filterQuery || 'system settings administration company profile sms whatsapp gateway automation auto-cut rbac permissions roles backup audit trail logs'.includes(filterQuery.toLowerCase())"
+             x-show="!filterQuery || 'system settings administration company profile sms whatsapp gateway automation auto-cut backup maintenance'.includes(filterQuery.toLowerCase())"
              class="space-y-1">
             <button type="button" 
                     @click="open = !open" 
@@ -951,18 +951,11 @@
                     Payment Gateways
                 </a>
 
-                <!-- 3. Automation Rules -->
+                <!-- 4. Automation Rules -->
                 <a href="{{ Route::has('tenant.settings.automation') ? route('tenant.settings.automation') : '#' }}" 
                    x-show="!filterQuery || 'automation auto-cut rules auto suspend non-paid users grace days setting cron billing'.includes(filterQuery.toLowerCase())"
                    class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ request()->routeIs('tenant.settings.automation*') ? 'border-slate-300 bg-slate-100 text-slate-900 font-bold border-l-4 border-l-slate-700' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
                     Automation Rules
-                </a>
-
-                <!-- 4. Roles & Permissions -->
-                <a href="{{ Route::has('tenant.settings.rbac') ? route('tenant.settings.rbac') : '#' }}" 
-                   x-show="!filterQuery || 'role based access control rbac permissions menu visibility roles acl'.includes(filterQuery.toLowerCase())"
-                   class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ request()->routeIs('tenant.settings.rbac*') ? 'border-slate-300 bg-slate-100 text-slate-900 font-bold border-l-4 border-l-slate-700' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
-                    Roles &amp; Permissions
                 </a>
 
                 <!-- 5. Backup & Restore -->
@@ -971,11 +964,48 @@
                    class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ request()->routeIs('tenant.settings.backup*') ? 'border-slate-300 bg-slate-100 text-slate-900 font-bold border-l-4 border-l-slate-700' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
                     Backup &amp; Restore
                 </a>
+            </div>
+        </div>
+        @endif
 
-                <!-- 6. Activity & Audit Trail -->
-                <a href="{{ Route::has('tenant.settings.audit-logs') ? route('tenant.settings.audit-logs') : (Route::has('tenant.staff.attendance') ? route('tenant.staff.attendance', ['tab' => 'logs']) : '#') }}" 
+        <!-- 10. Main Menu: User & Access Management (Collapsible Sub-menu) -->
+        @if(auth()->user() && (auth()->user()->isOwner() || auth()->user()->isIspAdmin() || auth()->user()->hasPermission('settings.rbac') || auth()->user()->hasPermission('settings.audit_logs') || auth()->user()->hasPermission('customers.view')))
+        @php
+            $isAccessActive = request()->routeIs('tenant.settings.rbac*') || request()->routeIs('tenant.staff.index*') || request()->routeIs('tenant.settings.audit*') || request()->routeIs('tenant.users*');
+        @endphp
+        <div x-data="{ open: {{ $isAccessActive ? 'true' : 'false' }} }" 
+             x-show="!filterQuery || 'user access management security roles permissions users list staff members audit trail activity logs telemetry'.includes(filterQuery.toLowerCase())"
+             class="space-y-1">
+            <button type="button" 
+                    @click="open = !open" 
+                    class="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg border transition text-[11.5px] font-semibold shadow-2xs cursor-pointer {{ $isAccessActive ? 'border-slate-300 bg-slate-100 text-slate-900 font-bold border-l-4 border-l-slate-700' : 'border-slate-200/90 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300' }}">
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-user-shield w-4 text-center text-xs {{ $isAccessActive ? 'text-slate-800' : 'text-slate-500' }}"></i>
+                    <span>User &amp; Access Control</span>
+                </div>
+                <i class="fas fa-chevron-right text-[8.5px] text-slate-400 transition-transform duration-150" :class="open ? 'rotate-90 text-slate-600' : ''"></i>
+            </button>
+
+            <!-- Sub-menu Items -->
+            <div x-show="open || filterQuery" x-collapse class="pl-2.5 pr-0.5 space-y-1" style="{{ $isAccessActive ? '' : 'display: none;' }}">
+                <!-- 1. Roles & Permissions -->
+                <a href="{{ Route::has('tenant.settings.rbac') ? route('tenant.settings.rbac') : '#' }}" 
+                   x-show="!filterQuery || 'role based access control rbac permissions menu visibility roles acl security'.includes(filterQuery.toLowerCase())"
+                   class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ request()->routeIs('tenant.settings.rbac*') ? 'border-slate-300 bg-slate-100 text-slate-900 font-bold border-l-4 border-l-slate-700' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
+                    Roles &amp; Permissions
+                </a>
+
+                <!-- 2. Users List -->
+                <a href="{{ Route::has('tenant.staff.index') ? route('tenant.staff.index') : '#' }}" 
+                   x-show="!filterQuery || 'users list all users directory staff employee accounts login credentials'.includes(filterQuery.toLowerCase())"
+                   class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ request()->routeIs('tenant.staff.index*') || request()->routeIs('tenant.users*') ? 'border-slate-300 bg-slate-100 text-slate-900 font-bold border-l-4 border-l-slate-700' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
+                    Users List
+                </a>
+
+                <!-- 3. Activity & Audit Trail -->
+                <a href="{{ Route::has('tenant.settings.audit-logs') ? route('tenant.settings.audit-logs') : '#' }}" 
                    x-show="!filterQuery || 'activity audit trail full audit logs admin staff actions security login logs telemetry'.includes(filterQuery.toLowerCase())"
-                   class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ request()->routeIs('tenant.settings.audit*') || (request()->routeIs('tenant.staff.attendance*') && request('tab') === 'logs') ? 'border-slate-300 bg-slate-100 text-slate-900 font-bold border-l-4 border-l-slate-700' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
+                   class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ request()->routeIs('tenant.settings.audit*') ? 'border-slate-300 bg-slate-100 text-slate-900 font-bold border-l-4 border-l-slate-700' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
                     Activity &amp; Audit Trail
                 </a>
             </div>
