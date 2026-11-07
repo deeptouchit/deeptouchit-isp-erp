@@ -101,19 +101,18 @@
                 <span>RADIUS Script</span>
             </button>
 
-            <button type="button" 
-                    @click="openRadiusModal()" 
-                    class="h-[34px] px-3 text-white rounded-lg text-xs font-semibold shadow-xs transition flex items-center gap-1.5 cursor-pointer {{ $isQuotaReached ? 'bg-slate-700 hover:bg-slate-800' : 'bg-emerald-600 hover:bg-emerald-700' }}">
+            <!-- Separate Create Pages for FreeRADIUS and API -->
+            <a href="{{ route('tenant.network.mikrotik.create', ['mode' => 'radius']) }}" 
+               class="h-[34px] px-3 text-white rounded-lg text-xs font-semibold shadow-xs transition flex items-center gap-1.5 cursor-pointer {{ $isQuotaReached ? 'bg-slate-700 hover:bg-slate-800' : 'bg-emerald-600 hover:bg-emerald-700' }}">
                 <i class="fas fa-shield-halved text-[10px]"></i>
                 <span>+ FreeRADIUS Router</span>
-            </button>
+            </a>
 
-            <button type="button" 
-                    @click="openApiModal()" 
-                    class="h-[34px] px-3 text-white rounded-lg text-xs font-semibold shadow-xs transition flex items-center gap-1.5 cursor-pointer {{ $isQuotaReached ? 'bg-slate-700 hover:bg-slate-800' : 'bg-cyan-600 hover:bg-cyan-700' }}">
+            <a href="{{ route('tenant.network.mikrotik.create', ['mode' => 'api']) }}" 
+               class="h-[34px] px-3 text-white rounded-lg text-xs font-semibold shadow-xs transition flex items-center gap-1.5 cursor-pointer {{ $isQuotaReached ? 'bg-slate-700 hover:bg-slate-800' : 'bg-cyan-600 hover:bg-cyan-700' }}">
                 <i class="fas fa-code text-[10px]"></i>
                 <span>+ API Router</span>
-            </button>
+            </a>
         </div>
     </div>
 
@@ -469,18 +468,16 @@
                                     <span class="text-xs font-semibold text-slate-700">No MikroTik Gateways Found</span>
                                     <p class="text-[11px] text-slate-400 max-w-sm">No routers match your filter criteria or no gateways have been configured yet.</p>
                                     <div class="flex items-center gap-2 mt-2">
-                                        <button type="button" 
-                                                @click="openRadiusModal()" 
-                                                class="h-[34px] px-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-xs transition flex items-center gap-1.5 cursor-pointer">
+                                        <a href="{{ route('tenant.network.mikrotik.create', ['mode' => 'radius']) }}" 
+                                           class="h-[34px] px-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                                             <i class="fas fa-shield-halved text-xs"></i>
                                             <span>+ FreeRADIUS Router</span>
-                                        </button>
-                                        <button type="button" 
-                                                @click="openApiModal()" 
-                                                class="h-[34px] px-3.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-xs font-semibold shadow-xs transition flex items-center gap-1.5 cursor-pointer">
+                                        </a>
+                                        <a href="{{ route('tenant.network.mikrotik.create', ['mode' => 'api']) }}" 
+                                           class="h-[34px] px-3.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-xs font-semibold shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                                             <i class="fas fa-code text-xs"></i>
                                             <span>+ API Router</span>
-                                        </button>
+                                        </a>
                                     </div>
                                 </div>
                             </td>
@@ -568,12 +565,11 @@
             <span x-text="activeMenuRouter?.is_active ? 'Disable Gateway' : 'Enable Gateway'"></span>
         </button>
 
-        <button type="button" 
-                @click="editRouterFromMenu()" 
-                class="w-full px-3 py-1.5 hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition text-left cursor-pointer">
+        <a :href="'/admin/network/mikrotik/' + activeMenuRouter?.id + '/edit'" 
+           class="w-full px-3 py-1.5 hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition text-left cursor-pointer">
             <i class="fas fa-pen-to-square w-4 text-amber-500 text-[11px]"></i>
-            <span>Edit Configuration</span>
-        </button>
+            <span>Edit Gateway</span>
+        </a>
 
         <button type="button" 
                 @click="deleteFromMenu()" 
@@ -583,299 +579,7 @@
         </button>
     </div>
 
-    <!-- MODAL 1: FREERADIUS AAA GATEWAY MODAL (Add & Edit) -->
-    <div x-show="radiusModal.open" 
-         x-cloak
-         class="bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 fixed inset-0 z-50">
-        <div class="bg-white rounded-xl border border-slate-200/90 shadow-2xl w-full max-w-xl overflow-hidden animate-in fade-in zoom-in duration-150"
-             @click.away="radiusModal.open = false">
-            
-            <div class="bg-slate-50/80 border-b border-slate-200 px-4 py-3 flex items-center justify-between">
-                <div class="flex items-center gap-2.5">
-                    <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center text-xs flex-shrink-0">
-                        <i class="fas fa-shield-halved"></i>
-                    </div>
-                    <div>
-                        <h2 class="text-xs font-semibold text-slate-800" x-text="radiusModal.isEdit ? 'Edit FreeRADIUS Gateway Configuration' : 'Add FreeRADIUS MikroTik Gateway'"></h2>
-                        <p class="text-[10.5px] text-slate-500 font-normal">Standard AAA architecture for PPPoE and Hotspot subscriber billing.</p>
-                    </div>
-                </div>
-                <button type="button" @click="radiusModal.open = false" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center cursor-pointer">
-                    <i class="fas fa-xmark text-xs"></i>
-                </button>
-            </div>
-
-            <form :action="radiusModal.isEdit ? `/admin/network/mikrotik/${radiusModal.id}` : '{{ route('tenant.network.mikrotik.store') }}'" 
-                  method="POST" 
-                  class="p-4 space-y-3 max-h-[78vh] overflow-y-auto">
-                @csrf
-                <template x-if="radiusModal.isEdit">
-                    <input type="hidden" name="_method" value="PUT">
-                </template>
-                <input type="hidden" name="connection_type" value="radius">
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-[11px] font-medium text-slate-700 mb-1">
-                            Router Name / Identity <span class="text-rose-500">*</span>
-                        </label>
-                        <input type="text" 
-                               name="name" 
-                               x-model="radiusModal.name" 
-                               required 
-                               placeholder="e.g. Core-CCR2004-DHAKA" 
-                               class="w-full h-[34px] px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                    </div>
-
-                    <div>
-                        <label class="block text-[11px] font-medium text-slate-700 mb-1">
-                            Hardware Model
-                        </label>
-                        <input type="text" 
-                               name="model" 
-                               x-model="radiusModal.model" 
-                               placeholder="e.g. CCR2004-16G-2S+" 
-                               class="w-full h-[34px] px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-[11px] font-medium text-slate-700 mb-1">
-                            Router IP Address <span class="text-rose-500">*</span>
-                        </label>
-                        <input type="text" 
-                               name="ip_address" 
-                               x-model="radiusModal.ip_address" 
-                               required 
-                               placeholder="e.g. 103.59.177.10" 
-                               class="w-full h-[34px] px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                    </div>
-
-                    <div>
-                        <label class="block text-[11px] font-medium text-slate-700 mb-1">
-                            CoA / Disconnect Port <span class="text-rose-500">*</span>
-                        </label>
-                        <input type="number" 
-                               name="coa_port" 
-                               x-model="radiusModal.coa_port" 
-                               required 
-                               placeholder="3799" 
-                               class="w-full h-[34px] px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-[11px] font-medium text-slate-700 mb-1">
-                        RADIUS Shared Secret <span class="text-rose-500">*</span>
-                    </label>
-                    <div class="relative">
-                        <input :type="radiusModal.showRadiusSecret ? 'text' : 'password'" 
-                               name="radius_secret" 
-                               x-model="radiusModal.radius_secret" 
-                               required 
-                               placeholder="radius@123" 
-                               class="w-full h-[34px] pl-3 pr-8 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                        <button type="button" 
-                                @click="radiusModal.showRadiusSecret = !radiusModal.showRadiusSecret" 
-                                class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer">
-                            <i class="fas text-xs" :class="radiusModal.showRadiusSecret ? 'fa-eye-slash' : 'fa-eye'"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- RouterOS Quick Script Snippet in Modal -->
-                <div class="rounded-lg overflow-hidden border border-slate-800 bg-slate-900">
-                    <div class="px-3 py-1.5 bg-slate-800/80 border-b border-slate-700/60 flex items-center justify-between text-[10px] text-slate-400 font-mono">
-                        <span>RouterOS Quick Setup Script</span>
-                        <button type="button" 
-                                @click="copyToClipboard(getRadiusModalScript(), 'RADIUS Script')" 
-                                class="text-cyan-400 hover:text-cyan-300 font-sans font-medium flex items-center gap-1 transition cursor-pointer">
-                            <i class="fas fa-copy text-[10px]"></i>
-                            <span>Copy</span>
-                        </button>
-                    </div>
-                    <pre class="p-2.5 text-cyan-300 font-mono text-[10.5px] overflow-x-auto leading-relaxed max-h-24 selection:bg-cyan-900" x-text="getRadiusModalScript()"></pre>
-                </div>
-
-                <div class="flex items-center gap-2 pt-1">
-                    <input type="checkbox" 
-                           id="radius_is_active" 
-                           name="is_active" 
-                           value="1" 
-                           x-model="radiusModal.is_active" 
-                           class="w-4 h-4 text-cyan-600 rounded border-slate-300 focus:ring-cyan-500">
-                    <label for="radius_is_active" class="text-xs text-slate-700 font-medium cursor-pointer">
-                        Enable this gateway immediately for active AAA authentication
-                    </label>
-                </div>
-
-                <div class="pt-2 border-t border-slate-200 flex items-center justify-end gap-2">
-                    <button type="button" 
-                            @click="radiusModal.open = false" 
-                            class="h-[34px] px-3.5 border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs rounded-lg transition cursor-pointer">
-                        Cancel
-                    </button>
-                    <button type="submit" 
-                            class="h-[34px] px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs rounded-lg shadow-xs transition cursor-pointer">
-                        <span x-text="radiusModal.isEdit ? 'Update Gateway' : 'Save Gateway'"></span>
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- MODAL 2: ROUTEROS API GATEWAY MODAL (Add & Edit) -->
-    <div x-show="apiModal.open" 
-         x-cloak
-         class="bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 fixed inset-0 z-50">
-        <div class="bg-white rounded-xl border border-slate-200/90 shadow-2xl w-full max-w-xl overflow-hidden animate-in fade-in zoom-in duration-150"
-             @click.away="apiModal.open = false">
-            
-            <div class="bg-slate-50/80 border-b border-slate-200 px-4 py-3 flex items-center justify-between">
-                <div class="flex items-center gap-2.5">
-                    <div class="w-8 h-8 rounded-lg bg-cyan-50 text-cyan-600 border border-cyan-100 flex items-center justify-center text-xs flex-shrink-0">
-                        <i class="fas fa-code"></i>
-                    </div>
-                    <div>
-                        <h2 class="text-xs font-semibold text-slate-800" x-text="apiModal.isEdit ? 'Edit RouterOS API Gateway' : 'Connect MikroTik via RouterOS API'"></h2>
-                        <p class="text-[10.5px] text-slate-500 font-normal">Direct RouterOS API socket communication for live telemetry &amp; queues.</p>
-                    </div>
-                </div>
-                <button type="button" @click="apiModal.open = false" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center cursor-pointer">
-                    <i class="fas fa-xmark text-xs"></i>
-                </button>
-            </div>
-
-            <form :action="apiModal.isEdit ? `/admin/network/mikrotik/${apiModal.id}` : '{{ route('tenant.network.mikrotik.store') }}'" 
-                  method="POST" 
-                  class="p-4 space-y-3 max-h-[78vh] overflow-y-auto">
-                @csrf
-                <template x-if="apiModal.isEdit">
-                    <input type="hidden" name="_method" value="PUT">
-                </template>
-                <input type="hidden" name="connection_type" value="api">
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-[11px] font-medium text-slate-700 mb-1">
-                            Router Name / Identity <span class="text-rose-500">*</span>
-                        </label>
-                        <input type="text" 
-                               name="name" 
-                               x-model="apiModal.name" 
-                               required 
-                               placeholder="e.g. Edge-Router-Chittagong" 
-                               class="w-full h-[34px] px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                    </div>
-
-                    <div>
-                        <label class="block text-[11px] font-medium text-slate-700 mb-1">
-                            Hardware Model
-                        </label>
-                        <input type="text" 
-                               name="model" 
-                               x-model="apiModal.model" 
-                               placeholder="e.g. RB4011iGS+" 
-                               class="w-full h-[34px] px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-[11px] font-medium text-slate-700 mb-1">
-                            Router IP Address <span class="text-rose-500">*</span>
-                        </label>
-                        <input type="text" 
-                               name="ip_address" 
-                               x-model="apiModal.ip_address" 
-                               required 
-                               placeholder="e.g. 192.168.88.1" 
-                               class="w-full h-[34px] px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                    </div>
-
-                    <div>
-                        <label class="block text-[11px] font-medium text-slate-700 mb-1">
-                            RouterOS API Port <span class="text-rose-500">*</span>
-                        </label>
-                        <input type="number" 
-                               name="api_port" 
-                               x-model="apiModal.api_port" 
-                               required 
-                               placeholder="8728" 
-                               class="w-full h-[34px] px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-[11px] font-medium text-slate-700 mb-1">
-                            API Username <span class="text-rose-500">*</span>
-                        </label>
-                        <input type="text" 
-                               name="username" 
-                               x-model="apiModal.username" 
-                               required 
-                               placeholder="admin" 
-                               class="w-full h-[34px] px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                    </div>
-
-                    <div>
-                        <label class="block text-[11px] font-medium text-slate-700 mb-1">
-                            API Password <span class="text-rose-500" x-show="!apiModal.isEdit">*</span>
-                        </label>
-                        <div class="relative">
-                            <input :type="apiModal.showPassword ? 'text' : 'password'" 
-                                   name="password" 
-                                   x-model="apiModal.password" 
-                                   :required="!apiModal.isEdit" 
-                                   placeholder="••••••••" 
-                                   class="w-full h-[34px] pl-3 pr-8 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                            <button type="button" 
-                                    @click="apiModal.showPassword = !apiModal.showPassword" 
-                                    class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer">
-                                <i class="fas text-xs" :class="apiModal.showPassword ? 'fa-eye-slash' : 'fa-eye'"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="flex items-center justify-between pt-1">
-                    <label class="inline-flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" 
-                               name="use_ssl" 
-                               value="1" 
-                               x-model="apiModal.use_ssl" 
-                               class="w-4 h-4 text-cyan-600 rounded border-slate-300 focus:ring-cyan-500">
-                        <span class="text-xs text-slate-700 font-medium">Use SSL / TLS (Port 8729)</span>
-                    </label>
-
-                    <button type="button" 
-                            @click="testApiModalSocket()" 
-                            :disabled="apiModal.testingSocket"
-                            class="h-[30px] px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200/80 rounded-lg text-[11px] font-semibold transition inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50">
-                        <i class="fas fa-spinner fa-spin text-cyan-600" x-show="apiModal.testingSocket"></i>
-                        <i class="fas fa-bolt text-emerald-600" x-show="!apiModal.testingSocket"></i>
-                        <span>Test API Socket</span>
-                    </button>
-                </div>
-
-                <div class="pt-2 border-t border-slate-200 flex items-center justify-end gap-2">
-                    <button type="button" 
-                            @click="apiModal.open = false" 
-                            class="h-[34px] px-3.5 border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs rounded-lg transition cursor-pointer">
-                        Cancel
-                    </button>
-                    <button type="submit" 
-                            class="h-[34px] px-4 bg-cyan-600 hover:bg-cyan-700 text-white font-medium text-xs rounded-lg shadow-xs transition cursor-pointer">
-                        <span x-text="apiModal.isEdit ? 'Update Gateway' : 'Connect Gateway'"></span>
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- MODAL 3: VIEW GATEWAY DETAILS MODAL (Rule 3) -->
+    <!-- MODAL 1: VIEW GATEWAY DETAILS MODAL (Rule 3) -->
     <div x-show="detailsModal.open" 
          x-cloak
          class="bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 fixed inset-0 z-50">
@@ -965,23 +669,24 @@
                     </button>
 
                     <div class="flex items-center gap-2">
+                        <a :href="'/admin/network/mikrotik/' + detailsModal.data?.id + '/edit'" 
+                           class="h-[34px] px-3.5 bg-amber-500 hover:bg-amber-600 text-white font-medium text-xs rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
+                            <i class="fas fa-pen-to-square text-xs"></i>
+                            <span>Edit Gateway</span>
+                        </a>
+
                         <button type="button" 
                                 @click="detailsModal.open = false" 
                                 class="h-[34px] px-3.5 border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs rounded-lg transition cursor-pointer">
                             Close
                         </button>
-                        <a :href="'/admin/network/mikrotik/' + detailsModal.data?.id" 
-                           class="h-[34px] px-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-xs rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
-                            <i class="fas fa-chart-line text-xs"></i>
-                            <span>Live Telemetry</span>
-                        </a>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- MODAL 4: SOCKET TEST / PROBE MODAL (Rule 3) -->
+    <!-- MODAL 2: SOCKET TEST / PROBE MODAL (Rule 3) -->
     <div x-show="probeModal.open" 
          x-cloak
          class="bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 fixed inset-0 z-50">
@@ -1041,7 +746,7 @@
         </div>
     </div>
 
-    <!-- MODAL 5: FREERADIUS CLIENT SETUP SCRIPT MODAL (Rule 3) -->
+    <!-- MODAL 3: FREERADIUS CLIENT SETUP SCRIPT MODAL (Rule 3) -->
     <div x-show="showScriptModal" 
          x-cloak
          class="bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 fixed inset-0 z-50">
@@ -1122,35 +827,6 @@ function mikrotikManager() {
             data: null
         },
 
-        radiusModal: {
-            open: false,
-            isEdit: false,
-            id: null,
-            name: '',
-            ip_address: '',
-            model: '',
-            radius_secret: 'radius@123',
-            coa_port: 3799,
-            is_active: true,
-            showRadiusSecret: false
-        },
-
-        apiModal: {
-            open: false,
-            isEdit: false,
-            id: null,
-            name: '',
-            ip_address: '',
-            model: '',
-            api_port: 8728,
-            username: 'admin',
-            password: '',
-            use_ssl: false,
-            is_active: true,
-            showPassword: false,
-            testingSocket: false
-        },
-
         probeModal: {
             open: false,
             loading: false,
@@ -1159,100 +835,10 @@ function mikrotikManager() {
             result: null
         },
 
-        openRadiusModal() {
-            this.activeMenuRouter = null;
-            this.radiusModal = {
-                open: true,
-                isEdit: false,
-                id: null,
-                name: '',
-                ip_address: '',
-                model: '',
-                radius_secret: 'radius@123',
-                coa_port: 3799,
-                is_active: true,
-                showRadiusSecret: false
-            };
-        },
-
-        openEditRadiusModal(router) {
-            this.activeMenuRouter = null;
-            this.radiusModal = {
-                open: true,
-                isEdit: true,
-                id: router.id,
-                name: router.name || '',
-                ip_address: router.ip_address || '',
-                model: router.model || '',
-                radius_secret: router.radius_secret || 'radius@123',
-                coa_port: router.coa_port || 3799,
-                is_active: !!router.is_active,
-                showRadiusSecret: false
-            };
-        },
-
-        openApiModal() {
-            this.activeMenuRouter = null;
-            this.apiModal = {
-                open: true,
-                isEdit: false,
-                id: null,
-                name: '',
-                ip_address: '',
-                model: '',
-                api_port: 8728,
-                username: 'admin',
-                password: '',
-                use_ssl: false,
-                is_active: true,
-                showPassword: false,
-                testingSocket: false
-            };
-        },
-
-        openEditApiModal(router) {
-            this.activeMenuRouter = null;
-            this.apiModal = {
-                open: true,
-                isEdit: true,
-                id: router.id,
-                name: router.name || '',
-                ip_address: router.ip_address || '',
-                model: router.model || '',
-                api_port: router.api_port || 8728,
-                username: router.username || 'admin',
-                password: '',
-                use_ssl: !!router.use_ssl,
-                is_active: !!router.is_active,
-                showPassword: false,
-                testingSocket: false
-            };
-        },
-
         viewRouterDetails(router) {
             this.activeMenuRouter = null;
             this.detailsModal.data = router;
             this.detailsModal.open = true;
-        },
-
-        editRouterFromMenu() {
-            if (!this.activeMenuRouter) return;
-            const router = this.activeMenuRouter;
-            this.activeMenuRouter = null;
-
-            if (router.connection_type === 'api') {
-                this.openEditApiModal(router);
-            } else {
-                this.openEditRadiusModal(router);
-            }
-        },
-
-        getRadiusModalScript() {
-            const sIp = this.serverIp || '103.59.177.136';
-            const sec = this.radiusModal.radius_secret || 'radius@123';
-            const coa = this.radiusModal.coa_port || 3799;
-
-            return `/radius add service=ppp,hotspot,login address=${sIp} secret="${sec}" authentication-port=1812 accounting-port=1813 timeout=3000ms comment="SomitySoft FreeRADIUS"\n/radius incoming set accept=yes port=${coa}\n/ppp aaa set use-radius=yes accounting=yes interim-update=5m`;
         },
 
         getMikrotikScript(ip, secret) {
@@ -1260,51 +846,6 @@ function mikrotikManager() {
             const sec = secret || 'radius@123';
 
             return `# 1. Add FreeRADIUS Server\n/radius add service=ppp,hotspot,login address=${sIp} secret="${sec}" authentication-port=1812 accounting-port=1813 timeout=3000ms comment="SomitySoft FreeRADIUS"\n\n# 2. Enable CoA / Disconnect Requests\n/radius incoming set accept=yes port=3799\n\n# 3. Enable PPPoE RADIUS AAA Accounting\n/ppp aaa set use-radius=yes accounting=yes interim-update=5m`;
-        },
-
-        async testApiModalSocket() {
-            if (!this.apiModal.ip_address) {
-                alert('Please enter Router IP Address first.');
-                return;
-            }
-
-            this.apiModal.testingSocket = true;
-
-            try {
-                const res = await fetch(`{{ route('tenant.network.mikrotik.test') }}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        ip_address: this.apiModal.ip_address,
-                        api_port: this.apiModal.api_port || 8728,
-                        username: this.apiModal.username || 'admin',
-                        password: this.apiModal.password || '',
-                        use_ssl: this.apiModal.use_ssl
-                    })
-                });
-                const data = await res.json();
-
-                if (typeof Swal !== 'undefined') {
-                    Swal.fire({
-                        icon: data.success ? 'success' : 'error',
-                        title: data.success ? 'Connection Successful!' : 'Connection Failed',
-                        html: `<div class='text-xs text-slate-600 mt-1'>${data.message}` + 
-                              (data.ros_version ? `<br><span class='font-mono font-bold text-cyan-800'>RouterOS: ${data.ros_version} (${data.model || ''})</span>` : '') + 
-                              `</div>`,
-                        confirmButtonColor: data.success ? '#0891b2' : '#e11d48'
-                    });
-                } else {
-                    alert(data.message);
-                }
-            } catch (err) {
-                alert('Network communication error while testing socket.');
-            } finally {
-                this.apiModal.testingSocket = false;
-            }
         },
 
         toggleMenu(router, event) {
@@ -1485,8 +1026,14 @@ function mikrotikManager() {
                     showCancelButton: true,
                     confirmButtonColor: '#e11d48',
                     cancelButtonColor: '#64748b',
-                    confirmButtonText: 'Yes, Delete Gateway',
-                    cancelButtonText: 'Cancel'
+                    confirmButtonText: '<i class="far fa-trash-alt mr-1"></i> Yes, Delete Gateway',
+                    cancelButtonText: 'Cancel',
+                    reverseButtons: true,
+                    customClass: {
+                        popup: 'rounded-2xl shadow-xl border border-slate-200 p-5',
+                        confirmButton: 'px-4 py-2 rounded-xl text-xs font-semibold shadow-xs',
+                        cancelButton: 'px-4 py-2 rounded-xl text-xs font-semibold'
+                    }
                 }).then((result) => {
                     if (result.isConfirmed) {
                         this.submitDeleteForm(routerId);

@@ -97,9 +97,11 @@ Route::middleware(['web'])->group(function () {
         Route::prefix('admin/network')->name('tenant.network.')->middleware('permission:network.routers,network.radius,network.olts_onus,network.packages,network.ip_pools')->group(function () {
             // MikroTik Routers Fleet Management
             Route::get('/mikrotik', [MikrotikController::class, 'index'])->name('mikrotik');
+            Route::get('/mikrotik/create', [MikrotikController::class, 'create'])->name('mikrotik.create');
             Route::post('/mikrotik', [MikrotikController::class, 'store'])->name('mikrotik.store');
             Route::post('/mikrotik/test-connection', [MikrotikController::class, 'testConnection'])->name('mikrotik.test');
             Route::get('/mikrotik/{router}', [MikrotikController::class, 'show'])->name('mikrotik.show');
+            Route::get('/mikrotik/{router}/edit', [MikrotikController::class, 'edit'])->name('mikrotik.edit');
             Route::put('/mikrotik/{router}', [MikrotikController::class, 'update'])->name('mikrotik.update');
             Route::delete('/mikrotik/{router}', [MikrotikController::class, 'destroy'])->name('mikrotik.destroy');
             Route::post('/mikrotik/{router}/sync', [MikrotikController::class, 'sync'])->name('mikrotik.sync');

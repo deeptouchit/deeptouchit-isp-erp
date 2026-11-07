@@ -140,6 +140,32 @@ class MikrotikController extends Controller
     }
 
     /**
+     * Show the form for creating a new MikroTik router.
+     */
+    public function create(Request $request)
+    {
+        $tenant = $this->getTenant();
+        $tenant->loadMissing('plan');
+        $plan = $tenant->plan;
+        $mikrotikQuota = $plan ? (int)$plan->mikrotik_limit : 2;
+        $totalRouters = TenantRouter::where('tenant_id', $tenant->id)->count();
+        $isQuotaReached = ($mikrotikQuota > 0 && $totalRouters >= $mikrotikQuota);
+
+        $serverIp = $this->resolveServerPublicIp();
+        $defaultMode = $request->query('mode', 'radius');
+
+        return view('tenant.network.mikrotik_create', compact(
+            'tenant',
+            'plan',
+            'mikrotikQuota',
+            'totalRouters',
+            'isQuotaReached',
+            'serverIp',
+            'defaultMode'
+        ));
+    }
+
+    /**
      * Store a newly created MikroTik router.
      */
     public function store(Request $request)
@@ -257,6 +283,22 @@ class MikrotikController extends Controller
             'radiusCliScript',
             'ipPools',
             'packages',
+            'serverIp'
+        ));
+    }
+
+    /**
+     * Show the form for editing an existing MikroTik router.
+     */
+    public function edit($id)
+    {
+        $tenant = $this->getTenant();
+        $router = $this->findTenantRouter($id);
+        $serverIp = $this->resolveServerPublicIp();
+
+        return view('tenant.network.mikrotik_edit', compact(
+            'tenant',
+            'router',
             'serverIp'
         ));
     }
