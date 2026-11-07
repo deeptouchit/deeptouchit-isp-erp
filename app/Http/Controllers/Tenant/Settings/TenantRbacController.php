@@ -49,10 +49,16 @@ class TenantRbacController extends Controller
         $search = $request->input('search');
         $typeFilter = $request->input('type'); // 'all', 'system', 'custom'
         $statusFilter = $request->input('status'); // 'all', 'active', 'disabled'
+        $scopeFilter = $request->input('scope', 'all'); // 'all', 'customers', 'network', 'billing', 'support', 'settings'
         $perPage = (int)$request->input('per_page', 20);
         if (!in_array($perPage, [10, 20, 50, 100], true)) {
             $perPage = 20;
         }
+
+        // Active more filters counter for 2-Tier Filter System
+        $activeMoreCount = 0;
+        if ($scopeFilter !== 'all' && !empty($scopeFilter)) $activeMoreCount++;
+        $isMoreOpen = $activeMoreCount > 0;
 
         $query = TenantRole::where('tenant_id', $tenantId);
 
@@ -72,6 +78,13 @@ class TenantRbacController extends Controller
 
         if ($statusFilter && $statusFilter !== 'all') {
             $query->where('status', $statusFilter);
+        }
+
+        if ($scopeFilter && $scopeFilter !== 'all') {
+            $query->where(function ($q) use ($scopeFilter) {
+                $q->where('name', 'isp_admin')
+                  ->orWhere('permissions', 'like', "%\"{$scopeFilter}.%");
+            });
         }
 
         $roles = $query->orderBy('is_system', 'desc')->orderBy('id', 'asc')->paginate($perPage)->withQueryString();
@@ -111,7 +124,58 @@ class TenantRbacController extends Controller
             'search',
             'typeFilter',
             'statusFilter',
-            'perPage'
+            'scopeFilter',
+            'perPage',
+            'activeMoreCount',
+            'isMoreOpen'
+        ));
+    }
+
+    /**
+     * Display standalone dedicated page to create a new role
+     */
+    public function create(Request $request): View
+    {
+        $tenant = $this->getTenant();
+        $permissionCatalog = TenantRole::getPermissionCatalog();
+
+        $totalPermissions = 0;
+        foreach ($permissionCatalog as $group) {
+            $totalPermissions += count($group['permissions']);
+        }
+
+        return view('tenant.settings.rbac_create', compact(
+            'tenant',
+            'permissionCatalog',
+            'totalPermissions'
+        ));
+    }
+
+    /**
+     * Display standalone dedicated page to edit an existing role
+     */
+    public function edit($id): View
+    {
+        $tenant = $this->getTenant();
+        $role = TenantRole::where('tenant_id', $tenant->id)->findOrFail($id);
+        $permissionCatalog = TenantRole::getPermissionCatalog();
+
+        $totalPermissions = 0;
+        foreach ($permissionCatalog as $group) {
+            $totalPermissions += count($group['permissions']);
+        }
+
+        $assignedStaff = User::where('tenant_id', $tenant->id)
+            ->where('role', $role->name)
+            ->select('id', 'name', 'email', 'phone', 'mobile', 'staff_id', 'designation', 'status')
+            ->get();
+
+        return view('tenant.settings.rbac_edit', compact(
+            'tenant',
+            'role',
+            'permissionCatalog',
+            'totalPermissions',
+            'assignedStaff'
         ));
     }
 
@@ -162,7 +226,7 @@ class TenantRbacController extends Controller
             'user_agent' => $request->userAgent(),
         ]);
 
-        return back()->with('success', "Role '{$role->display_name}' created successfully.");
+        return redirect()->route('tenant.settings.rbac')->with('success', "Role '{$role->display_name}' created successfully.");
     }
 
     /**
@@ -223,7 +287,7 @@ class TenantRbacController extends Controller
             'user_agent' => $request->userAgent(),
         ]);
 
-        return back()->with('success', "Role '{$role->display_name}' updated successfully.");
+        return redirect()->route('tenant.settings.rbac')->with('success', "Role '{$role->display_name}' updated successfully.");
     }
 
     /**

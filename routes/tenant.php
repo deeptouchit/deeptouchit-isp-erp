@@ -565,8 +565,10 @@ Route::middleware(['web'])->group(function () {
 
             // 4. Role-Based Access Control (RBAC) & Permissions
             Route::get('/rbac', [TenantRbacController::class, 'index'])->name('rbac');
+            Route::get('/rbac/create', [TenantRbacController::class, 'create'])->name('rbac.create');
             Route::post('/rbac', [TenantRbacController::class, 'store'])->name('rbac.store');
             Route::get('/rbac/{id}', [TenantRbacController::class, 'show'])->whereNumber('id')->name('rbac.show');
+            Route::get('/rbac/{id}/edit', [TenantRbacController::class, 'edit'])->whereNumber('id')->name('rbac.edit');
             Route::put('/rbac/{id}', [TenantRbacController::class, 'update'])->whereNumber('id')->name('rbac.update');
             Route::delete('/rbac/{id}', [TenantRbacController::class, 'destroy'])->whereNumber('id')->name('rbac.destroy');
             Route::post('/rbac/{id}/clone', [TenantRbacController::class, 'cloneRole'])->whereNumber('id')->name('rbac.clone');
