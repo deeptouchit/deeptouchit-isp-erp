@@ -475,7 +475,10 @@
                         if (c) {
                             $refs.custName.value = c.name;
                             $refs.custPhone.value = c.phone || '';
-                            $refs.custAddr.value = c.installation_address || c.address || '';
+                            $refs.custAddr.value = c.address || '';
+                            if (c.zone_id && $refs.zoneSelect) {
+                                $refs.zoneSelect.value = c.zone_id;
+                            }
                         }
                     }
                 } }">
@@ -558,7 +561,7 @@
                         </div>
                         <div>
                             <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Coverage Zone</label>
-                            <select name="zone_id" class="w-full h-[34px] bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
+                            <select name="zone_id" x-ref="zoneSelect" class="w-full h-[34px] bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                                 <option value="">Select Zone</option>
                                 @foreach($zones as $z)
                                     <option value="{{ $z->id }}">{{ $z->name }}</option>

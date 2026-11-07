@@ -59,7 +59,7 @@ class TenantFieldJobController extends Controller
 
         $zones = TenantCoverageZone::where('tenant_id', $tenantId)->orderBy('name')->get();
         $customers = TenantCustomer::where('tenant_id', $tenantId)
-            ->select('id', 'name', 'phone', 'address', 'installation_address')
+            ->select('id', 'name', 'phone', 'address', 'zone_id')
             ->orderBy('name')
             ->limit(300)
             ->get();
@@ -174,7 +174,7 @@ class TenantFieldJobController extends Controller
             if ($cust) {
                 $customerName = $customerName ?: $cust->name;
                 $customerPhone = $customerPhone ?: $cust->phone;
-                $address = $address ?: ($cust->installation_address ?: $cust->address);
+                $address = $address ?: $cust->address;
             }
         }
 
