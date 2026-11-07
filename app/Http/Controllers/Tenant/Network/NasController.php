@@ -140,6 +140,24 @@ class NasController extends Controller
     }
 
     /**
+     * Show the form for creating a new NAS client.
+     */
+    public function create(Request $request)
+    {
+        $tenant = $this->getTenant();
+        $tenantRouters = TenantRouter::where('tenant_id', $tenant->id)
+            ->orderBy('name')
+            ->get();
+        $preselectedRouterId = $request->query('router_id');
+
+        return view('tenant.network.nas_create', compact(
+            'tenant',
+            'tenantRouters',
+            'preselectedRouterId'
+        ));
+    }
+
+    /**
      * Store a newly created NAS client.
      */
     public function store(Request $request)
@@ -176,6 +194,24 @@ class NasController extends Controller
 
         return redirect()->route('tenant.network.nas')
             ->with('success', "RADIUS NAS Client '{$nas->shortname}' ({$nas->nasname}) registered successfully.");
+    }
+
+    /**
+     * Show the form for editing an existing NAS client.
+     */
+    public function edit($id)
+    {
+        $tenant = $this->getTenant();
+        $nas = $this->findTenantNas($id);
+        $tenantRouters = TenantRouter::where('tenant_id', $tenant->id)
+            ->orderBy('name')
+            ->get();
+
+        return view('tenant.network.nas_edit', compact(
+            'tenant',
+            'nas',
+            'tenantRouters'
+        ));
     }
 
     /**
@@ -229,7 +265,8 @@ class NasController extends Controller
         $nas->save();
         $this->radiusService->syncNasClients($tenant);
 
-        return back()->with('success', "NAS Client '{$nas->shortname}' updated successfully.");
+        return redirect()->route('tenant.network.nas')
+            ->with('success', "NAS Client '{$nas->shortname}' updated successfully.");
     }
 
     /**

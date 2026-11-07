@@ -111,7 +111,9 @@ Route::middleware(['web'])->group(function () {
             Route::patch('/mikrotik/{router}/toggle-status', [MikrotikController::class, 'toggleStatus'])->name('mikrotik.toggle-status');
             Route::get('/mikrotik/{router}/telemetry', [MikrotikController::class, 'telemetry'])->name('mikrotik.telemetry');
             Route::get('/nas', [NasController::class, 'index'])->name('nas');
+            Route::get('/nas/create', [NasController::class, 'create'])->name('nas.create');
             Route::post('/nas', [NasController::class, 'store'])->name('nas.store');
+            Route::get('/nas/{nas}/edit', [NasController::class, 'edit'])->name('nas.edit');
             Route::put('/nas/{nas}', [NasController::class, 'update'])->name('nas.update');
             Route::delete('/nas/{nas}', [NasController::class, 'destroy'])->name('nas.destroy');
             Route::patch('/nas/{nas}/toggle-status', [NasController::class, 'toggleStatus'])->name('nas.toggle-status');
