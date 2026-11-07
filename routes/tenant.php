@@ -508,6 +508,7 @@ Route::middleware(['web'])->group(function () {
             Route::post('/field-jobs/{id}/status', [TenantFieldJobController::class, 'updateStatus'])->whereNumber('id')->name('field-jobs.status');
             Route::get('/field-jobs/{id}/print', [TenantFieldJobController::class, 'printJobSheet'])->whereNumber('id')->name('field-jobs.print');
             Route::get('/field-jobs/export', [TenantFieldJobController::class, 'exportCsv'])->name('field-jobs.export');
+            Route::delete('/field-jobs/{id}', [TenantFieldJobController::class, 'destroy'])->whereNumber('id')->name('field-jobs.destroy');
 
             // 3. New Installation Tasks & Provisioning Pipeline
             Route::get('/installations', [TenantInstallationTaskController::class, 'index'])->name('installations');

@@ -43,10 +43,11 @@ class TenantFieldJobController extends Controller
         $priority = $request->get('priority', 'all');
         $status = $request->get('status', 'all');
         $technicianId = $request->get('technician_id', 'all');
+        $zoneId = $request->get('zone_id', 'all');
         $search = trim($request->get('search', ''));
         $perPage = (int) $request->get('per_page', 20);
 
-        // 1. Fetch Technicians & Coverage Zones for Filters
+        // 1. Fetch Technicians, Coverage Zones & Recent Customers
         $technicians = User::where('tenant_id', $tenantId)
             ->where(function($q) {
                 $q->where('role', 'like', '%tech%')
@@ -57,6 +58,11 @@ class TenantFieldJobController extends Controller
             ->get();
 
         $zones = TenantCoverageZone::where('tenant_id', $tenantId)->orderBy('name')->get();
+        $customers = TenantCustomer::where('tenant_id', $tenantId)
+            ->select('id', 'name', 'phone', 'address', 'installation_address')
+            ->orderBy('name')
+            ->limit(300)
+            ->get();
 
         // 2. Query Field Jobs
         $query = TenantFieldJob::where('tenant_id', $tenantId)
@@ -90,7 +96,18 @@ class TenantFieldJobController extends Controller
             $query->where('assigned_to', (int)$technicianId);
         }
 
+        if ($zoneId !== 'all' && !empty($zoneId)) {
+            $query->where('zone_id', (int)$zoneId);
+        }
+
         $jobs = $query->paginate($perPage)->withQueryString();
+
+        // Active more filters counter for 2-Tier customer standard filter
+        $activeMoreCount = 0;
+        if ($technicianId !== 'all' && !empty($technicianId)) $activeMoreCount++;
+        if ($priority !== 'all' && !empty($priority)) $activeMoreCount++;
+        if ($zoneId !== 'all' && !empty($zoneId)) $activeMoreCount++;
+        $isMoreOpen = $activeMoreCount > 0;
 
         // 3. Compute 6 KPI Stats
         $totalJobs = TenantFieldJob::where('tenant_id', $tenantId)->count();
@@ -115,10 +132,14 @@ class TenantFieldJobController extends Controller
             'stats',
             'technicians',
             'zones',
+            'customers',
             'jobType',
             'priority',
             'status',
             'technicianId',
+            'zoneId',
+            'activeMoreCount',
+            'isMoreOpen',
             'search',
             'perPage'
         ));
@@ -134,14 +155,28 @@ class TenantFieldJobController extends Controller
 
         $request->validate([
             'job_type' => 'required|string',
-            'customer_name' => 'required|string|max:255',
+            'customer_name' => 'required_without:customer_id|nullable|string|max:255',
             'customer_phone' => 'nullable|string|max:30',
-            'address' => 'required|string|max:255',
+            'address' => 'required_without:customer_id|nullable|string|max:255',
             'priority' => 'required|in:low,medium,high,urgent',
             'assigned_to' => 'nullable|exists:users,id',
             'issue_description' => 'required|string',
             'scheduled_at' => 'nullable|date',
         ]);
+
+        $customerId = $request->customer_id ? (int)$request->customer_id : null;
+        $customerName = $request->customer_name;
+        $customerPhone = $request->customer_phone;
+        $address = $request->address;
+
+        if ($customerId) {
+            $cust = TenantCustomer::where('tenant_id', $tenantId)->find($customerId);
+            if ($cust) {
+                $customerName = $customerName ?: $cust->name;
+                $customerPhone = $customerPhone ?: $cust->phone;
+                $address = $address ?: ($cust->installation_address ?: $cust->address);
+            }
+        }
 
         $jobNumber = 'JOB-' . date('y') . '-' . str_pad(rand(100, 9999), 4, '0', STR_PAD_LEFT);
         while (TenantFieldJob::where('job_number', $jobNumber)->exists()) {
@@ -154,20 +189,54 @@ class TenantFieldJobController extends Controller
             'tenant_id' => $tenantId,
             'job_number' => $jobNumber,
             'job_type' => $request->job_type,
-            'customer_name' => $request->customer_name,
-            'customer_phone' => $request->customer_phone,
-            'address' => $request->address,
+            'customer_id' => $customerId,
+            'customer_name' => $customerName,
+            'customer_phone' => $customerPhone,
+            'address' => $address,
             'zone_id' => $request->zone_id,
             'assigned_to' => $tech?->id,
             'assigned_technician_name' => $tech?->name,
             'priority' => $request->priority,
             'status' => $tech ? 'dispatched' : 'pending',
             'scheduled_at' => $request->scheduled_at ? Carbon::parse($request->scheduled_at) : now()->addHours(2),
+            'optical_rx_before' => $request->optical_rx_before,
             'issue_description' => $request->issue_description,
             'created_by' => auth()->id() ?? 1,
         ]);
 
         return back()->with('success', "Field job {$jobNumber} has been dispatched successfully.");
+    }
+
+    /**
+     * Delete Field Job (Super Admin / ISP Admin only)
+     */
+    public function destroy(Request $request, $id)
+    {
+        $tenant = $this->getTenant();
+        $authUser = auth()->user();
+
+        if (!$authUser || !$authUser->canDeleteTickets()) {
+            if ($request->wantsJson() || $request->ajax() || str_contains($request->header('Accept', ''), 'json')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized: Only Super Admin / ISP Admin can delete field jobs.',
+                ], 403);
+            }
+            abort(403, 'Unauthorized: Only Super Admin / ISP Admin can delete field jobs.');
+        }
+
+        $job = TenantFieldJob::where('tenant_id', $tenant->id)->findOrFail($id);
+        $jobNo = $job->job_number;
+        $job->delete();
+
+        if ($request->wantsJson() || $request->ajax() || str_contains($request->header('Accept', ''), 'json')) {
+            return response()->json([
+                'success' => true,
+                'message' => "Field Job #{$jobNo} deleted successfully.",
+            ]);
+        }
+
+        return back()->with('success', "Field Job #{$jobNo} deleted successfully.");
     }
 
     /**
