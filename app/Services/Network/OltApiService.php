@@ -873,9 +873,10 @@ class OltApiService
                 }
             }
 
-            // 2. Fetch Real Optical Diagnostics (Rx/Tx Power, Distance) for all 4 ports from onuopmdiag.html
+            // 2. Fetch Real Optical Diagnostics (Rx/Tx Power, Distance) across all PON ports from onuopmdiag.html
             $opmDiag = [];
-            for ($p = 1; $p <= 4; $p++) {
+            $maxPorts = max(4, min(16, (int)($olt->total_pon_ports ?: 8)));
+            for ($p = 1; $p <= $maxPorts; $p++) {
                 $opmHtml = $this->fetchVsolHtmlPage($ip, $port, $username, $password, 'onuopmdiag.html', ['select' => (string)$p]);
                 if ($opmHtml && preg_match_all('/<tr>\s*<td[^>]*>EPON0\/(\d+):(\d+)<\/td>\s*<td[^>]*>([0-9a-fA-F:]{17})<\/td>\s*<td[^>]*>([^<]*)<\/td>\s*<td[^>]*>([-\d.]+)<\/td>\s*<td[^>]*>([-\d.]+)<\/td>\s*<td[^>]*>([-\d.]+)<\/td>\s*<td[^>]*>([-\d.]+)<\/td>\s*<td[^>]*>([-\d.]+)<\/td>\s*<td[^>]*>([-\d.]+)<\/td>\s*<\/tr>/i', $opmHtml, $opmMatches, PREG_SET_ORDER)) {
                     foreach ($opmMatches as $om) {
@@ -1780,6 +1781,43 @@ class OltApiService
                         ]);
 
                     return $telemetry;
+                }
+            }
+        }
+
+        // 4. UniMars / CoreLink Driver (Port 8084 style)
+        if ($driver === 'unimars' || $port === 8084 || str_contains(strtolower($olt->vendor ?? ''), 'core') || str_contains(strtolower($olt->model ?? ''), 'ha73')) {
+            $onuBody = $this->sendUniMarsRequest($ip, $port, "get=onualllist&sysUnit=1");
+            if ($onuBody && preg_match_all('/<item onu="([^"]+)"/i', $onuBody, $matches)) {
+                foreach ($matches[1] as $onuStr) {
+                    $cols = explode(',', $onuStr);
+                    $portOnu = $cols[0] ?? '';
+                    $pParts = explode(':', $portOnu);
+                    $curPon = $pParts[0] ?? '';
+                    $curId = isset($pParts[1]) ? (int)$pParts[1] : 0;
+                    if ($curId === $onuId && ($curPon === $ponPort || str_contains($curPon, (string)$ponNumber))) {
+                        $distance = isset($cols[10]) && is_numeric($cols[10]) ? (int)$cols[10] : null;
+                        $txPower = isset($cols[14]) && is_numeric($cols[14]) ? (float)$cols[14] : null;
+                        $rxPower = isset($cols[15]) && is_numeric($cols[15]) ? (float)$cols[15] : null;
+
+                        TenantOnu::where('olt_id', $olt->id)
+                            ->where('pon_port', $ponPort)
+                            ->where('onu_id', $onuId)
+                            ->update([
+                                'rx_power_dbm' => $rxPower,
+                                'tx_power_dbm' => $txPower,
+                                'distance_m' => $distance,
+                            ]);
+
+                        return [
+                            'rx_power_dbm' => $rxPower,
+                            'tx_power_dbm' => $txPower,
+                            'distance_m' => $distance,
+                            'temperature' => null,
+                            'voltage' => null,
+                            'updated_at' => now()->toIso8601String(),
+                        ];
+                    }
                 }
             }
         }

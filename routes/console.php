@@ -49,6 +49,12 @@ Schedule::command('network:sync-olts')
     ->withoutOverlapping(10)
     ->runInBackground();
 
+// 5b. Automated Customer-ONU Auto-Link Engine (Every 10 Minutes)
+Schedule::command('isp:auto-link-onus --force')
+    ->everyTenMinutes()
+    ->withoutOverlapping(10)
+    ->runInBackground();
+
 // 6. ISP Master Subscriber Automation Engine (Dynamic UI-Driven Scheduler)
 // Continuously evaluates and executes the exact rules configured on admin/settings/automation:
 // - Monthly Billing Generation Time (e.g. 12:05 AM)

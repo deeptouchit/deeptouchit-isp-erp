@@ -116,30 +116,50 @@ class OnuController extends Controller
 
         $onus = $query->latest('id')->paginate($perPage)->withQueryString();
 
-        // High-performance batch pre-resolving of customer router MACs
+        // High-performance batch pre-resolving of customer router MACs & Client names
         $usernames = $onus->pluck('pppoe_username')->filter()->unique()->toArray();
         $onuMacs = $onus->pluck('mac_address')->filter()->unique()->toArray();
+        $routerMacs = $onus->pluck('router_mac')->filter()->unique()->toArray();
 
         $customersByUsername = !empty($usernames) ? TenantCustomer::where('tenant_id', $tenant->id)
             ->whereIn('username', $usernames)
             ->get()
-            ->keyBy('username') : collect();
+            ->keyBy(fn($c) => strtolower(trim((string)$c->username))) : collect();
 
         $customersByOnuMac = !empty($onuMacs) ? TenantCustomer::where('tenant_id', $tenant->id)
             ->whereIn('onu_mac_sn', $onuMacs)
             ->get()
-            ->keyBy('onu_mac_sn') : collect();
+            ->keyBy(fn($c) => strtolower(preg_replace('/[^a-f0-9]/i', '', (string)$c->onu_mac_sn))) : collect();
+
+        $customersByRouterMac = !empty($routerMacs) ? TenantCustomer::where('tenant_id', $tenant->id)
+            ->whereIn('mac_address', $routerMacs)
+            ->get()
+            ->keyBy(fn($c) => strtolower(preg_replace('/[^a-f0-9]/i', '', (string)$c->mac_address))) : collect();
 
         foreach ($onus as $onu) {
-            if (empty($onu->router_mac)) {
-                $matchedCust = ($onu->pppoe_username ? $customersByUsername->get($onu->pppoe_username) : null)
-                    ?: ($onu->mac_address ? $customersByOnuMac->get($onu->mac_address) : null);
-                if ($matchedCust && !empty($matchedCust->mac_address)) {
-                    $onu->auto_router_mac = $matchedCust->mac_address;
-                    if (empty($onu->customer_id)) {
-                        $onu->linked_customer_id = $matchedCust->id;
-                    }
+            $cleanOnuMac = !empty($onu->mac_address) ? strtolower(preg_replace('/[^a-f0-9]/i', '', (string)$onu->mac_address)) : null;
+            $cleanRMac = !empty($onu->router_mac) ? strtolower(preg_replace('/[^a-f0-9]/i', '', (string)$onu->router_mac)) : null;
+            $uKey = !empty($onu->pppoe_username) ? strtolower(trim((string)$onu->pppoe_username)) : null;
+
+            $matchedCust = $onu->customer
+                ?: ($uKey ? $customersByUsername->get($uKey) : null)
+                ?: ($cleanRMac ? $customersByRouterMac->get($cleanRMac) : null)
+                ?: ($cleanOnuMac ? $customersByOnuMac->get($cleanOnuMac) : null);
+
+            if ($matchedCust) {
+                if (!$onu->relationLoaded('customer') || !$onu->customer) {
+                    $onu->setRelation('customer', $matchedCust);
                 }
+                if (empty($onu->customer_id)) {
+                    $onu->linked_customer_id = $matchedCust->id;
+                }
+                if (empty($onu->router_mac) && !empty($matchedCust->mac_address)) {
+                    $onu->auto_router_mac = $matchedCust->mac_address;
+                }
+                if (empty($onu->pppoe_username) && !empty($matchedCust->username)) {
+                    $onu->pppoe_username = $matchedCust->username;
+                }
+                $onu->resolved_client_name = $matchedCust->name;
             }
         }
 
@@ -250,6 +270,110 @@ class OnuController extends Controller
             'distinctPonPorts',
             'distinctVendors'
         ));
+    }
+
+    /**
+     * Synchronize all active OLT hardware devices and auto-link customer bindings.
+     */
+    public function syncAll(Request $request)
+    {
+        @set_time_limit(300);
+        $tenant = Auth::user()?->tenant;
+        if (!$tenant) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+        }
+
+        $olts = TenantOlt::where('tenant_id', $tenant->id)->get();
+        if ($olts->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No active OLT hardware gateways configured. Please register an OLT device first.',
+            ], 422);
+        }
+
+        $syncedCount = 0;
+        $failedCount = 0;
+        $details = [];
+
+        foreach ($olts as $olt) {
+            try {
+                $res = $this->oltApiService->syncOlt($olt);
+                if (!empty($res['success'])) {
+                    $syncedCount++;
+                    $details[] = "{$olt->name}: " . ($res['message'] ?? 'Synced');
+                } else {
+                    $failedCount++;
+                    $details[] = "{$olt->name}: " . ($res['message'] ?? 'Connection error');
+                }
+            } catch (\Throwable $e) {
+                $failedCount++;
+                $details[] = "{$olt->name}: " . $e->getMessage();
+                Log::error("Manual OLT sync exception for {$olt->name}: " . $e->getMessage());
+            }
+        }
+
+        // Trigger auto-link
+        try {
+            \Illuminate\Support\Facades\Artisan::call('isp:auto-link-onus', [
+                '--tenant' => $tenant->id,
+                '--force' => true,
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning("Auto-link error during syncAll: " . $e->getMessage());
+        }
+
+        $totalOnus = TenantOnu::where('tenant_id', $tenant->id)->count();
+        $onlineOnus = TenantOnu::where('tenant_id', $tenant->id)->where('status', 'online')->count();
+        $linkedCount = TenantOnu::where('tenant_id', $tenant->id)
+            ->where(function ($q) {
+                $q->whereNotNull('customer_id')->orWhereNotNull('router_mac');
+            })->count();
+
+        $msg = "Synchronized {$syncedCount} of " . $olts->count() . " OLT(s). Total {$totalOnus} ONUs ({$onlineOnus} online, {$linkedCount} linked with clients).";
+
+        return response()->json([
+            'success' => $syncedCount > 0,
+            'message' => $msg,
+            'details' => $details,
+            'total_onus' => $totalOnus,
+            'online_onus' => $onlineOnus,
+            'linked_onus' => $linkedCount,
+        ]);
+    }
+
+    /**
+     * Re-evaluate and link customer profiles with ONUs via Router MAC & Usernames.
+     */
+    public function autoLink(Request $request)
+    {
+        @set_time_limit(180);
+        $tenant = Auth::user()?->tenant;
+        if (!$tenant) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+        }
+
+        try {
+            \Illuminate\Support\Facades\Artisan::call('isp:auto-link-onus', [
+                '--tenant' => $tenant->id,
+                '--force' => true,
+            ]);
+
+            $linkedCount = TenantOnu::where('tenant_id', $tenant->id)
+                ->where(function ($q) {
+                    $q->whereNotNull('customer_id')->orWhereNotNull('router_mac');
+                })->count();
+
+            return response()->json([
+                'success' => true,
+                'message' => "Client auto-linking completed successfully. {$linkedCount} ONUs are now linked with customer profiles.",
+                'linked_onus' => $linkedCount,
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to auto-link customers: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**

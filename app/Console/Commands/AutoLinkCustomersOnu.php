@@ -142,11 +142,19 @@ class AutoLinkCustomersOnu extends Command
 
                 // Apply link
                 if ($matchedOnu) {
-                    $matchedOnu->updateQuietly([
+                    $onuUpdateData = [
                         'customer_id' => $c->id,
                         'router_mac' => $routerMac ?: ($matchedOnu->router_mac ?: $c->mac_address),
                         'pppoe_username' => $c->username ?: $matchedOnu->pppoe_username,
-                    ]);
+                    ];
+
+                    // If ONU name is generic (starts with 'ONU ' or empty or 'Unnamed'), assign customer's real name
+                    $currentOnuName = trim((string)$matchedOnu->name);
+                    if (empty($currentOnuName) || str_starts_with($currentOnuName, 'ONU ') || str_starts_with($currentOnuName, 'Unnamed') || $currentOnuName === '1GE ONU' || $currentOnuName === 'XPON ONU') {
+                        $onuUpdateData['name'] = $c->name;
+                    }
+
+                    $matchedOnu->updateQuietly($onuUpdateData);
 
                     $c->updateQuietly([
                         'olt_id' => $matchedOnu->olt_id,

@@ -147,6 +147,8 @@ Route::middleware(['web'])->group(function () {
             Route::get('/olt/{olt}/port-stats', [OltController::class, 'portStats'])->name('olt.port-stats');
             Route::post('/olt/{olt}/port-stats/reset', [OltController::class, 'resetPortStats'])->name('olt.port-stats.reset');
             Route::get('/onu', [OnuController::class, 'index'])->name('onu');
+            Route::post('/onu/sync-all', [OnuController::class, 'syncAll'])->name('onu.sync-all');
+            Route::post('/onu/auto-link', [OnuController::class, 'autoLink'])->name('onu.auto-link');
             Route::get('/onu/{onu}', [OnuController::class, 'show'])->name('onu.show');
             Route::put('/onu/{onu}', [OnuController::class, 'update'])->name('onu.update');
             Route::post('/onu/{onu}/reboot', [OnuController::class, 'reboot'])->name('onu.reboot');

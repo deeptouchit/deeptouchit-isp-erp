@@ -63,6 +63,26 @@
         </div>
 
         <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap flex-shrink-0">
+            <!-- Manual OLT & ONU Sync Button -->
+            <button type="button" 
+                    @click="syncAllOlts()" 
+                    :disabled="syncingAll || linkingClients"
+                    class="h-[34px] px-3.5 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs shadow-xs transition inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-60"
+                    title="Synchronize all live OLT hardware gateways and pull connected ONUs">
+                <i class="fas fa-rotate text-xs" :class="{ 'fa-spin': syncingAll }"></i>
+                <span x-text="syncingAll ? 'Syncing OLTs...' : 'Sync from OLTs'"></span>
+            </button>
+
+            <!-- Auto-Link Clients Button -->
+            <button type="button" 
+                    @click="autoLinkClients()" 
+                    :disabled="syncingAll || linkingClients"
+                    class="h-[34px] px-3 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs shadow-2xs transition inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-60"
+                    title="Re-match all ONUs with existing customers via Router MAC, Calling Station ID, and PPPoE user">
+                <i class="fas fa-link text-cyan-600 text-[11px]" :class="{ 'fa-spin': linkingClients }"></i>
+                <span x-text="linkingClients ? 'Linking...' : 'Auto-Link Clients'"></span>
+            </button>
+
             <!-- Link to OLT Gateways -->
             <a href="{{ route('tenant.network.olt') }}" 
                class="h-[34px] px-3.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold text-xs shadow-2xs transition inline-flex items-center justify-center gap-1.5 cursor-pointer">
@@ -359,6 +379,9 @@
                                 default => 'bg-cyan-50 text-cyan-700 border-cyan-200'
                             };
                             $routerMacDisplay = $onu->router_mac ?: ($onu->auto_router_mac ?: ($onu->customer->mac_address ?? null));
+                            $clientNameDisplay = $onu->resolved_client_name ?: ($onu->customer->name ?? ($onu->name ?: 'Unnamed Terminal'));
+                            $pppoeUserDisplay = $onu->pppoe_username ?: ($onu->customer->username ?? null);
+                            $customerId = $onu->customer_id ?: ($onu->linked_customer_id ?? null);
                             $onuPayload = [
                                 'id' => $onu->id,
                                 'olt_id' => $onu->olt_id,
@@ -366,7 +389,7 @@
                                 'olt_ip' => $onu->olt->ip_address ?? '',
                                 'pon_port' => $onu->pon_port,
                                 'onu_id' => $onu->onu_id,
-                                'name' => $onu->name,
+                                'name' => $clientNameDisplay,
                                 'desc' => $onu->desc,
                                 'mac_address' => $onu->mac_address,
                                 'router_mac' => $routerMacDisplay ?: '',
@@ -376,7 +399,7 @@
                                 'vlan_id' => $onu->vlan_id,
                                 'vlan_mode' => $onu->vlan_mode ?: 'tag',
                                 'service_mode' => $onu->service_mode ?: 'bridge',
-                                'pppoe_username' => $onu->pppoe_username,
+                                'pppoe_username' => $pppoeUserDisplay,
                                 'pppoe_password' => $onu->pppoe_password,
                                 'lan1_state' => $onu->lan1_state ?: 'enable',
                                 'wifi_ssid' => $onu->wifi_ssid,
@@ -400,19 +423,28 @@
 
                             <!-- 2. Client / ONU Name (Left Align) -->
                             <td class="text-left whitespace-nowrap">
-                                <button type="button" 
-                                        @click="openManageModal({{ Js::from($onuPayload) }}, 'config')" 
-                                        class="font-semibold text-slate-900 hover:text-cyan-600 transition inline-flex items-center gap-1.5 cursor-pointer text-left"
-                                        title="Click to Configure ONU Settings">
-                                    <span id="onu-name-{{ $onu->id }}">{{ $onu->name ?: 'Unnamed Terminal' }}</span>
-                                </button>
+                                @if($customerId)
+                                    <a href="{{ route('tenant.customers.show', $customerId) }}" 
+                                       class="font-semibold text-slate-900 hover:text-cyan-600 transition inline-flex items-center gap-1.5"
+                                       title="View Linked Customer Profile">
+                                        <i class="fas fa-user-check text-[10px] text-emerald-500"></i>
+                                        <span id="onu-name-{{ $onu->id }}">{{ $clientNameDisplay }}</span>
+                                    </a>
+                                @else
+                                    <button type="button" 
+                                            @click="openManageModal({{ Js::from($onuPayload) }}, 'config')" 
+                                            class="font-semibold text-slate-900 hover:text-cyan-600 transition inline-flex items-center gap-1.5 cursor-pointer text-left"
+                                            title="Click to Configure ONU Settings">
+                                        <span id="onu-name-{{ $onu->id }}">{{ $clientNameDisplay }}</span>
+                                    </button>
+                                @endif
                             </td>
 
                             <!-- 3. PPPoE Username (Center Align, font-mono) -->
                             <td class="text-center font-mono whitespace-nowrap">
-                                @if($onu->pppoe_username)
+                                @if($pppoeUserDisplay)
                                     <span class="inline-flex px-1.5 py-0.5 rounded text-[10px] bg-slate-100 text-slate-700 font-semibold border border-slate-200">
-                                        {{ $onu->pppoe_username }}
+                                        {{ $pppoeUserDisplay }}
                                     </span>
                                 @else
                                     <span class="text-slate-400 text-xs">--</span>
@@ -488,7 +520,17 @@
                                         {{ $onu->rx_power_dbm }} dBm
                                     </span>
                                 @else
-                                    <span class="text-slate-400 text-xs">--</span>
+                                    <span class="text-slate-400 text-xs inline-flex items-center gap-1">
+                                        <span>--</span>
+                                        @if($onu->status === 'online')
+                                            <button type="button" 
+                                                    @click="quickPollOptical({{ Js::from($onuPayload) }})"
+                                                    class="text-slate-400 hover:text-cyan-600 text-[10px] cursor-pointer"
+                                                    title="Poll live optical telemetry directly from OLT">
+                                                <i class="fas fa-rotate"></i>
+                                            </button>
+                                        @endif
+                                    </span>
                                 @endif
                             </td>
 
@@ -586,10 +628,17 @@
             </button>
 
             <button type="button" 
+                    @click="quickPollOptical(activeMenuOnu)" 
+                    class="w-full px-2.5 py-1.5 hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 font-normal flex items-center gap-2 transition text-left cursor-pointer text-[11px]">
+                <i class="fas fa-arrows-rotate text-emerald-600 w-3.5 text-center text-[10px]"></i>
+                <span>Poll Live Telemetry</span>
+            </button>
+
+            <button type="button" 
                     @click="configureFromMenu('optical')" 
                     class="w-full px-2.5 py-1.5 hover:bg-purple-50 text-slate-700 hover:text-purple-700 font-normal flex items-center gap-2 transition text-left cursor-pointer text-[11px]">
                 <i class="fas fa-signal text-purple-600 w-3.5 text-center text-[10px]"></i>
-                <span>Optical Telemetry</span>
+                <span>View Optical Telemetry</span>
             </button>
         </div>
 
@@ -904,6 +953,8 @@
 <script>
 function onuManager() {
     return {
+        syncingAll: false,
+        linkingClients: false,
         activeMenuOnu: null,
         menuPos: { top: '0px', bottom: 'auto', right: '0px', left: 'auto' },
         toast: { show: false, message: '', type: 'success' },
@@ -1215,6 +1266,97 @@ function onuManager() {
                 this.showToast('Network error while refreshing telemetry.', 'error');
             } finally {
                 this.manageModal.refreshingOptical = false;
+            }
+        },
+
+        async syncAllOlts() {
+            if (this.syncingAll || this.linkingClients) return;
+            if (!confirm('Synchronize all active OLT hardware devices and auto-link customer terminals now? This queries live hardware over the network.')) {
+                return;
+            }
+
+            this.syncingAll = true;
+            this.showToast('Connecting to OLT hardware & pulling live ONU telemetry...', 'info');
+
+            try {
+                const response = await fetch('{{ route('tenant.network.onu.sync-all') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    }
+                });
+                const data = await response.json();
+                if (data.success) {
+                    this.showToast(data.message, 'success');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1200);
+                } else {
+                    this.showToast(data.message || 'OLT synchronization encountered errors.', 'error');
+                }
+            } catch (err) {
+                this.showToast('Network timeout or communication error with OLT devices.', 'error');
+            } finally {
+                this.syncingAll = false;
+            }
+        },
+
+        async autoLinkClients() {
+            if (this.syncingAll || this.linkingClients) return;
+            this.linkingClients = true;
+            this.showToast('Evaluating and pairing ONUs with customer profiles...', 'info');
+
+            try {
+                const response = await fetch('{{ route('tenant.network.onu.auto-link') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    }
+                });
+                const data = await response.json();
+                if (data.success) {
+                    this.showToast(data.message, 'success');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                } else {
+                    this.showToast(data.message || 'Auto-linking failed.', 'error');
+                }
+            } catch (err) {
+                this.showToast('Network error while running customer pairing.', 'error');
+            } finally {
+                this.linkingClients = false;
+            }
+        },
+
+        async quickPollOptical(onu) {
+            if (!onu) return;
+            this.activeMenuOnu = null;
+            this.showToast(`Querying OLT for ${onu.pon_port}:#${onu.onu_id} optical telemetry...`, 'info');
+
+            try {
+                const response = await fetch(`/admin/network/onu/${onu.id}/optical`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    }
+                });
+                const data = await response.json();
+                if (data.success) {
+                    this.showToast('Optical telemetry updated directly from OLT.', 'success');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 800);
+                } else {
+                    this.showToast(data.message || 'Could not fetch live telemetry from OLT.', 'error');
+                }
+            } catch (err) {
+                this.showToast('Error communicating with OLT gateway.', 'error');
             }
         }
     };
