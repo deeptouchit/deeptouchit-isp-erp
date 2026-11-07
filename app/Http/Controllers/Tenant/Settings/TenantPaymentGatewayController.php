@@ -41,6 +41,9 @@ class TenantPaymentGatewayController extends Controller
         $tenantId = $tenant->id;
 
         $tab = $request->get('tab', 'bkash'); // bkash, nagad, bank_qr, logs
+        $search = trim($request->get('search', ''));
+        $gatewayFilter = $request->get('gateway', 'all');
+        $statusFilter = $request->get('status', 'all');
 
         // 1. Fetch PaymentGateways
         $gateways = PaymentGateway::orderBy('sort_order', 'asc')->get()->keyBy('slug');
@@ -106,17 +109,40 @@ class TenantPaymentGatewayController extends Controller
         ];
 
         // 4. Recent Gateway Transactions (Logs Tab)
-        $logs = TenantGatewayTransaction::where('tenant_id', $tenantId)
+        $logsQuery = TenantGatewayTransaction::where('tenant_id', $tenantId)
             ->with(['customer'])
-            ->latest('id')
-            ->paginate(15)
-            ->withQueryString();
+            ->latest('id');
+
+        if (!empty($search)) {
+            $logsQuery->where(function($q) use ($search) {
+                $q->where('transaction_id', 'like', "%{$search}%")
+                  ->orWhere('gateway_trx_id', 'like', "%{$search}%")
+                  ->orWhereHas('customer', function($cq) use ($search) {
+                      $cq->where('name', 'like', "%{$search}%")
+                         ->orWhere('username', 'like', "%{$search}%")
+                         ->orWhere('phone', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        if ($gatewayFilter !== 'all' && !empty($gatewayFilter)) {
+            $logsQuery->where('gateway', $gatewayFilter);
+        }
+
+        if ($statusFilter !== 'all' && !empty($statusFilter)) {
+            $logsQuery->where('status', $statusFilter);
+        }
+
+        $logs = $logsQuery->paginate(15)->withQueryString();
 
         $currencySymbol = '৳';
 
         return view('tenant.settings.payment_gateways', compact(
             'tenant',
             'tab',
+            'search',
+            'gatewayFilter',
+            'statusFilter',
             'bkashSettings',
             'nagadSettings',
             'bankQrSettings',
