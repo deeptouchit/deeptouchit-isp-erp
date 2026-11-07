@@ -13,7 +13,12 @@
     <title>@yield('title', $globalSettings['app_name'] ?? config('app.name', 'SomitySoft SaaS Platform'))</title>
 
     {{-- Favicon --}}
-    @if(!empty($globalSettings['app_favicon']))
+    @php
+        $activeFaviconTenant = $tenant ?? (auth()->user()?->tenant ?: \App\Models\Tenant::first());
+    @endphp
+    @if($activeFaviconTenant && !empty($activeFaviconTenant->favicon))
+        <link rel="icon" href="{{ asset('storage/' . $activeFaviconTenant->favicon) }}">
+    @elseif(!empty($globalSettings['app_favicon']))
         <link rel="icon" type="image/x-icon" href="{{ $globalSettings['app_favicon'] }}">
     @else
         <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">

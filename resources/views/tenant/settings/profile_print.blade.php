@@ -65,7 +65,7 @@
         {{-- Header Block --}}
         <div class="flex items-start justify-between border-b-2 border-slate-800 pb-4">
             <div class="flex items-center gap-4">
-                @if($tenant->logo && file_exists(public_path('storage/' . $tenant->logo)))
+                @if($tenant->logo && (\Illuminate\Support\Facades\Storage::disk('public')->exists($tenant->logo) || file_exists(public_path('storage/' . $tenant->logo))))
                     <div class="w-16 h-16 rounded-lg border border-slate-200 p-1 flex items-center justify-center overflow-hidden flex-shrink-0">
                         <img src="{{ asset('storage/' . $tenant->logo) }}" alt="Logo" class="max-h-full max-w-full object-contain">
                     </div>

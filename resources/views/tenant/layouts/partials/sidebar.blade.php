@@ -67,7 +67,7 @@
            :class="sidebarCollapsed ? 'justify-center' : 'flex-1'"
            :title="sidebarCollapsed ? 'Dashboard' : ''">
             @if(isset($tenant) && $tenant && !empty($tenant->logo))
-                <img src="{{ $tenant->logo }}" alt="{{ $tenant->company_name ?: $tenant->name }}" class="h-7 max-w-[120px] object-contain flex-shrink-0">
+                <img src="{{ str_starts_with($tenant->logo, 'http') || str_starts_with($tenant->logo, '/') ? $tenant->logo : asset('storage/' . $tenant->logo) }}" alt="{{ $tenant->company_name ?: $tenant->name }}" class="h-7 max-w-[120px] object-contain flex-shrink-0">
             @else
                 <div class="w-7 h-7 rounded-lg bg-blue-600 flex-shrink-0 flex items-center justify-center text-white font-bold text-xs shadow-xs">
                     {{ strtoupper(substr($tenant->name ?? 'ISP', 0, 1)) }}

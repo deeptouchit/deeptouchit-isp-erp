@@ -197,7 +197,7 @@
                 {{-- Company Logo Upload --}}
                 <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200/80 flex items-start gap-4">
                     <div class="w-16 h-16 rounded-lg bg-white border border-slate-200 flex items-center justify-center p-1.5 shadow-2xs overflow-hidden flex-shrink-0">
-                        @if($tenant->logo && file_exists(public_path('storage/' . $tenant->logo)))
+                        @if($tenant->logo && (\Illuminate\Support\Facades\Storage::disk('public')->exists($tenant->logo) || file_exists(public_path('storage/' . $tenant->logo))))
                             <img src="{{ asset('storage/' . $tenant->logo) }}" alt="Logo" class="max-h-full max-w-full object-contain">
                         @else
                             <div class="text-center text-slate-400">
@@ -216,7 +216,7 @@
                 {{-- Favicon Upload --}}
                 <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200/80 flex items-start gap-4">
                     <div class="w-16 h-16 rounded-lg bg-white border border-slate-200 flex items-center justify-center p-1.5 shadow-2xs overflow-hidden flex-shrink-0">
-                        @if($tenant->favicon && file_exists(public_path('storage/' . $tenant->favicon)))
+                        @if($tenant->favicon && (\Illuminate\Support\Facades\Storage::disk('public')->exists($tenant->favicon) || file_exists(public_path('storage/' . $tenant->favicon))))
                             <img src="{{ asset('storage/' . $tenant->favicon) }}" alt="Favicon" class="w-8 h-8 object-contain">
                         @else
                             <div class="text-center text-slate-400">
