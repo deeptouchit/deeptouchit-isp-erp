@@ -524,6 +524,7 @@ Route::middleware(['web'])->group(function () {
             Route::post('/escalations/{id}/status', [TenantResellerEscalationController::class, 'updateStatus'])->whereNumber('id')->name('escalations.status');
             Route::get('/escalations/{id}/print', [TenantResellerEscalationController::class, 'printReport'])->whereNumber('id')->name('escalations.print');
             Route::get('/escalations/export', [TenantResellerEscalationController::class, 'exportCsv'])->name('escalations.export');
+            Route::delete('/escalations/{id}', [TenantResellerEscalationController::class, 'destroy'])->whereNumber('id')->name('escalations.destroy');
 
             // 5. Helpdesk, NOC & Field SLA Analytics & Performance Scorecard
             Route::get('/sla-analytics', [TenantSlaAnalyticsController::class, 'index'])->name('sla-analytics');

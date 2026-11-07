@@ -41,6 +41,7 @@ class TenantResellerEscalationController extends Controller
         $category = $request->get('category', 'all');
         $impact = $request->get('impact', 'all');
         $resellerId = $request->get('reseller_id', 'all');
+        $engineerId = $request->get('engineer_id', 'all');
         $status = $request->get('status', 'all');
         $search = trim($request->get('search', ''));
         $perPage = (int) $request->get('per_page', 20);
@@ -83,11 +84,22 @@ class TenantResellerEscalationController extends Controller
             $query->where('reseller_id', (int)$resellerId);
         }
 
+        if ($engineerId !== 'all' && !empty($engineerId)) {
+            $query->where('assigned_engineer_id', (int)$engineerId);
+        }
+
         if ($status !== 'all' && !empty($status)) {
             $query->where('status', $status);
         }
 
         $escalations = $query->paginate($perPage)->withQueryString();
+
+        // Active more filters counter for 2-Tier customer standard filter
+        $activeMoreCount = 0;
+        if ($resellerId !== 'all' && !empty($resellerId)) $activeMoreCount++;
+        if ($engineerId !== 'all' && !empty($engineerId)) $activeMoreCount++;
+        if ($status !== 'all' && !empty($status)) $activeMoreCount++;
+        $isMoreOpen = $activeMoreCount > 0;
 
         // 3. Compute 6 KPI Stats
         $totalEscalations = TenantResellerEscalation::where('tenant_id', $tenantId)->count();
@@ -115,6 +127,9 @@ class TenantResellerEscalationController extends Controller
             'category',
             'impact',
             'resellerId',
+            'engineerId',
+            'activeMoreCount',
+            'isMoreOpen',
             'status',
             'search',
             'perPage'
@@ -204,6 +219,38 @@ class TenantResellerEscalationController extends Controller
         }
 
         return back()->with('success', "Escalation {$escalation->escalation_number} status changed to " . strtoupper(str_replace('_', ' ', $status)) . ".");
+    }
+
+    /**
+     * Delete Reseller Technical Escalation (Super Admin / ISP Admin only)
+     */
+    public function destroy(Request $request, $id)
+    {
+        $tenant = $this->getTenant();
+        $authUser = auth()->user();
+
+        if (!$authUser || !$authUser->canDeleteTickets()) {
+            if ($request->wantsJson() || $request->ajax() || str_contains($request->header('Accept', ''), 'json')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized: Only Super Admin / ISP Admin can delete technical escalations.',
+                ], 403);
+            }
+            abort(403, 'Unauthorized: Only Super Admin / ISP Admin can delete technical escalations.');
+        }
+
+        $escalation = TenantResellerEscalation::where('tenant_id', $tenant->id)->findOrFail($id);
+        $escNo = $escalation->escalation_number;
+        $escalation->delete();
+
+        if ($request->wantsJson() || $request->ajax() || str_contains($request->header('Accept', ''), 'json')) {
+            return response()->json([
+                'success' => true,
+                'message' => "Escalation #{$escNo} deleted successfully.",
+            ]);
+        }
+
+        return back()->with('success', "Escalation #{$escNo} deleted successfully.");
     }
 
     /**
