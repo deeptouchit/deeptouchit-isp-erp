@@ -336,7 +336,9 @@
                     <tr>
                         <th class="w-10 text-center font-semibold">#</th>
                         <th class="text-center font-semibold">Client / ONU Name</th>
-                        <th class="text-center font-semibold">OLT &amp; Port</th>
+                        <th class="text-center font-semibold">PPPoE User</th>
+                        <th class="text-center font-semibold">OLT Gateway</th>
+                        <th class="text-center font-semibold">PON:ONU ID</th>
                         <th class="text-center font-semibold">ONU MAC</th>
                         <th class="text-center font-semibold">Router MAC</th>
                         <th class="text-center font-semibold">Type</th>
@@ -402,25 +404,45 @@
                                         @click="openManageModal({{ Js::from($onuPayload) }}, 'config')" 
                                         class="font-semibold text-slate-900 hover:text-cyan-600 transition inline-flex items-center gap-1.5 cursor-pointer text-left"
                                         title="Click to Configure ONU Settings">
-                                    <span id="onu-name-{{ $onu->id }}">{{ $onu->name ?: 'Unnamed ONU' }}</span>
-                                    @if($onu->pppoe_username)
-                                        <span class="text-[10px] font-mono text-slate-400 font-normal">({{ $onu->pppoe_username }})</span>
-                                    @endif
+                                    <span id="onu-name-{{ $onu->id }}">{{ $onu->name ?: 'Unnamed Terminal' }}</span>
                                 </button>
                             </td>
 
-                            <!-- 3. OLT & Port (Center Align) -->
+                            <!-- 3. PPPoE Username (Center Align, font-mono) -->
+                            <td class="text-center font-mono whitespace-nowrap">
+                                @if($onu->pppoe_username)
+                                    <span class="inline-flex px-1.5 py-0.5 rounded text-[10px] bg-slate-100 text-slate-700 font-semibold border border-slate-200">
+                                        {{ $onu->pppoe_username }}
+                                    </span>
+                                @else
+                                    <span class="text-slate-400 text-xs">--</span>
+                                @endif
+                            </td>
+
+                            <!-- 4. OLT Gateway (Left Align) -->
+                            <td class="text-left whitespace-nowrap">
+                                @if($onu->olt)
+                                    <a href="{{ route('tenant.network.olt.show', $onu->olt_id) }}" 
+                                       class="inline-flex items-center gap-1 text-slate-700 hover:text-cyan-600 font-medium transition"
+                                       title="View OLT Chassis Panel">
+                                        <i class="fas fa-network-wired text-[9px] text-slate-400"></i>
+                                        <span>{{ $onu->olt->name }}</span>
+                                    </a>
+                                @else
+                                    <span class="text-slate-400 text-xs">--</span>
+                                @endif
+                            </td>
+
+                            <!-- 5. PON:ONU ID (Center Align, font-mono) -->
                             <td class="text-center font-mono whitespace-nowrap">
                                 <a href="{{ route('tenant.network.olt.show', ['olt' => $onu->olt_id, 'pon_port' => $onu->pon_port]) }}" 
-                                   class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] bg-slate-100 hover:bg-slate-200 border border-slate-200 transition text-slate-700"
-                                   title="View OLT Chassis PON Port">
-                                    <span class="font-semibold text-cyan-800">{{ $onu->olt->name ?? 'OLT' }}</span>
-                                    <span class="text-slate-400">/</span>
-                                    <span class="text-purple-700 font-bold">{{ $onu->pon_port }}:#{{ $onu->onu_id }}</span>
+                                   class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100 transition"
+                                   title="View PON Port {{ $onu->pon_port }}">
+                                    {{ $onu->pon_port }}:#{{ $onu->onu_id }}
                                 </a>
                             </td>
 
-                            <!-- 4. ONU MAC (Center Align, font-mono) -->
+                            <!-- 6. ONU MAC (Center Align, font-mono) -->
                             <td class="text-center font-mono text-slate-800 whitespace-nowrap">
                                 <span class="inline-flex items-center gap-1">
                                     <span>{{ $onu->mac_address ?: '--' }}</span>
@@ -435,7 +457,7 @@
                                 </span>
                             </td>
 
-                            <!-- 5. Router MAC (Center Align, font-mono) -->
+                            <!-- 7. Router MAC (Center Align, font-mono) -->
                             <td class="text-center font-mono whitespace-nowrap">
                                 @if($routerMacDisplay)
                                     <span class="inline-flex items-center gap-1 text-slate-800">
@@ -452,14 +474,14 @@
                                 @endif
                             </td>
 
-                            <!-- 6. Type (Center Align) -->
+                            <!-- 8. Type (Center Align) -->
                             <td class="text-center font-mono whitespace-nowrap">
                                 <span class="inline-flex px-1.5 py-0.5 rounded text-[10px] border {{ $typeBadge }}">
                                     {{ $onuType }}
                                 </span>
                             </td>
 
-                            <!-- 7. Optical Power (Center Align, font-mono) -->
+                            <!-- 9. Optical Power (Center Align, font-mono) -->
                             <td class="text-center font-mono whitespace-nowrap">
                                 @if($onu->rx_power_dbm !== null)
                                     <span class="inline-flex px-2 py-0.5 rounded-full text-[10px] border font-bold {{ $sig['badge'] }}">
@@ -470,12 +492,12 @@
                                 @endif
                             </td>
 
-                            <!-- 8. Distance (Center Align, font-mono) -->
+                            <!-- 10. Distance (Center Align, font-mono) -->
                             <td class="text-center font-mono text-slate-700 whitespace-nowrap">
                                 {{ $onu->distance_m !== null ? $onu->distance_m . 'm' : '--' }}
                             </td>
 
-                            <!-- 9. Status (Center Align) -->
+                            <!-- 11. Status (Center Align) -->
                             <td class="text-center whitespace-nowrap">
                                 @if($onu->status === 'online')
                                     <span class="inline-flex items-center justify-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -490,7 +512,7 @@
                                 @endif
                             </td>
 
-                            <!-- 10. Actions (Center Align, Floating 3-Dot) -->
+                            <!-- 12. Actions (Center Align, Floating 3-Dot) -->
                             <td class="w-10 text-center whitespace-nowrap">
                                 <button type="button" 
                                         @click.stop="toggleMenu({{ Js::from($onuPayload) }}, $event)" 
@@ -502,7 +524,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="10" class="py-10 text-center">
+                            <td colspan="12" class="py-10 text-center">
                                 <div class="max-w-md mx-auto space-y-2.5">
                                     <div class="w-10 h-10 rounded-xl bg-cyan-50 text-cyan-600 mx-auto flex items-center justify-center text-base border border-cyan-100 shadow-xs">
                                         <i class="fas fa-satellite-dish"></i>
