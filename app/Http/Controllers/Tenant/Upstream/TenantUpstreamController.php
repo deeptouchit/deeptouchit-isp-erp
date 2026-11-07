@@ -501,6 +501,8 @@ class TenantUpstreamController extends Controller
         $search = $request->input('search');
         $providerId = $request->input('provider_id');
         $status = $request->input('status');
+        $billingMonth = $request->input('billing_month');
+        $dueOnly = $request->boolean('due_only');
         $perPage = (int) $request->input('per_page', 20);
         if ($perPage <= 0 || $perPage > 500) {
             $perPage = 20;
@@ -525,6 +527,14 @@ class TenantUpstreamController extends Controller
 
         if ($status) {
             $query->where('payment_status', strtoupper($status));
+        }
+
+        if ($billingMonth) {
+            $query->where('billing_month', 'like', "{$billingMonth}%");
+        }
+
+        if ($dueOnly) {
+            $query->where('due_amount', '>', 0);
         }
 
         $invoices = $query->latest('id')->paginate($perPage)->withQueryString();
@@ -589,6 +599,8 @@ class TenantUpstreamController extends Controller
         $search = $request->input('search');
         $providerId = $request->input('provider_id');
         $method = $request->input('payment_method');
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
         $perPage = (int) $request->input('per_page', 20);
         if ($perPage <= 0 || $perPage > 500) {
             $perPage = 20;
@@ -615,6 +627,14 @@ class TenantUpstreamController extends Controller
 
         if ($method) {
             $query->where('payment_method', $method);
+        }
+
+        if ($startDate) {
+            $query->whereDate('paid_at', '>=', $startDate);
+        }
+
+        if ($endDate) {
+            $query->whereDate('paid_at', '<=', $endDate);
         }
 
         $payments = $query->latest('id')->paginate($perPage)->withQueryString();
