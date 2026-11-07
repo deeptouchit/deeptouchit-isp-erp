@@ -49,6 +49,10 @@ class TenantBillingController extends Controller
         $oltCount = class_exists('\App\Models\OltDevice') ? \App\Models\OltDevice::where('tenant_id', $tenant->id)->count() : 0;
         $packagesCount = class_exists('\App\Models\TenantInternetPackage') ? \App\Models\TenantInternetPackage::where('tenant_id', $tenant->id)->count() : 0;
 
+        // Recent Invoices & Payments for Live Activity Tables
+        $recentInvoices = $tenant->invoices()->with('plan')->latest('id')->take(5)->get();
+        $recentPayments = $tenant->payments()->with('invoice')->latest('id')->take(5)->get();
+
         return view('tenant.billing.dashboard', compact(
             'tenant',
             'subscription',
@@ -63,7 +67,9 @@ class TenantBillingController extends Controller
             'staffCount',
             'mikrotikCount',
             'oltCount',
-            'packagesCount'
+            'packagesCount',
+            'recentInvoices',
+            'recentPayments'
         ));
     }
 
