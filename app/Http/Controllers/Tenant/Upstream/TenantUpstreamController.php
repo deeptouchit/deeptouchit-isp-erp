@@ -39,6 +39,7 @@ class TenantUpstreamController extends Controller
 
         $search = $request->input('search');
         $carrierType = $request->input('carrier_type');
+        $routerId = $request->input('router_id');
         $status = $request->input('status');
         $perPage = (int) $request->input('per_page', 20);
         if ($perPage <= 0 || $perPage > 500) {
@@ -60,6 +61,12 @@ class TenantUpstreamController extends Controller
 
         if ($carrierType) {
             $query->where('carrier_type', $carrierType);
+        }
+
+        if ($routerId) {
+            $query->whereHas('links', function ($lq) use ($routerId) {
+                $lq->where('router_id', $routerId);
+            });
         }
 
         if ($status !== null && $status !== '') {
