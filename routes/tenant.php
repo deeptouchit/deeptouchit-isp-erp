@@ -500,6 +500,7 @@ Route::middleware(['web'])->group(function () {
             Route::post('/{ticket}/reply', [TenantTicketController::class, 'reply'])->whereNumber('ticket')->name('reply');
             Route::post('/{id}/close', [TenantTicketController::class, 'closeTicket'])->whereNumber('id')->name('close');
             Route::post('/{id}/reopen', [TenantTicketController::class, 'reopenTicket'])->whereNumber('id')->name('reopen');
+            Route::delete('/{ticket}', [TenantTicketController::class, 'destroy'])->whereNumber('ticket')->name('destroy');
 
             // 2. Assigned Field Jobs & Dispatch Roster
             Route::get('/field-jobs', [TenantFieldJobController::class, 'index'])->name('field-jobs');

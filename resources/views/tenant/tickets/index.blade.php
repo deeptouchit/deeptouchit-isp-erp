@@ -357,7 +357,7 @@
             </button>
         </div>
 
-        {{-- Group 2: Status Management --}}
+        {{-- Group 2: Status Management & Delete --}}
         <div class="py-1">
             <template x-if="activeMenu?.status !== 'closed' && activeMenu?.status !== 'resolved'">
                 <button type="button" 
@@ -375,6 +375,15 @@
                     <span>Reopen Ticket</span>
                 </button>
             </template>
+
+            @if(auth()->user() && (auth()->user()->isOwner() || auth()->user()->role === 'super_admin'))
+                <button type="button" 
+                        @click="deleteTicketAction(activeMenu); activeMenu = null" 
+                        class="w-full flex items-center gap-2 px-3 py-1.5 text-rose-600 hover:bg-rose-50 hover:text-rose-700 font-medium transition cursor-pointer">
+                    <i class="fas fa-trash-alt text-rose-500 w-4 text-center text-xs"></i>
+                    <span>Delete Ticket</span>
+                </button>
+            @endif
         </div>
     </div>
 
@@ -600,6 +609,68 @@
                     }
                 } catch (e) {
                     console.error('Error reopening ticket:', e);
+                    location.reload();
+                }
+            },
+
+            async deleteTicketAction(ticket) {
+                if (!ticket || !ticket.id) return;
+
+                if (typeof Swal !== 'undefined') {
+                    const result = await Swal.fire({
+                        title: 'Delete Support Ticket?',
+                        html: `Are you sure you want to permanently delete ticket <b>#${ticket.ticket_number}</b>?<br><span class="text-xs text-rose-600 mt-1 block">All thread messages and attachments will be permanently removed.</span>`,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: '<i class="fas fa-trash-alt mr-1.5"></i> Yes, Delete Permanently',
+                        cancelButtonText: 'Cancel',
+                        reverseButtons: true,
+                        customClass: {
+                            confirmButton: 'bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs px-4 py-2 rounded-lg shadow-xs cursor-pointer mr-2',
+                            cancelButton: 'bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs px-4 py-2 rounded-lg border border-slate-200 cursor-pointer'
+                        },
+                        buttonsStyling: false
+                    });
+                    if (!result.isConfirmed) return;
+                } else {
+                    if (!confirm(`Are you sure you want to permanently delete ticket #${ticket.ticket_number}?`)) return;
+                }
+
+                try {
+                    const response = await fetch(`/admin/support/${ticket.id}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json'
+                        }
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        if (typeof Swal !== 'undefined') {
+                            await Swal.fire({
+                                icon: 'success',
+                                title: 'Ticket Deleted',
+                                text: data.message || 'Support ticket deleted successfully.',
+                                timer: 1500,
+                                showConfirmButton: false,
+                                toast: true,
+                                position: 'top-end'
+                            });
+                        }
+                        location.reload();
+                    } else {
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Delete Failed',
+                                text: data.message || 'Failed to delete support ticket.'
+                            });
+                        } else {
+                            alert(data.message || 'Failed to delete support ticket.');
+                        }
+                    }
+                } catch (e) {
+                    console.error('Error deleting ticket:', e);
                     location.reload();
                 }
             }

@@ -434,4 +434,62 @@ class TenantTicketController extends Controller
 
         return back()->with('success', "Ticket {$ticket->ticket_number} has been reopened.");
     }
+
+    /**
+     * Delete Support Ticket (Super Admin / Owner only)
+     */
+    public function destroy(Request $request, $id)
+    {
+        $tenant = $this->getTenant();
+        $authUser = auth()->user();
+
+        // Strictly authorize Super Admin / Owner
+        if (!$authUser || (!$authUser->isOwner() && $authUser->role !== 'super_admin')) {
+            if ($request->wantsJson() || $request->ajax() || str_contains($request->header('Accept', ''), 'json')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized: Only Super Admin can delete support tickets.',
+                ], 403);
+            }
+            abort(403, 'Unauthorized: Only Super Admin can delete support tickets.');
+        }
+
+        $ticket = SupportTicket::where('tenant_id', $tenant->id)->findOrFail($id);
+        $ticketNumber = $ticket->ticket_number;
+
+        DB::beginTransaction();
+        try {
+            // Delete associated attachment files from storage
+            foreach ($ticket->messages as $msg) {
+                foreach ($msg->attachments as $att) {
+                    if ($att->file_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($att->file_path)) {
+                        \Illuminate\Support\Facades\Storage::disk('public')->delete($att->file_path);
+                    }
+                    $att->delete();
+                }
+                $msg->delete();
+            }
+
+            $ticket->delete();
+            DB::commit();
+
+            if ($request->wantsJson() || $request->ajax() || str_contains($request->header('Accept', ''), 'json')) {
+                return response()->json([
+                    'success' => true,
+                    'message' => "Ticket #{$ticketNumber} deleted successfully.",
+                ]);
+            }
+
+            return redirect()->route('tenant.tickets.index')->with('success', "Ticket #{$ticketNumber} deleted successfully.");
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            if ($request->wantsJson() || $request->ajax() || str_contains($request->header('Accept', ''), 'json')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to delete ticket: ' . $e->getMessage(),
+                ], 500);
+            }
+            return back()->with('error', 'Failed to delete ticket: ' . $e->getMessage());
+        }
+    }
 }
