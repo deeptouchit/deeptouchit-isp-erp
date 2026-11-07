@@ -155,9 +155,11 @@ Route::middleware(['web'])->group(function () {
             Route::post('/onu/{onu}/factory-reset', [OnuController::class, 'factoryReset'])->name('onu.factory-reset');
             Route::get('/onu/{onu}/optical', [OnuController::class, 'optical'])->name('onu.optical');
             Route::get('/ip-pools', [IpPoolController::class, 'index'])->name('ip-pools');
+            Route::get('/ip-pools/create', [IpPoolController::class, 'create'])->name('ip-pools.create');
             Route::post('/ip-pools', [IpPoolController::class, 'store'])->name('ip-pools.store');
             Route::post('/ip-pools/import-mikrotik', [IpPoolController::class, 'importFromMikrotik'])->name('ip-pools.import-mikrotik');
             Route::get('/ip-pools/{ipPool}', [IpPoolController::class, 'show'])->name('ip-pools.show');
+            Route::get('/ip-pools/{ipPool}/edit', [IpPoolController::class, 'edit'])->name('ip-pools.edit');
             Route::put('/ip-pools/{ipPool}', [IpPoolController::class, 'update'])->name('ip-pools.update');
             Route::delete('/ip-pools/{ipPool}', [IpPoolController::class, 'destroy'])->name('ip-pools.destroy');
             Route::patch('/ip-pools/{ipPool}/toggle-status', [IpPoolController::class, 'toggleStatus'])->name('ip-pools.toggle-status');

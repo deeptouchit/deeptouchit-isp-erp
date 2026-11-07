@@ -54,9 +54,17 @@ class IpPoolController extends Controller
             $query->where('pool_type', $poolType);
         }
 
-        // Status Filter
+        // Secondary Filters
         if ($status = $request->input('status')) {
             $query->where('status', $status);
+        }
+
+        if ($ipVersion = $request->input('ip_version')) {
+            $query->where('ip_version', $ipVersion);
+        }
+
+        if ($request->filled('is_sync')) {
+            $query->where('is_sync_mikrotik', (bool)$request->input('is_sync'));
         }
 
         $perPage = (int) $request->input('per_page', 30);
@@ -88,6 +96,23 @@ class IpPoolController extends Controller
             $metricBase->where('pool_type', $poolType);
         }
 
+        if ($status = $request->input('status')) {
+            $metricBase->where('status', $status);
+        }
+
+        if ($ipVersion = $request->input('ip_version')) {
+            $metricBase->where('ip_version', $ipVersion);
+        }
+
+        if ($request->filled('is_sync')) {
+            $metricBase->where('is_sync_mikrotik', (bool)$request->input('is_sync'));
+        }
+
+        $activeMoreCount = ($request->filled('status') ? 1 : 0) +
+                           ($request->filled('ip_version') ? 1 : 0) +
+                           ($request->filled('is_sync') ? 1 : 0);
+        $isMoreOpen = $activeMoreCount > 0;
+
         $totalPools = (clone $metricBase)->count();
         $totalIps = (int) (clone $metricBase)->sum('total_ips');
         $usedIps = (int) (clone $metricBase)->sum('used_ips');
@@ -106,8 +131,43 @@ class IpPoolController extends Controller
             'freeIps',
             'staticPublicIps',
             'cgnatIps',
-            'utilizationPercent'
+            'utilizationPercent',
+            'activeMoreCount',
+            'isMoreOpen'
         ));
+    }
+
+    /**
+     * Show form for creating a new IP Pool.
+     */
+    public function create()
+    {
+        $tenant = Auth::user()?->tenant;
+        if (!$tenant) {
+            abort(404, 'ISP Tenant record not found.');
+        }
+
+        $routers = TenantRouter::where('tenant_id', $tenant->id)->get(['id', 'name', 'ip_address']);
+        $existingPools = TenantIpPool::where('tenant_id', $tenant->id)->pluck('name');
+
+        return view('tenant.network.ip_pools_create', compact('tenant', 'routers', 'existingPools'));
+    }
+
+    /**
+     * Show form for editing an existing IP Pool.
+     */
+    public function edit($id)
+    {
+        $tenant = Auth::user()?->tenant;
+        if (!$tenant) {
+            abort(404, 'ISP Tenant record not found.');
+        }
+
+        $pool = TenantIpPool::where('tenant_id', $tenant->id)->with('router')->findOrFail($id);
+        $routers = TenantRouter::where('tenant_id', $tenant->id)->get(['id', 'name', 'ip_address']);
+        $existingPools = TenantIpPool::where('tenant_id', $tenant->id)->where('id', '!=', $pool->id)->pluck('name');
+
+        return view('tenant.network.ip_pools_edit', compact('tenant', 'pool', 'routers', 'existingPools'));
     }
 
     /**
@@ -144,7 +204,10 @@ class IpPoolController extends Controller
 
         $rangesInput = $validated['ranges'] ?? (($validated['range_start'] ?? '') . (!empty($validated['range_end']) ? '-' . $validated['range_end'] : ''));
         if (empty($rangesInput)) {
-            return response()->json(['success' => false, 'message' => 'Please provide IP range addresses (e.g. 10.10.0.2-10.10.3.254).'], 422);
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'message' => 'Please provide IP range addresses (e.g. 10.10.0.2-10.10.3.254).'], 422);
+            }
+            return back()->withInput()->withErrors(['ranges' => 'Please provide IP range addresses (e.g. 10.10.0.2-10.10.3.254).']);
         }
 
         $parsed = TenantIpPool::parseRange($rangesInput);
