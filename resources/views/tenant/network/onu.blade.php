@@ -356,7 +356,7 @@
                     <tr>
                         <th class="w-10 text-center font-semibold">#</th>
                         <th class="text-center font-semibold">Client / ONU Name</th>
-                        <th class="text-center font-semibold">PPPoE User</th>
+                        <th class="text-center font-semibold">Area</th>
                         <th class="text-center font-semibold">OLT Gateway</th>
                         <th class="text-center font-semibold">PON:ONU ID</th>
                         <th class="text-center font-semibold">ONU MAC</th>
@@ -380,6 +380,7 @@
                             };
                             $routerMacDisplay = $onu->router_mac ?: ($onu->auto_router_mac ?: ($onu->customer->mac_address ?? null));
                             $clientNameDisplay = $onu->resolved_client_name ?: ($onu->customer->name ?? ($onu->name ?: 'Unnamed Terminal'));
+                            $areaDisplay = $onu->resolved_area ?: ($onu->customer?->zone ?: ($onu->customer?->coverageZone?->name ?? null));
                             $pppoeUserDisplay = $onu->pppoe_username ?: ($onu->customer->username ?? null);
                             $customerId = $onu->customer_id ?: ($onu->linked_customer_id ?? null);
                             $onuPayload = [
@@ -390,6 +391,7 @@
                                 'pon_port' => $onu->pon_port,
                                 'onu_id' => $onu->onu_id,
                                 'name' => $clientNameDisplay,
+                                'area' => $areaDisplay,
                                 'desc' => $onu->desc,
                                 'mac_address' => $onu->mac_address,
                                 'router_mac' => $routerMacDisplay ?: '',
@@ -440,11 +442,12 @@
                                 @endif
                             </td>
 
-                            <!-- 3. PPPoE Username (Center Align, font-mono) -->
-                            <td class="text-center font-mono whitespace-nowrap">
-                                @if($pppoeUserDisplay)
-                                    <span class="inline-flex px-1.5 py-0.5 rounded text-[10px] bg-slate-100 text-slate-700 font-semibold border border-slate-200">
-                                        {{ $pppoeUserDisplay }}
+                            <!-- 3. Area (Left Align) -->
+                            <td class="text-left whitespace-nowrap">
+                                @if($areaDisplay)
+                                    <span class="inline-flex items-center gap-1 text-slate-700 font-medium">
+                                        <i class="fas fa-location-dot text-[9px] text-cyan-500"></i>
+                                        <span>{{ $areaDisplay }}</span>
                                     </span>
                                 @else
                                     <span class="text-slate-400 text-xs">--</span>
@@ -1271,12 +1274,70 @@ function onuManager() {
 
         async syncAllOlts() {
             if (this.syncingAll || this.linkingClients) return;
-            if (!confirm('Synchronize all active OLT hardware devices and auto-link customer terminals now? This queries live hardware over the network.')) {
-                return;
-            }
 
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: 'Synchronize All OLT Gateways?',
+                    html: `
+                        <div class="text-xs text-slate-600 mt-2 space-y-2 text-left">
+                            <p>This will connect directly to all registered OLT hardware devices across the network and:</p>
+                            <ul class="list-disc pl-5 space-y-1 text-slate-700 font-medium">
+                                <li>Discover &amp; synchronize all connected client ONUs / ONT terminals</li>
+                                <li>Fetch live optical Rx/Tx power (dBm), distance, and online status</li>
+                                <li>Automatically pair terminals with customer accounts and router MACs</li>
+                            </ul>
+                            <p class="text-[11px] text-cyan-700 font-semibold pt-1">
+                                <i class="fas fa-info-circle mr-1"></i> Multi-device hardware query may take 15 to 60 seconds depending on OLT response times.
+                            </p>
+                        </div>
+                    `,
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#0891b2',
+                    cancelButtonColor: '#64748b',
+                    confirmButtonText: '<i class="fas fa-rotate mr-1.5"></i> Yes, Start Sync',
+                    cancelButtonText: 'Cancel',
+                    reverseButtons: true,
+                    customClass: {
+                        popup: 'rounded-2xl shadow-2xl border border-slate-200 p-5',
+                        confirmButton: 'px-4 py-2 rounded-xl text-xs font-semibold shadow-xs',
+                        cancelButton: 'px-4 py-2 rounded-xl text-xs font-semibold'
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        this.executeSyncAllOlts();
+                    }
+                });
+            } else if (confirm('Synchronize all active OLT hardware devices and auto-link customer terminals now?')) {
+                this.executeSyncAllOlts();
+            }
+        },
+
+        async executeSyncAllOlts() {
             this.syncingAll = true;
-            this.showToast('Connecting to OLT hardware & pulling live ONU telemetry...', 'info');
+
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: 'Synchronizing OLT Hardware...',
+                    html: `
+                        <div class="py-4 text-center space-y-3">
+                            <div class="inline-block animate-spin text-cyan-600 text-3xl">
+                                <i class="fas fa-circle-notch"></i>
+                            </div>
+                            <p class="text-xs text-slate-600 font-medium">Connecting to OLTs, pulling optical telemetry &amp; pairing client accounts...</p>
+                            <p class="text-[11px] text-slate-400">Please wait, do not close or reload this page.</p>
+                        </div>
+                    `,
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    showConfirmButton: false,
+                    customClass: {
+                        popup: 'rounded-2xl shadow-2xl border border-slate-200 p-5'
+                    }
+                });
+            } else {
+                this.showToast('Connecting to OLT hardware & pulling live ONU telemetry...', 'info');
+            }
 
             try {
                 const response = await fetch('{{ route('tenant.network.onu.sync-all') }}', {
@@ -1289,15 +1350,73 @@ function onuManager() {
                 });
                 const data = await response.json();
                 if (data.success) {
-                    this.showToast(data.message, 'success');
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 1200);
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Synchronization Complete!',
+                            html: `
+                                <div class="text-xs text-slate-600 mt-2 text-left space-y-2 bg-slate-50 p-3 rounded-xl border border-slate-200">
+                                    <p class="font-semibold text-slate-800">${data.message}</p>
+                                    <div class="grid grid-cols-3 gap-2 pt-1 text-center font-mono">
+                                        <div class="bg-white p-2 rounded-lg border border-slate-200 shadow-2xs">
+                                            <span class="text-[10px] text-slate-400 block font-sans">Total ONUs</span>
+                                            <strong class="text-cyan-700 text-sm">${data.total_onus || 0}</strong>
+                                        </div>
+                                        <div class="bg-white p-2 rounded-lg border border-slate-200 shadow-2xs">
+                                            <span class="text-[10px] text-slate-400 block font-sans">Online</span>
+                                            <strong class="text-emerald-600 text-sm">${data.online_onus || 0}</strong>
+                                        </div>
+                                        <div class="bg-white p-2 rounded-lg border border-slate-200 shadow-2xs">
+                                            <span class="text-[10px] text-slate-400 block font-sans">Linked Clients</span>
+                                            <strong class="text-purple-600 text-sm">${data.linked_onus || 0}</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            `,
+                            confirmButtonColor: '#0891b2',
+                            confirmButtonText: '<i class="fas fa-check mr-1.5"></i> Done, Refresh View',
+                            customClass: {
+                                popup: 'rounded-2xl shadow-2xl border border-slate-200 p-5',
+                                confirmButton: 'px-4 py-2 rounded-xl text-xs font-semibold shadow-xs'
+                            }
+                        }).then(() => {
+                            window.location.reload();
+                        });
+                    } else {
+                        this.showToast(data.message, 'success');
+                        setTimeout(() => window.location.reload(), 1200);
+                    }
                 } else {
-                    this.showToast(data.message || 'OLT synchronization encountered errors.', 'error');
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Sync Encountered Problems',
+                            text: data.message || 'One or more OLTs could not be reached.',
+                            confirmButtonColor: '#e11d48',
+                            customClass: {
+                                popup: 'rounded-2xl shadow-2xl border border-slate-200 p-5',
+                                confirmButton: 'px-4 py-2 rounded-xl text-xs font-semibold'
+                            }
+                        });
+                    } else {
+                        this.showToast(data.message || 'OLT synchronization encountered errors.', 'error');
+                    }
                 }
             } catch (err) {
-                this.showToast('Network timeout or communication error with OLT devices.', 'error');
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Communication Timeout',
+                        text: 'Network timeout or connection error while contacting OLT hardware.',
+                        confirmButtonColor: '#e11d48',
+                        customClass: {
+                            popup: 'rounded-2xl shadow-2xl border border-slate-200 p-5',
+                            confirmButton: 'px-4 py-2 rounded-xl text-xs font-semibold'
+                        }
+                    });
+                } else {
+                    this.showToast('Network timeout or communication error with OLT devices.', 'error');
+                }
             } finally {
                 this.syncingAll = false;
             }
@@ -1305,8 +1424,66 @@ function onuManager() {
 
         async autoLinkClients() {
             if (this.syncingAll || this.linkingClients) return;
+
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: 'Auto-Link Client Accounts?',
+                    html: `
+                        <div class="text-xs text-slate-600 mt-2 space-y-2 text-left">
+                            <p>This will evaluate all ONUs against registered customers and:</p>
+                            <ul class="list-disc pl-5 space-y-1 text-slate-700 font-medium">
+                                <li>Match via Router MAC, Calling Station ID (MikroTik radacct), and ONU MAC</li>
+                                <li>Associate customers with their correct OLT &amp; PON port</li>
+                                <li>Assign actual customer names and area zones to each terminal</li>
+                            </ul>
+                        </div>
+                    `,
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#0891b2',
+                    cancelButtonColor: '#64748b',
+                    confirmButtonText: '<i class="fas fa-link mr-1.5"></i> Yes, Run Auto-Link',
+                    cancelButtonText: 'Cancel',
+                    reverseButtons: true,
+                    customClass: {
+                        popup: 'rounded-2xl shadow-2xl border border-slate-200 p-5',
+                        confirmButton: 'px-4 py-2 rounded-xl text-xs font-semibold shadow-xs',
+                        cancelButton: 'px-4 py-2 rounded-xl text-xs font-semibold'
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        this.executeAutoLinkClients();
+                    }
+                });
+            } else if (confirm('Run customer-ONU auto-linking now?')) {
+                this.executeAutoLinkClients();
+            }
+        },
+
+        async executeAutoLinkClients() {
             this.linkingClients = true;
-            this.showToast('Evaluating and pairing ONUs with customer profiles...', 'info');
+
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: 'Pairing Customer Profiles...',
+                    html: `
+                        <div class="py-4 text-center space-y-3">
+                            <div class="inline-block animate-spin text-cyan-600 text-3xl">
+                                <i class="fas fa-circle-notch"></i>
+                            </div>
+                            <p class="text-xs text-slate-600 font-medium">Evaluating router MACs, RADIUS sessions, and customer usernames...</p>
+                        </div>
+                    `,
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    showConfirmButton: false,
+                    customClass: {
+                        popup: 'rounded-2xl shadow-2xl border border-slate-200 p-5'
+                    }
+                });
+            } else {
+                this.showToast('Evaluating and pairing ONUs with customer profiles...', 'info');
+            }
 
             try {
                 const response = await fetch('{{ route('tenant.network.onu.auto-link') }}', {
@@ -1319,15 +1496,47 @@ function onuManager() {
                 });
                 const data = await response.json();
                 if (data.success) {
-                    this.showToast(data.message, 'success');
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 1000);
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Auto-Link Completed!',
+                            text: data.message,
+                            confirmButtonColor: '#0891b2',
+                            confirmButtonText: '<i class="fas fa-check mr-1.5"></i> Done, Refresh View',
+                            customClass: {
+                                popup: 'rounded-2xl shadow-2xl border border-slate-200 p-5',
+                                confirmButton: 'px-4 py-2 rounded-xl text-xs font-semibold shadow-xs'
+                            }
+                        }).then(() => {
+                            window.location.reload();
+                        });
+                    } else {
+                        this.showToast(data.message, 'success');
+                        setTimeout(() => window.location.reload(), 1000);
+                    }
                 } else {
-                    this.showToast(data.message || 'Auto-linking failed.', 'error');
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Auto-Link Failed',
+                            text: data.message || 'Auto-linking encountered an error.',
+                            confirmButtonColor: '#e11d48'
+                        });
+                    } else {
+                        this.showToast(data.message || 'Auto-linking failed.', 'error');
+                    }
                 }
             } catch (err) {
-                this.showToast('Network error while running customer pairing.', 'error');
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Network Error',
+                        text: 'An error occurred while communicating with the server.',
+                        confirmButtonColor: '#e11d48'
+                    });
+                } else {
+                    this.showToast('Network error while running customer pairing.', 'error');
+                }
             } finally {
                 this.linkingClients = false;
             }

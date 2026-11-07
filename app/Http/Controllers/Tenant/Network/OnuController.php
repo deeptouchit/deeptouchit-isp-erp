@@ -29,7 +29,7 @@ class OnuController extends Controller
 
         $olts = TenantOlt::where('tenant_id', $tenant->id)->get();
 
-        $query = TenantOnu::where('tenant_id', $tenant->id)->with(['olt', 'customer']);
+        $query = TenantOnu::where('tenant_id', $tenant->id)->with(['olt', 'customer.coverageZone']);
 
         if ($oltId = $request->input('olt_id')) {
             $query->where('olt_id', $oltId);
@@ -122,16 +122,19 @@ class OnuController extends Controller
         $routerMacs = $onus->pluck('router_mac')->filter()->unique()->toArray();
 
         $customersByUsername = !empty($usernames) ? TenantCustomer::where('tenant_id', $tenant->id)
+            ->with('coverageZone')
             ->whereIn('username', $usernames)
             ->get()
             ->keyBy(fn($c) => strtolower(trim((string)$c->username))) : collect();
 
         $customersByOnuMac = !empty($onuMacs) ? TenantCustomer::where('tenant_id', $tenant->id)
+            ->with('coverageZone')
             ->whereIn('onu_mac_sn', $onuMacs)
             ->get()
             ->keyBy(fn($c) => strtolower(preg_replace('/[^a-f0-9]/i', '', (string)$c->onu_mac_sn))) : collect();
 
         $customersByRouterMac = !empty($routerMacs) ? TenantCustomer::where('tenant_id', $tenant->id)
+            ->with('coverageZone')
             ->whereIn('mac_address', $routerMacs)
             ->get()
             ->keyBy(fn($c) => strtolower(preg_replace('/[^a-f0-9]/i', '', (string)$c->mac_address))) : collect();
@@ -160,6 +163,7 @@ class OnuController extends Controller
                     $onu->pppoe_username = $matchedCust->username;
                 }
                 $onu->resolved_client_name = $matchedCust->name;
+                $onu->resolved_area = $matchedCust->zone ?: ($matchedCust->coverageZone?->name ?? null);
             }
         }
 
