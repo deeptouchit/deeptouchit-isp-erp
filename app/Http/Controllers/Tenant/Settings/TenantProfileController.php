@@ -40,7 +40,7 @@ class TenantProfileController extends Controller
             'subscription_status' => ucfirst($tenant->status ?? 'Active'),
             'trade_license' => !empty($tenant->trade_license_no) ? 'Registered' : 'N/A',
             'support_line' => $tenant->support_hotline ? 'Active' : 'Not Set',
-            'plan_name' => $tenant->plan?->name ?? 'Active Plan',
+            'mail_status' => $tenant->mail_enabled ? 'Connected' : 'Disabled',
         ];
 
         return view('tenant.settings.profile', compact('tenant', 'stats'));
@@ -69,6 +69,10 @@ class TenantProfileController extends Controller
             'tin_bin_no' => 'nullable|string|max:100',
             'contact_person' => 'nullable|string|max:255',
             'contact_person_designation' => 'nullable|string|max:255',
+            'currency_code' => 'nullable|string|max:10',
+            'currency_symbol' => 'nullable|string|max:10',
+            'timezone' => 'nullable|string|max:50',
+            'invoice_footer_notes' => 'nullable|string|max:2000',
             'mail_driver' => 'nullable|string|max:50',
             'mail_host' => 'nullable|string|max:255',
             'mail_port' => 'nullable|integer',
@@ -98,6 +102,10 @@ class TenantProfileController extends Controller
             'tin_bin_no',
             'contact_person',
             'contact_person_designation',
+            'currency_code',
+            'currency_symbol',
+            'timezone',
+            'invoice_footer_notes',
             'mail_driver',
             'mail_host',
             'mail_port',

@@ -451,3 +451,4 @@ class TenantUserController extends Controller
         return view('tenant.users.print', compact('tenant', 'users'));
     }
 }
+
