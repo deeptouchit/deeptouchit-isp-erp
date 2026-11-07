@@ -386,8 +386,8 @@ class TenantRbacController extends Controller
         $tenant = $this->getTenant();
         $role = TenantRole::where('tenant_id', $tenant->id)->findOrFail($id);
 
-        if ($role->is_system) {
-            return back()->with('error', "System core role '{$role->display_name}' is protected and cannot be deleted.");
+        if ($role->name === 'isp_admin') {
+            return back()->with('error', "Primary ISP Super Admin ('{$role->display_name}') role is protected and cannot be deleted.");
         }
 
         $staffCount = User::where('tenant_id', $tenant->id)->where('role', $role->name)->count();

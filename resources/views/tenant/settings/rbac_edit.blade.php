@@ -207,9 +207,17 @@
 
         {{-- Form Action Footer --}}
         <div class="p-3 bg-white rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
-            <a href="{{ route('tenant.settings.rbac') }}" class="h-[34px] py-0 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-lg border border-slate-200/80 transition flex items-center justify-center cursor-pointer">
-                Cancel
-            </a>
+            <div class="flex items-center gap-2">
+                <a href="{{ route('tenant.settings.rbac') }}" class="h-[34px] py-0 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-lg border border-slate-200/80 transition flex items-center justify-center cursor-pointer">
+                    Cancel
+                </a>
+                @if($role->name !== 'isp_admin')
+                    <button type="button" @click="deleteThisRole()" class="h-[34px] py-0 px-3 bg-rose-50 hover:bg-rose-100 text-rose-700 font-semibold text-xs rounded-lg border border-rose-200 transition flex items-center gap-1.5 cursor-pointer">
+                        <i class="fas fa-trash-can text-rose-600 text-xs"></i>
+                        <span>Delete Role</span>
+                    </button>
+                @endif
+            </div>
             <button type="submit" class="h-[34px] py-0 px-5 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer">
                 <i class="fas fa-check text-xs"></i>
                 <span>Save Role Changes</span>
@@ -250,8 +258,40 @@
                     const toAdd = groupKeys.filter(k => !this.selectedPermissions.includes(k));
                     this.selectedPermissions.push(...toAdd);
                 }
+            },
+
+            deleteThisRole() {
+                if ({{ $assignedStaff->count() }} > 0) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Cannot Delete',
+                        text: 'This role has {{ $assignedStaff->count() }} active employees assigned. Please reassign them before deletion.',
+                        confirmButtonColor: '#0891b2'
+                    });
+                    return;
+                }
+
+                Swal.fire({
+                    title: 'Delete Role?',
+                    text: "Are you sure you want to permanently delete role '{{ $role->display_name }}'?",
+                    icon: 'error',
+                    showCancelButton: true,
+                    confirmButtonColor: '#e11d48',
+                    cancelButtonColor: '#64748b',
+                    confirmButtonText: 'Yes, Delete Role'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        const form = document.createElement('form');
+                        form.method = 'POST';
+                        form.action = "{{ route('tenant.settings.rbac.destroy', $role->id) }}";
+                        form.innerHTML = `@csrf <input type="hidden" name="_method" value="DELETE">`;
+                        document.body.appendChild(form);
+                        form.submit();
+                    }
+                });
             }
         };
     }
 </script>
 @endpush
+

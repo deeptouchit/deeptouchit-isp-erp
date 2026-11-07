@@ -378,11 +378,11 @@
         </div>
 
         {{-- Group 3: Destructive Actions --}}
-        <template x-if="activeMenu && !activeMenu.is_system">
+        <template x-if="activeMenu && activeMenu.name !== 'isp_admin'">
             <div class="py-1">
                 <button type="button" @click="deleteRoleAction(activeMenu); activeMenu = null" class="w-full text-left px-3 py-1.5 hover:bg-rose-50 text-rose-600 flex items-center gap-2 transition cursor-pointer">
                     <i class="fas fa-trash-can text-rose-500 w-3.5"></i>
-                    <span>Delete Custom Role</span>
+                    <span>Delete Role</span>
                 </button>
             </div>
         </template>
