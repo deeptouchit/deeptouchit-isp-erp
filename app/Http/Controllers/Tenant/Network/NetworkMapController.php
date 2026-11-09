@@ -24,11 +24,18 @@ class NetworkMapController extends Controller
         $selectedRouterId = $request->input('router_id');
         $selectedOltId = $request->input('olt_id');
         $selectedStatus = $request->input('status'); // online, offline, all
+        $search = $request->input('search');
 
         // 1. Fetch Routers
         $routerQuery = TenantRouter::where('tenant_id', $tenant->id);
         if ($selectedRouterId) {
             $routerQuery->where('id', $selectedRouterId);
+        }
+        if ($search) {
+            $routerQuery->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('ip_address', 'like', "%{$search}%");
+            });
         }
         $routers = $routerQuery->get();
         $allRouters = TenantRouter::where('tenant_id', $tenant->id)->get(['id', 'name', 'ip_address', 'status']);
@@ -40,6 +47,12 @@ class NetworkMapController extends Controller
         }
         if ($selectedOltId) {
             $oltQuery->where('id', $selectedOltId);
+        }
+        if ($search) {
+            $oltQuery->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('ip_address', 'like', "%{$search}%");
+            });
         }
         $olts = $oltQuery->get();
         $allOlts = TenantOlt::where('tenant_id', $tenant->id)->get(['id', 'name', 'ip_address', 'status', 'router_id']);
@@ -57,7 +70,17 @@ class NetworkMapController extends Controller
         } elseif ($selectedStatus === 'offline') {
             $onuQuery->where('status', 'offline');
         }
+        if ($search) {
+            $onuQuery->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('mac_address', 'like', "%{$search}%")
+                  ->orWhere('pppoe_username', 'like', "%{$search}%");
+            });
+        }
         $onus = $onuQuery->get();
+
+        $activeMoreCount = ($request->filled('olt_id') ? 1 : 0) + ($request->filled('status') ? 1 : 0);
+        $isMoreOpen = $activeMoreCount > 0;
 
         // 4. Calculate Summary Metrics
         $totalRouters = TenantRouter::where('tenant_id', $tenant->id)->count();
@@ -263,7 +286,9 @@ class NetworkMapController extends Controller
             'onlineOnus',
             'offlineOnus',
             'losOnus',
-            'avgRxPower'
+            'avgRxPower',
+            'activeMoreCount',
+            'isMoreOpen'
         ));
     }
 }

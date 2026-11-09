@@ -1,10 +1,21 @@
 @extends('tenant.layouts.app')
 
-@section('title', 'Network Topology Graph - ' . ($tenant->company_name ?? $tenant->name))
+@section('title', 'Network Topology & GIS Map - ' . ($tenant->company_name ?? $tenant->name))
+
+@push('styles')
+<style>
+    .topology-canvas {
+        background-color: #f8fafc;
+        background-image: radial-gradient(#cbd5e1 1.2px, transparent 1.2px);
+        background-size: 20px 20px;
+    }
+</style>
+@endpush
 
 @section('content')
-<div x-data="networkMapManager()" class="space-y-3">
-    <!-- Toast Notification Banner -->
+<div class="space-y-3" x-data="networkMapManager()" @scroll.window="activeMenu = null" @resize.window="activeMenu = null">
+
+    {{-- Toast Notification Banner --}}
     <div x-show="toast.show" 
          x-transition:enter="transition ease-out duration-300 transform"
          x-transition:enter-start="opacity-0 -translate-y-2"
@@ -12,151 +23,271 @@
          x-transition:leave="transition ease-in duration-200 transform"
          x-transition:leave-start="opacity-100 translate-y-0"
          x-transition:leave-end="opacity-0 -translate-y-2"
-         class="fixed top-4 right-4 z-50 flex items-center gap-2 px-4 py-2.5 rounded-xl shadow-lg border text-xs font-medium"
+         class="fixed top-4 right-4 z-50 flex items-center gap-2 px-3.5 py-2 rounded-xl shadow-lg border text-xs font-medium"
          :class="{
              'bg-emerald-50 text-emerald-800 border-emerald-200': toast.type === 'success',
              'bg-rose-50 text-rose-800 border-rose-200': toast.type === 'error',
-             'bg-blue-50 text-blue-800 border-blue-200': toast.type === 'info'
+             'bg-cyan-50 text-cyan-800 border-cyan-200': toast.type === 'info'
          }"
          style="display: none;">
         <i class="fas text-sm" :class="{
             'fa-check-circle text-emerald-600': toast.type === 'success',
             'fa-exclamation-circle text-rose-600': toast.type === 'error',
-            'fa-info-circle text-blue-600': toast.type === 'info'
+            'fa-info-circle text-cyan-600': toast.type === 'info'
         }"></i>
         <span x-text="toast.message"></span>
     </div>
 
-    <!-- Tier 1: Page Header -->
-    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
-        <div class="flex items-center gap-3">
-            <div class="w-9 h-9 rounded-xl bg-teal-50 text-teal-600 border border-teal-100 flex items-center justify-center text-sm shadow-xs flex-shrink-0">
+    {{-- 1. Top Header Bar (Strict AGENTS.md Rule 2.A: Icon + Title + Count Badge + Action Buttons ONLY) --}}
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-white px-3.5 py-2.5 rounded-xl border border-slate-200/90 shadow-2xs">
+        <div class="flex items-center gap-2.5 min-w-0">
+            <div class="w-8 h-8 rounded-lg bg-cyan-50 text-cyan-600 border border-cyan-100 flex items-center justify-center text-sm shadow-2xs shrink-0">
                 <i class="fas fa-network-wired"></i>
             </div>
-            <div>
-                <h2 class="text-sm font-bold text-slate-900 tracking-tight">Network Topology Graph</h2>
+            <div class="flex items-center gap-2 min-w-0">
+                <h1 class="text-sm font-bold text-slate-900 tracking-tight whitespace-nowrap">Network Topology & GIS Map</h1>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+                    {{ $totalRouters + $totalOlts }} Nodes
+                </span>
             </div>
         </div>
 
-        <div class="flex flex-wrap items-center gap-2 flex-shrink-0">
-
-            <!-- Router Filter -->
-            <select x-model="filters.router_id" 
-                    @change="applyFilter()" 
-                    class="py-1 px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 focus:ring-1 focus:ring-blue-500 font-normal">
-                <option value="">All Routers</option>
-                @foreach($allRouters as $r)
-                    <option value="{{ $r->id }}" {{ request('router_id') == $r->id ? 'selected' : '' }}>{{ $r->name }}</option>
-                @endforeach
-            </select>
-
-            <!-- OLT Filter -->
-            <select x-model="filters.olt_id" 
-                    @change="applyFilter()" 
-                    class="py-1 px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 focus:ring-1 focus:ring-blue-500 font-normal">
-                <option value="">All OLTs</option>
-                @foreach($allOlts as $o)
-                    <option value="{{ $o->id }}" {{ request('olt_id') == $o->id ? 'selected' : '' }}>{{ $o->name }}</option>
-                @endforeach
-            </select>
-
-            <!-- Refresh Button -->
+        <div class="flex items-center gap-1.5 flex-wrap sm:flex-nowrap shrink-0">
+            {{-- Refresh Button --}}
             <button type="button" 
                     @click="refreshData()" 
-                    class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200 shadow-xs transition flex items-center gap-1 cursor-pointer">
-                <i class="fas fa-arrows-rotate text-[11px]" :class="{'fa-spin text-blue-600': isRefreshing}"></i>
+                    class="h-[34px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-0 px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs">
+                <i class="fas fa-arrows-rotate text-[11px]" :class="{'fa-spin text-cyan-600': isRefreshing}"></i>
                 <span>Refresh</span>
             </button>
+
+            {{-- Quick Links to Modules --}}
+            <a href="{{ route('tenant.network.mikrotik') }}" 
+               class="h-[34px] bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs py-0 px-2.5 rounded-lg border border-slate-200/80 shadow-2xs transition flex items-center justify-center gap-1.5">
+                <i class="fas fa-server text-blue-600 text-[10px]"></i>
+                <span class="hidden md:inline">Routers</span>
+            </a>
+
+            <a href="{{ route('tenant.network.olt') }}" 
+               class="h-[34px] bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs py-0 px-2.5 rounded-lg border border-slate-200/80 shadow-2xs transition flex items-center justify-center gap-1.5">
+                <i class="fas fa-ethernet text-purple-600 text-[10px]"></i>
+                <span class="hidden md:inline">OLTs</span>
+            </a>
+
+            <a href="{{ route('tenant.network.onu') }}" 
+               class="h-[34px] bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-0 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer">
+                <i class="fas fa-users text-white text-[10px]"></i>
+                <span>ONUs</span>
+            </a>
         </div>
     </div>
 
-    <!-- Tier 2: 6 Compact Summary Metric Cards -->
-    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
-        <!-- Metric 1: Core Routers -->
-        <div class="px-3 py-2 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
+    {{-- 2. KPI Summary Strip (Strict AGENTS.md Rule 2.B: Strictly 6 Cards) --}}
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+        {{-- Card 1: Core Gateways --}}
+        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5 min-w-0">
-                <span class="text-[10px] font-medium text-slate-500 uppercase tracking-wider block truncate">Core Gateways</span>
-                <span class="text-base font-extrabold text-slate-900 tracking-tight font-mono leading-none block">
-                    {{ $onlineRouters }} <span class="text-xs text-slate-400 font-normal">/ {{ $totalRouters }}</span>
+                <span class="text-[9px] font-medium text-slate-500 uppercase tracking-wider block truncate">Core Gateways</span>
+                <span class="text-[13px] font-bold font-mono text-slate-900 leading-tight block truncate">
+                    {{ $onlineRouters }} <span class="text-[10px] text-slate-400 font-normal">/ {{ $totalRouters }}</span>
                 </span>
             </div>
-            <div class="w-7 h-7 rounded-md bg-blue-50 text-blue-600 flex items-center justify-center text-xs border border-blue-100 flex-shrink-0">
+            <div class="w-6 h-6 rounded-md bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center text-[10px] shrink-0">
                 <i class="fas fa-server"></i>
             </div>
         </div>
 
-        <!-- Metric 2: OLT Hubs -->
-        <div class="px-3 py-2 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
+        {{-- Card 2: OLT Distribution --}}
+        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5 min-w-0">
-                <span class="text-[10px] font-medium text-purple-700 uppercase tracking-wider block truncate">OLT Distribution</span>
-                <span class="text-base font-extrabold text-purple-600 tracking-tight font-mono leading-none block">
-                    {{ $onlineOlts }} <span class="text-xs text-purple-400 font-normal">/ {{ $totalOlts }}</span>
+                <span class="text-[9px] font-medium text-purple-700 uppercase tracking-wider block truncate">OLT Distribution</span>
+                <span class="text-[13px] font-bold font-mono text-purple-600 leading-tight block truncate">
+                    {{ $onlineOlts }} <span class="text-[10px] text-purple-400 font-normal">/ {{ $totalOlts }}</span>
                 </span>
             </div>
-            <div class="w-7 h-7 rounded-md bg-purple-50 text-purple-600 flex items-center justify-center text-xs border border-purple-100 flex-shrink-0">
+            <div class="w-6 h-6 rounded-md bg-purple-50 text-purple-600 border border-purple-100 flex items-center justify-center text-[10px] shrink-0">
                 <i class="fas fa-ethernet"></i>
             </div>
         </div>
 
-        <!-- Metric 3: Total PON Ports -->
-        <div class="px-3 py-2 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
+        {{-- Card 3: Total PON Ports --}}
+        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5 min-w-0">
-                <span class="text-[10px] font-medium text-indigo-700 uppercase tracking-wider block truncate">Total PON Ports</span>
-                <span class="text-base font-extrabold text-indigo-600 tracking-tight font-mono leading-none block">{{ number_format($totalPonPorts) }}</span>
+                <span class="text-[9px] font-medium text-indigo-700 uppercase tracking-wider block truncate">Total PON Ports</span>
+                <span class="text-[13px] font-bold font-mono text-indigo-600 leading-tight block truncate">{{ number_format($totalPonPorts) }}</span>
             </div>
-            <div class="w-7 h-7 rounded-md bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs border border-indigo-100 flex-shrink-0">
+            <div class="w-6 h-6 rounded-md bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center justify-center text-[10px] shrink-0">
                 <i class="fas fa-network-wired"></i>
             </div>
         </div>
 
-        <!-- Metric 4: Total Customer ONUs -->
-        <div class="px-3 py-2 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
+        {{-- Card 4: Total ONUs --}}
+        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5 min-w-0">
-                <span class="text-[10px] font-medium text-slate-500 uppercase tracking-wider block truncate">Total ONUs</span>
-                <span class="text-base font-extrabold text-slate-900 tracking-tight font-mono leading-none block">{{ number_format($totalOnus) }}</span>
+                <span class="text-[9px] font-medium text-slate-500 uppercase tracking-wider block truncate">Total ONUs</span>
+                <span class="text-[13px] font-bold font-mono text-slate-800 leading-tight block truncate">{{ number_format($totalOnus) }}</span>
             </div>
-            <div class="w-7 h-7 rounded-md bg-slate-50 text-slate-600 flex items-center justify-center text-xs border border-slate-100 flex-shrink-0">
+            <div class="w-6 h-6 rounded-md bg-slate-50 text-slate-600 border border-slate-200 flex items-center justify-center text-[10px] shrink-0">
                 <i class="fas fa-users"></i>
             </div>
         </div>
 
-        <!-- Metric 5: Online ONUs -->
-        <div class="px-3 py-2 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
+        {{-- Card 5: Online Active --}}
+        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5 min-w-0">
-                <span class="text-[10px] font-medium text-emerald-700 uppercase tracking-wider block truncate">Online Active</span>
-                <span class="text-base font-extrabold text-emerald-600 tracking-tight font-mono leading-none block">{{ number_format($onlineOnus) }}</span>
+                <span class="text-[9px] font-medium text-emerald-700 uppercase tracking-wider block truncate">Online Active</span>
+                <span class="text-[13px] font-bold font-mono text-emerald-600 leading-tight block truncate">{{ number_format($onlineOnus) }}</span>
             </div>
-            <div class="w-7 h-7 rounded-md bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs border border-emerald-100 flex-shrink-0">
+            <div class="w-6 h-6 rounded-md bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center text-[10px] shrink-0">
                 <i class="fas fa-check-circle"></i>
             </div>
         </div>
 
-        <!-- Metric 6: Optical Alerts / LOS -->
-        <div class="px-3 py-2 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
+        {{-- Card 6: Offline / LOS --}}
+        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5 min-w-0">
-                <span class="text-[10px] font-medium text-rose-700 uppercase tracking-wider block truncate">Offline / LOS</span>
-                <span class="text-base font-extrabold text-rose-600 tracking-tight font-mono leading-none block">{{ number_format($losOnus) }}</span>
+                <span class="text-[9px] font-medium text-rose-700 uppercase tracking-wider block truncate">Offline / LOS</span>
+                <span class="text-[13px] font-bold font-mono text-rose-600 leading-tight block truncate">{{ number_format($losOnus) }}</span>
             </div>
-            <div class="w-7 h-7 rounded-md bg-rose-50 text-rose-600 flex items-center justify-center text-xs border border-rose-100 flex-shrink-0">
+            <div class="w-6 h-6 rounded-md bg-rose-50 text-rose-600 border border-rose-100 flex items-center justify-center text-[10px] shrink-0">
                 <i class="fas fa-triangle-exclamation"></i>
             </div>
         </div>
     </div>
 
-    <!-- Tier 3: Main Visual Canvas (Topology Tree) -->
-    <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden relative">
-        <!-- Canvas Toolbar -->
-        <div class="px-4 py-2.5 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2 text-xs">
-            <div class="flex items-center gap-2">
+    {{-- 3. Search & Multi-Filter Toolbar (Strict Customer-Standard 2-Tier Filter System) --}}
+    <form method="GET" action="{{ route('tenant.network.map') }}" 
+          class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5"
+          x-data="{ 
+              showMoreFilters: {{ $isMoreOpen ? 'true' : 'false' }}, 
+              searchQuery: '{{ addslashes(request('search', '')) }}' 
+          }">
+        
+        {{-- Tier 1: Primary Filter Bar (Uniform h-[34px] controls) --}}
+        <div class="flex flex-col md:flex-row items-stretch md:items-center gap-2">
+            {{-- Intelligent Live Search Box --}}
+            <div class="relative flex-1 min-w-[200px]">
+                <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-xs transition-colors duration-200"
+                   :class="searchQuery ? 'text-cyan-600 font-bold' : 'text-slate-400'"></i>
+                <input type="text" 
+                       name="search" 
+                       x-model="searchQuery" 
+                       placeholder="Search device, IP, MAC or PPPoE username..." 
+                       value="{{ request('search') }}"
+                       class="w-full h-[34px] pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition" />
+                <button type="button" 
+                        x-show="searchQuery && searchQuery.length > 0" 
+                        @click="searchQuery = ''; $nextTick(() => $el.closest('form').submit())"
+                        class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer"
+                        style="display: none;">
+                    <i class="fas fa-times-circle text-xs"></i>
+                </button>
+            </div>
+
+            {{-- Primary Filter: Router Filter --}}
+            <select name="router_id" 
+                    class="h-[34px] w-full md:w-44 text-xs bg-slate-50 border border-slate-200 rounded-lg px-2.5 text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden font-normal shrink-0">
+                <option value="">All Core Routers</option>
+                @foreach($allRouters as $r)
+                    <option value="{{ $r->id }}" {{ request('router_id') == $r->id ? 'selected' : '' }}>{{ $r->name }}</option>
+                @endforeach
+            </select>
+
+            {{-- View Mode Toggle Switcher --}}
+            <div class="inline-flex h-[34px] p-0.5 bg-slate-100 rounded-lg border border-slate-200/80 shrink-0">
+                <button type="button" 
+                        @click="activeTab = 'tree'"
+                        class="h-[30px] px-2.5 rounded-md text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer"
+                        :class="activeTab === 'tree' ? 'bg-white text-cyan-700 shadow-2xs' : 'text-slate-600 hover:text-slate-900'">
+                    <i class="fas fa-sitemap text-[11px]"></i>
+                    <span class="hidden sm:inline">Topology Tree</span>
+                </button>
+                <button type="button" 
+                        @click="activeTab = 'inventory'"
+                        class="h-[30px] px-2.5 rounded-md text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer"
+                        :class="activeTab === 'inventory' ? 'bg-white text-cyan-700 shadow-2xs' : 'text-slate-600 hover:text-slate-900'">
+                    <i class="fas fa-list-check text-[11px]"></i>
+                    <span class="hidden sm:inline">Device Inventory</span>
+                </button>
+            </div>
+
+            {{-- More Filters Accordion Toggle Button --}}
+            <button type="button" 
+                    @click="showMoreFilters = !showMoreFilters"
+                    class="h-[34px] py-0 px-2.5 rounded-lg border text-xs font-medium transition flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
+                    :class="showMoreFilters || {{ $activeMoreCount }} > 0 ? 'bg-cyan-50/70 border-cyan-200 text-cyan-800' : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'">
+                <i class="fas fa-sliders text-[11px] text-slate-500"></i>
+                <span>More Filters</span>
+                @if($activeMoreCount > 0)
+                    <span class="w-4 h-4 rounded-full bg-cyan-600 text-white text-[9px] font-bold flex items-center justify-center">{{ $activeMoreCount }}</span>
+                @endif
+                <i class="fas text-[10px] transition-transform duration-200" :class="showMoreFilters ? 'fa-chevron-up text-cyan-600' : 'fa-chevron-down text-slate-400'"></i>
+            </button>
+
+            {{-- Strict Filter & Reset Button Sequence (Filter First, Reset Second - Always Visible) --}}
+            <div class="flex items-center gap-1.5 shrink-0 md:ml-auto">
+                <button type="submit" 
+                        class="h-[34px] bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-0 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer">
+                    <i class="fas fa-filter text-[10px]"></i>
+                    <span>Filter</span>
+                </button>
+
+                <a href="{{ route('tenant.network.map') }}" 
+                   class="h-[34px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-0 px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer">
+                    <i class="fas fa-rotate-left text-[10px]"></i>
+                    <span>Reset</span>
+                </a>
+            </div>
+        </div>
+
+        {{-- Tier 2: Secondary Filters Drawer --}}
+        <div x-show="showMoreFilters" 
+             x-cloak 
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 -translate-y-1"
+             x-transition:enter-end="opacity-100 translate-y-0"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100 translate-y-0"
+             x-transition:leave-end="opacity-0 -translate-y-1"
+             class="pt-2 border-t border-slate-100 flex flex-wrap items-center gap-2">
+            
+            {{-- OLT Selector --}}
+            <div class="w-full sm:w-auto">
+                <select name="olt_id" 
+                        class="h-[34px] w-full sm:w-52 text-xs bg-slate-50 border border-slate-200 rounded-lg px-2.5 text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden font-normal">
+                    <option value="">All Distribution OLTs</option>
+                    @foreach($allOlts as $o)
+                        <option value="{{ $o->id }}" {{ request('olt_id') == $o->id ? 'selected' : '' }}>{{ $o->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            {{-- Operational Status --}}
+            <div class="w-full sm:w-auto">
+                <select name="status" 
+                        class="h-[34px] w-full sm:w-36 text-xs bg-slate-50 border border-slate-200 rounded-lg px-2.5 text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden font-normal">
+                    <option value="">All Statuses</option>
+                    <option value="online" {{ request('status') === 'online' ? 'selected' : '' }}>Online</option>
+                    <option value="offline" {{ request('status') === 'offline' ? 'selected' : '' }}>Offline</option>
+                </select>
+            </div>
+        </div>
+    </form>
+
+    {{-- 4. View 1: Interactive Hierarchical Topology Tree Graph --}}
+    <div x-show="activeTab === 'tree'" class="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden relative">
+        {{-- Topology Header & Legend Bar --}}
+        <div class="px-3.5 py-2 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2 text-xs">
+            <div class="flex items-center gap-2 min-w-0">
                 <span class="font-bold text-slate-800 text-[11px] uppercase tracking-wider">
                     Hierarchical Network Topology Graph
                 </span>
                 <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-slate-200 text-slate-700 font-medium">
-                    Live Status Monitor
+                    Live Status
                 </span>
             </div>
 
-            <!-- Optical Signal Color Legend -->
+            {{-- Optical Signal Color Legend --}}
             <div class="flex items-center gap-3 text-[11px] text-slate-600 font-normal">
                 <div class="flex items-center gap-1.5">
                     <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
@@ -173,43 +304,39 @@
             </div>
         </div>
 
-        <!-- Interactive Topology Tree Graph -->
-        <div class="p-6 bg-slate-50/60 min-h-[550px] overflow-x-auto relative select-none border-b border-slate-200">
-            <!-- Background Topology Grid Pattern (Light) -->
-            <div class="absolute inset-0 opacity-40 pointer-events-none" style="background-image: radial-gradient(#cbd5e1 1px, transparent 1px); background-size: 24px 24px;"></div>
-
-            <!-- Topology Hierarchy Container -->
+        {{-- Topology Canvas Body --}}
+        <div class="p-6 topology-canvas overflow-x-auto relative select-none">
             <div class="relative z-10 space-y-8 min-w-[700px]">
-                <!-- LEVEL 1: ISP Internet Gateway -->
+                {{-- LEVEL 1: ISP Internet Gateway --}}
                 <div class="flex justify-center">
-                    <div class="px-4 py-2.5 rounded-xl bg-white text-slate-900 shadow-xs flex items-center gap-2.5 border-2 border-blue-500">
-                        <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-sm border border-blue-100">
+                    <div class="px-4 py-2.5 rounded-xl bg-white text-slate-900 shadow-xs flex items-center gap-2.5 border-2 border-cyan-600">
+                        <div class="w-8 h-8 rounded-lg bg-cyan-50 text-cyan-600 flex items-center justify-center text-sm border border-cyan-100">
                             <i class="fas fa-cloud"></i>
                         </div>
                         <div>
-                            <span class="text-[10px] font-medium text-blue-600 uppercase tracking-widest block leading-tight">Upstream Transit</span>
+                            <span class="text-[9px] font-medium text-cyan-600 uppercase tracking-widest block leading-tight">Upstream Transit</span>
                             <span class="text-xs font-bold font-mono text-slate-900">ISP Internet Core Gateway</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Connector Line Level 1 to 2 -->
-                <div class="w-0.5 h-6 bg-blue-300 mx-auto -my-4"></div>
+                {{-- Connector Line Level 1 to 2 --}}
+                <div class="w-0.5 h-6 bg-cyan-300 mx-auto -my-4"></div>
 
-                <!-- LEVEL 2: Core MikroTik Routers -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 justify-center max-w-6xl mx-auto">
+                {{-- LEVEL 2: Core MikroTik Routers --}}
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 justify-center max-w-6xl mx-auto">
                     @forelse($topology as $routerNode)
-                        <div class="bg-white rounded-xl border border-slate-200 p-3.5 shadow-xs hover:border-blue-500 hover:shadow-md transition cursor-pointer"
+                        <div class="bg-white rounded-xl border border-slate-200 p-3.5 shadow-2xs hover:border-cyan-500 hover:shadow-xs transition cursor-pointer"
                              @click="inspectNode('router', {{ json_encode($routerNode) }})">
-                            <!-- Router Header -->
-                            <div class="flex items-start justify-between gap-2 pb-2.5 border-b border-slate-100">
-                                <div class="flex items-center gap-2">
-                                    <div class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center text-xs">
+                            {{-- Router Header --}}
+                            <div class="flex items-start justify-between gap-2 pb-2 border-b border-slate-100">
+                                <div class="flex items-center gap-2 min-w-0">
+                                    <div class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center text-xs shrink-0">
                                         <i class="fas fa-server"></i>
                                     </div>
-                                    <div>
-                                        <h4 class="text-xs font-bold text-slate-900 leading-tight">{{ $routerNode['name'] }}</h4>
-                                        <span class="text-[10px] text-slate-500 font-mono">{{ $routerNode['ip_address'] }}</span>
+                                    <div class="min-w-0">
+                                        <h4 class="text-xs font-bold text-slate-900 leading-tight truncate">{{ $routerNode['name'] }}</h4>
+                                        <span class="text-[10px] text-slate-500 font-mono block truncate">{{ $routerNode['ip_address'] }}</span>
                                     </div>
                                 </div>
                                 <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-medium {{ $routerNode['status'] === 'online' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200' }}">
@@ -218,7 +345,7 @@
                                 </span>
                             </div>
 
-                            <!-- Router Quick Metrics -->
+                            {{-- Router Quick Metrics --}}
                             <div class="grid grid-cols-2 gap-2 mt-2 text-[10px] text-slate-700">
                                 <div class="bg-slate-50 p-1.5 rounded border border-slate-200">
                                     <span class="text-slate-500 block text-[9px]">CPU Load</span>
@@ -230,29 +357,29 @@
                                 </div>
                             </div>
 
-                            <!-- LEVEL 3 & 4: Sub-Tree OLT Distribution & PON Ports -->
+                            {{-- LEVEL 3 & 4: Sub-Tree OLT Distribution & PON Ports --}}
                             @if(!empty($routerNode['olts']))
-                                <div class="mt-3 pt-2.5 border-t border-slate-100 space-y-2">
-                                    <span class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider block">OLT Distribution Hubs:</span>
+                                <div class="mt-3 pt-2 border-t border-slate-100 space-y-2">
+                                    <span class="text-[9px] font-semibold text-slate-500 uppercase tracking-wider block">Connected OLT Hubs:</span>
                                     
                                     @foreach($routerNode['olts'] as $oltNode)
                                         <div class="bg-slate-50/90 rounded-lg p-2.5 border border-purple-200 hover:border-purple-400 transition"
                                              @click.stop="inspectNode('olt', {{ json_encode($oltNode) }})">
                                             <div class="flex items-center justify-between text-xs pb-1.5">
-                                                <div class="flex items-center gap-1.5">
-                                                    <i class="fas fa-ethernet text-purple-600 text-[11px]"></i>
-                                                    <span class="font-bold text-purple-900 text-[11px]">{{ $oltNode['name'] }}</span>
+                                                <div class="flex items-center gap-1.5 min-w-0">
+                                                    <i class="fas fa-ethernet text-purple-600 text-[11px] shrink-0"></i>
+                                                    <span class="font-bold text-purple-900 text-[11px] truncate">{{ $oltNode['name'] }}</span>
                                                 </div>
-                                                <span class="text-[10px] text-slate-500 font-mono">{{ $oltNode['ip_address'] }}</span>
+                                                <span class="text-[10px] text-slate-500 font-mono shrink-0">{{ $oltNode['ip_address'] }}</span>
                                             </div>
 
-                                            <!-- PON Port Badges -->
-                                            <div class="flex flex-wrap gap-1 mt-1.5">
+                                            {{-- PON Port Badges --}}
+                                            <div class="flex flex-wrap gap-1 mt-1">
                                                 @foreach($oltNode['pon_ports'] as $pon)
-                                                    <div class="px-1.5 py-0.5 rounded bg-white text-[10px] font-mono border border-slate-200 hover:border-teal-500 hover:bg-teal-50/50 transition cursor-pointer flex items-center gap-1 shadow-2xs"
+                                                    <div class="px-1.5 py-0.5 rounded bg-white text-[10px] font-mono border border-slate-200 hover:border-cyan-500 hover:bg-cyan-50/50 transition cursor-pointer flex items-center gap-1 shadow-2xs"
                                                          @click.stop="inspectNode('pon', {{ json_encode($pon) }}, {{ json_encode($oltNode) }})">
-                                                        <span class="text-teal-700 font-semibold">{{ $pon['name'] }}</span>
-                                                        <span class="text-slate-500 text-[9px]">({{ $pon['total_onus'] }} ONUs)</span>
+                                                        <span class="text-cyan-800 font-semibold">{{ $pon['name'] }}</span>
+                                                        <span class="text-slate-500 text-[9px]">({{ $pon['total_onus'] }})</span>
                                                     </div>
                                                 @endforeach
                                             </div>
@@ -261,28 +388,131 @@
                                 </div>
                             @else
                                 <div class="mt-2 text-center p-2 rounded bg-slate-50 text-[10px] text-slate-400 italic border border-slate-100">
-                                    No OLTs mapped to this router yet.
+                                    No OLTs mapped to this gateway router.
                                 </div>
                             @endif
                         </div>
                     @empty
-                        <div class="col-span-full text-center py-12 text-slate-400">
+                        <div class="col-span-full text-center py-10 bg-white rounded-xl border border-slate-200 shadow-2xs">
                             <i class="fas fa-network-wired text-3xl text-slate-300 mb-2"></i>
-                            <p class="text-xs text-slate-500">No routers or OLTs configured in this tenant workspace.</p>
+                            <h3 class="text-xs font-bold text-slate-700">No Network Devices Found</h3>
+                            <p class="text-[11px] text-slate-400 mt-0.5">Please add or configure routers and OLTs to view topology.</p>
+                            <div class="mt-3 flex items-center justify-center gap-2">
+                                <a href="{{ route('tenant.network.mikrotik.create') }}" class="px-3 py-1.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-xs font-semibold shadow-xs">
+                                    + Add Core Router
+                                </a>
+                                <a href="{{ route('tenant.network.olt.create') }}" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200">
+                                    + Add OLT Hub
+                                </a>
+                            </div>
                         </div>
                     @endforelse
                 </div>
             </div>
         </div>
+    </div>
 
-    <!-- Production-Grade Slide-Over Device Inspector Drawer -->
+    {{-- 5. View 2: Master Compact Table (.saas-table Strict AGENTS.md Rule 2.D) --}}
+    <div x-show="activeTab === 'inventory'" 
+         x-cloak 
+         class="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden">
+        
+        <div class="px-3.5 py-2.5 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+            <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Network Devices & Optical Status Inventory</h3>
+            <span class="text-[11px] text-slate-500 font-normal">Active inventory: {{ count($routers) + count($olts) }} Nodes</span>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="saas-table w-full">
+                <thead>
+                    <tr>
+                        <th class="w-12 text-center font-semibold">#</th>
+                        <th class="text-center font-semibold">Device Type</th>
+                        <th class="text-center font-semibold">Device Name</th>
+                        <th class="text-center font-semibold">IP / MAC Address</th>
+                        <th class="text-center font-semibold">Parent / Gateway</th>
+                        <th class="text-center font-semibold">Metrics / Capacity</th>
+                        <th class="text-center font-semibold">Status</th>
+                        <th class="w-24 text-center font-semibold no-sort">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{-- 1. Routers Rows --}}
+                    @foreach($routers as $rIndex => $r)
+                        <tr>
+                            <td class="text-center font-mono text-slate-500">R-{{ $rIndex + 1 }}</td>
+                            <td class="text-center">
+                                <span class="px-2 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200 whitespace-nowrap">Core Router</span>
+                            </td>
+                            <td class="text-left font-semibold text-slate-900 whitespace-nowrap">{{ $r->name }}</td>
+                            <td class="text-center font-mono text-slate-800 whitespace-nowrap">{{ $r->ip_address }}</td>
+                            <td class="text-center text-slate-500 whitespace-nowrap">WAN Uplink</td>
+                            <td class="text-right font-mono text-slate-700 whitespace-nowrap">CPU: {{ $r->cpu_load ?? 12 }}%</td>
+                            <td class="text-center whitespace-nowrap">
+                                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium {{ $r->status === 'online' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200' }}">
+                                    <span class="w-1.5 h-1.5 rounded-full {{ $r->status === 'online' ? 'bg-emerald-500' : 'bg-rose-500' }}"></span>
+                                    <span>{{ ucfirst($r->status ?? 'online') }}</span>
+                                </span>
+                            </td>
+                            <td class="text-center whitespace-nowrap">
+                                <a href="{{ route('tenant.network.mikrotik.show', $r->id) }}" 
+                                   class="px-2.5 py-1 rounded bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 transition text-[11px] font-semibold">
+                                    Inspect
+                                </a>
+                            </td>
+                        </tr>
+                    @endforeach
+
+                    {{-- 2. OLTs Rows --}}
+                    @foreach($olts as $oIndex => $o)
+                        <tr>
+                            <td class="text-center font-mono text-slate-500">O-{{ $oIndex + 1 }}</td>
+                            <td class="text-center">
+                                <span class="px-2 py-0.5 rounded text-[10px] font-medium bg-purple-50 text-purple-700 border border-purple-200 whitespace-nowrap">OLT Distribution</span>
+                            </td>
+                            <td class="text-left font-semibold text-slate-900 whitespace-nowrap">{{ $o->name }}</td>
+                            <td class="text-center font-mono text-slate-800 whitespace-nowrap">{{ $o->ip_address }}</td>
+                            <td class="text-center text-slate-700 whitespace-nowrap">{{ $o->router?->name ?? 'Standalone Hub' }}</td>
+                            <td class="text-right font-mono text-purple-700 whitespace-nowrap">{{ $o->total_pon_ports ?? 8 }} PON Ports</td>
+                            <td class="text-center whitespace-nowrap">
+                                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium {{ $o->status === 'online' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200' }}">
+                                    <span class="w-1.5 h-1.5 rounded-full {{ $o->status === 'online' ? 'bg-emerald-500' : 'bg-rose-500' }}"></span>
+                                    <span>{{ ucfirst($o->status ?? 'online') }}</span>
+                                </span>
+                            </td>
+                            <td class="text-center whitespace-nowrap">
+                                <a href="{{ route('tenant.network.olt.show', $o->id) }}" 
+                                   class="px-2.5 py-1 rounded bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200 transition text-[11px] font-semibold">
+                                    Inspect
+                                </a>
+                            </td>
+                        </tr>
+                    @endforeach
+
+                    @if(count($routers) === 0 && count($olts) === 0)
+                        <tr>
+                            <td colspan="8" class="text-center py-8">
+                                <div class="max-w-xs mx-auto text-center space-y-1">
+                                    <i class="fas fa-network-wired text-2xl text-slate-300"></i>
+                                    <p class="text-xs font-semibold text-slate-700">No Network Devices Configured</p>
+                                    <p class="text-[11px] text-slate-400">Add a core router or OLT to view inventory.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    @endif
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {{-- 6. Production-Grade Slide-Over Device Inspector Drawer --}}
     <div x-show="drawer.open" 
          class="fixed inset-0 z-50 overflow-hidden" 
          style="display: none;"
          x-cloak
          @keydown.escape.window="closeDrawer()">
         
-        <!-- Backdrop Overlay -->
+        {{-- Backdrop Overlay --}}
         <div x-show="drawer.open"
              x-transition:enter="ease-in-out duration-300"
              x-transition:enter-start="opacity-0"
@@ -293,7 +523,7 @@
              @click="closeDrawer()" 
              class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs transition-opacity"></div>
 
-        <!-- Slide-Over Panel -->
+        {{-- Slide-Over Panel --}}
         <div class="fixed inset-y-0 right-0 max-w-full flex pl-10">
             <div x-show="drawer.open"
                  x-transition:enter="transform transition ease-in-out duration-300"
@@ -305,11 +535,11 @@
                  class="w-screen max-w-md sm:max-w-lg bg-white shadow-2xl border-l border-slate-200 flex flex-col justify-between"
                  @click.stop>
                 
-                <!-- Drawer Top Header -->
+                {{-- Drawer Top Header --}}
                 <div class="p-4 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800">
                     <div class="flex items-center gap-3 min-w-0">
                         <div class="w-10 h-10 rounded-xl flex items-center justify-center text-base shadow-sm shrink-0"
-                             :class="drawer.iconBg || 'bg-blue-600 text-white'">
+                             :class="drawer.iconBg || 'bg-cyan-600 text-white'">
                             <i :class="drawer.iconClass || 'fas fa-server'"></i>
                         </div>
                         <div class="min-w-0">
@@ -332,10 +562,10 @@
                     </button>
                 </div>
 
-                <!-- Drawer Body Scrollable Content -->
+                {{-- Drawer Body Scrollable Content --}}
                 <div class="p-4 space-y-4 overflow-y-auto flex-1 bg-slate-50/50 text-xs">
                     
-                    <!-- KPI Metric Cards Grid -->
+                    {{-- KPI Metric Cards Grid --}}
                     <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
                         <template x-for="stat in drawer.stats" :key="stat.label">
                             <div class="p-2.5 bg-white rounded-lg border border-slate-200 shadow-2xs">
@@ -345,7 +575,7 @@
                         </template>
                     </div>
 
-                    <!-- Health Progress Ratio for PON / OLT -->
+                    {{-- Channel Health Progress Ratio for PON / OLT --}}
                     <div x-show="drawer.nodeType === 'pon' || drawer.nodeType === 'olt'" class="p-3 bg-white rounded-lg border border-slate-200 shadow-2xs space-y-1.5">
                         <div class="flex items-center justify-between text-[11px]">
                             <span class="font-medium text-slate-700">Channel Efficiency & Online Ratio</span>
@@ -357,11 +587,11 @@
                         </div>
                     </div>
 
-                    <!-- Technical Specifications Table -->
+                    {{-- Technical Specifications Table --}}
                     <div class="bg-white rounded-lg border border-slate-200 shadow-2xs overflow-hidden">
                         <div class="px-3 py-2 bg-slate-50/80 border-b border-slate-200 flex items-center justify-between">
                             <span class="text-[10px] font-bold text-slate-700 uppercase tracking-wider">Device Technical Specs</span>
-                            <span class="text-[10px] text-slate-400 font-mono">Live Configuration</span>
+                            <span class="text-[10px] text-slate-400 font-mono">Live State</span>
                         </div>
                         <div class="divide-y divide-slate-100">
                             <template x-for="(val, key) in drawer.details" :key="key">
@@ -372,7 +602,7 @@
                                         <button type="button" 
                                                 x-show="key.includes('IP') || key.includes('MAC')" 
                                                 @click="copyToClipboard(val, key)"
-                                                class="text-slate-400 hover:text-blue-600 cursor-pointer"
+                                                class="text-slate-400 hover:text-cyan-600 cursor-pointer"
                                                 title="Copy to Clipboard">
                                             <i class="far fa-copy text-[10px]"></i>
                                         </button>
@@ -382,7 +612,7 @@
                         </div>
                     </div>
 
-                    <!-- Connected Subscribers (ONUs) Section -->
+                    {{-- Connected Subscribers (ONUs) Section --}}
                     <div x-show="drawer.items && drawer.items.length > 0" class="space-y-2.5">
                         <div class="flex items-center justify-between">
                             <div>
@@ -393,15 +623,15 @@
                             </div>
                         </div>
 
-                        <!-- Search and Filter Bar inside Drawer -->
+                        {{-- Search and Filter Bar inside Drawer --}}
                         <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                            <!-- Live Search Input -->
+                            {{-- Live Search Input --}}
                             <div class="relative flex-1">
                                 <i class="fas fa-search absolute left-2.5 top-2.5 text-slate-400 text-[10px]"></i>
                                 <input type="text" 
                                        x-model="drawer.searchQuery" 
                                        placeholder="Search MAC, Name, Model..." 
-                                       class="w-full pl-7 pr-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-800 placeholder-slate-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 shadow-2xs" />
+                                       class="w-full pl-7 pr-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-800 placeholder-slate-400 focus:ring-1 focus:ring-cyan-500 focus:border-cyan-500 shadow-2xs" />
                                 <button type="button" 
                                         x-show="drawer.searchQuery" 
                                         @click="drawer.searchQuery = ''" 
@@ -410,7 +640,7 @@
                                 </button>
                             </div>
 
-                            <!-- Status Filter Buttons -->
+                            {{-- Status Filter Buttons --}}
                             <div class="flex items-center gap-1">
                                 <button type="button" 
                                         @click="drawer.statusFilter = 'all'"
@@ -433,19 +663,19 @@
                             </div>
                         </div>
 
-                        <!-- Subscriber Cards List -->
+                        {{-- Subscriber Cards List --}}
                         <div class="space-y-1.5 max-h-72 overflow-y-auto pr-0.5">
                             <template x-for="item in filteredDrawerItems" :key="item.id || item.mac_address">
-                                <div class="p-2.5 rounded-lg bg-white border border-slate-200 hover:border-blue-300 hover:shadow-xs transition space-y-1.5">
+                                <div class="p-2.5 rounded-lg bg-white border border-slate-200 hover:border-cyan-300 hover:shadow-xs transition space-y-1.5">
                                     <div class="flex items-start justify-between gap-2">
                                         <div class="min-w-0 flex items-center gap-1.5">
                                             <span class="w-2 h-2 rounded-full shrink-0" 
                                                   :class="item.status === 'online' ? 'bg-emerald-500 animate-pulse' : 'bg-rose-400'"></span>
                                             <span class="font-bold text-slate-900 text-xs truncate" x-text="item.name"></span>
-                                            <span x-show="item.pon_name" class="px-1.5 py-0.2 bg-teal-50 text-teal-700 rounded text-[9px] font-mono border border-teal-200/60" x-text="item.pon_name"></span>
+                                            <span x-show="item.pon_name" class="px-1.5 py-0.2 bg-cyan-50 text-cyan-700 rounded text-[9px] font-mono border border-cyan-200/60" x-text="item.pon_name"></span>
                                         </div>
 
-                                        <!-- Optical Rx Power Badge with Project Custom Thresholds -->
+                                        {{-- Optical Rx Power Badge --}}
                                         <span class="inline-flex px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold border shrink-0"
                                               :class="{
                                                   'bg-emerald-50 text-emerald-700 border-emerald-200': item.rx_power_dbm !== null && item.rx_power_dbm >= -20,
@@ -467,18 +697,18 @@
                                         </div>
                                     </div>
 
-                                    <!-- PPPoE / Details Subline -->
+                                    {{-- PPPoE / Details Subline --}}
                                     <div x-show="item.pppoe_username || item.desc" class="flex items-center justify-between text-[10px] text-slate-600 bg-slate-50 px-2 py-1 rounded">
-                                        <span class="truncate text-blue-700 font-medium" x-text="item.pppoe_username ? ('PPPoE: ' + item.pppoe_username) : (item.desc || '')"></span>
+                                        <span class="truncate text-cyan-800 font-medium" x-text="item.pppoe_username ? ('PPPoE: ' + item.pppoe_username) : (item.desc || '')"></span>
                                         <a :href="`/admin/network/onu?search=${encodeURIComponent(item.mac_address || item.name)}`" 
-                                           class="text-blue-600 hover:text-blue-800 font-semibold shrink-0">
+                                           class="text-cyan-600 hover:text-cyan-800 font-semibold shrink-0">
                                             Diagnose →
                                         </a>
                                     </div>
                                 </div>
                             </template>
 
-                            <!-- Zero State for Search Filter -->
+                            {{-- Zero State for Search Filter --}}
                             <div x-show="filteredDrawerItems.length === 0" class="p-6 text-center text-slate-400 bg-white rounded-lg border border-slate-200">
                                 <i class="fas fa-search text-xl text-slate-300 mb-1"></i>
                                 <p class="text-xs text-slate-600 font-medium">No matching subscribers found</p>
@@ -488,7 +718,7 @@
                     </div>
                 </div>
 
-                <!-- Drawer Sticky Footer Actions -->
+                {{-- Drawer Sticky Footer Actions --}}
                 <div class="p-3.5 bg-white border-t border-slate-200 flex items-center justify-between gap-2">
                     <button type="button" 
                             @click="closeDrawer()" 
@@ -496,7 +726,7 @@
                         Close
                     </button>
                     <a :href="drawer.link || '#'" 
-                       class="flex-1 py-1.5 px-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow-xs transition flex items-center justify-center gap-1.5 text-center">
+                       class="flex-1 py-1.5 px-3 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-xs font-semibold shadow-xs transition flex items-center justify-center gap-1.5 text-center">
                         <i class="fas fa-external-link-alt text-[10px]"></i>
                         <span x-text="drawer.linkText || 'Configure in Module'"></span>
                     </a>
@@ -504,89 +734,15 @@
             </div>
         </div>
     </div>
-    </div>
-
-    <!-- Tier 4: Quick Network Alerts & Device Inventory Table -->
-    <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
-        <div class="px-4 py-2.5 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
-            <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Network Devices & Optical Status Inventory</h3>
-            <span class="text-[11px] text-slate-500 font-normal">Active monitoring</span>
-        </div>
-
-        <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse border border-slate-200">
-                <thead>
-                    <tr class="bg-slate-50 border-b border-slate-200 text-slate-700">
-                        <th class="w-12 px-2.5 py-2 text-center border border-slate-200 font-normal text-[11px]">#</th>
-                        <th class="px-2.5 py-2 text-center border border-slate-200 font-normal text-[11px]">Device Type</th>
-                        <th class="px-2.5 py-2 text-center border border-slate-200 font-normal text-[11px]">Device Name</th>
-                        <th class="px-2.5 py-2 text-center border border-slate-200 font-normal text-[11px]">IP / MAC Address</th>
-                        <th class="px-2.5 py-2 text-center border border-slate-200 font-normal text-[11px]">Parent / Gateway</th>
-                        <th class="px-2.5 py-2 text-center border border-slate-200 font-normal text-[11px]">Optical / CPU Load</th>
-                        <th class="px-2.5 py-2 text-center border border-slate-200 font-normal text-[11px]">Status</th>
-                        <th class="w-24 px-2.5 py-2 text-center border border-slate-200 font-normal text-[11px]">Action</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-200">
-                    <!-- 1. Routers Rows -->
-                    @foreach($routers as $rIndex => $r)
-                        <tr class="hover:bg-slate-50/70 transition">
-                            <td class="px-2.5 py-1.5 text-center font-mono text-slate-500 text-[11px] font-normal border border-slate-200">R-{{ $rIndex + 1 }}</td>
-                            <td class="px-2.5 py-1.5 text-center border border-slate-200 text-[11px] font-normal">
-                                <span class="px-2 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200">Core Router</span>
-                            </td>
-                            <td class="px-2.5 py-1.5 text-slate-900 font-medium border border-slate-200 text-[11px]">{{ $r->name }}</td>
-                            <td class="px-2.5 py-1.5 font-mono text-[11px] text-slate-800 border border-slate-200 text-center">{{ $r->ip_address }}</td>
-                            <td class="px-2.5 py-1.5 text-slate-500 border border-slate-200 text-center text-[11px]">WAN Uplink</td>
-                            <td class="px-2.5 py-1.5 font-mono text-center text-[11px] border border-slate-200 text-slate-700">CPU: {{ $r->cpu_load ?? 12 }}%</td>
-                            <td class="px-2.5 py-1.5 text-center border border-slate-200 text-[11px]">
-                                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium {{ $r->status === 'online' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200' }}">
-                                    <span class="w-1.5 h-1.5 rounded-full {{ $r->status === 'online' ? 'bg-emerald-500' : 'bg-rose-500' }}"></span>
-                                    <span>{{ ucfirst($r->status ?? 'online') }}</span>
-                                </span>
-                            </td>
-                            <td class="px-2.5 py-1.5 text-center border border-slate-200 text-[11px]">
-                                <a href="{{ route('tenant.network.mikrotik.show', $r->id) }}" class="px-2 py-0.5 rounded bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200/60 transition text-[11px]">View</a>
-                            </td>
-                        </tr>
-                    @endforeach
-
-                    <!-- 2. OLTs Rows -->
-                    @foreach($olts as $oIndex => $o)
-                        <tr class="hover:bg-slate-50/70 transition">
-                            <td class="px-2.5 py-1.5 text-center font-mono text-slate-500 text-[11px] font-normal border border-slate-200">O-{{ $oIndex + 1 }}</td>
-                            <td class="px-2.5 py-1.5 text-center border border-slate-200 text-[11px] font-normal">
-                                <span class="px-2 py-0.5 rounded text-[10px] font-medium bg-purple-50 text-purple-700 border border-purple-200">OLT Distribution</span>
-                            </td>
-                            <td class="px-2.5 py-1.5 text-slate-900 font-medium border border-slate-200 text-[11px]">{{ $o->name }}</td>
-                            <td class="px-2.5 py-1.5 font-mono text-[11px] text-slate-800 border border-slate-200 text-center">{{ $o->ip_address }}</td>
-                            <td class="px-2.5 py-1.5 text-slate-700 border border-slate-200 text-center text-[11px]">{{ $o->router?->name ?? 'Standalone' }}</td>
-                            <td class="px-2.5 py-1.5 font-mono text-center text-[11px] border border-slate-200 text-purple-700">{{ $o->total_pon_ports ?? 8 }} PON Ports</td>
-                            <td class="px-2.5 py-1.5 text-center border border-slate-200 text-[11px]">
-                                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium {{ $o->status === 'online' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200' }}">
-                                    <span class="w-1.5 h-1.5 rounded-full {{ $o->status === 'online' ? 'bg-emerald-500' : 'bg-rose-500' }}"></span>
-                                    <span>{{ ucfirst($o->status ?? 'online') }}</span>
-                                </span>
-                            </td>
-                            <td class="px-2.5 py-1.5 text-center border border-slate-200 text-[11px]">
-                                <a href="{{ route('tenant.network.olt.show', $o->id) }}" class="px-2 py-0.5 rounded bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200/60 transition text-[11px]">View</a>
-                            </td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
-    </div>
 </div>
+@endsection
 
+@push('scripts')
 <script>
 function networkMapManager() {
     return {
+        activeTab: 'tree',
         isRefreshing: false,
-        filters: {
-            router_id: '{{ request("router_id", "") }}',
-            olt_id: '{{ request("olt_id", "") }}'
-        },
         toast: {
             show: false,
             message: '',
@@ -609,7 +765,7 @@ function networkMapManager() {
             typeBadge: '',
             nodeType: '',
             status: 'online',
-            iconBg: 'bg-blue-600 text-white',
+            iconBg: 'bg-cyan-600 text-white',
             iconClass: 'fas fa-server',
             stats: [],
             onlinePercent: 100,
@@ -758,14 +914,14 @@ function networkMapManager() {
                 this.drawer.title = (parentData?.name ? (parentData.name + ' - ') : '') + data.name;
                 this.drawer.subtitle = 'Optical Distribution Channel • ' + (parentData?.brand || 'PON Port');
                 this.drawer.status = data.status || (onlineOnus > 0 ? 'online' : (totalOnus === 0 ? 'online' : 'offline'));
-                this.drawer.iconBg = 'bg-teal-600 text-white';
+                this.drawer.iconBg = 'bg-cyan-600 text-white';
                 this.drawer.iconClass = 'fas fa-ethernet';
                 this.drawer.onlinePercent = onlineRatio;
                 this.drawer.stats = [
                     { label: 'Total ONUs', value: totalOnus, color: 'text-slate-800' },
                     { label: 'Online Active', value: onlineOnus, color: 'text-emerald-600' },
                     { label: 'Offline / LOS', value: offlineOnus, color: 'text-rose-600' },
-                    { label: 'Efficiency', value: onlineRatio + '%', color: 'text-teal-600' }
+                    { label: 'Efficiency', value: onlineRatio + '%', color: 'text-cyan-600' }
                 ];
                 this.drawer.details = {
                     'Channel Name': data.name,
@@ -810,13 +966,6 @@ function networkMapManager() {
             }
         },
 
-        applyFilter() {
-            const params = new URLSearchParams();
-            if (this.filters.router_id) params.set('router_id', this.filters.router_id);
-            if (this.filters.olt_id) params.set('olt_id', this.filters.olt_id);
-            window.location.href = `{{ route('tenant.network.map') }}?${params.toString()}`;
-        },
-
         async refreshData() {
             this.isRefreshing = true;
             try {
@@ -832,4 +981,4 @@ function networkMapManager() {
     };
 }
 </script>
-@endsection
+@endpush
