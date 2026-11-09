@@ -32,42 +32,46 @@
         <span x-text="toast.message"></span>
     </div>
 
-    <!-- 1. Top Header Bar (Strict Rules: Icon + Title + Actions ONLY - No Subtitle) -->
-    <div class="flex items-center justify-between bg-white px-3.5 py-2.5 rounded-xl border border-slate-200 shadow-xs">
+    <!-- 1. Top Header Bar (Strict AGENTS.md Rule 2.A: Icon + Title + Count Badge + Action Buttons ONLY - NO Subtitle) -->
+    <div class="flex items-center justify-between bg-white px-3.5 py-2.5 rounded-xl border border-slate-200/90 shadow-2xs">
         <div class="flex items-center gap-2.5">
-            <div class="w-8 h-8 rounded-lg bg-cyan-50 text-cyan-700 border border-cyan-100 flex items-center justify-center text-sm shadow-xs flex-shrink-0">
+            <div class="w-7 h-7 rounded-lg bg-cyan-50 text-cyan-600 border border-cyan-100 flex items-center justify-center text-xs shadow-2xs flex-shrink-0">
                 <i class="fas fa-sitemap"></i>
             </div>
-            <h1 class="text-xs font-bold text-slate-800 tracking-tight">Virtual LANs (VLAN Management)</h1>
+            <div class="flex items-center gap-2">
+                <h1 class="text-xs font-bold text-slate-800 tracking-tight">Virtual LANs (VLAN Management)</h1>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-cyan-50 text-cyan-700 border border-cyan-200">
+                    {{ number_format($totalVlans) }} VLANs
+                </span>
+            </div>
         </div>
 
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-1.5">
             <!-- Sync from MikroTik Button -->
             <button type="button" 
                     @click="openImportModal()" 
-                    class="px-3 py-1.5 rounded-lg border border-purple-200 bg-purple-50 hover:bg-purple-100 text-purple-700 font-semibold text-xs shadow-xs transition flex items-center gap-1.5 cursor-pointer">
+                    class="h-[34px] px-3 py-0 rounded-lg border border-purple-200 bg-purple-50 hover:bg-purple-100 text-purple-700 font-semibold text-xs shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-rotate text-purple-600 text-xs" :class="{ 'fa-spin': importModal.syncing }"></i>
                 <span>Sync from MikroTik</span>
             </button>
 
             <!-- Link to MikroTik Routers -->
             <a href="{{ route('tenant.network.mikrotik') }}" 
-               class="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-xs shadow-xs transition flex items-center gap-1.5 cursor-pointer">
+               class="h-[34px] px-3 py-0 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-xs shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-server text-slate-400 text-xs"></i>
                 <span>View Routers</span>
             </a>
 
-            <!-- Create VLAN Button -->
-            <button type="button" 
-                    @click="openCreateModal()" 
-                    class="px-3.5 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs shadow-xs transition flex items-center gap-1.5 cursor-pointer">
+            <!-- Standalone Create VLAN Page Link (AGENTS.md Compliance) -->
+            <a href="{{ route('tenant.network.vlans.create') }}" 
+               class="h-[34px] px-3.5 py-0 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-plus text-[10px]"></i>
                 <span>Create VLAN</span>
-            </button>
+            </a>
         </div>
     </div>
 
-    <!-- 2. KPI Summary Strip (Strictly 6 Cards) -->
+    <!-- 2. KPI Summary Strip (Strictly 6 Cards - AGENTS.md Rule 2.B) -->
     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
         <!-- Card 1: Total VLANs -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
@@ -136,97 +140,163 @@
         </div>
     </div>
 
-    <!-- 3. Search & Filter Bar -->
-    <div class="p-3 bg-white rounded-xl border border-slate-200 shadow-xs">
-        <form action="{{ route('tenant.network.vlans') }}" method="GET" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-2">
+    <!-- 3. Customer-Standard 2-Tier Search & Multi-Filter Toolbar (AGENTS.md Rule 2.C - Strict Uniform Height h-[34px] Policy) -->
+    <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5"
+         x-data="{ showMoreFilters: {{ $isMoreOpen ? 'true' : 'false' }}, searchQuery: '{{ addslashes(request('search', '')) }}' }">
+        <form action="{{ route('tenant.network.vlans') }}" method="GET" class="space-y-2.5">
             
-            <!-- Search Input -->
-            <div class="lg:col-span-2">
-                <div class="relative">
-                    <span class="absolute inset-y-0 left-0 flex items-center pl-2.5 pointer-events-none text-slate-400 text-xs">
+            <!-- Tier 1: Primary Filter Bar (Uniform h-[34px]) -->
+            <div class="flex flex-col md:flex-row items-stretch md:items-center gap-2">
+                <!-- Intelligent Live Search Box with Dynamic Icon & 1-Click Clear -->
+                <div class="relative flex-1 min-w-[200px]">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-2.5 pointer-events-none text-xs transition"
+                          :class="searchQuery ? 'text-cyan-600 font-bold' : 'text-slate-400'">
                         <i class="fas fa-search"></i>
                     </span>
                     <input type="text" 
                            name="search" 
-                           value="{{ request('search') }}" 
-                           placeholder="Search Name, VLAN ID, Interface, Subnet..." 
-                           class="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-1 focus:ring-cyan-500 focus:border-cyan-500 transition font-normal" />
+                           x-model="searchQuery" 
+                           placeholder="Search VLAN name, ID, interface, subnet, description..." 
+                           class="w-full h-[34px] pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-normal" />
+                    <!-- 1-Click Clear Button -->
+                    <button type="button" 
+                            x-show="searchQuery && searchQuery.length > 0" 
+                            @click="searchQuery = ''; $nextTick(() => $el.closest('form').submit())" 
+                            class="absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400 hover:text-slate-600 cursor-pointer"
+                            title="Clear search">
+                        <i class="fas fa-xmark text-xs"></i>
+                    </button>
+                </div>
+
+                <!-- Primary Dropdown: Router -->
+                <div class="w-full md:w-44 flex-shrink-0">
+                    <select name="router_id" 
+                            onchange="this.form.submit()" 
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-normal">
+                        <option value="">All Routers</option>
+                        @foreach($routers as $r)
+                            <option value="{{ $r->id }}" {{ (string)request('router_id') === (string)$r->id ? 'selected' : '' }}>
+                                {{ $r->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <!-- Primary Dropdown: Type -->
+                <div class="w-full md:w-40 flex-shrink-0">
+                    <select name="type" 
+                            onchange="this.form.submit()" 
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-normal">
+                        <option value="">All Types</option>
+                        <option value="service" {{ request('type') === 'service' ? 'selected' : '' }}>Service (PPPoE)</option>
+                        <option value="management" {{ request('type') === 'management' ? 'selected' : '' }}>Management (OLT/SW)</option>
+                        <option value="corporate" {{ request('type') === 'corporate' ? 'selected' : '' }}>Corporate Trunk</option>
+                        <option value="cgnat" {{ request('type') === 'cgnat' ? 'selected' : '' }}>CGNAT Trunk</option>
+                        <option value="voice" {{ request('type') === 'voice' ? 'selected' : '' }}>VoIP Voice</option>
+                        <option value="tr069" {{ request('type') === 'tr069' ? 'selected' : '' }}>TR-069 ACS</option>
+                    </select>
+                </div>
+
+                <!-- Pagination Selector (per_page) -->
+                <div class="w-full md:w-28 flex-shrink-0">
+                    @php $perPageVal = (int)request('per_page', 30); @endphp
+                    <select name="per_page" 
+                            onchange="this.form.submit()" 
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-normal">
+                        <option value="15" {{ $perPageVal === 15 ? 'selected' : '' }}>15 / page</option>
+                        <option value="30" {{ $perPageVal === 30 ? 'selected' : '' }}>30 / page</option>
+                        <option value="50" {{ $perPageVal === 50 ? 'selected' : '' }}>50 / page</option>
+                        <option value="100" {{ $perPageVal === 100 ? 'selected' : '' }}>100 / page</option>
+                        <option value="200" {{ $perPageVal === 200 ? 'selected' : '' }}>200 / page</option>
+                    </select>
+                </div>
+
+                <!-- More Filters Accordion Toggle Button with Badge & Chevron -->
+                <button type="button" 
+                        @click="showMoreFilters = !showMoreFilters" 
+                        class="h-[34px] py-0 px-2.5 rounded-lg border border-slate-200 text-xs font-semibold transition flex items-center justify-between gap-1.5 cursor-pointer flex-shrink-0"
+                        :class="showMoreFilters || {{ $activeMoreCount }} > 0 ? 'bg-cyan-50/70 border-cyan-200 text-cyan-800' : 'bg-slate-50 hover:bg-slate-100 text-slate-700'">
+                    <span class="flex items-center gap-1.5">
+                        <i class="fas fa-sliders text-[11px]" :class="showMoreFilters ? 'text-cyan-600' : 'text-slate-400'"></i>
+                        <span>More</span>
+                    </span>
+                    @if($activeMoreCount > 0)
+                        <span class="px-1.5 py-0.2 rounded-full text-[9px] font-mono font-bold bg-cyan-600 text-white">
+                            {{ $activeMoreCount }}
+                        </span>
+                    @endif
+                    <i class="fas text-[10px] transition-transform duration-200"
+                       :class="showMoreFilters ? 'fa-chevron-up text-cyan-600' : 'fa-chevron-down text-slate-400'"></i>
+                </button>
+
+                <!-- Strict Sequence: [Filter] then [Reset] Button at Right (AGENTS.md Compliance) -->
+                <div class="flex items-center gap-1.5 flex-shrink-0 md:ml-auto">
+                    <button type="submit" 
+                            class="h-[34px] py-0 px-3 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" 
+                            title="Apply Filters">
+                        <i class="fas fa-filter text-[10px]"></i>
+                        <span>Filter</span>
+                    </button>
+                    <a href="{{ route('tenant.network.vlans') }}" 
+                       class="h-[34px] py-0 px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer" 
+                       title="Reset All Filters">
+                        <i class="fas fa-rotate-left text-[10px]"></i>
+                        <span>Reset</span>
+                    </a>
                 </div>
             </div>
 
-            <!-- Router Filter -->
-            <div>
-                <select name="router_id" 
-                        onchange="this.form.submit()" 
-                        class="w-full py-1.5 px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 focus:outline-hidden focus:ring-1 focus:ring-cyan-500 focus:border-cyan-500 transition font-normal">
-                    <option value="">All Routers</option>
-                    @foreach($routers as $r)
-                        <option value="{{ $r->id }}" {{ (string)request('router_id') === (string)$r->id ? 'selected' : '' }}>
-                            {{ $r->name }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
+            <!-- Tier 2: Secondary Filter Drawer (Expandable) -->
+            <div x-show="showMoreFilters" 
+                 x-cloak 
+                 x-transition:enter="transition ease-out duration-150"
+                 x-transition:enter-start="opacity-0 -translate-y-1"
+                 x-transition:enter-end="opacity-100 translate-y-0"
+                 x-transition:leave="transition ease-in duration-100"
+                 x-transition:leave-start="opacity-100 translate-y-0"
+                 x-transition:leave-end="opacity-0 -translate-y-1"
+                 class="pt-2 border-t border-slate-100 flex flex-wrap items-center gap-2">
+                
+                <!-- Status Filter -->
+                <div class="w-full sm:w-44">
+                    <select name="status" 
+                            onchange="this.form.submit()" 
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-normal">
+                        <option value="">All Statuses</option>
+                        <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>Active</option>
+                        <option value="disabled" {{ request('status') === 'disabled' ? 'selected' : '' }}>Disabled</option>
+                    </select>
+                </div>
 
-            <!-- Type Filter -->
-            <div>
-                <select name="type" 
-                        onchange="this.form.submit()" 
-                        class="w-full py-1.5 px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 focus:outline-hidden focus:ring-1 focus:ring-cyan-500 focus:border-cyan-500 transition font-normal">
-                    <option value="">All Types</option>
-                    <option value="service" {{ request('type') === 'service' ? 'selected' : '' }}>Service (PPPoE)</option>
-                    <option value="management" {{ request('type') === 'management' ? 'selected' : '' }}>Management (OLT/SW)</option>
-                    <option value="corporate" {{ request('type') === 'corporate' ? 'selected' : '' }}>Corporate Trunk</option>
-                    <option value="cgnat" {{ request('type') === 'cgnat' ? 'selected' : '' }}>CGNAT Trunk</option>
-                    <option value="voice" {{ request('type') === 'voice' ? 'selected' : '' }}>VoIP Voice</option>
-                    <option value="tr069" {{ request('type') === 'tr069' ? 'selected' : '' }}>TR-069 ACS</option>
-                </select>
-            </div>
+                <!-- MikroTik Sync State Filter -->
+                <div class="w-full sm:w-48">
+                    <select name="is_sync" 
+                            onchange="this.form.submit()" 
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-normal">
+                        <option value="">All Sync States</option>
+                        <option value="1" {{ request('is_sync') === '1' ? 'selected' : '' }}>Synced to MikroTik</option>
+                        <option value="0" {{ request('is_sync') === '0' ? 'selected' : '' }}>Local / Unsynced</option>
+                    </select>
+                </div>
 
-            <!-- Status Filter -->
-            <div>
-                <select name="status" 
-                        onchange="this.form.submit()" 
-                        class="w-full py-1.5 px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 focus:outline-hidden focus:ring-1 focus:ring-cyan-500 focus:border-cyan-500 transition font-normal">
-                    <option value="">All Statuses</option>
-                    <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>Active</option>
-                    <option value="disabled" {{ request('status') === 'disabled' ? 'selected' : '' }}>Disabled</option>
-                </select>
-            </div>
-
-            <!-- Per Page Filter -->
-            <div>
-                @php $perPageVal = (int)request('per_page', 30); @endphp
-                <select name="per_page" 
-                        onchange="this.form.submit()" 
-                        class="w-full py-1.5 px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 focus:outline-hidden focus:ring-1 focus:ring-cyan-500 focus:border-cyan-500 transition font-normal">
-                    <option value="15" {{ $perPageVal === 15 ? 'selected' : '' }}>15 / page</option>
-                    <option value="30" {{ $perPageVal === 30 ? 'selected' : '' }}>30 / page</option>
-                    <option value="50" {{ $perPageVal === 50 ? 'selected' : '' }}>50 / page</option>
-                    <option value="100" {{ $perPageVal === 100 ? 'selected' : '' }}>100 / page</option>
-                    <option value="200" {{ $perPageVal === 200 ? 'selected' : '' }}>200 / page</option>
-                </select>
-            </div>
-
-            <!-- Filter & Reset Buttons (Strict Universal Standard) -->
-            <div class="flex items-center gap-1.5 flex-shrink-0">
-                <button type="submit" 
-                        class="flex-1 sm:flex-initial bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-1.5 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" 
-                        title="Apply Filters">
-                    <i class="fas fa-filter text-[10px]"></i>
-                    <span>Filter</span>
-                </button>
-                <a href="{{ route('tenant.network.vlans') }}" 
-                   class="flex-1 sm:flex-initial bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-1.5 px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer" 
-                   title="Reset Filters">
-                    <i class="fas fa-rotate-left text-[10px]"></i>
-                    <span>Reset</span>
-                </a>
+                <!-- OLT Filter -->
+                <div class="w-full sm:w-48">
+                    <select name="olt_id" 
+                            onchange="this.form.submit()" 
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-normal">
+                        <option value="">All Associated OLTs</option>
+                        @foreach($olts as $o)
+                            <option value="{{ $o->id }}" {{ (string)request('olt_id') === (string)$o->id ? 'selected' : '' }}>
+                                {{ $o->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
             </div>
         </form>
     </div>
 
-    <!-- 4. Master Compact Table (Pure CSS System Compliant) -->
+    <!-- 4. Master Compact Table (Strict AGENTS.md Rule 2.D - Centered Headers, Single Line, Natural Empty State) -->
     <div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
         <div class="px-3.5 py-2 bg-slate-50/80 border-b border-slate-200 flex items-center justify-between">
             <span class="font-normal text-slate-700 text-xs flex items-center gap-1.5">
@@ -242,16 +312,16 @@
             <table class="saas-table">
                 <thead>
                     <tr>
-                        <th class="w-10">#</th>
-                        <th>Status</th>
-                        <th>Router</th>
-                        <th class="text-center">VLAN ID</th>
-                        <th>Name</th>
-                        <th>Parent Interface</th>
-                        <th>Type</th>
-                        <th>Subnet / IP</th>
-                        <th>Comment</th>
-                        <th class="w-10 text-center no-sort">Actions</th>
+                        <th class="w-10 text-center font-semibold">#</th>
+                        <th class="text-center font-semibold">Status</th>
+                        <th class="text-center font-semibold">Router</th>
+                        <th class="text-center font-semibold">VLAN ID</th>
+                        <th class="text-center font-semibold">VLAN Name</th>
+                        <th class="text-center font-semibold">Parent Interface</th>
+                        <th class="text-center font-semibold">Type</th>
+                        <th class="text-center font-semibold">Subnet / IP</th>
+                        <th class="text-center font-semibold">Comment</th>
+                        <th class="w-10 text-center font-semibold no-sort">Action</th>
                     </tr>
                 </thead>
                 <tbody class="text-slate-700">
@@ -263,42 +333,48 @@
                                 'name' => $vlan->name,
                                 'interface' => $vlan->interface,
                                 'type' => $vlan->type,
+                                'type_label' => $vlan->type_badge['label'] ?? ucfirst($vlan->type),
                                 'subnet' => $vlan->subnet,
                                 'gateway' => $vlan->gateway,
                                 'dhcp_enabled' => (bool)$vlan->dhcp_enabled,
                                 'mtu' => $vlan->mtu,
                                 'router_id' => $vlan->router_id,
+                                'router_name' => $vlan->router?->name ?? 'Global',
+                                'router_ip' => $vlan->router?->ip_address ?? '',
                                 'olt_id' => $vlan->olt_id,
+                                'olt_name' => $vlan->olt?->name ?? 'None',
                                 'status' => $vlan->status,
                                 'description' => $vlan->description,
                                 'is_sync_mikrotik' => (bool)$vlan->is_sync_mikrotik,
                             ];
                         @endphp
                         <tr>
-                            <!-- 1. Index -->
-                            <td class="font-mono text-slate-400">
+                            <!-- 1. Index (#): Center Align -->
+                            <td class="text-center font-mono text-slate-400">
                                 {{ $vlans->firstItem() + $index }}
                             </td>
 
-                            <!-- 2. Status -->
-                            <td>
+                            <!-- 2. Status: Center Align -->
+                            <td class="text-center">
                                 @if($vlan->status === 'active')
-                                    <span class="inline-flex items-center justify-center gap-1 px-2 py-0.5 rounded-full text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                    <span class="inline-flex items-center justify-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono bg-emerald-50 text-emerald-700 border border-emerald-200">
                                         <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                                         <span>Active</span>
                                     </span>
                                 @else
-                                    <span class="inline-flex items-center justify-center gap-1 px-2 py-0.5 rounded-full text-[10px] bg-slate-100 text-slate-600 border border-slate-200">
+                                    <span class="inline-flex items-center justify-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono bg-slate-100 text-slate-600 border border-slate-200">
                                         <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
                                         <span>Disabled</span>
                                     </span>
                                 @endif
                             </td>
 
-                            <!-- 3. Router -->
-                            <td>
+                            <!-- 3. Router: Center Align -->
+                            <td class="text-center">
                                 @if($vlan->router)
-                                    <a href="{{ route('tenant.network.mikrotik.show', $vlan->router_id) }}" class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 text-[10px] font-mono transition" title="{{ $vlan->router->ip_address }}">
+                                    <a href="{{ route('tenant.network.mikrotik.show', $vlan->router_id) }}" 
+                                       class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 text-[10px] font-mono transition" 
+                                       title="{{ $vlan->router->ip_address }}">
                                         <i class="fas fa-server text-[8px] text-indigo-500"></i>
                                         <span class="truncate max-w-[110px]">{{ $vlan->router->name }}</span>
                                     </a>
@@ -307,38 +383,38 @@
                                 @endif
                             </td>
 
-                            <!-- 4. VLAN ID -->
-                            <td class="text-center font-mono font-bold text-slate-900">
-                                <span class="bg-slate-100 text-slate-800 border border-slate-200 px-2 py-0.5 rounded text-[10px]">
+                            <!-- 4. VLAN ID: Center Align -->
+                            <td class="text-center font-mono text-slate-900">
+                                <span class="bg-slate-100 text-slate-800 border border-slate-200 px-2 py-0.5 rounded text-[10px] font-bold">
                                     {{ $vlan->vlan_id }}
                                 </span>
                             </td>
 
-                            <!-- 5. Name -->
-                            <td class="text-cyan-800">
-                                <button type="button" 
-                                        @click="openEditModal({{ Js::from($vlanPayload) }})" 
-                                        class="hover:underline text-left cursor-pointer">
+                            <!-- 5. Name: Left Align (Textual) -->
+                            <td class="text-left text-cyan-800">
+                                <a href="{{ route('tenant.network.vlans.edit', $vlan->id) }}" 
+                                   class="hover:underline font-medium cursor-pointer" 
+                                   title="Click to Edit">
                                     {{ $vlan->name }}
-                                </button>
+                                </a>
                             </td>
 
-                            <!-- 6. Parent Interface -->
-                            <td class="font-mono text-[10px]">
+                            <!-- 6. Parent Interface: Center Align (Code) -->
+                            <td class="text-center font-mono text-[10px]">
                                 <span class="text-indigo-700 bg-indigo-50 border border-indigo-100 px-1.5 py-0.5 rounded">
                                     {{ $vlan->interface }}
                                 </span>
                             </td>
 
-                            <!-- 7. Type -->
-                            <td class="font-mono text-[10px]">
+                            <!-- 7. Type: Center Align -->
+                            <td class="text-center font-mono text-[10px]">
                                 <span class="inline-flex px-1.5 py-0.5 rounded border {{ $vlan->type_badge['class'] ?? 'bg-slate-50 text-slate-700 border-slate-200' }}">
                                     {{ $vlan->type_badge['label'] ?? ucfirst($vlan->type) }}
                                 </span>
                             </td>
 
-                            <!-- 8. Subnet / IP -->
-                            <td class="font-mono text-slate-800">
+                            <!-- 8. Subnet / IP: Center Align (Code) -->
+                            <td class="text-center font-mono text-slate-800">
                                 @if($vlan->subnet || $vlan->gateway)
                                     <span class="inline-flex items-center gap-1">
                                         <span>{{ $vlan->subnet ?: $vlan->gateway }}</span>
@@ -354,12 +430,12 @@
                                 @endif
                             </td>
 
-                            <!-- 9. Comment -->
-                            <td class="text-slate-600 max-w-[140px] truncate" title="{{ $vlan->description }}">
+                            <!-- 9. Comment: Left Align (Textual) -->
+                            <td class="text-left text-slate-600 max-w-[140px] truncate" title="{{ $vlan->description }}">
                                 {{ $vlan->description ?: '--' }}
                             </td>
 
-                            <!-- 10. Actions (3-Dot Action Button) -->
+                            <!-- 10. Action: Center Align (3-Dot Action Button) -->
                             <td class="w-10 text-center">
                                 <button type="button" 
                                         @click.stop="toggleMenu({{ Js::from($vlanPayload) }}, $event)" 
@@ -371,23 +447,24 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="10" class="p-8 text-center">
+                            <td colspan="10" class="py-10 text-center">
                                 <div class="max-w-md mx-auto space-y-2">
-                                    <div class="w-10 h-10 rounded-xl bg-cyan-50 text-cyan-600 mx-auto flex items-center justify-center text-base border border-cyan-100">
+                                    <div class="w-10 h-10 rounded-xl bg-cyan-50 text-cyan-600 mx-auto flex items-center justify-center text-base border border-cyan-100 shadow-2xs">
                                         <i class="fas fa-sitemap"></i>
                                     </div>
-                                    <h3 class="text-xs font-normal text-slate-800">No VLANs Found</h3>
-                                    <p class="text-[11px] text-slate-400 font-normal">Create 802.1Q VLANs or sync existing VLAN interfaces directly from your MikroTik core router.</p>
+                                    <h3 class="text-xs font-semibold text-slate-800">No VLANs Found</h3>
+                                    <p class="text-[11px] text-slate-400 font-normal">
+                                        Create your first 802.1Q VLAN or sync existing VLAN interfaces directly from your MikroTik core router.
+                                    </p>
                                     <div class="pt-1 flex items-center justify-center gap-2">
-                                        <button type="button" 
-                                                @click="openCreateModal()" 
-                                                class="bg-cyan-600 hover:bg-cyan-700 text-white font-medium text-xs px-3.5 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
+                                        <a href="{{ route('tenant.network.vlans.create') }}" 
+                                           class="h-[34px] bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs px-3.5 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                                             <i class="fas fa-plus text-[10px]"></i>
                                             <span>Create VLAN</span>
-                                        </button>
+                                        </a>
                                         <button type="button" 
                                                 @click="openImportModal()" 
-                                                class="border border-purple-200 bg-purple-50 hover:bg-purple-100 text-purple-700 font-medium text-xs px-3.5 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
+                                                class="h-[34px] border border-purple-200 bg-purple-50 hover:bg-purple-100 text-purple-700 font-semibold text-xs px-3.5 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                                             <i class="fas fa-rotate text-purple-600 text-xs"></i>
                                             <span>Sync from MikroTik</span>
                                         </button>
@@ -413,7 +490,7 @@
         @endif
     </div>
 
-    <!-- 5. Global Floating 3-Dot Action Menu -->
+    <!-- 5. Global Floating 3-Dot Action Menu (Strict AGENTS.md Rule 2.E - getBoundingClientRect, fixed z-50) -->
     <div x-show="activeMenuVlan !== null" 
          @click.away="activeMenuVlan = null"
          x-transition:enter="transition ease-out duration-100"
@@ -431,15 +508,25 @@
          class="fixed z-50 w-48 bg-white rounded-lg shadow-xl border border-slate-200 py-0.5 text-xs divide-y divide-slate-100 font-normal"
          style="display: none;">
         
-        <!-- Group 1: Configuration & Management -->
+        <!-- Group 1: Diagnostics & Details -->
         <div class="py-0.5">
+            <button type="button" 
+                    @click="viewDetailsFromMenu()" 
+                    class="w-full px-2.5 py-1 hover:bg-cyan-50 text-slate-700 hover:text-cyan-700 font-normal flex items-center gap-2 transition text-left cursor-pointer text-[11px]">
+                <i class="fas fa-eye text-cyan-600 w-3.5 text-center text-[10px]"></i>
+                <span>View Details</span>
+            </button>
+
             <button type="button" 
                     @click="editFromMenu()" 
                     class="w-full px-2.5 py-1 hover:bg-amber-50 text-slate-700 hover:text-amber-700 font-normal flex items-center gap-2 transition text-left cursor-pointer text-[11px]">
                 <i class="fas fa-pen-to-square text-amber-500 w-3.5 text-center text-[10px]"></i>
                 <span>Edit Configuration</span>
             </button>
+        </div>
 
+        <!-- Group 2: MikroTik Sync & Status Management -->
+        <div class="py-0.5">
             <button type="button" 
                     @click="syncFromMenu()" 
                     class="w-full px-2.5 py-1 hover:bg-purple-50 text-slate-700 hover:text-purple-700 font-normal flex items-center gap-2 transition text-left cursor-pointer text-[11px]">
@@ -449,13 +536,13 @@
 
             <button type="button" 
                     @click="toggleStatusFromMenu()" 
-                    class="w-full px-2.5 py-1 hover:bg-cyan-50 text-slate-700 hover:text-cyan-700 font-normal flex items-center gap-2 transition text-left cursor-pointer text-[11px]">
+                    class="w-full px-2.5 py-1 hover:bg-slate-50 text-slate-700 font-normal flex items-center gap-2 transition text-left cursor-pointer text-[11px]">
                 <i class="fas w-3.5 text-center text-[10px]" :class="activeMenuVlan?.status === 'active' ? 'fa-ban text-rose-500' : 'fa-check text-emerald-500'"></i>
                 <span x-text="activeMenuVlan?.status === 'active' ? 'Disable VLAN' : 'Enable VLAN'"></span>
             </button>
         </div>
 
-        <!-- Group 2: Destructive Action -->
+        <!-- Group 3: Destructive Action -->
         <div class="py-0.5">
             <button type="button" 
                     @click="deleteFromMenu()" 
@@ -466,8 +553,8 @@
         </div>
     </div>
 
-    <!-- 6. Production-Grade Natural Modal: Create & Edit VLAN Modal -->
-    <div x-show="modal.open" 
+    <!-- 6. Production-Grade Natural Modal: View Details Modal (Read-Only Inspection) -->
+    <div x-show="detailsModal.open" 
          x-transition:enter="transition ease-out duration-150"
          x-transition:enter-start="opacity-0"
          x-transition:enter-end="opacity-100"
@@ -477,7 +564,7 @@
          class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4"
          style="display: none;">
         
-        <div @click.away="closeModal()" 
+        <div @click.away="closeDetailsModal()" 
              x-transition:enter="transition ease-out duration-150"
              x-transition:enter-start="transform opacity-0 scale-95"
              x-transition:enter-end="transform opacity-100 scale-100"
@@ -493,178 +580,83 @@
                         <i class="fas fa-sitemap"></i>
                     </div>
                     <div>
-                        <h3 class="text-xs font-semibold text-slate-800" x-text="modal.isEdit ? 'Edit VLAN' : 'Create New VLAN'"></h3>
-                        <p class="text-[10.5px] text-slate-500 font-normal">Configure 802.1Q VLAN interface properties and router assignment</p>
+                        <h3 class="text-xs font-semibold text-slate-800" x-text="detailsModal.vlan?.name || 'VLAN Details'"></h3>
+                        <p class="text-[10.5px] text-slate-500 font-normal">802.1Q Interface mapping, subnet specifications &amp; telemetry</p>
                     </div>
                 </div>
-                <button type="button" @click="closeModal()" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center text-xs cursor-pointer">
+                <button type="button" @click="closeDetailsModal()" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center text-xs cursor-pointer">
                     <i class="fas fa-xmark"></i>
                 </button>
             </div>
 
-            <!-- Modal Body Form -->
-            <div class="p-4 space-y-3.5 max-h-[70vh] overflow-y-auto text-xs">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <!-- Router Selector -->
-                    <div>
-                        <label class="block text-[11px] font-semibold text-slate-700 mb-1">Target MikroTik Router</label>
-                        <select x-model="modal.form.router_id" 
-                                @change="fetchRouterInterfaces()"
-                                class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 outline-hidden transition font-normal">
-                            <option value="">None / Standalone VLAN</option>
-                            @foreach($routers as $r)
-                                <option value="{{ $r->id }}">{{ $r->name }} ({{ $r->ip_address }})</option>
-                            @endforeach
-                        </select>
+            <!-- Details Body -->
+            <div class="p-4 space-y-4 max-h-[75vh] overflow-y-auto text-xs" x-if="detailsModal.vlan">
+                
+                <!-- Specs Grid -->
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                    <div class="p-2 bg-slate-50 rounded-lg border border-slate-200/80">
+                        <span class="text-[10px] text-slate-400 block uppercase">VLAN ID (Tag)</span>
+                        <span class="font-mono text-slate-800 font-bold" x-text="detailsModal.vlan.vlan_id"></span>
                     </div>
+                    <div class="p-2 bg-slate-50 rounded-lg border border-slate-200/80">
+                        <span class="text-[10px] text-slate-400 block uppercase">VLAN Type</span>
+                        <span class="font-medium text-slate-800" x-text="detailsModal.vlan.type_label"></span>
+                    </div>
+                    <div class="p-2 bg-slate-50 rounded-lg border border-slate-200/80">
+                        <span class="text-[10px] text-slate-400 block uppercase">Parent Interface</span>
+                        <span class="font-mono text-indigo-700 font-semibold" x-text="detailsModal.vlan.interface"></span>
+                    </div>
+                    <div class="p-2 bg-slate-50 rounded-lg border border-slate-200/80">
+                        <span class="text-[10px] text-slate-400 block uppercase">Associated Router</span>
+                        <span class="font-medium text-slate-800" x-text="detailsModal.vlan.router_name + (detailsModal.vlan.router_ip ? ` (${detailsModal.vlan.router_ip})` : '')"></span>
+                    </div>
+                    <div class="p-2 bg-slate-50 rounded-lg border border-slate-200/80">
+                        <span class="text-[10px] text-slate-400 block uppercase">Subnet CIDR</span>
+                        <span class="font-mono text-slate-800" x-text="detailsModal.vlan.subnet || '--'"></span>
+                    </div>
+                    <div class="p-2 bg-slate-50 rounded-lg border border-slate-200/80">
+                        <span class="text-[10px] text-slate-400 block uppercase">Gateway IP</span>
+                        <span class="font-mono text-slate-800" x-text="detailsModal.vlan.gateway || '--'"></span>
+                    </div>
+                    <div class="p-2 bg-slate-50 rounded-lg border border-slate-200/80">
+                        <span class="text-[10px] text-slate-400 block uppercase">MTU Size</span>
+                        <span class="font-mono text-slate-800" x-text="(detailsModal.vlan.mtu || 1500) + ' bytes'"></span>
+                    </div>
+                    <div class="p-2 bg-slate-50 rounded-lg border border-slate-200/80">
+                        <span class="text-[10px] text-slate-400 block uppercase">DHCP Server</span>
+                        <span class="font-semibold" :class="detailsModal.vlan.dhcp_enabled ? 'text-emerald-700' : 'text-slate-500'" x-text="detailsModal.vlan.dhcp_enabled ? 'Enabled' : 'Disabled'"></span>
+                    </div>
+                    <div class="p-2 bg-slate-50 rounded-lg border border-slate-200/80">
+                        <span class="text-[10px] text-slate-400 block uppercase">Associated OLT</span>
+                        <span class="font-medium text-slate-800" x-text="detailsModal.vlan.olt_name"></span>
+                    </div>
+                    <div class="p-2 bg-slate-50 rounded-lg border border-slate-200/80">
+                        <span class="text-[10px] text-slate-400 block uppercase">Status</span>
+                        <span class="font-medium capitalize" 
+                              :class="detailsModal.vlan.status === 'active' ? 'text-emerald-700' : 'text-slate-600'" 
+                              x-text="detailsModal.vlan.status"></span>
+                    </div>
+                </div>
 
-                    <!-- Associated OLT (Optional) -->
-                    <div>
-                        <label class="block text-[11px] font-semibold text-slate-700 mb-1">Associated OLT (Optional)</label>
-                        <select x-model="modal.form.olt_id" 
-                                class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 outline-hidden transition font-normal">
-                            <option value="">None / All OLTs</option>
-                            @foreach($olts as $o)
-                                <option value="{{ $o->id }}">{{ $o->name }} ({{ $o->ip_address }})</option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <!-- VLAN ID -->
-                    <div>
-                        <label class="block text-[11px] font-semibold text-slate-700 mb-1">
-                            VLAN ID (1–4094) <span class="text-rose-500">*</span>
-                        </label>
-                        <input type="number" 
-                               x-model="modal.form.vlan_id" 
-                               placeholder="e.g. 100" 
-                               min="1" max="4094"
-                               class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono text-slate-800 focus:bg-white focus:border-cyan-500 outline-hidden transition font-normal" />
-                    </div>
-
-                    <!-- VLAN Name -->
-                    <div>
-                        <label class="block text-[11px] font-semibold text-slate-700 mb-1">
-                            VLAN Name <span class="text-rose-500">*</span>
-                        </label>
-                        <input type="text" 
-                               x-model="modal.form.name" 
-                               placeholder="e.g. vlan100-pppoe" 
-                               class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 outline-hidden transition font-normal" />
-                    </div>
-
-                    <!-- Parent Interface -->
-                    <div>
-                        <div class="flex items-center justify-between mb-1">
-                            <label class="text-[11px] font-semibold text-slate-700">
-                                Parent Interface <span class="text-rose-500">*</span>
-                            </label>
-                            <span x-show="modal.loadingInterfaces" class="text-[10px] text-cyan-600 font-mono flex items-center gap-1">
-                                <i class="fas fa-spinner fa-spin text-[9px]"></i> Loading...
-                            </span>
-                        </div>
-                        <select x-model="modal.form.interface" 
-                                :disabled="modal.loadingInterfaces"
-                                class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono text-slate-800 focus:bg-white focus:border-cyan-500 outline-hidden transition font-normal">
-                            <template x-for="iface in modal.availableInterfaces" :key="iface">
-                                <option :value="iface" x-text="iface" :selected="modal.form.interface === iface"></option>
-                            </template>
-                            <template x-if="modal.availableInterfaces.length === 0">
-                                <option value="ether1">ether1 (Default)</option>
-                            </template>
-                        </select>
-                    </div>
-
-                    <!-- VLAN Service Type -->
-                    <div>
-                        <label class="block text-[11px] font-semibold text-slate-700 mb-1">
-                            VLAN Service Type <span class="text-rose-500">*</span>
-                        </label>
-                        <select x-model="modal.form.type" 
-                                class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 outline-hidden transition font-normal">
-                            <option value="service">Service (PPPoE / Client Access)</option>
-                            <option value="management">Management (OLT / Switch Mgmt)</option>
-                            <option value="corporate">Corporate Leased Line / Trunk</option>
-                            <option value="cgnat">CGNAT Trunk Block</option>
-                            <option value="voice">VoIP Voice SIP</option>
-                            <option value="tr069">TR-069 ACS Auto-Config</option>
-                        </select>
-                    </div>
-
-                    <!-- Subnet (Optional) -->
-                    <div>
-                        <label class="block text-[11px] font-semibold text-slate-700 mb-1">IP Subnet (Optional)</label>
-                        <input type="text" 
-                               x-model="modal.form.subnet" 
-                               placeholder="e.g. 10.10.100.0/24" 
-                               class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono text-slate-800 focus:bg-white focus:border-cyan-500 outline-hidden transition font-normal" />
-                    </div>
-
-                    <!-- Gateway IP (Optional) -->
-                    <div>
-                        <label class="block text-[11px] font-semibold text-slate-700 mb-1">Gateway IP (Optional)</label>
-                        <input type="text" 
-                               x-model="modal.form.gateway" 
-                               placeholder="e.g. 10.10.100.1" 
-                               class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono text-slate-800 focus:bg-white focus:border-cyan-500 outline-hidden transition font-normal" />
-                    </div>
-
-                    <!-- MTU Size -->
-                    <div>
-                        <label class="block text-[11px] font-semibold text-slate-700 mb-1">MTU Size</label>
-                        <input type="number" 
-                               x-model="modal.form.mtu" 
-                               placeholder="1500" 
-                               min="576" max="9216"
-                               class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono text-slate-800 focus:bg-white focus:border-cyan-500 outline-hidden transition font-normal" />
-                    </div>
-
-                    <!-- Status -->
-                    <div>
-                        <label class="block text-[11px] font-semibold text-slate-700 mb-1">Administrative Status</label>
-                        <select x-model="modal.form.status" 
-                                class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 outline-hidden transition font-normal">
-                            <option value="active">Active / Enabled</option>
-                            <option value="disabled">Disabled</option>
-                        </select>
-                    </div>
-
-                    <!-- Comment / Description -->
-                    <div class="sm:col-span-2">
-                        <label class="block text-[11px] font-semibold text-slate-700 mb-1">Comment (MikroTik Interface Comment)</label>
-                        <textarea x-model="modal.form.description" 
-                                  rows="2"
-                                  placeholder="e.g. PPPoE VLAN for Core Switch POP-1" 
-                                  class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 outline-hidden transition font-normal"></textarea>
-                    </div>
-
-                    <!-- MikroTik Sync Checkbox -->
-                    <div class="sm:col-span-2 pt-1 border-t border-slate-100 flex items-center gap-2">
-                        <input type="checkbox" 
-                               id="is_sync_mikrotik" 
-                               x-model="modal.form.is_sync_mikrotik" 
-                               class="rounded text-cyan-600 focus:ring-cyan-500 border-slate-300">
-                        <label for="is_sync_mikrotik" class="text-xs text-slate-700 cursor-pointer select-none">
-                            Automatically push & sync this VLAN interface to the selected MikroTik Router (<code class="text-cyan-700 font-mono text-[10.5px]">/interface/vlan</code>)
-                        </label>
-                    </div>
+                <!-- Description / Comment -->
+                <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200/80">
+                    <span class="text-[10px] text-slate-400 block uppercase mb-0.5">Comment / Description</span>
+                    <p class="text-slate-700 font-normal leading-relaxed" x-text="detailsModal.vlan.description || 'No comment provided.'"></p>
                 </div>
             </div>
 
             <!-- Modal Footer -->
             <div class="px-4 py-2.5 bg-slate-50/80 border-t border-slate-200 flex items-center justify-between">
                 <button type="button" 
-                        @click="closeModal()" 
-                        class="border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs px-3.5 py-1.5 rounded-lg transition cursor-pointer">
-                    Cancel
+                        @click="closeDetailsModal()" 
+                        class="h-[34px] px-3.5 border border-slate-300 hover:bg-slate-100 text-slate-700 font-semibold text-xs rounded-lg transition cursor-pointer">
+                    Close
                 </button>
-                <button type="button" 
-                        @click="saveVlan()" 
-                        :disabled="modal.saving"
-                        class="bg-cyan-600 hover:bg-cyan-700 text-white font-medium text-xs px-4 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50">
-                    <i class="fas fa-check text-[10px]" :class="{ 'fa-spin fa-spinner': modal.saving }"></i>
-                    <span x-text="modal.saving ? 'Saving...' : (modal.isEdit ? 'Save Changes' : 'Create VLAN')"></span>
-                </button>
+                <a :href="detailsModal.vlan ? `/admin/network/vlans/${detailsModal.vlan.id}/edit` : '#'" 
+                   class="h-[34px] px-4 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
+                    <i class="fas fa-pen-to-square text-[10px]"></i>
+                    <span>Edit VLAN</span>
+                </a>
             </div>
         </div>
     </div>
@@ -697,7 +689,7 @@
                     </div>
                     <div>
                         <h3 class="text-xs font-semibold text-slate-800">Sync VLANs from MikroTik</h3>
-                        <p class="text-[10.5px] text-slate-500 font-normal">Import /interface/vlan configurations</p>
+                        <p class="text-[10.5px] text-slate-500 font-normal">Pull and synchronize /interface/vlan configurations</p>
                     </div>
                 </div>
                 <button type="button" @click="closeImportModal()" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center text-xs cursor-pointer">
@@ -707,13 +699,15 @@
 
             <div class="p-4 space-y-3.5 text-xs">
                 <p class="text-slate-600 leading-relaxed font-normal">
-                    Select a MikroTik router below. All configured VLAN interfaces (<code class="bg-slate-100 px-1 py-0.5 rounded text-purple-700 font-mono text-[11px]">/interface/vlan</code>) will be imported and synchronized directly with your database.
+                    Select a MikroTik router below to pull all configured VLAN interfaces (<code class="bg-slate-100 px-1 py-0.5 rounded text-purple-700 font-mono text-[11px]">/interface/vlan</code>) directly into the database.
                 </p>
 
                 <div>
-                    <label class="block text-[11px] font-semibold text-slate-700 mb-1">Select MikroTik Router <span class="text-rose-500">*</span></label>
+                    <label class="block text-[11px] font-semibold text-slate-700 mb-1">
+                        Select MikroTik Router <span class="text-rose-500">*</span>
+                    </label>
                     <select x-model="importModal.router_id" 
-                            class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 outline-hidden transition font-normal">
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 outline-hidden transition font-normal">
                         @foreach($routers as $r)
                             <option value="{{ $r->id }}">{{ $r->name }} ({{ $r->ip_address }})</option>
                         @endforeach
@@ -723,9 +717,9 @@
                 <div class="p-3 bg-purple-50/60 border border-purple-100 rounded-lg text-purple-900 space-y-1">
                     <span class="font-semibold block text-[11px]">✨ Automatic Sync Capabilities:</span>
                     <ul class="list-disc list-inside text-[10.5px] space-y-0.5 text-purple-800/90 font-normal">
-                        <li>Imports VLAN IDs, interface bindings, and comments.</li>
-                        <li>Links with associated parent interfaces automatically.</li>
-                        <li>Updates matching VLANs without duplicating records.</li>
+                        <li>Imports VLAN tags, interface names, and MTU values.</li>
+                        <li>Associates parent interfaces automatically.</li>
+                        <li>Updates existing VLAN records without duplicates.</li>
                     </ul>
                 </div>
             </div>
@@ -733,13 +727,13 @@
             <div class="px-4 py-2.5 bg-slate-50/80 border-t border-slate-200 flex items-center justify-between">
                 <button type="button" 
                         @click="closeImportModal()" 
-                        class="border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs px-3.5 py-1.5 rounded-lg transition cursor-pointer">
+                        class="h-[34px] px-3.5 border border-slate-300 hover:bg-slate-100 text-slate-700 font-semibold text-xs rounded-lg transition cursor-pointer">
                     Cancel
                 </button>
                 <button type="button" 
                         @click="syncFromMikrotik()" 
                         :disabled="importModal.syncing"
-                        class="bg-purple-600 hover:bg-purple-700 text-white font-medium text-xs px-4 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50">
+                        class="h-[34px] bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs px-4 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50">
                     <i class="fas fa-rotate text-[10px]" :class="{ 'fa-spin': importModal.syncing }"></i>
                     <span x-text="importModal.syncing ? 'Pulling from Router...' : 'Start Sync'"></span>
                 </button>
@@ -757,28 +751,9 @@ function vlanManager() {
         menuPos: { top: '0px', bottom: 'auto', right: '0px', left: 'auto' },
         toast: { show: false, message: '', type: 'success' },
 
-        modal: {
+        detailsModal: {
             open: false,
-            isEdit: false,
-            saving: false,
-            loadingInterfaces: false,
-            availableInterfaces: ['ether1', 'ether2', 'ether3', 'ether4', 'ether5', 'bridge', 'sfp-sfpplus1'],
-            form: {
-                id: null,
-                vlan_id: '',
-                name: '',
-                interface: 'ether1',
-                type: 'service',
-                subnet: '',
-                gateway: '',
-                dhcp_enabled: false,
-                mtu: 1500,
-                router_id: '{{ $routers->first()?->id ?? "" }}',
-                olt_id: '',
-                status: 'active',
-                description: '',
-                is_sync_mikrotik: true
-            }
+            vlan: null
         },
 
         importModal: {
@@ -819,11 +794,23 @@ function vlanManager() {
             }
         },
 
+        viewDetailsFromMenu() {
+            if (!this.activeMenuVlan) return;
+            this.detailsModal.vlan = this.activeMenuVlan;
+            this.activeMenuVlan = null;
+            this.detailsModal.open = true;
+        },
+
+        closeDetailsModal() {
+            this.detailsModal.open = false;
+            this.detailsModal.vlan = null;
+        },
+
         editFromMenu() {
             if (!this.activeMenuVlan) return;
-            const vlan = this.activeMenuVlan;
+            const vlanId = this.activeMenuVlan.id;
             this.activeMenuVlan = null;
-            this.openEditModal(vlan);
+            window.location.href = `/admin/network/vlans/${vlanId}/edit`;
         },
 
         syncFromMenu() {
@@ -861,7 +848,7 @@ function vlanManager() {
             if (!this.activeMenuVlan) return;
             const vlan = this.activeMenuVlan;
             this.activeMenuVlan = null;
-            this.confirmDelete(vlan.id, `${vlan.name} (VLAN ID: ${vlan.vlan_id})`);
+            this.confirmDelete(vlan.id, vlan.name);
         },
 
         showToast(message, type = 'success') {
@@ -884,130 +871,11 @@ function vlanManager() {
             }
         },
 
-        openCreateModal() {
-            this.modal.isEdit = false;
-            this.modal.form = {
-                id: null,
-                vlan_id: '',
-                name: '',
-                interface: 'ether1',
-                type: 'service',
-                subnet: '',
-                gateway: '',
-                dhcp_enabled: false,
-                mtu: 1500,
-                router_id: '{{ $routers->first()?->id ?? "" }}',
-                olt_id: '',
-                status: 'active',
-                description: '',
-                is_sync_mikrotik: true
-            };
-            this.modal.open = true;
-            if (this.modal.form.router_id) {
-                this.fetchRouterInterfaces();
-            }
-        },
-
-        openEditModal(vlanData) {
-            this.modal.isEdit = true;
-            const currentIface = vlanData.interface || 'ether1';
-            this.modal.form = {
-                id: vlanData.id,
-                vlan_id: vlanData.vlan_id,
-                name: vlanData.name,
-                interface: currentIface,
-                type: vlanData.type || 'service',
-                subnet: vlanData.subnet || '',
-                gateway: vlanData.gateway || '',
-                dhcp_enabled: Boolean(vlanData.dhcp_enabled),
-                mtu: vlanData.mtu || 1500,
-                router_id: vlanData.router_id ? String(vlanData.router_id) : '',
-                olt_id: vlanData.olt_id ? String(vlanData.olt_id) : '',
-                status: vlanData.status || 'active',
-                description: vlanData.description || '',
-                is_sync_mikrotik: Boolean(vlanData.is_sync_mikrotik)
-            };
-            if (!this.modal.availableInterfaces.includes(currentIface)) {
-                this.modal.availableInterfaces.push(currentIface);
-            }
-            this.modal.open = true;
-            if (this.modal.form.router_id) {
-                this.fetchRouterInterfaces(currentIface);
-            }
-        },
-
-        closeModal() {
-            this.modal.open = false;
-        },
-
-        async fetchRouterInterfaces(preferredInterface = null) {
-            if (!this.modal.form.router_id) {
-                this.modal.availableInterfaces = ['ether1', 'ether2', 'ether3', 'ether4', 'ether5', 'bridge', 'sfp-sfpplus1'];
-                return;
-            }
-            this.modal.loadingInterfaces = true;
-            try {
-                const response = await fetch(`/admin/network/vlans/router-interfaces/${this.modal.form.router_id}`);
-                const data = await response.json();
-                if (data.success && Array.isArray(data.interfaces) && data.interfaces.length > 0) {
-                    this.modal.availableInterfaces = data.interfaces;
-                    const target = preferredInterface || this.modal.form.interface;
-                    if (target && this.modal.availableInterfaces.includes(target)) {
-                        this.modal.form.interface = target;
-                    } else if (this.modal.availableInterfaces.length > 0) {
-                        this.modal.form.interface = this.modal.availableInterfaces[0];
-                    }
-                }
-            } catch (e) {
-                // Keep default fallback list
-            } finally {
-                this.modal.loadingInterfaces = false;
-            }
-        },
-
-        async saveVlan() {
-            if (!this.modal.form.vlan_id || !this.modal.form.name || !this.modal.form.interface) {
-                this.showToast('Please fill in VLAN ID, Name, and Interface.', 'error');
-                return;
-            }
-
-            this.modal.saving = true;
-            const url = this.modal.isEdit 
-                ? `/admin/network/vlans/${this.modal.form.id}` 
-                : '/admin/network/vlans';
-            const method = this.modal.isEdit ? 'PUT' : 'POST';
-
-            try {
-                const response = await fetch(url, {
-                    method: method,
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    },
-                    body: JSON.stringify(this.modal.form)
-                });
-
-                const data = await response.json();
-                if (response.ok && data.success) {
-                    this.showToast(data.message, 'success');
-                    this.closeModal();
-                    setTimeout(() => { window.location.reload(); }, 600);
-                } else {
-                    this.showToast(data.message || 'Validation error while saving VLAN.', 'error');
-                }
-            } catch (e) {
-                this.showToast('Network error while saving VLAN.', 'error');
-            } finally {
-                this.modal.saving = false;
-            }
-        },
-
         confirmDelete(id, name) {
             if (typeof Swal !== 'undefined') {
                 Swal.fire({
                     title: 'Delete VLAN?',
-                    html: `<div class="text-xs text-slate-600 mt-1">Are you sure you want to delete VLAN <strong class="text-slate-900 font-semibold">${name}</strong>?<br><span class="text-[11px] text-rose-500 mt-1 block">If synced with MikroTik, it will also be removed from the router.</span></div>`,
+                    html: `<div class="text-xs text-slate-600 mt-1">Are you sure you want to delete VLAN <strong class="text-slate-900 font-semibold">${name}</strong>?<br><span class="text-[11px] text-rose-500 mt-1 block">Associated subnets and MikroTik bindings will be unlinked.</span></div>`,
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonColor: '#e11d48',
@@ -1103,7 +971,7 @@ function vlanManager() {
                 if (response.ok && data.success) {
                     this.showToast(data.message, 'success');
                 } else {
-                    this.showToast(data.message || 'Failed to sync VLAN with MikroTik.', 'error');
+                    this.showToast(data.message || 'Failed to sync with MikroTik.', 'error');
                 }
             } catch (e) {
                 this.showToast('Network error while syncing with MikroTik.', 'error');

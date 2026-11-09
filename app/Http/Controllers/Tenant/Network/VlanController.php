@@ -62,6 +62,16 @@ class VlanController extends Controller
             $query->where('status', $status);
         }
 
+        // MikroTik Sync Filter
+        if ($request->filled('is_sync')) {
+            $query->where('is_sync_mikrotik', (bool)$request->input('is_sync'));
+        }
+
+        // OLT Filter
+        if ($oltId = $request->input('olt_id')) {
+            $query->where('olt_id', $oltId);
+        }
+
         $perPage = (int) $request->input('per_page', 30);
         if ($perPage <= 0 || $perPage > 500) {
             $perPage = 30;
@@ -91,6 +101,23 @@ class VlanController extends Controller
             $metricBase->where('type', $type);
         }
 
+        if ($status = $request->input('status')) {
+            $metricBase->where('status', $status);
+        }
+
+        if ($request->filled('is_sync')) {
+            $metricBase->where('is_sync_mikrotik', (bool)$request->input('is_sync'));
+        }
+
+        if ($oltId = $request->input('olt_id')) {
+            $metricBase->where('olt_id', $oltId);
+        }
+
+        $activeMoreCount = ($request->filled('status') ? 1 : 0) +
+                           ($request->filled('is_sync') ? 1 : 0) +
+                           ($request->filled('olt_id') ? 1 : 0);
+        $isMoreOpen = $activeMoreCount > 0;
+
         $totalVlans = (clone $metricBase)->count();
         $serviceVlans = (clone $metricBase)->where('type', 'service')->count();
         $mgmtVlans = (clone $metricBase)->where('type', 'management')->count();
@@ -108,8 +135,43 @@ class VlanController extends Controller
             'mgmtVlans',
             'corporateVlans',
             'activeVlans',
-            'syncedVlans'
+            'syncedVlans',
+            'activeMoreCount',
+            'isMoreOpen'
         ));
+    }
+
+    /**
+     * Show form for creating a new VLAN.
+     */
+    public function create()
+    {
+        $tenant = Auth::user()?->tenant;
+        if (!$tenant) {
+            abort(404, 'ISP Tenant record not found.');
+        }
+
+        $routers = TenantRouter::where('tenant_id', $tenant->id)->get(['id', 'name', 'ip_address']);
+        $olts = TenantOlt::where('tenant_id', $tenant->id)->get(['id', 'name', 'ip_address']);
+
+        return view('tenant.network.vlans_create', compact('tenant', 'routers', 'olts'));
+    }
+
+    /**
+     * Show form for editing an existing VLAN.
+     */
+    public function edit($id)
+    {
+        $tenant = Auth::user()?->tenant;
+        if (!$tenant) {
+            abort(404, 'ISP Tenant record not found.');
+        }
+
+        $vlan = TenantVlan::where('tenant_id', $tenant->id)->with(['router', 'olt'])->findOrFail($id);
+        $routers = TenantRouter::where('tenant_id', $tenant->id)->get(['id', 'name', 'ip_address']);
+        $olts = TenantOlt::where('tenant_id', $tenant->id)->get(['id', 'name', 'ip_address']);
+
+        return view('tenant.network.vlans_edit', compact('tenant', 'vlan', 'routers', 'olts'));
     }
 
     /**

@@ -165,9 +165,11 @@ Route::middleware(['web'])->group(function () {
             Route::patch('/ip-pools/{ipPool}/toggle-status', [IpPoolController::class, 'toggleStatus'])->name('ip-pools.toggle-status');
             Route::post('/ip-pools/{ipPool}/sync', [IpPoolController::class, 'syncMikrotik'])->name('ip-pools.sync');
             Route::get('/vlans', [VlanController::class, 'index'])->name('vlans');
+            Route::get('/vlans/create', [VlanController::class, 'create'])->name('vlans.create');
             Route::post('/vlans', [VlanController::class, 'store'])->name('vlans.store');
             Route::post('/vlans/import-mikrotik', [VlanController::class, 'importFromMikrotik'])->name('vlans.import-mikrotik');
             Route::get('/vlans/router-interfaces/{router}', [VlanController::class, 'getRouterInterfaces'])->name('vlans.router-interfaces');
+            Route::get('/vlans/{vlan}/edit', [VlanController::class, 'edit'])->name('vlans.edit');
             Route::get('/vlans/{vlan}', [VlanController::class, 'show'])->name('vlans.show');
             Route::put('/vlans/{vlan}', [VlanController::class, 'update'])->name('vlans.update');
             Route::delete('/vlans/{vlan}', [VlanController::class, 'destroy'])->name('vlans.destroy');
