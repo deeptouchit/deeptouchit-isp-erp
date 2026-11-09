@@ -84,6 +84,9 @@ class ResellerBandwidthController extends Controller
             });
         }
 
+        $activeMoreCount = ($request->filled('bandwidth_plan_id') ? 1 : 0) + ($request->filled('allocation_type') ? 1 : 0);
+        $isMoreOpen = $activeMoreCount > 0;
+
         $perPage = (int) $request->input('per_page', 20);
         if ($perPage <= 0 || $perPage > 500) {
             $perPage = 20;
@@ -151,6 +154,8 @@ class ResellerBandwidthController extends Controller
             'selectedPlanId',
             'selectedType',
             'selectedStatus',
+            'activeMoreCount',
+            'isMoreOpen',
             'perPage'
         ));
     }

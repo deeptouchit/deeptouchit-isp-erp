@@ -69,6 +69,12 @@ class ResellerInvoiceController extends Controller
             $query->where('type', $invoiceType);
         }
 
+        // Tier-2 Secondary Filters Count
+        $activeMoreCount = 0;
+        if (!empty($billingMonth)) $activeMoreCount++;
+        if (!empty($invoiceType)) $activeMoreCount++;
+        $isMoreOpen = $activeMoreCount > 0;
+
         $invoices = $query->latest('id')->paginate($perPage)->withQueryString();
 
         // 3. Calculate 6-Card Metric KPIs
@@ -101,6 +107,8 @@ class ResellerInvoiceController extends Controller
             'paymentStatus',
             'billingMonth',
             'invoiceType',
+            'activeMoreCount',
+            'isMoreOpen',
             'perPage'
         ));
     }

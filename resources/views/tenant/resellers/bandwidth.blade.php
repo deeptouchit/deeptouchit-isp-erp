@@ -1,6 +1,6 @@
 @extends('tenant.layouts.app')
 
-@section('title', 'Reseller Bandwidth Allocation - ' . ($tenant->company_name ?? $tenant->name))
+@section('title', 'Bandwidth Allocation - ' . ($tenant->company_name ?? $tenant->name))
 
 @push('styles')
     {{-- Page specific CSS --}}
@@ -9,26 +9,39 @@
 @section('content')
 <div class="space-y-3" x-data="resellerBandwidthManager()" @scroll.window="activeMenu = null" @resize.window="activeMenu = null">
 
-    <!-- 1. Top Header Bar (Strictly Icon + Title + Action Button ONLY - AGENTS.md Rule 2.A) -->
+    <!-- 1. Top Header Bar (Strictly Icon + Title + Count Badge + Action Buttons ONLY - AGENTS.md Rule 2.A) -->
     <div class="flex items-center justify-between bg-white px-3.5 py-2.5 rounded-xl border border-slate-200 shadow-xs">
         <div class="flex items-center gap-2.5">
             <div class="w-8 h-8 rounded-lg bg-cyan-50 text-cyan-600 border border-cyan-100 flex items-center justify-center text-sm shadow-2xs flex-shrink-0">
                 <i class="fas fa-network-wired"></i>
             </div>
-            <h1 class="text-xs font-bold text-slate-800 tracking-tight">Reseller Bandwidth Allocation</h1>
+            <h1 class="text-xs font-bold text-slate-800 tracking-tight">Bandwidth Allocation</h1>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-cyan-100 text-cyan-800 border border-cyan-200">
+                {{ $allocations->count() }} Allocated
+            </span>
         </div>
 
         <div class="flex items-center gap-2">
+            <a href="{{ route('tenant.resellers.capacity') }}" 
+               class="h-[34px] py-0 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200/80 shadow-2xs transition inline-flex items-center gap-1.5 cursor-pointer">
+                <i class="fas fa-microchip text-[11px] text-slate-600"></i>
+                <span>Gateway Capacity</span>
+            </a>
+            <a href="{{ route('tenant.resellers.bandwidth-plans') }}" 
+               class="h-[34px] py-0 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200/80 shadow-2xs transition inline-flex items-center gap-1.5 cursor-pointer">
+                <i class="fas fa-layer-group text-[11px] text-cyan-600"></i>
+                <span>Rate Plans</span>
+            </a>
             <button type="button" 
                     @click="generateBills()"
                     :disabled="generatingBills"
-                    class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200/80 shadow-2xs transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50">
+                    class="h-[34px] py-0 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200/80 shadow-2xs transition inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50">
                 <i class="fas fa-file-invoice-dollar text-[11px] text-cyan-700" :class="{ 'fa-spin fa-spinner': generatingBills }"></i>
-                <span x-text="generatingBills ? 'Generating...' : 'Generate Monthly Bills'"></span>
+                <span x-text="generatingBills ? 'Generating...' : 'Generate Bills'"></span>
             </button>
             <button type="button" 
                     @click="openAllocationModal()"
-                    class="px-3.5 py-1.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-xs font-semibold shadow-xs transition flex items-center gap-1.5 cursor-pointer">
+                    class="h-[34px] py-0 px-3.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-xs font-semibold shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-plus text-xs"></i>
                 <span>Allocate Bandwidth</span>
             </button>
@@ -112,92 +125,147 @@
         </div>
     </div>
 
-    <!-- 3. Search & Multi-Filter Toolbar (AGENTS.md Rule 2.C) -->
-    <div class="bg-white p-2.5 sm:p-3 rounded-xl border border-slate-200 shadow-xs space-y-2">
-        <form method="GET" action="{{ route('tenant.resellers.bandwidth') }}" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-2 items-center">
+    <!-- 3. Search & Multi-Filter Toolbar (Customer-Standard 2-Tier Filter System - AGENTS.md Rule 2.C) -->
+    <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5" 
+         x-data="{ showMoreFilters: {{ $isMoreOpen ? 'true' : 'false' }}, searchQuery: '{{ addslashes(request('search', '')) }}' }">
+        <form method="GET" action="{{ route('tenant.resellers.bandwidth') }}" class="space-y-2.5">
             
-            <!-- Search Input (MD: 3 Cols) -->
-            <div class="relative md:col-span-3">
-                <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
-                <input type="search" 
-                       name="search" 
-                       value="{{ request('search') }}" 
-                       autocomplete="off"
-                       placeholder="Search reseller, prefix, queue..." 
-                       class="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:border-cyan-500 shadow-2xs">
-            </div>
+            <!-- Tier 1: Primary Filter Bar (Uniform h-[34px] Row) -->
+            <div class="flex flex-col md:flex-row items-stretch md:items-center gap-2">
+                <!-- Intelligent Live Search Box -->
+                <div class="relative flex-1 min-w-[200px]">
+                    <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-xs transition-colors pointer-events-none"
+                       :class="searchQuery ? 'text-cyan-600 font-bold' : 'text-slate-400'"></i>
+                    <input type="search" 
+                           name="search" 
+                           x-model="searchQuery"
+                           autocomplete="off"
+                           placeholder="Search reseller, prefix, queue, router..." 
+                           class="w-full h-[34px] pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs">
+                    <button type="button" 
+                            x-show="searchQuery && searchQuery.length > 0" 
+                            @click="searchQuery = ''; $nextTick(() => $el.closest('form').submit())" 
+                            class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500 text-xs cursor-pointer p-0.5">
+                        <i class="fas fa-times-circle"></i>
+                    </button>
+                </div>
 
-            <!-- Router Filter (MD: 2 Cols) -->
-            <div class="md:col-span-2">
+                <!-- Primary Dropdown: Core Router Filter -->
                 <select name="router_id" 
                         onchange="this.form.submit()" 
-                        class="w-full py-1.5 px-2 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:border-cyan-500 shadow-2xs">
-                    <option value="">All Routers</option>
+                        class="h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs w-full md:w-44 flex-shrink-0">
+                    <option value="">All Core Routers</option>
                     @foreach($routers as $rtr)
                         <option value="{{ $rtr->id }}" {{ (string)request('router_id') === (string)$rtr->id ? 'selected' : '' }}>
                             {{ $rtr->name }}
                         </option>
                     @endforeach
                 </select>
-            </div>
 
-            <!-- Rate Plan Filter (MD: 3 Cols) -->
-            <div class="md:col-span-3">
-                <select name="bandwidth_plan_id" 
-                        onchange="this.form.submit()" 
-                        class="w-full py-1.5 px-2 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:border-cyan-500 shadow-2xs">
-                    <option value="">All Rate Slabs</option>
-                    @foreach($bandwidthPlans as $bp)
-                        <option value="{{ $bp->id }}" {{ (string)request('bandwidth_plan_id') === (string)$bp->id ? 'selected' : '' }}>
-                            {{ $bp->name }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
-
-            <!-- Status Filter (MD: 2 Cols) -->
-            <div class="md:col-span-2">
+                <!-- Primary Dropdown: Line Status Filter -->
                 <select name="status" 
                         onchange="this.form.submit()" 
-                        class="w-full py-1.5 px-2 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:border-cyan-500 shadow-2xs">
+                        class="h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs w-full md:w-36 flex-shrink-0">
                     <option value="">All Status</option>
                     <option value="ACTIVE" {{ request('status') === 'ACTIVE' ? 'selected' : '' }}>Active</option>
                     <option value="THROTTLED" {{ request('status') === 'THROTTLED' ? 'selected' : '' }}>Throttled</option>
                     <option value="SUSPENDED" {{ request('status') === 'SUSPENDED' ? 'selected' : '' }}>Suspended</option>
                 </select>
+
+                <!-- Pagination Selector (per_page) -->
+                <select name="per_page" 
+                        onchange="this.form.submit()" 
+                        class="h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs w-full md:w-28 flex-shrink-0">
+                    <option value="15" {{ request('per_page', 20) == 15 ? 'selected' : '' }}>15 / page</option>
+                    <option value="20" {{ request('per_page', 20) == 20 ? 'selected' : '' }}>20 / page</option>
+                    <option value="30" {{ request('per_page', 20) == 30 ? 'selected' : '' }}>30 / page</option>
+                    <option value="50" {{ request('per_page', 20) == 50 ? 'selected' : '' }}>50 / page</option>
+                    <option value="100" {{ request('per_page', 20) == 100 ? 'selected' : '' }}>100 / page</option>
+                </select>
+
+                <!-- Accordion Toggle Button for Tier-2 Secondary Filters -->
+                <button type="button" 
+                        @click="showMoreFilters = !showMoreFilters" 
+                        class="h-[34px] py-0 px-2.5 bg-slate-50 hover:bg-slate-100 text-slate-700 font-medium text-xs rounded-lg border border-slate-200 transition flex items-center justify-center gap-1.5 flex-shrink-0 cursor-pointer">
+                    <i class="fas fa-sliders text-slate-500 text-[11px]"></i>
+                    <span>More Filters</span>
+                    @if($activeMoreCount > 0)
+                        <span class="w-4 h-4 rounded-full bg-cyan-600 text-white text-[9px] font-bold flex items-center justify-center">{{ $activeMoreCount }}</span>
+                    @endif
+                    <i class="fas text-[10px] ml-0.5 transition-transform" :class="showMoreFilters ? 'fa-chevron-up text-cyan-600' : 'fa-chevron-down text-slate-400'"></i>
+                </button>
+
+                <!-- Strict Filter & Reset Buttons Sequence (AGENTS.md Rule 2.C) -->
+                <div class="flex items-center gap-1.5 flex-shrink-0 md:ml-auto">
+                    <!-- Filter Button -->
+                    <button type="submit" 
+                            class="h-[34px] py-0 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" 
+                            title="Apply Filters">
+                        <i class="fas fa-filter text-[10px]"></i>
+                        <span>Filter</span>
+                    </button>
+                    <!-- Reset Button (Always Visible) -->
+                    <a href="{{ route('tenant.resellers.bandwidth') }}" 
+                       class="h-[34px] py-0 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer" 
+                       title="Reset Filters">
+                        <i class="fas fa-rotate-left text-[10px]"></i>
+                        <span>Reset</span>
+                    </a>
+                </div>
             </div>
 
-            <!-- Strict Filter & Reset Sequence (AGENTS.md Rule 2.C - MD: 2 Cols) -->
-            <div class="flex items-center gap-1.5 md:col-span-2">
-                <button type="submit" 
-                        class="w-1/2 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-1.5 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" 
-                        title="Apply Filters">
-                    <i class="fas fa-filter text-[10px]"></i>
-                    <span>Filter</span>
-                </button>
-                <a href="{{ route('tenant.resellers.bandwidth') }}" 
-                   class="w-1/2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-1.5 px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer" 
-                   title="Reset Filters">
-                    <i class="fas fa-rotate-left text-[10px]"></i>
-                    <span>Reset</span>
-                </a>
+            <!-- Tier 2: Secondary Filter Drawer (Expandable) -->
+            <div x-show="showMoreFilters" 
+                 x-cloak 
+                 x-transition:enter="transition ease-out duration-150"
+                 x-transition:enter-start="opacity-0 -translate-y-1"
+                 x-transition:enter-end="opacity-100 translate-y-0"
+                 class="pt-2 border-t border-slate-100 flex flex-wrap items-center gap-2">
+                
+                <!-- Secondary Filter: Rate Slab Plan -->
+                <div class="w-full sm:w-auto min-w-[200px]">
+                    <select name="bandwidth_plan_id" 
+                            onchange="this.form.submit()" 
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs">
+                        <option value="">All Rate Slabs</option>
+                        @foreach($bandwidthPlans as $bp)
+                            <option value="{{ $bp->id }}" {{ (string)request('bandwidth_plan_id') === (string)$bp->id ? 'selected' : '' }}>
+                                {{ $bp->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <!-- Secondary Filter: Allocation Type -->
+                <div class="w-full sm:w-auto min-w-[180px]">
+                    <select name="allocation_type" 
+                            onchange="this.form.submit()" 
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs">
+                        <option value="">All Allocation Types</option>
+                        <option value="DEDICATED_CIR" {{ request('allocation_type') === 'DEDICATED_CIR' ? 'selected' : '' }}>Dedicated CIR (1:1)</option>
+                        <option value="BURSTABLE_MIR" {{ request('allocation_type') === 'BURSTABLE_MIR' ? 'selected' : '' }}>Burstable MIR (1:4)</option>
+                        <option value="SHARED_RATIO" {{ request('allocation_type') === 'SHARED_RATIO' ? 'selected' : '' }}>Shared Ratio (1:8)</option>
+                    </select>
+                </div>
             </div>
         </form>
     </div>
 
-    <!-- 4. Master Table (<table class="saas-table">) (AGENTS.md Rule 2.D - Minimal 7 Columns) -->
+    <!-- 4. Master Compact Table (<table class="saas-table"> - AGENTS.md Rule 2.D) -->
     <div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
         <div class="overflow-x-auto">
             <table class="saas-table">
                 <thead>
                     <tr>
-                        <th class="w-10 text-center">#</th>
-                        <th>Reseller Partner</th>
-                        <th>Core Router</th>
-                        <th class="w-28 text-right">Total Bandwidth</th>
-                        <th class="w-32 text-center">Rate Slab Plan</th>
-                        <th class="w-36 text-right">Monthly Bill &amp; Due</th>
-                        <th class="w-28 text-center no-sort">Status &amp; Action</th>
+                        <th class="w-10 text-center font-semibold">#</th>
+                        <th class="w-24 text-center font-semibold">Status</th>
+                        <th class="text-center font-semibold">Reseller Partner</th>
+                        <th class="text-center font-semibold">Core Router</th>
+                        <th class="w-28 text-center font-semibold">Total Bandwidth</th>
+                        <th class="w-32 text-center font-semibold">Rate Slab Plan</th>
+                        <th class="w-28 text-center font-semibold">Monthly Bill</th>
+                        <th class="w-24 text-center font-semibold">Payment</th>
+                        <th class="w-10 text-center font-semibold no-sort">Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -207,34 +275,57 @@
                             $latestInv = $res->latestBandwidthInvoice;
                         @endphp
                         <tr>
-                            <!-- 1. Index -->
-                            <td class="text-center font-mono text-slate-500">
+                            <!-- 1. Index (#) -->
+                            <td class="text-center font-mono text-slate-500 whitespace-nowrap">
                                 {{ ($resellers->currentPage() - 1) * $resellers->perPage() + $index + 1 }}
                             </td>
 
-                            <!-- 2. Reseller Partner (Single-Line Pure Name) -->
-                            <td class="font-semibold text-cyan-800">
+                            <!-- 2. Line Status (Single-Line Badge) -->
+                            <td class="text-center whitespace-nowrap">
+                                @if($bw)
+                                    @if($bw->status === 'ACTIVE')
+                                        <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9.5px] font-bold font-mono bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                            <i class="fas fa-circle text-[5px]"></i> ACTIVE
+                                        </span>
+                                    @elseif($bw->status === 'THROTTLED')
+                                        <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9.5px] font-bold font-mono bg-amber-50 text-amber-700 border border-amber-200">
+                                            <i class="fas fa-gauge text-[7px]"></i> THROTTLED
+                                        </span>
+                                    @else
+                                        <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9.5px] font-bold font-mono bg-rose-50 text-rose-700 border border-rose-200">
+                                            <i class="fas fa-pause text-[5px]"></i> SUSPENDED
+                                        </span>
+                                    @endif
+                                @else
+                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9.5px] font-medium font-mono bg-slate-100 text-slate-500 border border-slate-200">
+                                        UNSET
+                                    </span>
+                                @endif
+                            </td>
+
+                            <!-- 3. Reseller Partner (Single-Line Pure Name - Rule 2.D) -->
+                            <td class="text-left font-semibold text-cyan-800 whitespace-nowrap">
                                 <button type="button" 
                                         @click="openDetailsModal({{ Js::from($res) }})" 
-                                        class="hover:underline cursor-pointer text-left font-semibold">
+                                        class="hover:underline cursor-pointer text-left font-semibold truncate max-w-[220px] inline-block align-middle">
                                     {{ $res->name }}
                                 </button>
                             </td>
 
-                            <!-- 3. Core Router -->
-                            <td class="text-slate-700">
+                            <!-- 4. Core Router (Left Align) -->
+                            <td class="text-left text-slate-700 whitespace-nowrap">
                                 {{ $bw?->router?->name ?? 'Standalone' }}
                             </td>
 
-                            <!-- 4. Total Bandwidth -->
-                            <td class="text-right font-mono font-bold text-cyan-800">
+                            <!-- 5. Total Bandwidth (Right Align, Mono) -->
+                            <td class="text-right font-mono font-bold text-cyan-800 whitespace-nowrap">
                                 {{ $bw ? $bw->formatted_total_bandwidth : '—' }}
                             </td>
 
-                            <!-- 5. Rate Slab Plan -->
-                            <td class="text-center">
+                            <!-- 6. Rate Slab Plan (Center Align) -->
+                            <td class="text-center whitespace-nowrap">
                                 @if($bw && $bw->bandwidthPlan)
-                                    <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-cyan-50 text-cyan-700 border border-cyan-200">
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-cyan-50 text-cyan-700 border border-cyan-200 truncate inline-block max-w-[140px]">
                                         {{ $bw->bandwidthPlan->name }}
                                     </span>
                                 @elseif($bw)
@@ -246,71 +337,68 @@
                                 @endif
                             </td>
 
-                            <!-- 6. Monthly Bill & Due Status -->
-                            <td class="text-right font-mono">
+                            <!-- 7. Monthly Bill (Right Align, Currency Standard) -->
+                            <td class="text-right font-mono whitespace-nowrap">
                                 @if($bw && $bw->monthly_bill_amount > 0)
-                                    <div class="font-bold text-slate-900">
-                                        @currency($bw->monthly_bill_amount)
-                                    </div>
+                                    <span class="font-bold text-slate-900">@currency($bw->monthly_bill_amount)</span>
+                                @else
+                                    <span class="text-slate-400 font-normal">—</span>
+                                @endif
+                            </td>
+
+                            <!-- 8. Payment Status (Center Align, Single-Line Badge) -->
+                            <td class="text-center whitespace-nowrap">
+                                @if($bw && $bw->monthly_bill_amount > 0)
                                     @if($latestInv)
                                         @if($latestInv->payment_status === 'PAID')
-                                            <span class="inline-flex items-center gap-1 text-[9.5px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200">
+                                            <span class="inline-flex items-center gap-1 text-[9.5px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
                                                 <i class="fas fa-check-circle text-[8px]"></i> PAID
                                             </span>
                                         @elseif($latestInv->payment_status === 'PARTIAL')
-                                            <span class="inline-flex items-center gap-1 text-[9.5px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.2 rounded border border-amber-200">
-                                                <i class="fas fa-circle-half-stroke text-[8px]"></i> DUE: @currency($latestInv->due_amount)
+                                            <span class="inline-flex items-center gap-1 text-[9.5px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
+                                                <i class="fas fa-circle-half-stroke text-[8px]"></i> PARTIAL
                                             </span>
                                         @else
-                                            <span class="inline-flex items-center gap-1 text-[9.5px] font-bold text-rose-700 bg-rose-50 px-1.5 py-0.2 rounded border border-rose-200">
-                                                <i class="fas fa-clock text-[8px]"></i> DUE: @currency($latestInv->due_amount)
+                                            <span class="inline-flex items-center gap-1 text-[9.5px] font-bold text-rose-700 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200">
+                                                <i class="fas fa-clock text-[8px]"></i> DUE
                                             </span>
                                         @endif
                                     @else
                                         <span class="text-[9.5px] font-medium text-slate-400">UNBILLED</span>
                                     @endif
                                 @else
-                                    <span class="text-slate-400 font-normal">—</span>
+                                    <span class="text-slate-400">—</span>
                                 @endif
                             </td>
 
-                            <!-- 7. Status & 3-Dot Action -->
-                            <td class="text-center">
-                                <div class="inline-flex items-center gap-1.5">
-                                    @if($bw)
-                                        @if($bw->status === 'ACTIVE')
-                                            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9.5px] font-bold font-mono bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                                <i class="fas fa-circle text-[5px]"></i> ACTIVE
-                                            </span>
-                                        @elseif($bw->status === 'THROTTLED')
-                                            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9.5px] font-bold font-mono bg-amber-50 text-amber-700 border border-amber-200">
-                                                <i class="fas fa-gauge text-[7px]"></i> THROTTLED
-                                            </span>
-                                        @else
-                                            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9.5px] font-bold font-mono bg-rose-50 text-rose-700 border border-rose-200">
-                                                <i class="fas fa-pause text-[5px]"></i> SUSPENDED
-                                            </span>
-                                        @endif
-                                    @else
-                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9.5px] font-medium font-mono bg-slate-100 text-slate-500 border border-slate-200">
-                                            UNSET
-                                        </span>
-                                    @endif
-
-                                    <button type="button" 
-                                            @click.stop="toggleMenu({{ Js::from($res) }}, $event)" 
-                                            class="w-6 h-6 rounded-md hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition flex items-center justify-center cursor-pointer"
-                                            title="Actions">
-                                        <i class="fas fa-ellipsis-v text-[10px]"></i>
-                                    </button>
-                                </div>
+                            <!-- 9. 3-Dot Action Button -->
+                            <td class="text-center whitespace-nowrap">
+                                <button type="button" 
+                                        @click.stop="toggleMenu({{ Js::from($res) }}, $event)" 
+                                        class="w-6 h-6 rounded-md hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition inline-flex items-center justify-center cursor-pointer"
+                                        title="Actions">
+                                    <i class="fas fa-ellipsis-v text-[10px]"></i>
+                                </button>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="text-center py-8 text-slate-400 text-xs">
-                                <i class="fas fa-network-wired text-3xl mb-2 block text-slate-300"></i>
-                                <span>No bandwidth allocations found matching your criteria.</span>
+                            <td colspan="9" class="text-center py-8 text-slate-400 text-xs">
+                                <div class="max-w-xs mx-auto space-y-2">
+                                    <div class="w-10 h-10 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto text-base">
+                                        <i class="fas fa-network-wired"></i>
+                                    </div>
+                                    <div class="text-xs font-semibold text-slate-600">No Bandwidth Allocations Found</div>
+                                    <p class="text-[11px] text-slate-400 leading-normal">Configure wholesale bandwidth allocations for your Sub-ISPs and Reseller partners.</p>
+                                    <div class="pt-1">
+                                        <button type="button" 
+                                                @click="openAllocationModal()" 
+                                                class="px-3 py-1.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-xs font-semibold shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer">
+                                            <i class="fas fa-plus text-xs"></i>
+                                            <span>Allocate Bandwidth</span>
+                                        </button>
+                                    </div>
+                                </div>
                             </td>
                         </tr>
                     @endforelse
@@ -321,8 +409,8 @@
         <!-- Pagination -->
         @if($resellers->hasPages())
             <div class="px-4 py-2.5 bg-white border-t border-slate-200 flex items-center justify-between text-xs">
-                <div>
-                    Showing <span class="font-bold">{{ $resellers->firstItem() }}</span> to <span class="font-bold">{{ $resellers->lastItem() }}</span> of <span class="font-bold">{{ $resellers->total() }}</span> entries
+                <div class="text-slate-600">
+                    Showing <span class="font-bold text-slate-800">{{ $resellers->firstItem() }}</span> to <span class="font-bold text-slate-800">{{ $resellers->lastItem() }}</span> of <span class="font-bold text-slate-800">{{ $resellers->total() }}</span> entries
                 </div>
                 <div>
                     {{ $resellers->links() }}
@@ -416,7 +504,7 @@
         <div class="bg-white rounded-xl border border-slate-200/90 shadow-2xl w-full max-w-xl overflow-hidden my-6"
              @click.outside="showModal = false">
             
-            <!-- Soft Natural Header (Rule 3 & Rule 2.A: No subtitles/p-tags) -->
+            <!-- Soft Natural Header -->
             <div class="bg-slate-50/80 border-b border-slate-200 px-4 py-3 flex items-center justify-between">
                 <div class="flex items-center gap-2.5">
                     <div class="w-7 h-7 rounded-lg bg-cyan-50 text-cyan-600 border border-cyan-100 flex items-center justify-center text-xs flex-shrink-0">
@@ -485,8 +573,8 @@
                         </label>
                         <input type="text" 
                                x-model="form.vlan_id" 
-                                placeholder="e.g. 101, 102, 205" 
-                                class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono px-3 py-1.5 focus:bg-white focus:border-cyan-500 shadow-2xs">
+                               placeholder="e.g. 101, 102, 205" 
+                               class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono px-3 py-1.5 focus:bg-white focus:border-cyan-500 shadow-2xs">
                     </div>
                 </div>
 

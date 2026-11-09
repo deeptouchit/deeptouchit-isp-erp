@@ -1,6 +1,6 @@
 @extends('tenant.layouts.app')
 
-@section('title', 'Subscription Invoices & Receipts - ' . ($tenant->company_name ?? $tenant->name))
+@section('title', 'Wholesale Invoices & Receipts - ' . ($tenant->company_name ?? $tenant->name))
 
 @push('styles')
 <style>
@@ -49,40 +49,45 @@
         <span x-text="toast.message"></span>
     </div>
 
-    <!-- 1. Top Header Bar (Strict Rules: Icon + Title + Actions ONLY - No Subtitle) -->
+    <!-- 1. Top Header Bar (Strict Rules: Icon + Title + Count Badge + Actions ONLY - AGENTS.md Rule 2.A) -->
     <div class="flex items-center justify-between bg-white px-3.5 py-2.5 rounded-xl border border-slate-200 shadow-xs">
         <div class="flex items-center gap-2.5">
-            <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-100 flex items-center justify-center text-sm shadow-xs flex-shrink-0">
+            <div class="w-8 h-8 rounded-lg bg-cyan-50 text-cyan-600 border border-cyan-100 flex items-center justify-center text-sm shadow-xs flex-shrink-0">
                 <i class="fas fa-file-invoice-dollar"></i>
             </div>
-            <h1 class="text-xs font-bold text-slate-800 tracking-tight">Subscription Invoices &amp; Receipts</h1>
+            <h1 class="text-xs font-bold text-slate-800 tracking-tight">Wholesale Invoices &amp; Receipts</h1>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-cyan-100 text-cyan-800 border border-cyan-200">
+                {{ $invoices->total() }} Invoices
+            </span>
         </div>
 
         <div class="flex items-center gap-2">
-            <!-- Link to Panel Licenses -->
             <a href="{{ route('tenant.resellers.subscriptions') }}" 
-               class="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-xs shadow-xs transition flex items-center gap-1.5 cursor-pointer">
+               class="h-[34px] py-0 px-3 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-xs shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-key text-slate-400 text-xs"></i>
                 <span>Panel Licenses</span>
             </a>
-
-            <!-- Generate Monthly Bills Button -->
+            <a href="{{ route('tenant.resellers.bandwidth') }}" 
+               class="h-[34px] py-0 px-3 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-xs shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer">
+                <i class="fas fa-network-wired text-cyan-600 text-xs"></i>
+                <span>Bandwidth</span>
+            </a>
             <button type="button" 
                     @click="openBulkBillModal()" 
-                    class="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs shadow-xs transition flex items-center gap-1.5 cursor-pointer">
+                    class="h-[34px] py-0 px-3.5 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-wand-magic-sparkles text-[10px]"></i>
                 <span>Generate Invoices</span>
             </button>
         </div>
     </div>
 
-    <!-- 2. KPI Summary Strip (Strictly 6 Cards) -->
+    <!-- 2. KPI Summary Strip (Strictly 6 Cards - AGENTS.md Rule 2.B) -->
     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
         <!-- Card 1: Total Invoiced -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
-            <div class="min-w-0">
+            <div class="min-w-0 pr-1">
                 <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Total Invoiced</span>
-                <span class="text-[13px] font-bold font-mono leading-tight block text-slate-900">@currency($totalInvoiced)</span>
+                <span class="text-[13px] font-bold font-mono leading-tight block text-slate-900 truncate">@currency($totalInvoiced)</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-slate-100 text-slate-600 border-slate-200 flex items-center justify-center">
                 <i class="fas fa-calculator"></i>
@@ -91,9 +96,9 @@
 
         <!-- Card 2: Total Collected -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
-            <div class="min-w-0">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-emerald-600">Total Collected</span>
-                <span class="text-[13px] font-bold font-mono leading-tight block text-emerald-700">@currency($totalPaid)</span>
+            <div class="min-w-0 pr-1">
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Total Collected</span>
+                <span class="text-[13px] font-bold font-mono leading-tight block text-emerald-700 truncate">@currency($totalPaid)</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-emerald-50 text-emerald-600 border-emerald-100 flex items-center justify-center">
                 <i class="fas fa-circle-check"></i>
@@ -102,9 +107,9 @@
 
         <!-- Card 3: Outstanding Due -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
-            <div class="min-w-0">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-rose-600">Outstanding Due</span>
-                <span class="text-[13px] font-bold font-mono leading-tight block text-rose-700">@currency($totalDue)</span>
+            <div class="min-w-0 pr-1">
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Outstanding Due</span>
+                <span class="text-[13px] font-bold font-mono leading-tight block text-rose-700 truncate">@currency($totalDue)</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-rose-50 text-rose-600 border-rose-100 flex items-center justify-center">
                 <i class="fas fa-clock"></i>
@@ -113,9 +118,9 @@
 
         <!-- Card 4: Paid Count -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
-            <div class="min-w-0">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-emerald-600">Paid Invoices</span>
-                <span class="text-[13px] font-bold font-mono leading-tight block text-emerald-700">{{ number_format($paidCount) }}</span>
+            <div class="min-w-0 pr-1">
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Paid Invoices</span>
+                <span class="text-[13px] font-bold font-mono leading-tight block text-emerald-700 truncate">{{ number_format($paidCount) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-emerald-50 text-emerald-600 border-emerald-100 flex items-center justify-center">
                 <i class="fas fa-file-circle-check"></i>
@@ -124,9 +129,9 @@
 
         <!-- Card 5: Unpaid / Due Count -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
-            <div class="min-w-0">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-amber-600">Unpaid / Due</span>
-                <span class="text-[13px] font-bold font-mono leading-tight block text-amber-700">{{ number_format($dueCount) }}</span>
+            <div class="min-w-0 pr-1">
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Unpaid / Due</span>
+                <span class="text-[13px] font-bold font-mono leading-tight block text-amber-700 truncate">{{ number_format($dueCount) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-amber-50 text-amber-600 border-amber-100 flex items-center justify-center">
                 <i class="fas fa-triangle-exclamation"></i>
@@ -135,130 +140,157 @@
 
         <!-- Card 6: This Month Billed -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
-            <div class="min-w-0">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-purple-600">This Month Billed</span>
-                <span class="text-[13px] font-bold font-mono leading-tight block text-purple-700">@currency($thisMonthBilled)</span>
+            <div class="min-w-0 pr-1">
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">This Month Billed</span>
+                <span class="text-[13px] font-bold font-mono leading-tight block text-cyan-800 truncate">@currency($thisMonthBilled)</span>
             </div>
-            <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-purple-50 text-purple-600 border-purple-100 flex items-center justify-center">
+            <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-cyan-50 text-cyan-600 border-cyan-100 flex items-center justify-center">
                 <i class="fas fa-calendar-check"></i>
             </div>
         </div>
     </div>
 
-    <!-- 3. Search & Filter Bar -->
-    <div class="p-3 bg-white rounded-xl border border-slate-200 shadow-xs">
-        <form action="{{ route('tenant.resellers.invoices') }}" method="GET" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-2">
+    <!-- 3. Search & Multi-Filter Toolbar (Customer-Standard 2-Tier Filter System - AGENTS.md Rule 2.C) -->
+    <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5"
+         x-data="{ showMoreFilters: {{ $isMoreOpen ? 'true' : 'false' }}, searchQuery: '{{ addslashes(request('search', '')) }}' }">
+        <form action="{{ route('tenant.resellers.invoices') }}" method="GET" class="space-y-2.5">
             
-            <!-- Search Input -->
-            <div class="lg:col-span-2">
-                <div class="relative">
-                    <span class="absolute inset-y-0 left-0 flex items-center pl-2.5 pointer-events-none text-slate-400 text-xs">
-                        <i class="fas fa-search"></i>
-                    </span>
-                    <input type="text" 
+            <!-- Tier 1: Primary Filter Bar (Uniform h-[34px] Row) -->
+            <div class="flex flex-col md:flex-row items-stretch md:items-center gap-2">
+                <!-- Intelligent Live Search Box -->
+                <div class="relative flex-1 min-w-[200px]">
+                    <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-xs transition-colors pointer-events-none"
+                       :class="searchQuery ? 'text-cyan-600 font-bold' : 'text-slate-400'"></i>
+                    <input type="search" 
                            name="search" 
-                           value="{{ request('search') }}" 
-                           placeholder="Search Invoice No, Reseller, Notes..." 
-                           class="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-emerald-500 outline-hidden transition font-normal" />
+                           x-model="searchQuery"
+                           autocomplete="off"
+                           placeholder="Search invoice no, reseller, notes..." 
+                           class="w-full h-[34px] pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs">
+                    <button type="button" 
+                            x-show="searchQuery && searchQuery.length > 0" 
+                            @click="searchQuery = ''; $nextTick(() => $el.closest('form').submit())" 
+                            class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500 text-xs cursor-pointer p-0.5">
+                        <i class="fas fa-times-circle"></i>
+                    </button>
                 </div>
-            </div>
 
-            <!-- Reseller Filter Dropdown -->
-            <div>
+                <!-- Reseller Filter Dropdown -->
                 <select name="reseller_id" 
-                        class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 focus:bg-white focus:border-emerald-500 outline-hidden transition font-normal">
+                        onchange="this.form.submit()" 
+                        class="h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs w-full md:w-48 flex-shrink-0">
                     <option value="">All Resellers</option>
                     @foreach($allResellers as $r)
-                        <option value="{{ $r->id }}" {{ request('reseller_id') == $r->id ? 'selected' : '' }}>
+                        <option value="{{ $r->id }}" {{ (string)request('reseller_id') === (string)$r->id ? 'selected' : '' }}>
                             {{ $r->name }} ({{ $r->code }})
                         </option>
                     @endforeach
                 </select>
-            </div>
 
-            <!-- Payment Status Filter -->
-            <div>
+                <!-- Payment Status Filter -->
                 <select name="payment_status" 
-                        class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 focus:bg-white focus:border-emerald-500 outline-hidden transition font-normal">
+                        onchange="this.form.submit()" 
+                        class="h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs w-full md:w-36 flex-shrink-0">
                     <option value="">All Statuses</option>
                     <option value="PAID" {{ request('payment_status') === 'PAID' ? 'selected' : '' }}>Paid</option>
                     <option value="UNPAID" {{ request('payment_status') === 'UNPAID' ? 'selected' : '' }}>Unpaid / Due</option>
                     <option value="PARTIAL" {{ request('payment_status') === 'PARTIAL' ? 'selected' : '' }}>Partial Paid</option>
                     <option value="CANCELLED" {{ request('payment_status') === 'CANCELLED' ? 'selected' : '' }}>Cancelled</option>
                 </select>
-            </div>
 
-            <!-- Billing Month Filter -->
-            <div>
-                <input type="month" 
-                       name="billing_month" 
-                       value="{{ request('billing_month') }}" 
-                       class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 focus:bg-white focus:border-emerald-500 outline-hidden transition font-normal font-mono" />
-            </div>
-
-            <!-- Per Page Selector -->
-            <div>
+                <!-- Pagination Selector (per_page) -->
                 <select name="per_page" 
-                        class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 focus:bg-white focus:border-emerald-500 outline-hidden transition font-normal">
-                    <option value="10" {{ request('per_page') == 10 ? 'selected' : '' }}>10 Per Page</option>
-                    <option value="20" {{ request('per_page', 20) == 20 ? 'selected' : '' }}>20 Per Page</option>
-                    <option value="50" {{ request('per_page') == 50 ? 'selected' : '' }}>50 Per Page</option>
-                    <option value="100" {{ request('per_page') == 100 ? 'selected' : '' }}>100 Per Page</option>
+                        onchange="this.form.submit()" 
+                        class="h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs w-full md:w-28 flex-shrink-0">
+                    <option value="15" {{ request('per_page', 20) == 15 ? 'selected' : '' }}>15 / page</option>
+                    <option value="20" {{ request('per_page', 20) == 20 ? 'selected' : '' }}>20 / page</option>
+                    <option value="30" {{ request('per_page', 20) == 30 ? 'selected' : '' }}>30 / page</option>
+                    <option value="50" {{ request('per_page', 20) == 50 ? 'selected' : '' }}>50 / page</option>
+                    <option value="100" {{ request('per_page', 20) == 100 ? 'selected' : '' }}>100 / page</option>
                 </select>
+
+                <!-- Accordion Toggle Button for Tier-2 Secondary Filters -->
+                <button type="button" 
+                        @click="showMoreFilters = !showMoreFilters" 
+                        class="h-[34px] py-0 px-2.5 bg-slate-50 hover:bg-slate-100 text-slate-700 font-medium text-xs rounded-lg border border-slate-200 transition flex items-center justify-center gap-1.5 flex-shrink-0 cursor-pointer">
+                    <i class="fas fa-sliders text-slate-500 text-[11px]"></i>
+                    <span>More Filters</span>
+                    @if($activeMoreCount > 0)
+                        <span class="w-4 h-4 rounded-full bg-cyan-600 text-white text-[9px] font-bold flex items-center justify-center">{{ $activeMoreCount }}</span>
+                    @endif
+                    <i class="fas text-[10px] ml-0.5 transition-transform" :class="showMoreFilters ? 'fa-chevron-up text-cyan-600' : 'fa-chevron-down text-slate-400'"></i>
+                </button>
+
+                <!-- Strict Filter & Reset Buttons Sequence (AGENTS.md Rule 2.C) -->
+                <div class="flex items-center gap-1.5 flex-shrink-0 md:ml-auto">
+                    <button type="submit" 
+                            class="h-[34px] py-0 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" 
+                            title="Apply Filters">
+                        <i class="fas fa-filter text-[10px]"></i>
+                        <span>Filter</span>
+                    </button>
+                    <a href="{{ route('tenant.resellers.invoices') }}" 
+                       class="h-[34px] py-0 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer" 
+                       title="Reset Filters">
+                        <i class="fas fa-rotate-left text-[10px]"></i>
+                        <span>Reset</span>
+                    </a>
+                </div>
             </div>
 
-            <!-- Action Buttons (Strict Universal Standard) -->
-            <div class="flex items-center gap-1.5 flex-shrink-0">
-                <button type="submit" 
-                        class="flex-1 sm:flex-initial bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-1.5 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" 
-                        title="Apply Filters">
-                    <i class="fas fa-filter text-[10px]"></i>
-                    <span>Filter</span>
-                </button>
-                <a href="{{ route('tenant.resellers.invoices') }}" 
-                   class="flex-1 sm:flex-initial bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-1.5 px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer" 
-                   title="Reset Filters">
-                    <i class="fas fa-rotate-left text-[10px]"></i>
-                    <span>Reset</span>
-                </a>
+            <!-- Tier 2: Secondary Filter Drawer (Expandable) -->
+            <div x-show="showMoreFilters" 
+                 x-cloak 
+                 x-transition:enter="transition ease-out duration-150"
+                 x-transition:enter-start="opacity-0 -translate-y-1"
+                 x-transition:enter-end="opacity-100 translate-y-0"
+                 class="pt-2 border-t border-slate-100 flex flex-wrap items-center gap-2">
+                
+                <!-- Secondary Filter: Billing Month -->
+                <div class="w-full sm:w-auto min-w-[180px]">
+                    <input type="month" 
+                           name="billing_month" 
+                           value="{{ request('billing_month') }}" 
+                           onchange="this.form.submit()"
+                           class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 focus:bg-white focus:border-cyan-500 outline-hidden transition font-mono shadow-2xs" />
+                </div>
+
+                <!-- Secondary Filter: Invoice Type -->
+                <div class="w-full sm:w-auto min-w-[180px]">
+                    <select name="type" 
+                            onchange="this.form.submit()" 
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs">
+                        <option value="">All Invoice Types</option>
+                        <option value="SUBSCRIPTION" {{ request('type') === 'SUBSCRIPTION' ? 'selected' : '' }}>Panel Subscription</option>
+                        <option value="BANDWIDTH" {{ request('type') === 'BANDWIDTH' ? 'selected' : '' }}>Bandwidth Allocation</option>
+                        <option value="MANUAL" {{ request('type') === 'MANUAL' ? 'selected' : '' }}>Manual Wholesale Charge</option>
+                    </select>
+                </div>
             </div>
         </form>
     </div>
 
-    <!-- 4. Master Compact Table (Pure CSS System Compliant) -->
+    <!-- 4. Master Compact Table (<table class="saas-table"> - AGENTS.md Rule 2.D) -->
     <div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
-        <div class="px-3.5 py-2 bg-slate-50/80 border-b border-slate-200 flex items-center justify-between">
-            <span class="font-normal text-slate-700 text-xs flex items-center gap-1.5">
-                <i class="fas fa-file-invoice text-slate-400 text-xs"></i>
-                <span>Subscription Invoices</span>
-            </span>
-            <span class="text-[11px] text-slate-500 font-mono font-normal">
-                Total {{ $invoices->total() }} Invoices
-            </span>
-        </div>
-
         <div class="overflow-x-auto">
             <table class="saas-table">
                 <thead>
                     <tr>
-                        <th class="w-10">#</th>
-                        <th>Status</th>
-                        <th>Invoice No</th>
-                        <th>Code</th>
-                        <th>Reseller Name</th>
-                        <th class="text-center">Billing Month</th>
-                        <th>Invoice Type</th>
-                        <th class="text-right">Total Amount</th>
-                        <th class="text-right">Paid Amount</th>
-                        <th class="text-right">Due Amount</th>
-                        <th class="text-center">Payment Method</th>
-                        <th class="w-10 text-center no-sort">Actions</th>
+                        <th class="w-10 text-center font-semibold">#</th>
+                        <th class="w-20 text-center font-semibold">Status</th>
+                        <th class="w-28 text-center font-semibold">Invoice No</th>
+                        <th class="text-center font-semibold">Reseller Partner</th>
+                        <th class="w-24 text-center font-semibold">Billing Month</th>
+                        <th class="w-28 text-center font-semibold">Total Amount</th>
+                        <th class="w-28 text-center font-semibold">Paid Amount</th>
+                        <th class="w-28 text-center font-semibold">Due Amount</th>
+                        <th class="w-24 text-center font-semibold">Method</th>
+                        <th class="w-10 text-center font-semibold no-sort">Action</th>
                     </tr>
                 </thead>
-                <tbody class="text-slate-700">
+                <tbody>
                     @forelse($invoices as $index => $inv)
                         @php
-                            $statusBadge = $inv->status_badge;
                             $invPayload = [
                                 'id' => $inv->id,
                                 'invoice_no' => $inv->invoice_no,
@@ -283,32 +315,29 @@
                         @endphp
                         <tr>
                             <!-- 1. Index -->
-                            <td class="font-mono text-slate-400">
-                                {{ $invoices->firstItem() + $index }}
+                            <td class="text-center font-mono text-slate-400 whitespace-nowrap">
+                                {{ ($invoices->currentPage() - 1) * $invoices->perPage() + $index + 1 }}
                             </td>
 
-                            <!-- 2. Status -->
-                            <td>
+                            <!-- 2. Status (Center Align, Single-Line Badge) -->
+                            <td class="text-center whitespace-nowrap">
                                 @if($inv->payment_status === 'PAID')
-                                    <span class="inline-flex items-center justify-center gap-1 px-2 py-0.5 rounded-full text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                        <span>Paid</span>
+                                    <span class="inline-flex items-center justify-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                        <i class="fas fa-check-circle text-[8px]"></i> Paid
                                     </span>
                                 @elseif($inv->payment_status === 'PARTIAL')
-                                    <span class="inline-flex items-center justify-center gap-1 px-2 py-0.5 rounded-full text-[10px] bg-amber-50 text-amber-700 border border-amber-200">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                                        <span>Partial</span>
+                                    <span class="inline-flex items-center justify-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                                        <i class="fas fa-circle-half-stroke text-[8px]"></i> Partial
                                     </span>
                                 @else
-                                    <span class="inline-flex items-center justify-center gap-1 px-2 py-0.5 rounded-full text-[10px] bg-rose-50 text-rose-700 border border-rose-200">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
-                                        <span>Unpaid</span>
+                                    <span class="inline-flex items-center justify-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+                                        <i class="fas fa-clock text-[8px]"></i> Unpaid
                                     </span>
                                 @endif
                             </td>
 
-                            <!-- 3. Invoice No -->
-                            <td class="font-mono text-cyan-800 font-semibold">
+                            <!-- 3. Invoice No (Center Align, Mono) -->
+                            <td class="text-center font-mono text-cyan-800 font-semibold whitespace-nowrap">
                                 <button type="button" 
                                         @click="openReceiptModal({{ Js::from($invPayload) }})" 
                                         class="hover:underline cursor-pointer">
@@ -316,75 +345,65 @@
                                 </button>
                             </td>
 
-                            <!-- 4. Reseller Code -->
-                            <td class="font-mono text-purple-700 font-semibold">
-                                {{ $inv->reseller?->code ?? '--' }}
+                            <!-- 4. Reseller Partner (Left Align) -->
+                            <td class="text-left font-semibold text-slate-800 whitespace-nowrap">
+                                <span class="truncate max-w-[200px] inline-block align-middle">{{ $inv->reseller?->name ?? 'N/A' }}</span>
                             </td>
 
-                            <!-- 5. Reseller Name -->
-                            <td class="text-slate-800 font-medium">
-                                {{ $inv->reseller?->name ?? 'N/A' }}
+                            <!-- 5. Billing Month (Center Align, Mono) -->
+                            <td class="text-center font-mono text-[11px] text-slate-700 whitespace-nowrap">
+                                {{ $inv->billing_month ? \Carbon\Carbon::parse($inv->billing_month)->format('M Y') : '—' }}
                             </td>
 
-                            <!-- 6. Billing Month -->
-                            <td class="text-center font-mono text-[11px] text-slate-700">
-                                {{ $inv->billing_month ? \Carbon\Carbon::parse($inv->billing_month)->format('M Y') : '--' }}
-                            </td>
-
-                            <!-- 7. Invoice Type -->
-                            <td class="text-slate-600 text-[11px]">
-                                {{ $inv->type_label }}
-                            </td>
-
-                            <!-- 8. Total Amount -->
-                            <td class="text-right font-mono font-bold text-slate-900">
+                            <!-- 6. Total Amount (Right Align, Mono) -->
+                            <td class="text-right font-mono font-bold text-slate-900 whitespace-nowrap">
                                 @currency($inv->amount)
                             </td>
 
-                            <!-- 9. Paid Amount -->
-                            <td class="text-right font-mono font-semibold text-emerald-700">
+                            <!-- 7. Paid Amount (Right Align, Mono) -->
+                            <td class="text-right font-mono font-bold text-emerald-700 whitespace-nowrap">
                                 @currency($inv->paid_amount)
                             </td>
 
-                            <!-- 10. Due Amount -->
-                            <td class="text-right font-mono font-semibold text-rose-600">
+                            <!-- 8. Due Amount (Right Align, Mono) -->
+                            <td class="text-right font-mono font-bold text-rose-600 whitespace-nowrap">
                                 @currency($inv->due_amount)
                             </td>
 
-                            <!-- 11. Payment Method -->
-                            <td class="text-center font-mono text-[10px]">
+                            <!-- 9. Payment Method (Center Align, Mono) -->
+                            <td class="text-center font-mono text-[10px] whitespace-nowrap">
                                 @if($inv->payment_method)
-                                    <span class="inline-flex px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
+                                    <span class="inline-flex px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200 font-medium">
                                         {{ str_replace('_', ' ', $inv->payment_method) }}
                                     </span>
                                 @else
-                                    <span class="text-slate-400">--</span>
+                                    <span class="text-slate-400">—</span>
                                 @endif
                             </td>
 
-                            <!-- 12. Actions (3-Dot Action Button) -->
-                            <td class="w-10 text-center">
+                            <!-- 10. Actions (3-Dot Action Button) -->
+                            <td class="text-center whitespace-nowrap">
                                 <button type="button" 
                                         @click.stop="toggleMenu({{ Js::from($invPayload) }}, $event)" 
-                                        class="inv-action-btn w-5 h-5 mx-auto rounded hover:bg-slate-200 text-slate-500 hover:text-emerald-700 transition cursor-pointer flex items-center justify-center text-[10px]"
+                                        class="w-6 h-6 rounded hover:bg-slate-100 text-slate-500 hover:text-cyan-600 transition inline-flex items-center justify-center cursor-pointer"
                                         title="Actions">
-                                    <i class="fas fa-ellipsis-v text-[10px] pointer-events-none"></i>
+                                    <i class="fas fa-ellipsis-v text-[10px]"></i>
                                 </button>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="12" class="p-8 text-center">
+                            <td colspan="10" class="p-8 text-center">
                                 <div class="max-w-md mx-auto space-y-2">
-                                    <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 mx-auto flex items-center justify-center text-base border border-emerald-100">
+                                    <div class="w-10 h-10 rounded-xl bg-cyan-50 text-cyan-600 mx-auto flex items-center justify-center text-base border border-cyan-100">
                                         <i class="fas fa-file-invoice"></i>
                                     </div>
-                                    <h3 class="text-xs font-normal text-slate-800">No Invoices Found</h3>
+                                    <h3 class="text-xs font-semibold text-slate-800">No Invoices Found</h3>
                                     <p class="text-[11px] text-slate-400 font-normal">Generate monthly bills or record partner renewals to create invoices.</p>
                                     <div class="pt-1 flex items-center justify-center gap-2">
                                         <button type="button" 
                                                 @click="openBulkBillModal()" 
-                                                class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs px-3.5 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
+                                                class="bg-cyan-600 hover:bg-cyan-700 text-white font-medium text-xs px-3.5 py-1.5 rounded-lg shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer">
                                             <i class="fas fa-wand-magic-sparkles text-[10px]"></i>
                                             <span>Generate Monthly Invoices</span>
                                         </button>
@@ -399,43 +418,38 @@
 
         <!-- Pagination Bar -->
         @if($invoices->hasPages())
-            <div class="px-3.5 py-2.5 bg-slate-50/80 border-t border-slate-200 flex items-center justify-between">
-                <span class="text-[11px] text-slate-500 font-normal">
-                    Showing {{ $invoices->firstItem() }} to {{ $invoices->lastItem() }} of {{ $invoices->total() }} invoices
-                </span>
-                <div class="scale-90 origin-right">
+            <div class="px-4 py-2.5 bg-white border-t border-slate-200 flex items-center justify-between text-xs text-slate-600">
+                <div>
+                    Showing <span class="font-bold text-slate-800">{{ $invoices->firstItem() }}</span> to <span class="font-bold text-slate-800">{{ $invoices->lastItem() }}</span> of <span class="font-bold text-slate-800">{{ $invoices->total() }}</span> invoices
+                </div>
+                <div>
                     {{ $invoices->links() }}
                 </div>
             </div>
         @endif
     </div>
 
-    <!-- 5. Global Floating 3-Dot Action Menu -->
+    <!-- 5. Global Floating 3-Dot Action Menu (Strict AGENTS.md Rule 2.E) -->
     <div x-show="activeMenu !== null" 
-         @click.away="activeMenu = null"
-         x-transition:enter="transition ease-out duration-100"
-         x-transition:enter-start="opacity-0 scale-95"
-         x-transition:enter-end="opacity-100 scale-100"
-         x-transition:leave="transition ease-in duration-75"
-         x-transition:leave-start="opacity-100 scale-100"
-         x-transition:leave-end="opacity-0 scale-95"
-         class="fixed z-50 w-52 bg-white rounded-xl shadow-2xl border border-slate-200 py-1.5 text-xs divide-y divide-slate-100"
-         :style="`top: ${menuPos.top}; bottom: ${menuPos.bottom}; right: ${menuPos.right}; left: ${menuPos.left};`"
+         x-cloak
+         @click.outside="activeMenu = null"
+         class="fixed z-50 w-52 bg-white rounded-xl shadow-2xl border border-slate-200 py-1 text-xs divide-y divide-slate-100"
+         :style="menuPos"
          style="display: none;">
 
         <!-- Group 1: View & Collect -->
         <div class="py-1">
             <button type="button" 
                     @click="openReceiptModal(activeMenu); activeMenu = null;" 
-                    class="w-full text-left px-3.5 py-1.5 hover:bg-slate-50 text-slate-700 hover:text-emerald-600 flex items-center gap-2 transition cursor-pointer">
-                <i class="fas fa-receipt w-3.5 text-slate-400"></i>
+                    class="w-full text-left px-3.5 py-1.5 hover:bg-slate-50 text-slate-700 hover:text-cyan-700 flex items-center gap-2 transition cursor-pointer">
+                <i class="fas fa-receipt w-3.5 text-cyan-600"></i>
                 <span>View Receipt / Invoice</span>
             </button>
             <button type="button" 
                     x-show="activeMenu?.payment_status !== 'PAID'"
                     @click="openPaymentModal(activeMenu); activeMenu = null;" 
-                    class="w-full text-left px-3.5 py-1.5 hover:bg-slate-50 text-emerald-700 font-semibold flex items-center gap-2 transition cursor-pointer">
-                <i class="fas fa-hand-holding-dollar w-3.5 text-emerald-500"></i>
+                    class="w-full text-left px-3.5 py-1.5 hover:bg-emerald-50 text-emerald-700 font-semibold flex items-center gap-2 transition cursor-pointer">
+                <i class="fas fa-hand-holding-dollar w-3.5 text-emerald-600"></i>
                 <span>Collect Payment</span>
             </button>
         </div>
@@ -445,42 +459,40 @@
             <button type="button" 
                     @click="deleteInvoice(activeMenu.id, activeMenu.invoice_no); activeMenu = null;" 
                     class="w-full text-left px-3.5 py-1.5 hover:bg-rose-50 text-rose-600 flex items-center gap-2 transition cursor-pointer">
-                <i class="fas fa-trash-can w-3.5 text-rose-400"></i>
+                <i class="fas fa-trash-can w-3.5 text-rose-500"></i>
                 <span>Delete Invoice</span>
             </button>
         </div>
     </div>
 
-    <!-- 6. MODAL 1: View / Print Invoice Receipt -->
+    <!-- 6. MODAL 1: View / Print Invoice Receipt (Soft Natural Header - AGENTS.md Rule 3) -->
     <div x-show="modals.receipt" 
-         x-transition:enter="transition ease-out duration-200"
+         x-cloak
+         x-transition:enter="transition ease-out duration-150"
          x-transition:enter-start="opacity-0"
          x-transition:enter-end="opacity-100"
-         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave="transition ease-in duration-100"
          x-transition:leave-start="opacity-100"
          x-transition:leave-end="opacity-0"
-         class="bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 fixed inset-0 z-50"
+         class="bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 fixed inset-0 z-50 overflow-y-auto"
          style="display: none;">
         
-        <div @click.away="modals.receipt = false" 
-             x-transition:enter="transition ease-out duration-150"
-             x-transition:enter-start="transform opacity-0 scale-95"
-             x-transition:enter-end="transform opacity-100 scale-100"
-             class="bg-white rounded-xl border border-slate-200/90 shadow-2xl w-full max-w-xl overflow-hidden">
+        <div @click.outside="modals.receipt = false" 
+             class="bg-white rounded-xl border border-slate-200/90 shadow-2xl w-full max-w-xl overflow-hidden my-6">
             
             <!-- Soft Natural Header -->
             <div class="px-4 py-3 bg-slate-50/80 border-b border-slate-200 flex items-center justify-between">
                 <div class="flex items-center gap-2.5">
-                    <div class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center text-xs flex-shrink-0">
+                    <div class="w-7 h-7 rounded-lg bg-cyan-50 text-cyan-600 border border-cyan-100 flex items-center justify-center text-xs flex-shrink-0">
                         <i class="fas fa-file-invoice"></i>
                     </div>
-                    <div>
+                    <div class="flex items-center gap-2">
                         <h3 class="text-xs font-semibold text-slate-800" x-text="receiptItem?.invoice_no"></h3>
-                        <p class="text-[10.5px] text-slate-500 font-normal">Subscription Invoice &amp; Payment Receipt</p>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-cyan-50 text-cyan-700 border border-cyan-100">Subscription Receipt</span>
                     </div>
                 </div>
                 <button type="button" @click="modals.receipt = false" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center text-xs cursor-pointer">
-                    <i class="fas fa-xmark"></i>
+                    <i class="fas fa-times"></i>
                 </button>
             </div>
 
@@ -490,14 +502,14 @@
                 <div class="flex items-start justify-between border-b border-slate-200 pb-3">
                     <div>
                         <h2 class="text-sm font-bold text-slate-900">{{ $tenant->company_name ?? $tenant->name }}</h2>
-                        <p class="text-[11px] text-slate-500">{{ $tenant->address ?? 'ISP Billing Center' }}</p>
-                        <p class="text-[11px] text-slate-500">Phone: {{ $tenant->phone ?? 'N/A' }}</p>
+                        <span class="text-[11px] text-slate-500 block">{{ $tenant->address ?? 'ISP Billing Center' }}</span>
+                        <span class="text-[11px] text-slate-500 block">Phone: {{ $tenant->phone ?? 'N/A' }}</span>
                     </div>
                     <div class="text-right">
                         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase"
                               :class="receiptItem?.payment_status === 'PAID' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'"
                               x-text="receiptItem?.payment_status"></span>
-                        <p class="text-xs font-mono font-bold text-slate-800 mt-1" x-text="receiptItem?.invoice_no"></p>
+                        <div class="text-xs font-mono font-bold text-slate-800 mt-1" x-text="receiptItem?.invoice_no"></div>
                     </div>
                 </div>
 
@@ -505,15 +517,15 @@
                 <div class="grid grid-cols-2 gap-3 p-3 bg-slate-50 rounded-lg border border-slate-200/80">
                     <div>
                         <span class="text-[10px] text-slate-400 uppercase tracking-wider block">Billed To (Reseller)</span>
-                        <p class="font-bold text-slate-900 text-xs" x-text="receiptItem?.reseller_name"></p>
-                        <p class="text-[11px] text-slate-600 font-mono" x-text="'Code: ' + receiptItem?.reseller_code"></p>
-                        <p class="text-[11px] text-slate-600" x-text="receiptItem?.reseller_mobile"></p>
+                        <div class="font-bold text-slate-900 text-xs" x-text="receiptItem?.reseller_name"></div>
+                        <div class="text-[11px] text-slate-600 font-mono" x-text="'Code: ' + receiptItem?.reseller_code"></div>
+                        <div class="text-[11px] text-slate-600" x-text="receiptItem?.reseller_mobile"></div>
                     </div>
                     <div class="text-right">
                         <span class="text-[10px] text-slate-400 uppercase tracking-wider block">Billing Period</span>
-                        <p class="font-bold text-slate-900 text-xs" x-text="receiptItem?.billing_month"></p>
-                        <p class="text-[11px] text-slate-600" x-text="receiptItem?.period_start + ' ~ ' + receiptItem?.period_end"></p>
-                        <p class="text-[11px] text-slate-500" x-text="receiptItem?.paid_at ? 'Paid on: ' + receiptItem?.paid_at : 'Status: Unpaid'"></p>
+                        <div class="font-bold text-slate-900 text-xs" x-text="receiptItem?.billing_month"></div>
+                        <div class="text-[11px] text-slate-600" x-text="receiptItem?.period_start + ' ~ ' + receiptItem?.period_end"></div>
+                        <div class="text-[11px] text-slate-500" x-text="receiptItem?.paid_at ? 'Paid on: ' + receiptItem?.paid_at : 'Status: Unpaid'"></div>
                     </div>
                 </div>
 
@@ -564,13 +576,13 @@
                     <button type="button" 
                             x-show="receiptItem?.payment_status !== 'PAID'"
                             @click="modals.receipt = false; openPaymentModal(receiptItem);" 
-                            class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs px-3.5 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
+                            class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs px-3.5 py-1.5 rounded-lg shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer">
                         <i class="fas fa-hand-holding-dollar text-[10px]"></i>
                         <span>Collect Payment</span>
                     </button>
                     <button type="button" 
                             @click="window.print()" 
-                            class="bg-slate-800 hover:bg-slate-900 text-white font-medium text-xs px-3.5 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
+                            class="bg-slate-800 hover:bg-slate-900 text-white font-medium text-xs px-3.5 py-1.5 rounded-lg shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer">
                         <i class="fas fa-print text-[10px]"></i>
                         <span>Print Receipt</span>
                     </button>
@@ -581,17 +593,18 @@
 
     <!-- 7. MODAL 2: Collect Payment / Settle Invoice -->
     <div x-show="modals.payment" 
-         x-transition:enter="transition ease-out duration-200"
+         x-cloak
+         x-transition:enter="transition ease-out duration-150"
          x-transition:enter-start="opacity-0"
          x-transition:enter-end="opacity-100"
-         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave="transition ease-in duration-100"
          x-transition:leave-start="opacity-100"
          x-transition:leave-end="opacity-0"
-         class="bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 fixed inset-0 z-50"
+         class="bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 fixed inset-0 z-50 overflow-y-auto"
          style="display: none;">
         
-        <div @click.away="modals.payment = false" 
-             class="bg-white rounded-xl border border-slate-200/90 shadow-2xl w-full max-w-md overflow-hidden">
+        <div @click.outside="modals.payment = false" 
+             class="bg-white rounded-xl border border-slate-200/90 shadow-2xl w-full max-w-md overflow-hidden my-6">
             
             <!-- Soft Natural Header -->
             <div class="px-4 py-3 bg-slate-50/80 border-b border-slate-200 flex items-center justify-between">
@@ -599,20 +612,20 @@
                     <div class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center text-xs flex-shrink-0">
                         <i class="fas fa-hand-holding-dollar"></i>
                     </div>
-                    <div>
+                    <div class="flex items-center gap-2">
                         <h3 class="text-xs font-semibold text-slate-800">Collect Invoice Payment</h3>
-                        <p class="text-[10.5px] text-slate-500 font-normal" x-text="paymentItem?.invoice_no"></p>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-slate-200 text-slate-700 font-semibold" x-text="paymentItem?.invoice_no"></span>
                     </div>
                 </div>
                 <button type="button" @click="modals.payment = false" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center text-xs cursor-pointer">
-                    <i class="fas fa-xmark"></i>
+                    <i class="fas fa-times"></i>
                 </button>
             </div>
 
             <!-- Modal Form Body -->
             <div class="p-4 space-y-3.5 text-xs">
                 <!-- Info Summary -->
-                <div class="p-3 bg-emerald-50/60 rounded-lg border border-emerald-100 grid grid-cols-2 gap-2 text-xs">
+                <div class="p-3 bg-slate-50 rounded-lg border border-slate-200 grid grid-cols-2 gap-2 text-xs">
                     <div>
                         <span class="text-[10.5px] text-slate-500 block">Reseller:</span>
                         <span class="font-semibold text-slate-800" x-text="paymentItem?.reseller_name"></span>
@@ -631,7 +644,7 @@
                     <input type="number" 
                            step="0.01" 
                            x-model="paymentForm.amount" 
-                           class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono font-bold text-slate-800 focus:bg-white focus:border-emerald-500 outline-hidden transition" />
+                           class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono font-bold text-slate-800 focus:bg-white focus:border-cyan-500 outline-hidden transition shadow-2xs" />
                 </div>
 
                 <!-- Payment Method -->
@@ -640,7 +653,7 @@
                         Payment Method <span class="text-rose-500">*</span>
                     </label>
                     <select x-model="paymentForm.payment_method" 
-                            class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-emerald-500 outline-hidden transition font-normal">
+                            class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 outline-hidden transition font-normal shadow-2xs">
                         <option value="CASH">Cash Collection</option>
                         <option value="WALLET_DEDUCT">Deduct from Reseller Wallet</option>
                         <option value="BANK">Bank Transfer / Deposit</option>
@@ -655,7 +668,7 @@
                     <input type="text" 
                            x-model="paymentForm.notes" 
                            placeholder="e.g. Received via bKash TrxID #827182" 
-                           class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-emerald-500 outline-hidden transition font-normal" />
+                           class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 outline-hidden transition font-normal shadow-2xs" />
                 </div>
             </div>
 
@@ -669,7 +682,7 @@
                 <button type="button" 
                         @click="submitPayment()" 
                         :disabled="saving"
-                        class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs px-4 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50">
+                        class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs px-4 py-1.5 rounded-lg shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50">
                     <i class="fas fa-check text-[10px]"></i>
                     <span x-text="saving ? 'Recording...' : 'Confirm Payment'"></span>
                 </button>
@@ -679,31 +692,31 @@
 
     <!-- 8. MODAL 3: Bulk Generate Monthly Invoices -->
     <div x-show="modals.bulkBill" 
-         x-transition:enter="transition ease-out duration-200"
+         x-cloak
+         x-transition:enter="transition ease-out duration-150"
          x-transition:enter-start="opacity-0"
          x-transition:enter-end="opacity-100"
-         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave="transition ease-in duration-100"
          x-transition:leave-start="opacity-100"
          x-transition:leave-end="opacity-0"
-         class="bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 fixed inset-0 z-50"
+         class="bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 fixed inset-0 z-50 overflow-y-auto"
          style="display: none;">
         
-        <div @click.away="modals.bulkBill = false" 
-             class="bg-white rounded-xl border border-slate-200/90 shadow-2xl w-full max-w-md overflow-hidden">
+        <div @click.outside="modals.bulkBill = false" 
+             class="bg-white rounded-xl border border-slate-200/90 shadow-2xl w-full max-w-md overflow-hidden my-6">
             
             <!-- Soft Natural Header -->
             <div class="px-4 py-3 bg-slate-50/80 border-b border-slate-200 flex items-center justify-between">
                 <div class="flex items-center gap-2.5">
-                    <div class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center text-xs flex-shrink-0">
+                    <div class="w-7 h-7 rounded-lg bg-cyan-50 text-cyan-600 border border-cyan-100 flex items-center justify-center text-xs flex-shrink-0">
                         <i class="fas fa-wand-magic-sparkles"></i>
                     </div>
-                    <div>
+                    <div class="flex items-center gap-2">
                         <h3 class="text-xs font-semibold text-slate-800">Generate Monthly Invoices</h3>
-                        <p class="text-[10.5px] text-slate-500 font-normal">Auto-create invoices for all active reseller licenses</p>
                     </div>
                 </div>
                 <button type="button" @click="modals.bulkBill = false" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center text-xs cursor-pointer">
-                    <i class="fas fa-xmark"></i>
+                    <i class="fas fa-times"></i>
                 </button>
             </div>
 
@@ -715,17 +728,17 @@
                     </label>
                     <input type="month" 
                            x-model="bulkForm.billing_month" 
-                           class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono text-slate-800 focus:bg-white focus:border-emerald-500 outline-hidden transition" />
+                           class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono text-slate-800 focus:bg-white focus:border-cyan-500 outline-hidden transition shadow-2xs" />
                 </div>
 
                 <div class="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-2">
                     <label class="flex items-start gap-2 cursor-pointer">
                         <input type="checkbox" 
                                x-model="bulkForm.auto_deduct_wallet" 
-                               class="mt-0.5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500" />
+                               class="mt-0.5 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500" />
                         <div>
                             <span class="font-semibold text-slate-800 block text-xs">Auto-deduct from Reseller Wallet</span>
-                            <span class="text-[10.5px] text-slate-500">If checked and the reseller has sufficient balance, invoice will be marked as PAID immediately.</span>
+                            <span class="text-[10.5px] text-slate-500 leading-normal block">If checked and the reseller has sufficient balance, invoice will be marked as PAID immediately.</span>
                         </div>
                     </label>
                 </div>
@@ -741,7 +754,7 @@
                 <button type="button" 
                         @click="submitBulkBill()" 
                         :disabled="saving"
-                        class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs px-4 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50">
+                        class="bg-cyan-600 hover:bg-cyan-700 text-white font-medium text-xs px-4 py-1.5 rounded-lg shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50">
                     <i class="fas fa-wand-magic-sparkles text-[10px]"></i>
                     <span x-text="saving ? 'Generating...' : 'Generate Invoices'"></span>
                 </button>
