@@ -176,8 +176,10 @@ Route::middleware(['web'])->group(function () {
             Route::patch('/vlans/{vlan}/toggle-status', [VlanController::class, 'toggleStatus'])->name('vlans.toggle-status');
             Route::post('/vlans/{vlan}/sync', [VlanController::class, 'syncMikrotik'])->name('vlans.sync');
             Route::get('/routing', [RoutingController::class, 'index'])->name('routing');
+            Route::get('/routing/create', [RoutingController::class, 'create'])->name('routing.create');
             Route::post('/routing', [RoutingController::class, 'store'])->name('routing.store');
             Route::post('/routing/import-mikrotik', [RoutingController::class, 'importFromMikrotik'])->name('routing.import-mikrotik');
+            Route::get('/routing/{route}/edit', [RoutingController::class, 'edit'])->name('routing.edit');
             Route::get('/routing/{route}', [RoutingController::class, 'show'])->name('routing.show');
             Route::put('/routing/{route}', [RoutingController::class, 'update'])->name('routing.update');
             Route::delete('/routing/{route}', [RoutingController::class, 'destroy'])->name('routing.destroy');

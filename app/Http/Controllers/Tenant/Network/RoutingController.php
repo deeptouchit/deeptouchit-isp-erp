@@ -53,14 +53,17 @@ class RoutingController extends Controller
             $query->where('type', $type);
         }
 
-        // Routing Table Filter
+        // Secondary Filters
         if ($table = $request->input('routing_table')) {
             $query->where('routing_table', $table);
         }
 
-        // Status Filter
         if ($status = $request->input('status')) {
             $query->where('status', $status);
+        }
+
+        if ($request->filled('is_sync')) {
+            $query->where('is_sync_mikrotik', (bool)$request->input('is_sync'));
         }
 
         $perPage = (int) $request->input('per_page', 30);
@@ -90,6 +93,23 @@ class RoutingController extends Controller
             $metricBase->where('type', $type);
         }
 
+        if ($table = $request->input('routing_table')) {
+            $metricBase->where('routing_table', $table);
+        }
+
+        if ($status = $request->input('status')) {
+            $metricBase->where('status', $status);
+        }
+
+        if ($request->filled('is_sync')) {
+            $metricBase->where('is_sync_mikrotik', (bool)$request->input('is_sync'));
+        }
+
+        $activeMoreCount = ($request->filled('status') ? 1 : 0) +
+                           ($request->filled('is_sync') ? 1 : 0) +
+                           ($request->filled('routing_table') ? 1 : 0);
+        $isMoreOpen = $activeMoreCount > 0;
+
         $totalRoutes = (clone $metricBase)->count();
         $defaultGateways = (clone $metricBase)->where('dst_address', '0.0.0.0/0')->count();
         $staticRoutes = (clone $metricBase)->where('type', 'static')->count();
@@ -106,8 +126,41 @@ class RoutingController extends Controller
             'staticRoutes',
             'dynamicRoutes',
             'activeRoutes',
-            'syncedRoutes'
+            'syncedRoutes',
+            'activeMoreCount',
+            'isMoreOpen'
         ));
+    }
+
+    /**
+     * Show form for creating a new Route.
+     */
+    public function create()
+    {
+        $tenant = Auth::user()?->tenant;
+        if (!$tenant) {
+            abort(404, 'ISP Tenant record not found.');
+        }
+
+        $routers = TenantRouter::where('tenant_id', $tenant->id)->get(['id', 'name', 'ip_address']);
+
+        return view('tenant.network.routing_create', compact('tenant', 'routers'));
+    }
+
+    /**
+     * Show form for editing an existing Route.
+     */
+    public function edit($id)
+    {
+        $tenant = Auth::user()?->tenant;
+        if (!$tenant) {
+            abort(404, 'ISP Tenant record not found.');
+        }
+
+        $route = TenantRoute::where('tenant_id', $tenant->id)->with('router')->findOrFail($id);
+        $routers = TenantRouter::where('tenant_id', $tenant->id)->get(['id', 'name', 'ip_address']);
+
+        return view('tenant.network.routing_edit', compact('tenant', 'route', 'routers'));
     }
 
     /**
