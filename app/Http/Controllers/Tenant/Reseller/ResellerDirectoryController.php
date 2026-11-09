@@ -32,6 +32,8 @@ class ResellerDirectoryController extends Controller
         $search = $request->input('search');
         $billingType = $request->input('billing_type');
         $status = $request->input('status');
+        $walletState = $request->input('wallet_state');
+        $hasPrefix = $request->input('has_prefix');
         $perPage = (int) $request->input('per_page', 20);
 
         // 1. Base Query
@@ -56,6 +58,25 @@ class ResellerDirectoryController extends Controller
         if ($status) {
             $query->where('status', $status);
         }
+
+        if ($walletState === 'positive') {
+            $query->where('wallet_balance', '>', 0);
+        } elseif ($walletState === 'zero_negative') {
+            $query->where('wallet_balance', '<=', 0);
+        } elseif ($walletState === 'credit_exceeded') {
+            $query->whereRaw('wallet_balance < -credit_limit');
+        }
+
+        if ($hasPrefix === 'yes') {
+            $query->whereNotNull('prefix')->where('prefix', '!=', '');
+        } elseif ($hasPrefix === 'no') {
+            $query->where(function ($q) {
+                $q->whereNull('prefix')->orWhere('prefix', '');
+            });
+        }
+
+        $activeMoreCount = ($request->filled('wallet_state') ? 1 : 0) + ($request->filled('has_prefix') ? 1 : 0);
+        $isMoreOpen = $activeMoreCount > 0;
 
         // 3. Pagination
         $resellers = $query->latest('id')->paginate($perPage)->withQueryString();
@@ -99,6 +120,10 @@ class ResellerDirectoryController extends Controller
             'search',
             'billingType',
             'status',
+            'walletState',
+            'hasPrefix',
+            'activeMoreCount',
+            'isMoreOpen',
             'perPage'
         ));
     }
