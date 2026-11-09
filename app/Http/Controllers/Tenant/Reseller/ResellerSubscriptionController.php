@@ -28,6 +28,7 @@ class ResellerSubscriptionController extends Controller
         $search = $request->input('search');
         $selectedResellerId = $request->input('reseller_id');
         $panelStatusFilter = $request->input('panel_status');
+        $billingType = $request->input('billing_type');
         $perPage = (int) $request->input('per_page', 20);
 
         // 1. Fetch All Resellers for filter dropdown & KPI sums
@@ -49,6 +50,13 @@ class ResellerSubscriptionController extends Controller
         if ($selectedResellerId) {
             $resellerQuery->where('id', $selectedResellerId);
         }
+
+        if ($billingType) {
+            $resellerQuery->where('billing_type', $billingType);
+        }
+
+        $activeMoreCount = ($request->filled('reseller_id') ? 1 : 0) + ($request->filled('billing_type') ? 1 : 0);
+        $isMoreOpen = $activeMoreCount > 0;
 
         $today = Carbon::today();
         $soonThreshold = Carbon::today()->addDays(7);
@@ -102,6 +110,9 @@ class ResellerSubscriptionController extends Controller
             'search',
             'selectedResellerId',
             'panelStatusFilter',
+            'billingType',
+            'activeMoreCount',
+            'isMoreOpen',
             'perPage'
         ));
     }
