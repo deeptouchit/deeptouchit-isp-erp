@@ -25,6 +25,8 @@ class ResellerBandwidthPlanController extends Controller
 
         $search = $request->input('search');
         $status = $request->input('status');
+        $volumeRange = $request->input('volume_range');
+        $hasAllocations = $request->input('has_allocations');
         $perPage = (int) $request->input('per_page', 20);
         if ($perPage <= 0 || $perPage > 500) {
             $perPage = 20;
@@ -44,6 +46,23 @@ class ResellerBandwidthPlanController extends Controller
         if ($status !== null && $status !== '') {
             $query->where('is_active', $status === '1' || $status === 'active');
         }
+
+        if ($volumeRange === 'low') {
+            $query->where('min_bandwidth_mbps', '<=', 500);
+        } elseif ($volumeRange === 'mid') {
+            $query->where('min_bandwidth_mbps', '>', 500)->where('min_bandwidth_mbps', '<=', 2000);
+        } elseif ($volumeRange === 'high') {
+            $query->where('min_bandwidth_mbps', '>', 2000);
+        }
+
+        if ($hasAllocations === 'yes') {
+            $query->has('allocations');
+        } elseif ($hasAllocations === 'no') {
+            $query->doesntHave('allocations');
+        }
+
+        $activeMoreCount = ($request->filled('volume_range') ? 1 : 0) + ($request->filled('has_allocations') ? 1 : 0);
+        $isMoreOpen = $activeMoreCount > 0;
 
         $plans = $query->orderBy('min_bandwidth_mbps', 'asc')->latest('id')->paginate($perPage)->withQueryString();
 
@@ -72,6 +91,10 @@ class ResellerBandwidthPlanController extends Controller
             'currencySymbol',
             'search',
             'status',
+            'volumeRange',
+            'hasAllocations',
+            'activeMoreCount',
+            'isMoreOpen',
             'perPage'
         ));
     }
