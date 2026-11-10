@@ -634,7 +634,7 @@ class TenantCustomerController extends Controller
                 'CASE WHEN customer_id = ? OR username = ? OR phone = ? THEN 0 WHEN customer_id LIKE ? OR username LIKE ? OR name LIKE ? THEN 1 ELSE 2 END',
                 [$q, $q, $q, "{$q}%", "{$q}%", "{$q}%"]
             )
-            ->orderByDesc('is_online')
+            ->orderByRaw("CASE WHEN online_status = 'online' THEN 0 ELSE 1 END")
             ->orderBy('name')
             ->limit(8)
             ->get();
@@ -680,7 +680,7 @@ class TenantCustomerController extends Controller
                 'package' => $c->package_display_name,
                 'status' => $c->status,
                 'status_label' => __($statusKey),
-                'is_online' => (bool) $c->is_online,
+                'is_online' => $c->online_status === 'online',
                 'due_amount' => $due,
                 'due_formatted' => $dueFormatted,
                 'url' => route('tenant.customers.show', $c->id),
