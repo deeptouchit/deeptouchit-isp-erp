@@ -32,20 +32,25 @@
         <span x-text="toast.message"></span>
     </div>
 
-    <!-- 1. Top Header Bar (Strictly Icon + Title + Action Button ONLY - No Subtitle) -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
-        <div class="flex items-center gap-3">
-            <div class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center text-xs flex-shrink-0">
+    <!-- 1. Top Header Bar (Strictly Icon + Title + Count Badge + Action Button ONLY - AGENTS.md Rule 2.A) -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-white px-3.5 py-2.5 rounded-xl border border-slate-200/90 shadow-2xs">
+        <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center text-sm shadow-2xs flex-shrink-0">
                 <i class="fas fa-handshake"></i>
             </div>
-            <h1 class="text-sm font-bold text-slate-900 tracking-tight">Sub-ISP Staff Roster</h1>
+            <div class="flex items-center gap-2">
+                <h1 class="text-xs sm:text-sm font-bold text-slate-900 tracking-tight">Sub-ISP Staff Roster</h1>
+                <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                    {{ number_format($employees->total()) }} Personnel
+                </span>
+            </div>
         </div>
 
         <div class="flex items-center gap-2">
             <!-- Onboard Sub-ISP Personnel Button -->
             <button type="button" 
                     @click="openAddModal()"
-                    class="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer">
+                    class="h-[34px] py-0 px-3.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-user-plus text-[11px]"></i>
                 <span>+ Onboard Sub-ISP Personnel</span>
             </button>
@@ -121,92 +126,131 @@
         </div>
     </div>
 
-    <!-- 3. Search & Multi-Filter Toolbar -->
-    <div class="bg-white p-2.5 rounded-xl border border-slate-200 shadow-xs">
-        <form method="GET" action="{{ route('tenant.staff.resellers') }}" class="flex flex-wrap items-center gap-2">
-            
-            <!-- Search Input -->
-            <div class="relative flex-1 min-w-[200px]">
-                <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
-                <input type="text" 
-                       name="search" 
-                       value="{{ request('search') }}" 
-                       placeholder="Search Name, Email, Phone, Partner Name, Staff ID..." 
-                       class="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-blue-500 focus:outline-hidden transition" />
-            </div>
+    <!-- 3. Search & Multi-Filter Toolbar (Customer-Standard 2-Tier Filter System - AGENTS.md Rule 2.C) -->
+    <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5"
+         x-data="{ showMoreFilters: {{ $isMoreOpen ? 'true' : 'false' }}, searchQuery: '{{ addslashes(request('search', '')) }}' }">
+        <form method="GET" action="{{ route('tenant.staff.resellers') }}" class="space-y-2.5">
+            <!-- Tier 1: Primary Filter Bar -->
+            <div class="flex flex-col md:flex-row items-stretch md:items-center gap-2">
+                <!-- Live Search Input -->
+                <div class="relative flex-1 min-w-[200px]">
+                    <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-xs transition-colors pointer-events-none"
+                       :class="searchQuery ? 'text-cyan-600 font-bold' : 'text-slate-400'"></i>
+                    <input type="text" 
+                           name="search" 
+                           x-model="searchQuery"
+                           placeholder="Search Name, Email, Phone, Partner Name, Staff ID..." 
+                           class="w-full h-[34px] pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition" />
+                    <button type="button" 
+                            x-show="searchQuery && searchQuery.length > 0" 
+                            x-cloak
+                            @click="searchQuery = ''; $nextTick(() => $el.closest('form').submit())"
+                            class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500 text-xs cursor-pointer">
+                        <i class="fas fa-times-circle"></i>
+                    </button>
+                </div>
 
-            <!-- Reseller Partner Filter -->
-            <div class="w-48">
-                <select name="reseller_id" 
-                        class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-blue-500 focus:outline-hidden transition">
-                    <option value="">All Sub-ISP Partners</option>
-                    @foreach($allResellers as $res)
-                        <option value="{{ $res->id }}" {{ (string)request('reseller_id') === (string)$res->id ? 'selected' : '' }}>
-                            {{ $res->name }} ({{ $res->code }})
-                        </option>
-                    @endforeach
-                </select>
-            </div>
+                <!-- Reseller Partner Filter -->
+                <div class="w-full md:w-48 flex-shrink-0">
+                    <select name="reseller_id" 
+                            onchange="this.form.submit()"
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition cursor-pointer">
+                        <option value="">All Sub-ISP Partners</option>
+                        @foreach($allResellers as $res)
+                            <option value="{{ $res->id }}" {{ (string)request('reseller_id') === (string)$res->id ? 'selected' : '' }}>
+                                {{ $res->name }} ({{ $res->code }})
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
 
-            <!-- Role Filter -->
-            <div class="w-40">
-                <select name="role" 
-                        class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-blue-500 focus:outline-hidden transition">
-                    <option value="">All Sub-ISP Roles</option>
-                    <option value="reseller_admin" {{ request('role') === 'reseller_admin' ? 'selected' : '' }}>Franchise Admin</option>
-                    <option value="reseller_manager" {{ request('role') === 'reseller_manager' ? 'selected' : '' }}>Branch Manager</option>
-                    <option value="reseller_technician" {{ request('role') === 'reseller_technician' ? 'selected' : '' }}>Field Tech</option>
-                    <option value="reseller_collector" {{ request('role') === 'reseller_collector' ? 'selected' : '' }}>Cash Collector</option>
-                </select>
-            </div>
+                <!-- Role Filter -->
+                <div class="w-full md:w-40 flex-shrink-0">
+                    <select name="role" 
+                            onchange="this.form.submit()"
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition cursor-pointer">
+                        <option value="">All Sub-ISP Roles</option>
+                        <option value="reseller_admin" {{ request('role') === 'reseller_admin' ? 'selected' : '' }}>Franchise Admin</option>
+                        <option value="reseller_manager" {{ request('role') === 'reseller_manager' ? 'selected' : '' }}>Branch Manager</option>
+                        <option value="reseller_technician" {{ request('role') === 'reseller_technician' ? 'selected' : '' }}>Field Tech</option>
+                        <option value="reseller_collector" {{ request('role') === 'reseller_collector' ? 'selected' : '' }}>Cash Collector</option>
+                    </select>
+                </div>
 
-            <!-- Shift Filter -->
-            <div class="w-36">
-                <select name="shift" 
-                        class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-blue-500 focus:outline-hidden transition">
-                    <option value="">All Shifts</option>
-                    <option value="Morning Shift (09:00 - 18:00)" {{ request('shift') === 'Morning Shift (09:00 - 18:00)' ? 'selected' : '' }}>Morning Shift</option>
-                    <option value="Evening Shift (14:00 - 22:00)" {{ request('shift') === 'Evening Shift (14:00 - 22:00)' ? 'selected' : '' }}>Evening Shift</option>
-                    <option value="Night NOC Shift (22:00 - 08:00)" {{ request('shift') === 'Night NOC Shift (22:00 - 08:00)' ? 'selected' : '' }}>Night NOC Shift</option>
-                    <option value="Full Day Field Duty" {{ request('shift') === 'Full Day Field Duty' ? 'selected' : '' }}>Full Day Duty</option>
-                </select>
-            </div>
+                <!-- Pagination Select -->
+                <div class="w-full md:w-28 flex-shrink-0">
+                    <select name="per_page" 
+                            onchange="this.form.submit()"
+                            class="w-full h-[34px] px-2 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition cursor-pointer">
+                        @foreach([15, 20, 30, 50, 100] as $size)
+                            <option value="{{ $size }}" {{ (int)$perPage === $size ? 'selected' : '' }}>{{ $size }} / page</option>
+                        @endforeach
+                    </select>
+                </div>
 
-            <!-- Status Filter -->
-            <div class="w-28">
-                <select name="status" 
-                        class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-blue-500 focus:outline-hidden transition">
-                    <option value="">All Status</option>
-                    <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>Active</option>
-                    <option value="inactive" {{ request('status') === 'inactive' ? 'selected' : '' }}>Suspended</option>
-                </select>
-            </div>
-
-            <!-- Pagination Select -->
-            <div class="w-24">
-                <select name="per_page" 
-                        class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-blue-500 focus:outline-hidden transition">
-                    <option value="15" {{ request('per_page', 20) == 15 ? 'selected' : '' }}>15 / Page</option>
-                    <option value="20" {{ request('per_page', 20) == 20 ? 'selected' : '' }}>20 / Page</option>
-                    <option value="30" {{ request('per_page', 20) == 30 ? 'selected' : '' }}>30 / Page</option>
-                    <option value="50" {{ request('per_page', 20) == 50 ? 'selected' : '' }}>50 / Page</option>
-                </select>
-            </div>
-
-            <!-- Action Buttons (Strict Universal Standard) -->
-            <div class="flex items-center gap-1.5 ml-auto flex-shrink-0">
-                <button type="submit" 
-                        class="bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-1.5 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" 
-                        title="Apply Filters">
-                    <i class="fas fa-filter text-[10px]"></i>
-                    <span>Filter</span>
+                <!-- More Filters Accordion Toggle Button -->
+                <button type="button" 
+                        @click="showMoreFilters = !showMoreFilters"
+                        class="h-[34px] py-0 px-2.5 rounded-lg border text-xs font-medium transition flex items-center justify-center gap-1.5 cursor-pointer flex-shrink-0"
+                        :class="showMoreFilters ? 'bg-cyan-50 border-cyan-200 text-cyan-700' : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700'">
+                    <i class="fas fa-sliders text-[10px]"></i>
+                    <span>More Filters</span>
+                    @if($activeMoreCount > 0)
+                        <span class="w-4 h-4 rounded-full bg-cyan-600 text-white text-[9px] font-bold flex items-center justify-center">
+                            {{ $activeMoreCount }}
+                        </span>
+                    @endif
+                    <i class="fas text-[9px] transition-transform duration-200" 
+                       :class="showMoreFilters ? 'fa-chevron-up text-cyan-600' : 'fa-chevron-down text-slate-400'"></i>
                 </button>
-                <a href="{{ route('tenant.staff.resellers') }}" 
-                   class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-1.5 px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer" 
-                   title="Reset Filters">
-                    <i class="fas fa-rotate-left text-[10px]"></i>
-                    <span>Reset</span>
-                </a>
+
+                <!-- Action Buttons (Strict Universal Standard) -->
+                <div class="flex items-center gap-1.5 flex-shrink-0 md:ml-auto">
+                    <button type="submit" 
+                            class="h-[34px] py-0 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" 
+                            title="Apply Filters">
+                        <i class="fas fa-filter text-[10px]"></i>
+                        <span>Filter</span>
+                    </button>
+                    <a href="{{ route('tenant.staff.resellers') }}" 
+                       class="h-[34px] py-0 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer" 
+                       title="Reset Filters">
+                        <i class="fas fa-rotate-left text-[10px]"></i>
+                        <span>Reset</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Tier 2: Secondary Filters Drawer -->
+            <div x-show="showMoreFilters" 
+                 x-cloak 
+                 x-transition:enter="transition ease-out duration-150"
+                 x-transition:enter-start="opacity-0 -translate-y-1"
+                 x-transition:enter-end="opacity-100 translate-y-0"
+                 class="pt-2 border-t border-slate-100 flex flex-wrap items-center gap-2">
+                <!-- Shift Filter -->
+                <div class="w-full sm:w-44">
+                    <select name="shift" 
+                            onchange="this.form.submit()"
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition cursor-pointer">
+                        <option value="">All Shifts</option>
+                        <option value="Morning Shift (09:00 - 18:00)" {{ request('shift') === 'Morning Shift (09:00 - 18:00)' ? 'selected' : '' }}>Morning Shift</option>
+                        <option value="Evening Shift (14:00 - 22:00)" {{ request('shift') === 'Evening Shift (14:00 - 22:00)' ? 'selected' : '' }}>Evening Shift</option>
+                        <option value="Night NOC Shift (22:00 - 08:00)" {{ request('shift') === 'Night NOC Shift (22:00 - 08:00)' ? 'selected' : '' }}>Night NOC Shift</option>
+                        <option value="Full Day Field Duty" {{ request('shift') === 'Full Day Field Duty' ? 'selected' : '' }}>Full Day Duty</option>
+                    </select>
+                </div>
+
+                <!-- Status Filter -->
+                <div class="w-full sm:w-36">
+                    <select name="status" 
+                            onchange="this.form.submit()"
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition cursor-pointer">
+                        <option value="">All Status</option>
+                        <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>Active</option>
+                        <option value="inactive" {{ request('status') === 'inactive' ? 'selected' : '' }}>Suspended</option>
+                    </select>
+                </div>
             </div>
         </form>
     </div>
@@ -217,15 +261,15 @@
             <table class="saas-table">
                 <thead>
                     <tr>
-                        <th class="w-12 text-center">#</th>
-                        <th>Staff ID</th>
-                        <th>Name</th>
-                        <th>Sub-ISP Partner</th>
-                        <th class="text-center">Role</th>
-                        <th>Mobile</th>
-                        <th>Shift</th>
-                        <th class="text-center">Status</th>
-                        <th class="w-14 text-center no-sort">Action</th>
+                        <th class="w-12 text-center font-semibold">#</th>
+                        <th class="text-center font-semibold">Staff ID</th>
+                        <th class="text-center font-semibold">Name</th>
+                        <th class="text-center font-semibold">Sub-ISP Partner</th>
+                        <th class="text-center font-semibold">Role</th>
+                        <th class="text-center font-semibold">Mobile</th>
+                        <th class="text-center font-semibold">Shift</th>
+                        <th class="text-center font-semibold">Status</th>
+                        <th class="w-14 text-center font-semibold no-sort">Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -237,22 +281,22 @@
                         @endphp
                         <tr>
                             <!-- 1. Index -->
-                            <td class="text-center font-mono text-slate-400">
+                            <td class="text-center font-mono text-slate-400 whitespace-nowrap">
                                 {{ $employees->firstItem() + $index }}
                             </td>
 
                             <!-- 2. Staff ID -->
-                            <td class="font-mono text-slate-700 font-medium">
+                            <td class="text-center font-mono text-slate-700 font-medium whitespace-nowrap">
                                 {{ $staffCode }}
                             </td>
 
                             <!-- 3. Name -->
-                            <td class="font-medium text-slate-900">
+                            <td class="text-left font-medium text-slate-900 whitespace-nowrap">
                                 {{ $emp->name }}
                             </td>
 
                             <!-- 4. Sub-ISP Partner -->
-                            <td>
+                            <td class="text-left whitespace-nowrap">
                                 <span class="inline-flex items-center gap-1 text-slate-800">
                                     <i class="fas fa-handshake text-blue-500 text-[10px]"></i>
                                     <span>{{ $emp->reseller?->name ?? 'Direct Sub-ISP' }}</span>
@@ -260,7 +304,7 @@
                             </td>
 
                             <!-- 5. Role -->
-                            <td class="text-center">
+                            <td class="text-center whitespace-nowrap">
                                 <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold border inline-flex items-center gap-1 {{ $roleBadge['class'] }}">
                                     <i class="fas {{ $roleBadge['icon'] }} text-[9px]"></i>
                                     <span>{{ $roleBadge['label'] }}</span>
@@ -268,17 +312,17 @@
                             </td>
 
                             <!-- 6. Mobile -->
-                            <td class="font-mono text-slate-600">
+                            <td class="text-center font-mono text-slate-600 whitespace-nowrap">
                                 {{ $emp->mobile ?: ($emp->phone ?: '--') }}
                             </td>
 
                             <!-- 7. Shift -->
-                            <td class="text-slate-600">
+                            <td class="text-center text-slate-600 whitespace-nowrap">
                                 {{ $emp->shift ?? 'Morning Shift' }}
                             </td>
 
                             <!-- 8. Status (Interactive Switch/Badge) -->
-                            <td class="text-center">
+                            <td class="text-center whitespace-nowrap">
                                 <button type="button" 
                                         @click="toggleStatus({{ $emp->id }})"
                                         class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border transition cursor-pointer {{ $statusBadge['class'] }} hover:opacity-80"
@@ -289,7 +333,7 @@
                             </td>
 
                             <!-- 9. Action (Floating 3-Dot Dropdown) -->
-                            <td class="text-center">
+                            <td class="text-center whitespace-nowrap">
                                 <button type="button" 
                                         @click="toggleMenu({{ Js::from($emp) }}, $event)" 
                                         class="w-6 h-6 rounded-md hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition cursor-pointer inline-flex items-center justify-center">
@@ -299,9 +343,20 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="9" class="px-4 py-8 text-center text-slate-400 text-xs italic bg-slate-50/50">
-                                <i class="fas fa-handshake text-2xl text-slate-300 mb-2 block"></i>
-                                No Sub-ISP personnel records found matching your filter criteria.
+                            <td colspan="9" class="text-center py-10 text-slate-400">
+                                <div class="max-w-xs mx-auto space-y-2.5">
+                                    <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 mx-auto flex items-center justify-center text-base border border-blue-100 shadow-2xs">
+                                        <i class="fas fa-handshake"></i>
+                                    </div>
+                                    <h3 class="text-xs font-semibold text-slate-800">No Sub-ISP Personnel Found</h3>
+                                    <p class="text-[11px] text-slate-500">No partner staff records match your filter criteria.</p>
+                                    <div class="pt-1">
+                                        <button type="button" @click="openAddModal()" class="h-[34px] py-0 px-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer">
+                                            <i class="fas fa-user-plus text-[10px]"></i>
+                                            <span>+ Onboard Sub-ISP Personnel</span>
+                                        </button>
+                                    </div>
+                                </div>
                             </td>
                         </tr>
                     @endforelse

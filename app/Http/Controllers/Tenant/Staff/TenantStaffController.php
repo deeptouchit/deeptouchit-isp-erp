@@ -108,6 +108,10 @@ class TenantStaffController extends Controller
         // Available dynamic RBAC roles for assignment
         $availableRoles = \App\Models\TenantRole::where('tenant_id', $tenant->id)->where('status', 'active')->orderBy('is_system', 'desc')->get();
 
+        // 2-Tier Filter Drawer State
+        $activeMoreCount = (!empty($selectedResellerId) ? 1 : 0) + (!empty($statusFilter) ? 1 : 0);
+        $isMoreOpen = $activeMoreCount > 0;
+
         return view('tenant.staff.index', compact(
             'tenant',
             'employees',
@@ -119,6 +123,8 @@ class TenantStaffController extends Controller
             'collectorsCount',
             'ispStaffCount',
             'activeStaffCount',
+            'activeMoreCount',
+            'isMoreOpen',
             'search',
             'scopeFilter',
             'selectedResellerId',
@@ -196,6 +202,10 @@ class TenantStaffController extends Controller
         $allResellers = TenantReseller::where('tenant_id', $tenant->id)->orderBy('name')->get();
         $availableRoles = \App\Models\TenantRole::where('tenant_id', $tenant->id)->where('status', 'active')->orderBy('is_system', 'desc')->get();
 
+        // 2-Tier Filter Drawer State
+        $activeMoreCount = (!empty($shiftFilter) ? 1 : 0) + (!empty($statusFilter) ? 1 : 0);
+        $isMoreOpen = $activeMoreCount > 0;
+
         return view('tenant.staff.isp', compact(
             'tenant',
             'employees',
@@ -207,6 +217,8 @@ class TenantStaffController extends Controller
             'fieldTechCount',
             'collectorsCount',
             'activeStaffCount',
+            'activeMoreCount',
+            'isMoreOpen',
             'search',
             'department',
             'roleFilter',
@@ -282,6 +294,10 @@ class TenantStaffController extends Controller
         $managersCount = (clone $baseQuery)->whereIn('role', ['reseller_manager', 'reseller_admin'])->count();
         $activeStaffCount = (clone $baseQuery)->where('status', 'active')->count();
 
+        // 2-Tier Filter Drawer State
+        $activeMoreCount = (!empty($shiftFilter) ? 1 : 0) + (!empty($statusFilter) ? 1 : 0);
+        $isMoreOpen = $activeMoreCount > 0;
+
         return view('tenant.staff.resellers', compact(
             'tenant',
             'employees',
@@ -292,6 +308,8 @@ class TenantStaffController extends Controller
             'collectorsCount',
             'managersCount',
             'activeStaffCount',
+            'activeMoreCount',
+            'isMoreOpen',
             'search',
             'selectedResellerId',
             'roleFilter',
@@ -371,6 +389,10 @@ class TenantStaffController extends Controller
         $halfDayCount = (clone $todayAttQuery)->where('status', 'half_day')->count();
         $absentLeaveCount = (clone $todayAttQuery)->whereIn('status', ['absent', 'on_leave'])->count();
 
+        // 2-Tier Filter Drawer State
+        $activeMoreCount = (!empty($selectedResellerId) ? 1 : 0) + (!empty($statusFilter) ? 1 : 0) + (!empty($shiftFilter) ? 1 : 0);
+        $isMoreOpen = $activeMoreCount > 0;
+
         return view('tenant.staff.attendance', compact(
             'tenant',
             'selectedDate',
@@ -388,6 +410,8 @@ class TenantStaffController extends Controller
             'lateArrivalsCount',
             'halfDayCount',
             'absentLeaveCount',
+            'activeMoreCount',
+            'isMoreOpen',
             'perPage'
         ));
     }
@@ -460,6 +484,10 @@ class TenantStaffController extends Controller
             $q->where('event_type', 'like', '%ATTENDANCE%')->orWhere('event_type', 'like', '%PUNCH%');
         })->count();
 
+        // 2-Tier Filter Drawer State
+        $activeMoreCount = (!empty($actorFilter) ? 1 : 0) + (!empty($eventTypeFilter) ? 1 : 0);
+        $isMoreOpen = $activeMoreCount > 0;
+
         return view('tenant.staff.logs', compact(
             'tenant',
             'selectedDate',
@@ -475,6 +503,8 @@ class TenantStaffController extends Controller
             'billingEventsCount',
             'supportEventsCount',
             'attendanceEventsCount',
+            'activeMoreCount',
+            'isMoreOpen',
             'perPage'
         ));
     }
@@ -680,11 +710,151 @@ class TenantStaffController extends Controller
     }
 
     /**
-     * Staff Target & Commission Logs.
+     * Staff Target & Commission Logs (Real-Time Collection Portfolio & Commission Matrix).
      */
     public function commissions(Request $request): View
     {
-        return $this->index($request);
+        $tenant = $this->getTenant();
+
+        $selectedMonth = $request->input('month', Carbon::now()->format('Y-m'));
+        $search = trim((string) $request->input('search', ''));
+        $scopeFilter = $request->input('scope', '');
+        $selectedResellerId = $request->input('reseller_id', '');
+        $roleFilter = $request->input('role', '');
+        $commissionRate = (float) $request->input('rate', 2.5);
+        if ($commissionRate < 0 || $commissionRate > 100) {
+            $commissionRate = 2.5;
+        }
+
+        $perPage = (int) $request->input('per_page', 20);
+        if (!in_array($perPage, [15, 20, 30, 50, 100])) {
+            $perPage = 20;
+        }
+
+        try {
+            $monthCarbon = Carbon::createFromFormat('Y-m', $selectedMonth);
+        } catch (\Throwable $e) {
+            $selectedMonth = Carbon::now()->format('Y-m');
+            $monthCarbon = Carbon::now();
+        }
+        $monthStart = (clone $monthCarbon)->startOfMonth();
+        $monthEnd = (clone $monthCarbon)->endOfMonth();
+        $periodLabel = $monthCarbon->format('F Y');
+
+        $allResellers = TenantReseller::where('tenant_id', $tenant->id)->orderBy('name')->get();
+
+        $query = User::where('tenant_id', $tenant->id)
+            ->where('role', '!=', 'owner')
+            ->with(['reseller']);
+
+        if ($search !== '') {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('phone', 'like', "%{$search}%")
+                  ->orWhere('mobile', 'like', "%{$search}%")
+                  ->orWhere('staff_id', 'like', "%{$search}%")
+                  ->orWhere('designation', 'like', "%{$search}%");
+            });
+        }
+
+        if ($scopeFilter === 'isp') {
+            $query->whereNull('reseller_id');
+        } elseif ($scopeFilter === 'reseller') {
+            $query->whereNotNull('reseller_id');
+        }
+
+        if ($selectedResellerId !== '') {
+            $query->where('reseller_id', $selectedResellerId);
+        }
+
+        if ($roleFilter !== '') {
+            $query->where('role', $roleFilter);
+        }
+
+        $allMatchedStaff = (clone $query)->get();
+        $staffIds = $allMatchedStaff->pluck('id')->all();
+
+        // Assigned Portfolio Target MRR per staff
+        $targetsByStaff = \App\Models\TenantCustomer::where('tenant_id', $tenant->id)
+            ->whereIn('assigned_collector_id', $staffIds ?: [0])
+            ->whereIn('status', ['active', 'expired', 'due'])
+            ->selectRaw('assigned_collector_id, COUNT(*) as assigned_count, COALESCE(SUM(monthly_bill), 0) as target_amount')
+            ->groupBy('assigned_collector_id')
+            ->get()
+            ->keyBy('assigned_collector_id');
+
+        // Actual Month Collections per staff
+        $collectionsByStaff = \App\Models\TenantCustomerPayment::where('tenant_id', $tenant->id)
+            ->whereIn('collected_by', $staffIds ?: [0])
+            ->where('status', '!=', 'void')
+            ->whereBetween('paid_at', [$monthStart, $monthEnd])
+            ->selectRaw('collected_by, COUNT(*) as receipts_count, COALESCE(SUM(amount), 0) as collected_amount')
+            ->groupBy('collected_by')
+            ->get()
+            ->keyBy('collected_by');
+
+        // Compute 6-Card Global KPI Metrics for matched scope
+        $totalStaffCount = $allMatchedStaff->count();
+        $totalTargetAmount = (float) $targetsByStaff->sum('target_amount');
+        $totalCollectedAmount = (float) $collectionsByStaff->sum('collected_amount');
+        $totalReceiptsCount = (int) $collectionsByStaff->sum('receipts_count');
+        $avgAchievementRate = $totalTargetAmount > 0 ? round(($totalCollectedAmount / $totalTargetAmount) * 100, 1) : 0.0;
+        $totalCommissionAmount = round(($totalCollectedAmount * $commissionRate) / 100, 2);
+
+        $employees = $query->orderBy('name')->paginate($perPage)->withQueryString();
+
+        // Attach computed metrics to paginated items
+        $employees->getCollection()->transform(function ($emp) use ($targetsByStaff, $collectionsByStaff, $commissionRate) {
+            $tRow = $targetsByStaff->get($emp->id);
+            $cRow = $collectionsByStaff->get($emp->id);
+
+            $targetAmt = (float) ($tRow->target_amount ?? 0);
+            $assignedCnt = (int) ($tRow->assigned_count ?? 0);
+            $collectedAmt = (float) ($cRow->collected_amount ?? 0);
+            $receiptsCnt = (int) ($cRow->receipts_count ?? 0);
+            $achievePct = $targetAmt > 0 ? round(($collectedAmt / $targetAmt) * 100, 1) : ($collectedAmt > 0 ? 100.0 : 0.0);
+            $earnedComm = round(($collectedAmt * $commissionRate) / 100, 2);
+
+            $emp->setAttribute('assigned_customers_count', $assignedCnt);
+            $emp->setAttribute('target_amount', $targetAmt);
+            $emp->setAttribute('collected_amount', $collectedAmt);
+            $emp->setAttribute('receipts_count', $receiptsCnt);
+            $emp->setAttribute('achievement_pct', $achievePct);
+            $emp->setAttribute('earned_commission', $earnedComm);
+            $emp->setAttribute('commission_rate', $commissionRate);
+
+            return $emp;
+        });
+
+        $activeMoreCount = ($selectedResellerId !== '' ? 1 : 0)
+            + ($roleFilter !== '' ? 1 : 0)
+            + ($request->has('rate') && (float) $request->input('rate') !== 2.5 ? 1 : 0);
+        $isMoreOpen = $activeMoreCount > 0;
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
+
+        return view('tenant.staff.commissions', compact(
+            'tenant',
+            'employees',
+            'allResellers',
+            'selectedMonth',
+            'periodLabel',
+            'search',
+            'scopeFilter',
+            'selectedResellerId',
+            'roleFilter',
+            'commissionRate',
+            'perPage',
+            'totalStaffCount',
+            'totalTargetAmount',
+            'totalCollectedAmount',
+            'totalReceiptsCount',
+            'avgAchievementRate',
+            'totalCommissionAmount',
+            'activeMoreCount',
+            'isMoreOpen',
+            'currencySymbol'
+        ));
     }
 
     /**
