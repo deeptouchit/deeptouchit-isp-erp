@@ -50,22 +50,134 @@
         </div>
 
         @if($canViewCustomers)
-        <!-- Global Customer Quick Search (Shortcut: /) -->
-        <form action="{{ route('tenant.customers.index') }}"
-              method="GET"
-              class="hidden lg:flex items-center relative ml-1.5"
-              x-data
-              @keydown.window="if ($event.key === '/' && !$event.ctrlKey && !$event.metaKey && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) { $event.preventDefault(); $refs.quickSearch.focus(); }">
-            <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-[10px] pointer-events-none"></i>
-            <input x-ref="quickSearch"
-                   type="search"
-                   name="search"
-                   value="{{ request()->routeIs('tenant.customers*') ? request('search', '') : '' }}"
-                   placeholder="{{ __('Search customer (ID, Phone, PPPoE)...') }}"
-                   autocomplete="off"
-                   class="h-8 w-52 xl:w-64 pl-7 pr-8 rounded-lg bg-slate-50/90 border border-slate-200/90 text-[11px] text-slate-700 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/15 transition shadow-2xs">
-            <kbd class="hidden xl:inline-flex items-center justify-center h-4 min-w-[16px] px-1 text-[9px] font-mono font-semibold text-slate-400 bg-white border border-slate-200 rounded absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">/</kbd>
-        </form>
+        <!-- Global Customer Live Quick Search Filter (Shortcut: /) -->
+        <div class="hidden md:flex items-center relative ml-1"
+             x-data="topbarQuickSearch()"
+             @click.outside="open = false"
+             @keydown.window="if ($event.key === '/' && !$event.ctrlKey && !$event.metaKey && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) { $event.preventDefault(); $refs.quickSearch.focus(); }">
+            <form action="{{ route('tenant.customers.index') }}"
+                  method="GET"
+                  x-ref="searchForm"
+                  @submit="if (selectedIndex >= 0 && results[selectedIndex]) { $event.preventDefault(); window.location.href = results[selectedIndex].url; }"
+                  class="relative flex items-center">
+                <i class="fas text-[10px] absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none transition-colors"
+                   :class="loading ? 'fa-circle-notch fa-spin text-cyan-600' : (query ? 'fa-search text-cyan-600' : 'fa-search text-slate-400')"></i>
+                <input x-ref="quickSearch"
+                       type="text"
+                       name="search"
+                       x-model="query"
+                       @input="onInput()"
+                       @focus="onFocus()"
+                       @keydown.arrow-down.prevent="moveSelection(1)"
+                       @keydown.arrow-up.prevent="moveSelection(-1)"
+                       @keydown.escape.prevent="closeDropdown()"
+                       placeholder="{{ __('Search customer (ID, Phone, PPPoE)...') }}"
+                       autocomplete="off"
+                       class="h-8 w-48 lg:w-60 xl:w-72 pl-7 pr-8 rounded-lg bg-slate-50/90 border border-slate-200/90 text-[11px] text-slate-700 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/15 transition shadow-2xs">
+                <button type="button"
+                        x-show="query && query.length > 0"
+                        x-cloak
+                        @click="clear()"
+                        class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500 p-0.5 text-[11px] transition cursor-pointer"
+                        title="{{ __('Clear Search') }}">
+                    <i class="fas fa-times-circle"></i>
+                </button>
+                <kbd x-show="!query || query.length === 0"
+                     class="hidden xl:inline-flex items-center justify-center h-4 min-w-[16px] px-1 text-[9px] font-mono font-semibold text-slate-400 bg-white border border-slate-200 rounded absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">/</kbd>
+            </form>
+
+            <!-- Live Quick Filter Results Flyout -->
+            <div x-show="open && query.trim().length > 0"
+                 x-cloak
+                 x-transition:enter="transition ease-out duration-150"
+                 x-transition:enter-start="opacity-0 translate-y-1 scale-98"
+                 x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                 x-transition:leave="transition ease-in duration-100"
+                 x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+                 x-transition:leave-end="opacity-0 translate-y-1 scale-98"
+                 class="absolute left-0 top-full mt-2 w-80 sm:w-[420px] max-w-[92vw] bg-white rounded-2xl border border-slate-200 shadow-2xl z-50 overflow-hidden ring-1 ring-slate-900/5"
+                 style="display: none;">
+
+                <!-- Header Strip -->
+                <div class="px-3.5 py-2 bg-slate-50/90 border-b border-slate-100 flex items-center justify-between text-[10.5px]">
+                    <span class="font-bold text-slate-700 flex items-center gap-1.5">
+                        <i class="fas fa-users text-cyan-600 text-[10px]"></i>
+                        <span>{{ __('Matching Customers') }}</span>
+                    </span>
+                    <span class="px-1.5 py-0.2 rounded-full bg-cyan-50 text-cyan-700 border border-cyan-200/80 font-mono font-bold text-[9.5px]"
+                          x-text="loading ? '...' : totalCount"></span>
+                </div>
+
+                <!-- Results List -->
+                <div class="max-h-80 overflow-y-auto divide-y divide-slate-100">
+                    <template x-if="loading && results.length === 0">
+                        <div class="py-7 text-center text-slate-400 text-xs flex flex-col items-center justify-center gap-1.5">
+                            <i class="fas fa-circle-notch fa-spin text-cyan-600 text-base"></i>
+                            <span>{{ __('Searching...') }}</span>
+                        </div>
+                    </template>
+
+                    <template x-if="!loading && results.length === 0">
+                        <div class="py-7 text-center text-slate-400 text-xs px-4">
+                            <div class="w-9 h-9 rounded-xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-2 text-sm">
+                                <i class="fas fa-user-slash"></i>
+                            </div>
+                            <p class="font-semibold text-slate-700 text-xs">{{ __('No matching customers found') }}</p>
+                        </div>
+                    </template>
+
+                    <template x-for="(item, idx) in results" :key="item.id">
+                        <a :href="item.url"
+                           @mouseenter="selectedIndex = idx"
+                           class="flex items-center justify-between gap-2.5 px-3.5 py-2.5 transition cursor-pointer"
+                           :class="selectedIndex === idx ? 'bg-cyan-50/80' : 'hover:bg-slate-50'">
+                            <div class="flex items-center gap-2.5 min-w-0 flex-1">
+                                <div class="relative w-8 h-8 rounded-lg bg-slate-100 text-slate-700 border border-slate-200/80 flex items-center justify-center font-bold text-[11px] flex-shrink-0">
+                                    <span x-text="(item.name || 'C').charAt(0).toUpperCase()"></span>
+                                    <span class="w-2 h-2 rounded-full ring-2 ring-white absolute -bottom-0.5 -right-0.5"
+                                          :class="item.is_online ? 'bg-emerald-500' : 'bg-slate-300'"></span>
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <div class="flex items-center gap-1.5 min-w-0">
+                                        <span class="font-bold text-slate-900 text-[11.5px] truncate" x-text="item.name"></span>
+                                        <span class="px-1.5 py-0.2 rounded bg-slate-100 text-slate-700 border border-slate-200 font-mono font-semibold text-[9.5px] flex-shrink-0"
+                                              x-text="item.customer_id"></span>
+                                    </div>
+                                    <div class="flex items-center gap-2 text-[10px] text-slate-500 mt-0.5 truncate">
+                                        <span x-show="item.username" class="font-mono text-cyan-700" x-text="item.username"></span>
+                                        <span x-show="item.phone" class="font-mono" x-text="item.phone"></span>
+                                        <span x-show="item.package" class="truncate" x-text="item.package"></span>
+                                        <span x-show="item.zone" class="text-slate-400 truncate" x-text="item.zone"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="flex flex-col items-end gap-1 flex-shrink-0">
+                                <span class="px-1.5 py-0.2 rounded text-[9px] font-bold border"
+                                      :class="item.status === 'active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : (item.status === 'due' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-rose-50 text-rose-700 border-rose-200')"
+                                      x-text="item.status_label"></span>
+                                <span x-show="item.due_amount > 0"
+                                      class="text-[10px] font-mono font-bold text-rose-600"
+                                      x-text="item.due_formatted"></span>
+                            </div>
+                        </a>
+                    </template>
+                </div>
+
+                <!-- Dropdown Footer -->
+                <div class="px-3.5 py-2 bg-slate-50/90 border-t border-slate-100 flex items-center justify-between gap-2 text-[10.5px]">
+                    <a :href="fullSearchUrl()"
+                       class="font-bold text-cyan-700 hover:text-cyan-900 transition flex items-center gap-1">
+                        <span x-text="totalCount > 0 ? i18n.viewAllCount.replace(':count', totalCount) : i18n.viewAll"></span>
+                        <i class="fas fa-arrow-right text-[9px]"></i>
+                    </a>
+                    <div class="hidden sm:flex items-center gap-2 text-[9.5px] text-slate-400">
+                        <span><kbd class="px-1 py-0.2 bg-white border border-slate-200 rounded font-mono">↑↓</kbd> {{ __('Navigate') }}</span>
+                        <span><kbd class="px-1 py-0.2 bg-white border border-slate-200 rounded font-mono">↵</kbd> {{ __('Open') }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
         @endif
     </div>
 
@@ -278,6 +390,113 @@
 @once
 @push('scripts')
 <script>
+    window.topbarQuickSearch = function () {
+        return {
+            query: @json(request()->routeIs('tenant.customers*') ? (string) request('search', '') : ''),
+            open: false,
+            loading: false,
+            results: [],
+            totalCount: 0,
+            selectedIndex: -1,
+            debounceTimer: null,
+            abortController: null,
+            endpoint: @json(route('tenant.customers.quick-search')),
+            indexUrl: @json(route('tenant.customers.index')),
+            i18n: {
+                viewAllCount: @json(__('View all :count results')),
+                viewAll: @json(__('View all results'))
+            },
+            onFocus() {
+                if (this.query.trim().length > 0) {
+                    this.open = true;
+                    if (this.results.length === 0 && !this.loading) {
+                        this.fetchResults();
+                    }
+                }
+            },
+            onInput() {
+                this.selectedIndex = -1;
+                const trimmed = this.query.trim();
+                clearTimeout(this.debounceTimer);
+                if (!trimmed) {
+                    this.open = false;
+                    this.results = [];
+                    this.totalCount = 0;
+                    this.loading = false;
+                    if (this.abortController) {
+                        this.abortController.abort();
+                    }
+                    return;
+                }
+                this.open = true;
+                this.loading = true;
+                this.debounceTimer = setTimeout(() => {
+                    this.fetchResults();
+                }, 220);
+            },
+            async fetchResults() {
+                const q = this.query.trim();
+                if (!q) return;
+
+                if (this.abortController) {
+                    this.abortController.abort();
+                }
+                this.abortController = new AbortController();
+                this.loading = true;
+
+                try {
+                    const url = this.endpoint + '?q=' + encodeURIComponent(q);
+                    const res = await fetch(url, {
+                        signal: this.abortController.signal,
+                        headers: { 'Accept': 'application/json' }
+                    });
+                    if (res.ok) {
+                        const data = await res.json();
+                        this.results = data.results || [];
+                        this.totalCount = data.total || 0;
+                    }
+                } catch (e) {
+                    if (e.name !== 'AbortError') {
+                        console.error('Quick search failed:', e);
+                    }
+                } finally {
+                    this.loading = false;
+                }
+            },
+            moveSelection(delta) {
+                if (!this.open || this.results.length === 0) return;
+                const next = this.selectedIndex + delta;
+                if (next < 0) {
+                    this.selectedIndex = this.results.length - 1;
+                } else if (next >= this.results.length) {
+                    this.selectedIndex = 0;
+                } else {
+                    this.selectedIndex = next;
+                }
+            },
+            closeDropdown() {
+                this.open = false;
+                this.selectedIndex = -1;
+                this.$refs.quickSearch?.blur();
+            },
+            clear() {
+                this.query = '';
+                this.results = [];
+                this.totalCount = 0;
+                this.selectedIndex = -1;
+                this.open = false;
+                this.loading = false;
+                if (this.abortController) {
+                    this.abortController.abort();
+                }
+                this.$nextTick(() => this.$refs.quickSearch?.focus());
+            },
+            fullSearchUrl() {
+                return this.indexUrl + '?search=' + encodeURIComponent(this.query.trim());
+            }
+        };
+    };
+
     window.topbarNotifications = function () {
         return {
             open: false,

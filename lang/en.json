@@ -768,5 +768,12 @@
     "New Customers Added": "New Customers Added",
     "Recharged (Paid)": "Recharged (Paid)",
     "Non-Recharged (Unpaid)": "Non-Recharged (Unpaid)",
-    "Recharge Rate (%)": "Recharge Rate (%)"
+    "Recharge Rate (%)": "Recharge Rate (%)",
+    "Matching Customers": "Matching Customers",
+    "No matching customers found": "No matching customers found",
+    "View all :count results": "View all :count results",
+    "View all results": "View all results",
+    "Searching...": "Searching...",
+    "Navigate": "Navigate",
+    "PPPoE": "PPPoE"
 }

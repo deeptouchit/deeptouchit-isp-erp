@@ -318,6 +318,7 @@ Route::middleware(['web'])->group(function () {
             Route::get('/expired', [TenantCustomerController::class, 'index'])->defaults('status', 'expired')->name('expired');
             Route::get('/expired-60-days', [TenantCustomerController::class, 'index'])->defaults('status', 'expired_60')->name('expired-60');
             Route::get('/online', [TenantCustomerController::class, 'index'])->defaults('online_status', 'online')->name('online');
+            Route::get('/quick-search', [TenantCustomerController::class, 'quickSearch'])->name('quick-search');
             
             // Coverage Zones & Areas Dedicated Routes
             Route::get('/zones', [TenantCoverageZoneController::class, 'index'])->name('zones');

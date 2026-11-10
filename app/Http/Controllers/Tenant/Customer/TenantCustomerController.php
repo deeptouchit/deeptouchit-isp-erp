@@ -588,6 +588,113 @@ class TenantCustomerController extends Controller
     }
 
     /**
+     * Global topbar quick-search autocomplete for customers (by ID, Name, Phone, PPPoE, IP, Zone).
+     */
+    public function quickSearch(Request $request): JsonResponse
+    {
+        $tenant = $this->getTenant();
+        $authUser = Auth::user();
+        $q = trim((string) $request->input('q', ''));
+
+        if ($q === '') {
+            return response()->json([
+                'success' => true,
+                'total' => 0,
+                'results' => [],
+            ]);
+        }
+
+        $isResellerUser = $authUser && ($authUser->isResellerUser() || !empty($authUser->reseller_id));
+        $isIspCollector = $authUser && $authUser->isCollector() && empty($authUser->reseller_id);
+
+        $baseQuery = TenantCustomer::where('tenant_id', $tenant->id)
+            ->with(['package:id,name,mikrotik_profile,package_name', 'reseller:id,name,code']);
+
+        if ($isResellerUser) {
+            $baseQuery->where('reseller_id', $authUser->reseller_id);
+        } elseif ($isIspCollector) {
+            $baseQuery->whereNull('reseller_id');
+        }
+
+        $baseQuery->where(function ($sub) use ($q) {
+            $sub->where('customer_id', 'like', "%{$q}%")
+                ->orWhere('username', 'like', "%{$q}%")
+                ->orWhere('name', 'like', "%{$q}%")
+                ->orWhere('phone', 'like', "%{$q}%")
+                ->orWhere('ip_address', 'like', "%{$q}%")
+                ->orWhere('mac_address', 'like', "%{$q}%")
+                ->orWhere('onu_mac_sn', 'like', "%{$q}%")
+                ->orWhere('zone', 'like', "%{$q}%");
+        });
+
+        $total = (clone $baseQuery)->count();
+
+        $customers = $baseQuery
+            ->orderByRaw(
+                'CASE WHEN customer_id = ? OR username = ? OR phone = ? THEN 0 WHEN customer_id LIKE ? OR username LIKE ? OR name LIKE ? THEN 1 ELSE 2 END',
+                [$q, $q, $q, "{$q}%", "{$q}%", "{$q}%"]
+            )
+            ->orderByDesc('is_online')
+            ->orderBy('name')
+            ->limit(8)
+            ->get();
+
+        // Format dues dynamically using global currency settings
+        $currSym = '৳';
+        $currPos = 'left';
+        $currDec = 2;
+        $thSep = ',';
+        $decSep = '.';
+        try {
+            $settings = \App\Models\Setting::whereNull('tenant_id')->pluck('value', 'key');
+            $currSym = $settings['currency_symbol'] ?? '৳';
+            $currPos = $settings['currency_position'] ?? 'left';
+            $currDec = (int) ($settings['currency_decimals'] ?? 2);
+            $thSep = ($settings['thousand_separator'] ?? ',') === 'space' ? ' ' : ($settings['thousand_separator'] ?? ',');
+            $decSep = $settings['decimal_separator'] ?? '.';
+        } catch (\Throwable $e) {
+            // Fallback to safe defaults
+        }
+
+        $results = $customers->map(function ($c) use ($currSym, $currPos, $currDec, $thSep, $decSep) {
+            $due = (float) ($c->due_amount ?? 0);
+            $amtStr = number_format($due, $currDec, $decSep, $thSep);
+            $dueFormatted = $currPos === 'right' ? "{$amtStr} {$currSym}" : "{$currSym} {$amtStr}";
+
+            $statusKey = match ($c->status) {
+                'active' => 'Active',
+                'due' => 'Due',
+                'expired' => 'Expired',
+                'suspended' => 'Suspended',
+                'disabled', 'disconnected' => 'Disabled',
+                default => ucfirst((string) $c->status),
+            };
+
+            return [
+                'id' => $c->id,
+                'customer_id' => $c->customer_id ?: ('#' . $c->id),
+                'name' => $c->name ?: ($c->username ?: 'Customer #' . $c->id),
+                'username' => $c->username ?? '',
+                'phone' => $c->phone ?? '',
+                'zone' => $c->zone ?? '',
+                'package' => $c->package_display_name,
+                'status' => $c->status,
+                'status_label' => __($statusKey),
+                'is_online' => (bool) $c->is_online,
+                'due_amount' => $due,
+                'due_formatted' => $dueFormatted,
+                'url' => route('tenant.customers.show', $c->id),
+            ];
+        })->values();
+
+        return response()->json([
+            'success' => true,
+            'total' => $total,
+            'results' => $results,
+        ]);
+    }
+
+    /**
      * Show customer details (Dedicated Page view for Web, JSON response for API/Modals).
      */
     public function show(Request $request, int $id): JsonResponse|View

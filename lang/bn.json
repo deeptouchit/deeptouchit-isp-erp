@@ -770,5 +770,12 @@
     "New Customers Added": "নতুন যুক্ত গ্রাহক",
     "Recharged (Paid)": "পরিশোধিত গ্রাহক",
     "Non-Recharged (Unpaid)": "অপরিশোধিত গ্রাহক",
-    "Recharge Rate (%)": "রিচার্জ হার (%)"
+    "Recharge Rate (%)": "রিচার্জ হার (%)",
+    "Matching Customers": "মিলে যাওয়া গ্রাহক",
+    "No matching customers found": "কোনো গ্রাহক পাওয়া যায়নি",
+    "View all :count results": "সব :count টি ফলাফল দেখুন",
+    "View all results": "সব ফলাফল দেখুন",
+    "Searching...": "খোঁজা হচ্ছে...",
+    "Navigate": "নেভিগেট",
+    "PPPoE": "PPPoE"
 }
