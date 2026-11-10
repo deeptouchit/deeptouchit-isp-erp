@@ -7,6 +7,43 @@
         $authUser && $authUser->role === 'isp_manager' => 'ISP Manager',
         default => 'ISP Admin Console',
     };
+    $roleAccent = match (true) {
+        $authUser && $authUser->isCollector() => ['dot' => 'bg-amber-500', 'text' => 'text-amber-700'],
+        $authUser && $authUser->isTechnician() => ['dot' => 'bg-cyan-500', 'text' => 'text-cyan-700'],
+        $authUser && $authUser->role === 'isp_manager' => ['dot' => 'bg-indigo-500', 'text' => 'text-indigo-700'],
+        default => ['dot' => 'bg-blue-600', 'text' => 'text-blue-600'],
+    };
+
+    $brandName = (isset($tenant) && $tenant)
+        ? ($tenant->company_name ?: ($tenant->name ?? 'ISP Portal'))
+        : 'ISP Portal';
+
+    $resolveBrandAsset = static function (?string $path): ?string {
+        if (empty($path)) {
+            return null;
+        }
+        return (str_starts_with($path, 'http://') || str_starts_with($path, 'https://') || str_starts_with($path, '/'))
+            ? $path
+            : asset('storage/' . ltrim($path, '/'));
+    };
+
+    $brandFaviconUrl = (isset($tenant) && $tenant) ? $resolveBrandAsset($tenant->favicon ?? null) : null;
+    $brandLogoUrl = (isset($tenant) && $tenant) ? $resolveBrandAsset($tenant->logo ?? null) : null;
+
+    // Detect wide horizontal wordmark logos so they don't duplicate or crush the sidebar title text
+    $isWideLogo = false;
+    if (!$brandFaviconUrl && isset($tenant) && $tenant && !empty($tenant->logo) && !str_starts_with($tenant->logo, 'http')) {
+        $localLogoPath = public_path('storage/' . ltrim($tenant->logo, '/'));
+        if (is_file($localLogoPath)) {
+            $logoDim = @getimagesize($localLogoPath);
+            if ($logoDim && !empty($logoDim[0]) && !empty($logoDim[1]) && ($logoDim[0] / $logoDim[1]) > 1.6) {
+                $isWideLogo = true;
+            }
+        }
+    }
+
+    $brandSquareIconUrl = $brandFaviconUrl ?: (!$isWideLogo ? $brandLogoUrl : null);
+    $brandInitial = mb_strtoupper(mb_substr(trim($brandName), 0, 1, 'UTF-8'), 'UTF-8') ?: 'I';
 @endphp
 
 <!-- Mobile Off-Canvas Sidebar Backdrop -->
@@ -24,9 +61,13 @@
 @push('styles')
 <style>
     .sidebar-collapsed .sidebar-brand-text,
+    .sidebar-collapsed .sidebar-brand-wide,
     .sidebar-collapsed .sidebar-search,
     .sidebar-collapsed .sidebar-user-text {
         display: none !important;
+    }
+    .sidebar-collapsed .sidebar-brand-collapsed-icon {
+        display: flex !important;
     }
     .sidebar-collapsed .sidebar-nav-container a > span,
     .sidebar-collapsed .sidebar-nav-container button span,
@@ -66,28 +107,47 @@
            sidebarCollapsed ? 'sidebar-collapsed' : ''
        ]">
     
-    <!-- Compact Brand Header -->
-    <div class="h-14 px-3 flex items-center justify-between border-b border-slate-100 bg-white"
-         :class="sidebarCollapsed ? 'justify-center px-2' : 'justify-between px-3'">
+    <!-- Compact Brand Header (Aligned 56px Height with Topbar) -->
+    <div class="h-14 flex-shrink-0 flex items-center border-b border-slate-200 bg-white transition-all"
+         :class="sidebarCollapsed ? 'justify-center px-2' : 'justify-between px-2.5 gap-1.5'">
         <a href="{{ route('tenant.dashboard') }}" 
-           class="flex items-center gap-2.5 overflow-hidden" 
+           class="flex items-center gap-2 min-w-0 group" 
            :class="sidebarCollapsed ? 'justify-center' : 'flex-1'"
-           :title="sidebarCollapsed ? '{{ __('Dashboard') }}' : ''">
-            @if(isset($tenant) && $tenant && !empty($tenant->logo))
-                <img src="{{ str_starts_with($tenant->logo, 'http') || str_starts_with($tenant->logo, '/') ? $tenant->logo : asset('storage/' . $tenant->logo) }}" alt="{{ $tenant->company_name ?: $tenant->name }}" class="h-7 max-w-[120px] object-contain flex-shrink-0">
+           :title='sidebarCollapsed ? {!! json_encode($brandName . " — " . __($consoleRoleLabel), JSON_HEX_APOS) !!} : {!! json_encode($brandName, JSON_HEX_APOS) !!}'>
+            @if(!$brandSquareIconUrl && $brandLogoUrl)
+                {{-- Wide horizontal logo fallback when no square icon/favicon is configured --}}
+                <div class="sidebar-brand-wide flex-1 min-w-0 flex flex-col justify-center">
+                    <img src="{{ $brandLogoUrl }}" alt="{{ $brandName }}" class="h-7 max-w-[168px] w-auto object-contain object-left">
+                    <span class="flex items-center gap-1.5 mt-0.5 min-w-0">
+                        <span class="w-1.5 h-1.5 rounded-full {{ $roleAccent['dot'] }} flex-shrink-0"></span>
+                        <span class="text-[9.5px] font-semibold {{ $roleAccent['text'] }} whitespace-nowrap truncate leading-none">{{ __($consoleRoleLabel) }}</span>
+                    </span>
+                </div>
+                <div class="sidebar-brand-collapsed-icon hidden w-9 h-9 rounded-lg bg-gradient-to-br from-blue-600 to-cyan-600 flex-shrink-0 items-center justify-center text-white font-bold text-sm shadow-xs">
+                    {{ $brandInitial }}
+                </div>
             @else
-                <div class="w-7 h-7 rounded-lg bg-blue-600 flex-shrink-0 flex items-center justify-center text-white font-bold text-xs shadow-xs">
-                    {{ strtoupper(substr($tenant->name ?? 'ISP', 0, 1)) }}
+                @if($brandSquareIconUrl)
+                    <div class="w-9 h-9 rounded-lg bg-white border border-slate-200/90 p-0.5 flex-shrink-0 flex items-center justify-center shadow-2xs overflow-hidden group-hover:border-blue-300 transition">
+                        <img src="{{ $brandSquareIconUrl }}" alt="{{ $brandName }}" class="w-full h-full object-contain rounded-[5px]">
+                    </div>
+                @else
+                    <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-600 to-cyan-600 flex-shrink-0 flex items-center justify-center text-white font-bold text-sm shadow-xs">
+                        {{ $brandInitial }}
+                    </div>
+                @endif
+                <div class="sidebar-brand-text flex-1 min-w-0 flex flex-col justify-center leading-tight">
+                    <span class="font-bold text-slate-900 text-[12px] tracking-[-0.01em] truncate block">{{ $brandName }}</span>
+                    <span class="flex items-center gap-1.5 mt-0.5 min-w-0">
+                        <span class="w-1.5 h-1.5 rounded-full {{ $roleAccent['dot'] }} flex-shrink-0"></span>
+                        <span class="text-[10px] font-semibold {{ $roleAccent['text'] }} whitespace-nowrap truncate leading-none">{{ __($consoleRoleLabel) }}</span>
+                    </span>
                 </div>
             @endif
-            <div class="sidebar-brand-text flex flex-col overflow-hidden leading-tight">
-                <span class="font-bold text-slate-900 text-xs tracking-tight truncate">{{ isset($tenant) && $tenant ? ($tenant->company_name ?: ($tenant->name ?? 'ISP Portal')) : 'ISP Portal' }}</span>
-                <span class="text-[9.5px] font-semibold text-blue-600 uppercase tracking-wider">{{ __($consoleRoleLabel) }}</span>
-            </div>
         </a>
 
         <!-- Mobile Close Button -->
-        <button type="button" @click="mobileSidebar = false" class="lg:hidden p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer">
+        <button type="button" @click="mobileSidebar = false" class="lg:hidden flex-shrink-0 p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer">
             <i class="fas fa-times text-xs"></i>
         </button>
     </div>
