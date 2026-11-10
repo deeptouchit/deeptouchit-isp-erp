@@ -6,7 +6,7 @@
 <div class="space-y-3" x-data="billingCatchUpManager()" @scroll.window="activeMenu = null" @resize.window="activeMenu = null">
     
     {{-- 1. TOP HEADER BAR (Icon + Title + Action Buttons ONLY - AGENTS.md Rule 2.A) --}}
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-white px-4 py-2.5 rounded-xl border border-slate-200/90 shadow-2xs">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-white px-3.5 py-2.5 rounded-xl border border-slate-200/90 shadow-2xs">
         <div class="flex items-center gap-2.5">
             <a href="{{ route('tenant.finance.invoices') }}" 
                class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-xs transition shadow-2xs cursor-pointer"
@@ -16,14 +16,14 @@
             <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 border border-amber-100 flex items-center justify-center text-sm shadow-2xs flex-shrink-0">
                 <i class="fas fa-bolt"></i>
             </div>
-            <h1 class="text-sm font-bold text-slate-800 tracking-tight">Billing Catch-Up &amp; Uninvoiced Queue</h1>
+            <h1 class="text-xs sm:text-sm font-bold text-slate-800 tracking-tight">Billing Catch-Up &amp; Uninvoiced Queue</h1>
         </div>
 
         <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap">
             {{-- Quick Rescan Button --}}
             <button type="button" 
                     @click="window.location.reload()" 
-                    class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200/80 transition inline-flex items-center gap-1.5 shadow-2xs cursor-pointer"
+                    class="h-[34px] py-0 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200/80 transition inline-flex items-center gap-1.5 shadow-2xs cursor-pointer"
                     title="Rescan & Refresh Subscriber Queue">
                 <i class="fas fa-arrows-rotate text-cyan-600 text-[11px]"></i>
                 <span>Refresh Scan</span>
@@ -35,7 +35,7 @@
                     x-cloak
                     @click="confirmBatchGenerate('selected')"
                     :disabled="isGenerating"
-                    class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg text-xs font-semibold shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer">
+                    class="h-[34px] py-0 px-3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg text-xs font-semibold shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer">
                 <i class="fas" :class="isGenerating ? 'fa-spinner fa-spin' : 'fa-check-double'"></i>
                 <span x-text="isGenerating ? 'Generating...' : `Generate Selected (${selectedIds.length})`"></span>
             </button>
@@ -45,7 +45,7 @@
             <button type="button" 
                     @click="confirmBatchGenerate('filtered')"
                     :disabled="isGenerating"
-                    class="px-3 py-1.5 bg-cyan-600 hover:bg-cyan-700 disabled:opacity-50 text-white rounded-lg text-xs font-semibold shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer"
+                    class="h-[34px] py-0 px-3 bg-cyan-600 hover:bg-cyan-700 disabled:opacity-50 text-white rounded-lg text-xs font-semibold shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer"
                     title="Generate Invoices for Current Target Scope: {{ $targetDateLabel }}">
                 <i class="fas" :class="isGenerating ? 'fa-spinner fa-spin' : 'fa-bolt'"></i>
                 <span x-text="isGenerating ? 'Processing...' : '{{ $generateBtnText }}'"></span>
@@ -383,14 +383,14 @@
                                    class="rounded text-cyan-600 focus:ring-cyan-500 cursor-pointer">
                         </th>
                         <th class="w-10 text-center no-sort">#</th>
-                        <th class="text-left font-semibold">Customer ID</th>
-                        <th class="text-left font-semibold">Customer Name</th>
-                        <th class="text-left font-semibold">Mobile Number</th>
-                        <th class="text-left font-semibold">Area</th>
-                        <th class="text-left font-semibold">Partner</th>
-                        <th class="text-left font-semibold">Package</th>
-                        <th class="text-right font-semibold">Monthly Bill</th>
-                        <th class="text-left font-semibold">Expiry Date</th>
+                        <th class="text-center font-semibold">Customer ID</th>
+                        <th class="text-center font-semibold">Customer Name</th>
+                        <th class="text-center font-semibold">Mobile Number</th>
+                        <th class="text-center font-semibold">Area</th>
+                        <th class="text-center font-semibold">Partner</th>
+                        <th class="text-center font-semibold">Package</th>
+                        <th class="text-center font-semibold">Monthly Bill</th>
+                        <th class="text-center font-semibold">Expiry Date</th>
                         <th class="text-center font-semibold">Cycle Status</th>
                         <th class="w-28 text-center no-sort">Action</th>
                     </tr>
@@ -420,32 +420,32 @@
                             </td>
 
                             {{-- 1. Index --}}
-                            <td class="text-center font-mono text-slate-500">{{ $subscribers->firstItem() + $index }}</td>
+                            <td class="text-center font-mono text-slate-500 whitespace-nowrap">{{ $subscribers->firstItem() + $index }}</td>
 
                             {{-- 2. Customer ID --}}
-                            <td class="font-mono font-bold text-slate-800 text-xs whitespace-nowrap">
+                            <td class="text-center font-mono font-bold text-slate-800 text-xs whitespace-nowrap">
                                 <a href="{{ route('tenant.customers.show', $customer->id) }}" class="hover:underline hover:text-cyan-700">
                                     {{ $customer->customer_id ?: $customer->username }}
                                 </a>
                             </td>
 
                             {{-- 3. Customer Name --}}
-                            <td class="whitespace-nowrap font-medium text-slate-900 text-xs">
+                            <td class="text-left whitespace-nowrap font-medium text-slate-900 text-xs">
                                 {{ $customer->name ?: $customer->username }}
                             </td>
 
                             {{-- 4. Mobile Number --}}
-                            <td class="whitespace-nowrap font-mono text-xs text-slate-700">
+                            <td class="text-center whitespace-nowrap font-mono text-xs text-slate-700">
                                 {{ $customer->phone ?: '—' }}
                             </td>
 
                             {{-- 5. Area --}}
-                            <td class="whitespace-nowrap font-medium text-slate-700 text-xs">
+                            <td class="text-left whitespace-nowrap font-medium text-slate-700 text-xs">
                                 {{ (is_object($customer->zone) ? ($customer->zone->name ?? '') : $customer->zone) ?: ($customer->coverageZone?->name ?: ($customer->address ?: '—')) }}
                             </td>
 
                             {{-- 6. Partner --}}
-                            <td class="font-mono whitespace-nowrap text-xs">
+                            <td class="text-center font-mono whitespace-nowrap text-xs">
                                 @if($customer->reseller)
                                     <span class="inline-flex items-center gap-1 text-purple-800 font-semibold" title="{{ $customer->reseller->name }}">
                                         <i class="fas fa-handshake text-purple-600 text-[10px]"></i>
@@ -460,7 +460,7 @@
                             </td>
 
                             {{-- 7. Package --}}
-                            <td class="whitespace-nowrap font-medium text-slate-800 text-xs">
+                            <td class="text-left whitespace-nowrap font-medium text-slate-800 text-xs">
                                 {{ $customer->package_display_name }}
                             </td>
 
@@ -470,7 +470,7 @@
                             </td>
 
                             {{-- 9. Expiry Date --}}
-                            <td class="whitespace-nowrap font-mono text-xs text-slate-700">
+                            <td class="text-center whitespace-nowrap font-mono text-xs text-slate-700">
                                 {{ $expiry ? $expiry->format('d M Y') : '—' }}
                             </td>
 
@@ -674,9 +674,10 @@ function billingCatchUpManager() {
         },
 
         async generateSingle(customerId, customerName, billAmount) {
+            const sym = '{{ $currencySymbol ?? "৳" }}';
             const result = await Swal.fire({
                 title: 'Generate Subscription Invoice?',
-                html: `Generate monthly subscription bill of <b>৳${billAmount.toFixed(2)}</b> for <b>${customerName}</b>?`,
+                html: `Generate monthly subscription bill of <b>${sym}${billAmount.toFixed(2)}</b> for <b>${customerName}</b>?`,
                 icon: 'question',
                 showCancelButton: true,
                 confirmButtonColor: '#0891b2',
@@ -730,6 +731,7 @@ function billingCatchUpManager() {
                 custom_date: this.customDate
             };
 
+            const sym = '{{ $currencySymbol ?? "৳" }}';
             if (scope === 'selected') {
                 htmlText = `Generate subscription invoices for <b>${this.selectedIds.length}</b> selected subscribers?`;
                 payload.customer_ids = this.selectedIds;
@@ -740,7 +742,7 @@ function billingCatchUpManager() {
                 htmlText = `<div class="text-left space-y-1.5 p-2 bg-slate-50 rounded-lg border border-slate-200">
                     <div class="flex justify-between text-xs"><span class="text-slate-500">Target Date Scope:</span><b class="text-cyan-700 font-semibold">${this.targetDateLabel}</b></div>
                     <div class="flex justify-between text-xs"><span class="text-slate-500">Subscribers to Bill:</span><b class="font-mono text-slate-800">${this.filteredCount} Subscribers</b></div>
-                    <div class="flex justify-between text-xs"><span class="text-slate-500">Estimated Total:</span><b class="font-mono text-emerald-600 font-bold">৳${this.filteredAmount.toLocaleString()}</b></div>
+                    <div class="flex justify-between text-xs"><span class="text-slate-500">Estimated Total:</span><b class="font-mono text-emerald-600 font-bold">${sym}${this.filteredAmount.toLocaleString()}</b></div>
                 </div>
                 <p class="text-xs text-slate-600 mt-2">Are you sure you want to generate subscription invoices for these subscribers?</p>`;
             }

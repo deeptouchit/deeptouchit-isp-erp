@@ -57,10 +57,10 @@
         <span x-text="toast.message"></span>
     </div>
 
-    <!-- 1. Top Header Bar (Strictly Icon + Title + Action Buttons ONLY - No Subtitle) -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3 rounded-md border border-slate-200 shadow-2xs">
-        <div class="flex items-center gap-3">
-            <div class="w-7 h-7 rounded-md bg-amber-50 text-amber-600 border border-amber-100 flex items-center justify-center text-xs flex-shrink-0">
+    <!-- 1. Top Header Bar (Strictly Icon + Title + Action Buttons ONLY - AGENTS.md Rule 2.A) -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-white px-3.5 py-2.5 rounded-xl border border-slate-200/90 shadow-2xs">
+        <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 border border-amber-100 flex items-center justify-center text-sm shadow-2xs flex-shrink-0">
                 <i class="fas fa-file-invoice-dollar"></i>
             </div>
             <h1 class="text-xs sm:text-sm font-bold text-slate-900 tracking-tight">
@@ -78,7 +78,7 @@
             @if(isset($uninvoicedQueueCount) && $uninvoicedQueueCount > 0)
             <!-- Billing Catch-Up Queue Quick Link -->
             <a href="{{ route('tenant.finance.billing-catchup') }}" 
-               class="px-2.5 py-1.5 rounded-md bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 font-semibold text-xs shadow-2xs transition inline-flex items-center gap-1.5 cursor-pointer"
+               class="h-[34px] py-0 px-3 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 font-semibold text-xs shadow-2xs transition inline-flex items-center gap-1.5 cursor-pointer"
                title="{{ $uninvoicedQueueCount }} uninvoiced subscribers in catch-up queue">
                 <i class="fas fa-bolt text-amber-600 text-[11px]"></i>
                 <span>Catch-Up Queue</span>
@@ -89,7 +89,7 @@
             <!-- Create Custom Invoice Button -->
             <button type="button" 
                     @click="openCreateModal()" 
-                    class="px-3 py-1.5 rounded-md bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer">
+                    class="h-[34px] py-0 px-3.5 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-plus text-[11px]"></i>
                 <span>+ Custom Invoice</span>
             </button>
@@ -394,8 +394,8 @@
                         <th class="text-center font-semibold">Area</th>
                         <th class="text-center font-semibold">Partner</th>
                         <th class="text-center font-semibold">Package</th>
-                        <th class="text-center font-semibold">Bill (Tk)</th>
-                        <th class="text-center font-semibold">Paid (Tk)</th>
+                        <th class="text-center font-semibold">Bill ({{ $currencySymbol ?? '৳' }})</th>
+                        <th class="text-center font-semibold">Paid ({{ $currencySymbol ?? '৳' }})</th>
                         @if(!$isDueOnly)
                             <th class="text-center font-semibold">Collector</th>
                         @endif
@@ -555,9 +555,20 @@
                         </tr>
                     @empty
                         <tr class="no-record-row">
-                            <td colspan="{{ $isDueOnly ? 12 : 14 }}" class="px-4 py-8 text-center text-slate-400 text-xs italic bg-slate-50/50">
-                                <i class="fas fa-file-invoice text-2xl text-slate-300 mb-2 block"></i>
-                                No customer invoices found for the selected scope.
+                            <td colspan="{{ $isDueOnly ? 12 : 14 }}" class="text-center py-10 text-slate-400">
+                                <div class="max-w-xs mx-auto space-y-2">
+                                    <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 mx-auto flex items-center justify-center text-base border border-amber-100 shadow-2xs">
+                                        <i class="fas fa-file-invoice"></i>
+                                    </div>
+                                    <h3 class="text-xs font-semibold text-slate-800">No Invoices Found</h3>
+                                    <p class="text-[11px] text-slate-500">No customer invoices matched your selected filters.</p>
+                                    <div class="pt-1">
+                                        <button type="button" @click="openCreateModal()" class="h-[34px] py-0 px-3.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-xs font-semibold shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer">
+                                            <i class="fas fa-plus text-[10px]"></i>
+                                            <span>+ Custom Invoice</span>
+                                        </button>
+                                    </div>
+                                </div>
                             </td>
                         </tr>
                     @endforelse

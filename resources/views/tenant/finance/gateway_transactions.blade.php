@@ -9,22 +9,22 @@
 @section('content')
 <div class="space-y-3" x-data="gatewayTransactionsManager()" @scroll.window="activeMenu = null" @resize.window="activeMenu = null">
 
-    {{-- 1. Top Header Bar (Strict Rule: Title + Action Buttons ONLY) --}}
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 pb-1 border-b border-slate-200/80">
-        <div class="flex items-center gap-2">
-            <div class="w-8 h-8 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-700 flex items-center justify-center font-bold text-sm shadow-2xs">
+    {{-- 1. Top Header Bar (Strict AGENTS.md Rule 2.A: Icon + Title + Action Buttons ONLY) --}}
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 bg-white px-3.5 py-2.5 rounded-xl border border-slate-200/90 shadow-2xs">
+        <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-700 flex items-center justify-center font-bold text-sm shadow-2xs flex-shrink-0">
                 <i class="fas fa-network-wired"></i>
             </div>
-            <h1 class="text-base font-bold text-slate-800 tracking-tight">Online Gateway Transactions</h1>
+            <h1 class="text-xs sm:text-sm font-bold text-slate-800 tracking-tight">Online Gateway Transactions</h1>
         </div>
 
-        <div class="flex items-center gap-1.5 flex-wrap">
-            <div class="hidden sm:flex items-center gap-1 px-2.5 py-1 bg-slate-100 rounded-lg border border-slate-200 text-[11px] text-slate-600 font-medium">
+        <div class="flex items-center gap-2 flex-wrap">
+            <div class="hidden sm:flex items-center gap-1.5 h-[34px] px-2.5 bg-slate-100 rounded-lg border border-slate-200 text-[11px] text-slate-600 font-medium">
                 <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span>bKash, Nagad, SSLCommerz PGWs Active</span>
+                <span>PGWs Active</span>
             </div>
 
-            <a href="{{ route('tenant.finance.gateway-transactions.export', request()->all()) }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-lg text-xs font-semibold shadow-2xs transition">
+            <a href="{{ route('tenant.finance.gateway-transactions.export', request()->all()) }}" class="h-[34px] py-0 px-3 inline-flex items-center gap-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-lg text-xs font-semibold shadow-2xs transition">
                 <i class="fas fa-file-excel text-emerald-600 text-[11px]"></i>
                 <span>Export CSV</span>
             </a>
@@ -161,8 +161,9 @@
                     <select name="per_page" 
                             onchange="this.form.submit()"
                             class="w-full h-[34px] px-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition cursor-pointer">
-                        <option value="10" {{ $perPage == 10 ? 'selected' : '' }}>10 / page</option>
+                        <option value="15" {{ $perPage == 15 ? 'selected' : '' }}>15 / page</option>
                         <option value="20" {{ $perPage == 20 ? 'selected' : '' }}>20 / page</option>
+                        <option value="30" {{ $perPage == 30 ? 'selected' : '' }}>30 / page</option>
                         <option value="50" {{ $perPage == 50 ? 'selected' : '' }}>50 / page</option>
                         <option value="100" {{ $perPage == 100 ? 'selected' : '' }}>100 / page</option>
                     </select>

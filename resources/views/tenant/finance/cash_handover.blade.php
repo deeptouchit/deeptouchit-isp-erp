@@ -32,12 +32,12 @@
 <div class="space-y-3" x-data="cashHandoverManager()" @scroll.window="activeMenu = null" @resize.window="activeMenu = null">
 
     <!-- 1. Top Header Bar (Icon + Title + Action Buttons ONLY - AGENTS.md Rule 2.A) -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-white p-3 sm:px-4 sm:py-3 rounded-xl border border-slate-200/90 shadow-2xs">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-white px-3.5 py-2.5 rounded-xl border border-slate-200/90 shadow-2xs">
         <div class="flex items-center gap-2.5">
             <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center text-sm shadow-2xs">
                 <i class="fas fa-vault"></i>
             </div>
-            <h1 class="text-sm sm:text-base font-bold text-slate-800 tracking-tight">
+            <h1 class="text-xs sm:text-sm font-bold text-slate-800 tracking-tight">
                 Daily Cash Handover &amp; Closing
             </h1>
         </div>
@@ -45,7 +45,7 @@
         <div class="flex items-center gap-2">
             <!-- Export CSV -->
             <a href="{{ route('tenant.finance.cash-handover.export', request()->query()) }}" 
-               class="border border-slate-300 hover:bg-slate-50 text-slate-700 font-medium text-xs px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow-2xs">
+               class="h-[34px] py-0 px-3 border border-slate-300 hover:bg-slate-50 text-slate-700 font-medium text-xs rounded-lg transition inline-flex items-center gap-1.5 shadow-2xs">
                 <i class="fas fa-file-csv text-emerald-600 text-xs"></i>
                 <span class="hidden sm:inline">Export</span> CSV
             </a>
@@ -53,7 +53,7 @@
             <!-- New Handover Button -->
             <button type="button" 
                     @click="openCreateModal()" 
-                    class="bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs px-3.5 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow-xs cursor-pointer">
+                    class="h-[34px] py-0 px-3.5 bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs rounded-lg transition inline-flex items-center gap-1.5 shadow-xs cursor-pointer">
                 <i class="fas fa-plus text-xs"></i>
                 <span>New Cash Handover</span>
             </button>
@@ -207,8 +207,9 @@
                     <select name="per_page" 
                             onchange="this.form.submit()"
                             class="w-full h-[34px] px-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition cursor-pointer">
-                        <option value="10" {{ $perPage == 10 ? 'selected' : '' }}>10 / page</option>
+                        <option value="15" {{ $perPage == 15 ? 'selected' : '' }}>15 / page</option>
                         <option value="20" {{ $perPage == 20 ? 'selected' : '' }}>20 / page</option>
+                        <option value="30" {{ $perPage == 30 ? 'selected' : '' }}>30 / page</option>
                         <option value="50" {{ $perPage == 50 ? 'selected' : '' }}>50 / page</option>
                         <option value="100" {{ $perPage == 100 ? 'selected' : '' }}>100 / page</option>
                     </select>
@@ -412,16 +413,22 @@
                     @empty
                         <tr>
                             <td colspan="8" class="text-center py-10 text-slate-400">
-                                <div class="flex flex-col items-center justify-center gap-2">
-                                    <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 text-base">
+                                <div class="max-w-xs mx-auto space-y-2.5">
+                                    <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 mx-auto flex items-center justify-center text-base border border-amber-100 shadow-2xs">
                                         <i class="fas fa-vault"></i>
                                     </div>
-                                    <p class="text-xs font-medium text-slate-600">No daily cash handovers found matching your criteria.</p>
-                                    <button type="button" 
-                                            @click="openCreateModal()" 
-                                            class="text-xs text-amber-600 font-semibold hover:underline">
-                                        + Submit New Cash Handover
-                                    </button>
+                                    <div class="space-y-0.5">
+                                        <h3 class="text-xs font-semibold text-slate-800">No Cash Handovers Found</h3>
+                                        <p class="text-[11px] text-slate-500">No daily cash handover vouchers match your filter criteria.</p>
+                                    </div>
+                                    <div class="pt-1">
+                                        <button type="button" 
+                                                @click="openCreateModal()" 
+                                                class="h-[34px] py-0 px-3.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-semibold shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer">
+                                            <i class="fas fa-plus text-[10px]"></i>
+                                            <span>New Cash Handover</span>
+                                        </button>
+                                    </div>
                                 </div>
                             </td>
                         </tr>

@@ -426,8 +426,11 @@ class TenantExpenseAccountController extends Controller
             ['path' => $request->url(), 'query' => $request->query()]
         );
 
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
+
         return view('tenant.finance.expenses', compact(
             'tenant',
+            'currencySymbol',
             'vouchers',
             'allCategories',
             'selectedType',

@@ -869,7 +869,7 @@ class TenantCustomerInvoiceController extends Controller
         $resellers = TenantReseller::where('tenant_id', $tenant->id)->orderBy('name')->get();
         $zones = TenantCoverageZone::where('tenant_id', $tenant->id)->orderBy('name')->get();
         $packages = TenantInternetPackage::where('tenant_id', $tenant->id)->orderBy('price')->get();
-        $currencySymbol = '৳';
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
 
         $generateBtnText = match($targetDateType) {
             'today' => "Generate Today's Bills (" . number_format($filteredTargetCount) . ")",

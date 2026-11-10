@@ -32,32 +32,32 @@
 @section('content')
 <div class="space-y-3" x-data="expenseAccountsManager()" @scroll.window="activeMenu = null" @resize.window="activeMenu = null">
 
-    {{-- 1. Top Header Bar (Strict Rule: Title + Action Buttons ONLY) --}}
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 pb-1 border-b border-slate-200/80">
-        <div class="flex items-center gap-2">
-            <div class="w-8 h-8 rounded-lg bg-cyan-50 border border-cyan-200 text-cyan-700 flex items-center justify-center font-bold text-sm shadow-2xs">
+    {{-- 1. Top Header Bar (Strict AGENTS.md Rule 2.A: Icon + Title + Action Buttons ONLY) --}}
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 bg-white px-3.5 py-2.5 rounded-xl border border-slate-200/90 shadow-2xs">
+        <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-lg bg-cyan-50 border border-cyan-200 text-cyan-700 flex items-center justify-center font-bold text-sm shadow-2xs flex-shrink-0">
                 <i class="fas fa-money-bill-transfer"></i>
             </div>
-            <h1 class="text-base font-bold text-slate-800 tracking-tight">Income &amp; Expense Accounts</h1>
+            <h1 class="text-xs sm:text-sm font-bold text-slate-800 tracking-tight">Income &amp; Expense Accounts</h1>
         </div>
 
         <div class="flex items-center gap-1.5 flex-wrap">
-            <button type="button" @click="openVoucherModal('EXPENSE')" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-semibold shadow-xs transition cursor-pointer">
+            <button type="button" @click="openVoucherModal('EXPENSE')" class="h-[34px] py-0 px-3 inline-flex items-center gap-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-semibold shadow-xs transition cursor-pointer">
                 <i class="fas fa-minus-circle text-[11px]"></i>
                 <span>Record Expense</span>
             </button>
 
-            <button type="button" @click="openVoucherModal('INCOME')" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-xs transition cursor-pointer">
+            <button type="button" @click="openVoucherModal('INCOME')" class="h-[34px] py-0 px-3 inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-xs transition cursor-pointer">
                 <i class="fas fa-plus-circle text-[11px]"></i>
                 <span>Record Income</span>
             </button>
 
-            <button type="button" @click="showCategoryModal = true" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 rounded-lg text-xs font-semibold shadow-2xs transition cursor-pointer">
+            <button type="button" @click="showCategoryModal = true" class="h-[34px] py-0 px-3 inline-flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 rounded-lg text-xs font-semibold shadow-2xs transition cursor-pointer">
                 <i class="fas fa-folder-tree text-indigo-600 text-[11px]"></i>
                 <span>Chart of Accounts</span>
             </button>
 
-            <a href="{{ route('tenant.finance.expenses.export', request()->all()) }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-lg text-xs font-semibold shadow-2xs transition">
+            <a href="{{ route('tenant.finance.expenses.export', request()->all()) }}" class="h-[34px] py-0 px-3 inline-flex items-center gap-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-lg text-xs font-semibold shadow-2xs transition">
                 <i class="fas fa-file-excel text-emerald-600 text-[11px]"></i>
                 <span>Export CSV</span>
             </a>
@@ -207,8 +207,9 @@
                     <select name="per_page" 
                             onchange="this.form.submit()"
                             class="w-full h-[34px] px-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs cursor-pointer">
-                        <option value="10" {{ $perPage == 10 ? 'selected' : '' }}>10 / page</option>
+                        <option value="15" {{ $perPage == 15 ? 'selected' : '' }}>15 / page</option>
                         <option value="20" {{ $perPage == 20 ? 'selected' : '' }}>20 / page</option>
+                        <option value="30" {{ $perPage == 30 ? 'selected' : '' }}>30 / page</option>
                         <option value="50" {{ $perPage == 50 ? 'selected' : '' }}>50 / page</option>
                         <option value="100" {{ $perPage == 100 ? 'selected' : '' }}>100 / page</option>
                     </select>
@@ -351,32 +352,32 @@
                     @forelse($vouchers as $index => $v)
                         <tr>
                             {{-- Row index --}}
-                            <td class="text-center font-mono text-slate-500">{{ $vouchers->firstItem() + $index }}</td>
+                            <td class="text-center font-mono text-slate-500 whitespace-nowrap">{{ $vouchers->firstItem() + $index }}</td>
 
                             {{-- Voucher / Receipt No --}}
-                            <td class="text-center">
+                            <td class="text-center whitespace-nowrap">
                                 <button type="button" @click="viewVoucher({{ $v->raw_id ?? $v->id }}, '{{ $v->source ?? 'voucher' }}')" class="font-mono font-bold {{ $v->type === 'INCOME' ? 'text-emerald-700 hover:text-emerald-600' : 'text-rose-700 hover:text-rose-600' }} hover:underline cursor-pointer">
                                     {{ $v->voucher_no }}
                                 </button>
                             </td>
 
                             {{-- Account Head / Category --}}
-                            <td class="text-left">
+                            <td class="text-left whitespace-nowrap">
                                 <span class="font-medium text-slate-800">{{ $v->category_name ?? ($v->category?->name ?? 'General Head') }}</span>
                             </td>
 
                             {{-- Description / Title --}}
-                            <td class="text-left truncate max-w-xs" title="{{ $v->title }}">
+                            <td class="text-left truncate max-w-xs whitespace-nowrap" title="{{ $v->title }}">
                                 <span class="text-slate-900 font-medium">{{ $v->title }}</span>
                             </td>
 
                             {{-- Amount (Color-coded by type) --}}
-                            <td class="text-right font-mono font-bold {{ $v->type === 'INCOME' ? 'text-emerald-700' : 'text-rose-700' }}">
+                            <td class="text-right font-mono font-bold whitespace-nowrap {{ $v->type === 'INCOME' ? 'text-emerald-700' : 'text-rose-700' }}">
                                 {{ $v->type === 'INCOME' ? '+' : '-' }}@currency($v->amount)
                             </td>
 
                             {{-- Status Badge --}}
-                            <td class="text-center">
+                            <td class="text-center whitespace-nowrap">
                                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold border {{ $v->status_badge['class'] }}">
                                     <i class="fas {{ $v->status_badge['icon'] }} text-[9px]"></i>
                                     <span>{{ $v->status_badge['label'] }}</span>
@@ -384,12 +385,12 @@
                             </td>
 
                             {{-- Date --}}
-                            <td class="text-center font-mono text-slate-600 text-xs">
+                            <td class="text-center font-mono text-slate-600 text-xs whitespace-nowrap">
                                 {{ $v->transaction_date ? \Carbon\Carbon::parse($v->transaction_date)->format('d M Y') : '--' }}
                             </td>
 
                             {{-- Action 3-Dot Button --}}
-                            <td class="text-center">
+                            <td class="text-center whitespace-nowrap">
                                 <button type="button" @click.stop="toggleMenu({{ json_encode($v) }}, $event)" 
                                         class="w-6 h-6 rounded-md hover:bg-slate-100 text-slate-500 hover:text-slate-700 inline-flex items-center justify-center transition cursor-pointer">
                                     <i class="fas fa-ellipsis-v text-[10px]"></i>

@@ -9,24 +9,24 @@
 @section('content')
 <div class="space-y-3" x-data="financialLedgerManager()" @scroll.window="activeMenu = null" @resize.window="activeMenu = null">
 
-    {{-- 1. Top Header Bar (Strict AGENTS.md Rule 2.A: Title + Action Buttons ONLY) --}}
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 pb-1 border-b border-slate-200/80">
-        <div class="flex items-center gap-2">
-            <div class="w-8 h-8 rounded-lg bg-cyan-50 border border-cyan-200 text-cyan-700 flex items-center justify-center font-bold text-sm shadow-2xs">
+    {{-- 1. Top Header Bar (Strict AGENTS.md Rule 2.A: Icon + Title + Action Buttons ONLY) --}}
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 bg-white px-3.5 py-2.5 rounded-xl border border-slate-200/90 shadow-2xs">
+        <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-lg bg-cyan-50 border border-cyan-200 text-cyan-700 flex items-center justify-center font-bold text-sm shadow-2xs flex-shrink-0">
                 <i class="fas fa-book-open"></i>
             </div>
-            <h1 class="text-base font-bold text-slate-800 tracking-tight">Financial Statements &amp; General Ledger</h1>
+            <h1 class="text-xs sm:text-sm font-bold text-slate-800 tracking-tight">Financial Statements &amp; General Ledger</h1>
         </div>
         
         <div class="flex items-center gap-1.5">
             <a href="{{ route('tenant.finance.ledger.export', request()->query()) }}" 
-               class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-lg text-xs font-semibold shadow-2xs transition">
+               class="h-[34px] py-0 px-3 inline-flex items-center gap-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-lg text-xs font-semibold shadow-2xs transition">
                 <i class="fas fa-file-csv text-emerald-600 text-[11px]"></i>
                 <span>Export CSV</span>
             </a>
             <a href="{{ route('tenant.finance.ledger.print', request()->query()) }}" 
                target="_blank" 
-               class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs rounded-lg shadow-xs transition">
+               class="h-[34px] py-0 px-3.5 inline-flex items-center gap-1.5 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs rounded-lg shadow-xs transition">
                 <i class="fas fa-print text-[11px]"></i>
                 <span>Print Statement</span>
             </a>
@@ -198,7 +198,9 @@
                     <select name="per_page" 
                             onchange="this.form.submit()"
                             class="w-full h-[34px] px-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs cursor-pointer">
+                        <option value="15" {{ request('per_page', '20') == '15' ? 'selected' : '' }}>15 / page</option>
                         <option value="20" {{ request('per_page', '20') == '20' ? 'selected' : '' }}>20 / page</option>
+                        <option value="30" {{ request('per_page', '20') == '30' ? 'selected' : '' }}>30 / page</option>
                         <option value="50" {{ request('per_page') == '50' ? 'selected' : '' }}>50 / page</option>
                         <option value="100" {{ request('per_page') == '100' ? 'selected' : '' }}>100 / page</option>
                     </select>
@@ -320,17 +322,17 @@
                         @forelse($paginator as $index => $item)
                             <tr>
                                 {{-- 1. Index --}}
-                                <td class="text-center font-mono text-slate-400">
+                                <td class="text-center font-mono text-slate-400 whitespace-nowrap">
                                     {{ $paginator->firstItem() + $index }}
                                 </td>
 
                                 {{-- 2. Date & Time --}}
-                                <td class="text-center font-mono text-slate-600 text-xs">
+                                <td class="text-center font-mono text-slate-600 text-xs whitespace-nowrap">
                                     {{ $item['date'] }}
                                 </td>
 
                                 {{-- 3. Voucher / Ref No --}}
-                                <td class="text-center">
+                                <td class="text-center whitespace-nowrap">
                                     <button type="button" 
                                             @click="viewEntry(@js($item))" 
                                             class="font-mono font-bold text-cyan-700 hover:text-cyan-900 hover:underline cursor-pointer">
@@ -339,17 +341,17 @@
                                 </td>
 
                                 {{-- 4. Account Head --}}
-                                <td class="text-left font-medium text-slate-800">
+                                <td class="text-left font-medium text-slate-800 whitespace-nowrap">
                                     {{ $item['category'] }}
                                 </td>
 
                                 {{-- 5. Particulars / Narrative --}}
-                                <td class="text-left text-slate-600 truncate max-w-xs" title="{{ $item['description'] }}">
+                                <td class="text-left text-slate-600 truncate max-w-xs whitespace-nowrap" title="{{ $item['description'] }}">
                                     {{ $item['description'] }}
                                 </td>
 
                                 {{-- 6. Debit (Expense / Outflow) --}}
-                                <td class="text-right font-mono font-semibold text-rose-600">
+                                <td class="text-right font-mono font-semibold text-rose-600 whitespace-nowrap">
                                     @if($item['type'] === 'debit')
                                         -@currency($item['amount'])
                                     @else
@@ -358,7 +360,7 @@
                                 </td>
 
                                 {{-- 7. Credit (Revenue / Inflow) --}}
-                                <td class="text-right font-mono font-semibold text-emerald-600">
+                                <td class="text-right font-mono font-semibold text-emerald-600 whitespace-nowrap">
                                     @if($item['type'] === 'credit')
                                         +@currency($item['amount'])
                                     @else
@@ -367,12 +369,12 @@
                                 </td>
 
                                 {{-- 8. Running Balance --}}
-                                <td class="text-right font-mono font-bold {{ $item['running_balance'] >= 0 ? 'text-slate-800' : 'text-rose-700' }}">
+                                <td class="text-right font-mono font-bold whitespace-nowrap {{ $item['running_balance'] >= 0 ? 'text-slate-800' : 'text-rose-700' }}">
                                     @currency($item['running_balance'])
                                 </td>
 
                                 {{-- 9. Action (3-Dot Menu) --}}
-                                <td class="text-center">
+                                <td class="text-center whitespace-nowrap">
                                     <button type="button" 
                                             @click="toggleMenu(@js($item), $event)" 
                                             class="w-6 h-6 rounded-md hover:bg-slate-100 text-slate-500 hover:text-slate-700 inline-flex items-center justify-center transition cursor-pointer">

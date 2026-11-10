@@ -195,8 +195,11 @@ class TenantGatewayTransactionController extends Controller
         if (!empty($selectedDate)) $activeMoreCount++;
         $isMoreOpen = $activeMoreCount > 0;
 
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
+
         return view('tenant.finance.gateway_transactions', compact(
             'tenant',
+            'currencySymbol',
             'transactions',
             'allGateways',
             'isResellerUser',

@@ -175,8 +175,11 @@ class TenantWholesaleBillingController extends Controller
         if (!empty($dateTo)) $activeMoreCount++;
         $isMoreOpen = $activeMoreCount > 0;
 
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
+
         return view('tenant.finance.wholesale_billing', compact(
             'tenant',
+            'currencySymbol',
             'invoices',
             'allResellers',
             'isResellerUser',
