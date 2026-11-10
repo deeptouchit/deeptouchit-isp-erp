@@ -561,5 +561,18 @@
     "Sub-ISP Manager": "Sub-ISP Manager",
     "Sub-ISP Tech": "Sub-ISP Tech",
     "Sub-ISP Collector": "Sub-ISP Collector",
-    "Staff Member": "Staff Member"
+    "Staff Member": "Staff Member",
+    "Support": "Support",
+    "SaaS Subscription": "SaaS Subscription",
+    "Support Desk": "Support Desk",
+    "No unread alerts or tickets right now.": "No unread alerts or tickets right now.",
+    "View Support Desk": "View Support Desk",
+    "Loading updates...": "Loading updates...",
+    "Exit Impersonation": "Exit Impersonation",
+    "Exit": "Exit",
+    "New Support Alert": "New Support Alert",
+    "View": "View",
+    "new": "new",
+    "Search customer (ID, Phone, PPPoE)...": "Search customer (ID, Phone, PPPoE)...",
+    "Active Plan": "Active Plan"
 }

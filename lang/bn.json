@@ -564,5 +564,18 @@
     "Sub-ISP Manager": "সাব-আইএসপি ম্যানেজার",
     "Sub-ISP Tech": "সাব-আইএসপি টেকনিশিয়ান",
     "Sub-ISP Collector": "সাব-আইএসপি কালেক্টর",
-    "Staff Member": "স্টাফ সদস্য"
+    "Staff Member": "স্টাফ সদস্য",
+    "Support": "সাপোর্ট",
+    "SaaS Subscription": "সাস সাবস্ক্রিপশন",
+    "Support Desk": "সাপোর্ট ডেস্ক",
+    "No unread alerts or tickets right now.": "এই মুহূর্তে কোনো অপঠিত বার্তা বা টিকিট নেই।",
+    "View Support Desk": "সাপোর্ট ডেস্ক দেখুন",
+    "Loading updates...": "আপডেট লোড হচ্ছে...",
+    "Exit Impersonation": "ইম্পার্সোনেশন বন্ধ করুন",
+    "Exit": "বের হন",
+    "New Support Alert": "নতুন সাপোর্ট অ্যালার্ট",
+    "View": "দেখুন",
+    "new": "নতুন",
+    "Search customer (ID, Phone, PPPoE)...": "গ্রাহক খুঁজুন (আইডি, ফোন, PPPoE)...",
+    "Active Plan": "সক্রিয় প্ল্যান"
 }
