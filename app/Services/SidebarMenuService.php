@@ -47,7 +47,7 @@ class SidebarMenuService
                         'url'        => $url,
                         'is_active'  => $isActive,
                         'badge'      => $child['badge'] ?? null,
-                        'keywords'   => strtolower($child['keywords'] ?? $child['title']),
+                        'keywords'   => mb_strtolower(trim(($child['keywords'] ?? $child['title']) . ' ' . __($child['title'])), 'UTF-8'),
                         'active_cls' => self::getChildActiveClasses($childColor),
                     ];
                 }
@@ -60,7 +60,7 @@ class SidebarMenuService
                 $parentActive = $anyChildActive || self::isItemActive($item);
                 $color = $item['color'] ?? 'blue';
                 $childKeywords = implode(' ', array_column($visibleChildren, 'keywords'));
-                $combinedKeywords = strtolower(trim(($item['keywords'] ?? $item['title']) . ' ' . $childKeywords));
+                $combinedKeywords = mb_strtolower(trim(($item['keywords'] ?? $item['title']) . ' ' . __($item['title']) . ' ' . $childKeywords), 'UTF-8');
 
                 $resolved[] = [
                     'type'          => 'group',
@@ -83,7 +83,7 @@ class SidebarMenuService
                     'url'         => self::resolveUrl($item),
                     'icon'        => $item['icon'] ?? 'fas fa-circle',
                     'is_active'   => $isActive,
-                    'keywords'    => strtolower($item['keywords'] ?? $item['title']),
+                    'keywords'    => mb_strtolower(trim(($item['keywords'] ?? $item['title']) . ' ' . __($item['title'])), 'UTF-8'),
                     'active_cls'  => self::getParentActiveClasses($color),
                     'icon_active' => self::getIconActiveClass($color),
                 ];

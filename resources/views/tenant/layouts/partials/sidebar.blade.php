@@ -72,7 +72,7 @@
         <a href="{{ route('tenant.dashboard') }}" 
            class="flex items-center gap-2.5 overflow-hidden" 
            :class="sidebarCollapsed ? 'justify-center' : 'flex-1'"
-           :title="sidebarCollapsed ? 'Dashboard' : ''">
+           :title="sidebarCollapsed ? '{{ __('Dashboard') }}' : ''">
             @if(isset($tenant) && $tenant && !empty($tenant->logo))
                 <img src="{{ str_starts_with($tenant->logo, 'http') || str_starts_with($tenant->logo, '/') ? $tenant->logo : asset('storage/' . $tenant->logo) }}" alt="{{ $tenant->company_name ?: $tenant->name }}" class="h-7 max-w-[120px] object-contain flex-shrink-0">
             @else
@@ -82,7 +82,7 @@
             @endif
             <div class="sidebar-brand-text flex flex-col overflow-hidden leading-tight">
                 <span class="font-bold text-slate-900 text-xs tracking-tight truncate">{{ isset($tenant) && $tenant ? ($tenant->company_name ?: ($tenant->name ?? 'ISP Portal')) : 'ISP Portal' }}</span>
-                <span class="text-[9.5px] font-semibold text-blue-600 uppercase tracking-wider">{{ $consoleRoleLabel }}</span>
+                <span class="text-[9.5px] font-semibold text-blue-600 uppercase tracking-wider">{{ __($consoleRoleLabel) }}</span>
             </div>
         </a>
 
@@ -107,7 +107,7 @@
                    readonly
                    onfocus="this.removeAttribute('readonly');"
                    x-model="filterQuery" 
-                   placeholder="Filter menu..." 
+                   placeholder="{{ __('Filter menu...') }}" 
                    class="w-full pl-7 pr-6 py-1.5 text-[11px] rounded-lg border border-slate-200 bg-white text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition placeholder:text-slate-400 shadow-2xs">
             <button type="button" 
                     x-show="filterQuery" 
@@ -148,12 +148,12 @@
                     <div x-show="open || filterQuery" x-collapse class="pl-2.5 pr-0.5 space-y-1" style="{{ $item['is_active'] ? '' : 'display: none;' }}">
                         @foreach($item['children'] as $child)
                             <a href="{{ $child['url'] }}" 
-                               x-show='!filterQuery || {!! json_encode($child["keywords"] . " " . strtolower($item["title"]), JSON_HEX_APOS) !!}.includes(filterQuery.toLowerCase())'
+                               x-show='!filterQuery || {!! json_encode($child["keywords"] . " " . mb_strtolower($item["title"] . " " . __($item["title"]), "UTF-8"), JSON_HEX_APOS) !!}.includes(filterQuery.toLowerCase())'
                                class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ $child['is_active'] ? $child['active_cls'] : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
                                 @if(!empty($child['badge']))
                                     <span class="flex items-center justify-between">
                                         <span>{{ __($child['title']) }}</span>
-                                        <span class="px-1.5 py-0.2 rounded text-[9px] bg-amber-100 text-amber-800 font-bold">{{ $child['badge'] }}</span>
+                                        <span class="px-1.5 py-0.2 rounded text-[9px] bg-amber-100 text-amber-800 font-bold">{{ __($child['badge']) }}</span>
                                     </span>
                                 @else
                                     {{ __($child['title']) }}
@@ -174,12 +174,12 @@
             </div>
             <div class="sidebar-user-text flex flex-col overflow-hidden leading-none">
                 <span class="text-[11px] font-bold text-slate-800 truncate">{{ $authUser?->name ?? 'Admin' }}</span>
-                <span class="text-[9px] text-slate-400">{{ $authUser?->role_badge['label'] ?? ($authUser && $authUser->isCollector() ? 'Bill Collector' : 'ISP Staff') }}</span>
+                <span class="text-[9px] text-slate-400">{{ __($authUser?->role_badge['label'] ?? ($authUser && $authUser->isCollector() ? 'Bill Collector' : 'ISP Staff')) }}</span>
             </div>
         </div>
         <form action="{{ route('tenant.logout') }}" method="POST">
             @csrf
-            <button type="submit" title="Sign Out" class="p-1 text-slate-400 hover:text-rose-600 transition cursor-pointer">
+            <button type="submit" title="{{ __('Sign Out') }}" class="p-1 text-slate-400 hover:text-rose-600 transition cursor-pointer">
                 <i class="fas fa-sign-out-alt text-xs"></i>
             </button>
         </form>
@@ -191,11 +191,11 @@
                 @click="toggleSidebar()" 
                 class="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-100 hover:text-slate-800 transition cursor-pointer"
                 :class="sidebarCollapsed ? 'justify-center' : 'justify-between'"
-                :title="sidebarCollapsed ? 'Expand Sidebar (Ctrl+B)' : 'Collapse Sidebar (Ctrl+B)'">
+                :title="sidebarCollapsed ? '{{ __('Expand Sidebar (Ctrl+B)') }}' : '{{ __('Collapse Sidebar (Ctrl+B)') }}'">
             <div class="flex items-center gap-2 overflow-hidden">
                 <i class="fas text-xs transition-transform duration-200" 
                    :class="sidebarCollapsed ? 'fa-angles-right text-cyan-600' : 'fa-angles-left text-slate-400'"></i>
-                <span x-show="!sidebarCollapsed" class="text-[11px] font-medium tracking-tight">Collapse</span>
+                <span x-show="!sidebarCollapsed" class="text-[11px] font-medium tracking-tight">{{ __('Collapse') }}</span>
             </div>
             <kbd x-show="!sidebarCollapsed" class="text-[9px] font-mono bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 text-slate-400">Ctrl+B</kbd>
         </button>
