@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Tenant;
 use App\Http\Controllers\Controller;
 use App\Models\PaymentTransaction;
 use App\Models\SaasInvoice;
+use App\Models\Setting;
 use App\Models\Tenant;
+use App\Services\Billing\PlanQuotaService;
 use App\Services\Payment\PaymentGatewayManager;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -30,7 +32,7 @@ class TenantBillingController extends Controller
         }
 
         $subscription = $tenant->activeSubscription ?: $tenant->subscriptions()->latest()->first();
-        $plan = $tenant->plan;
+        $plan = PlanQuotaService::getPlan($tenant);
 
         // Current pending invoice
         $currentInvoice = $tenant->invoices()->where('status', '!=', 'paid')->latest()->first();
@@ -40,14 +42,22 @@ class TenantBillingController extends Controller
         $totalPaid = (float) $tenant->invoices()->where('status', 'paid')->sum('amount');
         $totalOutstanding = (float) $tenant->invoices()->where('status', '!=', 'paid')->sum('amount');
 
-        // ISP Tenant Resource Usage Counts
-        $customersCount = class_exists('\App\Models\TenantCustomer') ? \App\Models\TenantCustomer::where('tenant_id', $tenant->id)->count() : 0;
-        $activeCustomersCount = class_exists('\App\Models\TenantCustomer') ? \App\Models\TenantCustomer::where('tenant_id', $tenant->id)->where('status', 'active')->count() : 0;
-        $resellersCount = class_exists('\App\Models\TenantReseller') ? \App\Models\TenantReseller::where('tenant_id', $tenant->id)->count() : 0;
-        $staffCount = \App\Models\User::where('tenant_id', $tenant->id)->count();
-        $mikrotikCount = class_exists('\App\Models\MikrotikRouter') ? \App\Models\MikrotikRouter::where('tenant_id', $tenant->id)->count() : 0;
-        $oltCount = class_exists('\App\Models\OltDevice') ? \App\Models\OltDevice::where('tenant_id', $tenant->id)->count() : 0;
-        $packagesCount = class_exists('\App\Models\TenantInternetPackage') ? \App\Models\TenantInternetPackage::where('tenant_id', $tenant->id)->count() : 0;
+        // Accurate live ISP tenant usage counts via PlanQuotaService
+        $usage = PlanQuotaService::getUsageSummary($tenant);
+        $customersCount = $usage['customers'];
+        $activeCustomersCount = $usage['active_customers'];
+        $resellersCount = $usage['resellers'];
+        $staffCount = $usage['staff'];
+        $mikrotikCount = $usage['mikrotik'];
+        $oltCount = $usage['olt'];
+        $packagesCount = $usage['packages'];
+
+        // Dynamic platform support contacts from global settings
+        $supportSettings = Setting::whereNull('tenant_id')
+            ->whereIn('key', ['support_phone', 'company_phone', 'billing_email', 'support_email', 'company_email'])
+            ->pluck('value', 'key');
+        $supportPhone = $supportSettings['support_phone'] ?? ($supportSettings['company_phone'] ?? '+880 1819-000000');
+        $billingEmail = $supportSettings['billing_email'] ?? ($supportSettings['support_email'] ?? ($supportSettings['company_email'] ?? 'billing@somitysoft.com'));
 
         // Recent Invoices & Payments for Live Activity Tables
         $recentInvoices = $tenant->invoices()->with('plan')->latest('id')->take(5)->get();
@@ -68,6 +78,8 @@ class TenantBillingController extends Controller
             'mikrotikCount',
             'oltCount',
             'packagesCount',
+            'supportPhone',
+            'billingEmail',
             'recentInvoices',
             'recentPayments'
         ));

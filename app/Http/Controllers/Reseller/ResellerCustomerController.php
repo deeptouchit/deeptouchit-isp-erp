@@ -15,6 +15,7 @@ use App\Models\TenantRouter;
 use App\Models\Setting;
 use App\Models\User;
 use App\Notifications\BanglaQrPaymentPendingNotification;
+use App\Services\Billing\PlanQuotaService;
 use App\Services\Network\MikrotikApiService;
 use App\Services\Network\RadiusService;
 use App\Services\Payment\BkashPaymentService;
@@ -257,6 +258,13 @@ class ResellerCustomerController extends Controller
         [$authUser, $reseller, $tenant] = $this->getResellerData();
         $tenantId = $tenant?->id;
         $resellerId = $reseller?->id;
+
+        if ($tenant) {
+            $customerQuota = PlanQuotaService::checkQuota($tenant, 'customer');
+            if (!$customerQuota['allowed']) {
+                return PlanQuotaService::denyResponse($request, $customerQuota['message']);
+            }
+        }
 
         $validated = $request->validate([
             'name' => 'required|string|max:150',

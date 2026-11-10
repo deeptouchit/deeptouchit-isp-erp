@@ -16,6 +16,7 @@ use App\Models\TenantReseller;
 use App\Models\TenantResellerWalletTransaction;
 use App\Models\TenantRouter;
 use App\Models\User;
+use App\Services\Billing\PlanQuotaService;
 use App\Services\Network\MikrotikApiService;
 use App\Services\Network\RadiusService;
 use Carbon\Carbon;
@@ -384,6 +385,7 @@ class TenantCustomerController extends Controller
             ->sort()
             ->values();
         $autoCustomerId = TenantCustomer::generateNextCustomerId($tenant->id);
+        $customerQuota = PlanQuotaService::checkQuota($tenant, 'customer');
 
         return view('tenant.customers.create', compact(
             'tenant',
@@ -394,7 +396,8 @@ class TenantCustomerController extends Controller
             'allResellers',
             'allZones',
             'coverageZones',
-            'autoCustomerId'
+            'autoCustomerId',
+            'customerQuota'
         ));
     }
 
@@ -404,6 +407,11 @@ class TenantCustomerController extends Controller
     public function store(Request $request): JsonResponse|RedirectResponse
     {
         $tenant = $this->getTenant();
+
+        $customerQuota = PlanQuotaService::checkQuota($tenant, 'customer');
+        if (!$customerQuota['allowed']) {
+            return PlanQuotaService::denyResponse($request, $customerQuota['message']);
+        }
 
         $validated = $request->validate([
             'customer_id' => [
@@ -1258,9 +1266,13 @@ class TenantCustomerController extends Controller
         }
 
         $importedCount = 0;
+        $quotaSkippedCount = 0;
         $pushedCount = 0;
         $failedCount = 0;
         $activeUsernames = [];
+
+        $customerQuotaCheck = PlanQuotaService::checkQuota($tenant, 'customer');
+        $remainingCustomerSlots = $customerQuotaCheck['limit'] > 0 ? $customerQuotaCheck['remaining'] : PHP_INT_MAX;
 
         // Packages map for auto-matching profile names
         $packages = TenantInternetPackage::where('tenant_id', $tenant->id)->get();
@@ -1284,6 +1296,10 @@ class TenantCustomerController extends Controller
                             ->first();
 
                         if (!$existing) {
+                            if ($remainingCustomerSlots <= 0) {
+                                $quotaSkippedCount++;
+                                continue;
+                            }
                             // Find matching package by mikrotik_profile or name
                             $matchedPackage = $packages->first(function ($p) use ($sec) {
                                 return strtolower(trim($p->mikrotik_profile ?: $p->name)) === strtolower(trim($sec['profile'] ?? ''));
@@ -1328,6 +1344,7 @@ class TenantCustomerController extends Controller
                             }
 
                             $importedCount++;
+                            $remainingCustomerSlots--;
                         } else {
                             if (!$existing->router_id) {
                                 $existing->router_id = $router->id;
@@ -1521,7 +1538,11 @@ class TenantCustomerController extends Controller
 
         $imported = 0;
         $updated = 0;
+        $quotaSkipped = 0;
         $prefix = TenantCustomer::getTenantPrefix($tenant->id);
+
+        $customerQuotaCheck = PlanQuotaService::checkQuota($tenant, 'customer');
+        $remainingCustomerSlots = $customerQuotaCheck['limit'] > 0 ? $customerQuotaCheck['remaining'] : PHP_INT_MAX;
 
         foreach ($secrets as $sec) {
             $username = trim($sec['name'] ?? '');
@@ -1535,6 +1556,10 @@ class TenantCustomerController extends Controller
             }) ?: $defaultPackage;
 
             if (!$existing) {
+                if ($remainingCustomerSlots <= 0) {
+                    $quotaSkipped++;
+                    continue;
+                }
                 $comment = trim($sec['comment'] ?? '');
                 $customerId = null;
                 if (!empty($comment) && str_starts_with(strtoupper($comment), strtoupper($prefix))) {
@@ -1570,6 +1595,7 @@ class TenantCustomerController extends Controller
                 }
 
                 $imported++;
+                $remainingCustomerSlots--;
             } elseif ($updateExisting) {
                 $existing->router_id = $router->id;
                 if (!empty($sec['password'])) {
@@ -1597,9 +1623,10 @@ class TenantCustomerController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => "Successfully imported {$imported} new customers from MikroTik '{$router->name}'!" . ($updated > 0 ? " ({$updated} updated)" : ""),
+            'message' => "Successfully imported {$imported} new customers from MikroTik '{$router->name}'!" . ($updated > 0 ? " ({$updated} updated)" : "") . ($quotaSkipped > 0 ? " ({$quotaSkipped} skipped: plan customer quota limit reached)" : ""),
             'imported' => $imported,
             'updated' => $updated,
+            'quota_skipped' => $quotaSkipped,
         ]);
     }
 
@@ -3360,6 +3387,9 @@ class TenantCustomerController extends Controller
         $errorsCount = 0;
         $logs = [];
 
+        $customerQuotaCheck = PlanQuotaService::checkQuota($tenant, 'customer');
+        $remainingCustomerSlots = $customerQuotaCheck['limit'] > 0 ? $customerQuotaCheck['remaining'] : PHP_INT_MAX;
+
         $mikrotikApi = $shouldSyncMikrotik ? new MikrotikApiService() : null;
 
         DB::beginTransaction();
@@ -3508,6 +3538,12 @@ class TenantCustomerController extends Controller
                     }
                 }
 
+                if ($remainingCustomerSlots <= 0) {
+                    $skippedCount++;
+                    $logs[] = "[Row {$rowNumber}] Skipped '{$username}': Plan customer quota limit ({$customerQuotaCheck['limit']}) reached.";
+                    continue;
+                }
+
                 // Generate / Validate Customer ID
                 $finalCustomerId = $customId;
                 if (empty($finalCustomerId)) {
@@ -3559,6 +3595,7 @@ class TenantCustomerController extends Controller
                 }
 
                 $importedCount++;
+                $remainingCustomerSlots--;
             }
 
             fclose($handle);

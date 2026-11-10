@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\TenantOlt;
 use App\Models\TenantOnu;
 use App\Models\TenantRouter;
+use App\Services\Billing\PlanQuotaService;
 use App\Services\Network\OltApiService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -201,22 +202,10 @@ class OltController extends Controller
             abort(404);
         }
 
-        // Enforce ISP Tenant Plan OLT Quota
-        $tenant->loadMissing('plan');
-        $plan = $tenant->plan;
-        $oltQuota = $plan ? (int)($plan->olt_limit ?? 1) : 1;
-        $currentCount = TenantOlt::where('tenant_id', $tenant->id)->count();
-
-        if ($oltQuota > 0 && $currentCount >= $oltQuota) {
-            $planName = $plan ? $plan->name : 'Current Plan';
-            $msg = "You have reached your Plan ({$planName}) quota limit of {$oltQuota} OLT devices. Please upgrade your subscription plan to add more OLTs.";
-            if ($request->wantsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => $msg,
-                ], 403);
-            }
-            return back()->withErrors(['plan' => $msg])->withInput();
+        // Enforce ISP Tenant Plan OLT Quota via PlanQuotaService
+        $oltQuotaCheck = PlanQuotaService::checkQuota($tenant, 'olt');
+        if (!$oltQuotaCheck['allowed']) {
+            return PlanQuotaService::denyResponse($request, $oltQuotaCheck['message']);
         }
 
         $validated = $request->validate([
@@ -234,6 +223,10 @@ class OltController extends Controller
             'snmp_community' => 'nullable|string|max:120',
             'notes' => 'nullable|string|max:1000',
         ]);
+
+        if (($validated['connection_type'] ?? null) === 'snmp' && !PlanQuotaService::hasFeature($tenant, 'snmp')) {
+            return PlanQuotaService::denyResponse($request, PlanQuotaService::featureLockedMessage($tenant, 'snmp'));
+        }
 
         $olt = new TenantOlt();
         $olt->tenant_id = $tenant->id;
@@ -409,6 +402,10 @@ class OltController extends Controller
             'snmp_community' => 'nullable|string|max:120',
             'notes' => 'nullable|string|max:1000',
         ]);
+
+        if (($validated['connection_type'] ?? null) === 'snmp' && !PlanQuotaService::hasFeature($tenant, 'snmp')) {
+            return PlanQuotaService::denyResponse($request, PlanQuotaService::featureLockedMessage($tenant, 'snmp'));
+        }
 
         $olt->name = $validated['name'];
         $olt->router_id = !empty($validated['router_id']) ? $validated['router_id'] : null;

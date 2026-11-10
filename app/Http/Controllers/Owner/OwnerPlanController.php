@@ -54,7 +54,7 @@ class OwnerPlanController extends Controller
         ]);
 
         $featuresArray = $request->filled('features')
-            ? array_values(array_filter(array_map('trim', explode(',', $request->features))))
+            ? array_values(array_filter(array_map('trim', preg_split('/\s*(?:,(?!\d{3}\b)|[\r\n;]+)\s*/', $request->features))))
             : [];
 
         $slug = Str::slug($validated['name']);
@@ -111,7 +111,7 @@ class OwnerPlanController extends Controller
         ]);
 
         $featuresArray = $request->filled('features')
-            ? array_values(array_filter(array_map('trim', explode(',', $request->features))))
+            ? array_values(array_filter(array_map('trim', preg_split('/\s*(?:,(?!\d{3}\b)|[\r\n;]+)\s*/', $request->features))))
             : $plan->features;
 
         $plan->update([

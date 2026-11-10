@@ -36,6 +36,20 @@
         </div>
     </div>
 
+    @if(isset($customerQuota) && !($customerQuota['allowed'] ?? true))
+        <div class="p-3 bg-amber-50 border border-amber-200 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-2xs">
+            <div class="flex items-center gap-2.5 text-amber-900 text-xs font-medium">
+                <i class="fas fa-triangle-exclamation text-amber-600 text-sm flex-shrink-0"></i>
+                <span>{{ $customerQuota['message'] }}</span>
+            </div>
+            <a href="{{ route('tenant.billing.dashboard') }}"
+               class="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs transition inline-flex items-center gap-1.5 flex-shrink-0">
+                <i class="fas fa-arrow-up-right-dots text-[10px]"></i>
+                <span>{{ __('Upgrade Plan') }}</span>
+            </a>
+        </div>
+    @endif
+
     <!-- Validation Notification Banner (Appears only on form error) -->
     <div x-show="Object.keys(errors).length > 0" 
          x-transition

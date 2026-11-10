@@ -8,6 +8,7 @@ use App\Models\TenantInternetPackage;
 use App\Models\TenantCustomer;
 use App\Models\TenantCoverageZone;
 use App\Models\User;
+use App\Services\Billing\PlanQuotaService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -138,22 +139,10 @@ class ResellerDirectoryController extends Controller
             abort(403, 'Unauthorized.');
         }
 
-        // 0. Enforce ISP Tenant Plan Reseller Quota
-        $tenant->loadMissing('plan');
-        $plan = $tenant->plan;
-        $resellerQuota = $plan ? (int) $plan->reseller_limit : 5;
-        $currentCount = TenantReseller::where('tenant_id', $tenant->id)->count();
-
-        if ($resellerQuota > 0 && $currentCount >= $resellerQuota) {
-            $planName = $plan ? $plan->name : 'Current Plan';
-            $msg = "You have reached your Plan ({$planName}) quota limit of {$resellerQuota} resellers. Please upgrade your subscription plan to onboard more resellers.";
-            if ($request->wantsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => $msg,
-                ], 403);
-            }
-            return back()->withErrors(['plan' => $msg])->withInput();
+        // Enforce ISP Tenant Plan Reseller Quota via PlanQuotaService
+        $resellerQuotaCheck = PlanQuotaService::checkQuota($tenant, 'reseller');
+        if (!$resellerQuotaCheck['allowed']) {
+            return PlanQuotaService::denyResponse($request, $resellerQuotaCheck['message']);
         }
 
         $validated = $request->validate([

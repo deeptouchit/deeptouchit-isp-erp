@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Tenant\Network;
 use App\Http\Controllers\Controller;
 use App\Models\TenantNas;
 use App\Models\TenantRouter;
+use App\Services\Billing\PlanQuotaService;
 use App\Services\Network\RadiusService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -125,6 +126,7 @@ class NasController extends Controller
             ->get();
 
         $freeradiusSnippet = $this->generateClientsConfContent($tenant);
+        $radiusAllowed = PlanQuotaService::hasFeature($tenant, 'radius');
 
         return view('tenant.network.nas', compact(
             'tenant',
@@ -135,7 +137,8 @@ class NasController extends Controller
             'linkedRoutersCount',
             'coaReadyCount',
             'tenantRouters',
-            'freeradiusSnippet'
+            'freeradiusSnippet',
+            'radiusAllowed'
         ));
     }
 
@@ -145,6 +148,10 @@ class NasController extends Controller
     public function create(Request $request)
     {
         $tenant = $this->getTenant();
+        if (!PlanQuotaService::hasFeature($tenant, 'radius')) {
+            return redirect()->route('tenant.network.nas')
+                ->with('error', PlanQuotaService::featureLockedMessage($tenant, 'radius'));
+        }
         $tenantRouters = TenantRouter::where('tenant_id', $tenant->id)
             ->orderBy('name')
             ->get();
@@ -163,6 +170,9 @@ class NasController extends Controller
     public function store(Request $request)
     {
         $tenant = $this->getTenant();
+        if (!PlanQuotaService::hasFeature($tenant, 'radius')) {
+            return PlanQuotaService::denyResponse($request, PlanQuotaService::featureLockedMessage($tenant, 'radius'));
+        }
 
         $validated = $request->validate([
             'shortname' => 'required|string|max:100',
@@ -220,6 +230,9 @@ class NasController extends Controller
     public function update(Request $request, $id)
     {
         $tenant = $this->getTenant();
+        if (!PlanQuotaService::hasFeature($tenant, 'radius')) {
+            return PlanQuotaService::denyResponse($request, PlanQuotaService::featureLockedMessage($tenant, 'radius'));
+        }
         $nas = $this->findTenantNas($id);
 
         $validated = $request->validate([

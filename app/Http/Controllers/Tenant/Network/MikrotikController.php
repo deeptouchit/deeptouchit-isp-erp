@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Tenant\Network;
 
 use App\Http\Controllers\Controller;
 use App\Models\TenantRouter;
+use App\Services\Billing\PlanQuotaService;
 use App\Services\Network\MikrotikApiService;
 use App\Services\Network\NetworkVaultService;
 use App\Services\Network\RadiusService;
@@ -172,24 +173,19 @@ class MikrotikController extends Controller
     {
         $tenant = $this->getTenant();
 
-        // Enforce ISP Tenant Plan MikroTik Quota
-        $tenant->loadMissing('plan');
-        $plan = $tenant->plan;
-        $mikrotikQuota = $plan ? (int)$plan->mikrotik_limit : 2;
-        $currentCount = TenantRouter::where('tenant_id', $tenant->id)->count();
-
-        if ($mikrotikQuota > 0 && $currentCount >= $mikrotikQuota) {
-            $planName = $plan ? $plan->name : 'Current Plan';
-            $msg = "You have reached your Plan ({$planName}) quota limit of {$mikrotikQuota} MikroTik routers. Please upgrade your subscription plan to add more routers.";
-            if ($request->wantsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => $msg,
-                ], 403);
-            }
-            return back()->withErrors(['plan' => $msg])->withInput();
+        // Enforce ISP Tenant Plan MikroTik Quota & RADIUS Feature Gate via PlanQuotaService
+        $mikrotikQuotaCheck = PlanQuotaService::checkQuota($tenant, 'mikrotik');
+        if (!$mikrotikQuotaCheck['allowed']) {
+            return PlanQuotaService::denyResponse($request, $mikrotikQuotaCheck['message']);
         }
+
         $mode = $request->input('connection_type', 'radius');
+        if (in_array($mode, ['radius', 'hybrid'], true) && !PlanQuotaService::hasFeature($tenant, 'radius')) {
+            return PlanQuotaService::denyResponse(
+                $request,
+                PlanQuotaService::featureLockedMessage($tenant, 'radius')
+            );
+        }
 
         $rules = [
             'name' => 'required|string|max:100',
@@ -343,6 +339,13 @@ class MikrotikController extends Controller
 
         $hasApi = !empty($validated['api_port']) && !empty($validated['username']);
         $hasRadius = !empty($router->decrypted_radius_secret) || !empty($validated['radius_secret']);
+
+        if ($hasRadius && !PlanQuotaService::hasFeature($tenant, 'radius')) {
+            return PlanQuotaService::denyResponse(
+                $request,
+                PlanQuotaService::featureLockedMessage($tenant, 'radius')
+            );
+        }
 
         if ($hasApi && $hasRadius) {
             $router->connection_type = 'hybrid';
