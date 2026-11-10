@@ -7,9 +7,6 @@
 
     $canViewCustomers = $authUser && !$authUser->isCollector() && !$authUser->isTechnician()
         && ($authUser->isOwner() || $authUser->isIspAdmin() || $authUser->hasPermission('customers.view'));
-    $canViewCustomerInvoices = $authUser && !$authUser->isCollector() && !$authUser->isTechnician()
-        && Route::has('tenant.finance.invoices')
-        && ($authUser->isOwner() || $authUser->isIspAdmin() || $authUser->hasPermission('billing.invoices'));
     $canViewTickets = $authUser && !$authUser->isCollector() && !$authUser->isTechnician()
         && ($authUser->isOwner() || $authUser->isIspAdmin() || $authUser->hasPermission('support.tickets'));
 
@@ -99,178 +96,8 @@
         </div>
 
         @if($authUser && !$authUser->isCollector() && !$authUser->isTechnician())
-            <!-- Quick Action: Due Customer Invoices (fallback SaaS Invoices) -->
-            <a href="{{ $canViewCustomerInvoices ? route('tenant.finance.invoices', ['status' => 'due']) : route('tenant.billing.invoices') }}"
-               class="hidden md:inline-flex h-8 items-center gap-1.5 px-2.5 rounded-lg border border-slate-200/90 bg-white hover:bg-cyan-50/40 hover:border-cyan-300/80 text-slate-700 hover:text-cyan-800 font-semibold text-[11.5px] shadow-2xs transition whitespace-nowrap">
-                <i class="fas fa-file-invoice-dollar text-cyan-600 text-[11px]"></i>
-                <span>{{ $canViewCustomerInvoices ? __('Due Invoices') : __('Invoices') }}</span>
-            </a>
-
-            @if($canViewTickets)
-            <!-- Quick Action: Support Desk -->
-            <a href="{{ route('tenant.tickets.index') }}"
-               class="hidden sm:inline-flex h-8 items-center gap-1.5 px-2.5 rounded-lg bg-cyan-50/80 hover:bg-cyan-100/80 border border-cyan-200/70 text-cyan-800 font-semibold text-[11.5px] transition whitespace-nowrap shadow-2xs">
-                <i class="fas fa-headset text-cyan-600 text-[11px]"></i>
-                <span>{{ __('Support') }}</span>
-            </a>
-            @endif
-
             <!-- Live Notifications Center -->
-            <div class="relative" x-data="{
-                open: false,
-                loading: false,
-                unreadCount: 0,
-                notifications: [],
-                knownIds: new Set(),
-                i18n: {
-                    newAlert: {!! json_encode(__('New Support Alert'), JSON_HEX_APOS) !!},
-                    viewBtn: {!! json_encode(__('View'), JSON_HEX_APOS) !!},
-                    newSuffix: {!! json_encode(__('new'), JSON_HEX_APOS) !!}
-                },
-                async init() {
-                    if ('Notification' in window && Notification.permission === 'default') {
-                        setTimeout(() => {
-                            Notification.requestPermission();
-                        }, 2500);
-                    }
-
-                    await this.loadNotifications(true);
-
-                    setInterval(() => {
-                        this.loadNotifications(false);
-                    }, 6000);
-                },
-                playNotificationSound() {
-                    try {
-                        const AudioContext = window.AudioContext || window.webkitAudioContext;
-                        if (!AudioContext) return;
-                        const ctx = new AudioContext();
-                        const osc = ctx.createOscillator();
-                        const gain = ctx.createGain();
-
-                        osc.type = 'sine';
-                        osc.frequency.setValueAtTime(587.33, ctx.currentTime);
-                        osc.frequency.setValueAtTime(880, ctx.currentTime + 0.1);
-
-                        gain.gain.setValueAtTime(0.15, ctx.currentTime);
-                        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
-
-                        osc.connect(gain);
-                        gain.connect(ctx.destination);
-
-                        osc.start(ctx.currentTime);
-                        osc.stop(ctx.currentTime + 0.4);
-                    } catch (e) {}
-                },
-                sendDesktopPush(title, message, link) {
-                    if ('Notification' in window && Notification.permission === 'granted') {
-                        try {
-                            const n = new Notification(title, {
-                                body: message,
-                                icon: '/favicon.ico',
-                                badge: '/favicon.ico'
-                            });
-                            n.onclick = () => {
-                                window.focus();
-                                if (link && link !== '#') {
-                                    window.location.href = link;
-                                }
-                            };
-                        } catch (e) {}
-                    }
-                },
-                showLiveToast(notif) {
-                    if (typeof Swal !== 'undefined') {
-                        Swal.fire({
-                            icon: 'info',
-                            title: notif.title || this.i18n.newAlert,
-                            text: notif.message || '',
-                            toast: true,
-                            position: 'top-end',
-                            showConfirmButton: true,
-                            confirmButtonText: this.i18n.viewBtn,
-                            timer: 7000,
-                            timerProgressBar: true,
-                            customClass: {
-                                confirmButton: 'bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs px-2.5 py-1 rounded-md cursor-pointer'
-                            },
-                            buttonsStyling: false
-                        }).then((res) => {
-                            if (res.isConfirmed && notif.link && notif.link !== '#') {
-                                this.markRead(notif);
-                            }
-                        });
-                    }
-                },
-                async loadNotifications(isFirst = false) {
-                    try {
-                        const res = await fetch('{{ route('tenant.notifications.unread') }}');
-                        if (res.ok) {
-                            const data = await res.json();
-                            const newNotifs = data.notifications || [];
-                            const newUnreadCount = data.unread_count || 0;
-
-                            if (!isFirst && this.knownIds.size > 0) {
-                                const freshNotifs = newNotifs.filter(n => !this.knownIds.has(n.id) && !n.read);
-                                if (freshNotifs.length > 0) {
-                                    const latest = freshNotifs[0];
-                                    this.playNotificationSound();
-                                    this.sendDesktopPush(latest.title, latest.message, latest.link);
-                                    this.showLiveToast(latest);
-                                }
-                            }
-
-                            newNotifs.forEach(n => this.knownIds.add(n.id));
-                            this.notifications = newNotifs;
-                            this.unreadCount = newUnreadCount;
-                        }
-                    } catch (e) {
-                        console.error('Failed to load notifications:', e);
-                    }
-                },
-                toggle() {
-                    this.open = !this.open;
-                    if (this.open) {
-                        if ('Notification' in window && Notification.permission === 'default') {
-                            Notification.requestPermission();
-                        }
-                        this.loadNotifications(false);
-                    }
-                },
-                async markRead(notif) {
-                    try {
-                        await fetch('/admin/notifications/' + notif.id + '/read', {
-                            method: 'POST',
-                            headers: {
-                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                                'Accept': 'application/json'
-                            }
-                        });
-                        notif.read = true;
-                        this.unreadCount = Math.max(0, this.unreadCount - 1);
-                        if (notif.link && notif.link !== '#') {
-                            window.location.href = notif.link;
-                        }
-                    } catch (e) {
-                        console.error('Failed to mark read:', e);
-                    }
-                },
-                async markAllAsRead() {
-                    try {
-                        await fetch('{{ route('tenant.notifications.mark-all-read') }}', {
-                            method: 'POST',
-                            headers: {
-                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                                'Accept': 'application/json'
-                            }
-                        });
-                        this.unreadCount = 0;
-                        this.notifications.forEach(n => n.read = true);
-                    } catch (e) {
-                        console.error('Failed to mark all read:', e);
-                    }
-                }
-            }" @click.outside="open = false">
+            <div class="relative" x-data="topbarNotifications()" @click.outside="open = false">
 
                 <button type="button"
                         @click="toggle()"
@@ -447,3 +274,167 @@
     </div>
 
 </header>
+
+@once
+@push('scripts')
+<script>
+    window.topbarNotifications = function () {
+        return {
+            open: false,
+            loading: false,
+            unreadCount: 0,
+            notifications: [],
+            knownIds: new Set(),
+            i18n: {
+                newAlert: @json(__('New Support Alert')),
+                viewBtn: @json(__('View')),
+                newSuffix: @json(__('new'))
+            },
+            async init() {
+                if ('Notification' in window && Notification.permission === 'default') {
+                    setTimeout(() => {
+                        Notification.requestPermission();
+                    }, 2500);
+                }
+
+                await this.loadNotifications(true);
+
+                setInterval(() => {
+                    this.loadNotifications(false);
+                }, 6000);
+            },
+            playNotificationSound() {
+                try {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    if (!AudioContext) return;
+                    const ctx = new AudioContext();
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+                    osc.frequency.setValueAtTime(880, ctx.currentTime + 0.1);
+
+                    gain.gain.setValueAtTime(0.15, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+
+                    osc.start(ctx.currentTime);
+                    osc.stop(ctx.currentTime + 0.4);
+                } catch (e) {}
+            },
+            sendDesktopPush(title, message, link) {
+                if ('Notification' in window && Notification.permission === 'granted') {
+                    try {
+                        const n = new Notification(title, {
+                            body: message,
+                            icon: '/favicon.ico',
+                            badge: '/favicon.ico'
+                        });
+                        n.onclick = () => {
+                            window.focus();
+                            if (link && link !== '#') {
+                                window.location.href = link;
+                            }
+                        };
+                    } catch (e) {}
+                }
+            },
+            showLiveToast(notif) {
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'info',
+                        title: notif.title || this.i18n.newAlert,
+                        text: notif.message || '',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: true,
+                        confirmButtonText: this.i18n.viewBtn,
+                        timer: 7000,
+                        timerProgressBar: true,
+                        customClass: {
+                            confirmButton: 'bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs px-2.5 py-1 rounded-md cursor-pointer'
+                        },
+                        buttonsStyling: false
+                    }).then((res) => {
+                        if (res.isConfirmed && notif.link && notif.link !== '#') {
+                            this.markRead(notif);
+                        }
+                    });
+                }
+            },
+            async loadNotifications(isFirst = false) {
+                try {
+                    const res = await fetch('{{ route('tenant.notifications.unread') }}');
+                    if (res.ok) {
+                        const data = await res.json();
+                        const newNotifs = data.notifications || [];
+                        const newUnreadCount = data.unread_count || 0;
+
+                        if (!isFirst && this.knownIds.size > 0) {
+                            const freshNotifs = newNotifs.filter(n => !this.knownIds.has(n.id) && !n.read);
+                            if (freshNotifs.length > 0) {
+                                const latest = freshNotifs[0];
+                                this.playNotificationSound();
+                                this.sendDesktopPush(latest.title, latest.message, latest.link);
+                                this.showLiveToast(latest);
+                            }
+                        }
+
+                        newNotifs.forEach(n => this.knownIds.add(n.id));
+                        this.notifications = newNotifs;
+                        this.unreadCount = newUnreadCount;
+                    }
+                } catch (e) {
+                    console.error('Failed to load notifications:', e);
+                }
+            },
+            toggle() {
+                this.open = !this.open;
+                if (this.open) {
+                    if ('Notification' in window && Notification.permission === 'default') {
+                        Notification.requestPermission();
+                    }
+                    this.loadNotifications(false);
+                }
+            },
+            async markRead(notif) {
+                try {
+                    await fetch('/admin/notifications/' + notif.id + '/read', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json'
+                        }
+                    });
+                    notif.read = true;
+                    this.unreadCount = Math.max(0, this.unreadCount - 1);
+                    if (notif.link && notif.link !== '#') {
+                        window.location.href = notif.link;
+                    }
+                } catch (e) {
+                    console.error('Failed to mark read:', e);
+                }
+            },
+            async markAllAsRead() {
+                try {
+                    await fetch('{{ route('tenant.notifications.mark-all-read') }}', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json'
+                        }
+                    });
+                    this.unreadCount = 0;
+                    this.notifications.forEach(n => n.read = true);
+                } catch (e) {
+                    console.error('Failed to mark all read:', e);
+                }
+            }
+        };
+    };
+</script>
+@endpush
+@endonce
