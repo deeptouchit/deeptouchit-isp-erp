@@ -971,7 +971,7 @@
         <!-- 10. Main Menu: User & Access Management (Collapsible Sub-menu) -->
         @if(auth()->user() && (auth()->user()->isOwner() || auth()->user()->isIspAdmin() || auth()->user()->hasPermission('settings.rbac') || auth()->user()->hasPermission('settings.audit_logs') || auth()->user()->hasPermission('customers.view')))
         @php
-            $isAccessActive = request()->routeIs('tenant.settings.rbac*') || request()->routeIs('tenant.staff.index*') || request()->routeIs('tenant.settings.audit*') || request()->routeIs('tenant.users*');
+            $isAccessActive = request()->routeIs('tenant.settings.rbac*') || request()->routeIs('tenant.settings.audit*') || request()->routeIs('tenant.users*');
         @endphp
         <div x-data="{ open: {{ $isAccessActive ? 'true' : 'false' }} }" 
              x-show="!filterQuery || 'user access management security roles permissions users list staff members audit trail activity logs telemetry'.includes(filterQuery.toLowerCase())"
