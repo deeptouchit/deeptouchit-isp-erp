@@ -172,10 +172,14 @@ class ResellerBandwidthController extends Controller
 
         $search = $request->input('search');
         $status = $request->input('status');
+        $load = $request->input('load');
         $perPage = (int) $request->input('per_page', 20);
         if ($perPage <= 0 || $perPage > 500) {
             $perPage = 20;
         }
+
+        $activeMoreCount = !empty($load) ? 1 : 0;
+        $isMoreOpen = $activeMoreCount > 0;
 
         $routerQuery = TenantRouter::where('tenant_id', $tenant->id);
 
@@ -235,6 +239,9 @@ class ResellerBandwidthController extends Controller
             'avgUtilization',
             'search',
             'status',
+            'load',
+            'activeMoreCount',
+            'isMoreOpen',
             'perPage'
         ));
     }

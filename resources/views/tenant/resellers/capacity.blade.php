@@ -32,6 +32,11 @@
                 <i class="fas fa-layer-group text-[11px] text-cyan-600"></i>
                 <span>Rate Plans</span>
             </a>
+            <a href="{{ route('tenant.network.mikrotik.create') }}" 
+               class="h-[34px] py-0 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200/80 shadow-2xs transition inline-flex items-center gap-1.5 cursor-pointer">
+                <i class="fas fa-plus text-xs text-slate-600"></i>
+                <span>Add Router</span>
+            </a>
         </div>
     </div>
 
@@ -108,63 +113,99 @@
         </div>
     </div>
 
-    <!-- 3. Search & Multi-Filter Toolbar (Uniform h-[34px] - AGENTS.md Rule 2.C) -->
+    <!-- 3. Search & Multi-Filter Toolbar (Customer-Standard 2-Tier Filter System - AGENTS.md Rule 2.C) -->
     <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5"
-         x-data="{ searchQuery: '{{ addslashes(request('search', '')) }}' }">
-        <form method="GET" action="{{ route('tenant.resellers.capacity') }}" class="flex flex-col md:flex-row items-stretch md:items-center gap-2">
+         x-data="{ showMoreFilters: {{ $isMoreOpen ? 'true' : 'false' }}, searchQuery: '{{ addslashes(request('search', '')) }}' }">
+        <form method="GET" action="{{ route('tenant.resellers.capacity') }}" class="space-y-2.5">
             
-            <!-- Intelligent Live Search Box -->
-            <div class="relative flex-1 min-w-[200px]">
-                <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-xs transition-colors pointer-events-none"
-                   :class="searchQuery ? 'text-cyan-600 font-bold' : 'text-slate-400'"></i>
-                <input type="search" 
-                       name="search" 
-                       x-model="searchQuery"
-                       autocomplete="off"
-                       placeholder="Search gateway name, IP, model..." 
-                       class="w-full h-[34px] pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs">
+            <!-- Tier 1: Primary Filter Bar (Uniform h-[34px] Row) -->
+            <div class="flex flex-col md:flex-row items-stretch md:items-center gap-2">
+                <!-- Intelligent Live Search Box -->
+                <div class="relative flex-1 min-w-[200px]">
+                    <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-xs transition-colors pointer-events-none"
+                       :class="searchQuery ? 'text-cyan-600 font-bold' : 'text-slate-400'"></i>
+                    <input type="search" 
+                           name="search" 
+                           x-model="searchQuery"
+                           autocomplete="off"
+                           placeholder="Search gateway name, IP, model..." 
+                           class="w-full h-[34px] pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs">
+                    <button type="button" 
+                            x-show="searchQuery && searchQuery.length > 0" 
+                            @click="searchQuery = ''; $nextTick(() => $el.closest('form').submit())" 
+                            class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500 text-xs cursor-pointer p-0.5">
+                        <i class="fas fa-times-circle"></i>
+                    </button>
+                </div>
+
+                <!-- Status Filter -->
+                <select name="status" 
+                        onchange="this.form.submit()" 
+                        class="h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs w-full md:w-36 flex-shrink-0">
+                    <option value="">All Statuses</option>
+                    <option value="online" {{ request('status') === 'online' ? 'selected' : '' }}>Online</option>
+                    <option value="offline" {{ request('status') === 'offline' ? 'selected' : '' }}>Offline</option>
+                </select>
+
+                <!-- Pagination Selector (per_page) -->
+                <select name="per_page" 
+                        onchange="this.form.submit()" 
+                        class="h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs w-full md:w-28 flex-shrink-0">
+                    <option value="15" {{ request('per_page', 20) == 15 ? 'selected' : '' }}>15 / page</option>
+                    <option value="20" {{ request('per_page', 20) == 20 ? 'selected' : '' }}>20 / page</option>
+                    <option value="30" {{ request('per_page', 20) == 30 ? 'selected' : '' }}>30 / page</option>
+                    <option value="50" {{ request('per_page', 20) == 50 ? 'selected' : '' }}>50 / page</option>
+                    <option value="100" {{ request('per_page', 20) == 100 ? 'selected' : '' }}>100 / page</option>
+                </select>
+
+                <!-- Accordion Toggle Button for Tier-2 Secondary Filters -->
                 <button type="button" 
-                        x-show="searchQuery && searchQuery.length > 0" 
-                        @click="searchQuery = ''; $nextTick(() => $el.closest('form').submit())" 
-                        class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500 text-xs cursor-pointer p-0.5">
-                    <i class="fas fa-times-circle"></i>
+                        @click="showMoreFilters = !showMoreFilters" 
+                        class="h-[34px] py-0 px-2.5 bg-slate-50 hover:bg-slate-100 text-slate-700 font-medium text-xs rounded-lg border border-slate-200 transition flex items-center justify-center gap-1.5 flex-shrink-0 cursor-pointer">
+                    <i class="fas fa-sliders text-slate-500 text-[11px]"></i>
+                    <span>More Filters</span>
+                    @if($activeMoreCount > 0)
+                        <span class="w-4 h-4 rounded-full bg-cyan-600 text-white text-[9px] font-bold flex items-center justify-center">{{ $activeMoreCount }}</span>
+                    @endif
+                    <i class="fas text-[10px] ml-0.5 transition-transform" :class="showMoreFilters ? 'fa-chevron-up text-cyan-600' : 'fa-chevron-down text-slate-400'"></i>
                 </button>
+
+                <!-- Filter & Reset Buttons (Strict Sequence - AGENTS.md Rule 2.C) -->
+                <div class="flex items-center gap-1.5 flex-shrink-0 md:ml-auto">
+                    <button type="submit" 
+                            class="h-[34px] py-0 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" 
+                            title="Apply Filters">
+                        <i class="fas fa-filter text-[10px]"></i>
+                        <span>Filter</span>
+                    </button>
+                    <a href="{{ route('tenant.resellers.capacity') }}" 
+                       class="h-[34px] py-0 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer" 
+                       title="Reset Filters">
+                        <i class="fas fa-rotate-left text-[10px]"></i>
+                        <span>Reset</span>
+                    </a>
+                </div>
             </div>
 
-            <!-- Status Filter -->
-            <select name="status" 
-                    onchange="this.form.submit()" 
-                    class="h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs w-full md:w-40 flex-shrink-0">
-                <option value="">All Statuses</option>
-                <option value="online" {{ request('status') === 'online' ? 'selected' : '' }}>Online</option>
-                <option value="offline" {{ request('status') === 'offline' ? 'selected' : '' }}>Offline</option>
-            </select>
-
-            <!-- Pagination Selector (per_page) -->
-            <select name="per_page" 
-                    onchange="this.form.submit()" 
-                    class="h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs w-full md:w-28 flex-shrink-0">
-                <option value="15" {{ request('per_page', 20) == 15 ? 'selected' : '' }}>15 / page</option>
-                <option value="20" {{ request('per_page', 20) == 20 ? 'selected' : '' }}>20 / page</option>
-                <option value="30" {{ request('per_page', 20) == 30 ? 'selected' : '' }}>30 / page</option>
-                <option value="50" {{ request('per_page', 20) == 50 ? 'selected' : '' }}>50 / page</option>
-                <option value="100" {{ request('per_page', 20) == 100 ? 'selected' : '' }}>100 / page</option>
-            </select>
-
-            <!-- Filter & Reset Buttons (Strict Sequence - AGENTS.md Rule 2.C) -->
-            <div class="flex items-center gap-1.5 flex-shrink-0 md:ml-auto">
-                <button type="submit" 
-                        class="h-[34px] py-0 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" 
-                        title="Apply Filters">
-                    <i class="fas fa-filter text-[10px]"></i>
-                    <span>Filter</span>
-                </button>
-                <a href="{{ route('tenant.resellers.capacity') }}" 
-                   class="h-[34px] py-0 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer" 
-                   title="Reset Filters">
-                    <i class="fas fa-rotate-left text-[10px]"></i>
-                    <span>Reset</span>
-                </a>
+            <!-- Tier 2: Secondary Filter Drawer (Expandable) -->
+            <div x-show="showMoreFilters" 
+                 x-cloak 
+                 x-transition:enter="transition ease-out duration-150"
+                 x-transition:enter-start="opacity-0 -translate-y-1"
+                 x-transition:enter-end="opacity-100 translate-y-0"
+                 class="pt-2 border-t border-slate-100 flex flex-wrap items-center gap-2">
+                
+                <!-- Secondary Filter: Load Level -->
+                <div class="w-full sm:w-auto min-w-[200px]">
+                    <select name="load" 
+                            onchange="this.form.submit()" 
+                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs">
+                        <option value="">All Load Levels</option>
+                        <option value="high" {{ request('load') === 'high' ? 'selected' : '' }}>High Load (&ge; 85%)</option>
+                        <option value="moderate" {{ request('load') === 'moderate' ? 'selected' : '' }}>Moderate Load (50% ~ 84%)</option>
+                        <option value="low" {{ request('load') === 'low' ? 'selected' : '' }}>Low Load (&lt; 50%)</option>
+                    </select>
+                </div>
             </div>
         </form>
     </div>
@@ -176,14 +217,14 @@
                 <thead>
                     <tr>
                         <th class="w-10 text-center font-semibold">#</th>
+                        <th class="w-24 text-center font-semibold">Status</th>
                         <th class="text-center font-semibold">Core Gateway Router</th>
-                        <th class="text-center font-semibold">IP Address</th>
-                        <th class="text-center font-semibold">Connected Partners</th>
+                        <th class="w-32 text-center font-semibold">IP Address</th>
+                        <th class="w-28 text-center font-semibold">Connected Partners</th>
                         <th class="w-28 text-center font-semibold">Allocated Capacity</th>
                         <th class="w-28 text-center font-semibold">Live Traffic</th>
                         <th class="w-24 text-center font-semibold">Load</th>
                         <th class="w-28 text-center font-semibold">Wholesale MRR</th>
-                        <th class="w-24 text-center font-semibold">Status</th>
                         <th class="w-10 text-center font-semibold no-sort">Action</th>
                     </tr>
                 </thead>
@@ -205,56 +246,7 @@
                                 {{ ($routers->currentPage() - 1) * $routers->perPage() + $index + 1 }}
                             </td>
 
-                            <!-- 2. Core Gateway Router (Left Align) -->
-                            <td class="text-left font-semibold text-cyan-800 whitespace-nowrap">
-                                <button type="button" 
-                                        @click="viewRouterBreakdown({{ Js::from($rtr) }}, {{ Js::from($m['resellers']) }})" 
-                                        class="hover:underline text-cyan-700 hover:text-cyan-800 font-semibold cursor-pointer text-left truncate max-w-[200px] inline-block align-middle">
-                                    {{ $rtr->name }}
-                                </button>
-                            </td>
-
-                            <!-- 3. IP Address (Center Align, Mono) -->
-                            <td class="text-center font-mono text-slate-700 whitespace-nowrap">
-                                {{ $rtr->ip_address }}
-                            </td>
-
-                            <!-- 4. Connected Resellers (Center Align) -->
-                            <td class="text-center font-mono font-medium text-cyan-800 whitespace-nowrap">
-                                <span class="px-2 py-0.5 rounded-md bg-cyan-50 border border-cyan-200 text-xs">
-                                    {{ $m['reseller_count'] }} Partners
-                                </span>
-                            </td>
-
-                            <!-- 5. Allocated Capacity (Right Align, Mono) -->
-                            <td class="text-right font-mono font-bold text-slate-800 whitespace-nowrap">
-                                {{ $m['total_allocated'] >= 1000 ? round($m['total_allocated']/1000, 2) . ' Gbps' : round($m['total_allocated'], 0) . ' Mbps' }}
-                            </td>
-
-                            <!-- 6. Current Live Usage (Right Align, Mono) -->
-                            <td class="text-right font-mono text-blue-700 font-bold whitespace-nowrap">
-                                {{ $m['current_usage'] >= 1000 ? round($m['current_usage']/1000, 2) . ' Gbps' : round($m['current_usage'], 0) . ' Mbps' }}
-                            </td>
-
-                            <!-- 7. Gateway Load (Center Align) -->
-                            <td class="text-center whitespace-nowrap">
-                                <div class="inline-flex items-center gap-1.5 font-mono text-xs">
-                                    <div class="w-12 h-1.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
-                                        <div class="h-full rounded-full {{ $m['utilization'] >= 85 ? 'bg-rose-500' : ($m['utilization'] >= 70 ? 'bg-amber-500' : 'bg-emerald-500') }}" 
-                                             style="width: {{ min(100, $m['utilization']) }}%"></div>
-                                    </div>
-                                    <span class="{{ $m['utilization'] >= 85 ? 'text-rose-600 font-bold' : 'text-slate-700' }}">
-                                        {{ $m['utilization'] }}%
-                                    </span>
-                                </div>
-                            </td>
-
-                            <!-- 8. Wholesale MRR (Right Align, Currency Standard) -->
-                            <td class="text-right font-mono font-bold text-cyan-800 whitespace-nowrap">
-                                @currency($m['mrr'])
-                            </td>
-
-                            <!-- 9. Status (Center Align, Single-Line Badge) -->
+                            <!-- 2. Status (Center Align, Single-Line Badge) -->
                             <td class="text-center whitespace-nowrap">
                                 @if($rtr->status === 'online')
                                     <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -267,6 +259,55 @@
                                         <span>Offline</span>
                                     </span>
                                 @endif
+                            </td>
+
+                            <!-- 3. Core Gateway Router (Left Align) -->
+                            <td class="text-left font-semibold text-cyan-800 whitespace-nowrap">
+                                <button type="button" 
+                                        @click="viewRouterBreakdown({{ Js::from($rtr) }}, {{ Js::from($m['resellers']) }})" 
+                                        class="hover:underline text-cyan-700 hover:text-cyan-800 font-semibold cursor-pointer text-left truncate max-w-[200px] inline-block align-middle">
+                                    {{ $rtr->name }}
+                                </button>
+                            </td>
+
+                            <!-- 4. IP Address (Center Align, Mono) -->
+                            <td class="text-center font-mono text-slate-700 whitespace-nowrap">
+                                {{ $rtr->ip_address }}
+                            </td>
+
+                            <!-- 5. Connected Resellers (Center Align) -->
+                            <td class="text-center font-mono font-medium text-cyan-800 whitespace-nowrap">
+                                <span class="px-2 py-0.5 rounded-md bg-cyan-50 border border-cyan-200 text-xs">
+                                    {{ $m['reseller_count'] }} Partners
+                                </span>
+                            </td>
+
+                            <!-- 6. Allocated Capacity (Right Align, Mono) -->
+                            <td class="text-right font-mono font-bold text-slate-800 whitespace-nowrap">
+                                {{ $m['total_allocated'] >= 1000 ? round($m['total_allocated']/1000, 2) . ' Gbps' : round($m['total_allocated'], 0) . ' Mbps' }}
+                            </td>
+
+                            <!-- 7. Current Live Usage (Right Align, Mono) -->
+                            <td class="text-right font-mono text-blue-700 font-bold whitespace-nowrap">
+                                {{ $m['current_usage'] >= 1000 ? round($m['current_usage']/1000, 2) . ' Gbps' : round($m['current_usage'], 0) . ' Mbps' }}
+                            </td>
+
+                            <!-- 8. Gateway Load (Center Align) -->
+                            <td class="text-center whitespace-nowrap">
+                                <div class="inline-flex items-center gap-1.5 font-mono text-xs">
+                                    <div class="w-12 h-1.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
+                                        <div class="h-full rounded-full {{ $m['utilization'] >= 85 ? 'bg-rose-500' : ($m['utilization'] >= 70 ? 'bg-amber-500' : 'bg-emerald-500') }}" 
+                                             style="width: {{ min(100, $m['utilization']) }}%"></div>
+                                    </div>
+                                    <span class="{{ $m['utilization'] >= 85 ? 'text-rose-600 font-bold' : 'text-slate-700' }}">
+                                        {{ $m['utilization'] }}%
+                                    </span>
+                                </div>
+                            </td>
+
+                            <!-- 9. Wholesale MRR (Right Align, Currency Standard) -->
+                            <td class="text-right font-mono font-bold text-cyan-800 whitespace-nowrap">
+                                @currency($m['mrr'])
                             </td>
 
                             <!-- 10. Action (3-Dot) -->
@@ -288,6 +329,13 @@
                                     </div>
                                     <h3 class="text-xs font-semibold text-slate-800">No Gateway Routers Found</h3>
                                     <p class="text-[11px] text-slate-500">Configure MikroTik Routers under Network section to view wholesale distribution capacity.</p>
+                                    <div class="pt-1">
+                                        <a href="{{ route('tenant.network.mikrotik.create') }}" 
+                                           class="px-3.5 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer">
+                                            <i class="fas fa-plus text-xs"></i>
+                                            <span>Add Core Router</span>
+                                        </a>
+                                    </div>
                                 </div>
                             </td>
                         </tr>
@@ -350,10 +398,10 @@
          x-transition:leave="transition ease-in duration-100"
          x-transition:leave-start="opacity-100"
          x-transition:leave-end="opacity-0"
-         class="bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 fixed inset-0 z-50"
+         class="bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 fixed inset-0 z-50 overflow-y-auto"
          style="display: none;">
         
-        <div class="bg-white rounded-xl border border-slate-200/90 shadow-2xl w-full max-w-xl overflow-hidden"
+        <div class="bg-white rounded-xl border border-slate-200/90 shadow-2xl w-full max-w-xl overflow-hidden my-6"
              @click.outside="breakdownModal.open = false">
             
             <!-- Soft Natural Header -->
