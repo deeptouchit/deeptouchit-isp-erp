@@ -3689,37 +3689,64 @@ class TenantCustomerController extends Controller
     public function monthlyAnalytics(Request $request)
     {
         $tenant = $this->getTenant();
-        $currencySymbol = $tenant->currency_symbol ?? '৳';
+        $user = Auth::user();
+        $isResellerUser = $user && ($user->isResellerUser() || !empty($user->reseller_id));
+        $userResellerId = $user?->reseller_id;
 
-        $selectedYear = (int) $request->input('year', date('Y'));
-        $scope = $request->input('scope', 'all'); // 'all', 'isp', 'reseller'
-        $resellerId = $request->input('reseller_id');
-        $zone = $request->input('zone');
+        $currentYear = (int) date('Y');
+        $selectedYear = (int) $request->input('year', $currentYear);
+        $isCurrentYear = ($selectedYear === $currentYear);
+
+        if ($isResellerUser) {
+            $scope = 'reseller';
+            $resellerId = (string) $userResellerId;
+        } else {
+            $scope = $request->input('scope', 'all'); // 'all', 'isp', 'reseller'
+            $resellerId = $request->input('reseller_id');
+        }
+
+        $zone = trim((string) $request->input('zone', ''));
+        $search = trim((string) $request->input('search', ''));
+        $rateTier = (string) $request->input('rate_tier', '');
+        $activityFilter = (string) $request->input('activity_filter', '');
+        $sortOrder = (string) $request->input('sort_order', 'newest');
 
         // Available years for dropdown
         $years = TenantCustomer::where('tenant_id', $tenant->id)
             ->selectRaw('DISTINCT YEAR(created_at) as yr')
             ->pluck('yr')
-            ->merge([(int)date('Y'), (int)date('Y') - 1])
+            ->merge([$currentYear, $currentYear - 1])
             ->filter()
             ->unique()
             ->sortDesc()
             ->values();
 
         // Resellers list
-        $resellers = TenantReseller::where('tenant_id', $tenant->id)->orderBy('name')->get();
+        $resellers = $isResellerUser
+            ? collect()
+            : TenantReseller::where('tenant_id', $tenant->id)->orderBy('name')->get();
 
-        // Distinct Zones
-        $zones = TenantCustomer::where('tenant_id', $tenant->id)
+        // Distinct Zones combining Coverage Zones + Customer Zones
+        $customerZones = TenantCustomer::where('tenant_id', $tenant->id)
+            ->when($isResellerUser, fn($q) => $q->where('reseller_id', $userResellerId))
             ->whereNotNull('zone')
             ->where('zone', '!=', '')
             ->distinct('zone')
-            ->pluck('zone')
+            ->pluck('zone');
+
+        $configuredZones = TenantCoverageZone::where('tenant_id', $tenant->id)
+            ->when($isResellerUser, fn($q) => $q->where('reseller_id', $userResellerId))
+            ->pluck('name');
+
+        $zones = $customerZones->merge($configuredZones)
+            ->map(fn($z) => trim((string)$z))
             ->filter()
+            ->unique()
+            ->sort()
             ->values();
 
         // Monthly breakdown for selectedYear
-        $maxMonth = ($selectedYear === (int)date('Y')) ? (int)date('n') : 12;
+        $maxMonth = $isCurrentYear ? (int) date('n') : 12;
 
         // Query 1: New customers per month
         $newCustomersQuery = TenantCustomer::where('tenant_id', $tenant->id)
@@ -3732,7 +3759,7 @@ class TenantCustomerController extends Controller
         if ($resellerId) {
             $newCustomersQuery->where('reseller_id', $resellerId);
         }
-        if ($zone) {
+        if ($zone !== '') {
             $newCustomersQuery->where('zone', $zone);
         }
         $newCustomersMonthly = $newCustomersQuery
@@ -3752,7 +3779,7 @@ class TenantCustomerController extends Controller
         if ($resellerId) {
             $paymentsQuery->where('reseller_id', $resellerId);
         }
-        if ($zone) {
+        if ($zone !== '') {
             $paymentsQuery->whereHas('customer', fn($cq) => $cq->where('zone', $zone));
         }
         $monthlyPayments = $paymentsQuery
@@ -3766,27 +3793,26 @@ class TenantCustomerController extends Controller
             ->get()
             ->keyBy('m');
 
-        $rows = [];
-        $kpiTotalNewYear = 0;
-        $kpiTotalCollectionYear = 0;
-        $kpiCurrentMonthNew = 0;
-        $kpiCurrentMonthRecharged = 0;
-        $kpiCurrentMonthNonRecharged = 0;
-        $kpiCurrentMonthCollection = 0;
-
         $totalActiveSubscribers = TenantCustomer::where('tenant_id', $tenant->id)
             ->when($scope === 'isp', fn($q) => $q->whereNull('reseller_id'))
             ->when($scope === 'reseller', fn($q) => $q->whereNotNull('reseller_id'))
             ->when($resellerId, fn($q) => $q->where('reseller_id', $resellerId))
-            ->when($zone, fn($q) => $q->where('zone', $zone))
+            ->when($zone !== '', fn($q) => $q->where('zone', $zone))
             ->whereNotIn('status', ['disabled', 'disconnected', 'archived'])
             ->count();
 
+        $allMonthRows = [];
+        $kpiTotalNewYear = 0;
+        $kpiTotalCollectionYear = 0.0;
+        $kpiRateSum = 0.0;
+
         for ($m = $maxMonth; $m >= 1; $m--) {
             $carbonMonth = Carbon::create($selectedYear, $m, 1, 0, 0, 0);
-            $monthKey = $carbonMonth->format('Y-m'); // e.g. 2026-11
-            $monthLabel = $carbonMonth->format('M Y'); // e.g. Nov 2026
-            $monthFullName = $carbonMonth->format('F Y'); // e.g. November 2026
+            $monthKey = $carbonMonth->format('Y-m');
+            $enShort = $carbonMonth->format('M');
+            $enFull = $carbonMonth->format('F');
+            $monthLabel = __($enShort) . ' ' . $selectedYear;
+            $monthFullName = __($enFull) . ' ' . $selectedYear;
             $endOfMonth = $carbonMonth->copy()->endOfMonth();
 
             $newCount = (int) ($newCustomersMonthly[$m] ?? 0);
@@ -3798,33 +3824,25 @@ class TenantCustomerController extends Controller
             $transactions = (int) ($payData?->transaction_count ?? 0);
             $kpiTotalCollectionYear += $collection;
 
-            // Total active/billed base up to that month
             $baseCount = TenantCustomer::where('tenant_id', $tenant->id)
                 ->where('created_at', '<=', $endOfMonth)
                 ->when($scope === 'isp', fn($q) => $q->whereNull('reseller_id'))
                 ->when($scope === 'reseller', fn($q) => $q->whereNotNull('reseller_id'))
                 ->when($resellerId, fn($q) => $q->where('reseller_id', $resellerId))
-                ->when($zone, fn($q) => $q->where('zone', $zone))
+                ->when($zone !== '', fn($q) => $q->where('zone', $zone))
                 ->whereNotIn('status', ['disabled', 'disconnected', 'archived'])
                 ->count();
 
-            // Non-recharged is base minus recharged
             $nonRechargedCount = max(0, $baseCount - $rechargedCount);
+            $rechargeRate = $baseCount > 0 ? round(($rechargedCount / $baseCount) * 100, 1) : 0.0;
+            $kpiRateSum += $rechargeRate;
 
-            $rechargeRate = $baseCount > 0 ? round(($rechargedCount / $baseCount) * 100, 1) : 0;
-
-            if ($m === (int)date('n') && $selectedYear === (int)date('Y')) {
-                $kpiCurrentMonthNew = $newCount;
-                $kpiCurrentMonthRecharged = $rechargedCount;
-                $kpiCurrentMonthNonRecharged = $nonRechargedCount;
-                $kpiCurrentMonthCollection = $collection;
-            }
-
-            $rows[] = [
+            $allMonthRows[] = [
                 'month_num' => $m,
                 'month_key' => $monthKey,
                 'month_label' => $monthLabel,
                 'month_full' => $monthFullName,
+                'search_tokens' => mb_strtolower("{$enShort} {$enFull} {$monthLabel} {$monthFullName} {$monthKey}", 'UTF-8'),
                 'new_customers' => $newCount,
                 'base_customers' => $baseCount,
                 'recharged_customers' => $rechargedCount,
@@ -3833,6 +3851,57 @@ class TenantCustomerController extends Controller
                 'transactions' => $transactions,
                 'recharge_rate' => $rechargeRate,
             ];
+        }
+
+        // Reference row for Period KPIs (Current month for current year, or latest month for past years)
+        $refRow = $allMonthRows[0] ?? [
+            'recharged_customers' => 0,
+            'non_recharged_customers' => 0,
+            'collection' => 0.0,
+        ];
+
+        $kpis = [
+            'total_subscribers' => $totalActiveSubscribers,
+            'year_new' => $kpiTotalNewYear,
+            'year_collection' => $kpiTotalCollectionYear,
+            'ref_recharged' => (int) $refRow['recharged_customers'],
+            'ref_non_recharged' => (int) $refRow['non_recharged_customers'],
+            'ref_collection' => (float) $refRow['collection'],
+            'avg_recharge_rate' => count($allMonthRows) > 0 ? round($kpiRateSum / count($allMonthRows), 1) : 0.0,
+        ];
+
+        // Apply Tier-1 search & Tier-2 filters to displayed/exported rows
+        $rows = array_values(array_filter($allMonthRows, function ($row) use ($search, $rateTier, $activityFilter) {
+            if ($search !== '' && !str_contains($row['search_tokens'], mb_strtolower($search, 'UTF-8'))) {
+                return false;
+            }
+            if ($rateTier === 'excellent' && $row['recharge_rate'] < 85) {
+                return false;
+            }
+            if ($rateTier === 'moderate' && ($row['recharge_rate'] < 60 || $row['recharge_rate'] >= 85)) {
+                return false;
+            }
+            if ($rateTier === 'low' && $row['recharge_rate'] >= 60) {
+                return false;
+            }
+            if ($activityFilter === 'with_collections' && $row['collection'] <= 0) {
+                return false;
+            }
+            if ($activityFilter === 'with_new' && $row['new_customers'] <= 0) {
+                return false;
+            }
+            if ($activityFilter === 'has_unpaid' && $row['non_recharged_customers'] <= 0) {
+                return false;
+            }
+            return true;
+        }));
+
+        if ($sortOrder === 'oldest') {
+            usort($rows, fn($a, $b) => $a['month_num'] <=> $b['month_num']);
+        } elseif ($sortOrder === 'highest_collection') {
+            usort($rows, fn($a, $b) => $b['collection'] <=> $a['collection']);
+        } elseif ($sortOrder === 'highest_rate') {
+            usort($rows, fn($a, $b) => $b['recharge_rate'] <=> $a['recharge_rate']);
         }
 
         // CSV Export Support
@@ -3844,7 +3913,16 @@ class TenantCustomerController extends Controller
             $callback = function () use ($rows) {
                 $file = fopen('php://output', 'w');
                 fputs($file, "\xEF\xBB\xBF");
-                fputcsv($file, ['Month', 'New Customers Added', 'Active Base', 'Recharged (Paid)', 'Non-Recharged (Unpaid)', 'Total Collection', 'Recharge Rate (%)', 'Transactions']);
+                fputcsv($file, [
+                    __('Month'),
+                    __('New Customers Added'),
+                    __('Active Base'),
+                    __('Recharged (Paid)'),
+                    __('Non-Recharged (Unpaid)'),
+                    __('Total Collection'),
+                    __('Recharge Rate (%)'),
+                    __('Transactions'),
+                ]);
                 foreach ($rows as $r) {
                     fputcsv($file, [
                         $r['month_full'],
@@ -3862,22 +3940,18 @@ class TenantCustomerController extends Controller
             return response()->stream($callback, 200, $headers);
         }
 
-        $kpis = [
-            'total_subscribers' => $totalActiveSubscribers,
-            'year_new' => $kpiTotalNewYear,
-            'current_month_new' => $kpiCurrentMonthNew,
-            'current_month_recharged' => $kpiCurrentMonthRecharged,
-            'current_month_non_recharged' => $kpiCurrentMonthNonRecharged,
-            'current_month_collection' => $kpiCurrentMonthCollection,
-        ];
-
         return view('tenant.customers.monthly_analytics', compact(
             'tenant',
-            'currencySymbol',
+            'isResellerUser',
+            'isCurrentYear',
             'selectedYear',
             'scope',
             'resellerId',
             'zone',
+            'search',
+            'rateTier',
+            'activityFilter',
+            'sortOrder',
             'years',
             'resellers',
             'zones',
