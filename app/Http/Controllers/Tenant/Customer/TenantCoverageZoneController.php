@@ -69,7 +69,7 @@ class TenantCoverageZoneController extends Controller
         $query = TenantCoverageZone::where('tenant_id', $tenant->id)
             ->with(['reseller', 'assignedStaff']);
 
-        // 1. Reseller Scoping
+        // 1. Primary Filter: Reseller / Territory Scoping
         if ($isResellerUser) {
             $query->where('reseller_id', $userResellerId);
             $selectedResellerId = (string)$userResellerId;
@@ -82,27 +82,28 @@ class TenantCoverageZoneController extends Controller
             }
         }
 
-        // 2. Search filter
-        if ($search = $request->input('search')) {
-            $query->where(function($q) use ($search) {
+        // 2. Search Filter (Zone Name, Code, City, Sub-Areas, Assigned Staff, Partner)
+        if ($search = trim((string) $request->input('search', ''))) {
+            $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
                   ->orWhere('code', 'like', "%{$search}%")
                   ->orWhere('city_upazila', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%")
                   ->orWhere('in_charge_name', 'like', "%{$search}%")
                   ->orWhere('in_charge_phone', 'like', "%{$search}%")
-                  ->orWhereHas('assignedStaff', function($sq) use ($search) {
+                  ->orWhereHas('assignedStaff', function ($sq) use ($search) {
                       $sq->where('name', 'like', "%{$search}%")
                          ->orWhere('phone', 'like', "%{$search}%")
                          ->orWhere('staff_id', 'like', "%{$search}%");
                   })
-                  ->orWhereHas('reseller', function($rq) use ($search) {
+                  ->orWhereHas('reseller', function ($rq) use ($search) {
                       $rq->where('name', 'like', "%{$search}%")
                          ->orWhere('code', 'like', "%{$search}%");
                   });
             });
         }
 
-        // 3. Status filter
+        // 3. Primary Filter: Status
         $statusFilter = $request->input('status', 'all');
         if ($statusFilter === 'active') {
             $query->where('is_active', true);
@@ -110,10 +111,109 @@ class TenantCoverageZoneController extends Controller
             $query->where('is_active', false);
         }
 
+        // 4. Secondary Filters (More Filters Drawer)
+        $cityFilter = trim((string) $request->input('city_upazila', ''));
+        if ($cityFilter !== '') {
+            $query->where('city_upazila', $cityFilter);
+        }
+
+        $staffFilter = (string) $request->input('staff_id', '');
+        if ($staffFilter === 'unassigned') {
+            $query->whereNull('staff_id')->where(function ($sq) {
+                $sq->whereNull('in_charge_name')->orWhere('in_charge_name', '');
+            });
+        } elseif ($staffFilter !== '' && is_numeric($staffFilter)) {
+            $query->where('staff_id', (int)$staffFilter);
+        }
+
+        $subAreasFilter = (string) $request->input('has_sub_areas', '');
+        if ($subAreasFilter === 'with_sub') {
+            $query->whereNotNull('description')->where('description', '!=', '');
+        } elseif ($subAreasFilter === 'without_sub') {
+            $query->where(function ($sq) {
+                $sq->whereNull('description')->orWhere('description', '');
+            });
+        }
+
+        $occupancyFilter = (string) $request->input('occupancy', '');
+        if ($occupancyFilter === 'populated') {
+            $query->whereExists(function ($sub) use ($tenant) {
+                $sub->select(DB::raw(1))
+                    ->from('tenant_customers')
+                    ->where('tenant_customers.tenant_id', $tenant->id)
+                    ->where(function ($match) {
+                        $match->whereColumn('tenant_customers.zone_id', 'tenant_coverage_zones.id')
+                              ->orWhereColumn('tenant_customers.zone', 'tenant_coverage_zones.name');
+                    });
+            });
+        } elseif ($occupancyFilter === 'empty') {
+            $query->whereNotExists(function ($sub) use ($tenant) {
+                $sub->select(DB::raw(1))
+                    ->from('tenant_customers')
+                    ->where('tenant_customers.tenant_id', $tenant->id)
+                    ->where(function ($match) {
+                        $match->whereColumn('tenant_customers.zone_id', 'tenant_coverage_zones.id')
+                              ->orWhereColumn('tenant_customers.zone', 'tenant_coverage_zones.name');
+                    });
+            });
+        }
+
+        $allowedPerPage = [15, 20, 30, 50, 100, 250, 500];
         $perPage = (int) $request->input('per_page', 20);
+        if (!in_array($perPage, $allowedPerPage, true)) {
+            $perPage = 20;
+        }
+
         $zones = $query->orderBy('name', 'asc')->paginate($perPage)->withQueryString();
 
-        // 4. Compute 6 KPI Stats Scoped to Reseller/Tenant
+        // Batch-load subscriber counts & MRR for the current page in ONE query (eliminates N+1)
+        $zoneMetrics = [];
+        $pageZones = $zones->getCollection();
+        if ($pageZones->isNotEmpty()) {
+            $zoneIds = $pageZones->pluck('id')->all();
+            $zoneNames = $pageZones->pluck('name')->filter()->unique()->values()->all();
+
+            $matchingCustomers = TenantCustomer::where('tenant_id', $tenant->id)
+                ->where(function ($q) use ($zoneIds, $zoneNames) {
+                    $q->whereIn('zone_id', $zoneIds);
+                    if (!empty($zoneNames)) {
+                        $q->orWhereIn('zone', $zoneNames);
+                    }
+                })
+                ->select('zone_id', 'zone', 'status', 'monthly_bill')
+                ->get();
+
+            foreach ($pageZones as $pz) {
+                $subCount = 0;
+                $activeCount = 0;
+                $mrrTotal = 0.0;
+                foreach ($matchingCustomers as $mc) {
+                    if ((int)$mc->zone_id === (int)$pz->id || ($mc->zone !== null && $mc->zone === $pz->name)) {
+                        $subCount++;
+                        if ($mc->status === 'active') {
+                            $activeCount++;
+                        }
+                        $mrrTotal += (float)($mc->monthly_bill ?? 0);
+                    }
+                }
+                $zoneMetrics[$pz->id] = [
+                    'subscribers_count' => $subCount,
+                    'active_subscribers' => $activeCount,
+                    'mrr' => $mrrTotal,
+                ];
+            }
+        }
+
+        // Distinct cities for Tier-2 filter dropdown
+        $distinctCitiesQuery = TenantCoverageZone::where('tenant_id', $tenant->id)
+            ->whereNotNull('city_upazila')
+            ->where('city_upazila', '!=', '');
+        if ($isResellerUser) {
+            $distinctCitiesQuery->where('reseller_id', $userResellerId);
+        }
+        $distinctCities = $distinctCitiesQuery->distinct()->orderBy('city_upazila')->pluck('city_upazila');
+
+        // 5. Compute 6 KPI Stats Scoped to Reseller/Tenant cleanly
         $kpiBaseZonesQuery = TenantCoverageZone::where('tenant_id', $tenant->id);
         if ($isResellerUser) {
             $kpiBaseZonesQuery->where('reseller_id', $userResellerId);
@@ -123,10 +223,17 @@ class TenantCoverageZoneController extends Controller
             $kpiBaseZonesQuery->where('reseller_id', (int)$selectedResellerId);
         }
 
-        $allZones = $kpiBaseZonesQuery->get();
-        $totalZones = $allZones->count();
-        $activeZones = $allZones->where('is_active', true)->count();
-        $inactiveZones = $allZones->where('is_active', false)->count();
+        $kpiStats = (clone $kpiBaseZonesQuery)
+            ->selectRaw('COUNT(*) as total_zones')
+            ->selectRaw('SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) as active_zones')
+            ->selectRaw('SUM(CASE WHEN is_active = 0 THEN 1 ELSE 0 END) as inactive_zones')
+            ->selectRaw("SUM(CASE WHEN staff_id IS NOT NULL OR (in_charge_name IS NOT NULL AND TRIM(in_charge_name) != '') THEN 1 ELSE 0 END) as assigned_staff_count")
+            ->first();
+
+        $totalZones = (int) ($kpiStats->total_zones ?? 0);
+        $activeZones = (int) ($kpiStats->active_zones ?? 0);
+        $inactiveZones = (int) ($kpiStats->inactive_zones ?? 0);
+        $assignedStaffCount = (int) ($kpiStats->assigned_staff_count ?? 0);
 
         // Subscribers query scoped
         $custQuery = TenantCustomer::where('tenant_id', $tenant->id);
@@ -138,9 +245,9 @@ class TenantCoverageZoneController extends Controller
             $custQuery->where('reseller_id', (int)$selectedResellerId);
         }
 
-        $totalSubscribersAssigned = (clone $custQuery)->where(function($q) {
+        $totalSubscribersAssigned = (clone $custQuery)->where(function ($q) {
             $q->whereNotNull('zone_id')
-              ->orWhere(function($sub) {
+              ->orWhere(function ($sub) {
                   $sub->whereNotNull('zone')->where('zone', '!=', '');
               });
         })->count();
@@ -153,17 +260,16 @@ class TenantCoverageZoneController extends Controller
             ->orderByDesc('total')
             ->first();
 
-        $topZoneName = $topZoneData ? ($topZoneData->zone . " (" . $topZoneData->total . ")") : 'None';
-
-        // Assigned Staff Count (zones with assigned staff / contact person)
-        $assignedStaffCount = $allZones->filter(fn($z) => !empty($z->staff_id) || !empty(trim($z->in_charge_name ?? '')))->count();
+        $topZoneName = $topZoneData ? ($topZoneData->zone . ' (' . $topZoneData->total . ')') : __('None');
 
         return view('tenant.customers.zones', compact(
             'tenant',
             'zones',
+            'zoneMetrics',
             'allResellers',
             'allStaff',
             'staffListJson',
+            'distinctCities',
             'isResellerUser',
             'selectedResellerId',
             'totalZones',
@@ -174,8 +280,63 @@ class TenantCoverageZoneController extends Controller
             'assignedStaffCount',
             'search',
             'statusFilter',
+            'cityFilter',
+            'staffFilter',
+            'subAreasFilter',
+            'occupancyFilter',
             'perPage'
         ));
+    }
+
+    /**
+     * Resolve Coverage Zone within tenant & reseller boundaries
+     */
+    protected function findScopedZone(Tenant $tenant, $id): TenantCoverageZone
+    {
+        $user = Auth::user();
+        $isResellerUser = $user && ($user->isResellerUser() || !empty($user->reseller_id));
+
+        $query = TenantCoverageZone::where('tenant_id', $tenant->id);
+        if ($isResellerUser) {
+            $query->where('reseller_id', $user->reseller_id);
+        }
+
+        return $query->findOrFail($id);
+    }
+
+    /**
+     * Validate and normalize tenant-scoped reseller & staff attributes for store/update
+     */
+    protected function prepareZoneAttributes(Tenant $tenant, array $validated): array
+    {
+        $user = Auth::user();
+        $isResellerUser = $user && ($user->isResellerUser() || !empty($user->reseller_id));
+
+        if ($isResellerUser) {
+            $validated['reseller_id'] = $user->reseller_id;
+        } elseif (!empty($validated['reseller_id'])) {
+            $reseller = TenantReseller::where('tenant_id', $tenant->id)->find($validated['reseller_id']);
+            $validated['reseller_id'] = $reseller?->id;
+        } else {
+            $validated['reseller_id'] = null;
+        }
+
+        if (!empty($validated['staff_id'])) {
+            $assignedStaff = User::where('tenant_id', $tenant->id)->find($validated['staff_id']);
+            if ($assignedStaff) {
+                $validated['staff_id'] = $assignedStaff->id;
+                $validated['in_charge_name'] = $assignedStaff->name;
+                if (empty($validated['in_charge_phone'])) {
+                    $validated['in_charge_phone'] = $assignedStaff->phone;
+                }
+            } else {
+                $validated['staff_id'] = null;
+            }
+        } else {
+            $validated['staff_id'] = null;
+        }
+
+        return $validated;
     }
 
     /**
@@ -184,9 +345,6 @@ class TenantCoverageZoneController extends Controller
     public function store(Request $request)
     {
         $tenant = $this->getTenant();
-        $user = Auth::user();
-        $isResellerUser = $user && ($user->isResellerUser() || !empty($user->reseller_id));
-        $userResellerId = $user?->reseller_id;
 
         $validated = $request->validate([
             'name' => 'required|string|max:150',
@@ -200,20 +358,7 @@ class TenantCoverageZoneController extends Controller
             'is_active' => 'nullable|boolean',
         ]);
 
-        if ($isResellerUser) {
-            $validated['reseller_id'] = $userResellerId;
-        }
-
-        // If staff_id is assigned, link staff name & phone
-        if (!empty($validated['staff_id'])) {
-            $assignedStaff = User::where('tenant_id', $tenant->id)->find($validated['staff_id']);
-            if ($assignedStaff) {
-                $validated['in_charge_name'] = $assignedStaff->name;
-                if (empty($validated['in_charge_phone'])) {
-                    $validated['in_charge_phone'] = $assignedStaff->phone;
-                }
-            }
-        }
+        $validated = $this->prepareZoneAttributes($tenant, $validated);
 
         // Auto-generate code if not provided
         if (empty($validated['code'])) {
@@ -226,15 +371,15 @@ class TenantCoverageZoneController extends Controller
             }
             $validated['code'] = $code;
         } else {
-            // Check code uniqueness within tenant
             $exists = TenantCoverageZone::where('tenant_id', $tenant->id)
                 ->where('code', $validated['code'])
                 ->exists();
             if ($exists) {
+                $errMsg = __('Zone Code is already in use.');
                 if ($request->wantsJson() || $request->ajax()) {
-                    return response()->json(['success' => false, 'message' => 'Zone Code is already in use.'], 422);
+                    return response()->json(['success' => false, 'message' => $errMsg], 422);
                 }
-                return back()->withErrors(['code' => 'Zone Code is already in use.'])->withInput();
+                return back()->withErrors(['code' => $errMsg])->withInput();
             }
         }
 
@@ -252,15 +397,16 @@ class TenantCoverageZoneController extends Controller
         }
         $custSyncQuery->update(['zone_id' => $zone->id]);
 
+        $msg = __("Coverage Zone ':name' created successfully.", ['name' => $zone->name]);
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
                 'success' => true,
-                'message' => "Coverage Zone '{$zone->name}' created successfully.",
+                'message' => $msg,
                 'zone' => $zone
             ]);
         }
 
-        return redirect()->route('tenant.customers.zones')->with('success', "Coverage Zone '{$zone->name}' created successfully.");
+        return redirect()->route('tenant.customers.zones')->with('success', $msg);
     }
 
     /**
@@ -269,15 +415,7 @@ class TenantCoverageZoneController extends Controller
     public function update(Request $request, $id)
     {
         $tenant = $this->getTenant();
-        $user = Auth::user();
-        $isResellerUser = $user && ($user->isResellerUser() || !empty($user->reseller_id));
-        $userResellerId = $user?->reseller_id;
-
-        $zoneQuery = TenantCoverageZone::where('tenant_id', $tenant->id);
-        if ($isResellerUser) {
-            $zoneQuery->where('reseller_id', $userResellerId);
-        }
-        $zone = $zoneQuery->findOrFail($id);
+        $zone = $this->findScopedZone($tenant, $id);
 
         $validated = $request->validate([
             'name' => 'required|string|max:150',
@@ -291,22 +429,7 @@ class TenantCoverageZoneController extends Controller
             'is_active' => 'nullable|boolean',
         ]);
 
-        if ($isResellerUser) {
-            $validated['reseller_id'] = $userResellerId;
-        }
-
-        // If staff_id is assigned, update staff name & phone
-        if (!empty($validated['staff_id'])) {
-            $assignedStaff = User::where('tenant_id', $tenant->id)->find($validated['staff_id']);
-            if ($assignedStaff) {
-                $validated['in_charge_name'] = $assignedStaff->name;
-                if (empty($validated['in_charge_phone'])) {
-                    $validated['in_charge_phone'] = $assignedStaff->phone;
-                }
-            }
-        } else {
-            $validated['staff_id'] = null;
-        }
+        $validated = $this->prepareZoneAttributes($tenant, $validated);
 
         // Code uniqueness check
         $codeExists = TenantCoverageZone::where('tenant_id', $tenant->id)
@@ -315,10 +438,11 @@ class TenantCoverageZoneController extends Controller
             ->exists();
 
         if ($codeExists) {
+            $errMsg = __('Zone Code is already taken by another area.');
             if ($request->wantsJson() || $request->ajax()) {
-                return response()->json(['success' => false, 'message' => 'Zone Code is already taken by another area.'], 422);
+                return response()->json(['success' => false, 'message' => $errMsg], 422);
             }
-            return back()->withErrors(['code' => 'Zone Code is already taken.'])->withInput();
+            return back()->withErrors(['code' => $errMsg])->withInput();
         }
 
         $oldName = $zone->name;
@@ -326,22 +450,22 @@ class TenantCoverageZoneController extends Controller
 
         $zone->update($validated);
 
-        // If name changed, synchronize customers table
         if ($oldName !== $zone->name) {
             TenantCustomer::where('tenant_id', $tenant->id)
                 ->where('zone_id', $zone->id)
                 ->update(['zone' => $zone->name]);
         }
 
+        $msg = __("Coverage Zone ':name' updated successfully.", ['name' => $zone->name]);
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
                 'success' => true,
-                'message' => "Coverage Zone '{$zone->name}' updated successfully.",
+                'message' => $msg,
                 'zone' => $zone
             ]);
         }
 
-        return redirect()->route('tenant.customers.zones')->with('success', "Coverage Zone '{$zone->name}' updated successfully.");
+        return redirect()->route('tenant.customers.zones')->with('success', $msg);
     }
 
     /**
@@ -350,30 +474,24 @@ class TenantCoverageZoneController extends Controller
     public function toggleStatus(Request $request, $id)
     {
         $tenant = $this->getTenant();
-        $user = Auth::user();
-        $isResellerUser = $user && ($user->isResellerUser() || !empty($user->reseller_id));
-        $userResellerId = $user?->reseller_id;
-
-        $zoneQuery = TenantCoverageZone::where('tenant_id', $tenant->id);
-        if ($isResellerUser) {
-            $zoneQuery->where('reseller_id', $userResellerId);
-        }
-        $zone = $zoneQuery->findOrFail($id);
+        $zone = $this->findScopedZone($tenant, $id);
 
         $zone->is_active = !$zone->is_active;
         $zone->save();
 
-        $stateText = $zone->is_active ? 'enabled' : 'disabled';
+        $msg = $zone->is_active
+            ? __("Coverage Zone ':name' is now enabled.", ['name' => $zone->name])
+            : __("Coverage Zone ':name' is now disabled.", ['name' => $zone->name]);
 
         if ($request->wantsJson() || $request->ajax() || str_contains($request->header('Accept', ''), 'json')) {
             return response()->json([
                 'success' => true,
                 'is_active' => $zone->is_active,
-                'message' => "Coverage Zone '{$zone->name}' is now {$stateText}.",
+                'message' => $msg,
             ]);
         }
 
-        return back()->with('success', "Coverage Zone '{$zone->name}' has been {$stateText} successfully.");
+        return back()->with('success', $msg);
     }
 
     /**
@@ -382,25 +500,20 @@ class TenantCoverageZoneController extends Controller
     public function destroy(Request $request, $id)
     {
         $tenant = $this->getTenant();
-        $user = Auth::user();
-        $isResellerUser = $user && ($user->isResellerUser() || !empty($user->reseller_id));
-        $userResellerId = $user?->reseller_id;
-
-        $zoneQuery = TenantCoverageZone::where('tenant_id', $tenant->id);
-        if ($isResellerUser) {
-            $zoneQuery->where('reseller_id', $userResellerId);
-        }
-        $zone = $zoneQuery->findOrFail($id);
+        $zone = $this->findScopedZone($tenant, $id);
 
         $subscriberCount = TenantCustomer::where('tenant_id', $tenant->id)
-            ->where(function($q) use ($zone) {
+            ->where(function ($q) use ($zone) {
                 $q->where('zone_id', $zone->id)
                   ->orWhere('zone', $zone->name);
             })
             ->count();
 
         if ($subscriberCount > 0) {
-            $msg = "Cannot delete zone '{$zone->name}' because {$subscriberCount} active subscribers are currently assigned to it.";
+            $msg = __("Cannot delete zone ':name' because :count subscribers are assigned to it.", [
+                'name' => $zone->name,
+                'count' => $subscriberCount,
+            ]);
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json(['success' => false, 'message' => $msg], 422);
             }
@@ -410,14 +523,15 @@ class TenantCoverageZoneController extends Controller
         $zoneName = $zone->name;
         $zone->delete();
 
+        $msg = __("Coverage Zone ':name' deleted successfully.", ['name' => $zoneName]);
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
                 'success' => true,
-                'message' => "Coverage Zone '{$zoneName}' deleted successfully."
+                'message' => $msg,
             ]);
         }
 
-        return redirect()->route('tenant.customers.zones')->with('success', "Coverage Zone '{$zoneName}' deleted successfully.");
+        return redirect()->route('tenant.customers.zones')->with('success', $msg);
     }
 
     /**
@@ -491,10 +605,11 @@ class TenantCoverageZoneController extends Controller
         $path = $file->getRealPath();
         $handle = fopen($path, 'r');
         if (!$handle) {
+            $errMsg = __('Unable to read uploaded file.');
             if ($request->wantsJson() || $request->ajax()) {
-                return response()->json(['success' => false, 'message' => 'Unable to read uploaded file.'], 422);
+                return response()->json(['success' => false, 'message' => $errMsg], 422);
             }
-            return back()->with('error', 'Unable to read uploaded file.');
+            return back()->with('error', $errMsg);
         }
 
         // Strip UTF-8 BOM if present
@@ -506,10 +621,11 @@ class TenantCoverageZoneController extends Controller
         $headerRow = fgetcsv($handle);
         if (!$headerRow) {
             fclose($handle);
+            $errMsg = __('The uploaded file is empty.');
             if ($request->wantsJson() || $request->ajax()) {
-                return response()->json(['success' => false, 'message' => 'The uploaded file is empty.'], 422);
+                return response()->json(['success' => false, 'message' => $errMsg], 422);
             }
-            return back()->with('error', 'The uploaded file is empty.');
+            return back()->with('error', $errMsg);
         }
 
         // Normalize headers
@@ -694,11 +810,13 @@ class TenantCoverageZoneController extends Controller
                     'is_active' => $isActive,
                 ]);
 
-                // Sync any customers with matching zone string
-                TenantCustomer::where('tenant_id', $tenant->id)
+                $syncQuery = TenantCustomer::where('tenant_id', $tenant->id)
                     ->where('zone', $name)
-                    ->whereNull('zone_id')
-                    ->update(['zone_id' => $createdZone->id]);
+                    ->whereNull('zone_id');
+                if ($createdZone->reseller_id) {
+                    $syncQuery->where('reseller_id', $createdZone->reseller_id);
+                }
+                $syncQuery->update(['zone_id' => $createdZone->id]);
 
                 $imported++;
             }
@@ -706,9 +824,13 @@ class TenantCoverageZoneController extends Controller
             DB::commit();
             fclose($handle);
 
-            $msg = "Import completed! Successfully imported {$imported} coverage zones/areas.";
-            if ($updated > 0) $msg .= " Updated {$updated} existing.";
-            if ($skipped > 0) $msg .= " Skipped {$skipped} duplicates/empty.";
+            $msg = __('Import completed! Imported :count coverage zones.', ['count' => $imported]);
+            if ($updated > 0) {
+                $msg .= ' ' . __('Updated :count existing.', ['count' => $updated]);
+            }
+            if ($skipped > 0) {
+                $msg .= ' ' . __('Skipped :count duplicates/empty.', ['count' => $skipped]);
+            }
 
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json([
@@ -727,14 +849,15 @@ class TenantCoverageZoneController extends Controller
                 fclose($handle);
             }
 
+            $errMsg = __('Import failed: :error', ['error' => $e->getMessage()]);
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Import failed: ' . $e->getMessage(),
+                    'message' => $errMsg,
                 ], 500);
             }
 
-            return back()->with('error', 'Import failed: ' . $e->getMessage());
+            return back()->with('error', $errMsg);
         }
     }
 
@@ -744,15 +867,7 @@ class TenantCoverageZoneController extends Controller
     public function updateSubAreas(Request $request, $id)
     {
         $tenant = $this->getTenant();
-        $user = Auth::user();
-        $isResellerUser = $user && ($user->isResellerUser() || !empty($user->reseller_id));
-        $userResellerId = $user?->reseller_id;
-
-        $zoneQuery = TenantCoverageZone::where('tenant_id', $tenant->id);
-        if ($isResellerUser) {
-            $zoneQuery->where('reseller_id', $userResellerId);
-        }
-        $zone = $zoneQuery->findOrFail($id);
+        $zone = $this->findScopedZone($tenant, $id);
 
         $subAreas = $request->input('sub_areas');
         if (is_array($subAreas)) {
@@ -763,15 +878,16 @@ class TenantCoverageZoneController extends Controller
         }
         $zone->save();
 
+        $msg = __("Sub-areas for ':name' updated successfully.", ['name' => $zone->name]);
         if ($request->wantsJson() || $request->ajax() || str_contains($request->header('Accept', ''), 'json')) {
             return response()->json([
                 'success' => true,
-                'message' => "Sub-areas for '{$zone->name}' updated successfully.",
+                'message' => $msg,
                 'sub_areas' => $zone->sub_areas_list,
                 'description' => $zone->description,
             ]);
         }
 
-        return back()->with('success', "Sub-areas for '{$zone->name}' updated successfully.");
+        return back()->with('success', $msg);
     }
 }
