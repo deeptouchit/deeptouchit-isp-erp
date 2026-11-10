@@ -84,6 +84,13 @@ class ResellerRechargeController extends Controller
 
         $recharges = $query->latest('id')->paginate($perPage)->withQueryString();
 
+        // 2-Tier Filter State
+        $activeMoreCount = 0;
+        if (!empty($methodFilter)) $activeMoreCount++;
+        if (!empty($dateFrom)) $activeMoreCount++;
+        if (!empty($dateTo)) $activeMoreCount++;
+        $isMoreOpen = $activeMoreCount > 0;
+
         // Distinct payment methods for filter
         $availableMethods = TenantResellerRecharge::where('tenant_id', $tenant->id)
             ->whereNotNull('payment_method')
@@ -130,6 +137,8 @@ class ResellerRechargeController extends Controller
             'onlinePgwCount',
             'bankAndCashCount',
             'availableMethods',
+            'activeMoreCount',
+            'isMoreOpen',
             'search',
             'selectedResellerId',
             'statusFilter',

@@ -75,6 +75,13 @@ class ResellerLedgerController extends Controller
 
         $transactions = $query->latest('id')->paginate($perPage)->withQueryString();
 
+        // 2-Tier Filter State
+        $activeMoreCount = 0;
+        if (!empty($paymentMethod)) $activeMoreCount++;
+        if (!empty($dateFrom)) $activeMoreCount++;
+        if (!empty($dateTo)) $activeMoreCount++;
+        $isMoreOpen = $activeMoreCount > 0;
+
         // 6 KPI Metric Calculations
         $baseTrx = TenantResellerWalletTransaction::where('tenant_id', $tenant->id);
         $totalCreditRecharges = (float) (clone $baseTrx)->where('type', 'CREDIT')->sum('amount');
@@ -108,6 +115,8 @@ class ResellerLedgerController extends Controller
             'totalTransactionsCount',
             'creditCount',
             'debitCount',
+            'activeMoreCount',
+            'isMoreOpen',
             'search',
             'selectedResellerId',
             'type',

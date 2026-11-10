@@ -102,6 +102,11 @@ class ResellerWalletController extends Controller
             ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
             ->sum('amount');
 
+        // Tier-2 Secondary Filters Count
+        $activeMoreCount = 0;
+        if (!empty($billingType)) $activeMoreCount++;
+        $isMoreOpen = $activeMoreCount > 0;
+
         return view('tenant.resellers.wallets', compact(
             'tenant',
             'currencySymbol',
@@ -118,6 +123,8 @@ class ResellerWalletController extends Controller
             'selectedResellerId',
             'balanceFilter',
             'billingType',
+            'activeMoreCount',
+            'isMoreOpen',
             'perPage'
         ));
     }
