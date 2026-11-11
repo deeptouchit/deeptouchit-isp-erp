@@ -1,6 +1,6 @@
 @extends('tenant.layouts.app')
 
-@section('title', 'Wholesale Invoices & Receipts - ' . ($tenant->company_name ?? $tenant->name))
+@section('title', __('Wholesale Invoices & Receipts') . ' - ' . ($tenant->company_name ?? $tenant->name))
 
 @push('styles')
 <style>
@@ -55,9 +55,9 @@
             <div class="w-8 h-8 rounded-lg bg-cyan-50 text-cyan-600 border border-cyan-100 flex items-center justify-center text-sm shadow-xs flex-shrink-0">
                 <i class="fas fa-file-invoice-dollar"></i>
             </div>
-            <h1 class="text-xs font-bold text-slate-800 tracking-tight">Wholesale Invoices &amp; Receipts</h1>
+            <h1 class="text-xs font-bold text-slate-800 tracking-tight">{{ __('Wholesale Invoices & Receipts') }}</h1>
             <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-cyan-100 text-cyan-800 border border-cyan-200">
-                {{ $invoices->total() }} Invoices
+                {{ __(':count Invoices', ['count' => $invoices->total()]) }}
             </span>
         </div>
 
@@ -65,18 +65,18 @@
             <a href="{{ route('tenant.resellers.subscriptions') }}" 
                class="h-[34px] py-0 px-3 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-xs shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-key text-slate-400 text-xs"></i>
-                <span>Panel Licenses</span>
+                <span>{{ __('Panel Licenses') }}</span>
             </a>
             <a href="{{ route('tenant.resellers.bandwidth') }}" 
                class="h-[34px] py-0 px-3 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-xs shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-network-wired text-cyan-600 text-xs"></i>
-                <span>Bandwidth</span>
+                <span>{{ __('Bandwidth') }}</span>
             </a>
             <button type="button" 
                     @click="openBulkBillModal()" 
                     class="h-[34px] py-0 px-3.5 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-wand-magic-sparkles text-[10px]"></i>
-                <span>Generate Invoices</span>
+                <span>{{ __('Generate Invoices') }}</span>
             </button>
         </div>
     </div>
@@ -86,7 +86,7 @@
         <!-- Card 1: Total Invoiced -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Total Invoiced</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">{{ __('Total Invoiced') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-slate-900 truncate">@currency($totalInvoiced)</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-slate-100 text-slate-600 border-slate-200 flex items-center justify-center">
@@ -97,7 +97,7 @@
         <!-- Card 2: Total Collected -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Total Collected</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">{{ __('Total Collected') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-emerald-700 truncate">@currency($totalPaid)</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-emerald-50 text-emerald-600 border-emerald-100 flex items-center justify-center">
@@ -108,7 +108,7 @@
         <!-- Card 3: Outstanding Due -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Outstanding Due</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">{{ __('Outstanding Due') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-rose-700 truncate">@currency($totalDue)</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-rose-50 text-rose-600 border-rose-100 flex items-center justify-center">
@@ -119,7 +119,7 @@
         <!-- Card 4: Paid Count -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Paid Invoices</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">{{ __('Paid Invoices') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-emerald-700 truncate">{{ number_format($paidCount) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-emerald-50 text-emerald-600 border-emerald-100 flex items-center justify-center">
@@ -130,7 +130,7 @@
         <!-- Card 5: Unpaid / Due Count -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Unpaid / Due</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">{{ __('Unpaid / Due') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-amber-700 truncate">{{ number_format($dueCount) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-amber-50 text-amber-600 border-amber-100 flex items-center justify-center">
@@ -141,7 +141,7 @@
         <!-- Card 6: This Month Billed -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">This Month Billed</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">{{ __('This Month Billed') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-cyan-800 truncate">@currency($thisMonthBilled)</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-cyan-50 text-cyan-600 border-cyan-100 flex items-center justify-center">
@@ -165,7 +165,7 @@
                            name="search" 
                            x-model="searchQuery"
                            autocomplete="off"
-                           placeholder="Search invoice no, reseller, notes..." 
+                           placeholder="{{ __('Search invoice no, reseller, notes...') }}" 
                            class="w-full h-[34px] pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs">
                     <button type="button" 
                             x-show="searchQuery && searchQuery.length > 0" 
@@ -179,7 +179,7 @@
                 <select name="reseller_id" 
                         onchange="this.form.submit()" 
                         class="h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs w-full md:w-48 flex-shrink-0">
-                    <option value="">All Resellers</option>
+                    <option value="">{{ __('All Resellers') }}</option>
                     @foreach($allResellers as $r)
                         <option value="{{ $r->id }}" {{ (string)request('reseller_id') === (string)$r->id ? 'selected' : '' }}>
                             {{ $r->name }} ({{ $r->code }})
@@ -191,22 +191,22 @@
                 <select name="payment_status" 
                         onchange="this.form.submit()" 
                         class="h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs w-full md:w-36 flex-shrink-0">
-                    <option value="">All Statuses</option>
-                    <option value="PAID" {{ request('payment_status') === 'PAID' ? 'selected' : '' }}>Paid</option>
-                    <option value="UNPAID" {{ request('payment_status') === 'UNPAID' ? 'selected' : '' }}>Unpaid / Due</option>
-                    <option value="PARTIAL" {{ request('payment_status') === 'PARTIAL' ? 'selected' : '' }}>Partial Paid</option>
-                    <option value="CANCELLED" {{ request('payment_status') === 'CANCELLED' ? 'selected' : '' }}>Cancelled</option>
+                    <option value="">{{ __('All Statuses') }}</option>
+                    <option value="PAID" {{ request('payment_status') === 'PAID' ? 'selected' : '' }}>{{ __('Paid') }}</option>
+                    <option value="UNPAID" {{ request('payment_status') === 'UNPAID' ? 'selected' : '' }}>{{ __('Unpaid / Due') }}</option>
+                    <option value="PARTIAL" {{ request('payment_status') === 'PARTIAL' ? 'selected' : '' }}>{{ __('Partial Paid') }}</option>
+                    <option value="CANCELLED" {{ request('payment_status') === 'CANCELLED' ? 'selected' : '' }}>{{ __('Cancelled') }}</option>
                 </select>
 
                 <!-- Pagination Selector (per_page) -->
                 <select name="per_page" 
                         onchange="this.form.submit()" 
                         class="h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs w-full md:w-28 flex-shrink-0">
-                    <option value="15" {{ request('per_page', 20) == 15 ? 'selected' : '' }}>15 / page</option>
-                    <option value="20" {{ request('per_page', 20) == 20 ? 'selected' : '' }}>20 / page</option>
-                    <option value="30" {{ request('per_page', 20) == 30 ? 'selected' : '' }}>30 / page</option>
-                    <option value="50" {{ request('per_page', 20) == 50 ? 'selected' : '' }}>50 / page</option>
-                    <option value="100" {{ request('per_page', 20) == 100 ? 'selected' : '' }}>100 / page</option>
+                    <option value="15" {{ request('per_page', 20) == 15 ? 'selected' : '' }}>15 / {{ __('page') }}</option>
+                    <option value="20" {{ request('per_page', 20) == 20 ? 'selected' : '' }}>20 / {{ __('page') }}</option>
+                    <option value="30" {{ request('per_page', 20) == 30 ? 'selected' : '' }}>30 / {{ __('page') }}</option>
+                    <option value="50" {{ request('per_page', 20) == 50 ? 'selected' : '' }}>50 / {{ __('page') }}</option>
+                    <option value="100" {{ request('per_page', 20) == 100 ? 'selected' : '' }}>100 / {{ __('page') }}</option>
                 </select>
 
                 <!-- Accordion Toggle Button for Tier-2 Secondary Filters -->
@@ -214,7 +214,7 @@
                         @click="showMoreFilters = !showMoreFilters" 
                         class="h-[34px] py-0 px-2.5 bg-slate-50 hover:bg-slate-100 text-slate-700 font-medium text-xs rounded-lg border border-slate-200 transition flex items-center justify-center gap-1.5 flex-shrink-0 cursor-pointer">
                     <i class="fas fa-sliders text-slate-500 text-[11px]"></i>
-                    <span>More Filters</span>
+                    <span>{{ __('More Filters') }}</span>
                     @if($activeMoreCount > 0)
                         <span class="w-4 h-4 rounded-full bg-cyan-600 text-white text-[9px] font-bold flex items-center justify-center">{{ $activeMoreCount }}</span>
                     @endif
@@ -225,15 +225,15 @@
                 <div class="flex items-center gap-1.5 flex-shrink-0 md:ml-auto">
                     <button type="submit" 
                             class="h-[34px] py-0 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" 
-                            title="Apply Filters">
+                            title="{{ __('Apply Filters') }}">
                         <i class="fas fa-filter text-[10px]"></i>
-                        <span>Filter</span>
+                        <span>{{ __('Filter') }}</span>
                     </button>
                     <a href="{{ route('tenant.resellers.invoices') }}" 
                        class="h-[34px] py-0 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer" 
-                       title="Reset Filters">
+                       title="{{ __('Reset Filters') }}">
                         <i class="fas fa-rotate-left text-[10px]"></i>
-                        <span>Reset</span>
+                        <span>{{ __('Reset') }}</span>
                     </a>
                 </div>
             </div>
@@ -260,10 +260,10 @@
                     <select name="type" 
                             onchange="this.form.submit()" 
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs">
-                        <option value="">All Invoice Types</option>
-                        <option value="SUBSCRIPTION" {{ request('type') === 'SUBSCRIPTION' ? 'selected' : '' }}>Panel Subscription</option>
-                        <option value="BANDWIDTH" {{ request('type') === 'BANDWIDTH' ? 'selected' : '' }}>Bandwidth Allocation</option>
-                        <option value="MANUAL" {{ request('type') === 'MANUAL' ? 'selected' : '' }}>Manual Wholesale Charge</option>
+                        <option value="">{{ __('All Invoice Types') }}</option>
+                        <option value="SUBSCRIPTION" {{ request('type') === 'SUBSCRIPTION' ? 'selected' : '' }}>{{ __('Panel Subscription') }}</option>
+                        <option value="BANDWIDTH" {{ request('type') === 'BANDWIDTH' ? 'selected' : '' }}>{{ __('Bandwidth Allocation') }}</option>
+                        <option value="MANUAL" {{ request('type') === 'MANUAL' ? 'selected' : '' }}>{{ __('Manual Wholesale Charge') }}</option>
                     </select>
                 </div>
             </div>
@@ -277,15 +277,15 @@
                 <thead>
                     <tr>
                         <th class="w-10 text-center font-semibold">#</th>
-                        <th class="w-20 text-center font-semibold">Status</th>
-                        <th class="w-28 text-center font-semibold">Invoice No</th>
-                        <th class="text-center font-semibold">Reseller Partner</th>
-                        <th class="w-24 text-center font-semibold">Billing Month</th>
-                        <th class="w-28 text-center font-semibold">Total Amount</th>
-                        <th class="w-28 text-center font-semibold">Paid Amount</th>
-                        <th class="w-28 text-center font-semibold">Due Amount</th>
-                        <th class="w-24 text-center font-semibold">Method</th>
-                        <th class="w-10 text-center font-semibold no-sort">Action</th>
+                        <th class="w-20 text-center font-semibold">{{ __('Status') }}</th>
+                        <th class="w-28 text-center font-semibold">{{ __('Invoice No') }}</th>
+                        <th class="text-center font-semibold">{{ __('Reseller Partner') }}</th>
+                        <th class="w-24 text-center font-semibold">{{ __('Billing Month') }}</th>
+                        <th class="w-28 text-center font-semibold">{{ __('Total Amount') }}</th>
+                        <th class="w-28 text-center font-semibold">{{ __('Paid Amount') }}</th>
+                        <th class="w-28 text-center font-semibold">{{ __('Due Amount') }}</th>
+                        <th class="w-24 text-center font-semibold">{{ __('Method') }}</th>
+                        <th class="w-10 text-center font-semibold no-sort">{{ __('Action') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -295,8 +295,8 @@
                                 'id' => $inv->id,
                                 'invoice_no' => $inv->invoice_no,
                                 'reseller_id' => $inv->reseller_id,
-                                'reseller_name' => $inv->reseller?->name ?? 'N/A',
-                                'reseller_code' => $inv->reseller?->code ?? 'N/A',
+                                'reseller_name' => $inv->reseller?->name ?? __('N/A'),
+                                'reseller_code' => $inv->reseller?->code ?? __('N/A'),
                                 'reseller_mobile' => $inv->reseller?->mobile ?? '',
                                 'reseller_address' => $inv->reseller?->address ?? '',
                                 'billing_month' => $inv->billing_month ? \Carbon\Carbon::parse($inv->billing_month)->format('F Y') : '',
@@ -307,7 +307,7 @@
                                 'paid_amount' => (float)$inv->paid_amount,
                                 'due_amount' => (float)$inv->due_amount,
                                 'payment_status' => $inv->payment_status,
-                                'payment_method' => $inv->payment_method ?? 'Unpaid',
+                                'payment_method' => $inv->payment_method ?? __('Unpaid'),
                                 'paid_at' => $inv->paid_at ? \Carbon\Carbon::parse($inv->paid_at)->format('d M, Y h:i A') : null,
                                 'notes' => $inv->notes,
                                 'wallet_balance' => (float)($inv->reseller?->wallet_balance ?? 0),
@@ -323,15 +323,19 @@
                             <td class="text-center whitespace-nowrap">
                                 @if($inv->payment_status === 'PAID')
                                     <span class="inline-flex items-center justify-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                        <i class="fas fa-check-circle text-[8px]"></i> Paid
+                                        <i class="fas fa-check-circle text-[8px]"></i> {{ __('Paid') }}
                                     </span>
                                 @elseif($inv->payment_status === 'PARTIAL')
                                     <span class="inline-flex items-center justify-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
-                                        <i class="fas fa-circle-half-stroke text-[8px]"></i> Partial
+                                        <i class="fas fa-circle-half-stroke text-[8px]"></i> {{ __('Partial') }}
+                                    </span>
+                                @elseif($inv->payment_status === 'CANCELLED')
+                                    <span class="inline-flex items-center justify-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-50 text-slate-600 border border-slate-200">
+                                        <i class="fas fa-ban text-[8px]"></i> {{ __('Cancelled') }}
                                     </span>
                                 @else
                                     <span class="inline-flex items-center justify-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-50 text-rose-700 border border-rose-200">
-                                        <i class="fas fa-clock text-[8px]"></i> Unpaid
+                                        <i class="fas fa-clock text-[8px]"></i> {{ __('Unpaid') }}
                                     </span>
                                 @endif
                             </td>
@@ -347,7 +351,7 @@
 
                             <!-- 4. Reseller Partner (Left Align) -->
                             <td class="text-left font-semibold text-slate-800 whitespace-nowrap">
-                                <span class="truncate max-w-[200px] inline-block align-middle">{{ $inv->reseller?->name ?? 'N/A' }}</span>
+                                <span class="truncate max-w-[200px] inline-block align-middle">{{ $inv->reseller?->name ?? __('N/A') }}</span>
                             </td>
 
                             <!-- 5. Billing Month (Center Align, Mono) -->
@@ -373,8 +377,20 @@
                             <!-- 9. Payment Method (Center Align, Mono) -->
                             <td class="text-center font-mono text-[10px] whitespace-nowrap">
                                 @if($inv->payment_method)
+                                    @php
+                                        $methodLabel = match ($inv->payment_method) {
+                                            'WALLET_DEDUCT' => __('WALLET DEDUCT'),
+                                            'CASH' => __('CASH'),
+                                            'BANK' => __('BANK'),
+                                            'BKASH' => __('BKASH'),
+                                            'NAGAD' => __('NAGAD'),
+                                            'ONLINE' => __('ONLINE'),
+                                            'DUE' => __('DUE'),
+                                            default => __(str_replace('_', ' ', $inv->payment_method)),
+                                        };
+                                    @endphp
                                     <span class="inline-flex px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200 font-medium">
-                                        {{ str_replace('_', ' ', $inv->payment_method) }}
+                                        {{ $methodLabel }}
                                     </span>
                                 @else
                                     <span class="text-slate-400">—</span>
@@ -386,7 +402,7 @@
                                 <button type="button" 
                                         @click.stop="toggleMenu({{ Js::from($invPayload) }}, $event)" 
                                         class="w-6 h-6 rounded hover:bg-slate-100 text-slate-500 hover:text-cyan-600 transition inline-flex items-center justify-center cursor-pointer"
-                                        title="Actions">
+                                        title="{{ __('Actions') }}">
                                     <i class="fas fa-ellipsis-v text-[10px]"></i>
                                 </button>
                             </td>
@@ -398,14 +414,14 @@
                                     <div class="w-10 h-10 rounded-xl bg-cyan-50 text-cyan-600 mx-auto flex items-center justify-center text-base border border-cyan-100">
                                         <i class="fas fa-file-invoice"></i>
                                     </div>
-                                    <h3 class="text-xs font-semibold text-slate-800">No Invoices Found</h3>
-                                    <p class="text-[11px] text-slate-400 font-normal">Generate monthly bills or record partner renewals to create invoices.</p>
+                                    <h3 class="text-xs font-semibold text-slate-800">{{ __('No Invoices Found') }}</h3>
+                                    <p class="text-[11px] text-slate-400 font-normal">{{ __('Generate monthly bills or record partner renewals to create invoices.') }}</p>
                                     <div class="pt-1 flex items-center justify-center gap-2">
                                         <button type="button" 
                                                 @click="openBulkBillModal()" 
                                                 class="bg-cyan-600 hover:bg-cyan-700 text-white font-medium text-xs px-3.5 py-1.5 rounded-lg shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer">
                                             <i class="fas fa-wand-magic-sparkles text-[10px]"></i>
-                                            <span>Generate Monthly Invoices</span>
+                                            <span>{{ __('Generate Monthly Invoices') }}</span>
                                         </button>
                                     </div>
                                 </div>
@@ -420,7 +436,11 @@
         @if($invoices->hasPages())
             <div class="px-4 py-2.5 bg-white border-t border-slate-200 flex items-center justify-between text-xs text-slate-600">
                 <div>
-                    Showing <span class="font-bold text-slate-800">{{ $invoices->firstItem() }}</span> to <span class="font-bold text-slate-800">{{ $invoices->lastItem() }}</span> of <span class="font-bold text-slate-800">{{ $invoices->total() }}</span> invoices
+                    {!! __('Showing :first to :last of :total invoices', [
+                        'first' => '<span class="font-bold text-slate-800">' . (int) $invoices->firstItem() . '</span>',
+                        'last' => '<span class="font-bold text-slate-800">' . (int) $invoices->lastItem() . '</span>',
+                        'total' => '<span class="font-bold text-slate-800">' . (int) $invoices->total() . '</span>',
+                    ]) !!}
                 </div>
                 <div>
                     {{ $invoices->links() }}
@@ -443,14 +463,14 @@
                     @click="openReceiptModal(activeMenu); activeMenu = null;" 
                     class="w-full text-left px-3.5 py-1.5 hover:bg-slate-50 text-slate-700 hover:text-cyan-700 flex items-center gap-2 transition cursor-pointer">
                 <i class="fas fa-receipt w-3.5 text-cyan-600"></i>
-                <span>View Receipt / Invoice</span>
+                <span>{{ __('View Receipt / Invoice') }}</span>
             </button>
             <button type="button" 
                     x-show="activeMenu?.payment_status !== 'PAID'"
                     @click="openPaymentModal(activeMenu); activeMenu = null;" 
                     class="w-full text-left px-3.5 py-1.5 hover:bg-emerald-50 text-emerald-700 font-semibold flex items-center gap-2 transition cursor-pointer">
                 <i class="fas fa-hand-holding-dollar w-3.5 text-emerald-600"></i>
-                <span>Collect Payment</span>
+                <span>{{ __('Collect Payment') }}</span>
             </button>
         </div>
 
@@ -460,7 +480,7 @@
                     @click="deleteInvoice(activeMenu.id, activeMenu.invoice_no); activeMenu = null;" 
                     class="w-full text-left px-3.5 py-1.5 hover:bg-rose-50 text-rose-600 flex items-center gap-2 transition cursor-pointer">
                 <i class="fas fa-trash-can w-3.5 text-rose-500"></i>
-                <span>Delete Invoice</span>
+                <span>{{ __('Delete Invoice') }}</span>
             </button>
         </div>
     </div>
@@ -488,7 +508,7 @@
                     </div>
                     <div class="flex items-center gap-2">
                         <h3 class="text-xs font-semibold text-slate-800" x-text="receiptItem?.invoice_no"></h3>
-                        <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-cyan-50 text-cyan-700 border border-cyan-100">Subscription Receipt</span>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-cyan-50 text-cyan-700 border border-cyan-100">{{ __('Subscription Receipt') }}</span>
                     </div>
                 </div>
                 <button type="button" @click="modals.receipt = false" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center text-xs cursor-pointer">
@@ -502,13 +522,13 @@
                 <div class="flex items-start justify-between border-b border-slate-200 pb-3">
                     <div>
                         <h2 class="text-sm font-bold text-slate-900">{{ $tenant->company_name ?? $tenant->name }}</h2>
-                        <span class="text-[11px] text-slate-500 block">{{ $tenant->address ?? 'ISP Billing Center' }}</span>
-                        <span class="text-[11px] text-slate-500 block">Phone: {{ $tenant->phone ?? 'N/A' }}</span>
+                        <span class="text-[11px] text-slate-500 block">{{ $tenant->address ?? __('ISP Billing Center') }}</span>
+                        <span class="text-[11px] text-slate-500 block">{{ __('Phone') }}: {{ $tenant->phone ?? __('N/A') }}</span>
                     </div>
                     <div class="text-right">
                         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase"
-                              :class="receiptItem?.payment_status === 'PAID' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'"
-                              x-text="receiptItem?.payment_status"></span>
+                              :class="receiptItem?.payment_status === 'PAID' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : (receiptItem?.payment_status === 'PARTIAL' ? 'bg-amber-50 text-amber-700 border border-amber-200' : (receiptItem?.payment_status === 'CANCELLED' ? 'bg-slate-100 text-slate-600 border border-slate-200' : 'bg-rose-50 text-rose-700 border border-rose-200'))"
+                              x-text="statusLabel(receiptItem?.payment_status)"></span>
                         <div class="text-xs font-mono font-bold text-slate-800 mt-1" x-text="receiptItem?.invoice_no"></div>
                     </div>
                 </div>
@@ -516,16 +536,16 @@
                 <!-- Reseller & Billing Period Meta -->
                 <div class="grid grid-cols-2 gap-3 p-3 bg-slate-50 rounded-lg border border-slate-200/80">
                     <div>
-                        <span class="text-[10px] text-slate-400 uppercase tracking-wider block">Billed To (Reseller)</span>
+                        <span class="text-[10px] text-slate-400 uppercase tracking-wider block">{{ __('Billed To (Reseller)') }}</span>
                         <div class="font-bold text-slate-900 text-xs" x-text="receiptItem?.reseller_name"></div>
-                        <div class="text-[11px] text-slate-600 font-mono" x-text="'Code: ' + receiptItem?.reseller_code"></div>
+                        <div class="text-[11px] text-slate-600 font-mono" x-text="i18n.codeLabel.replace(':code', receiptItem?.reseller_code || '')"></div>
                         <div class="text-[11px] text-slate-600" x-text="receiptItem?.reseller_mobile"></div>
                     </div>
                     <div class="text-right">
-                        <span class="text-[10px] text-slate-400 uppercase tracking-wider block">Billing Period</span>
+                        <span class="text-[10px] text-slate-400 uppercase tracking-wider block">{{ __('Billing Period') }}</span>
                         <div class="font-bold text-slate-900 text-xs" x-text="receiptItem?.billing_month"></div>
                         <div class="text-[11px] text-slate-600" x-text="receiptItem?.period_start + ' ~ ' + receiptItem?.period_end"></div>
-                        <div class="text-[11px] text-slate-500" x-text="receiptItem?.paid_at ? 'Paid on: ' + receiptItem?.paid_at : 'Status: Unpaid'"></div>
+                        <div class="text-[11px] text-slate-500" x-text="receiptItem?.paid_at ? i18n.paidOn.replace(':date', receiptItem?.paid_at) : i18n.statusUnpaid"></div>
                     </div>
                 </div>
 
@@ -534,8 +554,8 @@
                     <table class="w-full text-xs">
                         <thead class="bg-slate-100 border-b border-slate-200 text-slate-700">
                             <tr>
-                                <th class="p-2 text-left font-medium">Description</th>
-                                <th class="p-2 text-right font-medium">Amount</th>
+                                <th class="p-2 text-left font-medium">{{ __('Description') }}</th>
+                                <th class="p-2 text-right font-medium">{{ __('Amount') }}</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-200">
@@ -544,21 +564,21 @@
                                     <span class="font-semibold block" x-text="receiptItem?.type_label"></span>
                                     <span class="text-[11px] text-slate-500 font-normal" x-text="receiptItem?.notes"></span>
                                 </td>
-                                <td class="p-2 text-right font-mono font-bold text-slate-900" x-text="'৳' + Number(receiptItem?.amount || 0).toFixed(2)"></td>
+                                <td class="p-2 text-right font-mono font-bold text-slate-900" x-text="formatCurrency(receiptItem?.amount)"></td>
                             </tr>
                         </tbody>
                         <tfoot class="bg-slate-50 border-t border-slate-200 text-xs">
                             <tr>
-                                <td class="p-2 font-semibold text-slate-700 text-right">Total Invoiced:</td>
-                                <td class="p-2 text-right font-mono font-bold text-slate-900" x-text="'৳' + Number(receiptItem?.amount || 0).toFixed(2)"></td>
+                                <td class="p-2 font-semibold text-slate-700 text-right">{{ __('Total Invoiced') }}:</td>
+                                <td class="p-2 text-right font-mono font-bold text-slate-900" x-text="formatCurrency(receiptItem?.amount)"></td>
                             </tr>
                             <tr>
-                                <td class="p-2 font-semibold text-emerald-700 text-right">Paid Amount:</td>
-                                <td class="p-2 text-right font-mono font-bold text-emerald-700" x-text="'৳' + Number(receiptItem?.paid_amount || 0).toFixed(2)"></td>
+                                <td class="p-2 font-semibold text-emerald-700 text-right">{{ __('Paid Amount') }}:</td>
+                                <td class="p-2 text-right font-mono font-bold text-emerald-700" x-text="formatCurrency(receiptItem?.paid_amount)"></td>
                             </tr>
                             <tr>
-                                <td class="p-2 font-semibold text-rose-700 text-right">Due Balance:</td>
-                                <td class="p-2 text-right font-mono font-bold text-rose-700" x-text="'৳' + Number(receiptItem?.due_amount || 0).toFixed(2)"></td>
+                                <td class="p-2 font-semibold text-rose-700 text-right">{{ __('Due Balance') }}:</td>
+                                <td class="p-2 text-right font-mono font-bold text-rose-700" x-text="formatCurrency(receiptItem?.due_amount)"></td>
                             </tr>
                         </tfoot>
                     </table>
@@ -570,7 +590,7 @@
                 <button type="button" 
                         @click="modals.receipt = false" 
                         class="border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs px-3.5 py-1.5 rounded-lg transition cursor-pointer">
-                    Close
+                    {{ __('Close') }}
                 </button>
                 <div class="flex items-center gap-2">
                     <button type="button" 
@@ -578,13 +598,13 @@
                             @click="modals.receipt = false; openPaymentModal(receiptItem);" 
                             class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs px-3.5 py-1.5 rounded-lg shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer">
                         <i class="fas fa-hand-holding-dollar text-[10px]"></i>
-                        <span>Collect Payment</span>
+                        <span>{{ __('Collect Payment') }}</span>
                     </button>
                     <button type="button" 
                             @click="window.print()" 
                             class="bg-slate-800 hover:bg-slate-900 text-white font-medium text-xs px-3.5 py-1.5 rounded-lg shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer">
                         <i class="fas fa-print text-[10px]"></i>
-                        <span>Print Receipt</span>
+                        <span>{{ __('Print Receipt') }}</span>
                     </button>
                 </div>
             </div>
@@ -613,7 +633,7 @@
                         <i class="fas fa-hand-holding-dollar"></i>
                     </div>
                     <div class="flex items-center gap-2">
-                        <h3 class="text-xs font-semibold text-slate-800">Collect Invoice Payment</h3>
+                        <h3 class="text-xs font-semibold text-slate-800">{{ __('Collect Invoice Payment') }}</h3>
                         <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-slate-200 text-slate-700 font-semibold" x-text="paymentItem?.invoice_no"></span>
                     </div>
                 </div>
@@ -627,19 +647,19 @@
                 <!-- Info Summary -->
                 <div class="p-3 bg-slate-50 rounded-lg border border-slate-200 grid grid-cols-2 gap-2 text-xs">
                     <div>
-                        <span class="text-[10.5px] text-slate-500 block">Reseller:</span>
+                        <span class="text-[10.5px] text-slate-500 block">{{ __('Reseller') }}:</span>
                         <span class="font-semibold text-slate-800" x-text="paymentItem?.reseller_name"></span>
                     </div>
                     <div class="text-right">
-                        <span class="text-[10.5px] text-slate-500 block">Due Amount:</span>
-                        <span class="font-bold text-rose-600 font-mono" x-text="'৳' + Number(paymentItem?.due_amount || 0).toFixed(2)"></span>
+                        <span class="text-[10.5px] text-slate-500 block">{{ __('Due Amount') }}:</span>
+                        <span class="font-bold text-rose-600 font-mono" x-text="formatCurrency(paymentItem?.due_amount)"></span>
                     </div>
                 </div>
 
                 <!-- Payment Amount -->
                 <div>
                     <label class="block text-[11px] font-semibold text-slate-700 mb-1">
-                        Collected Amount (৳) <span class="text-rose-500">*</span>
+                        {{ __('Collected Amount') }} ({{ $currencySymbol ?? '৳' }}) <span class="text-rose-500">*</span>
                     </label>
                     <input type="number" 
                            step="0.01" 
@@ -650,24 +670,24 @@
                 <!-- Payment Method -->
                 <div>
                     <label class="block text-[11px] font-semibold text-slate-700 mb-1">
-                        Payment Method <span class="text-rose-500">*</span>
+                        {{ __('Payment Method') }} <span class="text-rose-500">*</span>
                     </label>
                     <select x-model="paymentForm.payment_method" 
                             class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 outline-hidden transition font-normal shadow-2xs">
-                        <option value="CASH">Cash Collection</option>
-                        <option value="WALLET_DEDUCT">Deduct from Reseller Wallet</option>
-                        <option value="BANK">Bank Transfer / Deposit</option>
-                        <option value="BKASH">bKash</option>
-                        <option value="NAGAD">Nagad</option>
+                        <option value="CASH">{{ __('Cash Collection') }}</option>
+                        <option value="WALLET_DEDUCT">{{ __('Deduct from Reseller Wallet') }}</option>
+                        <option value="BANK">{{ __('Bank Transfer / Deposit') }}</option>
+                        <option value="BKASH">{{ __('bKash') }}</option>
+                        <option value="NAGAD">{{ __('Nagad') }}</option>
                     </select>
                 </div>
 
                 <!-- Remarks -->
                 <div>
-                    <label class="block text-[11px] font-semibold text-slate-700 mb-1">Notes / Trx ID</label>
+                    <label class="block text-[11px] font-semibold text-slate-700 mb-1">{{ __('Notes / Trx ID') }}</label>
                     <input type="text" 
                            x-model="paymentForm.notes" 
-                           placeholder="e.g. Received via bKash TrxID #827182" 
+                           placeholder="{{ __('e.g. Received via bKash TrxID #827182') }}" 
                            class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 outline-hidden transition font-normal shadow-2xs" />
                 </div>
             </div>
@@ -677,14 +697,14 @@
                 <button type="button" 
                         @click="modals.payment = false" 
                         class="border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs px-3.5 py-1.5 rounded-lg transition cursor-pointer">
-                    Cancel
+                    {{ __('Cancel') }}
                 </button>
                 <button type="button" 
                         @click="submitPayment()" 
                         :disabled="saving"
                         class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs px-4 py-1.5 rounded-lg shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50">
                     <i class="fas fa-check text-[10px]"></i>
-                    <span x-text="saving ? 'Recording...' : 'Confirm Payment'"></span>
+                    <span x-text="saving ? i18n.recording : i18n.confirmPayment"></span>
                 </button>
             </div>
         </div>
@@ -712,7 +732,7 @@
                         <i class="fas fa-wand-magic-sparkles"></i>
                     </div>
                     <div class="flex items-center gap-2">
-                        <h3 class="text-xs font-semibold text-slate-800">Generate Monthly Invoices</h3>
+                        <h3 class="text-xs font-semibold text-slate-800">{{ __('Generate Monthly Invoices') }}</h3>
                     </div>
                 </div>
                 <button type="button" @click="modals.bulkBill = false" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center text-xs cursor-pointer">
@@ -724,7 +744,7 @@
             <div class="p-4 space-y-3.5 text-xs">
                 <div>
                     <label class="block text-[11px] font-semibold text-slate-700 mb-1">
-                        Billing Month <span class="text-rose-500">*</span>
+                        {{ __('Billing Month') }} <span class="text-rose-500">*</span>
                     </label>
                     <input type="month" 
                            x-model="bulkForm.billing_month" 
@@ -737,8 +757,8 @@
                                x-model="bulkForm.auto_deduct_wallet" 
                                class="mt-0.5 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500" />
                         <div>
-                            <span class="font-semibold text-slate-800 block text-xs">Auto-deduct from Reseller Wallet</span>
-                            <span class="text-[10.5px] text-slate-500 leading-normal block">If checked and the reseller has sufficient balance, invoice will be marked as PAID immediately.</span>
+                            <span class="font-semibold text-slate-800 block text-xs">{{ __('Auto-deduct from Reseller Wallet') }}</span>
+                            <span class="text-[10.5px] text-slate-500 leading-normal block">{{ __('If checked and the reseller has sufficient balance, invoice will be marked as PAID immediately.') }}</span>
                         </div>
                     </label>
                 </div>
@@ -749,14 +769,14 @@
                 <button type="button" 
                         @click="modals.bulkBill = false" 
                         class="border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs px-3.5 py-1.5 rounded-lg transition cursor-pointer">
-                    Cancel
+                    {{ __('Cancel') }}
                 </button>
                 <button type="button" 
                         @click="submitBulkBill()" 
                         :disabled="saving"
                         class="bg-cyan-600 hover:bg-cyan-700 text-white font-medium text-xs px-4 py-1.5 rounded-lg shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50">
                     <i class="fas fa-wand-magic-sparkles text-[10px]"></i>
-                    <span x-text="saving ? 'Generating...' : 'Generate Invoices'"></span>
+                    <span x-text="saving ? i18n.generating : i18n.generateInvoices"></span>
                 </button>
             </div>
         </div>
@@ -769,6 +789,8 @@
 <script>
     function resellerInvoicesManager() {
         return {
+            currencySymbol: @json($currencySymbol ?? '৳'),
+            currencyPosition: @json($currencyPosition ?? 'left'),
             activeMenu: null,
             menuPos: { top: '0px', bottom: 'auto', right: '10px', left: 'auto' },
             saving: false,
@@ -789,6 +811,60 @@
             bulkForm: {
                 billing_month: new Date().toISOString().slice(0, 7),
                 auto_deduct_wallet: true
+            },
+            i18n: {
+                codeLabel: @json(__('Code: :code')),
+                paidOn: @json(__('Paid on: :date')),
+                statusUnpaid: @json(__('Status: Unpaid')),
+                statusPaidLabel: @json(__('Paid')),
+                statusPartialLabel: @json(__('Partial')),
+                statusCancelledLabel: @json(__('Cancelled')),
+                statusUnpaidLabel: @json(__('Unpaid')),
+                recording: @json(__('Recording...')),
+                confirmPayment: @json(__('Confirm Payment')),
+                generating: @json(__('Generating...')),
+                generateInvoices: @json(__('Generate Invoices')),
+                enterValidAmount: @json(__('Please enter a valid payment amount.')),
+                paymentRecordedSuccess: @json(__('Payment recorded successfully!')),
+                paymentCollectionFailed: @json(__('Payment collection failed.')),
+                errorProcessingPayment: @json(__('Error processing payment')),
+                invoicesGeneratedSuccess: @json(__('Invoices generated successfully!')),
+                failedGenerateInvoices: @json(__('Failed to generate invoices.')),
+                errorGeneratingInvoices: @json(__('Error generating bulk invoices')),
+                deleteInvoiceTitle: @json(__('Delete Invoice?')),
+                deleteInvoiceConfirmText: @json(__('Are you sure you want to delete Invoice :invoice?')),
+                deleteInvoiceWarning: @json(__('This financial record will be permanently deleted.')),
+                yesDelete: @json(__('Yes, Delete')),
+                cancel: @json(__('Cancel')),
+                invoiceDeletedSuccess: @json(__('Invoice deleted successfully.')),
+                deleteFailed: @json(__('Delete failed.')),
+                errorDeletingInvoice: @json(__('Error deleting invoice'))
+            },
+
+            init() {
+                const flashSuccess = @json(session('success'));
+                const flashError = @json(session('error'));
+                if (flashSuccess) {
+                    this.showToast(flashSuccess, 'success');
+                } else if (flashError) {
+                    this.showToast(flashError, 'error');
+                }
+            },
+
+            formatCurrency(amount) {
+                const val = Number(amount || 0);
+                const formatted = val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                return this.currencyPosition === 'right'
+                    ? `${formatted} ${this.currencySymbol}`
+                    : `${this.currencySymbol} ${formatted}`;
+            },
+
+            statusLabel(status) {
+                if (status === 'PAID') return this.i18n.statusPaidLabel;
+                if (status === 'PARTIAL') return this.i18n.statusPartialLabel;
+                if (status === 'CANCELLED') return this.i18n.statusCancelledLabel;
+                if (status === 'UNPAID') return this.i18n.statusUnpaidLabel;
+                return status || '--';
             },
 
             showToast(message, type = 'success') {
@@ -843,7 +919,7 @@
 
             async submitPayment() {
                 if (!this.paymentForm.amount || this.paymentForm.amount <= 0) {
-                    this.showToast('Please enter a valid payment amount.', 'error');
+                    this.showToast(this.i18n.enterValidAmount, 'error');
                     return;
                 }
                 this.saving = true;
@@ -859,14 +935,14 @@
                     });
                     const data = await res.json();
                     if (res.ok && data.success) {
-                        this.showToast(data.message || 'Payment recorded successfully!', 'success');
+                        this.showToast(data.message || this.i18n.paymentRecordedSuccess, 'success');
                         this.modals.payment = false;
                         setTimeout(() => window.location.reload(), 600);
                     } else {
-                        this.showToast(data.message || 'Payment collection failed.', 'error');
+                        this.showToast(data.message || this.i18n.paymentCollectionFailed, 'error');
                     }
                 } catch (e) {
-                    this.showToast('Error processing payment', 'error');
+                    this.showToast(this.i18n.errorProcessingPayment, 'error');
                 } finally {
                     this.saving = false;
                 }
@@ -894,30 +970,38 @@
                     });
                     const data = await res.json();
                     if (res.ok && data.success) {
-                        this.showToast(data.message || 'Invoices generated successfully!', 'success');
+                        this.showToast(data.message || this.i18n.invoicesGeneratedSuccess, 'success');
                         this.modals.bulkBill = false;
                         setTimeout(() => window.location.reload(), 600);
                     } else {
-                        this.showToast(data.message || 'Failed to generate invoices.', 'error');
+                        this.showToast(data.message || this.i18n.failedGenerateInvoices, 'error');
                     }
                 } catch (e) {
-                    this.showToast('Error generating bulk invoices', 'error');
+                    this.showToast(this.i18n.errorGeneratingInvoices, 'error');
                 } finally {
                     this.saving = false;
                 }
             },
 
             deleteInvoice(id, invoiceNo) {
+                const safeInvoiceNo = String(invoiceNo ?? '').replace(/[&<>"']/g, (m) => ({
+                    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
+                }[m]));
+
                 if (typeof Swal !== 'undefined') {
+                    const confirmQuestion = this.i18n.deleteInvoiceConfirmText.replace(
+                        ':invoice',
+                        `<strong class="text-slate-900 font-semibold">${safeInvoiceNo}</strong>`
+                    );
                     Swal.fire({
-                        title: 'Delete Invoice?',
-                        html: `<div class="text-xs text-slate-600 mt-1">Are you sure you want to delete Invoice <strong class="text-slate-900 font-semibold">${invoiceNo}</strong>?<br><span class="text-[11px] text-rose-500 mt-1 block">This financial record will be permanently deleted.</span></div>`,
+                        title: this.i18n.deleteInvoiceTitle,
+                        html: `<div class="text-xs text-slate-600 mt-1">${confirmQuestion}<br><span class="text-[11px] text-rose-500 mt-1 block">${this.i18n.deleteInvoiceWarning}</span></div>`,
                         icon: 'warning',
                         showCancelButton: true,
                         confirmButtonColor: '#e11d48',
                         cancelButtonColor: '#64748b',
-                        confirmButtonText: '<i class="far fa-trash-alt mr-1"></i> Yes, Delete',
-                        cancelButtonText: 'Cancel',
+                        confirmButtonText: `<i class="far fa-trash-alt mr-1"></i> ${this.i18n.yesDelete}`,
+                        cancelButtonText: this.i18n.cancel,
                         reverseButtons: true,
                         customClass: {
                             popup: 'rounded-2xl shadow-xl border border-slate-200 p-5',
@@ -929,7 +1013,7 @@
                             this.executeDelete(id);
                         }
                     });
-                } else if (confirm(`Are you sure you want to delete Invoice '${invoiceNo}'?`)) {
+                } else if (confirm(this.i18n.deleteInvoiceConfirmText.replace(':invoice', String(invoiceNo ?? '')))) {
                     this.executeDelete(id);
                 }
             },
@@ -946,13 +1030,13 @@
                     });
                     const data = await res.json();
                     if (res.ok && data.success) {
-                        this.showToast(data.message || 'Invoice deleted successfully.', 'success');
+                        this.showToast(data.message || this.i18n.invoiceDeletedSuccess, 'success');
                         setTimeout(() => window.location.reload(), 500);
                     } else {
-                        this.showToast(data.message || 'Delete failed.', 'error');
+                        this.showToast(data.message || this.i18n.deleteFailed, 'error');
                     }
                 } catch (e) {
-                    this.showToast('Error deleting invoice', 'error');
+                    this.showToast(this.i18n.errorDeletingInvoice, 'error');
                 }
             }
         };

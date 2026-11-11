@@ -77,22 +77,22 @@ class TenantResellerInvoice extends Model
     {
         return match ($this->payment_status) {
             'PAID' => [
-                'label' => 'Paid',
+                'label' => __('Paid'),
                 'class' => 'bg-emerald-50 text-emerald-700 border-emerald-200',
                 'icon' => 'fa-check-circle',
             ],
             'PARTIAL' => [
-                'label' => 'Partial',
+                'label' => __('Partial'),
                 'class' => 'bg-amber-50 text-amber-700 border-amber-200',
                 'icon' => 'fa-circle-half-stroke',
             ],
             'CANCELLED' => [
-                'label' => 'Cancelled',
+                'label' => __('Cancelled'),
                 'class' => 'bg-slate-50 text-slate-600 border-slate-200',
                 'icon' => 'fa-ban',
             ],
             default => [
-                'label' => 'Unpaid / Due',
+                'label' => __('Unpaid / Due'),
                 'class' => 'bg-rose-50 text-rose-700 border-rose-200',
                 'icon' => 'fa-clock',
             ],
@@ -105,9 +105,9 @@ class TenantResellerInvoice extends Model
     public function getTypeLabelAttribute(): string
     {
         return match ($this->type) {
-            'BANDWIDTH_WHOLESALE' => 'Bandwidth Wholesale',
-            'MANUAL_CHARGE' => 'Manual / Extra Charge',
-            default => 'Software / Panel Subscription',
+            'BANDWIDTH_WHOLESALE' => __('Bandwidth Wholesale'),
+            'MANUAL_CHARGE' => __('Manual / Extra Charge'),
+            default => __('Software / Panel Subscription'),
         };
     }
 

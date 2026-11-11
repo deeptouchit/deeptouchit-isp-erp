@@ -22,8 +22,10 @@ class ResellerInvoiceController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            abort(404, 'Tenant record not found.');
+            abort(404, __('Tenant record not found.'));
         }
+
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
 
         $search = $request->input('search');
         $selectedResellerId = $request->input('reseller_id');
@@ -94,6 +96,7 @@ class ResellerInvoiceController extends Controller
 
         return view('tenant.resellers.invoices', compact(
             'tenant',
+            'currencySymbol',
             'invoices',
             'allResellers',
             'totalInvoiced',
@@ -120,7 +123,7 @@ class ResellerInvoiceController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            abort(403, 'Unauthorized.');
+            abort(403, __('Unauthorized.'));
         }
 
         $validated = $request->validate([
@@ -138,9 +141,9 @@ class ResellerInvoiceController extends Controller
 
         if ($invoice->payment_status === 'PAID') {
             if ($request->wantsJson()) {
-                return response()->json(['success' => false, 'message' => 'Invoice is already fully paid.'], 422);
+                return response()->json(['success' => false, 'message' => __('Invoice is already fully paid.')], 422);
             }
-            return back()->with('error', 'Invoice is already fully paid.');
+            return back()->with('error', __('Invoice is already fully paid.'));
         }
 
         if ($payAmount > (float) $invoice->due_amount) {
@@ -153,13 +156,17 @@ class ResellerInvoiceController extends Controller
         if ($method === 'WALLET_DEDUCT' && $reseller) {
             $available = (float) $reseller->wallet_balance + (float) $reseller->credit_limit;
             if ($available < $payAmount) {
+                $currency = $tenant->currency_symbol ?? '৳';
                 if ($request->wantsJson()) {
                     return response()->json([
                         'success' => false,
-                        'message' => "Insufficient wallet balance. Available: ৳{$available}, Required: ৳{$payAmount}",
+                        'message' => __('Insufficient wallet balance. Available: :available, Required: :required', [
+                            'available' => $currency . number_format($available, 2),
+                            'required' => $currency . number_format($payAmount, 2),
+                        ]),
                     ], 422);
                 }
-                return back()->with('error', "Insufficient wallet balance for {$reseller->name}.");
+                return back()->with('error', __('Insufficient wallet balance for :name.', ['name' => $reseller->name]));
             }
         }
 
@@ -184,7 +191,12 @@ class ResellerInvoiceController extends Controller
 
             DB::commit();
 
-            $msg = "Payment of ৳" . number_format($payAmount, 2) . " received for Invoice #{$invoice->invoice_no}.";
+            $currency = $tenant->currency_symbol ?? '৳';
+            $msg = __('Payment of :currency:amount received for Invoice #:invoice.', [
+                'currency' => $currency,
+                'amount' => number_format($payAmount, 2),
+                'invoice' => $invoice->invoice_no,
+            ]);
 
             if ($request->wantsJson()) {
                 return response()->json([
@@ -197,10 +209,11 @@ class ResellerInvoiceController extends Controller
             return redirect()->route('tenant.resellers.invoices')->with('success', $msg);
         } catch (\Throwable $e) {
             DB::rollBack();
+            $errorMsg = __('Payment failed: :error', ['error' => $e->getMessage()]);
             if ($request->wantsJson()) {
-                return response()->json(['success' => false, 'message' => 'Payment failed: ' . $e->getMessage()], 500);
+                return response()->json(['success' => false, 'message' => $errorMsg], 500);
             }
-            return back()->with('error', 'Payment failed: ' . $e->getMessage());
+            return back()->with('error', $errorMsg);
         }
     }
 
@@ -211,14 +224,14 @@ class ResellerInvoiceController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            abort(403, 'Unauthorized.');
+            abort(403, __('Unauthorized.'));
         }
 
         $invoice = TenantResellerInvoice::where('tenant_id', $tenant->id)->findOrFail($id);
         $invNo = $invoice->invoice_no;
         $invoice->delete();
 
-        $msg = "Invoice '{$invNo}' deleted successfully.";
+        $msg = __("Invoice ':invoice' deleted successfully.", ['invoice' => $invNo]);
 
         if ($request->wantsJson()) {
             return response()->json([

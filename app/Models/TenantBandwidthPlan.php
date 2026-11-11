@@ -77,7 +77,7 @@ class TenantBandwidthPlan extends Model
         };
 
         if ($min <= 0 && ($max === null || $max <= 0)) {
-            return 'All Volumes (Universal)';
+            return __('All Volumes (Universal)');
         }
 
         if ($max === null || $max <= 0) {
@@ -111,11 +111,11 @@ class TenantBandwidthPlan extends Model
     public function getStatusBadgeAttribute(): array
     {
         return $this->is_active ? [
-            'label' => 'Active',
+            'label' => __('Active'),
             'class' => 'bg-emerald-50 text-emerald-700 border-emerald-200',
             'dot' => 'bg-emerald-500',
         ] : [
-            'label' => 'Inactive',
+            'label' => __('Inactive'),
             'class' => 'bg-slate-100 text-slate-600 border-slate-200',
             'dot' => 'bg-slate-400',
         ];

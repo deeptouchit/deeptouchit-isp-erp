@@ -111,9 +111,9 @@ class TenantResellerBandwidth extends Model
     {
         $mbps = (float) $this->total_bandwidth_mbps;
         if ($mbps >= 1000) {
-            return round($mbps / 1000, 2) . ' Gbps';
+            return round($mbps / 1000, 2) . ' ' . __('Gbps');
         }
-        return round($mbps, 0) . ' Mbps';
+        return round($mbps, 0) . ' ' . __('Mbps');
     }
 
     /**
@@ -123,17 +123,17 @@ class TenantResellerBandwidth extends Model
     {
         return match ($this->status) {
             'ACTIVE' => [
-                'label' => 'Active Line',
+                'label' => __('Active Line'),
                 'class' => 'bg-emerald-50 text-emerald-700 border-emerald-200',
                 'icon' => 'fa-circle-check',
             ],
             'THROTTLED' => [
-                'label' => 'Throttled (Capped)',
+                'label' => __('Throttled (Capped)'),
                 'class' => 'bg-amber-50 text-amber-700 border-amber-200',
                 'icon' => 'fa-gauge-high',
             ],
             'SUSPENDED' => [
-                'label' => 'Suspended (Blocked)',
+                'label' => __('Suspended (Blocked)'),
                 'class' => 'bg-rose-50 text-rose-700 border-rose-200',
                 'icon' => 'fa-circle-pause',
             ],
@@ -152,17 +152,17 @@ class TenantResellerBandwidth extends Model
     {
         return match ($this->allocation_type) {
             'DEDICATED_CIR' => [
-                'label' => 'Dedicated (CIR 1:1)',
+                'label' => __('Dedicated (CIR 1:1)'),
                 'class' => 'bg-purple-50 text-purple-700 border-purple-200',
                 'icon' => 'fa-bolt',
             ],
             'BURSTABLE_MIR' => [
-                'label' => 'Burstable (MIR)',
+                'label' => __('Burstable (MIR)'),
                 'class' => 'bg-blue-50 text-blue-700 border-blue-200',
                 'icon' => 'fa-water',
             ],
             'SHARED_POOL' => [
-                'label' => 'Shared Pool',
+                'label' => __('Shared Pool'),
                 'class' => 'bg-indigo-50 text-indigo-700 border-indigo-200',
                 'icon' => 'fa-users-line',
             ],

@@ -1,6 +1,6 @@
 @extends('tenant.layouts.app')
 
-@section('title', 'Bandwidth Rate Plans - ' . ($tenant->company_name ?? $tenant->name))
+@section('title', __('Bandwidth Rate Plans') . ' - ' . ($tenant->company_name ?? $tenant->name))
 
 @push('styles')
     {{-- Page specific CSS --}}
@@ -39,9 +39,9 @@
                 <i class="fas fa-tags"></i>
             </div>
             <div class="flex items-center gap-2 min-w-0">
-                <h1 class="text-sm font-bold text-slate-900 tracking-tight whitespace-nowrap">Bandwidth Rate Plans</h1>
+                <h1 class="text-sm font-bold text-slate-900 tracking-tight whitespace-nowrap">{{ __('Bandwidth Rate Plans') }}</h1>
                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
-                    {{ $totalPlansCount }} Slabs
+                    {{ __(':count Slabs', ['count' => $totalPlansCount]) }}
                 </span>
             </div>
         </div>
@@ -50,9 +50,9 @@
             {{-- Wholesale Allocations Link --}}
             <a href="{{ route('tenant.resellers.bandwidth') }}" 
                class="h-[34px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-0 px-2.5 rounded-lg border border-slate-200/80 shadow-2xs transition flex items-center justify-center gap-1.5"
-               title="View Reseller Bandwidth Allocations">
+               title="{{ __('View Reseller Bandwidth Allocations') }}">
                 <i class="fas fa-network-wired text-cyan-600 text-[10px]"></i>
-                <span class="hidden md:inline">Wholesale Allocations</span>
+                <span class="hidden md:inline">{{ __('Wholesale Allocations') }}</span>
             </a>
 
             {{-- Create Rate Slab Button --}}
@@ -60,7 +60,7 @@
                     @click="openCreateModal()"
                     class="h-[34px] bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-0 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer">
                 <i class="fas fa-plus text-[10px]"></i>
-                <span>Create Rate Slab</span>
+                <span>{{ __('Create Rate Slab') }}</span>
             </button>
         </div>
     </div>
@@ -70,7 +70,7 @@
         {{-- Card 1: Total Rate Plans --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5 min-w-0">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Total Slabs</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">{{ __('Total Slabs') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-slate-900 truncate">{{ number_format($totalPlansCount) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-cyan-50 text-cyan-600 border-cyan-100 flex items-center justify-center">
@@ -81,7 +81,7 @@
         {{-- Card 2: Active Plans --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5 min-w-0">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-emerald-600">Active Slabs</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-emerald-600">{{ __('Active Slabs') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-emerald-700 truncate">{{ number_format($activePlansCount) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-emerald-50 text-emerald-600 border-emerald-100 flex items-center justify-center">
@@ -92,7 +92,7 @@
         {{-- Card 3: Avg Global Rate --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5 min-w-0">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-blue-600">Avg Global</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-blue-600">{{ __('Avg Global') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-blue-700 truncate">@currency($avgGlobalRate)</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-blue-50 text-blue-600 border-blue-100 flex items-center justify-center">
@@ -103,7 +103,7 @@
         {{-- Card 4: Avg CDN Rate --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5 min-w-0">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-purple-600">Avg CDN</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-purple-600">{{ __('Avg CDN') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-purple-700 truncate">@currency($avgCdnRate)</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-purple-50 text-purple-600 border-purple-100 flex items-center justify-center">
@@ -114,7 +114,7 @@
         {{-- Card 5: Avg BDIX Rate --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5 min-w-0">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-indigo-600">Avg BDIX</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-indigo-600">{{ __('Avg BDIX') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-indigo-700 truncate">@currency($avgBdixRate)</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-indigo-50 text-indigo-600 border-indigo-100 flex items-center justify-center">
@@ -125,7 +125,7 @@
         {{-- Card 6: Assigned Lines --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5 min-w-0">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Assigned Lines</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">{{ __('Assigned Lines') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-slate-800 truncate">{{ number_format($totalAssignedResellers) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-slate-100 text-slate-600 border-slate-200 flex items-center justify-center">
@@ -151,7 +151,7 @@
                 <input type="text" 
                        name="search" 
                        x-model="searchQuery" 
-                       placeholder="Search Rate Slab Name, Code, Description..." 
+                       placeholder="{{ __('Search Rate Slab Name, Code, Description...') }}" 
                        value="{{ request('search') }}"
                        autocomplete="off"
                        class="w-full h-[34px] pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-normal" />
@@ -167,19 +167,19 @@
             {{-- Primary Filter: Status Filter --}}
             <select name="status" 
                     class="h-[34px] w-full md:w-36 text-xs bg-slate-50 border border-slate-200 rounded-lg px-2.5 text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden font-normal shrink-0">
-                <option value="">All Statuses</option>
-                <option value="1" {{ request('status') === '1' ? 'selected' : '' }}>Active Slabs</option>
-                <option value="0" {{ request('status') === '0' ? 'selected' : '' }}>Inactive Slabs</option>
+                <option value="">{{ __('All Statuses') }}</option>
+                <option value="1" {{ request('status') === '1' ? 'selected' : '' }}>{{ __('Active Slabs') }}</option>
+                <option value="0" {{ request('status') === '0' ? 'selected' : '' }}>{{ __('Inactive Slabs') }}</option>
             </select>
 
             {{-- Pagination Selector (per_page) --}}
             @php $perPageVal = (int)request('per_page', 20); @endphp
             <select name="per_page" 
                     class="h-[34px] w-full md:w-28 text-xs bg-slate-50 border border-slate-200 rounded-lg px-2.5 text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden font-normal shrink-0">
-                <option value="10" {{ $perPageVal === 10 ? 'selected' : '' }}>10 / page</option>
-                <option value="20" {{ $perPageVal === 20 ? 'selected' : '' }}>20 / page</option>
-                <option value="50" {{ $perPageVal === 50 ? 'selected' : '' }}>50 / page</option>
-                <option value="100" {{ $perPageVal === 100 ? 'selected' : '' }}>100 / page</option>
+                <option value="10" {{ $perPageVal === 10 ? 'selected' : '' }}>10 / {{ __('page') }}</option>
+                <option value="20" {{ $perPageVal === 20 ? 'selected' : '' }}>20 / {{ __('page') }}</option>
+                <option value="50" {{ $perPageVal === 50 ? 'selected' : '' }}>50 / {{ __('page') }}</option>
+                <option value="100" {{ $perPageVal === 100 ? 'selected' : '' }}>100 / {{ __('page') }}</option>
             </select>
 
             {{-- More Filters Accordion Toggle Button --}}
@@ -188,7 +188,7 @@
                     class="h-[34px] py-0 px-2.5 rounded-lg border text-xs font-medium transition flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
                     :class="showMoreFilters || {{ $activeMoreCount }} > 0 ? 'bg-cyan-50/70 border-cyan-200 text-cyan-800' : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'">
                 <i class="fas fa-sliders text-[11px] text-slate-500"></i>
-                <span>More Filters</span>
+                <span>{{ __('More Filters') }}</span>
                 @if($activeMoreCount > 0)
                     <span class="w-4 h-4 rounded-full bg-cyan-600 text-white text-[9px] font-bold flex items-center justify-center">{{ $activeMoreCount }}</span>
                 @endif
@@ -200,13 +200,13 @@
                 <button type="submit" 
                         class="h-[34px] bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-0 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer">
                     <i class="fas fa-filter text-[10px]"></i>
-                    <span>Filter</span>
+                    <span>{{ __('Filter') }}</span>
                 </button>
 
                 <a href="{{ route('tenant.resellers.bandwidth-plans') }}" 
                    class="h-[34px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-0 px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer">
                     <i class="fas fa-rotate-left text-[10px]"></i>
-                    <span>Reset</span>
+                    <span>{{ __('Reset') }}</span>
                 </a>
             </div>
         </div>
@@ -226,10 +226,10 @@
             <div class="w-full sm:w-auto">
                 <select name="volume_range" 
                         class="h-[34px] w-full sm:w-52 text-xs bg-slate-50 border border-slate-200 rounded-lg px-2.5 text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden font-normal">
-                    <option value="">All Volume Slabs</option>
-                    <option value="low" {{ request('volume_range') === 'low' ? 'selected' : '' }}>Small Tier (&le; 500 Mbps)</option>
-                    <option value="mid" {{ request('volume_range') === 'mid' ? 'selected' : '' }}>Medium Tier (501 - 2000 Mbps)</option>
-                    <option value="high" {{ request('volume_range') === 'high' ? 'selected' : '' }}>Large Tier (&gt; 2000 Mbps)</option>
+                    <option value="">{{ __('All Volume Slabs') }}</option>
+                    <option value="low" {{ request('volume_range') === 'low' ? 'selected' : '' }}>{{ __('Small Tier (≤ 500 Mbps)') }}</option>
+                    <option value="mid" {{ request('volume_range') === 'mid' ? 'selected' : '' }}>{{ __('Medium Tier (501 - 2000 Mbps)') }}</option>
+                    <option value="high" {{ request('volume_range') === 'high' ? 'selected' : '' }}>{{ __('Large Tier (> 2000 Mbps)') }}</option>
                 </select>
             </div>
 
@@ -237,9 +237,9 @@
             <div class="w-full sm:w-auto">
                 <select name="has_allocations" 
                         class="h-[34px] w-full sm:w-48 text-xs bg-slate-50 border border-slate-200 rounded-lg px-2.5 text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden font-normal">
-                    <option value="">All Allocation States</option>
-                    <option value="yes" {{ request('has_allocations') === 'yes' ? 'selected' : '' }}>Has Assigned Resellers</option>
-                    <option value="no" {{ request('has_allocations') === 'no' ? 'selected' : '' }}>No Assigned Resellers</option>
+                    <option value="">{{ __('All Allocation States') }}</option>
+                    <option value="yes" {{ request('has_allocations') === 'yes' ? 'selected' : '' }}>{{ __('Has Assigned Resellers') }}</option>
+                    <option value="no" {{ request('has_allocations') === 'no' ? 'selected' : '' }}>{{ __('No Assigned Resellers') }}</option>
                 </select>
             </div>
         </div>
@@ -250,10 +250,10 @@
         <div class="px-3.5 py-2 bg-slate-50/80 border-b border-slate-200 flex items-center justify-between">
             <span class="font-bold text-slate-800 text-[11px] uppercase tracking-wider flex items-center gap-1.5">
                 <i class="fas fa-tags text-slate-400 text-xs"></i>
-                <span>Bandwidth Rate Slabs &amp; Tariffs</span>
+                <span>{{ __('Bandwidth Rate Slabs & Tariffs') }}</span>
             </span>
             <span class="text-[11px] text-slate-500 font-mono font-normal">
-                Total {{ $plans->total() }} Slabs
+                {{ __('Total :count Slabs', ['count' => $plans->total()]) }}
             </span>
         </div>
 
@@ -262,16 +262,16 @@
                 <thead>
                     <tr>
                         <th class="w-10 text-center font-semibold">#</th>
-                        <th class="text-center font-semibold">Rate Slab Name</th>
-                        <th class="w-36 text-center font-semibold font-mono">Volume Slab (Range)</th>
-                        <th class="text-center font-semibold w-28">Global Internet</th>
-                        <th class="text-center font-semibold w-24">CDN / Cache</th>
-                        <th class="text-center font-semibold w-24">BDIX Peering</th>
-                        <th class="text-center font-semibold w-24">GGC (Google)</th>
-                        <th class="text-center font-semibold w-24">FNA (Meta)</th>
-                        <th class="text-center font-semibold w-24">Others Cache</th>
-                        <th class="text-center font-semibold w-20">Status</th>
-                        <th class="w-10 text-center font-semibold no-sort">Action</th>
+                        <th class="text-center font-semibold">{{ __('Rate Slab Name') }}</th>
+                        <th class="w-36 text-center font-semibold font-mono">{{ __('Volume Slab (Range)') }}</th>
+                        <th class="text-center font-semibold w-28">{{ __('Global Internet') }}</th>
+                        <th class="text-center font-semibold w-24">{{ __('CDN / Cache') }}</th>
+                        <th class="text-center font-semibold w-24">{{ __('BDIX Peering') }}</th>
+                        <th class="text-center font-semibold w-24">{{ __('GGC (Google)') }}</th>
+                        <th class="text-center font-semibold w-24">{{ __('FNA (Meta)') }}</th>
+                        <th class="text-center font-semibold w-24">{{ __('Others Cache') }}</th>
+                        <th class="text-center font-semibold w-20">{{ __('Status') }}</th>
+                        <th class="w-10 text-center font-semibold no-sort">{{ __('Action') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -339,7 +339,7 @@
                                 <button type="button" 
                                         @click.stop="toggleMenu({{ Js::from($plan) }}, $event)"
                                         class="w-6 h-6 mx-auto rounded-md hover:bg-slate-100 text-slate-500 hover:text-cyan-700 transition flex items-center justify-center cursor-pointer text-[10px]"
-                                        title="Actions">
+                                        title="{{ __('Actions') }}">
                                     <i class="fas fa-ellipsis-v text-[10px] pointer-events-none"></i>
                                 </button>
                             </td>
@@ -351,14 +351,14 @@
                                     <div class="w-10 h-10 rounded-xl bg-cyan-50 text-cyan-600 mx-auto flex items-center justify-center text-base border border-cyan-100 shadow-2xs">
                                         <i class="fas fa-tags"></i>
                                     </div>
-                                    <h3 class="text-xs font-bold text-slate-800">No Bandwidth Rate Plans Found</h3>
-                                    <p class="text-[11px] text-slate-400 font-normal">Define volume slabs to start allocating bandwidth tariffs to resellers.</p>
+                                    <h3 class="text-xs font-bold text-slate-800">{{ __('No Bandwidth Rate Plans Found') }}</h3>
+                                    <p class="text-[11px] text-slate-400 font-normal">{{ __('Define volume slabs to start allocating bandwidth tariffs to resellers.') }}</p>
                                     <div class="pt-1 flex items-center justify-center gap-2">
                                         <button type="button" 
                                                 @click="openCreateModal()" 
                                                 class="bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs px-3.5 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                                             <i class="fas fa-plus text-[10px]"></i>
-                                            <span>Create Rate Slab</span>
+                                            <span>{{ __('Create Rate Slab') }}</span>
                                         </button>
                                     </div>
                                 </div>
@@ -373,7 +373,7 @@
         @if($plans->hasPages())
             <div class="px-3.5 py-2.5 bg-slate-50/80 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-600">
                 <span class="text-[11px] text-slate-500 font-normal">
-                    Showing {{ $plans->firstItem() }} to {{ $plans->lastItem() }} of {{ $plans->total() }} entries
+                    {{ __('Showing :first to :last of :total entries', ['first' => $plans->firstItem() ?? 0, 'last' => $plans->lastItem() ?? 0, 'total' => $plans->total()]) }}
                 </span>
                 <div>
                     {{ $plans->links() }}
@@ -400,14 +400,14 @@
                     @click="const p = activeMenu; activeMenu = null; openDetailsModal(p)" 
                     class="w-full px-3 py-1.5 text-left hover:bg-slate-50 hover:text-cyan-700 flex items-center gap-2 cursor-pointer transition text-[11px]">
                 <i class="fas fa-circle-info text-cyan-600 w-3.5 text-[10px]"></i>
-                <span>View Details</span>
+                <span>{{ __('View Details') }}</span>
             </button>
 
             <button type="button" 
                     @click="const p = activeMenu; activeMenu = null; openEditModal(p)" 
                     class="w-full px-3 py-1.5 text-left hover:bg-slate-50 hover:text-cyan-700 flex items-center gap-2 cursor-pointer transition text-[11px]">
                 <i class="fas fa-pen-to-square text-cyan-600 w-3.5 text-[10px]"></i>
-                <span>Edit Plan</span>
+                <span>{{ __('Edit Plan') }}</span>
             </button>
 
             <button type="button" 
@@ -415,7 +415,7 @@
                     class="w-full px-3 py-1.5 text-left hover:bg-slate-50 flex items-center gap-2 cursor-pointer transition text-[11px]"
                     :class="activeMenu?.is_active ? 'text-amber-600 hover:text-amber-700' : 'text-emerald-600 hover:text-emerald-700'">
                 <i class="fas w-3.5 text-[10px]" :class="activeMenu?.is_active ? 'fa-ban text-amber-600' : 'fa-check text-emerald-600'"></i>
-                <span x-text="activeMenu?.is_active ? 'Disable Plan' : 'Enable Plan'"></span>
+                <span x-text="activeMenu?.is_active ? i18n.disablePlan : i18n.enablePlan"></span>
             </button>
         </div>
 
@@ -424,7 +424,7 @@
                     @click="const p = activeMenu; activeMenu = null; deletePlan(p)" 
                     class="w-full px-3 py-1.5 text-left hover:bg-rose-50 hover:text-rose-700 text-rose-600 flex items-center gap-2 cursor-pointer transition text-[11px]">
                 <i class="fas fa-trash-can text-rose-600 w-3.5 text-[10px]"></i>
-                <span>Delete Plan</span>
+                <span>{{ __('Delete Plan') }}</span>
             </button>
         </div>
     </div>
@@ -451,8 +451,8 @@
                         <i class="fas fa-tags"></i>
                     </div>
                     <div>
-                        <h3 class="text-xs font-bold text-slate-800" x-text="modal.isEdit ? 'Edit Bandwidth Rate Slab' : 'Create Bandwidth Rate Slab'"></h3>
-                        <p class="text-[10.5px] text-slate-500 font-normal">Define volume tier and wholesale tariff per Mbps for each traffic category</p>
+                        <h3 class="text-xs font-bold text-slate-800" x-text="modal.isEdit ? i18n.editBandwidthRateSlab : i18n.createBandwidthRateSlab"></h3>
+                        <p class="text-[10.5px] text-slate-500 font-normal">{{ __('Define volume tier and wholesale tariff per Mbps for each traffic category') }}</p>
                     </div>
                 </div>
                 <button type="button" @click="modal.open = false" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center cursor-pointer">
@@ -466,49 +466,49 @@
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div class="sm:col-span-2">
                         <label class="block text-[11px] font-semibold text-slate-700 mb-1">
-                            Slab / Plan Name <span class="text-rose-500">*</span>
+                            {{ __('Slab / Plan Name') }} <span class="text-rose-500">*</span>
                         </label>
                         <input type="text" 
                                x-model="form.name" 
                                required 
-                               placeholder="e.g. Slab 1 (1 - 500 Mbps)" 
+                               placeholder="{{ __('e.g. Slab 1 (1 - 500 Mbps)') }}" 
                                class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-cyan-500 font-normal outline-hidden transition">
                     </div>
                     <div>
                         <label class="block text-[11px] font-semibold text-slate-700 mb-1">
-                            Slab Code
+                            {{ __('Slab Code') }}
                         </label>
                         <input type="text" 
                                x-model="form.code" 
-                               placeholder="e.g. SLAB-500M" 
+                               placeholder="{{ __('e.g. SLAB-500M') }}" 
                                class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono px-3 py-1.5 focus:bg-white focus:border-cyan-500 font-normal outline-hidden transition">
                     </div>
                 </div>
 
                 {{-- Row 2: Bandwidth Volume Slab (Min - Max Mbps) --}}
                 <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
-                    <span class="text-[11px] font-bold text-slate-800 block">Bandwidth Volume Slab (Min - Max)</span>
+                    <span class="text-[11px] font-bold text-slate-800 block">{{ __('Bandwidth Volume Slab (Min - Max)') }}</span>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <label class="block text-[10px] font-semibold text-slate-600 mb-0.5">
-                                Min Bandwidth (Mbps)
+                                {{ __('Min Bandwidth (Mbps)') }}
                             </label>
                             <input type="number" 
                                    step="1" 
                                    min="0" 
                                    x-model="form.min_bandwidth_mbps" 
-                                   placeholder="e.g. 1 or 500" 
+                                   placeholder="{{ __('e.g. 1 or 500') }}" 
                                    class="w-full bg-white border border-slate-200 rounded-lg text-xs font-mono px-2.5 py-1.5 focus:border-cyan-500 font-normal outline-hidden transition">
                         </div>
                         <div>
                             <label class="block text-[10px] font-semibold text-slate-600 mb-0.5">
-                                Max Bandwidth (Mbps) <span class="text-[9px] text-slate-400 font-normal">(Leave blank for unlimited)</span>
+                                {{ __('Max Bandwidth (Mbps)') }} <span class="text-[9px] text-slate-400 font-normal">{{ __('(Leave blank for unlimited)') }}</span>
                             </label>
                             <input type="number" 
                                    step="1" 
                                    min="0" 
                                    x-model="form.max_bandwidth_mbps" 
-                                   placeholder="e.g. 500, 1000 (1GB), 2000 (2GB)" 
+                                   placeholder="{{ __('e.g. 500, 1000 (1GB), 2000 (2GB)') }}" 
                                    class="w-full bg-white border border-slate-200 rounded-lg text-xs font-mono px-2.5 py-1.5 focus:border-cyan-500 font-normal outline-hidden transition">
                         </div>
                     </div>
@@ -516,81 +516,81 @@
 
                 {{-- Row 3: 6 Traffic Category Rates (Rate per Mbps) --}}
                 <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
-                    <span class="text-[11px] font-bold text-slate-800 block">Traffic Category Rates ({{ $currencySymbol ?? '৳' }} per Mbps / Month)</span>
+                    <span class="text-[11px] font-bold text-slate-800 block">{{ __('Traffic Category Rates (:currency per Mbps / Month)', ['currency' => $currencySymbol ?? '৳']) }}</span>
                     
                     <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                         {{-- 1. Global Internet --}}
                         <div>
                             <label class="block text-[10px] font-semibold text-blue-700 mb-0.5">
-                                Global Internet <span class="text-rose-500">*</span>
+                                {{ __('Global Internet') }} <span class="text-rose-500">*</span>
                             </label>
-                            <input type="number" step="0.01" min="0" x-model="form.global_rate_per_mbps" required placeholder="e.g. 280" class="w-full bg-white border border-slate-200 rounded-lg text-xs font-mono px-2.5 py-1.5 focus:border-cyan-500 font-normal outline-hidden transition">
+                            <input type="number" step="0.01" min="0" x-model="form.global_rate_per_mbps" required placeholder="{{ __('e.g. 280') }}" class="w-full bg-white border border-slate-200 rounded-lg text-xs font-mono px-2.5 py-1.5 focus:border-cyan-500 font-normal outline-hidden transition">
                         </div>
 
                         {{-- 2. CDN / Cache --}}
                         <div>
                             <label class="block text-[10px] font-semibold text-purple-700 mb-0.5">
-                                CDN / Cache
+                                {{ __('CDN / Cache') }}
                             </label>
-                            <input type="number" step="0.01" min="0" x-model="form.cdn_rate_per_mbps" placeholder="e.g. 35" class="w-full bg-white border border-slate-200 rounded-lg text-xs font-mono px-2.5 py-1.5 focus:border-cyan-500 font-normal outline-hidden transition">
+                            <input type="number" step="0.01" min="0" x-model="form.cdn_rate_per_mbps" placeholder="{{ __('e.g. 35') }}" class="w-full bg-white border border-slate-200 rounded-lg text-xs font-mono px-2.5 py-1.5 focus:border-cyan-500 font-normal outline-hidden transition">
                         </div>
 
                         {{-- 3. BDIX Peering --}}
                         <div>
                             <label class="block text-[10px] font-semibold text-indigo-700 mb-0.5">
-                                BDIX Peering
+                                {{ __('BDIX Peering') }}
                             </label>
-                            <input type="number" step="0.01" min="0" x-model="form.bdix_rate_per_mbps" placeholder="e.g. 45" class="w-full bg-white border border-slate-200 rounded-lg text-xs font-mono px-2.5 py-1.5 focus:border-cyan-500 font-normal outline-hidden transition">
+                            <input type="number" step="0.01" min="0" x-model="form.bdix_rate_per_mbps" placeholder="{{ __('e.g. 45') }}" class="w-full bg-white border border-slate-200 rounded-lg text-xs font-mono px-2.5 py-1.5 focus:border-cyan-500 font-normal outline-hidden transition">
                         </div>
 
                         {{-- 4. GGC Cache --}}
                         <div>
                             <label class="block text-[10px] font-semibold text-amber-700 mb-0.5">
-                                GGC (Google Cache)
+                                {{ __('GGC (Google Cache)') }}
                             </label>
-                            <input type="number" step="0.01" min="0" x-model="form.ggc_rate_per_mbps" placeholder="e.g. 25" class="w-full bg-white border border-slate-200 rounded-lg text-xs font-mono px-2.5 py-1.5 focus:border-cyan-500 font-normal outline-hidden transition">
+                            <input type="number" step="0.01" min="0" x-model="form.ggc_rate_per_mbps" placeholder="{{ __('e.g. 25') }}" class="w-full bg-white border border-slate-200 rounded-lg text-xs font-mono px-2.5 py-1.5 focus:border-cyan-500 font-normal outline-hidden transition">
                         </div>
 
                         {{-- 5. FNA Cache --}}
                         <div>
                             <label class="block text-[10px] font-semibold text-sky-700 mb-0.5">
-                                FNA (Meta / FB)
+                                {{ __('FNA (Meta / FB)') }}
                             </label>
-                            <input type="number" step="0.01" min="0" x-model="form.fna_rate_per_mbps" placeholder="e.g. 25" class="w-full bg-white border border-slate-200 rounded-lg text-xs font-mono px-2.5 py-1.5 focus:border-cyan-500 font-normal outline-hidden transition">
+                            <input type="number" step="0.01" min="0" x-model="form.fna_rate_per_mbps" placeholder="{{ __('e.g. 25') }}" class="w-full bg-white border border-slate-200 rounded-lg text-xs font-mono px-2.5 py-1.5 focus:border-cyan-500 font-normal outline-hidden transition">
                         </div>
 
                         {{-- 6. OTHERS Cache --}}
                         <div>
                             <label class="block text-[10px] font-semibold text-emerald-700 mb-0.5">
-                                OTHERS Cache
+                                {{ __('OTHERS Cache') }}
                             </label>
-                            <input type="number" step="0.01" min="0" x-model="form.others_rate_per_mbps" placeholder="e.g. 20" class="w-full bg-white border border-slate-200 rounded-lg text-xs font-mono px-2.5 py-1.5 focus:border-cyan-500 font-normal outline-hidden transition">
+                            <input type="number" step="0.01" min="0" x-model="form.others_rate_per_mbps" placeholder="{{ __('e.g. 20') }}" class="w-full bg-white border border-slate-200 rounded-lg text-xs font-mono px-2.5 py-1.5 focus:border-cyan-500 font-normal outline-hidden transition">
                         </div>
                     </div>
                 </div>
 
                 {{-- Row 4: Notes --}}
                 <div>
-                    <label class="block text-[11px] font-semibold text-slate-700 mb-1">Notes / Description</label>
-                    <input type="text" x-model="form.notes" placeholder="e.g. Wholesale bandwidth pricing slab for 1 - 500 Mbps volume" class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-cyan-500 font-normal outline-hidden transition">
+                    <label class="block text-[11px] font-semibold text-slate-700 mb-1">{{ __('Notes / Description') }}</label>
+                    <input type="text" x-model="form.notes" placeholder="{{ __('e.g. Wholesale bandwidth pricing slab for 1 - 500 Mbps volume') }}" class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-cyan-500 font-normal outline-hidden transition">
                 </div>
 
                 {{-- Row 5: Active Status Toggle --}}
                 <div class="flex items-center gap-2 pt-1">
                     <input type="checkbox" id="plan_active" x-model="form.is_active" class="w-4 h-4 text-cyan-600 rounded border-slate-300 focus:ring-cyan-500 cursor-pointer">
-                    <label for="plan_active" class="text-xs font-medium text-slate-700 cursor-pointer">Active and Available for Bandwidth Allocation</label>
+                    <label for="plan_active" class="text-xs font-medium text-slate-700 cursor-pointer">{{ __('Active and Available for Bandwidth Allocation') }}</label>
                 </div>
 
                 {{-- Footer Actions --}}
                 <div class="pt-2 border-t border-slate-200 flex items-center justify-end gap-2">
                     <button type="button" @click="modal.open = false" class="border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs px-3.5 py-1.5 rounded-lg transition cursor-pointer">
-                        Cancel
+                        {{ __('Cancel') }}
                     </button>
                     <button type="submit" 
                             :disabled="submitting"
                             class="bg-cyan-600 hover:bg-cyan-700 text-white font-medium text-xs px-4 py-1.5 rounded-lg shadow-xs transition inline-flex items-center gap-1.5 disabled:opacity-50 cursor-pointer">
                         <i class="fas fa-check text-xs" :class="{ 'fa-spin fa-spinner': submitting }"></i>
-                        <span x-text="submitting ? 'Saving...' : (modal.isEdit ? 'Update Rate Slab' : 'Save Rate Slab')"></span>
+                        <span x-text="submitting ? i18n.saving : (modal.isEdit ? i18n.updateRateSlab : i18n.saveRateSlab)"></span>
                     </button>
                 </div>
             </form>
@@ -620,7 +620,7 @@
                     </div>
                     <div>
                         <h3 class="text-xs font-bold text-slate-800" x-text="detailsModal.data?.name"></h3>
-                        <p class="text-[10.5px] text-slate-500 font-mono font-normal" x-text="detailsModal.data?.code || 'Bandwidth Rate Slab Details'"></p>
+                        <p class="text-[10.5px] text-slate-500 font-mono font-normal" x-text="detailsModal.data?.code || i18n.bandwidthRateSlabDetails"></p>
                     </div>
                 </div>
                 <button type="button" @click="detailsModal.open = false" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center cursor-pointer">
@@ -633,42 +633,42 @@
                 {{-- Volume Slab Badge Card --}}
                 <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between">
                     <div>
-                        <span class="text-[10px] text-slate-500 uppercase font-semibold block">Volume Tier Range</span>
+                        <span class="text-[10px] text-slate-500 uppercase font-semibold block">{{ __('Volume Tier Range') }}</span>
                         <span class="text-sm font-bold font-mono text-slate-800 mt-0.5 block" x-text="detailsModal.data?.formatted_slab_range"></span>
                     </div>
                     <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-semibold border"
                           :class="detailsModal.data?.is_active ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-600 border-slate-200'">
                         <span class="w-1.5 h-1.5 rounded-full" :class="detailsModal.data?.is_active ? 'bg-emerald-500' : 'bg-slate-400'"></span>
-                        <span x-text="detailsModal.data?.is_active ? 'Active' : 'Inactive'"></span>
+                        <span x-text="detailsModal.data?.is_active ? i18n.active : i18n.inactive"></span>
                     </span>
                 </div>
 
                 {{-- 6 Category Rates Breakdown --}}
                 <div>
-                    <span class="text-[11px] font-bold text-slate-800 mb-2 block">Traffic Rates Breakdown (Per Mbps)</span>
+                    <span class="text-[11px] font-bold text-slate-800 mb-2 block">{{ __('Traffic Rates Breakdown (Per Mbps)') }}</span>
                     <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
                         <div class="p-2.5 bg-blue-50/50 rounded-lg border border-blue-100">
-                            <span class="text-[10px] text-blue-700 uppercase font-semibold block">Global Internet</span>
+                            <span class="text-[10px] text-blue-700 uppercase font-semibold block">{{ __('Global Internet') }}</span>
                             <span class="text-xs font-bold font-mono text-blue-900 mt-0.5 block" x-text="formatCurrency(detailsModal.data?.global_rate_per_mbps)"></span>
                         </div>
                         <div class="p-2.5 bg-purple-50/50 rounded-lg border border-purple-100">
-                            <span class="text-[10px] text-purple-700 uppercase font-semibold block">CDN / Cache</span>
+                            <span class="text-[10px] text-purple-700 uppercase font-semibold block">{{ __('CDN / Cache') }}</span>
                             <span class="text-xs font-bold font-mono text-purple-900 mt-0.5 block" x-text="formatCurrency(detailsModal.data?.cdn_rate_per_mbps)"></span>
                         </div>
                         <div class="p-2.5 bg-indigo-50/50 rounded-lg border border-indigo-100">
-                            <span class="text-[10px] text-indigo-700 uppercase font-semibold block">BDIX Peering</span>
+                            <span class="text-[10px] text-indigo-700 uppercase font-semibold block">{{ __('BDIX Peering') }}</span>
                             <span class="text-xs font-bold font-mono text-indigo-900 mt-0.5 block" x-text="formatCurrency(detailsModal.data?.bdix_rate_per_mbps)"></span>
                         </div>
                         <div class="p-2.5 bg-amber-50/50 rounded-lg border border-amber-100">
-                            <span class="text-[10px] text-amber-700 uppercase font-semibold block">GGC (Google)</span>
+                            <span class="text-[10px] text-amber-700 uppercase font-semibold block">{{ __('GGC (Google)') }}</span>
                             <span class="text-xs font-bold font-mono text-amber-900 mt-0.5 block" x-text="formatCurrency(detailsModal.data?.ggc_rate_per_mbps)"></span>
                         </div>
                         <div class="p-2.5 bg-sky-50/50 rounded-lg border border-sky-100">
-                            <span class="text-[10px] text-sky-700 uppercase font-semibold block">FNA (Meta / FB)</span>
+                            <span class="text-[10px] text-sky-700 uppercase font-semibold block">{{ __('FNA (Meta / FB)') }}</span>
                             <span class="text-xs font-bold font-mono text-sky-900 mt-0.5 block" x-text="formatCurrency(detailsModal.data?.fna_rate_per_mbps)"></span>
                         </div>
                         <div class="p-2.5 bg-emerald-50/50 rounded-lg border border-emerald-100">
-                            <span class="text-[10px] text-emerald-700 uppercase font-semibold block">OTHERS Cache</span>
+                            <span class="text-[10px] text-emerald-700 uppercase font-semibold block">{{ __('OTHERS Cache') }}</span>
                             <span class="text-xs font-bold font-mono text-emerald-900 mt-0.5 block" x-text="formatCurrency(detailsModal.data?.others_rate_per_mbps)"></span>
                         </div>
                     </div>
@@ -677,7 +677,7 @@
                 {{-- Notes --}}
                 <template x-if="detailsModal.data?.notes">
                     <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200 text-slate-700">
-                        <span class="text-[10px] font-semibold text-slate-500 uppercase block mb-0.5">Notes</span>
+                        <span class="text-[10px] font-semibold text-slate-500 uppercase block mb-0.5">{{ __('Notes') }}</span>
                         <span class="text-xs" x-text="detailsModal.data?.notes"></span>
                     </div>
                 </template>
@@ -689,10 +689,10 @@
                         @click="const p = detailsModal.data; detailsModal.open = false; openEditModal(p)"
                         class="bg-cyan-600 hover:bg-cyan-700 text-white font-medium text-xs px-3.5 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                     <i class="fas fa-pen-to-square text-xs"></i>
-                    <span>Edit This Slab</span>
+                    <span>{{ __('Edit This Slab') }}</span>
                 </button>
                 <button type="button" @click="detailsModal.open = false" class="border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs px-3.5 py-1.5 rounded-lg transition cursor-pointer">
-                    Close
+                    {{ __('Close') }}
                 </button>
             </div>
         </div>
@@ -708,8 +708,33 @@ function bandwidthPlansManager() {
         activeMenu: null,
         menuPos: { top: '0px', right: '10px', left: 'auto', bottom: 'auto' },
         submitting: false,
-        currencySymbol: '{{ $currencySymbol ?? '৳' }}',
+        currencySymbol: @json($currencySymbol ?? '৳'),
+        currencyPosition: @json($currencyPosition ?? 'left'),
         toast: { show: false, message: '', type: 'success' },
+        i18n: {
+            disablePlan: @json(__('Disable Plan')),
+            enablePlan: @json(__('Enable Plan')),
+            editBandwidthRateSlab: @json(__('Edit Bandwidth Rate Slab')),
+            createBandwidthRateSlab: @json(__('Create Bandwidth Rate Slab')),
+            saving: @json(__('Saving...')),
+            updateRateSlab: @json(__('Update Rate Slab')),
+            saveRateSlab: @json(__('Save Rate Slab')),
+            bandwidthRateSlabDetails: @json(__('Bandwidth Rate Slab Details')),
+            active: @json(__('Active')),
+            inactive: @json(__('Inactive')),
+            rateSlabSavedSuccess: @json(__('Rate slab saved successfully!')),
+            failedSaveRateSlab: @json(__('Failed to save rate slab.')),
+            networkErrorResponse: @json(__('Network error or invalid server response.')),
+            statusUpdated: @json(__('Status updated!')),
+            failedToggleStatus: @json(__('Failed to toggle status.')),
+            deleteRateSlabTitle: @json(__('Delete Rate Slab?')),
+            deleteRateSlabConfirm: @json(__('Are you sure you want to delete :name?')),
+            deleteRateSlabWarning: @json(__('This rate slab will no longer be available for bandwidth allocation.')),
+            yesDeleteSlab: @json(__('Yes, Delete Slab')),
+            cancel: @json(__('Cancel')),
+            rateSlabDeleted: @json(__('Rate slab deleted.')),
+            failedDeleteRateSlab: @json(__('Failed to delete rate slab.'))
+        },
 
         modal: {
             open: false,
@@ -737,6 +762,25 @@ function bandwidthPlansManager() {
             notes: ''
         },
 
+        init() {
+            const flashSuccess = @json(session('success'));
+            const flashError = @json(session('error'));
+            if (flashSuccess) {
+                this.showToast(flashSuccess, 'success');
+            } else if (flashError) {
+                this.showToast(flashError, 'error');
+            }
+        },
+
+        escapeHtml(str) {
+            return String(str ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        },
+
         showToast(message, type = 'success') {
             this.toast.message = message;
             this.toast.type = type;
@@ -746,7 +790,10 @@ function bandwidthPlansManager() {
 
         formatCurrency(amount) {
             const val = parseFloat(amount || 0);
-            return `${this.currencySymbol} ${val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            const formatted = val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            return this.currencyPosition === 'right'
+                ? `${formatted} ${this.currencySymbol}`
+                : `${this.currencySymbol} ${formatted}`;
         },
 
         toggleMenu(item, event) {
@@ -844,13 +891,13 @@ function bandwidthPlansManager() {
                 const data = await response.json();
                 if (data.success) {
                     this.modal.open = false;
-                    this.showToast(data.message || 'Rate slab saved successfully!', 'success');
+                    this.showToast(data.message || this.i18n.rateSlabSavedSuccess, 'success');
                     setTimeout(() => window.location.reload(), 600);
                 } else {
-                    this.showToast(data.message || 'Failed to save rate slab.', 'error');
+                    this.showToast(data.message || this.i18n.failedSaveRateSlab, 'error');
                 }
             } catch (err) {
-                this.showToast('Network error or invalid server response.', 'error');
+                this.showToast(this.i18n.networkErrorResponse, 'error');
             } finally {
                 this.submitting = false;
             }
@@ -869,27 +916,29 @@ function bandwidthPlansManager() {
                 const data = await response.json();
                 if (data.success) {
                     plan.is_active = data.is_active;
-                    this.showToast(data.message || 'Status updated!', 'success');
+                    this.showToast(data.message || this.i18n.statusUpdated, 'success');
                     setTimeout(() => window.location.reload(), 500);
                 } else {
-                    this.showToast(data.message || 'Failed to toggle status.', 'error');
+                    this.showToast(data.message || this.i18n.failedToggleStatus, 'error');
                 }
             } catch (err) {
-                this.showToast('Failed to toggle status.', 'error');
+                this.showToast(this.i18n.failedToggleStatus, 'error');
             }
         },
 
         async deletePlan(plan) {
             if (typeof Swal !== 'undefined') {
+                const safeNameHtml = `<strong class="text-slate-900 font-semibold">${this.escapeHtml(plan.name)}</strong>`;
+                const confirmText = this.escapeHtml(this.i18n.deleteRateSlabConfirm).replace(':name', safeNameHtml);
                 const result = await Swal.fire({
-                    title: 'Delete Rate Slab?',
-                    html: `<div class="text-xs text-slate-600 mt-1">Are you sure you want to delete <strong class="text-slate-900 font-semibold">${plan.name}</strong>?<br><span class="text-[11px] text-rose-500 mt-1 block">This rate slab will no longer be available for bandwidth allocation.</span></div>`,
+                    title: this.i18n.deleteRateSlabTitle,
+                    html: `<div class="text-xs text-slate-600 mt-1">${confirmText}<br><span class="text-[11px] text-rose-500 mt-1 block">${this.escapeHtml(this.i18n.deleteRateSlabWarning)}</span></div>`,
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonColor: '#e11d48',
                     cancelButtonColor: '#64748b',
-                    confirmButtonText: 'Yes, Delete Slab',
-                    cancelButtonText: 'Cancel',
+                    confirmButtonText: this.i18n.yesDeleteSlab,
+                    cancelButtonText: this.i18n.cancel,
                     reverseButtons: true,
                     customClass: {
                         popup: 'rounded-2xl shadow-xl border border-slate-200 p-5',
@@ -901,7 +950,7 @@ function bandwidthPlansManager() {
                 if (result.isConfirmed) {
                     this.executeDelete(plan.id);
                 }
-            } else if (confirm(`Are you sure you want to delete '${plan.name}'?`)) {
+            } else if (confirm(this.i18n.deleteRateSlabConfirm.replace(':name', plan.name))) {
                 this.executeDelete(plan.id);
             }
         },
@@ -918,13 +967,13 @@ function bandwidthPlansManager() {
                 });
                 const data = await response.json();
                 if (data.success) {
-                    this.showToast(data.message || 'Rate slab deleted.', 'success');
+                    this.showToast(data.message || this.i18n.rateSlabDeleted, 'success');
                     setTimeout(() => window.location.reload(), 500);
                 } else {
-                    this.showToast(data.message || 'Failed to delete rate slab.', 'error');
+                    this.showToast(data.message || this.i18n.failedDeleteRateSlab, 'error');
                 }
             } catch (err) {
-                this.showToast('Failed to delete rate slab.', 'error');
+                this.showToast(this.i18n.failedDeleteRateSlab, 'error');
             }
         }
     };

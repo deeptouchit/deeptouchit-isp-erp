@@ -20,7 +20,7 @@ class ResellerBandwidthPlanController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            abort(404, 'Tenant record not found.');
+            abort(404, __('Tenant record not found.'));
         }
 
         $search = $request->input('search');
@@ -106,7 +106,7 @@ class ResellerBandwidthPlanController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            abort(403, 'Unauthorized.');
+            abort(403, __('Unauthorized.'));
         }
 
         $validated = $request->validate([
@@ -142,7 +142,7 @@ class ResellerBandwidthPlanController extends Controller
             'notes' => $validated['notes'] ?? null,
         ]);
 
-        $msg = "Bandwidth Rate Slab '{$plan->name}' created successfully!";
+        $msg = __('Bandwidth Rate Slab :name created successfully!', ['name' => $plan->name]);
 
         if ($request->wantsJson()) {
             return response()->json([
@@ -162,7 +162,7 @@ class ResellerBandwidthPlanController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            abort(403, 'Unauthorized.');
+            abort(403, __('Unauthorized.'));
         }
 
         $plan = TenantBandwidthPlan::where('tenant_id', $tenant->id)->findOrFail($id);
@@ -197,7 +197,7 @@ class ResellerBandwidthPlanController extends Controller
             'notes' => $validated['notes'] ?? null,
         ]);
 
-        $msg = "Bandwidth Rate Slab '{$plan->name}' updated successfully!";
+        $msg = __('Bandwidth Rate Slab :name updated successfully!', ['name' => $plan->name]);
 
         if ($request->wantsJson()) {
             return response()->json([
@@ -217,15 +217,16 @@ class ResellerBandwidthPlanController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            abort(403, 'Unauthorized.');
+            abort(403, __('Unauthorized.'));
         }
 
         $plan = TenantBandwidthPlan::where('tenant_id', $tenant->id)->findOrFail($id);
         $plan->is_active = !$plan->is_active;
         $plan->save();
 
-        $stateText = $plan->is_active ? 'activated' : 'deactivated';
-        $msg = "Rate Slab '{$plan->name}' is now {$stateText}.";
+        $msg = $plan->is_active
+            ? __('Rate Slab :name has been activated.', ['name' => $plan->name])
+            : __('Rate Slab :name has been deactivated.', ['name' => $plan->name]);
 
         if ($request->wantsJson() || $request->ajax() || str_contains($request->header('Accept', ''), 'json')) {
             return response()->json([
@@ -245,14 +246,14 @@ class ResellerBandwidthPlanController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            abort(403, 'Unauthorized.');
+            abort(403, __('Unauthorized.'));
         }
 
         $plan = TenantBandwidthPlan::where('tenant_id', $tenant->id)->findOrFail($id);
 
         $usedCount = TenantResellerBandwidth::where('bandwidth_plan_id', $plan->id)->count();
         if ($usedCount > 0) {
-            $err = "Cannot delete '{$plan->name}' because it is currently assigned to {$usedCount} reseller(s).";
+            $err = __('Cannot delete :name because it is currently assigned to :count reseller(s).', ['name' => $plan->name, 'count' => $usedCount]);
             if ($request->wantsJson()) {
                 return response()->json(['success' => false, 'message' => $err], 422);
             }
@@ -262,7 +263,7 @@ class ResellerBandwidthPlanController extends Controller
         $planName = $plan->name;
         $plan->delete();
 
-        $msg = "Bandwidth Rate Slab '{$planName}' deleted successfully!";
+        $msg = __('Bandwidth Rate Slab :name deleted successfully!', ['name' => $planName]);
         if ($request->wantsJson()) {
             return response()->json(['success' => true, 'message' => $msg]);
         }

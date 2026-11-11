@@ -24,7 +24,7 @@ class ResellerBandwidthController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            abort(404, 'Tenant record not found.');
+            abort(404, __('Tenant record not found.'));
         }
 
         $search = $request->input('search');
@@ -167,7 +167,7 @@ class ResellerBandwidthController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            abort(404, 'Tenant record not found.');
+            abort(404, __('Tenant record not found.'));
         }
 
         $search = $request->input('search');
@@ -227,10 +227,13 @@ class ResellerBandwidthController extends Controller
             ];
         }
 
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
+
         return view('tenant.resellers.capacity', compact(
             'tenant',
             'routers',
             'routerMetrics',
+            'currencySymbol',
             'totalAllocatedMbps',
             'totalCurrentUsage',
             'totalWholesaleMRR',
@@ -253,7 +256,7 @@ class ResellerBandwidthController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            abort(403, 'Unauthorized.');
+            abort(403, __('Unauthorized.'));
         }
 
         $validated = $request->validate([
@@ -271,6 +274,20 @@ class ResellerBandwidthController extends Controller
             'mikrotik_queue_name' => 'nullable|string|max:100',
             'status' => 'nullable|in:ACTIVE,THROTTLED,SUSPENDED',
             'notes' => 'nullable|string|max:255',
+        ], [], [
+            'reseller_id' => __('Reseller Partner'),
+            'router_id' => __('Core Gateway Router'),
+            'bandwidth_plan_id' => __('Bandwidth Rate Plan'),
+            'vlan_id' => __('VLAN IDs / Tags'),
+            'global_bandwidth_mbps' => __('Global Internet'),
+            'cdn_bandwidth_mbps' => __('CDN Cache'),
+            'bdix_bandwidth_mbps' => __('BDIX Peering'),
+            'ggc_bandwidth_mbps' => __('GGC Google'),
+            'fna_bandwidth_mbps' => __('FNA Facebook'),
+            'other_bandwidth_mbps' => __('Other Cache'),
+            'mikrotik_queue_name' => __('MikroTik Simple Queue Name'),
+            'status' => __('Line Status'),
+            'notes' => __('Notes'),
         ]);
 
         $reseller = TenantReseller::where('tenant_id', $tenant->id)->findOrFail($validated['reseller_id']);
@@ -339,7 +356,10 @@ class ResellerBandwidthController extends Controller
             ]
         );
 
-        $msg = "Bandwidth allocation of {$bandwidth->formatted_total_bandwidth} for '{$reseller->name}' configured successfully!";
+        $msg = __("Bandwidth allocation of :bandwidth for ':reseller' configured successfully!", [
+            'bandwidth' => $bandwidth->formatted_total_bandwidth,
+            'reseller' => $reseller->name,
+        ]);
 
         if ($request->wantsJson()) {
             return response()->json([
@@ -359,21 +379,28 @@ class ResellerBandwidthController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            abort(403, 'Unauthorized.');
+            abort(403, __('Unauthorized.'));
         }
 
         $bandwidth = TenantResellerBandwidth::where('tenant_id', $tenant->id)->findOrFail($id);
         $newStatus = $request->input('status');
 
         if (!in_array($newStatus, ['ACTIVE', 'THROTTLED', 'SUSPENDED'])) {
-            return response()->json(['success' => false, 'message' => 'Invalid status option.'], 422);
+            return response()->json(['success' => false, 'message' => __('Invalid status option.')], 422);
         }
 
         $bandwidth->update(['status' => $newStatus]);
 
+        $partnerName = $bandwidth->reseller?->name ?? __('Reseller');
+        $message = match ($newStatus) {
+            'ACTIVE' => __("Bandwidth line for ':reseller' is now Active!", ['reseller' => $partnerName]),
+            'THROTTLED' => __("Bandwidth line for ':reseller' is now Throttled!", ['reseller' => $partnerName]),
+            default => __("Bandwidth line for ':reseller' is now Suspended!", ['reseller' => $partnerName]),
+        };
+
         return response()->json([
             'success' => true,
-            'message' => "Bandwidth line for '{$bandwidth->reseller?->name}' is now {$newStatus}!",
+            'message' => $message,
             'status' => $newStatus,
             'badge' => $bandwidth->status_badge,
         ]);
@@ -386,7 +413,7 @@ class ResellerBandwidthController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            abort(403, 'Unauthorized.');
+            abort(403, __('Unauthorized.'));
         }
 
         $bandwidth = TenantResellerBandwidth::where('tenant_id', $tenant->id)
@@ -397,7 +424,11 @@ class ResellerBandwidthController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => "Simple Queue '{$bandwidth->mikrotik_queue_name}' synchronized with {$bandwidth->router?->name} ({$bandwidth->formatted_total_bandwidth})!",
+            'message' => __("Simple Queue ':queue' synchronized with :router (:bandwidth)!", [
+                'queue' => $bandwidth->mikrotik_queue_name,
+                'router' => $bandwidth->router?->name ?? __('Standalone'),
+                'bandwidth' => $bandwidth->formatted_total_bandwidth,
+            ]),
             'last_sync' => now()->format('d M, h:i A'),
         ]);
     }
@@ -409,7 +440,7 @@ class ResellerBandwidthController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            abort(403, 'Unauthorized.');
+            abort(403, __('Unauthorized.'));
         }
 
         $bandwidth = TenantResellerBandwidth::where('tenant_id', $tenant->id)
@@ -438,8 +469,8 @@ class ResellerBandwidthController extends Controller
             'success' => true,
             'partner_name' => $bandwidth->reseller?->name,
             'total_bandwidth' => $bandwidth->formatted_total_bandwidth,
-            'current_usage' => $bandwidth->current_usage_mbps . ' Mbps',
-            'peak_usage' => $bandwidth->peak_usage_mbps . ' Mbps',
+            'current_usage' => $bandwidth->current_usage_mbps . ' ' . __('Mbps'),
+            'peak_usage' => $bandwidth->peak_usage_mbps . ' ' . __('Mbps'),
             'utilization' => $bandwidth->utilization_percent . '%',
             'points' => $points,
         ]);
@@ -452,17 +483,17 @@ class ResellerBandwidthController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            abort(403, 'Unauthorized.');
+            abort(403, __('Unauthorized.'));
         }
 
         $bandwidth = TenantResellerBandwidth::where('tenant_id', $tenant->id)
             ->with('reseller')
             ->findOrFail($id);
 
-        $partnerName = $bandwidth->reseller?->name ?? 'Reseller';
+        $partnerName = $bandwidth->reseller?->name ?? __('Reseller');
         $bandwidth->delete();
 
-        $msg = "Bandwidth allocation for '{$partnerName}' deleted successfully.";
+        $msg = __("Bandwidth allocation for ':reseller' deleted successfully.", ['reseller' => $partnerName]);
 
         if ($request->wantsJson()) {
             return response()->json([
@@ -481,7 +512,7 @@ class ResellerBandwidthController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            abort(403, 'Unauthorized.');
+            abort(403, __('Unauthorized.'));
         }
 
         $billingMonthInput = $request->input('billing_month', now()->format('Y-m'));
@@ -519,8 +550,8 @@ class ResellerBandwidthController extends Controller
 
             $itemDetails = [
                 'type' => 'BANDWIDTH_WHOLESALE',
-                'plan_name' => $bw->bandwidthPlan?->name ?? 'Custom Rate',
-                'router_name' => $bw->router?->name ?? 'Standalone',
+                'plan_name' => $bw->bandwidthPlan?->name ?? __('Custom Rate'),
+                'router_name' => $bw->router?->name ?? __('Standalone'),
                 'vlan_id' => $bw->vlan_id,
                 'total_bandwidth_mbps' => (float) $bw->total_bandwidth_mbps,
                 'global' => [
@@ -572,7 +603,7 @@ class ResellerBandwidthController extends Controller
                 'period_end' => (clone $billingMonthDate)->endOfMonth()->toDateString(),
                 'due_date' => (clone $billingMonthDate)->startOfMonth()->addDays(10)->toDateString(),
                 'item_details' => $itemDetails,
-                'notes' => "Wholesale Bandwidth Allocation Bill for {$billingMonthDate->format('F Y')}",
+                'notes' => __('Wholesale Bandwidth Allocation Bill for :month', ['month' => $billingMonthDate->format('F Y')]),
                 'created_by' => Auth::id(),
             ]);
 
@@ -581,10 +612,16 @@ class ResellerBandwidthController extends Controller
         }
 
         $formattedMonth = $billingMonthDate->format('M Y');
-        $msg = "Generated {$generatedCount} wholesale bandwidth invoices for {$formattedMonth}.";
-        if ($skippedCount > 0) {
-            $msg .= " ({$skippedCount} already existed / skipped).";
-        }
+        $msg = $skippedCount > 0
+            ? __('Generated :count wholesale bandwidth invoices for :month (:skipped already existed / skipped).', [
+                'count' => $generatedCount,
+                'month' => $formattedMonth,
+                'skipped' => $skippedCount,
+            ])
+            : __('Generated :count wholesale bandwidth invoices for :month.', [
+                'count' => $generatedCount,
+                'month' => $formattedMonth,
+            ]);
 
         if ($request->wantsJson()) {
             return response()->json([
@@ -606,7 +643,7 @@ class ResellerBandwidthController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            abort(403, 'Unauthorized.');
+            abort(403, __('Unauthorized.'));
         }
 
         $invoice = TenantResellerInvoice::where('tenant_id', $tenant->id)
@@ -626,7 +663,7 @@ class ResellerBandwidthController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            abort(403, 'Unauthorized.');
+            abort(403, __('Unauthorized.'));
         }
 
         $validated = $request->validate([
@@ -634,6 +671,11 @@ class ResellerBandwidthController extends Controller
             'payment_method' => 'required|string|in:CASH,BANK_TRANSFER,BKASH,NAGAD,ROCKET,CHEQUE,OTHER',
             'discount' => 'nullable|numeric|min:0',
             'notes' => 'nullable|string|max:255',
+        ], [], [
+            'paid_amount' => __('Received Amount'),
+            'payment_method' => __('Payment Method'),
+            'discount' => __('Discount / Waiver'),
+            'notes' => __('Transaction Ref / Notes'),
         ]);
 
         $invoice = TenantResellerInvoice::where('tenant_id', $tenant->id)->findOrFail($id);
@@ -659,7 +701,10 @@ class ResellerBandwidthController extends Controller
         ]);
 
         $currency = $tenant->currency_symbol ?? '৳';
-        $msg = "Payment of {$currency} " . number_format($addPaid, 2) . " received for Invoice #{$invoice->invoice_no}!";
+        $msg = __('Payment of :amount received for Invoice #:invoice!', [
+            'amount' => $currency . ' ' . number_format($addPaid, 2),
+            'invoice' => $invoice->invoice_no,
+        ]);
 
         if ($request->wantsJson()) {
             return response()->json([
@@ -679,7 +724,7 @@ class ResellerBandwidthController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            abort(403, 'Unauthorized.');
+            abort(403, __('Unauthorized.'));
         }
 
         $invoice = TenantResellerInvoice::where('tenant_id', $tenant->id)
