@@ -1,6 +1,6 @@
 @extends('tenant.layouts.app')
 
-@section('title', 'ONU & Optical Terminals - ' . ($tenant->company_name ?? $tenant->name))
+@section('title', __('ONU & Optical Terminals') . ' - ' . ($tenant->company_name ?? $tenant->name))
 
 @push('styles')
     {{-- Page-specific CSS --}}
@@ -55,9 +55,9 @@
                 <i class="fas fa-satellite-dish"></i>
             </div>
             <div class="flex items-center gap-2">
-                <h2 class="text-sm font-bold text-slate-900 tracking-tight">ONU &amp; Optical Terminals Directory</h2>
+                <h2 class="text-sm font-bold text-slate-900 tracking-tight">{{ __('ONU & Optical Terminals Directory') }}</h2>
                 <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-cyan-50 text-cyan-700 border border-cyan-200 font-mono">
-                    Total: {{ number_format($totalOnus) }}
+                    {{ __('Total') }}: {{ number_format($totalOnus) }}
                 </span>
             </div>
         </div>
@@ -68,9 +68,9 @@
                     @click="syncAllOlts()" 
                     :disabled="syncingAll || linkingClients"
                     class="h-[34px] px-3.5 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs shadow-xs transition inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-60"
-                    title="Synchronize all live OLT hardware gateways and pull connected ONUs">
+                    title="{{ __('Synchronize all live OLT hardware gateways and pull connected ONUs') }}">
                 <i class="fas fa-rotate text-xs" :class="{ 'fa-spin': syncingAll }"></i>
-                <span x-text="syncingAll ? 'Syncing OLTs...' : 'Sync from OLTs'"></span>
+                <span x-text="syncingAll ? i18n.syncingOlts : i18n.syncFromOlts"></span>
             </button>
 
             <!-- Auto-Link Clients Button -->
@@ -78,16 +78,16 @@
                     @click="autoLinkClients()" 
                     :disabled="syncingAll || linkingClients"
                     class="h-[34px] px-3 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs shadow-2xs transition inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-60"
-                    title="Re-match all ONUs with existing customers via Router MAC, Calling Station ID, and PPPoE user">
+                    title="{{ __('Re-match all ONUs with existing customers via Router MAC, Calling Station ID, and PPPoE user') }}">
                 <i class="fas fa-link text-cyan-600 text-[11px]" :class="{ 'fa-spin': linkingClients }"></i>
-                <span x-text="linkingClients ? 'Linking...' : 'Auto-Link Clients'"></span>
+                <span x-text="linkingClients ? i18n.linking : i18n.autoLinkClients"></span>
             </button>
 
             <!-- Link to OLT Gateways -->
             <a href="{{ route('tenant.network.olt') }}" 
                class="h-[34px] px-3.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold text-xs shadow-2xs transition inline-flex items-center justify-center gap-1.5 cursor-pointer">
                 <i class="fas fa-network-wired text-slate-500 text-xs"></i>
-                <span>View OLT Gateways</span>
+                <span>{{ __('View OLT Gateways') }}</span>
             </a>
         </div>
     </div>
@@ -97,7 +97,7 @@
         <!-- Card 1: Total ONUs -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5 min-w-0">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Total ONUs</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">{{ __('Total ONUs') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-slate-900">{{ number_format($totalOnus) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-cyan-50 text-cyan-600 border-cyan-100 flex items-center justify-center">
@@ -108,7 +108,7 @@
         <!-- Card 2: Online Active -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5 min-w-0">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-emerald-700">Online Active</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-emerald-700">{{ __('Online Active') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-emerald-600">{{ number_format($onlineOnus) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-emerald-50 text-emerald-600 border-emerald-100 flex items-center justify-center">
@@ -119,7 +119,7 @@
         <!-- Card 3: Offline -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5 min-w-0">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-rose-700">Offline</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-rose-700">{{ __('Offline') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-rose-600">{{ number_format($offlineOnus) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-rose-50 text-rose-600 border-rose-100 flex items-center justify-center">
@@ -130,7 +130,7 @@
         <!-- Card 4: Critical Signal -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5 min-w-0">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-rose-700">Critical Optical</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-rose-700">{{ __('Critical Optical') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-rose-600">{{ number_format($criticalOnus) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-rose-50 text-rose-600 border-rose-100 flex items-center justify-center">
@@ -141,7 +141,7 @@
         <!-- Card 5: Warning Signal -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5 min-w-0">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-amber-700">Warning Signal</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-amber-700">{{ __('Warning Signal') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-amber-600">{{ number_format($warningOnus) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-amber-50 text-amber-600 border-amber-100 flex items-center justify-center">
@@ -152,7 +152,7 @@
         <!-- Card 6: Online Ratio -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5 min-w-0">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-cyan-700">Online Ratio</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-cyan-700">{{ __('Online Ratio') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-cyan-600">{{ $onlineRatio }}%</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-cyan-50 text-cyan-600 border-cyan-100 flex items-center justify-center">
@@ -178,7 +178,7 @@
                            name="search" 
                            id="onuSearchInput"
                            x-model="searchQuery" 
-                           placeholder="Search Name, ONU MAC, Router MAC, Port, Model..." 
+                           placeholder="{{ __('Search Name, ONU MAC, Router MAC, Port, Model...') }}" 
                            class="w-full h-[34px] pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition" 
                            autocomplete="off" />
                     <button type="button" 
@@ -186,7 +186,7 @@
                             x-cloak
                             @click="searchQuery = ''; $nextTick(() => $el.closest('form').submit())"
                             class="absolute inset-y-0 right-0 flex items-center pr-2 text-slate-400 hover:text-rose-500 transition cursor-pointer"
-                            title="Clear search">
+                            title="{{ __('Clear search') }}">
                         <i class="fas fa-times-circle text-xs"></i>
                     </button>
                 </div>
@@ -196,7 +196,7 @@
                     <select name="olt_id" 
                             onchange="this.form.submit()" 
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                        <option value="">All OLT Gateways</option>
+                        <option value="">{{ __('All OLT Gateways') }}</option>
                         @foreach($olts as $o)
                             <option value="{{ $o->id }}" {{ (string)$oltFilter === (string)$o->id ? 'selected' : '' }}>
                                 {{ $o->name }}
@@ -210,12 +210,12 @@
                     <select name="status" 
                             onchange="this.form.submit()" 
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                        <option value="">All Statuses</option>
-                        <option value="online" {{ $statusFilter === 'online' ? 'selected' : '' }}>Online</option>
-                        <option value="offline" {{ $statusFilter === 'offline' ? 'selected' : '' }}>Offline</option>
-                        <option value="good" {{ $statusFilter === 'good' ? 'selected' : '' }}>Good (≥ -20 dBm)</option>
-                        <option value="warning" {{ $statusFilter === 'warning' ? 'selected' : '' }}>Warning (-21 to -26)</option>
-                        <option value="critical" {{ $statusFilter === 'critical' ? 'selected' : '' }}>Critical (&lt; -26 dBm)</option>
+                        <option value="">{{ __('All Statuses') }}</option>
+                        <option value="online" {{ $statusFilter === 'online' ? 'selected' : '' }}>{{ __('Online') }}</option>
+                        <option value="offline" {{ $statusFilter === 'offline' ? 'selected' : '' }}>{{ __('Offline') }}</option>
+                        <option value="good" {{ $statusFilter === 'good' ? 'selected' : '' }}>{{ __('Good (≥ -20 dBm)') }}</option>
+                        <option value="warning" {{ $statusFilter === 'warning' ? 'selected' : '' }}>{{ __('Warning (-21 to -26)') }}</option>
+                        <option value="critical" {{ $statusFilter === 'critical' ? 'selected' : '' }}>{{ __('Critical (< -26 dBm)') }}</option>
                     </select>
                 </div>
 
@@ -224,7 +224,7 @@
                     <select name="onu_type" 
                             onchange="this.form.submit()" 
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                        <option value="">All Types</option>
+                        <option value="">{{ __('All Types') }}</option>
                         <option value="EPON" {{ $onuTypeFilter === 'EPON' ? 'selected' : '' }}>EPON</option>
                         <option value="GPON" {{ $onuTypeFilter === 'GPON' ? 'selected' : '' }}>GPON</option>
                         <option value="XPON" {{ $onuTypeFilter === 'XPON' ? 'selected' : '' }}>XPON</option>
@@ -237,13 +237,13 @@
                     <select name="per_page" 
                             onchange="this.form.submit()" 
                             class="w-full h-[34px] px-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-mono">
-                        <option value="15" {{ $perPageVal === 15 ? 'selected' : '' }}>15 / page</option>
-                        <option value="20" {{ $perPageVal === 20 ? 'selected' : '' }}>20 / page</option>
-                        <option value="30" {{ $perPageVal === 30 ? 'selected' : '' }}>30 / page</option>
-                        <option value="50" {{ $perPageVal === 50 ? 'selected' : '' }}>50 / page</option>
-                        <option value="100" {{ $perPageVal === 100 ? 'selected' : '' }}>100 / page</option>
-                        <option value="250" {{ $perPageVal === 250 ? 'selected' : '' }}>250 / page</option>
-                        <option value="500" {{ $perPageVal === 500 ? 'selected' : '' }}>500 / page</option>
+                        <option value="15" {{ $perPageVal === 15 ? 'selected' : '' }}>15 / {{ __('page') }}</option>
+                        <option value="20" {{ $perPageVal === 20 ? 'selected' : '' }}>20 / {{ __('page') }}</option>
+                        <option value="30" {{ $perPageVal === 30 ? 'selected' : '' }}>30 / {{ __('page') }}</option>
+                        <option value="50" {{ $perPageVal === 50 ? 'selected' : '' }}>50 / {{ __('page') }}</option>
+                        <option value="100" {{ $perPageVal === 100 ? 'selected' : '' }}>100 / {{ __('page') }}</option>
+                        <option value="250" {{ $perPageVal === 250 ? 'selected' : '' }}>250 / {{ __('page') }}</option>
+                        <option value="500" {{ $perPageVal === 500 ? 'selected' : '' }}>500 / {{ __('page') }}</option>
                     </select>
                 </div>
 
@@ -253,7 +253,7 @@
                         class="h-[34px] py-0 px-2.5 rounded-lg border border-slate-200 text-xs font-semibold flex items-center justify-center gap-1.5 transition flex-shrink-0 cursor-pointer"
                         :class="showMoreFilters || {{ $activeMoreCount }} > 0 ? 'bg-cyan-50 text-cyan-700 border-cyan-200' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'">
                     <i class="fas fa-sliders text-[10px]"></i>
-                    <span>More</span>
+                    <span>{{ __('More') }}</span>
                     @if($activeMoreCount > 0)
                         <span class="w-4 h-4 rounded-full bg-cyan-600 text-white text-[9px] font-bold flex items-center justify-center">{{ $activeMoreCount }}</span>
                     @endif
@@ -265,12 +265,12 @@
                     <button type="submit" 
                             class="h-[34px] py-0 px-3 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer">
                         <i class="fas fa-filter text-[10px]"></i>
-                        <span>Filter</span>
+                        <span>{{ __('Filter') }}</span>
                     </button>
                     <a href="{{ route('tenant.network.onu') }}" 
                        class="h-[34px] py-0 px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer">
                         <i class="fas fa-rotate-left text-[10px]"></i>
-                        <span>Reset</span>
+                        <span>{{ __('Reset') }}</span>
                     </a>
                 </div>
             </div>
@@ -288,10 +288,10 @@
                     <select name="pon_port" 
                             onchange="this.form.submit()" 
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                        <option value="">All PON Ports</option>
+                        <option value="">{{ __('All PON Ports') }}</option>
                         @foreach($distinctPonPorts ?? [] as $pp)
                             <option value="{{ $pp }}" {{ $ponPortFilter === $pp ? 'selected' : '' }}>
-                                PON {{ $pp }}
+                                {{ __('PON') }} {{ $pp }}
                             </option>
                         @endforeach
                     </select>
@@ -302,7 +302,7 @@
                     <select name="vendor" 
                             onchange="this.form.submit()" 
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                        <option value="">All Hardware Vendors</option>
+                        <option value="">{{ __('All Hardware Vendors') }}</option>
                         @foreach($distinctVendors ?? [] as $v)
                             <option value="{{ $v }}" {{ $vendorFilter === $v ? 'selected' : '' }}>
                                 {{ $v }}
@@ -316,9 +316,9 @@
                     <select name="binding" 
                             onchange="this.form.submit()" 
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                        <option value="">All Customer Bindings</option>
-                        <option value="linked" {{ $bindingFilter === 'linked' ? 'selected' : '' }}>Linked to Customer</option>
-                        <option value="unlinked" {{ $bindingFilter === 'unlinked' ? 'selected' : '' }}>Unassigned / Free</option>
+                        <option value="">{{ __('All Customer Bindings') }}</option>
+                        <option value="linked" {{ $bindingFilter === 'linked' ? 'selected' : '' }}>{{ __('Linked to Customer') }}</option>
+                        <option value="unlinked" {{ $bindingFilter === 'unlinked' ? 'selected' : '' }}>{{ __('Unassigned / Free') }}</option>
                     </select>
                 </div>
 
@@ -327,11 +327,11 @@
                     <select name="distance_range" 
                             onchange="this.form.submit()" 
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                        <option value="">All Fiber Distances</option>
-                        <option value="under_500" {{ $distanceFilter === 'under_500' ? 'selected' : '' }}>&lt; 500m</option>
-                        <option value="500_1000" {{ $distanceFilter === '500_1000' ? 'selected' : '' }}>500m - 1,000m</option>
-                        <option value="1000_2000" {{ $distanceFilter === '1000_2000' ? 'selected' : '' }}>1,000m - 2,000m</option>
-                        <option value="over_2000" {{ $distanceFilter === 'over_2000' ? 'selected' : '' }}>&gt; 2,000m</option>
+                        <option value="">{{ __('All Fiber Distances') }}</option>
+                        <option value="under_500" {{ $distanceFilter === 'under_500' ? 'selected' : '' }}>{{ __('< 500m') }}</option>
+                        <option value="500_1000" {{ $distanceFilter === '500_1000' ? 'selected' : '' }}>{{ __('500m - 1,000m') }}</option>
+                        <option value="1000_2000" {{ $distanceFilter === '1000_2000' ? 'selected' : '' }}>{{ __('1,000m - 2,000m') }}</option>
+                        <option value="over_2000" {{ $distanceFilter === 'over_2000' ? 'selected' : '' }}>{{ __('> 2,000m') }}</option>
                     </select>
                 </div>
             </div>
@@ -343,10 +343,10 @@
         <div class="px-3.5 py-2 bg-slate-50/80 border-b border-slate-200 flex items-center justify-between">
             <span class="font-normal text-slate-700 text-xs flex items-center gap-1.5">
                 <i class="fas fa-list text-slate-400 text-xs"></i>
-                <span>Master ONU &amp; Optical Terminals Directory</span>
+                <span>{{ __('Master ONU & Optical Terminals Directory') }}</span>
             </span>
             <span class="text-[11px] text-slate-500 font-mono font-normal">
-                Total {{ $onus->total() }} Terminals
+                {{ __('Total :count Terminals', ['count' => $onus->total()]) }}
             </span>
         </div>
 
@@ -355,17 +355,17 @@
                 <thead>
                     <tr>
                         <th class="w-10 text-center font-semibold">#</th>
-                        <th class="text-center font-semibold">Client / ONU Name</th>
-                        <th class="text-center font-semibold">Area</th>
-                        <th class="text-center font-semibold">OLT Gateway</th>
-                        <th class="text-center font-semibold">PON:ONU ID</th>
-                        <th class="text-center font-semibold">ONU MAC</th>
-                        <th class="text-center font-semibold">Router MAC</th>
-                        <th class="text-center font-semibold">Type</th>
-                        <th class="text-center font-semibold">Optical Power</th>
-                        <th class="text-center font-semibold">Distance</th>
-                        <th class="text-center font-semibold">Status</th>
-                        <th class="w-10 text-center font-semibold no-sort">Action</th>
+                        <th class="text-center font-semibold">{{ __('Client / ONU Name') }}</th>
+                        <th class="text-center font-semibold">{{ __('Area') }}</th>
+                        <th class="text-center font-semibold">{{ __('OLT Gateway') }}</th>
+                        <th class="text-center font-semibold">{{ __('PON:ONU ID') }}</th>
+                        <th class="text-center font-semibold">{{ __('ONU MAC') }}</th>
+                        <th class="text-center font-semibold">{{ __('Router MAC') }}</th>
+                        <th class="text-center font-semibold">{{ __('Type') }}</th>
+                        <th class="text-center font-semibold">{{ __('Optical Power') }}</th>
+                        <th class="text-center font-semibold">{{ __('Distance') }}</th>
+                        <th class="text-center font-semibold">{{ __('Status') }}</th>
+                        <th class="w-10 text-center font-semibold no-sort">{{ __('Action') }}</th>
                     </tr>
                 </thead>
                 <tbody class="text-slate-700">
@@ -379,14 +379,14 @@
                                 default => 'bg-cyan-50 text-cyan-700 border-cyan-200'
                             };
                             $routerMacDisplay = $onu->router_mac ?: ($onu->auto_router_mac ?: ($onu->customer->mac_address ?? null));
-                            $clientNameDisplay = $onu->resolved_client_name ?: ($onu->customer->name ?? ($onu->name ?: 'Unnamed Terminal'));
+                            $clientNameDisplay = $onu->resolved_client_name ?: ($onu->customer->name ?? ($onu->name ?: __('Unnamed Terminal')));
                             $areaDisplay = $onu->resolved_area ?: ($onu->customer?->zone ?: ($onu->customer?->coverageZone?->name ?? null));
                             $pppoeUserDisplay = $onu->pppoe_username ?: ($onu->customer->username ?? null);
                             $customerId = $onu->customer_id ?: ($onu->linked_customer_id ?? null);
                             $onuPayload = [
                                 'id' => $onu->id,
                                 'olt_id' => $onu->olt_id,
-                                'olt_name' => $onu->olt->name ?? 'OLT',
+                                'olt_name' => $onu->olt->name ?? __('OLT'),
                                 'olt_ip' => $onu->olt->ip_address ?? '',
                                 'pon_port' => $onu->pon_port,
                                 'onu_id' => $onu->onu_id,
@@ -412,9 +412,9 @@
                                 'rx_power_dbm' => $onu->rx_power_dbm,
                                 'tx_power_dbm' => $onu->tx_power_dbm,
                                 'distance_m' => $onu->distance_m,
-                                'signal_label' => $sig['label'],
+                                'signal_label' => __($sig['label']),
                                 'signal_badge' => $sig['badge'],
-                                'updated_at' => $onu->updated_at ? $onu->updated_at->diffForHumans() : 'Recently'
+                                'updated_at' => $onu->updated_at ? $onu->updated_at->diffForHumans() : __('Recently')
                             ];
                         @endphp
                         <tr>
@@ -428,7 +428,7 @@
                                 @if($customerId)
                                     <a href="{{ route('tenant.customers.show', $customerId) }}" 
                                        class="font-semibold text-slate-900 hover:text-cyan-600 transition inline-flex items-center gap-1.5"
-                                       title="View Linked Customer Profile">
+                                       title="{{ __('View Linked Customer Profile') }}">
                                         <i class="fas fa-user-check text-[10px] text-emerald-500"></i>
                                         <span id="onu-name-{{ $onu->id }}">{{ $clientNameDisplay }}</span>
                                     </a>
@@ -436,7 +436,7 @@
                                     <button type="button" 
                                             @click="openManageModal({{ Js::from($onuPayload) }}, 'config')" 
                                             class="font-semibold text-slate-900 hover:text-cyan-600 transition inline-flex items-center gap-1.5 cursor-pointer text-left"
-                                            title="Click to Configure ONU Settings">
+                                            title="{{ __('Click to Configure ONU Settings') }}">
                                         <span id="onu-name-{{ $onu->id }}">{{ $clientNameDisplay }}</span>
                                     </button>
                                 @endif
@@ -459,7 +459,7 @@
                                 @if($onu->olt)
                                     <a href="{{ route('tenant.network.olt.show', $onu->olt_id) }}" 
                                        class="inline-flex items-center gap-1 text-slate-700 hover:text-cyan-600 font-medium transition"
-                                       title="View OLT Chassis Panel">
+                                       title="{{ __('View OLT Chassis Panel') }}">
                                         <i class="fas fa-network-wired text-[9px] text-slate-400"></i>
                                         <span>{{ $onu->olt->name }}</span>
                                     </a>
@@ -472,7 +472,7 @@
                             <td class="text-center font-mono whitespace-nowrap">
                                 <a href="{{ route('tenant.network.olt.show', ['olt' => $onu->olt_id, 'pon_port' => $onu->pon_port]) }}" 
                                    class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100 transition"
-                                   title="View PON Port {{ $onu->pon_port }}">
+                                   title="{{ __('View PON Port :port', ['port' => $onu->pon_port]) }}">
                                     {{ $onu->pon_port }}:#{{ $onu->onu_id }}
                                 </a>
                             </td>
@@ -483,9 +483,9 @@
                                     <span>{{ $onu->mac_address ?: '--' }}</span>
                                     @if($onu->mac_address)
                                         <button type="button" 
-                                                @click="copyToClipboard('{{ $onu->mac_address }}', 'ONU MAC')" 
+                                                @click="copyToClipboard('{{ $onu->mac_address }}', i18n.onuMac)" 
                                                 class="text-slate-400 hover:text-cyan-600 text-[10px] cursor-pointer" 
-                                                title="Copy ONU MAC">
+                                                title="{{ __('Copy ONU MAC') }}">
                                             <i class="fas fa-copy"></i>
                                         </button>
                                     @endif
@@ -498,9 +498,9 @@
                                     <span class="inline-flex items-center gap-1 text-slate-800">
                                         <span>{{ $routerMacDisplay }}</span>
                                         <button type="button" 
-                                                @click="copyToClipboard('{{ $routerMacDisplay }}', 'Router MAC')" 
+                                                @click="copyToClipboard('{{ $routerMacDisplay }}', i18n.routerMac)" 
                                                 class="text-slate-400 hover:text-cyan-600 text-[10px] cursor-pointer" 
-                                                title="Copy Router MAC">
+                                                title="{{ __('Copy Router MAC') }}">
                                             <i class="fas fa-copy"></i>
                                         </button>
                                     </span>
@@ -529,7 +529,7 @@
                                             <button type="button" 
                                                     @click="quickPollOptical({{ Js::from($onuPayload) }})"
                                                     class="text-slate-400 hover:text-cyan-600 text-[10px] cursor-pointer"
-                                                    title="Poll live optical telemetry directly from OLT">
+                                                    title="{{ __('Poll live optical telemetry directly from OLT') }}">
                                                 <i class="fas fa-rotate"></i>
                                             </button>
                                         @endif
@@ -547,12 +547,12 @@
                                 @if($onu->status === 'online')
                                     <span class="inline-flex items-center justify-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
                                         <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                        <span>Online</span>
+                                        <span>{{ __('Online') }}</span>
                                     </span>
                                 @else
                                     <span class="inline-flex items-center justify-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200">
                                         <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
-                                        <span>Offline</span>
+                                        <span>{{ __('Offline') }}</span>
                                     </span>
                                 @endif
                             </td>
@@ -562,7 +562,7 @@
                                 <button type="button" 
                                         @click.stop="toggleMenu({{ Js::from($onuPayload) }}, $event)" 
                                         class="w-6 h-6 mx-auto rounded-lg hover:bg-slate-200 text-slate-500 hover:text-cyan-700 transition cursor-pointer flex items-center justify-center text-[10px]"
-                                        title="Actions">
+                                        title="{{ __('Actions') }}">
                                     <i class="fas fa-ellipsis-v text-[10px] pointer-events-none"></i>
                                 </button>
                             </td>
@@ -574,12 +574,12 @@
                                     <div class="w-10 h-10 rounded-xl bg-cyan-50 text-cyan-600 mx-auto flex items-center justify-center text-base border border-cyan-100 shadow-xs">
                                         <i class="fas fa-satellite-dish"></i>
                                     </div>
-                                    <h3 class="text-xs font-bold text-slate-800">No ONUs / Optical Terminals Found</h3>
-                                    <p class="text-[11px] text-slate-400 font-normal">Adjust search filters or synchronize your OLT gateways to discover and link client ONUs.</p>
+                                    <h3 class="text-xs font-bold text-slate-800">{{ __('No ONUs / Optical Terminals Found') }}</h3>
+                                    <p class="text-[11px] text-slate-400 font-normal">{{ __('Adjust search filters or synchronize your OLT gateways to discover and link client ONUs.') }}</p>
                                     <div class="pt-1 flex items-center justify-center gap-2">
                                         <a href="{{ route('tenant.network.olt') }}" class="h-[34px] px-3.5 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs shadow-xs transition inline-flex items-center justify-center gap-1.5 cursor-pointer">
                                             <i class="fas fa-network-wired text-[10px]"></i>
-                                            <span>View OLT Gateways</span>
+                                            <span>{{ __('View OLT Gateways') }}</span>
                                         </a>
                                     </div>
                                 </div>
@@ -594,7 +594,7 @@
         @if($onus->hasPages() || $onus->total() > 0)
             <div class="p-3 bg-slate-50/80 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-2">
                 <div class="text-[11px] text-slate-500 font-normal">
-                    Showing {{ $onus->firstItem() ?? 0 }} to {{ $onus->lastItem() ?? 0 }} of {{ $onus->total() }} results
+                    {{ __('Showing :first to :last of :total results', ['first' => $onus->firstItem() ?? 0, 'last' => $onus->lastItem() ?? 0, 'total' => $onus->total()]) }}
                 </div>
                 <div>
                     {{ $onus->links() }}
@@ -627,21 +627,21 @@
                     @click="configureFromMenu('config')" 
                     class="w-full px-2.5 py-1.5 hover:bg-cyan-50 text-slate-700 hover:text-cyan-700 font-normal flex items-center gap-2 transition text-left cursor-pointer text-[11px]">
                 <i class="fas fa-sliders-h text-cyan-600 w-3.5 text-center text-[10px]"></i>
-                <span>Configure Settings</span>
+                <span>{{ __('Configure Settings') }}</span>
             </button>
 
             <button type="button" 
                     @click="quickPollOptical(activeMenuOnu)" 
                     class="w-full px-2.5 py-1.5 hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 font-normal flex items-center gap-2 transition text-left cursor-pointer text-[11px]">
                 <i class="fas fa-arrows-rotate text-emerald-600 w-3.5 text-center text-[10px]"></i>
-                <span>Poll Live Telemetry</span>
+                <span>{{ __('Poll Live Telemetry') }}</span>
             </button>
 
             <button type="button" 
                     @click="configureFromMenu('optical')" 
                     class="w-full px-2.5 py-1.5 hover:bg-purple-50 text-slate-700 hover:text-purple-700 font-normal flex items-center gap-2 transition text-left cursor-pointer text-[11px]">
                 <i class="fas fa-signal text-purple-600 w-3.5 text-center text-[10px]"></i>
-                <span>View Optical Telemetry</span>
+                <span>{{ __('View Optical Telemetry') }}</span>
             </button>
         </div>
 
@@ -651,14 +651,14 @@
                     @click="rebootFromMenu()" 
                     class="w-full px-2.5 py-1.5 hover:bg-amber-50 text-amber-700 font-normal flex items-center gap-2 transition text-left cursor-pointer text-[11px]">
                 <i class="fas fa-power-off text-amber-600 w-3.5 text-center text-[10px]"></i>
-                <span>Reboot Terminal</span>
+                <span>{{ __('Reboot Terminal') }}</span>
             </button>
 
             <button type="button" 
                     @click="factoryResetFromMenu()" 
                     class="w-full px-2.5 py-1.5 hover:bg-rose-50 text-rose-600 font-normal flex items-center gap-2 transition text-left cursor-pointer text-[11px]">
                 <i class="fas fa-rotate-left text-rose-500 w-3.5 text-center text-[10px]"></i>
-                <span>Factory Reset ONU</span>
+                <span>{{ __('Factory Reset ONU') }}</span>
             </button>
         </div>
     </div>
@@ -688,16 +688,16 @@
                             </div>
                             <div>
                                 <div class="flex items-center gap-2">
-                                    <h3 class="text-xs font-bold text-slate-800">Configure ONU Terminal</h3>
+                                    <h3 class="text-xs font-bold text-slate-800">{{ __('Configure ONU Terminal') }}</h3>
                                     <span class="px-1.5 py-0.5 rounded text-[9.5px] font-mono uppercase bg-slate-100 text-slate-700 border border-slate-200"
                                           x-text="manageModal.onu.onu_type"></span>
                                 </div>
                                 <p class="text-[10.5px] text-slate-500 font-normal">
                                     <span x-text="manageModal.onu.olt_name"></span> &bull; 
-                                    Port <span class="font-mono text-cyan-700" x-text="manageModal.onu.pon_port + ':#' + manageModal.onu.onu_id"></span> &bull;
-                                    ONU MAC <span class="font-mono text-slate-600" x-text="manageModal.onu.mac_address"></span>
+                                    {{ __('Port') }} <span class="font-mono text-cyan-700" x-text="manageModal.onu.pon_port + ':#' + manageModal.onu.onu_id"></span> &bull;
+                                    {{ __('ONU MAC') }} <span class="font-mono text-slate-600" x-text="manageModal.onu.mac_address"></span>
                                     <template x-if="manageModal.onu.router_mac">
-                                        <span> &bull; Router MAC <span class="font-mono text-cyan-700" x-text="manageModal.onu.router_mac"></span></span>
+                                        <span> &bull; {{ __('Router MAC') }} <span class="font-mono text-cyan-700" x-text="manageModal.onu.router_mac"></span></span>
                                     </template>
                                 </p>
                             </div>
@@ -717,7 +717,7 @@
                                 class="px-3 py-1.5 text-xs font-semibold border-b-2 transition cursor-pointer"
                                 :class="manageModal.activeTab === 'config' ? 'border-cyan-600 text-cyan-700 bg-white rounded-t-lg' : 'border-transparent text-slate-500 hover:text-slate-800'">
                             <i class="fas fa-sliders-h text-[10px] mr-1"></i>
-                            <span>Configuration</span>
+                            <span>{{ __('Configuration') }}</span>
                         </button>
 
                         <button type="button" 
@@ -725,7 +725,7 @@
                                 class="px-3 py-1.5 text-xs font-semibold border-b-2 transition cursor-pointer"
                                 :class="manageModal.activeTab === 'subscriber' ? 'border-cyan-600 text-cyan-700 bg-white rounded-t-lg' : 'border-transparent text-slate-500 hover:text-slate-800'">
                             <i class="fas fa-user text-[10px] mr-1"></i>
-                            <span>Subscriber Info</span>
+                            <span>{{ __('Subscriber Info') }}</span>
                         </button>
 
                         <button type="button" 
@@ -733,7 +733,7 @@
                                 class="px-3 py-1.5 text-xs font-semibold border-b-2 transition cursor-pointer"
                                 :class="manageModal.activeTab === 'optical' ? 'border-cyan-600 text-cyan-700 bg-white rounded-t-lg' : 'border-transparent text-slate-500 hover:text-slate-800'">
                             <i class="fas fa-signal text-[10px] mr-1"></i>
-                            <span>Optical Status</span>
+                            <span>{{ __('Optical Status') }}</span>
                         </button>
                     </div>
 
@@ -745,86 +745,86 @@
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <!-- Service Mode -->
                                 <div>
-                                    <label class="block text-[11px] font-semibold text-slate-700 mb-1">Service / WAN Mode</label>
+                                    <label class="block text-[11px] font-semibold text-slate-700 mb-1">{{ __('Service / WAN Mode') }}</label>
                                     <select x-model="manageModal.form.service_mode" 
                                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                                        <option value="bridge">Bridge Mode</option>
-                                        <option value="pppoe">PPPoE Router Mode</option>
-                                        <option value="dhcp">DHCP Client Mode</option>
-                                        <option value="static">Static IP Mode</option>
+                                        <option value="bridge">{{ __('Bridge Mode') }}</option>
+                                        <option value="pppoe">{{ __('PPPoE Router Mode') }}</option>
+                                        <option value="dhcp">{{ __('DHCP Client Mode') }}</option>
+                                        <option value="static">{{ __('Static IP Mode') }}</option>
                                     </select>
                                 </div>
 
                                 <!-- VLAN ID -->
                                 <div>
-                                    <label class="block text-[11px] font-semibold text-slate-700 mb-1">VLAN ID</label>
+                                    <label class="block text-[11px] font-semibold text-slate-700 mb-1">{{ __('VLAN ID') }}</label>
                                     <input type="number" 
                                            x-model="manageModal.form.vlan_id" 
-                                           placeholder="e.g. 100" 
+                                           placeholder="{{ __('e.g. 100') }}" 
                                            min="1" max="4094"
                                            class="w-full h-[34px] px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition" />
                                 </div>
 
                                 <!-- VLAN Mode -->
                                 <div>
-                                    <label class="block text-[11px] font-semibold text-slate-700 mb-1">VLAN Mode</label>
+                                    <label class="block text-[11px] font-semibold text-slate-700 mb-1">{{ __('VLAN Mode') }}</label>
                                     <select x-model="manageModal.form.vlan_mode" 
                                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                                        <option value="tag">Tagged</option>
-                                        <option value="untag">Untagged</option>
-                                        <option value="transparent">Transparent</option>
-                                        <option value="hybrid">Hybrid</option>
+                                        <option value="tag">{{ __('Tagged') }}</option>
+                                        <option value="untag">{{ __('Untagged') }}</option>
+                                        <option value="transparent">{{ __('Transparent') }}</option>
+                                        <option value="hybrid">{{ __('Hybrid') }}</option>
                                     </select>
                                 </div>
 
                                 <!-- LAN Port 1 -->
                                 <div>
-                                    <label class="block text-[11px] font-semibold text-slate-700 mb-1">LAN Port 1 State</label>
+                                    <label class="block text-[11px] font-semibold text-slate-700 mb-1">{{ __('LAN Port 1 State') }}</label>
                                     <select x-model="manageModal.form.lan1_state" 
                                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                                        <option value="enable">Enabled</option>
-                                        <option value="disable">Disabled</option>
+                                        <option value="enable">{{ __('Enabled') }}</option>
+                                        <option value="disable">{{ __('Disabled') }}</option>
                                     </select>
                                 </div>
 
                                 <!-- Bandwidth Profile -->
                                 <div>
-                                    <label class="block text-[11px] font-semibold text-slate-700 mb-1">Bandwidth Profile</label>
+                                    <label class="block text-[11px] font-semibold text-slate-700 mb-1">{{ __('Bandwidth Profile') }}</label>
                                     <select x-model="manageModal.form.bandwidth_profile" 
                                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                                        <option value="">Default (Unlimited)</option>
-                                        <option value="10M">10 Mbps</option>
-                                        <option value="20M">20 Mbps</option>
-                                        <option value="30M">30 Mbps</option>
-                                        <option value="50M">50 Mbps</option>
-                                        <option value="100M">100 Mbps</option>
+                                        <option value="">{{ __('Default (Unlimited)') }}</option>
+                                        <option value="10M">{{ __('10 Mbps') }}</option>
+                                        <option value="20M">{{ __('20 Mbps') }}</option>
+                                        <option value="30M">{{ __('30 Mbps') }}</option>
+                                        <option value="50M">{{ __('50 Mbps') }}</option>
+                                        <option value="100M">{{ __('100 Mbps') }}</option>
                                     </select>
                                 </div>
 
                                 <!-- CATV Control -->
                                 <div>
-                                    <label class="block text-[11px] font-semibold text-slate-700 mb-1">CATV RF Port</label>
+                                    <label class="block text-[11px] font-semibold text-slate-700 mb-1">{{ __('CATV RF Port') }}</label>
                                     <select x-model="manageModal.form.catv_state" 
                                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                                        <option value="enable">Enabled</option>
-                                        <option value="disable">Disabled</option>
+                                        <option value="enable">{{ __('Enabled') }}</option>
+                                        <option value="disable">{{ __('Disabled') }}</option>
                                     </select>
                                 </div>
                             </div>
 
                             <!-- Optional PPPoE Credentials -->
                             <div class="border-t border-slate-100 pt-3 space-y-2">
-                                <span class="text-[11px] font-semibold text-slate-700 block">PPPoE Credentials (Optional)</span>
+                                <span class="text-[11px] font-semibold text-slate-700 block">{{ __('PPPoE Credentials (Optional)') }}</span>
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <div>
-                                        <label class="block text-[10.5px] text-slate-500 mb-1">Username</label>
+                                        <label class="block text-[10.5px] text-slate-500 mb-1">{{ __('Username') }}</label>
                                         <input type="text" 
                                                x-model="manageModal.form.pppoe_username" 
                                                placeholder="client_pppoe_user" 
                                                class="w-full h-[34px] px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition" />
                                     </div>
                                     <div>
-                                        <label class="block text-[10.5px] text-slate-500 mb-1">Password</label>
+                                        <label class="block text-[10.5px] text-slate-500 mb-1">{{ __('Password') }}</label>
                                         <input type="password" 
                                                x-model="manageModal.form.pppoe_password" 
                                                placeholder="••••••••" 
@@ -835,20 +835,20 @@
 
                             <!-- Optional WiFi SSID / Password -->
                             <div class="border-t border-slate-100 pt-3 space-y-2">
-                                <span class="text-[11px] font-semibold text-slate-700 block">WiFi Access Point (Optional)</span>
+                                <span class="text-[11px] font-semibold text-slate-700 block">{{ __('WiFi Access Point (Optional)') }}</span>
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <div>
-                                        <label class="block text-[10.5px] text-slate-500 mb-1">SSID Name</label>
+                                        <label class="block text-[10.5px] text-slate-500 mb-1">{{ __('SSID Name') }}</label>
                                         <input type="text" 
                                                x-model="manageModal.form.wifi_ssid" 
-                                               placeholder="e.g. Home_WiFi_2.4G" 
+                                               placeholder="{{ __('e.g. Home_WiFi_2.4G') }}" 
                                                class="w-full h-[34px] px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition" />
                                     </div>
                                     <div>
-                                        <label class="block text-[10.5px] text-slate-500 mb-1">WPA Key / Password</label>
+                                        <label class="block text-[10.5px] text-slate-500 mb-1">{{ __('WPA Key / Password') }}</label>
                                         <input type="text" 
                                                x-model="manageModal.form.wifi_password" 
-                                               placeholder="Minimum 8 characters" 
+                                               placeholder="{{ __('Minimum 8 characters') }}" 
                                                class="w-full h-[34px] px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition" />
                                     </div>
                                 </div>
@@ -858,26 +858,26 @@
                         <!-- TAB 2: Subscriber Info -->
                         <div x-show="manageModal.activeTab === 'subscriber'" class="space-y-3">
                             <div>
-                                <label class="block text-[11px] font-semibold text-slate-700 mb-1">Terminal Description / Customer Name</label>
+                                <label class="block text-[11px] font-semibold text-slate-700 mb-1">{{ __('Terminal Description / Customer Name') }}</label>
                                 <input type="text" 
                                        x-model="manageModal.form.name" 
-                                       placeholder="e.g. John Doe - Home Connection" 
+                                       placeholder="{{ __('e.g. John Doe - Home Connection') }}" 
                                        class="w-full h-[34px] px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition" />
                             </div>
 
                             <div>
-                                <label class="block text-[11px] font-semibold text-slate-700 mb-1">Client Wi-Fi Router WAN MAC Address</label>
+                                <label class="block text-[11px] font-semibold text-slate-700 mb-1">{{ __('Client Wi-Fi Router WAN MAC Address') }}</label>
                                 <input type="text" 
                                        x-model="manageModal.form.router_mac" 
-                                       placeholder="e.g. 50:D4:F7:AA:BB:CC" 
+                                       placeholder="{{ __('e.g. 50:D4:F7:AA:BB:CC') }}" 
                                        class="w-full h-[34px] px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition" />
                             </div>
 
                             <div>
-                                <label class="block text-[11px] font-semibold text-slate-700 mb-1">Notes / Physical Address / Drop Cable Line</label>
+                                <label class="block text-[11px] font-semibold text-slate-700 mb-1">{{ __('Notes / Physical Address / Drop Cable Line') }}</label>
                                 <textarea x-model="manageModal.form.desc" 
                                           rows="3" 
-                                          placeholder="e.g. TJ Box #4, Port 3, Fiber core 2 blue..." 
+                                          placeholder="{{ __('e.g. TJ Box #4, Port 3, Fiber core 2 blue...') }}" 
                                           class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition resize-none"></textarea>
                             </div>
                         </div>
@@ -886,30 +886,30 @@
                         <div x-show="manageModal.activeTab === 'optical'" class="space-y-3">
                             <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                                 <div class="p-3 bg-slate-50 rounded-lg border border-slate-200 text-center">
-                                    <span class="text-[10px] text-slate-500 uppercase block font-medium">Rx Optical Power</span>
+                                    <span class="text-[10px] text-slate-500 uppercase block font-medium">{{ __('Rx Optical Power') }}</span>
                                     <span class="text-sm font-mono font-bold block mt-1" 
                                           :class="manageModal.onu.rx_power_dbm < -26 ? 'text-rose-600' : (manageModal.onu.rx_power_dbm < -20 ? 'text-amber-600' : 'text-emerald-600')"
                                           x-text="manageModal.onu.rx_power_dbm !== null ? manageModal.onu.rx_power_dbm + ' dBm' : '--'"></span>
                                 </div>
 
                                 <div class="p-3 bg-slate-50 rounded-lg border border-slate-200 text-center">
-                                    <span class="text-[10px] text-slate-500 uppercase block font-medium">Tx Optical Power</span>
+                                    <span class="text-[10px] text-slate-500 uppercase block font-medium">{{ __('Tx Optical Power') }}</span>
                                     <span class="text-sm font-mono font-bold text-slate-800 block mt-1" 
                                           x-text="manageModal.onu.tx_power_dbm !== null ? manageModal.onu.tx_power_dbm + ' dBm' : '--'"></span>
                                 </div>
 
                                 <div class="p-3 bg-slate-50 rounded-lg border border-slate-200 text-center">
-                                    <span class="text-[10px] text-slate-500 uppercase block font-medium">Fiber Distance</span>
+                                    <span class="text-[10px] text-slate-500 uppercase block font-medium">{{ __('Fiber Distance') }}</span>
                                     <span class="text-sm font-mono font-bold text-indigo-700 block mt-1" 
-                                          x-text="manageModal.onu.distance_m !== null ? manageModal.onu.distance_m + ' meters' : '--'"></span>
+                                          x-text="manageModal.onu.distance_m !== null ? manageModal.onu.distance_m + ' ' + i18n.meters : '--'"></span>
                                 </div>
                             </div>
 
                             <div class="p-3 bg-slate-50 rounded-lg border border-slate-200 flex items-center justify-between">
                                 <div class="space-y-0.5">
-                                    <span class="text-[11px] font-semibold text-slate-800 block">Signal Quality Assessment</span>
+                                    <span class="text-[11px] font-semibold text-slate-800 block">{{ __('Signal Quality Assessment') }}</span>
                                     <p class="text-[10.5px] text-slate-500 font-normal">
-                                        Optical Rx should ideally be between -14 dBm and -24 dBm for stable GPON/EPON service.
+                                        {{ __('Optical Rx should ideally be between -14 dBm and -24 dBm for stable GPON/EPON service.') }}
                                     </p>
                                 </div>
                                 <span class="px-2.5 py-1 rounded-full text-xs font-mono font-bold border" 
@@ -923,7 +923,7 @@
                                         :disabled="manageModal.refreshingOptical" 
                                         class="h-[34px] px-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 transition cursor-pointer disabled:opacity-50">
                                     <i class="fas fa-arrows-rotate text-[11px]" :class="{ 'fa-spin': manageModal.refreshingOptical }"></i>
-                                    <span x-text="manageModal.refreshingOptical ? 'Querying OLT...' : 'Poll Live Telemetry'"></span>
+                                    <span x-text="manageModal.refreshingOptical ? i18n.queryingOlt : i18n.pollLiveTelemetry"></span>
                                 </button>
                             </div>
                         </div>
@@ -935,14 +935,14 @@
                         <button type="button" 
                                 @click="closeManageModal()" 
                                 class="h-[34px] px-3.5 rounded-lg border border-slate-300 hover:bg-slate-100 text-slate-700 font-semibold text-xs transition cursor-pointer">
-                            Cancel
+                            {{ __('Cancel') }}
                         </button>
                         <button type="button" 
                                 @click="saveOnuConfig()" 
                                 :disabled="manageModal.saving" 
                                 class="h-[34px] px-4 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50">
                             <i class="fas fa-check text-[10px]" :class="{ 'fa-spinner fa-spin': manageModal.saving }"></i>
-                            <span x-text="manageModal.saving ? 'Pushing to OLT...' : 'Save Configuration'"></span>
+                            <span x-text="manageModal.saving ? i18n.pushingToOlt : i18n.saveConfiguration"></span>
                         </button>
                     </div>
                 </div>
@@ -956,6 +956,93 @@
 <script>
 function onuManager() {
     return {
+        i18n: {
+            syncingOlts: @js(__('Syncing OLTs...')),
+            syncFromOlts: @js(__('Sync from OLTs')),
+            linking: @js(__('Linking...')),
+            autoLinkClients: @js(__('Auto-Link Clients')),
+            onuMac: @js(__('ONU MAC')),
+            routerMac: @js(__('Router MAC')),
+            macAddress: @js(__('MAC address')),
+            meters: @js(__('meters')),
+            queryingOlt: @js(__('Querying OLT...')),
+            pollLiveTelemetry: @js(__('Poll Live Telemetry')),
+            pushingToOlt: @js(__('Pushing to OLT...')),
+            saveConfiguration: @js(__('Save Configuration')),
+            rebootTitle: @js(__('Reboot Terminal?')),
+            rebootPrompt: @js(__('Send remote reboot command to ONU :name on port :port?', ['name' => '__NAME__', 'port' => '__PORT__'])),
+            rebootDisconnectNote: @js(__('Subscriber will temporarily disconnect for ~45 seconds.')),
+            yesReboot: @js(__('Yes, Reboot')),
+            cancel: @js(__('Cancel')),
+            rebootConfirmFallback: @js(__('Reboot ONU :name?', ['name' => '__NAME__'])),
+            factoryResetTitle: @js(__('Factory Reset ONU?')),
+            factoryResetPrompt: @js(__('Are you sure you want to reset ONU :name to factory defaults?', ['name' => '__NAME__'])),
+            factoryResetWarning: @js(__('All custom VLAN, WAN, and WiFi configurations will be erased.')),
+            yesResetDefaults: @js(__('Yes, Reset to Defaults')),
+            factoryResetConfirmFallback: @js(__('Reset ONU :name to factory defaults?', ['name' => '__NAME__'])),
+            rebootSuccessFallback: @js(__('ONU reboot command sent successfully.')),
+            rebootFailFallback: @js(__('Failed to reboot ONU.')),
+            rebootNetworkError: @js(__('Network error while sending reboot command.')),
+            factoryResetSuccessFallback: @js(__('Factory reset command sent successfully.')),
+            factoryResetFailFallback: @js(__('Failed to send factory reset command.')),
+            factoryResetNetworkError: @js(__('Network error while sending factory reset.')),
+            copiedToClipboard: @js(__(':label copied to clipboard!', ['label' => '__LABEL__'])),
+            copiedSimple: @js(__(':label copied!', ['label' => '__LABEL__'])),
+            copyError: @js(__('Could not copy to clipboard.')),
+            configSavedFallback: @js(__('Configuration saved successfully.')),
+            configSaveFailFallback: @js(__('Failed to save configuration.')),
+            configSaveNetworkError: @js(__('Network error while saving configuration.')),
+            signalGood: @js(__('Good')),
+            signalWarning: @js(__('Warning')),
+            signalCritical: @js(__('Critical')),
+            liveTelemetryUpdated: @js(__('Live telemetry updated.')),
+            fetchTelemetryFailFallback: @js(__('Could not fetch live telemetry from OLT.')),
+            refreshTelemetryNetworkError: @js(__('Network error while refreshing telemetry.')),
+            syncTitle: @js(__('Synchronize All OLT Gateways?')),
+            syncIntro: @js(__('This will connect directly to all registered OLT hardware devices across the network and:')),
+            syncBullet1: @js(__('Discover & synchronize all connected client ONUs / ONT terminals')),
+            syncBullet2: @js(__('Fetch live optical Rx/Tx power (dBm), distance, and online status')),
+            syncBullet3: @js(__('Automatically pair terminals with customer accounts and router MACs')),
+            syncNote: @js(__('Multi-device hardware query may take 15 to 60 seconds depending on OLT response times.')),
+            yesStartSync: @js(__('Yes, Start Sync')),
+            syncConfirmFallback: @js(__('Synchronize all active OLT hardware devices and auto-link customer terminals now?')),
+            syncProgressTitle: @js(__('Synchronizing OLT Hardware...')),
+            syncProgressText: @js(__('Connecting to OLTs, pulling optical telemetry & pairing client accounts...')),
+            pleaseWait: @js(__('Please wait, do not close or reload this page.')),
+            syncToastConnecting: @js(__('Connecting to OLT hardware & pulling live ONU telemetry...')),
+            syncCompleteTitle: @js(__('Synchronization Complete!')),
+            totalOnus: @js(__('Total ONUs')),
+            online: @js(__('Online')),
+            linkedClients: @js(__('Linked Clients')),
+            doneRefreshView: @js(__('Done, Refresh View')),
+            syncProblemsTitle: @js(__('Sync Encountered Problems')),
+            syncProblemsFallback: @js(__('One or more OLTs could not be reached.')),
+            syncErrorsToast: @js(__('OLT synchronization encountered errors.')),
+            commTimeoutTitle: @js(__('Communication Timeout')),
+            commTimeoutText: @js(__('Network timeout or connection error while contacting OLT hardware.')),
+            commTimeoutToast: @js(__('Network timeout or communication error with OLT devices.')),
+            autoLinkTitle: @js(__('Auto-Link Client Accounts?')),
+            autoLinkIntro: @js(__('This will evaluate all ONUs against registered customers and:')),
+            autoLinkBullet1: @js(__('Match via Router MAC, Calling Station ID (MikroTik radacct), and ONU MAC')),
+            autoLinkBullet2: @js(__('Associate customers with their correct OLT & PON port')),
+            autoLinkBullet3: @js(__('Assign actual customer names and area zones to each terminal')),
+            yesRunAutoLink: @js(__('Yes, Run Auto-Link')),
+            autoLinkConfirmFallback: @js(__('Run customer-ONU auto-linking now?')),
+            pairingTitle: @js(__('Pairing Customer Profiles...')),
+            pairingText: @js(__('Evaluating router MACs, RADIUS sessions, and customer usernames...')),
+            pairingToast: @js(__('Evaluating and pairing ONUs with customer profiles...')),
+            autoLinkCompleteTitle: @js(__('Auto-Link Completed!')),
+            autoLinkFailedTitle: @js(__('Auto-Link Failed')),
+            autoLinkFailedText: @js(__('Auto-linking encountered an error.')),
+            autoLinkFailedToast: @js(__('Auto-linking failed.')),
+            networkErrorTitle: @js(__('Network Error')),
+            networkErrorText: @js(__('An error occurred while communicating with the server.')),
+            pairingNetworkErrorToast: @js(__('Network error while running customer pairing.')),
+            queryingOpticalToast: @js(__('Querying OLT for :port:#:id optical telemetry...', ['port' => '__PORT__', 'id' => '__ID__'])),
+            opticalUpdatedToast: @js(__('Optical telemetry updated directly from OLT.')),
+            oltCommErrorToast: @js(__('Error communicating with OLT gateway.'))
+        },
+
         syncingAll: false,
         linkingClients: false,
         activeMenuOnu: null,
@@ -983,6 +1070,14 @@ function onuManager() {
                 catv_state: 'enable',
                 bandwidth_profile: ''
             }
+        },
+
+        escapeHtml(str) {
+            return String(str ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
         },
 
         toggleMenu(onuPayload, event) {
@@ -1039,16 +1134,21 @@ function onuManager() {
         },
 
         confirmReboot(onu) {
+            const onuName = onu.name || onu.mac_address;
             if (typeof Swal !== 'undefined') {
+                const promptText = this.i18n.rebootPrompt
+                    .replace('__NAME__', `<strong class="text-slate-900 font-semibold">${this.escapeHtml(onuName)}</strong>`)
+                    .replace('__PORT__', `<span class="font-mono text-cyan-700">${this.escapeHtml(onu.pon_port)}:#${this.escapeHtml(onu.onu_id)}</span>`);
+
                 Swal.fire({
-                    title: 'Reboot Terminal?',
-                    html: `<div class="text-xs text-slate-600 mt-1">Send remote reboot command to ONU <strong class="text-slate-900 font-semibold">${onu.name || onu.mac_address}</strong> on port <span class="font-mono text-cyan-700">${onu.pon_port}:#${onu.onu_id}</span>?<br><span class="text-[11px] text-slate-400 mt-1 block">Subscriber will temporarily disconnect for ~45 seconds.</span></div>`,
+                    title: this.i18n.rebootTitle,
+                    html: `<div class="text-xs text-slate-600 mt-1">${promptText}<br><span class="text-[11px] text-slate-400 mt-1 block">${this.escapeHtml(this.i18n.rebootDisconnectNote)}</span></div>`,
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonColor: '#0891b2',
                     cancelButtonColor: '#64748b',
-                    confirmButtonText: '<i class="fas fa-power-off mr-1"></i> Yes, Reboot',
-                    cancelButtonText: 'Cancel',
+                    confirmButtonText: `<i class="fas fa-power-off mr-1"></i> ${this.escapeHtml(this.i18n.yesReboot)}`,
+                    cancelButtonText: this.i18n.cancel,
                     reverseButtons: true,
                     customClass: {
                         popup: 'rounded-2xl shadow-xl border border-slate-200 p-5',
@@ -1060,22 +1160,26 @@ function onuManager() {
                         this.executeReboot(onu.id);
                     }
                 });
-            } else if (confirm(`Reboot ONU ${onu.name || onu.mac_address}?`)) {
+            } else if (confirm(this.i18n.rebootConfirmFallback.replace('__NAME__', onuName))) {
                 this.executeReboot(onu.id);
             }
         },
 
         confirmFactoryReset(onu) {
+            const onuName = onu.name || onu.mac_address;
             if (typeof Swal !== 'undefined') {
+                const promptText = this.i18n.factoryResetPrompt
+                    .replace('__NAME__', `<strong class="text-slate-900 font-semibold">${this.escapeHtml(onuName)}</strong>`);
+
                 Swal.fire({
-                    title: 'Factory Reset ONU?',
-                    html: `<div class="text-xs text-slate-600 mt-1">Are you sure you want to reset ONU <strong class="text-slate-900 font-semibold">${onu.name || onu.mac_address}</strong> to factory defaults?<br><span class="text-[11px] text-rose-500 mt-1 block">All custom VLAN, WAN, and WiFi configurations will be erased.</span></div>`,
+                    title: this.i18n.factoryResetTitle,
+                    html: `<div class="text-xs text-slate-600 mt-1">${promptText}<br><span class="text-[11px] text-rose-500 mt-1 block">${this.escapeHtml(this.i18n.factoryResetWarning)}</span></div>`,
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonColor: '#e11d48',
                     cancelButtonColor: '#64748b',
-                    confirmButtonText: '<i class="fas fa-rotate-left mr-1"></i> Yes, Reset to Defaults',
-                    cancelButtonText: 'Cancel',
+                    confirmButtonText: `<i class="fas fa-rotate-left mr-1"></i> ${this.escapeHtml(this.i18n.yesResetDefaults)}`,
+                    cancelButtonText: this.i18n.cancel,
                     reverseButtons: true,
                     customClass: {
                         popup: 'rounded-2xl shadow-xl border border-slate-200 p-5',
@@ -1087,7 +1191,7 @@ function onuManager() {
                         this.executeFactoryReset(onu.id);
                     }
                 });
-            } else if (confirm(`Reset ONU ${onu.name} to factory defaults?`)) {
+            } else if (confirm(this.i18n.factoryResetConfirmFallback.replace('__NAME__', onuName))) {
                 this.executeFactoryReset(onu.id);
             }
         },
@@ -1104,12 +1208,12 @@ function onuManager() {
                 });
                 const data = await response.json();
                 if (data.success) {
-                    this.showToast(data.message || 'ONU reboot command sent successfully.', 'success');
+                    this.showToast(data.message || this.i18n.rebootSuccessFallback, 'success');
                 } else {
-                    this.showToast(data.message || 'Failed to reboot ONU.', 'error');
+                    this.showToast(data.message || this.i18n.rebootFailFallback, 'error');
                 }
             } catch (e) {
-                this.showToast('Network error while sending reboot command.', 'error');
+                this.showToast(this.i18n.rebootNetworkError, 'error');
             }
         },
 
@@ -1125,12 +1229,12 @@ function onuManager() {
                 });
                 const data = await response.json();
                 if (data.success) {
-                    this.showToast(data.message || 'Factory reset command sent successfully.', 'success');
+                    this.showToast(data.message || this.i18n.factoryResetSuccessFallback, 'success');
                 } else {
-                    this.showToast(data.message || 'Failed to send factory reset command.', 'error');
+                    this.showToast(data.message || this.i18n.factoryResetFailFallback, 'error');
                 }
             } catch (e) {
-                this.showToast('Network error while sending factory reset.', 'error');
+                this.showToast(this.i18n.factoryResetNetworkError, 'error');
             }
         },
 
@@ -1141,16 +1245,17 @@ function onuManager() {
             setTimeout(() => { this.toast.show = false; }, 3500);
         },
 
-        copyToClipboard(text, label = 'MAC address') {
+        copyToClipboard(text, label = null) {
             if (!text) return;
+            const displayLabel = label || this.i18n.macAddress;
             if (navigator.clipboard) {
                 navigator.clipboard.writeText(text).then(() => {
-                    this.showToast(`${label} copied to clipboard!`, 'success');
+                    this.showToast(this.i18n.copiedToClipboard.replace('__LABEL__', displayLabel), 'success');
                 }).catch(() => {
-                    this.showToast('Could not copy to clipboard.', 'error');
+                    this.showToast(this.i18n.copyError, 'error');
                 });
             } else {
-                this.showToast(`${label} copied!`, 'success');
+                this.showToast(this.i18n.copiedSimple.replace('__LABEL__', displayLabel), 'success');
             }
         },
 
@@ -1207,7 +1312,7 @@ function onuManager() {
                 const data = await response.json();
                 if (data.success) {
                     this.manageModal.onu = { ...this.manageModal.onu, ...this.manageModal.form };
-                    this.showToast(data.message || 'Configuration saved successfully.', 'success');
+                    this.showToast(data.message || this.i18n.configSavedFallback, 'success');
                     
                     const nameEl = document.getElementById(`onu-name-${this.manageModal.onu.id}`);
                     if (nameEl) nameEl.textContent = this.manageModal.form.name;
@@ -1215,10 +1320,10 @@ function onuManager() {
                     this.closeManageModal();
                     setTimeout(() => window.location.reload(), 600);
                 } else {
-                    this.showToast(data.message || 'Failed to save configuration.', 'error');
+                    this.showToast(data.message || this.i18n.configSaveFailFallback, 'error');
                 }
             } catch (e) {
-                this.showToast('Network error while saving configuration.', 'error');
+                this.showToast(this.i18n.configSaveNetworkError, 'error');
             } finally {
                 this.manageModal.saving = false;
             }
@@ -1250,23 +1355,23 @@ function onuManager() {
                     const rx = this.manageModal.onu.rx_power_dbm;
                     if (rx !== null && rx !== undefined) {
                         if (rx >= -20.0) {
-                            this.manageModal.onu.signal_label = 'Good';
+                            this.manageModal.onu.signal_label = this.i18n.signalGood;
                             this.manageModal.onu.signal_badge = 'bg-emerald-50 text-emerald-700 border-emerald-200';
                         } else if (rx >= -26.0 && rx < -20.0) {
-                            this.manageModal.onu.signal_label = 'Warning';
+                            this.manageModal.onu.signal_label = this.i18n.signalWarning;
                             this.manageModal.onu.signal_badge = 'bg-amber-50 text-amber-700 border-amber-200';
                         } else {
-                            this.manageModal.onu.signal_label = 'Critical';
+                            this.manageModal.onu.signal_label = this.i18n.signalCritical;
                             this.manageModal.onu.signal_badge = 'bg-rose-50 text-rose-700 border-rose-200';
                         }
                     }
 
-                    this.showToast('Live telemetry updated.', 'success');
+                    this.showToast(this.i18n.liveTelemetryUpdated, 'success');
                 } else {
-                    this.showToast(data.message || 'Could not fetch live telemetry from OLT.', 'info');
+                    this.showToast(data.message || this.i18n.fetchTelemetryFailFallback, 'info');
                 }
             } catch (e) {
-                this.showToast('Network error while refreshing telemetry.', 'error');
+                this.showToast(this.i18n.refreshTelemetryNetworkError, 'error');
             } finally {
                 this.manageModal.refreshingOptical = false;
             }
@@ -1277,17 +1382,17 @@ function onuManager() {
 
             if (typeof Swal !== 'undefined') {
                 Swal.fire({
-                    title: 'Synchronize All OLT Gateways?',
+                    title: this.i18n.syncTitle,
                     html: `
                         <div class="text-xs text-slate-600 mt-2 space-y-2 text-left">
-                            <p>This will connect directly to all registered OLT hardware devices across the network and:</p>
+                            <p>${this.escapeHtml(this.i18n.syncIntro)}</p>
                             <ul class="list-disc pl-5 space-y-1 text-slate-700 font-medium">
-                                <li>Discover &amp; synchronize all connected client ONUs / ONT terminals</li>
-                                <li>Fetch live optical Rx/Tx power (dBm), distance, and online status</li>
-                                <li>Automatically pair terminals with customer accounts and router MACs</li>
+                                <li>${this.escapeHtml(this.i18n.syncBullet1)}</li>
+                                <li>${this.escapeHtml(this.i18n.syncBullet2)}</li>
+                                <li>${this.escapeHtml(this.i18n.syncBullet3)}</li>
                             </ul>
                             <p class="text-[11px] text-cyan-700 font-semibold pt-1">
-                                <i class="fas fa-info-circle mr-1"></i> Multi-device hardware query may take 15 to 60 seconds depending on OLT response times.
+                                <i class="fas fa-info-circle mr-1"></i> ${this.escapeHtml(this.i18n.syncNote)}
                             </p>
                         </div>
                     `,
@@ -1295,8 +1400,8 @@ function onuManager() {
                     showCancelButton: true,
                     confirmButtonColor: '#0891b2',
                     cancelButtonColor: '#64748b',
-                    confirmButtonText: '<i class="fas fa-rotate mr-1.5"></i> Yes, Start Sync',
-                    cancelButtonText: 'Cancel',
+                    confirmButtonText: `<i class="fas fa-rotate mr-1.5"></i> ${this.escapeHtml(this.i18n.yesStartSync)}`,
+                    cancelButtonText: this.i18n.cancel,
                     reverseButtons: true,
                     customClass: {
                         popup: 'rounded-2xl shadow-2xl border border-slate-200 p-5',
@@ -1308,7 +1413,7 @@ function onuManager() {
                         this.executeSyncAllOlts();
                     }
                 });
-            } else if (confirm('Synchronize all active OLT hardware devices and auto-link customer terminals now?')) {
+            } else if (confirm(this.i18n.syncConfirmFallback)) {
                 this.executeSyncAllOlts();
             }
         },
@@ -1318,14 +1423,14 @@ function onuManager() {
 
             if (typeof Swal !== 'undefined') {
                 Swal.fire({
-                    title: 'Synchronizing OLT Hardware...',
+                    title: this.i18n.syncProgressTitle,
                     html: `
                         <div class="py-4 text-center space-y-3">
                             <div class="inline-block animate-spin text-cyan-600 text-3xl">
                                 <i class="fas fa-circle-notch"></i>
                             </div>
-                            <p class="text-xs text-slate-600 font-medium">Connecting to OLTs, pulling optical telemetry &amp; pairing client accounts...</p>
-                            <p class="text-[11px] text-slate-400">Please wait, do not close or reload this page.</p>
+                            <p class="text-xs text-slate-600 font-medium">${this.escapeHtml(this.i18n.syncProgressText)}</p>
+                            <p class="text-[11px] text-slate-400">${this.escapeHtml(this.i18n.pleaseWait)}</p>
                         </div>
                     `,
                     allowOutsideClick: false,
@@ -1336,7 +1441,7 @@ function onuManager() {
                     }
                 });
             } else {
-                this.showToast('Connecting to OLT hardware & pulling live ONU telemetry...', 'info');
+                this.showToast(this.i18n.syncToastConnecting, 'info');
             }
 
             try {
@@ -1353,28 +1458,28 @@ function onuManager() {
                     if (typeof Swal !== 'undefined') {
                         Swal.fire({
                             icon: 'success',
-                            title: 'Synchronization Complete!',
+                            title: this.i18n.syncCompleteTitle,
                             html: `
                                 <div class="text-xs text-slate-600 mt-2 text-left space-y-2 bg-slate-50 p-3 rounded-xl border border-slate-200">
-                                    <p class="font-semibold text-slate-800">${data.message}</p>
+                                    <p class="font-semibold text-slate-800">${this.escapeHtml(data.message)}</p>
                                     <div class="grid grid-cols-3 gap-2 pt-1 text-center font-mono">
                                         <div class="bg-white p-2 rounded-lg border border-slate-200 shadow-2xs">
-                                            <span class="text-[10px] text-slate-400 block font-sans">Total ONUs</span>
+                                            <span class="text-[10px] text-slate-400 block font-sans">${this.escapeHtml(this.i18n.totalOnus)}</span>
                                             <strong class="text-cyan-700 text-sm">${data.total_onus || 0}</strong>
                                         </div>
                                         <div class="bg-white p-2 rounded-lg border border-slate-200 shadow-2xs">
-                                            <span class="text-[10px] text-slate-400 block font-sans">Online</span>
+                                            <span class="text-[10px] text-slate-400 block font-sans">${this.escapeHtml(this.i18n.online)}</span>
                                             <strong class="text-emerald-600 text-sm">${data.online_onus || 0}</strong>
                                         </div>
                                         <div class="bg-white p-2 rounded-lg border border-slate-200 shadow-2xs">
-                                            <span class="text-[10px] text-slate-400 block font-sans">Linked Clients</span>
+                                            <span class="text-[10px] text-slate-400 block font-sans">${this.escapeHtml(this.i18n.linkedClients)}</span>
                                             <strong class="text-purple-600 text-sm">${data.linked_onus || 0}</strong>
                                         </div>
                                     </div>
                                 </div>
                             `,
                             confirmButtonColor: '#0891b2',
-                            confirmButtonText: '<i class="fas fa-check mr-1.5"></i> Done, Refresh View',
+                            confirmButtonText: `<i class="fas fa-check mr-1.5"></i> ${this.escapeHtml(this.i18n.doneRefreshView)}`,
                             customClass: {
                                 popup: 'rounded-2xl shadow-2xl border border-slate-200 p-5',
                                 confirmButton: 'px-4 py-2 rounded-xl text-xs font-semibold shadow-xs'
@@ -1390,8 +1495,8 @@ function onuManager() {
                     if (typeof Swal !== 'undefined') {
                         Swal.fire({
                             icon: 'error',
-                            title: 'Sync Encountered Problems',
-                            text: data.message || 'One or more OLTs could not be reached.',
+                            title: this.i18n.syncProblemsTitle,
+                            text: data.message || this.i18n.syncProblemsFallback,
                             confirmButtonColor: '#e11d48',
                             customClass: {
                                 popup: 'rounded-2xl shadow-2xl border border-slate-200 p-5',
@@ -1399,15 +1504,15 @@ function onuManager() {
                             }
                         });
                     } else {
-                        this.showToast(data.message || 'OLT synchronization encountered errors.', 'error');
+                        this.showToast(data.message || this.i18n.syncErrorsToast, 'error');
                     }
                 }
             } catch (err) {
                 if (typeof Swal !== 'undefined') {
                     Swal.fire({
                         icon: 'error',
-                        title: 'Communication Timeout',
-                        text: 'Network timeout or connection error while contacting OLT hardware.',
+                        title: this.i18n.commTimeoutTitle,
+                        text: this.i18n.commTimeoutText,
                         confirmButtonColor: '#e11d48',
                         customClass: {
                             popup: 'rounded-2xl shadow-2xl border border-slate-200 p-5',
@@ -1415,7 +1520,7 @@ function onuManager() {
                         }
                     });
                 } else {
-                    this.showToast('Network timeout or communication error with OLT devices.', 'error');
+                    this.showToast(this.i18n.commTimeoutToast, 'error');
                 }
             } finally {
                 this.syncingAll = false;
@@ -1427,14 +1532,14 @@ function onuManager() {
 
             if (typeof Swal !== 'undefined') {
                 Swal.fire({
-                    title: 'Auto-Link Client Accounts?',
+                    title: this.i18n.autoLinkTitle,
                     html: `
                         <div class="text-xs text-slate-600 mt-2 space-y-2 text-left">
-                            <p>This will evaluate all ONUs against registered customers and:</p>
+                            <p>${this.escapeHtml(this.i18n.autoLinkIntro)}</p>
                             <ul class="list-disc pl-5 space-y-1 text-slate-700 font-medium">
-                                <li>Match via Router MAC, Calling Station ID (MikroTik radacct), and ONU MAC</li>
-                                <li>Associate customers with their correct OLT &amp; PON port</li>
-                                <li>Assign actual customer names and area zones to each terminal</li>
+                                <li>${this.escapeHtml(this.i18n.autoLinkBullet1)}</li>
+                                <li>${this.escapeHtml(this.i18n.autoLinkBullet2)}</li>
+                                <li>${this.escapeHtml(this.i18n.autoLinkBullet3)}</li>
                             </ul>
                         </div>
                     `,
@@ -1442,8 +1547,8 @@ function onuManager() {
                     showCancelButton: true,
                     confirmButtonColor: '#0891b2',
                     cancelButtonColor: '#64748b',
-                    confirmButtonText: '<i class="fas fa-link mr-1.5"></i> Yes, Run Auto-Link',
-                    cancelButtonText: 'Cancel',
+                    confirmButtonText: `<i class="fas fa-link mr-1.5"></i> ${this.escapeHtml(this.i18n.yesRunAutoLink)}`,
+                    cancelButtonText: this.i18n.cancel,
                     reverseButtons: true,
                     customClass: {
                         popup: 'rounded-2xl shadow-2xl border border-slate-200 p-5',
@@ -1455,7 +1560,7 @@ function onuManager() {
                         this.executeAutoLinkClients();
                     }
                 });
-            } else if (confirm('Run customer-ONU auto-linking now?')) {
+            } else if (confirm(this.i18n.autoLinkConfirmFallback)) {
                 this.executeAutoLinkClients();
             }
         },
@@ -1465,13 +1570,13 @@ function onuManager() {
 
             if (typeof Swal !== 'undefined') {
                 Swal.fire({
-                    title: 'Pairing Customer Profiles...',
+                    title: this.i18n.pairingTitle,
                     html: `
                         <div class="py-4 text-center space-y-3">
                             <div class="inline-block animate-spin text-cyan-600 text-3xl">
                                 <i class="fas fa-circle-notch"></i>
                             </div>
-                            <p class="text-xs text-slate-600 font-medium">Evaluating router MACs, RADIUS sessions, and customer usernames...</p>
+                            <p class="text-xs text-slate-600 font-medium">${this.escapeHtml(this.i18n.pairingText)}</p>
                         </div>
                     `,
                     allowOutsideClick: false,
@@ -1482,7 +1587,7 @@ function onuManager() {
                     }
                 });
             } else {
-                this.showToast('Evaluating and pairing ONUs with customer profiles...', 'info');
+                this.showToast(this.i18n.pairingToast, 'info');
             }
 
             try {
@@ -1499,10 +1604,10 @@ function onuManager() {
                     if (typeof Swal !== 'undefined') {
                         Swal.fire({
                             icon: 'success',
-                            title: 'Auto-Link Completed!',
+                            title: this.i18n.autoLinkCompleteTitle,
                             text: data.message,
                             confirmButtonColor: '#0891b2',
-                            confirmButtonText: '<i class="fas fa-check mr-1.5"></i> Done, Refresh View',
+                            confirmButtonText: `<i class="fas fa-check mr-1.5"></i> ${this.escapeHtml(this.i18n.doneRefreshView)}`,
                             customClass: {
                                 popup: 'rounded-2xl shadow-2xl border border-slate-200 p-5',
                                 confirmButton: 'px-4 py-2 rounded-xl text-xs font-semibold shadow-xs'
@@ -1518,24 +1623,24 @@ function onuManager() {
                     if (typeof Swal !== 'undefined') {
                         Swal.fire({
                             icon: 'error',
-                            title: 'Auto-Link Failed',
-                            text: data.message || 'Auto-linking encountered an error.',
+                            title: this.i18n.autoLinkFailedTitle,
+                            text: data.message || this.i18n.autoLinkFailedText,
                             confirmButtonColor: '#e11d48'
                         });
                     } else {
-                        this.showToast(data.message || 'Auto-linking failed.', 'error');
+                        this.showToast(data.message || this.i18n.autoLinkFailedToast, 'error');
                     }
                 }
             } catch (err) {
                 if (typeof Swal !== 'undefined') {
                     Swal.fire({
                         icon: 'error',
-                        title: 'Network Error',
-                        text: 'An error occurred while communicating with the server.',
+                        title: this.i18n.networkErrorTitle,
+                        text: this.i18n.networkErrorText,
                         confirmButtonColor: '#e11d48'
                     });
                 } else {
-                    this.showToast('Network error while running customer pairing.', 'error');
+                    this.showToast(this.i18n.pairingNetworkErrorToast, 'error');
                 }
             } finally {
                 this.linkingClients = false;
@@ -1545,7 +1650,12 @@ function onuManager() {
         async quickPollOptical(onu) {
             if (!onu) return;
             this.activeMenuOnu = null;
-            this.showToast(`Querying OLT for ${onu.pon_port}:#${onu.onu_id} optical telemetry...`, 'info');
+            this.showToast(
+                this.i18n.queryingOpticalToast
+                    .replace('__PORT__', onu.pon_port)
+                    .replace('__ID__', onu.onu_id),
+                'info'
+            );
 
             try {
                 const response = await fetch(`/admin/network/onu/${onu.id}/optical`, {
@@ -1557,15 +1667,15 @@ function onuManager() {
                 });
                 const data = await response.json();
                 if (data.success) {
-                    this.showToast('Optical telemetry updated directly from OLT.', 'success');
+                    this.showToast(this.i18n.opticalUpdatedToast, 'success');
                     setTimeout(() => {
                         window.location.reload();
                     }, 800);
                 } else {
-                    this.showToast(data.message || 'Could not fetch live telemetry from OLT.', 'error');
+                    this.showToast(data.message || this.i18n.fetchTelemetryFailFallback, 'error');
                 }
             } catch (err) {
-                this.showToast('Error communicating with OLT gateway.', 'error');
+                this.showToast(this.i18n.oltCommErrorToast, 'error');
             }
         }
     };

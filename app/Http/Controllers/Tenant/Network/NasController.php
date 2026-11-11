@@ -34,7 +34,7 @@ class NasController extends Controller
             $tenant = \App\Models\Tenant::first();
         }
         if (!$tenant) {
-            abort(404, 'ISP Tenant record not found.');
+            abort(404, __('ISP Tenant record not found.'));
         }
         return $tenant;
     }
@@ -203,7 +203,7 @@ class NasController extends Controller
         $this->radiusService->syncNasClients($tenant);
 
         return redirect()->route('tenant.network.nas')
-            ->with('success', "RADIUS NAS Client '{$nas->shortname}' ({$nas->nasname}) registered successfully.");
+            ->with('success', __("RADIUS NAS Client ':name' (:ip) registered successfully.", ['name' => $nas->shortname, 'ip' => $nas->nasname]));
     }
 
     /**
@@ -279,7 +279,7 @@ class NasController extends Controller
         $this->radiusService->syncNasClients($tenant);
 
         return redirect()->route('tenant.network.nas')
-            ->with('success', "NAS Client '{$nas->shortname}' updated successfully.");
+            ->with('success', __("NAS Client ':name' updated successfully.", ['name' => $nas->shortname]));
     }
 
     /**
@@ -294,7 +294,7 @@ class NasController extends Controller
         $this->radiusService->syncNasClients($tenant);
 
         return redirect()->route('tenant.network.nas')
-            ->with('success', "NAS Client '{$name}' removed from RADIUS database.");
+            ->with('success', __("NAS Client ':name' removed from RADIUS database.", ['name' => $name]));
     }
 
     /**
@@ -308,17 +308,23 @@ class NasController extends Controller
         $nas->save();
         $this->radiusService->syncNasClients($tenant);
 
-        $stateText = $nas->is_active ? 'enabled' : 'disabled';
+        $jsonMessage = $nas->is_active
+            ? __("NAS ':name' is now enabled.", ['name' => $nas->shortname])
+            : __("NAS ':name' is now disabled.", ['name' => $nas->shortname]);
 
         if ($request->wantsJson() || $request->ajax() || $request->expectsJson() || $request->isJson() || str_contains($request->header('Accept', ''), 'json')) {
             return response()->json([
                 'success' => true,
                 'is_active' => $nas->is_active,
-                'message' => "NAS '{$nas->shortname}' is now {$stateText}.",
+                'message' => $jsonMessage,
             ]);
         }
 
-        return back()->with('success', "NAS Client '{$nas->shortname}' has been {$stateText} successfully.");
+        $flashMessage = $nas->is_active
+            ? __("NAS Client ':name' has been enabled successfully.", ['name' => $nas->shortname])
+            : __("NAS Client ':name' has been disabled successfully.", ['name' => $nas->shortname]);
+
+        return back()->with('success', $flashMessage);
     }
 
     /**
@@ -335,7 +341,7 @@ class NasController extends Controller
         if (!$isPortValid || !$hasSecret) {
             return response()->json([
                 'success' => false,
-                'message' => 'CoA test failed: Invalid CoA port or missing RADIUS shared secret.',
+                'message' => __('CoA test failed: Invalid CoA port or missing RADIUS shared secret.'),
             ], 422);
         }
 
@@ -347,7 +353,9 @@ class NasController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => "RFC 3576 CoA endpoint verified on {$nas->nasname}:{$nas->coa_port} (Secret confirmed).",
+            'message' => __('RFC 3576 CoA endpoint verified on :endpoint (Secret confirmed).', [
+                'endpoint' => "{$nas->nasname}:{$nas->coa_port}",
+            ]),
         ]);
     }
 

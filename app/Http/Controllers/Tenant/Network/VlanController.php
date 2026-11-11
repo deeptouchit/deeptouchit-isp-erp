@@ -27,7 +27,7 @@ class VlanController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            abort(404, 'ISP Tenant record not found.');
+            abort(404, __('ISP Tenant record not found.'));
         }
 
         $routers = TenantRouter::where('tenant_id', $tenant->id)->get(['id', 'name', 'ip_address']);
@@ -148,7 +148,7 @@ class VlanController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            abort(404, 'ISP Tenant record not found.');
+            abort(404, __('ISP Tenant record not found.'));
         }
 
         $routers = TenantRouter::where('tenant_id', $tenant->id)->get(['id', 'name', 'ip_address']);
@@ -164,7 +164,7 @@ class VlanController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            abort(404, 'ISP Tenant record not found.');
+            abort(404, __('ISP Tenant record not found.'));
         }
 
         $vlan = TenantVlan::where('tenant_id', $tenant->id)->with(['router', 'olt'])->findOrFail($id);
@@ -181,7 +181,7 @@ class VlanController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+            return response()->json(['success' => false, 'message' => __('Unauthorized')], 401);
         }
 
         $validated = $request->validate([
@@ -237,14 +237,18 @@ class VlanController extends Controller
         }
 
         if ($request->wantsJson() || $request->ajax()) {
+            $message = $vlan->is_sync_mikrotik
+                ? __("VLAN ':name' (ID: :vlan_id) created successfully and synced to MikroTik.", ['name' => $vlan->name, 'vlan_id' => $vlan->vlan_id])
+                : __("VLAN ':name' (ID: :vlan_id) created successfully.", ['name' => $vlan->name, 'vlan_id' => $vlan->vlan_id]);
+
             return response()->json([
                 'success' => true,
-                'message' => "VLAN '{$vlan->name}' (ID: {$vlan->vlan_id}) created successfully." . ($vlan->is_sync_mikrotik ? ' Synced to MikroTik.' : ''),
+                'message' => $message,
                 'vlan' => $vlan->fresh()->load(['router', 'olt']),
             ]);
         }
 
-        return redirect()->route('tenant.network.vlans')->with('success', "VLAN '{$vlan->name}' created successfully.");
+        return redirect()->route('tenant.network.vlans')->with('success', __("VLAN ':name' created successfully.", ['name' => $vlan->name]));
     }
 
     /**
@@ -254,7 +258,7 @@ class VlanController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+            return response()->json(['success' => false, 'message' => __('Unauthorized')], 401);
         }
 
         $vlan = TenantVlan::where('tenant_id', $tenant->id)->with(['router', 'olt'])->findOrFail($id);
@@ -272,7 +276,7 @@ class VlanController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+            return response()->json(['success' => false, 'message' => __('Unauthorized')], 401);
         }
 
         $vlan = TenantVlan::where('tenant_id', $tenant->id)->findOrFail($id);
@@ -331,12 +335,12 @@ class VlanController extends Controller
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
                 'success' => true,
-                'message' => "VLAN '{$vlan->name}' (ID: {$vlan->vlan_id}) updated successfully.",
+                'message' => __("VLAN ':name' (ID: :vlan_id) updated successfully.", ['name' => $vlan->name, 'vlan_id' => $vlan->vlan_id]),
                 'vlan' => $vlan->fresh()->load(['router', 'olt']),
             ]);
         }
 
-        return redirect()->route('tenant.network.vlans')->with('success', "VLAN '{$vlan->name}' updated successfully.");
+        return redirect()->route('tenant.network.vlans')->with('success', __("VLAN ':name' updated successfully.", ['name' => $vlan->name]));
     }
 
     /**
@@ -346,7 +350,7 @@ class VlanController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+            return response()->json(['success' => false, 'message' => __('Unauthorized')], 401);
         }
 
         $vlan = TenantVlan::where('tenant_id', $tenant->id)->with('router')->findOrFail($id);
@@ -366,11 +370,11 @@ class VlanController extends Controller
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
                 'success' => true,
-                'message' => "VLAN '{$name}' deleted successfully.",
+                'message' => __("VLAN ':name' deleted successfully.", ['name' => $name]),
             ]);
         }
 
-        return redirect()->route('tenant.network.vlans')->with('success', "VLAN '{$name}' deleted successfully.");
+        return redirect()->route('tenant.network.vlans')->with('success', __("VLAN ':name' deleted successfully.", ['name' => $name]));
     }
 
     /**
@@ -380,7 +384,7 @@ class VlanController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+            return response()->json(['success' => false, 'message' => __('Unauthorized')], 401);
         }
 
         $vlan = TenantVlan::where('tenant_id', $tenant->id)->with('router')->findOrFail($id);
@@ -399,15 +403,19 @@ class VlanController extends Controller
             );
         }
 
+        $statusMessage = $newStatus === 'active'
+            ? __("VLAN ':name' status changed to active.", ['name' => $vlan->name])
+            : __("VLAN ':name' status changed to disabled.", ['name' => $vlan->name]);
+
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
                 'success' => true,
-                'message' => "VLAN '{$vlan->name}' status changed to {$newStatus}.",
+                'message' => $statusMessage,
                 'status' => $newStatus,
             ]);
         }
 
-        return redirect()->route('tenant.network.vlans')->with('success', "VLAN status updated.");
+        return redirect()->route('tenant.network.vlans')->with('success', __('VLAN status updated.'));
     }
 
     /**
@@ -417,7 +425,7 @@ class VlanController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+            return response()->json(['success' => false, 'message' => __('Unauthorized')], 401);
         }
 
         $vlan = TenantVlan::where('tenant_id', $tenant->id)->with('router')->findOrFail($id);
@@ -425,7 +433,7 @@ class VlanController extends Controller
         if (!$vlan->router) {
             return response()->json([
                 'success' => false,
-                'message' => 'No MikroTik router is assigned to this VLAN. Please edit the VLAN and select a Router.',
+                'message' => __('No MikroTik router is assigned to this VLAN. Please edit the VLAN and select a Router.'),
             ], 422);
         }
 
@@ -451,7 +459,7 @@ class VlanController extends Controller
 
         return response()->json([
             'success' => false,
-            'message' => $result['message'] ?? 'Failed to communicate with MikroTik router.',
+            'message' => $result['message'] ?? __('Failed to communicate with MikroTik router.'),
         ], 500);
     }
 
@@ -462,7 +470,7 @@ class VlanController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+            return response()->json(['success' => false, 'message' => __('Unauthorized')], 401);
         }
 
         $validated = $request->validate([
@@ -475,7 +483,7 @@ class VlanController extends Controller
         if (!$res['success']) {
             return response()->json([
                 'success' => false,
-                'message' => $res['message'] ?? 'Failed to pull VLANs from MikroTik router.',
+                'message' => $res['message'] ?? __('Failed to pull VLANs from MikroTik router.'),
             ], 500);
         }
 
@@ -539,7 +547,11 @@ class VlanController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => "Successfully synchronized with MikroTik ({$router->name}): {$imported} new VLANs imported, {$updated} existing VLANs updated.",
+            'message' => __('Successfully synchronized with MikroTik (:router): :imported new VLANs imported, :updated existing VLANs updated.', [
+                'router' => $router->name,
+                'imported' => $imported,
+                'updated' => $updated,
+            ]),
             'imported_count' => $imported,
             'updated_count' => $updated,
             'total_from_mikrotik' => count($res['vlans']),

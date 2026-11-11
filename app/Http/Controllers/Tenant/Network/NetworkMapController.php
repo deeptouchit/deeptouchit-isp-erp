@@ -18,7 +18,7 @@ class NetworkMapController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            abort(404, 'ISP Tenant record not found.');
+            abort(404, __('ISP Tenant record not found.'));
         }
 
         $selectedRouterId = $request->input('router_id');
@@ -156,7 +156,7 @@ class NetworkMapController extends Controller
                         'onus' => $portOnus->map(function ($onu) {
                             return [
                                 'id' => $onu->id,
-                                'name' => $onu->name ?: ($onu->model ?: "ONU #{$onu->onu_id}"),
+                                'name' => $onu->name ?: ($onu->model ?: __('ONU #:id', ['id' => $onu->onu_id])),
                                 'desc' => $onu->desc,
                                 'mac_address' => $onu->mac_address,
                                 'vendor' => $onu->vendor,
@@ -239,12 +239,12 @@ class NetworkMapController extends Controller
             if (!empty($standaloneOltNodes)) {
                 $topology[] = [
                     'id' => 0,
-                    'name' => 'Standalone Distribution Hub',
-                    'model' => 'Distribution Network',
+                    'name' => __('Standalone Distribution Hub'),
+                    'model' => __('Distribution Network'),
                     'ip_address' => '10.0.0.0/8',
                     'status' => 'online',
                     'cpu_load' => 5,
-                    'uptime' => 'Active',
+                    'uptime' => __('Active'),
                     'olts' => $standaloneOltNodes,
                 ];
             }

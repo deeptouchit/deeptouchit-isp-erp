@@ -1,6 +1,6 @@
 @extends('tenant.layouts.app')
 
-@section('title', 'Edit Route: ' . $route->dst_address . ' - ' . ($tenant->company_name ?? $tenant->name))
+@section('title', __('Edit Route') . ': ' . $route->dst_address . ' - ' . ($tenant->company_name ?? $tenant->name))
 
 @push('styles')
     {{-- Page-specific CSS --}}
@@ -16,13 +16,13 @@
                 <i class="fas fa-route"></i>
             </div>
             <div class="flex items-center gap-2">
-                <h1 class="text-xs font-bold text-slate-800 tracking-tight">Edit Route: {{ $route->dst_address }}</h1>
+                <h1 class="text-xs font-bold text-slate-800 tracking-tight">{{ __('Edit Route') }}: {{ $route->dst_address }}</h1>
                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-cyan-50 text-cyan-700 border border-cyan-200">
-                    via {{ $route->gateway }}
+                    {{ __('via :gateway', ['gateway' => $route->gateway]) }}
                 </span>
                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold {{ $route->status === 'active' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-600 border border-slate-200' }}">
                     <span class="w-1.5 h-1.5 rounded-full {{ $route->status === 'active' ? 'bg-emerald-500' : 'bg-slate-400' }}"></span>
-                    <span>{{ ucfirst($route->status) }}</span>
+                    <span>{{ $route->status === 'active' ? __('Active') : __('Disabled') }}</span>
                 </span>
             </div>
         </div>
@@ -31,7 +31,7 @@
             <a href="{{ route('tenant.network.routing') }}" 
                class="h-[34px] px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200/80 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-arrow-left text-[11px]"></i>
-                <span>Back to Routing</span>
+                <span>{{ __('Back to Routing') }}</span>
             </a>
         </div>
     </div>
@@ -41,7 +41,7 @@
         <div class="bg-rose-50 border border-rose-200 rounded-xl p-3 text-xs text-rose-800">
             <div class="flex items-center gap-2 font-semibold mb-1 text-rose-900">
                 <i class="fas fa-triangle-exclamation text-rose-600"></i>
-                <span>Please correct the errors below:</span>
+                <span>{{ __('Please correct the errors below:') }}</span>
             </div>
             <ul class="list-disc list-inside space-y-0.5 text-[11px] text-rose-700">
                 @foreach($errors->all() as $error)
@@ -61,9 +61,9 @@
             <div class="space-y-3">
                 <div class="flex items-center justify-between border-b border-slate-100 pb-2">
                     <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-                        1. Target &amp; Gateway Addressing
+                        {{ __('1. Target & Gateway Addressing') }}
                     </span>
-                    <span class="text-[10.5px] text-slate-400">Destination network prefix, next-hop IP or interface gateway</span>
+                    <span class="text-[10.5px] text-slate-400">{{ __('Destination network prefix, next-hop IP or interface gateway') }}</span>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
@@ -71,39 +71,39 @@
                     <div class="sm:col-span-2">
                         <div class="flex items-center justify-between mb-1">
                             <label class="block text-[11px] font-medium text-slate-700">
-                                Dst. Address (Network Prefix) <span class="text-rose-500">*</span>
+                                {{ __('Dst. Address (Network Prefix)') }} <span class="text-rose-500">*</span>
                             </label>
                             <button type="button" 
                                     @click="dstAddress = '0.0.0.0/0'" 
                                     class="text-[10px] text-cyan-600 hover:text-cyan-800 font-medium cursor-pointer">
-                                Set Default (0.0.0.0/0)
+                                {{ __('Set Default (0.0.0.0/0)') }}
                             </button>
                         </div>
                         <input type="text" 
                                name="dst_address" 
                                x-model="dstAddress" 
                                required 
-                               placeholder="e.g. 0.0.0.0/0 or 10.50.0.0/16" 
+                               placeholder="{{ __('e.g. 0.0.0.0/0 or 10.50.0.0/16') }}" 
                                class="w-full h-[34px] px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                     </div>
 
                     <!-- Next-Hop Gateway -->
                     <div class="sm:col-span-2">
                         <label class="block text-[11px] font-medium text-slate-700 mb-1">
-                            Gateway (IP or Interface) <span class="text-rose-500">*</span>
+                            {{ __('Gateway (IP or Interface)') }} <span class="text-rose-500">*</span>
                         </label>
                         <input type="text" 
                                name="gateway" 
                                value="{{ old('gateway', $route->gateway) }}" 
                                required 
-                               placeholder="e.g. 192.168.1.1, 10.0.0.1 or sfp-sfpplus1" 
+                               placeholder="{{ __('e.g. 192.168.1.1, 10.0.0.1 or sfp-sfpplus1') }}" 
                                class="w-full h-[34px] px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                     </div>
 
                     <!-- Distance -->
                     <div>
                         <label class="block text-[11px] font-medium text-slate-700 mb-1">
-                            Distance (Metric) <span class="text-rose-500">*</span>
+                            {{ __('Distance (Metric)') }} <span class="text-rose-500">*</span>
                         </label>
                         <input type="number" 
                                name="distance" 
@@ -118,22 +118,22 @@
                     <!-- Route Type -->
                     <div>
                         <label class="block text-[11px] font-medium text-slate-700 mb-1">
-                            Route Type <span class="text-rose-500">*</span>
+                            {{ __('Route Type') }} <span class="text-rose-500">*</span>
                         </label>
                         <select name="type" 
                                 class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                            <option value="static" {{ old('type', $route->type) === 'static' ? 'selected' : '' }}>Static Gateway</option>
-                            <option value="bgp" {{ old('type', $route->type) === 'bgp' ? 'selected' : '' }}>BGP Dynamic</option>
-                            <option value="ospf" {{ old('type', $route->type) === 'ospf' ? 'selected' : '' }}>OSPF Internal</option>
-                            <option value="connected" {{ old('type', $route->type) === 'connected' ? 'selected' : '' }}>Connected (DAC)</option>
-                            <option value="blackhole" {{ old('type', $route->type) === 'blackhole' ? 'selected' : '' }}>Blackhole (Null0)</option>
+                            <option value="static" {{ old('type', $route->type) === 'static' ? 'selected' : '' }}>{{ __('Static Gateway') }}</option>
+                            <option value="bgp" {{ old('type', $route->type) === 'bgp' ? 'selected' : '' }}>{{ __('BGP Dynamic') }}</option>
+                            <option value="ospf" {{ old('type', $route->type) === 'ospf' ? 'selected' : '' }}>{{ __('OSPF Internal') }}</option>
+                            <option value="connected" {{ old('type', $route->type) === 'connected' ? 'selected' : '' }}>{{ __('Connected (DAC)') }}</option>
+                            <option value="blackhole" {{ old('type', $route->type) === 'blackhole' ? 'selected' : '' }}>{{ __('Blackhole (Null0)') }}</option>
                         </select>
                     </div>
 
                     <!-- Routing Table -->
                     <div>
                         <label class="block text-[11px] font-medium text-slate-700 mb-1">
-                            Routing Table <span class="text-rose-500">*</span>
+                            {{ __('Routing Table') }} <span class="text-rose-500">*</span>
                         </label>
                         <input type="text" 
                                name="routing_table" 
@@ -146,12 +146,12 @@
                     <!-- Status -->
                     <div>
                         <label class="block text-[11px] font-medium text-slate-700 mb-1">
-                            Status <span class="text-rose-500">*</span>
+                            {{ __('Status') }} <span class="text-rose-500">*</span>
                         </label>
                         <select name="status" 
                                 class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                            <option value="active" {{ old('status', $route->status) === 'active' ? 'selected' : '' }}>Active</option>
-                            <option value="disabled" {{ old('status', $route->status) === 'disabled' ? 'selected' : '' }}>Disabled</option>
+                            <option value="active" {{ old('status', $route->status) === 'active' ? 'selected' : '' }}>{{ __('Active') }}</option>
+                            <option value="disabled" {{ old('status', $route->status) === 'disabled' ? 'selected' : '' }}>{{ __('Disabled') }}</option>
                         </select>
                     </div>
                 </div>
@@ -161,20 +161,20 @@
             <div class="space-y-3 pt-2">
                 <div class="flex items-center justify-between border-t border-slate-100 pt-3">
                     <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-                        2. Router Association &amp; Scope
+                        {{ __('2. Router Association & Scope') }}
                     </span>
-                    <span class="text-[10.5px] text-slate-400">Target core hardware router in fleet</span>
+                    <span class="text-[10.5px] text-slate-400">{{ __('Target core hardware router in fleet') }}</span>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <!-- Associated Router -->
                     <div>
                         <label class="block text-[11px] font-medium text-slate-700 mb-1">
-                            Associated Router
+                            {{ __('Associated Router') }}
                         </label>
                         <select name="router_id" 
                                 class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                            <option value="">-- Standalone (No Router Link) --</option>
+                            <option value="">{{ __('-- Standalone (No Router Link) --') }}</option>
                             @foreach($routers as $r)
                                 <option value="{{ $r->id }}" {{ (string)old('router_id', $route->router_id) === (string)$r->id ? 'selected' : '' }}>
                                     {{ $r->name }} ({{ $r->ip_address }})
@@ -186,12 +186,12 @@
                     <!-- Comment / Description -->
                     <div>
                         <label class="block text-[11px] font-medium text-slate-700 mb-1">
-                            Comment / Description (MikroTik Route Comment)
+                            {{ __('Comment / Description (MikroTik Route Comment)') }}
                         </label>
                         <input type="text" 
                                name="description" 
                                value="{{ old('description', $route->description) }}" 
-                               placeholder="e.g. Primary default gateway route via Telco upstream" 
+                               placeholder="{{ __('e.g. Primary default gateway route via Telco upstream') }}" 
                                class="w-full h-[34px] px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                     </div>
                 </div>
@@ -201,7 +201,7 @@
             <div class="space-y-3 pt-2">
                 <div class="flex items-center justify-between border-t border-slate-100 pt-3">
                     <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-                        3. MikroTik Router Synchronization
+                        {{ __('3. MikroTik Router Synchronization') }}
                     </span>
                 </div>
 
@@ -209,10 +209,10 @@
                 <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/80 flex items-center justify-between">
                     <div>
                         <label for="is_sync_mikrotik" class="text-xs font-semibold text-slate-800 cursor-pointer block">
-                            Push Route to Associated MikroTik Router
+                            {{ __('Push Route to Associated MikroTik Router') }}
                         </label>
                         <p class="text-[11px] text-slate-500">
-                            When enabled and a router is selected, changes to this routing record will immediately be synced to <code class="font-mono text-purple-700 bg-purple-50 px-1 py-0.5 rounded">/ip/route</code> via RouterOS API.
+                            {!! __('When enabled and a router is selected, changes to this routing record will immediately be synced to :code via RouterOS API.', ['code' => '<code class="font-mono text-purple-700 bg-purple-50 px-1 py-0.5 rounded">/ip/route</code>']) !!}
                         </p>
                     </div>
                     <div class="flex items-center">
@@ -230,12 +230,12 @@
             <div class="pt-3 border-t border-slate-200 flex items-center justify-end gap-2">
                 <a href="{{ route('tenant.network.routing') }}" 
                    class="h-[34px] px-4 border border-slate-300 hover:bg-slate-100 text-slate-700 font-semibold text-xs rounded-lg transition flex items-center justify-center cursor-pointer">
-                    Cancel
+                    {{ __('Cancel') }}
                 </a>
                 <button type="submit" 
                         class="h-[34px] px-5 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                     <i class="fas fa-check text-[10px]"></i>
-                    <span>Save Changes</span>
+                    <span>{{ __('Save Changes') }}</span>
                 </button>
             </div>
         </form>
@@ -247,7 +247,7 @@
 <script>
 function routeEditManager() {
     return {
-        dstAddress: '{{ old('dst_address', $route->dst_address) }}'
+        dstAddress: @js(old('dst_address', $route->dst_address))
     };
 }
 </script>

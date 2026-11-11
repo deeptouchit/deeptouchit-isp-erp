@@ -26,7 +26,7 @@ class RoutingController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            abort(404, 'ISP Tenant record not found.');
+            abort(404, __('ISP Tenant record not found.'));
         }
 
         $routers = TenantRouter::where('tenant_id', $tenant->id)->get(['id', 'name', 'ip_address']);
@@ -139,7 +139,7 @@ class RoutingController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            abort(404, 'ISP Tenant record not found.');
+            abort(404, __('ISP Tenant record not found.'));
         }
 
         $routers = TenantRouter::where('tenant_id', $tenant->id)->get(['id', 'name', 'ip_address']);
@@ -154,7 +154,7 @@ class RoutingController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            abort(404, 'ISP Tenant record not found.');
+            abort(404, __('ISP Tenant record not found.'));
         }
 
         $route = TenantRoute::where('tenant_id', $tenant->id)->with('router')->findOrFail($id);
@@ -170,7 +170,7 @@ class RoutingController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+            return response()->json(['success' => false, 'message' => __('Unauthorized')], 401);
         }
 
         $validated = $request->validate([
@@ -222,14 +222,18 @@ class RoutingController extends Controller
         }
 
         if ($request->wantsJson() || $request->ajax()) {
+            $message = $route->is_sync_mikrotik
+                ? __("Route ':dst' via :gateway created successfully and synced to MikroTik.", ['dst' => $route->dst_address, 'gateway' => $route->gateway])
+                : __("Route ':dst' via :gateway created successfully.", ['dst' => $route->dst_address, 'gateway' => $route->gateway]);
+
             return response()->json([
                 'success' => true,
-                'message' => "Route '{$route->dst_address}' via {$route->gateway} created successfully." . ($route->is_sync_mikrotik ? ' Synced to MikroTik.' : ''),
+                'message' => $message,
                 'route' => $route->fresh()->load('router'),
             ]);
         }
 
-        return redirect()->route('tenant.network.routing')->with('success', "Route '{$route->dst_address}' created successfully.");
+        return redirect()->route('tenant.network.routing')->with('success', __("Route ':dst' created successfully.", ['dst' => $route->dst_address]));
     }
 
     /**
@@ -239,7 +243,7 @@ class RoutingController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+            return response()->json(['success' => false, 'message' => __('Unauthorized')], 401);
         }
 
         $route = TenantRoute::where('tenant_id', $tenant->id)->with('router')->findOrFail($id);
@@ -257,7 +261,7 @@ class RoutingController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+            return response()->json(['success' => false, 'message' => __('Unauthorized')], 401);
         }
 
         $route = TenantRoute::where('tenant_id', $tenant->id)->findOrFail($id);
@@ -286,7 +290,7 @@ class RoutingController extends Controller
             'is_sync_mikrotik' => (bool) ($validated['is_sync_mikrotik'] ?? $route->is_sync_mikrotik),
         ]);
 
-        $mikrotikMsg = '';
+        $message = __("Route ':dst' updated successfully.", ['dst' => $route->dst_address]);
         // Push update to MikroTik if synced
         if ($route->is_sync_mikrotik && $route->router_id) {
             try {
@@ -302,27 +306,33 @@ class RoutingController extends Controller
                         $route->status === 'disabled'
                     );
                     if ($syncRes['success']) {
-                        $mikrotikMsg = ' Synced to MikroTik.';
+                        $message = __("Route ':dst' updated successfully and synced to MikroTik.", ['dst' => $route->dst_address]);
                     } else {
                         Log::warning("Failed to update Route {$route->dst_address} on MikroTik: " . ($syncRes['message'] ?? ''));
-                        $mikrotikMsg = ' (MikroTik sync warning: ' . ($syncRes['message'] ?? 'could not reach router') . ')';
+                        $message = __("Route ':dst' updated successfully (MikroTik sync warning: :warning).", [
+                            'dst' => $route->dst_address,
+                            'warning' => $syncRes['message'] ?? __('could not reach router'),
+                        ]);
                     }
                 }
             } catch (\Throwable $e) {
                 Log::warning("Exception updating Route {$route->dst_address} on MikroTik: " . $e->getMessage());
-                $mikrotikMsg = ' (MikroTik sync error: ' . $e->getMessage() . ')';
+                $message = __("Route ':dst' updated successfully (MikroTik sync error: :error).", [
+                    'dst' => $route->dst_address,
+                    'error' => $e->getMessage(),
+                ]);
             }
         }
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
                 'success' => true,
-                'message' => "Route '{$route->dst_address}' updated successfully." . $mikrotikMsg,
+                'message' => $message,
                 'route' => $route->fresh()->load('router'),
             ]);
         }
 
-        return redirect()->route('tenant.network.routing')->with('success', "Route '{$route->dst_address}' updated successfully." . $mikrotikMsg);
+        return redirect()->route('tenant.network.routing')->with('success', $message);
     }
 
     /**
@@ -332,7 +342,7 @@ class RoutingController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+            return response()->json(['success' => false, 'message' => __('Unauthorized')], 401);
         }
 
         $route = TenantRoute::where('tenant_id', $tenant->id)->with('router')->findOrFail($id);
@@ -352,11 +362,11 @@ class RoutingController extends Controller
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
                 'success' => true,
-                'message' => "Route '{$dst}' deleted successfully.",
+                'message' => __("Route ':dst' deleted successfully.", ['dst' => $dst]),
             ]);
         }
 
-        return redirect()->route('tenant.network.routing')->with('success', "Route '{$dst}' deleted successfully.");
+        return redirect()->route('tenant.network.routing')->with('success', __("Route ':dst' deleted successfully.", ['dst' => $dst]));
     }
 
     /**
@@ -366,7 +376,7 @@ class RoutingController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+            return response()->json(['success' => false, 'message' => __('Unauthorized')], 401);
         }
 
         $route = TenantRoute::where('tenant_id', $tenant->id)->with('router')->findOrFail($id);
@@ -389,15 +399,19 @@ class RoutingController extends Controller
             }
         }
 
+        $statusMessage = $newStatus === 'active'
+            ? __("Route ':dst' status changed to active.", ['dst' => $route->dst_address])
+            : __("Route ':dst' status changed to disabled.", ['dst' => $route->dst_address]);
+
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
                 'success' => true,
-                'message' => "Route '{$route->dst_address}' status changed to {$newStatus}.",
+                'message' => $statusMessage,
                 'status' => $newStatus,
             ]);
         }
 
-        return redirect()->route('tenant.network.routing')->with('success', "Route status updated.");
+        return redirect()->route('tenant.network.routing')->with('success', __('Route status updated.'));
     }
 
     /**
@@ -407,7 +421,7 @@ class RoutingController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+            return response()->json(['success' => false, 'message' => __('Unauthorized')], 401);
         }
 
         $route = TenantRoute::where('tenant_id', $tenant->id)->with('router')->findOrFail($id);
@@ -415,7 +429,7 @@ class RoutingController extends Controller
         if (!$route->router) {
             return response()->json([
                 'success' => false,
-                'message' => 'No MikroTik router is assigned to this Route. Please edit the route and select a Router.',
+                'message' => __('No MikroTik router is assigned to this Route. Please edit the route and select a Router.'),
             ], 422);
         }
 
@@ -441,7 +455,7 @@ class RoutingController extends Controller
 
         return response()->json([
             'success' => false,
-            'message' => $result['message'] ?? 'Failed to communicate with MikroTik router.',
+            'message' => $result['message'] ?? __('Failed to communicate with MikroTik router.'),
         ], 500);
     }
 
@@ -452,7 +466,7 @@ class RoutingController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+            return response()->json(['success' => false, 'message' => __('Unauthorized')], 401);
         }
 
         $validated = $request->validate([
@@ -465,7 +479,7 @@ class RoutingController extends Controller
         if (!$res['success']) {
             return response()->json([
                 'success' => false,
-                'message' => $res['message'] ?? 'Failed to pull Routes from MikroTik router.',
+                'message' => $res['message'] ?? __('Failed to pull Routes from MikroTik router.'),
             ], 500);
         }
 
@@ -522,7 +536,11 @@ class RoutingController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => "Successfully synchronized with MikroTik ({$router->name}): {$imported} new Routes imported, {$updated} existing Routes updated.",
+            'message' => __('Successfully synchronized with MikroTik (:router): :imported new Routes imported, :updated existing Routes updated.', [
+                'router' => $router->name,
+                'imported' => $imported,
+                'updated' => $updated,
+            ]),
             'imported_count' => $imported,
             'updated_count' => $updated,
             'total_from_mikrotik' => count($res['routes']),

@@ -1,6 +1,6 @@
 @extends('tenant.layouts.app')
 
-@section('title', 'MikroTik Gateways & Routers - ' . ($tenant->company_name ?? $tenant->name))
+@section('title', __('MikroTik Gateways & Routers') . ' - ' . ($tenant->company_name ?? $tenant->name))
 
 @push('styles')
     {{-- Page Specific Styles --}}
@@ -74,12 +74,12 @@
                 <i class="fas fa-server"></i>
             </div>
             <div class="flex items-center gap-2">
-                <h1 class="text-xs font-bold text-slate-800 tracking-tight">MikroTik Gateways &amp; Routers</h1>
+                <h1 class="text-xs font-bold text-slate-800 tracking-tight">{{ __('MikroTik Gateways & Routers') }}</h1>
                 <!-- Plan Quota Badge -->
                 <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold border {{ $isQuotaReached ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-purple-50 text-purple-700 border-purple-200' }}"
-                      title="Router quota allowed in your ISP plan">
+                      title="{{ __('Router quota allowed in your ISP plan') }}">
                     <i class="fas fa-layer-group text-[9px]"></i>
-                    <span>Plan: {{ $plan->name ?? 'Standard' }} ({{ $totalRouters }}/{{ $mikrotikQuota > 0 ? $mikrotikQuota : '∞' }})</span>
+                    <span>{{ __('Plan') }}: {{ $plan->name ?? __('Standard') }} ({{ $totalRouters }}/{{ $mikrotikQuota > 0 ? $mikrotikQuota : '∞' }})</span>
                 </span>
             </div>
         </div>
@@ -89,29 +89,29 @@
                 <a href="{{ route('tenant.network.map') }}" 
                    class="h-[34px] px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200/80 rounded-lg text-xs font-medium transition flex items-center gap-1 cursor-pointer">
                     <i class="fas fa-project-diagram text-indigo-600 text-[11px]"></i>
-                    <span>Topology Map</span>
+                    <span>{{ __('Topology Map') }}</span>
                 </a>
             @endif
 
             <button type="button" 
                     @click="openGlobalScriptModal()"
                     class="h-[34px] px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200/80 rounded-lg text-xs font-medium transition flex items-center gap-1 cursor-pointer"
-                    title="Generate FreeRADIUS client script">
+                    title="{{ __('Generate FreeRADIUS client script') }}">
                 <i class="fas fa-terminal text-slate-600 text-[11px]"></i>
-                <span>RADIUS Script</span>
+                <span>{{ __('RADIUS Script') }}</span>
             </button>
 
             <!-- Separate Create Pages for FreeRADIUS and API -->
             <a href="{{ route('tenant.network.mikrotik.create', ['mode' => 'radius']) }}" 
                class="h-[34px] px-3 text-white rounded-lg text-xs font-semibold shadow-xs transition flex items-center gap-1.5 cursor-pointer {{ $isQuotaReached ? 'bg-slate-700 hover:bg-slate-800' : 'bg-emerald-600 hover:bg-emerald-700' }}">
                 <i class="fas fa-shield-halved text-[10px]"></i>
-                <span>+ FreeRADIUS Router</span>
+                <span>{{ __('+ FreeRADIUS Router') }}</span>
             </a>
 
             <a href="{{ route('tenant.network.mikrotik.create', ['mode' => 'api']) }}" 
                class="h-[34px] px-3 text-white rounded-lg text-xs font-semibold shadow-xs transition flex items-center gap-1.5 cursor-pointer {{ $isQuotaReached ? 'bg-slate-700 hover:bg-slate-800' : 'bg-cyan-600 hover:bg-cyan-700' }}">
                 <i class="fas fa-code text-[10px]"></i>
-                <span>+ API Router</span>
+                <span>{{ __('+ API Router') }}</span>
             </a>
         </div>
     </div>
@@ -121,7 +121,7 @@
         <!-- Card 1: Plan Quota -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Plan Quota</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">{{ __('Plan Quota') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block {{ $isQuotaReached ? 'text-rose-600' : 'text-slate-800' }} truncate">
                     {{ $totalRouters }} / {{ $mikrotikQuota > 0 ? $mikrotikQuota : '∞' }}
                 </span>
@@ -134,7 +134,7 @@
         <!-- Card 2: Online Fleet -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Online Fleet</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">{{ __('Online Fleet') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-emerald-600 truncate">{{ number_format($onlineRouters) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-emerald-50 text-emerald-600 border-emerald-100 flex items-center justify-center">
@@ -145,7 +145,7 @@
         <!-- Card 3: Offline / Down -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Offline / Down</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">{{ __('Offline / Down') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block {{ $offlineRouters > 0 ? 'text-rose-600' : 'text-slate-400' }} truncate">
                     {{ number_format($offlineRouters) }}
                 </span>
@@ -158,7 +158,7 @@
         <!-- Card 4: RADIUS Mode -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">RADIUS AAA</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">{{ __('RADIUS AAA') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-cyan-700 truncate">{{ number_format($radiusCount) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-cyan-50 text-cyan-600 border-cyan-100 flex items-center justify-center">
@@ -169,7 +169,7 @@
         <!-- Card 5: API / Hybrid -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">API / Hybrid</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">{{ __('API / Hybrid') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-purple-700 truncate">{{ number_format($apiHybridCount) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-purple-50 text-purple-600 border-purple-100 flex items-center justify-center">
@@ -180,7 +180,7 @@
         <!-- Card 6: RADIUS Server IP -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">RADIUS Host IP</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">{{ __('RADIUS Host IP') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-indigo-800 truncate">{{ $serverIp }}</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-indigo-50 text-indigo-600 border-indigo-100 flex items-center justify-center">
@@ -205,13 +205,13 @@
                     <input type="text" 
                            name="search" 
                            x-model="searchQuery"
-                           placeholder="Search router name, host IP, hardware model..." 
+                           placeholder="{{ __('Search router name, host IP, hardware model...') }}" 
                            class="w-full h-[34px] pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-normal" />
                     <button type="button" 
                             x-show="searchQuery && searchQuery.length > 0" 
                             @click="searchQuery = ''; $nextTick(() => $el.closest('form').submit())"
                             class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
-                            title="Clear search">
+                            title="{{ __('Clear search') }}">
                         <i class="fas fa-xmark text-xs"></i>
                     </button>
                 </div>
@@ -221,10 +221,10 @@
                     <select name="connection_type" 
                             onchange="this.form.submit()" 
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                        <option value="">All Modes</option>
-                        <option value="radius" {{ request('connection_type') === 'radius' ? 'selected' : '' }}>RADIUS AAA</option>
-                        <option value="api" {{ request('connection_type') === 'api' ? 'selected' : '' }}>RouterOS API</option>
-                        <option value="hybrid" {{ request('connection_type') === 'hybrid' ? 'selected' : '' }}>Hybrid (Both)</option>
+                        <option value="">{{ __('All Modes') }}</option>
+                        <option value="radius" {{ request('connection_type') === 'radius' ? 'selected' : '' }}>{{ __('RADIUS AAA') }}</option>
+                        <option value="api" {{ request('connection_type') === 'api' ? 'selected' : '' }}>{{ __('RouterOS API') }}</option>
+                        <option value="hybrid" {{ request('connection_type') === 'hybrid' ? 'selected' : '' }}>{{ __('Hybrid (Both)') }}</option>
                     </select>
                 </div>
 
@@ -233,10 +233,10 @@
                     <select name="status" 
                             onchange="this.form.submit()" 
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                        <option value="">All Statuses</option>
-                        <option value="online" {{ request('status') === 'online' ? 'selected' : '' }}>Online</option>
-                        <option value="offline" {{ request('status') === 'offline' ? 'selected' : '' }}>Offline</option>
-                        <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>Pending</option>
+                        <option value="">{{ __('All Statuses') }}</option>
+                        <option value="online" {{ request('status') === 'online' ? 'selected' : '' }}>{{ __('Online') }}</option>
+                        <option value="offline" {{ request('status') === 'offline' ? 'selected' : '' }}>{{ __('Offline') }}</option>
+                        <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>{{ __('Pending') }}</option>
                     </select>
                 </div>
 
@@ -245,12 +245,12 @@
                     <select name="per_page" 
                             onchange="this.form.submit()" 
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                        <option value="10" {{ request('per_page', 20) == 10 ? 'selected' : '' }}>10 / page</option>
-                        <option value="15" {{ request('per_page', 20) == 15 ? 'selected' : '' }}>15 / page</option>
-                        <option value="20" {{ request('per_page', 20) == 20 ? 'selected' : '' }}>20 / page</option>
-                        <option value="30" {{ request('per_page', 20) == 30 ? 'selected' : '' }}>30 / page</option>
-                        <option value="50" {{ request('per_page', 20) == 50 ? 'selected' : '' }}>50 / page</option>
-                        <option value="100" {{ request('per_page', 20) == 100 ? 'selected' : '' }}>100 / page</option>
+                        <option value="10" {{ request('per_page', 20) == 10 ? 'selected' : '' }}>10 / {{ __('page') }}</option>
+                        <option value="15" {{ request('per_page', 20) == 15 ? 'selected' : '' }}>15 / {{ __('page') }}</option>
+                        <option value="20" {{ request('per_page', 20) == 20 ? 'selected' : '' }}>20 / {{ __('page') }}</option>
+                        <option value="30" {{ request('per_page', 20) == 30 ? 'selected' : '' }}>30 / {{ __('page') }}</option>
+                        <option value="50" {{ request('per_page', 20) == 50 ? 'selected' : '' }}>50 / {{ __('page') }}</option>
+                        <option value="100" {{ request('per_page', 20) == 100 ? 'selected' : '' }}>100 / {{ __('page') }}</option>
                     </select>
                 </div>
 
@@ -260,7 +260,7 @@
                         class="h-[34px] py-0 px-2.5 rounded-lg border text-xs font-medium flex items-center justify-center gap-1.5 transition flex-shrink-0 cursor-pointer"
                         :class="showMoreFilters || {{ $activeMoreCount }} > 0 ? 'bg-cyan-50 border-cyan-200 text-cyan-700' : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-600'">
                     <i class="fas fa-sliders text-[11px]"></i>
-                    <span>More</span>
+                    <span>{{ __('More') }}</span>
                     @if($activeMoreCount > 0)
                     <span class="w-4 h-4 rounded-full bg-cyan-600 text-white text-[9px] font-bold flex items-center justify-center">
                         {{ $activeMoreCount }}
@@ -275,14 +275,14 @@
                     <button type="submit" 
                             class="h-[34px] bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-0 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer">
                         <i class="fas fa-filter text-[10px]"></i>
-                        <span>Filter</span>
+                        <span>{{ __('Filter') }}</span>
                     </button>
 
                     <a href="{{ route('tenant.network.mikrotik') }}" 
                        class="h-[34px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-0 px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer" 
-                       title="Reset All Filters">
+                       title="{{ __('Reset All Filters') }}">
                         <i class="fas fa-rotate-left text-[10px]"></i>
-                        <span>Reset</span>
+                        <span>{{ __('Reset') }}</span>
                     </a>
                 </div>
             </div>
@@ -297,13 +297,13 @@
                 
                 <!-- State Filter (Enabled / Disabled) -->
                 <div class="w-full sm:w-48 flex-shrink-0">
-                    <label class="block text-[9px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Gateway State</label>
+                    <label class="block text-[9px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">{{ __('Gateway State') }}</label>
                     <select name="active" 
                             onchange="this.form.submit()" 
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                        <option value="">All States</option>
-                        <option value="1" {{ request('active') === '1' ? 'selected' : '' }}>Enabled Gateways Only</option>
-                        <option value="0" {{ request('active') === '0' ? 'selected' : '' }}>Disabled Gateways Only</option>
+                        <option value="">{{ __('All States') }}</option>
+                        <option value="1" {{ request('active') === '1' ? 'selected' : '' }}>{{ __('Enabled Gateways Only') }}</option>
+                        <option value="0" {{ request('active') === '0' ? 'selected' : '' }}>{{ __('Disabled Gateways Only') }}</option>
                     </select>
                 </div>
             </div>
@@ -317,12 +317,12 @@
                 <thead>
                     <tr>
                         <th class="w-10 text-center font-semibold">#</th>
-                        <th class="text-center font-semibold">Status</th>
-                        <th class="text-center font-semibold">Router Name</th>
-                        <th class="text-center font-semibold">Host IP &amp; Port</th>
-                        <th class="text-center font-semibold">Architecture</th>
-                        <th class="text-center font-semibold">Hardware &amp; ROS</th>
-                        <th class="w-12 text-center font-semibold no-sort">Action</th>
+                        <th class="text-center font-semibold">{{ __('Status') }}</th>
+                        <th class="text-center font-semibold">{{ __('Router Name') }}</th>
+                        <th class="text-center font-semibold">{{ __('Host IP & Port') }}</th>
+                        <th class="text-center font-semibold">{{ __('Architecture') }}</th>
+                        <th class="text-center font-semibold">{{ __('Hardware & ROS') }}</th>
+                        <th class="w-12 text-center font-semibold no-sort">{{ __('Action') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -342,22 +342,22 @@
                                 @if(!$router->is_active)
                                     <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">
                                         <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
-                                        <span>Disabled</span>
+                                        <span>{{ __('Disabled') }}</span>
                                     </span>
                                 @elseif($router->status === 'online')
                                     <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                                         <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                        <span>Online</span>
+                                        <span>{{ __('Online') }}</span>
                                     </span>
                                 @elseif($router->status === 'offline')
                                     <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-50 text-rose-700 border border-rose-200" title="{{ $router->last_error }}">
                                         <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
-                                        <span>Offline</span>
+                                        <span>{{ __('Offline') }}</span>
                                     </span>
                                 @else
                                     <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200" title="{{ $router->last_error }}">
                                         <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                                        <span>{{ ucfirst($router->status ?? 'pending') }}</span>
+                                        <span>{{ __(ucfirst($router->status ?? 'pending')) }}</span>
                                     </span>
                                 @endif
                             </td>
@@ -401,7 +401,7 @@
                                             :{{ $router->api_port ?: 8728 }}
                                         </span>
                                     @elseif($router->coa_port)
-                                        <span class="px-1.5 py-0.5 rounded text-[9.5px] bg-slate-100 text-slate-600 border border-slate-200" title="CoA Port">
+                                        <span class="px-1.5 py-0.5 rounded text-[9.5px] bg-slate-100 text-slate-600 border border-slate-200" title="{{ __('CoA Port') }}">
                                             :{{ $router->coa_port }}
                                         </span>
                                     @endif
@@ -412,7 +412,7 @@
                             <td class="text-center">
                                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border {{ $connBadge['class'] ?? 'bg-slate-100 text-slate-700 border-slate-200' }}">
                                     <i class="fas {{ $connBadge['icon'] ?? 'fa-server' }} text-[9px]"></i>
-                                    <span>{{ $connBadge['label'] ?? ucfirst($router->connection_type) }}</span>
+                                    <span>{{ __($connBadge['label'] ?? ucfirst($router->connection_type)) }}</span>
                                 </span>
                             </td>
 
@@ -465,18 +465,18 @@
                                     <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
                                         <i class="fas fa-server text-base"></i>
                                     </div>
-                                    <span class="text-xs font-semibold text-slate-700">No MikroTik Gateways Found</span>
-                                    <p class="text-[11px] text-slate-400 max-w-sm">No routers match your filter criteria or no gateways have been configured yet.</p>
+                                    <span class="text-xs font-semibold text-slate-700">{{ __('No MikroTik Gateways Found') }}</span>
+                                    <p class="text-[11px] text-slate-400 max-w-sm">{{ __('No routers match your filter criteria or no gateways have been configured yet.') }}</p>
                                     <div class="flex items-center gap-2 mt-2">
                                         <a href="{{ route('tenant.network.mikrotik.create', ['mode' => 'radius']) }}" 
                                            class="h-[34px] px-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                                             <i class="fas fa-shield-halved text-xs"></i>
-                                            <span>+ FreeRADIUS Router</span>
+                                            <span>{{ __('+ FreeRADIUS Router') }}</span>
                                         </a>
                                         <a href="{{ route('tenant.network.mikrotik.create', ['mode' => 'api']) }}" 
                                            class="h-[34px] px-3.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-xs font-semibold shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                                             <i class="fas fa-code text-xs"></i>
-                                            <span>+ API Router</span>
+                                            <span>{{ __('+ API Router') }}</span>
                                         </a>
                                     </div>
                                 </div>
@@ -491,7 +491,7 @@
         @if($routers->hasPages())
             <div class="px-3 py-2 border-t border-slate-200 bg-slate-50/50 flex items-center justify-between">
                 <div class="text-[11px] text-slate-500">
-                    Showing <span class="font-semibold text-slate-700">{{ $routers->firstItem() }}</span> to <span class="font-semibold text-slate-700">{{ $routers->lastItem() }}</span> of <span class="font-semibold text-slate-700">{{ $routers->total() }}</span> gateways
+                    {{ __('Showing :first to :last of :total gateways', ['first' => $routers->firstItem(), 'last' => $routers->lastItem(), 'total' => $routers->total()]) }}
                 </div>
                 <div>
                     {{ $routers->links() }}
@@ -517,41 +517,41 @@
                 @click="viewRouterDetails(activeMenuRouter)" 
                 class="w-full px-3 py-1.5 hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition text-left cursor-pointer">
             <i class="fas fa-circle-info w-4 text-cyan-600 text-[11px]"></i>
-            <span>View Details</span>
+            <span>{{ __('View Details') }}</span>
         </button>
 
         <a :href="'/admin/network/mikrotik/' + activeMenuRouter?.id" 
            class="w-full px-3 py-1.5 hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition text-left">
             <i class="fas fa-chart-line w-4 text-indigo-500 text-[11px]"></i>
-            <span>Live Telemetry &amp; Traffic</span>
+            <span>{{ __('Live Telemetry & Traffic') }}</span>
         </a>
 
         <button type="button" 
                 @click="testFromMenu()" 
                 class="w-full px-3 py-1.5 hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition text-left cursor-pointer">
             <i class="fas fa-bolt w-4 text-emerald-600 text-[11px]"></i>
-            <span>Test Connection Socket</span>
+            <span>{{ __('Test Connection Socket') }}</span>
         </button>
 
         <button type="button" 
                 @click="scriptFromMenu()" 
                 class="w-full px-3 py-1.5 hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition text-left cursor-pointer">
             <i class="fas fa-terminal w-4 text-blue-600 text-[11px]"></i>
-            <span>RADIUS Setup Script</span>
+            <span>{{ __('RADIUS Setup Script') }}</span>
         </button>
 
         <button type="button" 
-                @click="copyToClipboard(activeMenuRouter?.radius_secret || '', 'Shared Secret')" 
+                @click="copyToClipboard(activeMenuRouter?.radius_secret || '', i18n.sharedSecret)" 
                 class="w-full px-3 py-1.5 hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition text-left cursor-pointer">
             <i class="fas fa-key w-4 text-amber-500 text-[11px]"></i>
-            <span>Copy Shared Secret</span>
+            <span>{{ __('Copy Shared Secret') }}</span>
         </button>
 
         <button type="button" 
-                @click="copyToClipboard(activeMenuRouter?.ip_address || '', 'Host IP')" 
+                @click="copyToClipboard(activeMenuRouter?.ip_address || '', i18n.hostIp)" 
                 class="w-full px-3 py-1.5 hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition text-left cursor-pointer">
             <i class="fas fa-copy w-4 text-slate-500 text-[11px]"></i>
-            <span>Copy Host IP</span>
+            <span>{{ __('Copy Host IP') }}</span>
         </button>
 
         <div class="border-t border-slate-100 my-0.5"></div>
@@ -562,20 +562,20 @@
                 class="w-full px-3 py-1.5 hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition text-left cursor-pointer">
             <i class="fas w-4 text-center text-[11px]" 
                :class="activeMenuRouter?.is_active ? 'fa-toggle-on text-emerald-600' : 'fa-toggle-off text-slate-400'"></i>
-            <span x-text="activeMenuRouter?.is_active ? 'Disable Gateway' : 'Enable Gateway'"></span>
+            <span x-text="activeMenuRouter?.is_active ? i18n.disableGateway : i18n.enableGateway"></span>
         </button>
 
         <a :href="'/admin/network/mikrotik/' + activeMenuRouter?.id + '/edit'" 
            class="w-full px-3 py-1.5 hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition text-left cursor-pointer">
             <i class="fas fa-pen-to-square w-4 text-amber-500 text-[11px]"></i>
-            <span>Edit Gateway</span>
+            <span>{{ __('Edit Gateway') }}</span>
         </a>
 
         <button type="button" 
                 @click="deleteFromMenu()" 
                 class="w-full px-3 py-1.5 hover:bg-rose-50 text-rose-600 flex items-center gap-2 transition text-left cursor-pointer">
             <i class="fas fa-trash-can w-4 text-rose-400 text-[11px]"></i>
-            <span>Delete Gateway</span>
+            <span>{{ __('Delete Gateway') }}</span>
         </button>
     </div>
 
@@ -592,7 +592,7 @@
                         <i class="fas fa-server"></i>
                     </div>
                     <div>
-                        <h2 class="text-xs font-semibold text-slate-800" x-text="detailsModal.data?.name || 'MikroTik Gateway Details'"></h2>
+                        <h2 class="text-xs font-semibold text-slate-800" x-text="detailsModal.data?.name || i18n.gatewayDetailsTitle"></h2>
                         <p class="text-[10.5px] text-slate-500 font-normal" x-text="`${detailsModal.data?.model || 'RouterBOARD'} • ROS ${detailsModal.data?.ros_version || 'v7.x'}`"></p>
                     </div>
                 </div>
@@ -605,44 +605,44 @@
                 <!-- Status & Telemetry 3 Metric Cards -->
                 <div class="grid grid-cols-3 gap-2">
                     <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200">
-                        <span class="text-[9px] uppercase font-bold text-slate-400 block">Fleet Status</span>
+                        <span class="text-[9px] uppercase font-bold text-slate-400 block">{{ __('Fleet Status') }}</span>
                         <span class="text-sm font-bold block mt-0.5" 
                               :class="detailsModal.data?.status === 'online' ? 'text-emerald-600' : 'text-rose-600'" 
-                              x-text="detailsModal.data?.is_active ? (detailsModal.data?.status?.toUpperCase() || 'OFFLINE') : 'DISABLED'">
+                              x-text="detailsModal.data?.is_active ? (detailsModal.data?.status === 'online' ? i18n.statusOnline : (detailsModal.data?.status === 'pending' ? i18n.statusPending : i18n.statusOffline)) : i18n.statusDisabled">
                         </span>
                     </div>
                     <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200">
-                        <span class="text-[9px] uppercase font-bold text-slate-400 block">CPU Load</span>
+                        <span class="text-[9px] uppercase font-bold text-slate-400 block">{{ __('CPU Load') }}</span>
                         <span class="text-sm font-mono font-bold text-slate-800 block mt-0.5" x-text="`${detailsModal.data?.cpu_load || 0}%`"></span>
                     </div>
                     <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200">
-                        <span class="text-[9px] uppercase font-bold text-slate-400 block">System Uptime</span>
+                        <span class="text-[9px] uppercase font-bold text-slate-400 block">{{ __('System Uptime') }}</span>
                         <span class="text-sm font-mono font-bold text-slate-800 block mt-0.5 truncate" x-text="detailsModal.data?.uptime || '--'"></span>
                     </div>
                 </div>
 
                 <!-- Network Properties Grid -->
                 <div class="p-3 bg-slate-50 rounded-lg border border-slate-200/80 space-y-2 text-[11.5px]">
-                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">Gateway Network Configuration</span>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">{{ __('Gateway Network Configuration') }}</span>
                     <div class="space-y-1.5">
                         <div class="flex items-center justify-between">
-                            <span class="text-slate-500">Host IP Address:</span>
+                            <span class="text-slate-500">{{ __('Host IP Address:') }}</span>
                             <span class="font-mono font-bold text-slate-800" x-text="detailsModal.data?.ip_address"></span>
                         </div>
                         <div class="flex items-center justify-between">
-                            <span class="text-slate-500">Architecture Mode:</span>
+                            <span class="text-slate-500">{{ __('Architecture Mode:') }}</span>
                             <span class="font-semibold text-slate-800 uppercase" x-text="detailsModal.data?.connection_type"></span>
                         </div>
                         <div class="flex items-center justify-between" x-show="detailsModal.data?.connection_type === 'api' || detailsModal.data?.connection_type === 'hybrid'">
-                            <span class="text-slate-500">RouterOS API Port:</span>
+                            <span class="text-slate-500">{{ __('RouterOS API Port:') }}</span>
                             <span class="font-mono font-semibold text-slate-800" x-text="detailsModal.data?.api_port || 8728"></span>
                         </div>
                         <div class="flex items-center justify-between" x-show="detailsModal.data?.coa_port">
-                            <span class="text-slate-500">CoA / Disconnect Port:</span>
+                            <span class="text-slate-500">{{ __('CoA / Disconnect Port:') }}</span>
                             <span class="font-mono font-semibold text-slate-800" x-text="detailsModal.data?.coa_port"></span>
                         </div>
                         <div class="flex items-center justify-between" x-show="detailsModal.data?.free_memory">
-                            <span class="text-slate-500">Free / Total Memory:</span>
+                            <span class="text-slate-500">{{ __('Free / Total Memory:') }}</span>
                             <span class="font-mono font-semibold text-slate-800" x-text="`${detailsModal.data?.free_memory} / ${detailsModal.data?.total_memory}`"></span>
                         </div>
                     </div>
@@ -651,12 +651,12 @@
                 <!-- Associated Downstream Devices -->
                 <div class="grid grid-cols-2 gap-2 text-[11.5px] p-2.5 bg-slate-50 rounded-lg border border-slate-200">
                     <div>
-                        <span class="text-slate-400 block font-medium">Associated OLTs:</span>
-                        <span class="font-bold text-slate-800" x-text="`${detailsModal.data?.olts_count || 0} Devices`"></span>
+                        <span class="text-slate-400 block font-medium">{{ __('Associated OLTs:') }}</span>
+                        <span class="font-bold text-slate-800" x-text="`${detailsModal.data?.olts_count || 0} ${i18n.devices}`"></span>
                     </div>
                     <div>
-                        <span class="text-slate-400 block font-medium">RADIUS NAS Clients:</span>
-                        <span class="font-bold text-slate-800" x-text="`${detailsModal.data?.nas_count || 0} Clients`"></span>
+                        <span class="text-slate-400 block font-medium">{{ __('RADIUS NAS Clients:') }}</span>
+                        <span class="font-bold text-slate-800" x-text="`${detailsModal.data?.nas_count || 0} ${i18n.clients}`"></span>
                     </div>
                 </div>
 
@@ -665,20 +665,20 @@
                             @click="testRouterConnection(detailsModal.data?.id)" 
                             class="h-[34px] px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                         <i class="fas fa-bolt text-xs"></i>
-                        <span>Test Socket</span>
+                        <span>{{ __('Test Socket') }}</span>
                     </button>
 
                     <div class="flex items-center gap-2">
                         <a :href="'/admin/network/mikrotik/' + detailsModal.data?.id + '/edit'" 
                            class="h-[34px] px-3.5 bg-amber-500 hover:bg-amber-600 text-white font-medium text-xs rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                             <i class="fas fa-pen-to-square text-xs"></i>
-                            <span>Edit Gateway</span>
+                            <span>{{ __('Edit Gateway') }}</span>
                         </a>
 
                         <button type="button" 
                                 @click="detailsModal.open = false" 
                                 class="h-[34px] px-3.5 border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs rounded-lg transition cursor-pointer">
-                            Close
+                            {{ __('Close') }}
                         </button>
                     </div>
                 </div>
@@ -699,7 +699,7 @@
                         <i class="fas fa-bolt"></i>
                     </div>
                     <div>
-                        <h2 class="text-xs font-semibold text-slate-800">Connection Socket Diagnostics</h2>
+                        <h2 class="text-xs font-semibold text-slate-800">{{ __('Connection Socket Diagnostics') }}</h2>
                         <p class="text-[10.5px] text-slate-500 font-normal" x-text="probeModal.routerName"></p>
                     </div>
                 </div>
@@ -711,8 +711,8 @@
             <div class="p-4 space-y-3">
                 <div x-show="probeModal.loading" class="py-6 text-center space-y-2.5">
                     <i class="fas fa-circle-notch fa-spin text-2xl text-cyan-600"></i>
-                    <p class="text-xs font-medium text-slate-700">Testing connection socket...</p>
-                    <p class="text-[11px] text-slate-400">Pinging IP and handshaking with RouterOS API</p>
+                    <p class="text-xs font-medium text-slate-700">{{ __('Testing connection socket...') }}</p>
+                    <p class="text-[11px] text-slate-400">{{ __('Pinging IP and handshaking with RouterOS API') }}</p>
                 </div>
 
                 <div x-show="!probeModal.loading && probeModal.result" class="space-y-3">
@@ -720,18 +720,18 @@
                          :class="probeModal.result?.success ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-rose-50 text-rose-800 border-rose-200'">
                         <div class="flex items-center gap-2 font-bold mb-1">
                             <i class="fas text-sm" :class="probeModal.result?.success ? 'fa-circle-check text-emerald-600' : 'fa-circle-xmark text-rose-600'"></i>
-                            <span x-text="probeModal.result?.success ? 'Socket Handshake Established!' : 'Connection Socket Failed'"></span>
+                            <span x-text="probeModal.result?.success ? i18n.socketEstablished : i18n.socketFailed"></span>
                         </div>
                         <p class="text-[11.5px]" x-text="probeModal.result?.message"></p>
                     </div>
 
                     <div x-show="probeModal.result?.success" class="grid grid-cols-2 gap-2 text-[11px] p-2.5 bg-slate-50 rounded-lg border border-slate-200">
                         <div>
-                            <span class="text-slate-400 block font-medium">RouterOS Version:</span>
+                            <span class="text-slate-400 block font-medium">{{ __('RouterOS Version:') }}</span>
                             <span class="font-mono font-bold text-slate-800" x-text="probeModal.result?.ros_version || 'v7.x'"></span>
                         </div>
                         <div>
-                            <span class="text-slate-400 block font-medium">Model / Architecture:</span>
+                            <span class="text-slate-400 block font-medium">{{ __('Model / Architecture:') }}</span>
                             <span class="font-semibold text-slate-800" x-text="probeModal.result?.model || 'RouterBOARD'"></span>
                         </div>
                     </div>
@@ -739,7 +739,7 @@
 
                 <div class="pt-2 border-t border-slate-200 flex items-center justify-end">
                     <button type="button" @click="probeModal.open = false" class="h-[34px] px-3.5 border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs rounded-lg transition cursor-pointer">
-                        Close Diagnostics
+                        {{ __('Close Diagnostics') }}
                     </button>
                 </div>
             </div>
@@ -759,7 +759,7 @@
                         <i class="fas fa-terminal"></i>
                     </div>
                     <div>
-                        <h2 class="text-xs font-semibold text-slate-800">FreeRADIUS Client Terminal Script</h2>
+                        <h2 class="text-xs font-semibold text-slate-800">{{ __('FreeRADIUS Client Terminal Script') }}</h2>
                         <p class="text-[10.5px] text-slate-500 font-normal" x-text="activeRouterName"></p>
                     </div>
                 </div>
@@ -770,17 +770,17 @@
 
             <div class="p-4 space-y-2.5 text-xs">
                 <p class="text-slate-600 text-[11px] leading-relaxed">
-                    Paste this script into your MikroTik Winbox/SSH terminal (<strong>New Terminal</strong>) to configure the FreeRADIUS AAA client:
+                    {!! __('Paste this script into your MikroTik Winbox/SSH terminal (:terminal) to configure the FreeRADIUS AAA client:', ['terminal' => '<strong>' . e(__('New Terminal')) . '</strong>']) !!}
                 </p>
 
                 <div class="rounded-lg overflow-hidden border border-slate-800 bg-slate-900">
                     <div class="px-3 py-1.5 bg-slate-800/80 border-b border-slate-700/60 flex items-center justify-between text-[10px] text-slate-400 font-mono">
-                        <span>RouterOS Script</span>
+                        <span>{{ __('RouterOS Script') }}</span>
                         <button type="button" 
-                                @click="copyToClipboard(activeScript, 'RADIUS Script')" 
+                                @click="copyToClipboard(activeScript, i18n.radiusScript)" 
                                 class="text-cyan-400 hover:text-cyan-300 font-sans font-medium flex items-center gap-1 transition cursor-pointer">
                             <i class="fas fa-copy text-[10px]"></i>
-                            <span>Copy</span>
+                            <span>{{ __('Copy') }}</span>
                         </button>
                     </div>
                     <pre class="p-3 text-cyan-300 font-mono text-[11px] overflow-x-auto leading-relaxed selection:bg-cyan-900" x-text="activeScript"></pre>
@@ -789,14 +789,14 @@
 
             <div class="px-4 py-2.5 bg-slate-50/80 border-t border-slate-200 flex items-center justify-between">
                 <button type="button" 
-                        @click="copyToClipboard(activeScript, 'RADIUS Script')" 
+                        @click="copyToClipboard(activeScript, i18n.radiusScript)" 
                         class="h-[34px] px-3.5 bg-cyan-600 hover:bg-cyan-700 text-white font-medium text-xs rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                     <i class="fas fa-copy text-[10px]"></i>
-                    <span>Copy Script</span>
+                    <span>{{ __('Copy Script') }}</span>
                 </button>
 
                 <button type="button" @click="showScriptModal = false" class="h-[34px] px-3.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-medium text-xs rounded-lg transition cursor-pointer">
-                    Close
+                    {{ __('Close') }}
                 </button>
             </div>
         </div>
@@ -821,6 +821,38 @@ function mikrotikManager() {
         activeRouterName: '',
         serverIp: '{{ $serverIp ?? "103.59.177.136" }}',
         routers: @json($routersData),
+
+        i18n: {
+            sharedSecret: @js(__('Shared Secret')),
+            hostIp: @js(__('Host IP')),
+            radiusScript: @js(__('RADIUS Script')),
+            disableGateway: @js(__('Disable Gateway')),
+            enableGateway: @js(__('Enable Gateway')),
+            gatewayDetailsTitle: @js(__('MikroTik Gateway Details')),
+            statusOnline: @js(__('ONLINE')),
+            statusOffline: @js(__('OFFLINE')),
+            statusPending: @js(__('PENDING')),
+            statusDisabled: @js(__('DISABLED')),
+            devices: @js(__('Devices')),
+            clients: @js(__('Clients')),
+            socketEstablished: @js(__('Socket Handshake Established!')),
+            socketFailed: @js(__('Connection Socket Failed')),
+            copiedDefault: @js(__('Copied')),
+            copiedSuffix: @js(__('copied to clipboard!')),
+            copyFailed: @js(__('Failed to copy to clipboard.')),
+            statusUpdateFailed: @js(__('Failed to update router status.')),
+            statusUpdateNetworkError: @js(__('Network error while updating router status.')),
+            allRouters: @js(__('All MikroTik Routers')),
+            mikrotikRouter: @js(__('MikroTik Router')),
+            mikrotikGateway: @js(__('MikroTik Gateway')),
+            probeNetworkError: @js(__('Network error or timeout connecting to RouterOS API.')),
+            deleteTitle: @js(__('Delete MikroTik Gateway?')),
+            deleteConfirmPrefix: @js(__('Are you sure you want to delete gateway')),
+            deleteConfirmNote: @js(__('Associated RADIUS NAS clients and telemetry links will be detached.')),
+            deleteConfirmBtn: @js(__('Yes, Delete Gateway')),
+            cancelBtn: @js(__('Cancel')),
+            deleteConfirmPlainPrefix: @js(__('Are you sure you want to delete router')),
+        },
 
         detailsModal: {
             open: false,
@@ -911,10 +943,10 @@ function mikrotikManager() {
                     this.showToast(data.message, data.is_active ? 'success' : 'info');
                     setTimeout(() => window.location.reload(), 400);
                 } else {
-                    this.showToast('Failed to update router status.', 'error');
+                    this.showToast(this.i18n.statusUpdateFailed, 'error');
                 }
             } catch (e) {
-                this.showToast('Network error while updating router status.', 'error');
+                this.showToast(this.i18n.statusUpdateNetworkError, 'error');
             }
         },
 
@@ -935,12 +967,13 @@ function mikrotikManager() {
             }, 3500);
         },
 
-        copyToClipboard(text, label = 'Copied') {
+        copyToClipboard(text, label = null) {
             this.activeMenuRouter = null;
             if (!text) return;
+            const lbl = label || this.i18n.copiedDefault;
             if (navigator.clipboard && window.isSecureContext) {
                 navigator.clipboard.writeText(text).then(() => {
-                    this.showToast(`${label} copied to clipboard!`, 'success');
+                    this.showToast(`${lbl} ${this.i18n.copiedSuffix}`, 'success');
                 });
             } else {
                 const ta = document.createElement('textarea');
@@ -951,16 +984,16 @@ function mikrotikManager() {
                 ta.select();
                 try {
                     document.execCommand('copy');
-                    this.showToast(`${label} copied to clipboard!`, 'success');
+                    this.showToast(`${lbl} ${this.i18n.copiedSuffix}`, 'success');
                 } catch (e) {
-                    alert('Failed to copy to clipboard.');
+                    alert(this.i18n.copyFailed);
                 }
                 document.body.removeChild(ta);
             }
         },
 
         openGlobalScriptModal() {
-            this.activeRouterName = 'All MikroTik Routers';
+            this.activeRouterName = this.i18n.allRouters;
             this.activeScript = this.getMikrotikScript(this.serverIp, 'radius@123');
             this.showScriptModal = true;
         },
@@ -971,7 +1004,7 @@ function mikrotikManager() {
                 this.activeRouterName = router.name;
                 this.activeScript = this.getMikrotikScript(router.ip_address, router.radius_secret);
             } else {
-                this.activeRouterName = 'MikroTik Router';
+                this.activeRouterName = this.i18n.mikrotikRouter;
                 this.activeScript = this.getMikrotikScript(this.serverIp, 'radius@123');
             }
             this.showScriptModal = true;
@@ -981,7 +1014,7 @@ function mikrotikManager() {
             if (!routerId) return;
             const router = this.routers.find(r => r.id == routerId);
             this.probeModal.routerId = routerId;
-            this.probeModal.routerName = router ? router.name : 'MikroTik Gateway';
+            this.probeModal.routerName = router ? router.name : this.i18n.mikrotikGateway;
             this.probeModal.loading = true;
             this.probeModal.result = null;
             this.probeModal.open = true;
@@ -1009,7 +1042,7 @@ function mikrotikManager() {
             } catch (err) {
                 this.probeModal.result = {
                     success: false,
-                    message: 'Network error or timeout connecting to RouterOS API.'
+                    message: this.i18n.probeNetworkError
                 };
             } finally {
                 this.probeModal.loading = false;
@@ -1020,14 +1053,14 @@ function mikrotikManager() {
             this.activeMenuRouter = null;
             if (typeof Swal !== 'undefined') {
                 Swal.fire({
-                    title: 'Delete MikroTik Gateway?',
-                    html: `<div class="text-xs text-slate-600 mt-1">Are you sure you want to delete gateway <strong class="text-slate-900 font-semibold">${routerName}</strong>?<br><span class="text-[11px] text-rose-500 mt-1 block">Associated RADIUS NAS clients and telemetry links will be detached.</span></div>`,
+                    title: this.i18n.deleteTitle,
+                    html: `<div class="text-xs text-slate-600 mt-1">${this.i18n.deleteConfirmPrefix} <strong class="text-slate-900 font-semibold">${routerName}</strong>?<br><span class="text-[11px] text-rose-500 mt-1 block">${this.i18n.deleteConfirmNote}</span></div>`,
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonColor: '#e11d48',
                     cancelButtonColor: '#64748b',
-                    confirmButtonText: '<i class="far fa-trash-alt mr-1"></i> Yes, Delete Gateway',
-                    cancelButtonText: 'Cancel',
+                    confirmButtonText: `<i class="far fa-trash-alt mr-1"></i> ${this.i18n.deleteConfirmBtn}`,
+                    cancelButtonText: this.i18n.cancelBtn,
                     reverseButtons: true,
                     customClass: {
                         popup: 'rounded-2xl shadow-xl border border-slate-200 p-5',
@@ -1039,7 +1072,7 @@ function mikrotikManager() {
                         this.submitDeleteForm(routerId);
                     }
                 });
-            } else if (confirm(`Are you sure you want to delete router '${routerName}'?`)) {
+            } else if (confirm(`${this.i18n.deleteConfirmPlainPrefix} '${routerName}'?`)) {
                 this.submitDeleteForm(routerId);
             }
         },

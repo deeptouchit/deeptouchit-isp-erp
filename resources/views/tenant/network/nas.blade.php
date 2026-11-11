@@ -1,6 +1,6 @@
 @extends('tenant.layouts.app')
 
-@section('title', 'NAS / RADIUS Gateways - ' . ($tenant->company_name ?? $tenant->name))
+@section('title', __('NAS / RADIUS Gateways') . ' - ' . ($tenant->company_name ?? $tenant->name))
 
 @push('styles')
     {{-- Page-specific CSS --}}
@@ -75,7 +75,7 @@
                 <i class="fas fa-shield-alt"></i>
             </div>
             <div class="flex items-center gap-2">
-                <h1 class="text-xs font-bold text-slate-800 tracking-tight">NAS &amp; RADIUS Clients</h1>
+                <h1 class="text-xs font-bold text-slate-800 tracking-tight">{{ __('NAS & RADIUS Clients') }}</h1>
                 <span class="text-[10px] font-bold text-slate-500 bg-slate-100 border border-slate-200/80 px-2 py-0.5 rounded-full font-mono">{{ number_format($nasList->total()) }}</span>
             </div>
         </div>
@@ -84,23 +84,23 @@
             <button type="button" 
                     @click="showConfigModal = true"
                     class="h-[34px] px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200/80 rounded-lg text-xs font-medium transition flex items-center gap-1 cursor-pointer"
-                    title="View FreeRADIUS clients.conf">
+                    title="{{ __('View FreeRADIUS clients.conf') }}">
                 <i class="fas fa-file-code text-violet-600 text-[11px]"></i>
                 <span>clients.conf</span>
             </button>
 
             <a href="{{ route('tenant.network.mikrotik') }}" 
                class="h-[34px] px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200/80 rounded-lg text-xs font-medium transition flex items-center gap-1 cursor-pointer"
-               title="MikroTik Routers">
+               title="{{ __('MikroTik Routers') }}">
                 <i class="fas fa-server text-cyan-600 text-[11px]"></i>
-                <span>Routers</span>
+                <span>{{ __('Routers') }}</span>
             </a>
 
             <!-- Dedicated Add Page -->
             <a href="{{ route('tenant.network.nas.create') }}"
                class="h-[34px] px-3 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-xs font-semibold shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-plus text-[10px]"></i>
-                <span>+ Add NAS Gateway</span>
+                <span>{{ __('+ Add NAS Gateway') }}</span>
             </a>
         </div>
     </div>
@@ -110,7 +110,7 @@
         <!-- Card 1: Total Gateways -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Total Gateways</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">{{ __('Total Gateways') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-slate-900 truncate">{{ number_format($totalNas) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-violet-50 text-violet-600 border-violet-100 flex items-center justify-center">
@@ -121,7 +121,7 @@
         <!-- Card 2: Active Links -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Active Links</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">{{ __('Active Links') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-emerald-600 truncate">{{ number_format($activeNas) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-emerald-50 text-emerald-600 border-emerald-100 flex items-center justify-center">
@@ -132,7 +132,7 @@
         <!-- Card 3: Disabled -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Disabled</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">{{ __('Disabled') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-slate-500 truncate">{{ number_format($disabledNas) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-slate-100 text-slate-500 border-slate-200 flex items-center justify-center">
@@ -143,7 +143,7 @@
         <!-- Card 4: RADIUS Port -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Auth Port</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">{{ __('Auth Port') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-blue-700 truncate">1812/UDP</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-blue-50 text-blue-600 border-blue-100 flex items-center justify-center">
@@ -154,7 +154,7 @@
         <!-- Card 5: CoA / PoD Port -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">CoA / PoD Port</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">{{ __('CoA / PoD Port') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-purple-700 truncate">3799/UDP</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-purple-50 text-purple-600 border-purple-100 flex items-center justify-center">
@@ -165,7 +165,7 @@
         <!-- Card 6: Fleet Linked -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Fleet Linked</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">{{ __('Fleet Linked') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-indigo-700 truncate">{{ $linkedRoutersCount }}/{{ $tenantRouters->count() }}</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-indigo-50 text-indigo-600 border-indigo-100 flex items-center justify-center">
@@ -190,13 +190,13 @@
                     <input type="text" 
                            name="search" 
                            x-model="searchQuery"
-                           placeholder="Search identifier, host IP, description..." 
+                           placeholder="{{ __('Search identifier, host IP, description...') }}" 
                            class="w-full h-[34px] pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-normal" />
                     <button type="button" 
                             x-show="searchQuery && searchQuery.length > 0" 
                             @click="searchQuery = ''; $nextTick(() => $el.closest('form').submit())"
                             class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
-                            title="Clear search">
+                            title="{{ __('Clear search') }}">
                         <i class="fas fa-xmark text-xs"></i>
                     </button>
                 </div>
@@ -206,7 +206,7 @@
                     <select name="router_id" 
                             onchange="this.form.submit()" 
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                        <option value="">All Fleet Routers</option>
+                        <option value="">{{ __('All Fleet Routers') }}</option>
                         @foreach($tenantRouters as $r)
                             <option value="{{ $r->id }}" {{ (string)request('router_id') === (string)$r->id ? 'selected' : '' }}>
                                 {{ $r->name }} ({{ $r->ip_address }})
@@ -220,13 +220,13 @@
                     <select name="type" 
                             onchange="this.form.submit()" 
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                        <option value="">All Platforms</option>
+                        <option value="">{{ __('All Platforms') }}</option>
                         <option value="mikrotik" {{ request('type') === 'mikrotik' ? 'selected' : '' }}>MikroTik RouterOS</option>
                         <option value="cisco" {{ request('type') === 'cisco' ? 'selected' : '' }}>Cisco IOS</option>
                         <option value="juniper" {{ request('type') === 'juniper' ? 'selected' : '' }}>Juniper JunOS</option>
                         <option value="huawei" {{ request('type') === 'huawei' ? 'selected' : '' }}>Huawei VRP</option>
                         <option value="accel-ppp" {{ request('type') === 'accel-ppp' ? 'selected' : '' }}>Accel-PPP BRAS</option>
-                        <option value="other" {{ request('type') === 'other' ? 'selected' : '' }}>Generic RADIUS</option>
+                        <option value="other" {{ request('type') === 'other' ? 'selected' : '' }}>{{ __('Generic RADIUS') }}</option>
                     </select>
                 </div>
 
@@ -236,11 +236,11 @@
                     <select name="per_page" 
                             onchange="this.form.submit()" 
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                        <option value="10" {{ $perPageVal === 10 ? 'selected' : '' }}>10 / page</option>
-                        <option value="20" {{ $perPageVal === 20 ? 'selected' : '' }}>20 / page</option>
-                        <option value="50" {{ $perPageVal === 50 ? 'selected' : '' }}>50 / page</option>
-                        <option value="100" {{ $perPageVal === 100 ? 'selected' : '' }}>100 / page</option>
-                        <option value="250" {{ $perPageVal === 250 ? 'selected' : '' }}>250 / page</option>
+                        <option value="10" {{ $perPageVal === 10 ? 'selected' : '' }}>10 / {{ __('page') }}</option>
+                        <option value="20" {{ $perPageVal === 20 ? 'selected' : '' }}>20 / {{ __('page') }}</option>
+                        <option value="50" {{ $perPageVal === 50 ? 'selected' : '' }}>50 / {{ __('page') }}</option>
+                        <option value="100" {{ $perPageVal === 100 ? 'selected' : '' }}>100 / {{ __('page') }}</option>
+                        <option value="250" {{ $perPageVal === 250 ? 'selected' : '' }}>250 / {{ __('page') }}</option>
                     </select>
                 </div>
 
@@ -250,7 +250,7 @@
                         class="h-[34px] py-0 px-2.5 rounded-lg border text-xs font-medium flex items-center justify-center gap-1.5 transition flex-shrink-0 cursor-pointer"
                         :class="showMoreFilters || {{ $activeMoreCount }} > 0 ? 'bg-cyan-50 border-cyan-200 text-cyan-700' : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-600'">
                     <i class="fas fa-sliders text-[11px]"></i>
-                    <span>More</span>
+                    <span>{{ __('More') }}</span>
                     @if($activeMoreCount > 0)
                     <span class="w-4 h-4 rounded-full bg-cyan-600 text-white text-[9px] font-bold flex items-center justify-center">
                         {{ $activeMoreCount }}
@@ -265,14 +265,14 @@
                     <button type="submit" 
                             class="h-[34px] bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-0 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer">
                         <i class="fas fa-filter text-[10px]"></i>
-                        <span>Filter</span>
+                        <span>{{ __('Filter') }}</span>
                     </button>
 
                     <a href="{{ route('tenant.network.nas') }}" 
                        class="h-[34px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-0 px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer" 
-                       title="Reset All Filters">
+                       title="{{ __('Reset All Filters') }}">
                         <i class="fas fa-rotate-left text-[10px]"></i>
-                        <span>Reset</span>
+                        <span>{{ __('Reset') }}</span>
                     </a>
                 </div>
             </div>
@@ -287,13 +287,13 @@
                 
                 <!-- Status Filter -->
                 <div class="w-full sm:w-48 flex-shrink-0">
-                    <label class="block text-[9px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Gateway State</label>
+                    <label class="block text-[9px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">{{ __('Gateway State') }}</label>
                     <select name="active" 
                             onchange="this.form.submit()" 
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                        <option value="">All States</option>
-                        <option value="1" {{ request('active') === '1' || request('active') === 'active' ? 'selected' : '' }}>Active Gateways Only</option>
-                        <option value="0" {{ request('active') === '0' || request('active') === 'disabled' ? 'selected' : '' }}>Disabled Gateways Only</option>
+                        <option value="">{{ __('All States') }}</option>
+                        <option value="1" {{ request('active') === '1' || request('active') === 'active' ? 'selected' : '' }}>{{ __('Active Gateways Only') }}</option>
+                        <option value="0" {{ request('active') === '0' || request('active') === 'disabled' ? 'selected' : '' }}>{{ __('Disabled Gateways Only') }}</option>
                     </select>
                 </div>
             </div>
@@ -307,12 +307,12 @@
                 <thead>
                     <tr>
                         <th class="w-10 text-center font-semibold">#</th>
-                        <th class="text-center font-semibold">Shortname / Identifier</th>
-                        <th class="text-center font-semibold">NAS IP &amp; Ports</th>
-                        <th class="text-center font-semibold">Platform</th>
-                        <th class="text-center font-semibold">Linked Fleet Router</th>
-                        <th class="text-center font-semibold">Status</th>
-                        <th class="w-12 text-center font-semibold no-sort">Action</th>
+                        <th class="text-center font-semibold">{{ __('Shortname / Identifier') }}</th>
+                        <th class="text-center font-semibold">{{ __('NAS IP & Ports') }}</th>
+                        <th class="text-center font-semibold">{{ __('Platform') }}</th>
+                        <th class="text-center font-semibold">{{ __('Linked Fleet Router') }}</th>
+                        <th class="text-center font-semibold">{{ __('Status') }}</th>
+                        <th class="w-12 text-center font-semibold no-sort">{{ __('Action') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -348,7 +348,7 @@
                             <td class="text-center font-mono">
                                 <div class="inline-flex items-center gap-1.5 flex-nowrap">
                                     <span class="font-semibold text-slate-800">{{ $nas->nasname }}</span>
-                                    <span class="px-1.5 py-0.5 rounded text-[9.5px] bg-slate-100 text-slate-600 border border-slate-200" title="Auth: {{ $nas->ports ?: 1812 }} | CoA: {{ $nas->coa_port ?: 3799 }}">
+                                    <span class="px-1.5 py-0.5 rounded text-[9.5px] bg-slate-100 text-slate-600 border border-slate-200" title="{{ __('Auth') }}: {{ $nas->ports ?: 1812 }} | {{ __('CoA') }}: {{ $nas->coa_port ?: 3799 }}">
                                         :{{ $nas->ports ?: 1812 }}
                                     </span>
                                 </div>
@@ -358,7 +358,7 @@
                             <td class="text-center">
                                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border {{ $vendorBadge['class'] }}">
                                     <i class="fas {{ $vendorBadge['icon'] }} text-[9px]"></i>
-                                    <span>{{ $vendorBadge['label'] }}</span>
+                                    <span>{{ __($vendorBadge['label']) }}</span>
                                 </span>
                             </td>
 
@@ -380,12 +380,12 @@
                                 @if($nas->is_active)
                                     <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                                         <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                        <span>Active</span>
+                                        <span>{{ __('Active') }}</span>
                                     </span>
                                 @else
                                     <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">
                                         <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
-                                        <span>Disabled</span>
+                                        <span>{{ __('Disabled') }}</span>
                                     </span>
                                 @endif
                             </td>
@@ -421,12 +421,12 @@
                                     <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
                                         <i class="fas fa-shield-alt text-base"></i>
                                     </div>
-                                    <span class="text-xs font-semibold text-slate-700">No FreeRADIUS Gateways Found</span>
-                                    <p class="text-[11px] text-slate-400 max-w-sm">No NAS clients match your filter criteria or no gateways have been configured yet.</p>
+                                    <span class="text-xs font-semibold text-slate-700">{{ __('No FreeRADIUS Gateways Found') }}</span>
+                                    <p class="text-[11px] text-slate-400 max-w-sm">{{ __('No NAS clients match your filter criteria or no gateways have been configured yet.') }}</p>
                                     <a href="{{ route('tenant.network.nas.create') }}" 
                                        class="mt-2 h-[34px] px-3.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-xs font-semibold shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                                         <i class="fas fa-plus text-xs"></i>
-                                        <span>Register NAS Gateway</span>
+                                        <span>{{ __('Register NAS Gateway') }}</span>
                                     </a>
                                 </div>
                             </td>
@@ -440,7 +440,7 @@
         @if($nasList->hasPages())
             <div class="px-3 py-2 border-t border-slate-200 bg-slate-50/50 flex items-center justify-between">
                 <div class="text-[11px] text-slate-500">
-                    Showing <span class="font-semibold text-slate-700">{{ $nasList->firstItem() }}</span> to <span class="font-semibold text-slate-700">{{ $nasList->lastItem() }}</span> of <span class="font-semibold text-slate-700">{{ $nasList->total() }}</span> gateways
+                    {{ __('Showing :first to :last of :total gateways', ['first' => $nasList->firstItem(), 'last' => $nasList->lastItem(), 'total' => $nasList->total()]) }}
                 </div>
                 <div>
                     {{ $nasList->links() }}
@@ -466,28 +466,28 @@
                 @click="openDetailsModal(activeMenuNas?.id)" 
                 class="w-full px-3 py-1.5 hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition text-left cursor-pointer">
             <i class="fas fa-circle-info w-4 text-cyan-600 text-[11px]"></i>
-            <span>View Details</span>
+            <span>{{ __('View Details') }}</span>
         </button>
 
         <button type="button" 
                 @click="testCoaFromMenu()" 
                 class="w-full px-3 py-1.5 hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition text-left cursor-pointer">
             <i class="fas fa-bolt w-4 text-purple-600 text-[11px]"></i>
-            <span>Test CoA Socket</span>
+            <span>{{ __('Test CoA Socket') }}</span>
         </button>
 
         <button type="button" 
-                @click="copyToClipboard(activeMenuNas?.secret || '', 'Shared Secret')" 
+                @click="copyToClipboard(activeMenuNas?.secret || '', i18n.sharedSecret)" 
                 class="w-full px-3 py-1.5 hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition text-left cursor-pointer">
             <i class="fas fa-key w-4 text-amber-500 text-[11px]"></i>
-            <span>Copy Shared Secret</span>
+            <span>{{ __('Copy Shared Secret') }}</span>
         </button>
 
         <button type="button" 
-                @click="copyToClipboard(activeMenuNas?.nasname || '', 'NAS IP Address')" 
+                @click="copyToClipboard(activeMenuNas?.nasname || '', i18n.nasIpAddress)" 
                 class="w-full px-3 py-1.5 hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition text-left cursor-pointer">
             <i class="fas fa-copy w-4 text-slate-500 text-[11px]"></i>
-            <span>Copy Host IP</span>
+            <span>{{ __('Copy Host IP') }}</span>
         </button>
 
         <div class="border-t border-slate-100 my-0.5"></div>
@@ -498,20 +498,20 @@
                 class="w-full px-3 py-1.5 hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition text-left cursor-pointer">
             <i class="fas w-4 text-center text-[11px]" 
                :class="activeMenuNas?.is_active ? 'fa-toggle-on text-emerald-600' : 'fa-toggle-off text-slate-400'"></i>
-            <span x-text="activeMenuNas?.is_active ? 'Disable Gateway' : 'Enable Gateway'"></span>
+            <span x-text="activeMenuNas?.is_active ? i18n.disableGateway : i18n.enableGateway"></span>
         </button>
 
         <a :href="'/admin/network/nas/' + activeMenuNas?.id + '/edit'" 
            class="w-full px-3 py-1.5 hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition text-left cursor-pointer">
             <i class="fas fa-pen-to-square w-4 text-amber-500 text-[11px]"></i>
-            <span>Edit Gateway</span>
+            <span>{{ __('Edit Gateway') }}</span>
         </a>
 
         <button type="button" 
                 @click="deleteFromMenu()" 
                 class="w-full px-3 py-1.5 hover:bg-rose-50 text-rose-600 flex items-center gap-2 transition text-left cursor-pointer">
             <i class="fas fa-trash-can w-4 text-rose-400 text-[11px]"></i>
-            <span>Delete Gateway</span>
+            <span>{{ __('Delete Gateway') }}</span>
         </button>
     </div>
 
@@ -528,8 +528,8 @@
                         <i class="fas fa-shield-alt"></i>
                     </div>
                     <div>
-                        <h2 class="text-xs font-semibold text-slate-800" x-text="viewNas?.shortname || 'NAS Gateway Details'"></h2>
-                        <p class="text-[10.5px] text-slate-500 font-normal" x-text="`Host: ${viewNas?.nasname || ''}`"></p>
+                        <h2 class="text-xs font-semibold text-slate-800" x-text="viewNas?.shortname || i18n.nasDetailsTitle"></h2>
+                        <p class="text-[10.5px] text-slate-500 font-normal" x-text="`${i18n.hostLabel}: ${viewNas?.nasname || ''}`"></p>
                     </div>
                 </div>
                 <button type="button" @click="showDetailsModal = false" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center cursor-pointer">
@@ -541,40 +541,40 @@
                 <!-- Status & Architecture 3 Metric Cards -->
                 <div class="grid grid-cols-3 gap-2">
                     <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200">
-                        <span class="text-[9px] uppercase font-bold text-slate-400 block">Gateway State</span>
+                        <span class="text-[9px] uppercase font-bold text-slate-400 block">{{ __('Gateway State') }}</span>
                         <span class="text-sm font-bold block mt-0.5" 
                               :class="viewNas?.is_active ? 'text-emerald-600' : 'text-slate-500'" 
-                              x-text="viewNas?.is_active ? 'ACTIVE' : 'DISABLED'">
+                              x-text="viewNas?.is_active ? i18n.statusActive : i18n.statusDisabled">
                         </span>
                     </div>
                     <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200">
-                        <span class="text-[9px] uppercase font-bold text-slate-400 block">Auth Port</span>
+                        <span class="text-[9px] uppercase font-bold text-slate-400 block">{{ __('Auth Port') }}</span>
                         <span class="text-sm font-mono font-bold text-blue-700 block mt-0.5" x-text="viewNas?.ports || 1812"></span>
                     </div>
                     <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200">
-                        <span class="text-[9px] uppercase font-bold text-slate-400 block">CoA Port</span>
+                        <span class="text-[9px] uppercase font-bold text-slate-400 block">{{ __('CoA Port') }}</span>
                         <span class="text-sm font-mono font-bold text-purple-700 block mt-0.5" x-text="viewNas?.coa_port || 3799"></span>
                     </div>
                 </div>
 
                 <!-- Network Properties Grid -->
                 <div class="p-3 bg-slate-50 rounded-lg border border-slate-200/80 space-y-2 text-[11.5px]">
-                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">FreeRADIUS Client Properties</span>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">{{ __('FreeRADIUS Client Properties') }}</span>
                     <div class="space-y-1.5">
                         <div class="flex items-center justify-between">
-                            <span class="text-slate-500">NAS IP Address:</span>
+                            <span class="text-slate-500">{{ __('NAS IP Address:') }}</span>
                             <span class="font-mono font-bold text-slate-800" x-text="viewNas?.nasname"></span>
                         </div>
                         <div class="flex items-center justify-between">
-                            <span class="text-slate-500">Platform Type:</span>
+                            <span class="text-slate-500">{{ __('Platform Type:') }}</span>
                             <span class="font-semibold text-slate-800 uppercase" x-text="viewNas?.type"></span>
                         </div>
                         <div class="flex items-center justify-between">
-                            <span class="text-slate-500">RADIUS Shared Secret:</span>
+                            <span class="text-slate-500">{{ __('RADIUS Shared Secret:') }}</span>
                             <span class="font-mono font-semibold text-slate-800" x-text="viewNas?.secret || '••••••••'"></span>
                         </div>
                         <div class="flex items-center justify-between" x-show="viewNas?.router_name">
-                            <span class="text-slate-500">Linked Fleet Router:</span>
+                            <span class="text-slate-500">{{ __('Linked Fleet Router:') }}</span>
                             <span class="font-semibold text-indigo-700" x-text="viewNas?.router_name"></span>
                         </div>
                     </div>
@@ -582,7 +582,7 @@
 
                 <template x-if="viewNas?.description">
                     <div class="p-2.5 bg-amber-50/50 rounded-lg border border-amber-200 text-[11px] text-amber-900">
-                        <span class="font-bold block mb-0.5">Notes / Description:</span>
+                        <span class="font-bold block mb-0.5">{{ __('Notes / Description:') }}</span>
                         <span x-text="viewNas?.description"></span>
                     </div>
                 </template>
@@ -592,20 +592,20 @@
                             @click="triggerCoaTest(viewNas?.id)" 
                             class="h-[34px] px-3 bg-purple-600 hover:bg-purple-700 text-white font-medium text-xs rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                         <i class="fas fa-bolt text-xs"></i>
-                        <span>Test CoA Socket</span>
+                        <span>{{ __('Test CoA Socket') }}</span>
                     </button>
 
                     <div class="flex items-center gap-2">
                         <a :href="'/admin/network/nas/' + viewNas?.id + '/edit'" 
                            class="h-[34px] px-3.5 bg-amber-500 hover:bg-amber-600 text-white font-medium text-xs rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                             <i class="fas fa-pen-to-square text-xs"></i>
-                            <span>Edit Gateway</span>
+                            <span>{{ __('Edit Gateway') }}</span>
                         </a>
 
                         <button type="button" 
                                 @click="showDetailsModal = false" 
                                 class="h-[34px] px-3.5 border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs rounded-lg transition cursor-pointer">
-                            Close
+                            {{ __('Close') }}
                         </button>
                     </div>
                 </div>
@@ -626,8 +626,8 @@
                         <i class="fas fa-file-code"></i>
                     </div>
                     <div>
-                        <h2 class="text-xs font-semibold text-slate-800">FreeRADIUS clients.conf Preview</h2>
-                        <p class="text-[10.5px] text-slate-500 font-normal">Active client configurations synchronized to the RADIUS engine.</p>
+                        <h2 class="text-xs font-semibold text-slate-800">{{ __('FreeRADIUS clients.conf Preview') }}</h2>
+                        <p class="text-[10.5px] text-slate-500 font-normal">{{ __('Active client configurations synchronized to the RADIUS engine.') }}</p>
                     </div>
                 </div>
                 <button type="button" @click="showConfigModal = false" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center cursor-pointer">
@@ -643,7 +643,7 @@
                                 @click="copyToClipboard(configSnippet, 'clients.conf')" 
                                 class="text-cyan-400 hover:text-cyan-300 font-sans font-medium flex items-center gap-1 transition cursor-pointer">
                             <i class="fas fa-copy text-[10px]"></i>
-                            <span>Copy</span>
+                            <span>{{ __('Copy') }}</span>
                         </button>
                     </div>
                     <pre class="p-3 text-cyan-300 font-mono text-[11px] overflow-x-auto leading-relaxed max-h-60 selection:bg-cyan-900" x-text="configSnippet"></pre>
@@ -654,11 +654,11 @@
                 <a href="{{ route('tenant.network.nas.config') }}" 
                    class="h-[34px] px-3.5 bg-cyan-600 hover:bg-cyan-700 text-white font-medium text-xs rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                     <i class="fas fa-download text-[10px]"></i>
-                    <span>Download File</span>
+                    <span>{{ __('Download File') }}</span>
                 </a>
 
                 <button type="button" @click="showConfigModal = false" class="h-[34px] px-3.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-medium text-xs rounded-lg transition cursor-pointer">
-                    Close
+                    {{ __('Close') }}
                 </button>
             </div>
         </div>
@@ -683,6 +683,32 @@ function nasManager() {
         viewNas: null,
         configSnippet: @json($freeradiusSnippet),
         nasList: @json($nasCollection),
+
+        i18n: {
+            sharedSecret: @js(__('Shared Secret')),
+            nasIpAddress: @js(__('NAS IP Address')),
+            disableGateway: @js(__('Disable Gateway')),
+            enableGateway: @js(__('Enable Gateway')),
+            nasDetailsTitle: @js(__('NAS Gateway Details')),
+            hostLabel: @js(__('Host')),
+            statusActive: @js(__('ACTIVE')),
+            statusDisabled: @js(__('DISABLED')),
+            sendingCoaToast: @js(__('Sending CoA / PoD packet test...')),
+            coaCompletedTitle: @js(__('CoA Test Completed')),
+            coaResponseTitle: @js(__('CoA Socket Response')),
+            coaNoAckFallback: @js(__('No ACK received from NAS on port 3799')),
+            coaNetworkError: @js(__('Network error testing CoA socket.')),
+            statusUpdateFailed: @js(__('Failed to update NAS status.')),
+            statusUpdateNetworkError: @js(__('Network error while updating NAS status.')),
+            deleteTitle: @js(__('Delete NAS Gateway?')),
+            deleteConfirmPrefix: @js(__('Are you sure you want to delete NAS client')),
+            deleteConfirmNote: @js(__('Authentication requests from this IP will be rejected by FreeRADIUS.')),
+            deleteConfirmBtn: @js(__('Yes, Delete Gateway')),
+            cancelBtn: @js(__('Cancel')),
+            copiedDefault: @js(__('Copied')),
+            copiedSuffix: @js(__('copied to clipboard!')),
+            copyFailed: @js(__('Failed to copy to clipboard.')),
+        },
 
         openDetailsModal(nasId) {
             this.activeMenuNas = null;
@@ -729,7 +755,7 @@ function nasManager() {
 
         async triggerCoaTest(nasId) {
             try {
-                this.showToast('Sending CoA / PoD packet test...', 'info');
+                this.showToast(this.i18n.sendingCoaToast, 'info');
                 const res = await fetch(`/admin/network/nas/${nasId}/test-coa`, {
                     method: 'POST',
                     headers: {
@@ -742,7 +768,7 @@ function nasManager() {
                 if (data.success) {
                     Swal.fire({
                         icon: 'success',
-                        title: 'CoA Test Completed',
+                        title: this.i18n.coaCompletedTitle,
                         text: data.message,
                         timer: 2500,
                         showConfirmButton: false
@@ -750,12 +776,12 @@ function nasManager() {
                 } else {
                     Swal.fire({
                         icon: 'warning',
-                        title: 'CoA Socket Response',
-                        text: data.message || 'No ACK received from NAS on port 3799'
+                        title: this.i18n.coaResponseTitle,
+                        text: data.message || this.i18n.coaNoAckFallback
                     });
                 }
             } catch (e) {
-                this.showToast('Network error testing CoA socket.', 'error');
+                this.showToast(this.i18n.coaNetworkError, 'error');
             }
         },
 
@@ -781,10 +807,10 @@ function nasManager() {
                     this.showToast(data.message, data.is_active ? 'success' : 'info');
                     setTimeout(() => window.location.reload(), 400);
                 } else {
-                    this.showToast('Failed to update NAS status.', 'error');
+                    this.showToast(this.i18n.statusUpdateFailed, 'error');
                 }
             } catch (e) {
-                this.showToast('Network error while updating NAS status.', 'error');
+                this.showToast(this.i18n.statusUpdateNetworkError, 'error');
             }
         },
 
@@ -799,14 +825,14 @@ function nasManager() {
         confirmDeleteNas(nasId, nasName) {
             this.activeMenuNas = null;
             Swal.fire({
-                title: 'Delete NAS Gateway?',
-                html: `<div class="text-xs text-slate-600 mt-1">Are you sure you want to delete NAS client <strong class="text-slate-900 font-semibold">${nasName}</strong>?<br><span class="text-[11px] text-rose-500 mt-1 block">Authentication requests from this IP will be rejected by FreeRADIUS.</span></div>`,
+                title: this.i18n.deleteTitle,
+                html: `<div class="text-xs text-slate-600 mt-1">${this.i18n.deleteConfirmPrefix} <strong class="text-slate-900 font-semibold">${nasName}</strong>?<br><span class="text-[11px] text-rose-500 mt-1 block">${this.i18n.deleteConfirmNote}</span></div>`,
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#e11d48',
                 cancelButtonColor: '#64748b',
-                confirmButtonText: 'Yes, Delete Gateway',
-                cancelButtonText: 'Cancel'
+                confirmButtonText: this.i18n.deleteConfirmBtn,
+                cancelButtonText: this.i18n.cancelBtn
             }).then((result) => {
                 if (result.isConfirmed) {
                     const form = document.createElement('form');
@@ -831,12 +857,13 @@ function nasManager() {
             }, 3500);
         },
 
-        copyToClipboard(text, label = 'Copied') {
+        copyToClipboard(text, label = null) {
             this.activeMenuNas = null;
             if (!text) return;
+            const lbl = label || this.i18n.copiedDefault;
             if (navigator.clipboard && window.isSecureContext) {
                 navigator.clipboard.writeText(text).then(() => {
-                    this.showToast(`${label} copied to clipboard!`, 'success');
+                    this.showToast(`${lbl} ${this.i18n.copiedSuffix}`, 'success');
                 });
             } else {
                 const ta = document.createElement('textarea');
@@ -847,9 +874,9 @@ function nasManager() {
                 ta.select();
                 try {
                     document.execCommand('copy');
-                    this.showToast(`${label} copied to clipboard!`, 'success');
+                    this.showToast(`${lbl} ${this.i18n.copiedSuffix}`, 'success');
                 } catch (e) {
-                    alert('Failed to copy to clipboard.');
+                    alert(this.i18n.copyFailed);
                 }
                 document.body.removeChild(ta);
             }
@@ -862,8 +889,8 @@ document.addEventListener('DOMContentLoaded', function() {
     @if(session('success'))
         Swal.fire({
             icon: 'success',
-            title: 'Success!',
-            text: "{{ session('success') }}",
+            title: @js(__('Success!')),
+            text: @json(session('success')),
             timer: 2500,
             showConfirmButton: false
         });
@@ -871,8 +898,8 @@ document.addEventListener('DOMContentLoaded', function() {
     @if(session('error'))
         Swal.fire({
             icon: 'error',
-            title: 'Error!',
-            text: "{{ session('error') }}",
+            title: @js(__('Error!')),
+            text: @json(session('error')),
             confirmButtonColor: '#e11d48'
         });
     @endif

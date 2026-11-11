@@ -1,6 +1,6 @@
 @extends('tenant.layouts.app')
 
-@section('title', 'OLT Gateways & Optical Terminals - ' . ($tenant->company_name ?? $tenant->name))
+@section('title', __('OLT Gateways & Optical Terminals') . ' - ' . ($tenant->company_name ?? $tenant->name))
 
 @push('styles')
     {{-- Page-specific CSS --}}
@@ -48,12 +48,12 @@
                 <i class="fas fa-network-wired"></i>
             </div>
             <div class="flex items-center gap-2">
-                <h2 class="text-sm font-bold text-slate-900 tracking-tight">OLT Gateways &amp; Optical Terminals</h2>
+                <h2 class="text-sm font-bold text-slate-900 tracking-tight">{{ __('OLT Gateways & Optical Terminals') }}</h2>
                 <!-- Plan Quota Badge -->
                 <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-mono font-semibold border {{ $isQuotaReached ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-cyan-50 text-cyan-700 border-cyan-200' }}"
-                      title="OLT quota allowed in your ISP plan">
+                      title="{{ __('OLT quota allowed in your ISP plan') }}">
                     <i class="fas fa-layer-group text-[9px]"></i>
-                    <span>Plan: {{ $plan->name ?? 'Standard' }} ({{ $totalOlts }}/{{ $oltQuota > 0 ? $oltQuota : '∞' }})</span>
+                    <span>{{ __('Plan') }}: {{ $plan->name ?? __('Standard') }} ({{ $totalOlts }}/{{ $oltQuota > 0 ? $oltQuota : '∞' }})</span>
                 </span>
             </div>
         </div>
@@ -63,14 +63,14 @@
             <a href="{{ route('tenant.network.onu') }}" 
                class="h-[34px] px-3 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold text-xs shadow-2xs transition inline-flex items-center justify-center gap-1.5 cursor-pointer">
                 <i class="fas fa-satellite-dish text-slate-400 text-xs"></i>
-                <span>Client ONUs</span>
+                <span>{{ __('Client ONUs') }}</span>
             </a>
 
             <!-- Add OLT Button (Dedicated Create Page) -->
             <a href="{{ route('tenant.network.olt.create') }}" 
                class="h-[34px] px-3.5 rounded-lg text-white font-semibold text-xs shadow-xs transition inline-flex items-center justify-center gap-1.5 cursor-pointer {{ $isQuotaReached ? 'bg-slate-700 hover:bg-slate-800' : 'bg-cyan-600 hover:bg-cyan-700' }}">
                 <i class="fas fa-plus text-[10px]"></i>
-                <span>Add OLT Device</span>
+                <span>{{ __('Add OLT Device') }}</span>
             </a>
         </div>
     </div>
@@ -80,7 +80,7 @@
         <!-- Card 1: Plan Quota -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5 min-w-0">
-                <span class="text-[9px] font-medium text-slate-500 uppercase tracking-wider block truncate">Plan Quota</span>
+                <span class="text-[9px] font-medium text-slate-500 uppercase tracking-wider block truncate">{{ __('Plan Quota') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block {{ $isQuotaReached ? 'text-rose-600' : 'text-slate-900' }}">
                     {{ $totalOlts }} / {{ $oltQuota > 0 ? $oltQuota : '∞' }}
                 </span>
@@ -93,7 +93,7 @@
         <!-- Card 2: Online OLTs -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5 min-w-0">
-                <span class="text-[9px] font-medium text-emerald-700 uppercase tracking-wider block truncate">Online OLT</span>
+                <span class="text-[9px] font-medium text-emerald-700 uppercase tracking-wider block truncate">{{ __('Online OLT') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-emerald-600">{{ number_format($onlineOlts) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-emerald-50 text-emerald-600 border-emerald-100 flex items-center justify-center">
@@ -104,7 +104,7 @@
         <!-- Card 3: Total ONUs -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5 min-w-0">
-                <span class="text-[9px] font-medium text-blue-700 uppercase tracking-wider block truncate">Total ONUs</span>
+                <span class="text-[9px] font-medium text-blue-700 uppercase tracking-wider block truncate">{{ __('Total ONUs') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-blue-700">{{ number_format($totalOnus) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-blue-50 text-blue-600 border-blue-100 flex items-center justify-center">
@@ -115,7 +115,7 @@
         <!-- Card 4: Online ONUs -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5 min-w-0">
-                <span class="text-[9px] font-medium text-emerald-700 uppercase tracking-wider block truncate">Online ONUs</span>
+                <span class="text-[9px] font-medium text-emerald-700 uppercase tracking-wider block truncate">{{ __('Online ONUs') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-emerald-600">{{ number_format($onlineOnus) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-emerald-50 text-emerald-600 border-emerald-100 flex items-center justify-center">
@@ -126,7 +126,7 @@
         <!-- Card 5: Offline ONUs -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5 min-w-0">
-                <span class="text-[9px] font-medium text-rose-700 uppercase tracking-wider block truncate">Offline ONUs</span>
+                <span class="text-[9px] font-medium text-rose-700 uppercase tracking-wider block truncate">{{ __('Offline ONUs') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-rose-600">{{ number_format($offlineOnus) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-rose-50 text-rose-600 border-rose-100 flex items-center justify-center">
@@ -137,7 +137,7 @@
         <!-- Card 6: Online Ratio -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5 min-w-0">
-                <span class="text-[9px] font-medium text-cyan-700 uppercase tracking-wider block truncate">Online Ratio</span>
+                <span class="text-[9px] font-medium text-cyan-700 uppercase tracking-wider block truncate">{{ __('Online Ratio') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-cyan-600">{{ $onlineRatio }}%</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-cyan-50 text-cyan-600 border-cyan-100 flex items-center justify-center">
@@ -162,13 +162,13 @@
                     <input type="text" 
                            name="search" 
                            x-model="searchQuery" 
-                           placeholder="Search OLT name, IP, model, vendor..." 
+                           placeholder="{{ __('Search OLT name, IP, model, vendor...') }}" 
                            class="w-full h-[34px] pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition" />
                     <button type="button" 
                             x-show="searchQuery && searchQuery.length > 0" 
                             @click="searchQuery = ''; $nextTick(() => $el.closest('form').submit())"
                             class="absolute inset-y-0 right-0 flex items-center pr-2 text-slate-400 hover:text-rose-500 transition cursor-pointer"
-                            title="Clear search">
+                            title="{{ __('Clear Search') }}">
                         <i class="fas fa-times-circle text-xs"></i>
                     </button>
                 </div>
@@ -178,7 +178,7 @@
                     <select name="router_id" 
                             onchange="this.form.submit()" 
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                        <option value="">All Parent Routers</option>
+                        <option value="">{{ __('All Parent Routers') }}</option>
                         @foreach($routers as $r)
                             <option value="{{ $r->id }}" {{ (string)request('router_id') === (string)$r->id ? 'selected' : '' }}>
                                 {{ $r->name }}
@@ -192,9 +192,9 @@
                     <select name="status" 
                             onchange="this.form.submit()" 
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                        <option value="">All Statuses</option>
-                        <option value="online" {{ request('status') === 'online' ? 'selected' : '' }}>Online</option>
-                        <option value="offline" {{ request('status') === 'offline' ? 'selected' : '' }}>Offline</option>
+                        <option value="">{{ __('All Statuses') }}</option>
+                        <option value="online" {{ request('status') === 'online' ? 'selected' : '' }}>{{ __('Online') }}</option>
+                        <option value="offline" {{ request('status') === 'offline' ? 'selected' : '' }}>{{ __('Offline') }}</option>
                     </select>
                 </div>
 
@@ -203,11 +203,11 @@
                     <select name="per_page" 
                             onchange="this.form.submit()" 
                             class="w-full h-[34px] px-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-mono">
-                        <option value="15" {{ request('per_page', 20) == 15 ? 'selected' : '' }}>15 / page</option>
-                        <option value="20" {{ request('per_page', 20) == 20 ? 'selected' : '' }}>20 / page</option>
-                        <option value="30" {{ request('per_page', 20) == 30 ? 'selected' : '' }}>30 / page</option>
-                        <option value="50" {{ request('per_page', 20) == 50 ? 'selected' : '' }}>50 / page</option>
-                        <option value="100" {{ request('per_page', 20) == 100 ? 'selected' : '' }}>100 / page</option>
+                        <option value="15" {{ request('per_page', 20) == 15 ? 'selected' : '' }}>15 / {{ __('page') }}</option>
+                        <option value="20" {{ request('per_page', 20) == 20 ? 'selected' : '' }}>20 / {{ __('page') }}</option>
+                        <option value="30" {{ request('per_page', 20) == 30 ? 'selected' : '' }}>30 / {{ __('page') }}</option>
+                        <option value="50" {{ request('per_page', 20) == 50 ? 'selected' : '' }}>50 / {{ __('page') }}</option>
+                        <option value="100" {{ request('per_page', 20) == 100 ? 'selected' : '' }}>100 / {{ __('page') }}</option>
                     </select>
                 </div>
 
@@ -217,7 +217,7 @@
                         class="h-[34px] py-0 px-2.5 rounded-lg border border-slate-200 text-xs font-semibold flex items-center justify-center gap-1.5 transition flex-shrink-0 cursor-pointer"
                         :class="showMoreFilters ? 'bg-cyan-50 text-cyan-700 border-cyan-200' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'">
                     <i class="fas fa-sliders text-[10px]"></i>
-                    <span>More</span>
+                    <span>{{ __('More Filters') }}</span>
                     @if($activeMoreCount > 0)
                         <span class="w-4 h-4 rounded-full bg-cyan-600 text-white text-[9px] font-bold flex items-center justify-center">{{ $activeMoreCount }}</span>
                     @endif
@@ -229,12 +229,12 @@
                     <button type="submit" 
                             class="h-[34px] py-0 px-3 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer">
                         <i class="fas fa-filter text-[10px]"></i>
-                        <span>Filter</span>
+                        <span>{{ __('Filter') }}</span>
                     </button>
                     <a href="{{ route('tenant.network.olt') }}" 
                        class="h-[34px] py-0 px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer">
                         <i class="fas fa-rotate-left text-[10px]"></i>
-                        <span>Reset</span>
+                        <span>{{ __('Reset') }}</span>
                     </a>
                 </div>
             </div>
@@ -252,7 +252,7 @@
                     <select name="vendor" 
                             onchange="this.form.submit()" 
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                        <option value="">All Hardware Vendors</option>
+                        <option value="">{{ __('All Hardware Vendors') }}</option>
                         <option value="EPON OLT" {{ request('vendor') === 'EPON OLT' ? 'selected' : '' }}>EPON OLT</option>
                         <option value="VSOL" {{ request('vendor') === 'VSOL' ? 'selected' : '' }}>VSOL</option>
                         <option value="BDCOM" {{ request('vendor') === 'BDCOM' ? 'selected' : '' }}>BDCOM</option>
@@ -268,11 +268,11 @@
                     <select name="connection_type" 
                             onchange="this.form.submit()" 
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                        <option value="">All Protocol Types</option>
-                        <option value="web_api" {{ request('connection_type') === 'web_api' ? 'selected' : '' }}>Web API</option>
-                        <option value="snmp" {{ request('connection_type') === 'snmp' ? 'selected' : '' }}>SNMP</option>
-                        <option value="telnet" {{ request('connection_type') === 'telnet' ? 'selected' : '' }}>Telnet / CLI</option>
-                        <option value="hybrid" {{ request('connection_type') === 'hybrid' ? 'selected' : '' }}>Hybrid</option>
+                        <option value="">{{ __('All Protocol Types') }}</option>
+                        <option value="web_api" {{ request('connection_type') === 'web_api' ? 'selected' : '' }}>{{ __('Web API') }}</option>
+                        <option value="snmp" {{ request('connection_type') === 'snmp' ? 'selected' : '' }}>{{ __('SNMP') }}</option>
+                        <option value="telnet" {{ request('connection_type') === 'telnet' ? 'selected' : '' }}>{{ __('Telnet / CLI') }}</option>
+                        <option value="hybrid" {{ request('connection_type') === 'hybrid' ? 'selected' : '' }}>{{ __('Hybrid') }}</option>
                     </select>
                 </div>
             </div>
@@ -284,10 +284,10 @@
         <div class="px-3.5 py-2 bg-slate-50/80 border-b border-slate-200 flex items-center justify-between">
             <span class="font-normal text-slate-700 text-xs flex items-center gap-1.5">
                 <i class="fas fa-list text-slate-400 text-xs"></i>
-                <span>Master OLT Fleet Directory</span>
+                <span>{{ __('Master OLT Fleet Directory') }}</span>
             </span>
             <span class="text-[11px] text-slate-500 font-mono font-normal">
-                Total {{ $olts->total() }} Devices
+                {{ __('Total :count Devices', ['count' => $olts->total()]) }}
             </span>
         </div>
 
@@ -296,15 +296,15 @@
                 <thead>
                     <tr>
                         <th class="w-10 text-center font-semibold">#</th>
-                        <th class="text-center font-semibold">OLT Device Name</th>
-                        <th class="text-center font-semibold">Host IP &amp; Port</th>
-                        <th class="text-center font-semibold">Parent Router</th>
-                        <th class="text-center font-semibold">Model / Vendor</th>
-                        <th class="text-center font-semibold">PON Ports</th>
-                        <th class="text-center font-semibold">Total ONUs</th>
-                        <th class="text-center font-semibold">Online ONUs</th>
-                        <th class="text-center font-semibold">Status</th>
-                        <th class="w-10 text-center font-semibold no-sort">Action</th>
+                        <th class="text-center font-semibold">{{ __('OLT Device Name') }}</th>
+                        <th class="text-center font-semibold">{{ __('Host IP & Port') }}</th>
+                        <th class="text-center font-semibold">{{ __('Parent Router') }}</th>
+                        <th class="text-center font-semibold">{{ __('Model / Vendor') }}</th>
+                        <th class="text-center font-semibold">{{ __('PON Ports') }}</th>
+                        <th class="text-center font-semibold">{{ __('Total ONUs') }}</th>
+                        <th class="text-center font-semibold">{{ __('Online ONUs') }}</th>
+                        <th class="text-center font-semibold">{{ __('Status') }}</th>
+                        <th class="w-10 text-center font-semibold no-sort">{{ __('Action') }}</th>
                     </tr>
                 </thead>
                 <tbody class="text-slate-700">
@@ -324,7 +324,7 @@
                             <td class="text-left whitespace-nowrap">
                                 <a href="{{ route('tenant.network.olt.show', $olt->id) }}" 
                                    class="font-semibold text-slate-900 hover:text-cyan-600 transition inline-flex items-center gap-1.5"
-                                   title="Click to view Chassis & PON Panel">
+                                   title="{{ __('Click to view Chassis & PON Panel') }}">
                                     <span>{{ $olt->name }}</span>
                                 </a>
                             </td>
@@ -334,9 +334,9 @@
                                 <span class="inline-flex items-center gap-1">
                                     <span>{{ $olt->ip_address }}:{{ $olt->web_port ?: 80 }}</span>
                                     <button type="button" 
-                                            @click="copyToClipboard('{{ $olt->ip_address }}', 'OLT IP')" 
+                                            @click="copyToClipboard(@js($olt->ip_address), i18n.oltIp)" 
                                             class="text-slate-400 hover:text-cyan-600 text-[10px] cursor-pointer" 
-                                            title="Copy IP Address">
+                                            title="{{ __('Copy IP Address') }}">
                                         <i class="fas fa-copy"></i>
                                     </button>
                                 </span>
@@ -352,7 +352,7 @@
                                         <span class="truncate max-w-[120px]">{{ $olt->router->name }}</span>
                                     </a>
                                 @else
-                                    <span class="text-slate-400 font-mono text-[10px]">Standalone</span>
+                                    <span class="text-slate-400 font-mono text-[10px]">{{ __('Standalone') }}</span>
                                 @endif
                             </td>
 
@@ -365,7 +365,7 @@
                             <td class="text-center font-mono whitespace-nowrap">
                                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
                                     <i class="fas fa-plug text-[9px]"></i>
-                                    <span>{{ $olt->total_pon_ports ?: 8 }} PON</span>
+                                    <span>{{ $olt->total_pon_ports ?: 8 }} {{ __('PON') }}</span>
                                 </span>
                             </td>
 
@@ -373,9 +373,9 @@
                             <td class="text-center font-mono whitespace-nowrap">
                                 <a href="{{ route('tenant.network.onu', ['olt_id' => $olt->id]) }}" 
                                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 transition" 
-                                   title="View all ONUs for {{ $olt->name }}">
+                                   title="{{ __('View all ONUs for :name', ['name' => $olt->name]) }}">
                                     <i class="fas fa-satellite-dish text-[9px]"></i>
-                                    <span>{{ number_format($totalCount) }} ONUs</span>
+                                    <span>{{ number_format($totalCount) }} {{ __('ONUs') }}</span>
                                 </a>
                             </td>
 
@@ -383,9 +383,9 @@
                             <td class="text-center font-mono whitespace-nowrap">
                                 <a href="{{ route('tenant.network.onu', ['olt_id' => $olt->id, 'status' => 'online']) }}" 
                                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 transition" 
-                                   title="View Online ONUs for {{ $olt->name }}">
+                                   title="{{ __('View Online ONUs for :name', ['name' => $olt->name]) }}">
                                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                    <span>{{ number_format($onlineCount) }} Online</span>
+                                    <span>{{ number_format($onlineCount) }} {{ __('Online') }}</span>
                                 </a>
                             </td>
 
@@ -394,12 +394,12 @@
                                 @if($olt->status === 'online')
                                     <span class="inline-flex items-center justify-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
                                         <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                        <span>Online</span>
+                                        <span>{{ __('Online') }}</span>
                                     </span>
                                 @else
                                     <span class="inline-flex items-center justify-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-rose-50 text-rose-700 border border-rose-200" title="{{ $olt->last_error }}">
                                         <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
-                                        <span>Offline</span>
+                                        <span>{{ __('Offline') }}</span>
                                     </span>
                                 @endif
                             </td>
@@ -409,7 +409,7 @@
                                 <button type="button" 
                                         @click.stop="toggleMenu({{ Js::from($olt) }}, $event)" 
                                         class="w-6 h-6 mx-auto rounded-lg hover:bg-slate-200 text-slate-500 hover:text-cyan-700 transition cursor-pointer flex items-center justify-center text-[10px]"
-                                        title="Actions">
+                                        title="{{ __('Actions') }}">
                                     <i class="fas fa-ellipsis-v text-[10px] pointer-events-none"></i>
                                 </button>
                             </td>
@@ -421,12 +421,12 @@
                                     <div class="w-10 h-10 rounded-xl bg-cyan-50 text-cyan-600 mx-auto flex items-center justify-center text-base border border-cyan-100 shadow-xs">
                                         <i class="fas fa-network-wired"></i>
                                     </div>
-                                    <h3 class="text-xs font-bold text-slate-800">No OLT Gateways Found</h3>
-                                    <p class="text-[11px] text-slate-400 font-normal">Connect your EPON or GPON Optical Line Terminal to synchronize PON port status and customer ONUs.</p>
+                                    <h3 class="text-xs font-bold text-slate-800">{{ __('No OLT Gateways Found') }}</h3>
+                                    <p class="text-[11px] text-slate-400 font-normal">{{ __('Connect your EPON or GPON Optical Line Terminal to synchronize PON port status and customer ONUs.') }}</p>
                                     <div class="pt-1 flex items-center justify-center gap-2">
                                         <a href="{{ route('tenant.network.olt.create') }}" class="h-[34px] px-3.5 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs shadow-xs transition inline-flex items-center justify-center gap-1.5 cursor-pointer">
                                             <i class="fas fa-plus text-[10px]"></i>
-                                            <span>Add OLT Device</span>
+                                            <span>{{ __('Add OLT Device') }}</span>
                                         </a>
                                     </div>
                                 </div>
@@ -441,7 +441,7 @@
         @if($olts->hasPages() || $olts->total() > 0)
             <div class="p-3 bg-slate-50/80 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-2">
                 <div class="text-[11px] text-slate-500 font-normal">
-                    Showing {{ $olts->firstItem() ?? 0 }} to {{ $olts->lastItem() ?? 0 }} of {{ $olts->total() }} results
+                    {{ __('Showing :first to :last of :total results', ['first' => $olts->firstItem() ?? 0, 'last' => $olts->lastItem() ?? 0, 'total' => $olts->total()]) }}
                 </div>
                 <div>
                     {{ $olts->links() }}
@@ -473,13 +473,13 @@
             <a :href="'/admin/network/olt/' + activeMenuOlt?.id" 
                class="w-full px-2.5 py-1.5 hover:bg-cyan-50 text-slate-700 hover:text-cyan-700 font-normal flex items-center gap-2 transition text-left text-[11px]">
                 <i class="fas fa-desktop text-cyan-600 w-3.5 text-center text-[10px]"></i>
-                <span>Chassis &amp; PON Panel</span>
+                <span>{{ __('Chassis & PON Panel') }}</span>
             </a>
 
             <a :href="'/admin/network/onu?olt_id=' + activeMenuOlt?.id" 
                class="w-full px-2.5 py-1.5 hover:bg-purple-50 text-slate-700 hover:text-purple-700 font-normal flex items-center gap-2 transition text-left text-[11px]">
                 <i class="fas fa-satellite-dish text-purple-600 w-3.5 text-center text-[10px]"></i>
-                <span>View Client ONUs</span>
+                <span>{{ __('View Client ONUs') }}</span>
             </a>
         </div>
 
@@ -490,14 +490,14 @@
                     :disabled="syncingId !== null"
                     class="w-full px-2.5 py-1.5 hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 font-normal flex items-center gap-2 transition text-left cursor-pointer text-[11px] disabled:opacity-50">
                 <i class="fas fa-rotate text-emerald-600 w-3.5 text-center text-[10px]" :class="{ 'fa-spin': syncingId === activeMenuOlt?.id }"></i>
-                <span x-text="syncingId === activeMenuOlt?.id ? 'Syncing...' : 'Sync with OLT Device'"></span>
+                <span x-text="syncingId === activeMenuOlt?.id ? i18n.syncing : i18n.syncWithOlt"></span>
             </button>
 
             <!-- Dedicated Edit Page -->
             <a :href="'/admin/network/olt/' + activeMenuOlt?.id + '/edit'" 
                class="w-full px-2.5 py-1.5 hover:bg-amber-50 text-slate-700 hover:text-amber-700 font-normal flex items-center gap-2 transition text-left text-[11px]">
                 <i class="fas fa-pen-to-square text-amber-500 w-3.5 text-center text-[10px]"></i>
-                <span>Edit OLT Settings</span>
+                <span>{{ __('Edit OLT Settings') }}</span>
             </a>
         </div>
 
@@ -507,7 +507,7 @@
                     @click="deleteFromMenu()" 
                     class="w-full px-2.5 py-1.5 hover:bg-rose-50 text-rose-600 font-normal flex items-center gap-2 transition text-left cursor-pointer text-[11px]">
                 <i class="fas fa-trash-can text-rose-500 w-3.5 text-center text-[10px]"></i>
-                <span>Delete OLT Gateway</span>
+                <span>{{ __('Delete OLT Gateway') }}</span>
             </button>
         </div>
     </div>
@@ -521,7 +521,34 @@ function oltManager() {
         syncingId: null,
         activeMenuOlt: null,
         menuPos: { top: '0px', bottom: 'auto', right: '0px', left: 'auto' },
+        i18n: {
+            oltIp: @js(__('OLT IP')),
+            syncing: @js(__('Syncing...')),
+            syncWithOlt: @js(__('Sync with OLT Device')),
+            syncSuccess: @js(__('OLT synchronization completed successfully.')),
+            syncFailed: @js(__('OLT synchronization failed.')),
+            syncNetworkError: @js(__('Network error while syncing OLT device.')),
+            deleteTitle: @js(__('Delete OLT Gateway?')),
+            deleteConfirmPrefix: @js(__('Are you sure you want to delete OLT')),
+            deleteWarning: @js(__('This will also detach associated ONUs and port metrics.')),
+            deleteConfirmBtn: @js(__('Yes, Delete OLT')),
+            cancelBtn: @js(__('Cancel')),
+            copiedDefault: @js(__('Copied')),
+            copiedToClipboard: @js(__('copied to clipboard!')),
+            copiedFallback: @js(__('copied!')),
+            copyFailed: @js(__('Could not copy to clipboard.')),
+        },
         toast: { show: false, message: '', type: 'success' },
+
+        escapeHtml(str) {
+            return String(str ?? '').replace(/[&<>"']/g, (m) => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;',
+            }[m]));
+        },
 
         toggleMenu(olt, event) {
             if (this.activeMenuOlt && this.activeMenuOlt.id === olt.id) {
@@ -582,13 +609,13 @@ function oltManager() {
                 });
                 const data = await res.json();
                 if (data.success) {
-                    this.showToast(data.message || 'OLT synchronization completed successfully.', 'success');
+                    this.showToast(data.message || this.i18n.syncSuccess, 'success');
                     setTimeout(() => window.location.reload(), 800);
                 } else {
-                    this.showToast(data.message || 'OLT synchronization failed.', 'error');
+                    this.showToast(data.message || this.i18n.syncFailed, 'error');
                 }
             } catch (e) {
-                this.showToast('Network error while syncing OLT device.', 'error');
+                this.showToast(this.i18n.syncNetworkError, 'error');
             } finally {
                 this.syncingId = null;
             }
@@ -597,14 +624,14 @@ function oltManager() {
         confirmDelete(id, name) {
             if (typeof Swal !== 'undefined') {
                 Swal.fire({
-                    title: 'Delete OLT Gateway?',
-                    html: `<div class="text-xs text-slate-600 mt-1">Are you sure you want to delete OLT <strong class="text-slate-900 font-semibold">${name}</strong>?<br><span class="text-[11px] text-rose-500 mt-1 block">This will also detach associated ONUs and port metrics.</span></div>`,
+                    title: this.i18n.deleteTitle,
+                    html: `<div class="text-xs text-slate-600 mt-1">${this.i18n.deleteConfirmPrefix} <strong class="text-slate-900 font-semibold">${this.escapeHtml(name)}</strong>?<br><span class="text-[11px] text-rose-500 mt-1 block">${this.i18n.deleteWarning}</span></div>`,
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonColor: '#e11d48',
                     cancelButtonColor: '#64748b',
-                    confirmButtonText: '<i class="far fa-trash-alt mr-1"></i> Yes, Delete OLT',
-                    cancelButtonText: 'Cancel',
+                    confirmButtonText: `<i class="far fa-trash-alt mr-1"></i> ${this.i18n.deleteConfirmBtn}`,
+                    cancelButtonText: this.i18n.cancelBtn,
                     reverseButtons: true,
                     customClass: {
                         popup: 'rounded-2xl shadow-xl border border-slate-200 p-5',
@@ -624,7 +651,7 @@ function oltManager() {
                         form.submit();
                     }
                 });
-            } else if (confirm(`Are you sure you want to delete OLT '${name}'?`)) {
+            } else if (confirm(`${this.i18n.deleteConfirmPrefix} '${name}'? ${this.i18n.deleteWarning}`)) {
                 const form = document.createElement('form');
                 form.method = 'POST';
                 form.action = `/admin/network/olt/${id}`;
@@ -637,15 +664,16 @@ function oltManager() {
             }
         },
 
-        copyToClipboard(text, label = 'Copied') {
+        copyToClipboard(text, label = null) {
+            const copyLabel = label || this.i18n.copiedDefault;
             if (navigator.clipboard) {
                 navigator.clipboard.writeText(text).then(() => {
-                    this.showToast(`${label} copied to clipboard!`, 'success');
+                    this.showToast(`${copyLabel} ${this.i18n.copiedToClipboard}`, 'success');
                 }).catch(() => {
-                    this.showToast('Could not copy to clipboard.', 'error');
+                    this.showToast(this.i18n.copyFailed, 'error');
                 });
             } else {
-                this.showToast(`${label} copied!`, 'success');
+                this.showToast(`${copyLabel} ${this.i18n.copiedFallback}`, 'success');
             }
         },
 

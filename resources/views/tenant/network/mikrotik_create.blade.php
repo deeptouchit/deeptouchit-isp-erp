@@ -1,6 +1,6 @@
 @extends('tenant.layouts.app')
 
-@section('title', 'Add MikroTik Router - ' . ($tenant->company_name ?? $tenant->name))
+@section('title', __('Add MikroTik Router') . ' - ' . ($tenant->company_name ?? $tenant->name))
 
 @push('styles')
     {{-- Page-specific CSS --}}
@@ -16,9 +16,9 @@
                 <i class="fas fa-server"></i>
             </div>
             <div class="flex items-center gap-2">
-                <h1 class="text-xs font-bold text-slate-800 tracking-tight">Add MikroTik Gateway</h1>
+                <h1 class="text-xs font-bold text-slate-800 tracking-tight">{{ __('Add MikroTik Gateway') }}</h1>
                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold border {{ $isQuotaReached ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-purple-50 text-purple-700 border-purple-200' }}">
-                    Quota: {{ $totalRouters }}/{{ $mikrotikQuota > 0 ? $mikrotikQuota : '∞' }}
+                    {{ __('Quota') }}: {{ $totalRouters }}/{{ $mikrotikQuota > 0 ? $mikrotikQuota : '∞' }}
                 </span>
             </div>
         </div>
@@ -27,7 +27,7 @@
             <a href="{{ route('tenant.network.mikrotik') }}" 
                class="h-[34px] px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200/80 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-arrow-left text-[11px]"></i>
-                <span>Back to Routers</span>
+                <span>{{ __('Back to Routers') }}</span>
             </a>
         </div>
     </div>
@@ -37,10 +37,10 @@
     <div class="p-3 bg-rose-50 border border-rose-200 rounded-xl flex items-center justify-between text-xs text-rose-800">
         <div class="flex items-center gap-2">
             <i class="fas fa-triangle-exclamation text-rose-600 text-sm"></i>
-            <span>You have reached your Plan limit of <strong>{{ $mikrotikQuota }}</strong> MikroTik router(s). Upgrade your subscription to add more gateways.</span>
+            <span>{!! __('You have reached your Plan limit of :limit MikroTik router(s). Upgrade your subscription to add more gateways.', ['limit' => '<strong>' . e($mikrotikQuota) . '</strong>']) !!}</span>
         </div>
         <a href="{{ route('tenant.subscription.index') }}" class="h-[28px] px-3 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-[11px] font-semibold transition flex items-center gap-1">
-            <span>Upgrade Plan</span>
+            <span>{{ __('Upgrade Plan') }}</span>
             <i class="fas fa-arrow-right text-[10px]"></i>
         </a>
     </div>
@@ -54,7 +54,7 @@
             <!-- 1. Connection Mode Selector (Segmented Cards) -->
             <div>
                 <label class="block text-[11px] font-semibold text-slate-700 uppercase tracking-wider mb-2">
-                    Select Gateway Architecture Mode <span class="text-rose-500">*</span>
+                    {{ __('Select Gateway Architecture Mode') }} <span class="text-rose-500">*</span>
                 </label>
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                     <!-- FreeRADIUS Option -->
@@ -66,8 +66,8 @@
                             <i class="fas fa-shield-halved"></i>
                         </div>
                         <div class="min-w-0">
-                            <span class="text-xs font-bold block" :class="formData.connection_type === 'radius' ? 'text-emerald-900' : 'text-slate-800'">FreeRADIUS AAA</span>
-                            <span class="text-[10.5px] text-slate-500 block">PPPoE &amp; Hotspot Subscriber Auth</span>
+                            <span class="text-xs font-bold block" :class="formData.connection_type === 'radius' ? 'text-emerald-900' : 'text-slate-800'">{{ __('FreeRADIUS AAA') }}</span>
+                            <span class="text-[10.5px] text-slate-500 block">{{ __('PPPoE & Hotspot Subscriber Auth') }}</span>
                         </div>
                     </label>
 
@@ -80,8 +80,8 @@
                             <i class="fas fa-code"></i>
                         </div>
                         <div class="min-w-0">
-                            <span class="text-xs font-bold block" :class="formData.connection_type === 'api' ? 'text-cyan-900' : 'text-slate-800'">RouterOS API</span>
-                            <span class="text-[10.5px] text-slate-500 block">Live Telemetry &amp; Simple Queues</span>
+                            <span class="text-xs font-bold block" :class="formData.connection_type === 'api' ? 'text-cyan-900' : 'text-slate-800'">{{ __('RouterOS API') }}</span>
+                            <span class="text-[10.5px] text-slate-500 block">{{ __('Live Telemetry & Simple Queues') }}</span>
                         </div>
                     </label>
 
@@ -94,8 +94,8 @@
                             <i class="fas fa-microchip"></i>
                         </div>
                         <div class="min-w-0">
-                            <span class="text-xs font-bold block" :class="formData.connection_type === 'hybrid' ? 'text-purple-900' : 'text-slate-800'">Hybrid (Both)</span>
-                            <span class="text-[10.5px] text-slate-500 block">Full RADIUS AAA + Live API Sync</span>
+                            <span class="text-xs font-bold block" :class="formData.connection_type === 'hybrid' ? 'text-purple-900' : 'text-slate-800'">{{ __('Hybrid (Both)') }}</span>
+                            <span class="text-[10.5px] text-slate-500 block">{{ __('Full RADIUS AAA + Live API Sync') }}</span>
                         </div>
                     </label>
                 </div>
@@ -105,41 +105,41 @@
 
             <!-- 2. Core Identity & Hardware Details -->
             <div class="space-y-3">
-                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">1. Hardware &amp; Host Identity</span>
+                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">{{ __('1. Hardware & Host Identity') }}</span>
                 
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div>
                         <label class="block text-[11px] font-medium text-slate-700 mb-1">
-                            Router Name / Identity <span class="text-rose-500">*</span>
+                            {{ __('Router Name / Identity') }} <span class="text-rose-500">*</span>
                         </label>
                         <input type="text" 
                                name="name" 
                                x-model="formData.name" 
                                required 
-                               placeholder="e.g. Core-CCR2004-DHAKA" 
+                               placeholder="{{ __('e.g. Core-CCR2004-DHAKA') }}" 
                                class="w-full h-[34px] px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                     </div>
 
                     <div>
                         <label class="block text-[11px] font-medium text-slate-700 mb-1">
-                            Router IP Address <span class="text-rose-500">*</span>
+                            {{ __('Router IP Address') }} <span class="text-rose-500">*</span>
                         </label>
                         <input type="text" 
                                name="ip_address" 
                                x-model="formData.ip_address" 
                                required 
-                               placeholder="e.g. 103.59.177.10" 
+                               placeholder="{{ __('e.g. 103.59.177.10') }}" 
                                class="w-full h-[34px] px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                     </div>
 
                     <div>
                         <label class="block text-[11px] font-medium text-slate-700 mb-1">
-                            Hardware Model
+                            {{ __('Hardware Model') }}
                         </label>
                         <input type="text" 
                                name="model" 
                                x-model="formData.model" 
-                               placeholder="e.g. CCR2004-16G-2S+ or RB4011" 
+                               placeholder="{{ __('e.g. CCR2004-16G-2S+ or RB4011') }}" 
                                class="w-full h-[34px] px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                     </div>
                 </div>
@@ -148,13 +148,13 @@
             <!-- 3. FreeRADIUS Settings (Shown if radius or hybrid) -->
             <div x-show="formData.connection_type === 'radius' || formData.connection_type === 'hybrid'" class="space-y-3 pt-2">
                 <div class="border-t border-slate-100 pt-3">
-                    <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-700 block">2. FreeRADIUS AAA Settings</span>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-700 block">{{ __('2. FreeRADIUS AAA Settings') }}</span>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                         <label class="block text-[11px] font-medium text-slate-700 mb-1">
-                            RADIUS Shared Secret <span class="text-rose-500">*</span>
+                            {{ __('RADIUS Shared Secret') }} <span class="text-rose-500">*</span>
                         </label>
                         <div class="relative">
                             <input :type="showRadiusSecret ? 'text' : 'password'" 
@@ -173,7 +173,7 @@
 
                     <div>
                         <label class="block text-[11px] font-medium text-slate-700 mb-1">
-                            CoA / Disconnect Port <span class="text-rose-500">*</span>
+                            {{ __('CoA / Disconnect Port') }} <span class="text-rose-500">*</span>
                         </label>
                         <input type="number" 
                                name="coa_port" 
@@ -187,12 +187,12 @@
                 <!-- RouterOS Quick Script Snippet -->
                 <div class="rounded-lg overflow-hidden border border-slate-800 bg-slate-900 mt-2">
                     <div class="px-3 py-1.5 bg-slate-800/80 border-b border-slate-700/60 flex items-center justify-between text-[10px] text-slate-400 font-mono">
-                        <span>RouterOS FreeRADIUS Setup Script (Run in New Terminal)</span>
+                        <span>{{ __('RouterOS FreeRADIUS Setup Script (Run in New Terminal)') }}</span>
                         <button type="button" 
-                                @click="copyToClipboard(getRadiusScript(), 'RADIUS Script')" 
+                                @click="copyToClipboard(getRadiusScript(), i18n.radiusScript)" 
                                 class="text-cyan-400 hover:text-cyan-300 font-sans font-medium flex items-center gap-1 transition cursor-pointer">
                             <i class="fas fa-copy text-[10px]"></i>
-                            <span>Copy Script</span>
+                            <span>{{ __('Copy Script') }}</span>
                         </button>
                     </div>
                     <pre class="p-3 text-cyan-300 font-mono text-[11px] overflow-x-auto leading-relaxed max-h-36 selection:bg-cyan-900" x-text="getRadiusScript()"></pre>
@@ -203,7 +203,7 @@
             <div x-show="formData.connection_type === 'api' || formData.connection_type === 'hybrid'" class="space-y-3 pt-2">
                 <div class="border-t border-slate-100 pt-3 flex items-center justify-between">
                     <span class="text-[10px] font-bold uppercase tracking-wider text-cyan-700 block">
-                        <span x-text="formData.connection_type === 'hybrid' ? '3. RouterOS API Socket Credentials' : '2. RouterOS API Socket Credentials'"></span>
+                        <span x-text="formData.connection_type === 'hybrid' ? i18n.apiCredentialsStep3 : i18n.apiCredentialsStep2"></span>
                     </span>
                     <button type="button" 
                             @click="testApiSocket()" 
@@ -211,14 +211,14 @@
                             class="h-[28px] px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200/80 rounded-lg text-[11px] font-semibold transition inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50">
                         <i class="fas fa-spinner fa-spin text-cyan-600" x-show="testingSocket"></i>
                         <i class="fas fa-bolt text-emerald-600" x-show="!testingSocket"></i>
-                        <span>Test Socket Now</span>
+                        <span>{{ __('Test Socket Now') }}</span>
                     </button>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div>
                         <label class="block text-[11px] font-medium text-slate-700 mb-1">
-                            RouterOS API Port <span class="text-rose-500">*</span>
+                            {{ __('RouterOS API Port') }} <span class="text-rose-500">*</span>
                         </label>
                         <input type="number" 
                                name="api_port" 
@@ -230,7 +230,7 @@
 
                     <div>
                         <label class="block text-[11px] font-medium text-slate-700 mb-1">
-                            API Username <span class="text-rose-500">*</span>
+                            {{ __('API Username') }} <span class="text-rose-500">*</span>
                         </label>
                         <input type="text" 
                                name="username" 
@@ -242,7 +242,7 @@
 
                     <div>
                         <label class="block text-[11px] font-medium text-slate-700 mb-1">
-                            API Password <span class="text-rose-500">*</span>
+                            {{ __('API Password') }} <span class="text-rose-500">*</span>
                         </label>
                         <div class="relative">
                             <input :type="showPassword ? 'text' : 'password'" 
@@ -268,7 +268,7 @@
                            x-model="formData.use_ssl" 
                            class="w-4 h-4 text-cyan-600 rounded border-slate-300 focus:ring-cyan-500">
                     <label for="use_ssl" class="text-xs text-slate-700 font-medium cursor-pointer">
-                        Use SSL / TLS Encryption (Port 8729 / API-SSL)
+                        {{ __('Use SSL / TLS Encryption (Port 8729 / API-SSL)') }}
                     </label>
                 </div>
             </div>
@@ -283,7 +283,7 @@
                            x-model="formData.is_active" 
                            class="w-4 h-4 text-cyan-600 rounded border-slate-300 focus:ring-cyan-500">
                     <label for="is_active" class="text-xs text-slate-700 font-medium cursor-pointer">
-                        Enable this gateway immediately for active authentication &amp; telemetry
+                        {{ __('Enable this gateway immediately for active authentication & telemetry') }}
                     </label>
                 </div>
             </div>
@@ -292,13 +292,13 @@
             <div class="pt-3 border-t border-slate-200 flex items-center justify-end gap-2">
                 <a href="{{ route('tenant.network.mikrotik') }}" 
                    class="h-[34px] px-4 border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs rounded-lg transition flex items-center justify-center cursor-pointer">
-                    Cancel
+                    {{ __('Cancel') }}
                 </a>
                 <button type="submit" 
                         :disabled="{{ $isQuotaReached ? 'true' : 'false' }}"
                         class="h-[34px] px-5 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
                     <i class="fas fa-check text-xs"></i>
-                    <span>Save &amp; Connect Gateway</span>
+                    <span>{{ __('Save & Connect Gateway') }}</span>
                 </button>
             </div>
         </form>
@@ -315,6 +315,20 @@ function mikrotikCreateManager() {
         showRadiusSecret: false,
         showPassword: false,
         testingSocket: false,
+
+        i18n: {
+            radiusScript: @js(__('RADIUS Script')),
+            apiCredentialsStep2: @js(__('2. RouterOS API Socket Credentials')),
+            apiCredentialsStep3: @js(__('3. RouterOS API Socket Credentials')),
+            copiedDefault: @js(__('Copied')),
+            copiedExclaim: @js(__('Copied!')),
+            copyFailed: @js(__('Failed to copy text.')),
+            enterIpFirst: @js(__('Please enter Router IP Address first.')),
+            connectionSuccess: @js(__('Connection Successful!')),
+            connectionFailed: @js(__('Connection Failed')),
+            routerOsLabel: @js(__('RouterOS')),
+            socketNetworkError: @js(__('Network communication error while testing socket.')),
+        },
 
         formData: {
             connection_type: '{{ $defaultMode ?? "radius" }}',
@@ -338,13 +352,14 @@ function mikrotikCreateManager() {
             return `# 1. Add FreeRADIUS Server\n/radius add service=ppp,hotspot,login address=${sIp} secret="${sec}" authentication-port=1812 accounting-port=1813 timeout=3000ms comment="SomitySoft FreeRADIUS"\n\n# 2. Enable CoA / Disconnect Requests\n/radius incoming set accept=yes port=${coa}\n\n# 3. Enable PPPoE RADIUS AAA Accounting\n/ppp aaa set use-radius=yes accounting=yes interim-update=5m`;
         },
 
-        copyToClipboard(text, label = 'Copied') {
+        copyToClipboard(text, label = null) {
             if (!text) return;
+            const lbl = label || this.i18n.copiedDefault;
             if (navigator.clipboard && window.isSecureContext) {
                 navigator.clipboard.writeText(text).then(() => {
                     Swal.fire({
                         icon: 'success',
-                        title: `${label} Copied!`,
+                        title: `${lbl} ${this.i18n.copiedExclaim}`,
                         timer: 1500,
                         showConfirmButton: false
                     });
@@ -360,12 +375,12 @@ function mikrotikCreateManager() {
                     document.execCommand('copy');
                     Swal.fire({
                         icon: 'success',
-                        title: `${label} Copied!`,
+                        title: `${lbl} ${this.i18n.copiedExclaim}`,
                         timer: 1500,
                         showConfirmButton: false
                     });
                 } catch (e) {
-                    alert('Failed to copy text.');
+                    alert(this.i18n.copyFailed);
                 }
                 document.body.removeChild(ta);
             }
@@ -373,7 +388,7 @@ function mikrotikCreateManager() {
 
         async testApiSocket() {
             if (!this.formData.ip_address) {
-                alert('Please enter Router IP Address first.');
+                alert(this.i18n.enterIpFirst);
                 return;
             }
 
@@ -400,9 +415,9 @@ function mikrotikCreateManager() {
                 if (typeof Swal !== 'undefined') {
                     Swal.fire({
                         icon: data.success ? 'success' : 'error',
-                        title: data.success ? 'Connection Successful!' : 'Connection Failed',
+                        title: data.success ? this.i18n.connectionSuccess : this.i18n.connectionFailed,
                         html: `<div class='text-xs text-slate-600 mt-1'>${data.message}` + 
-                              (data.ros_version ? `<br><span class='font-mono font-bold text-cyan-800'>RouterOS: ${data.ros_version} (${data.model || ''})</span>` : '') + 
+                              (data.ros_version ? `<br><span class='font-mono font-bold text-cyan-800'>${this.i18n.routerOsLabel}: ${data.ros_version} (${data.model || ''})</span>` : '') + 
                               `</div>`,
                         confirmButtonColor: data.success ? '#0891b2' : '#e11d48'
                     });
@@ -410,7 +425,7 @@ function mikrotikCreateManager() {
                     alert(data.message);
                 }
             } catch (err) {
-                alert('Network communication error while testing socket.');
+                alert(this.i18n.socketNetworkError);
             } finally {
                 this.testingSocket = false;
             }

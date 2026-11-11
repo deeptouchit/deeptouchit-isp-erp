@@ -1,6 +1,6 @@
 @extends('tenant.layouts.app')
 
-@section('title', 'Internet Packages & Plans - ' . ($tenant->company_name ?? $tenant->name))
+@section('title', __('Internet Packages & Plans') . ' - ' . ($tenant->company_name ?? $tenant->name))
 
 @push('styles')
     {{-- Page-specific CSS --}}
@@ -47,9 +47,9 @@
                 <i class="fas fa-boxes-stacked"></i>
             </div>
             <div class="flex items-center gap-2">
-                <h2 class="text-sm font-bold text-slate-900 tracking-tight">Internet Packages &amp; Bandwidth Plans</h2>
+                <h2 class="text-sm font-bold text-slate-900 tracking-tight">{{ __('Internet Packages & Bandwidth Plans') }}</h2>
                 <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-cyan-50 text-cyan-700 border border-cyan-200 font-mono">
-                    Total: {{ number_format($totalPackages) }}
+                    {{ __('Total') }}: {{ number_format($totalPackages) }}
                 </span>
             </div>
         </div>
@@ -60,21 +60,21 @@
                     @click="showImportModal = true"
                     class="h-[34px] px-3 rounded-lg border border-purple-200 bg-purple-50 hover:bg-purple-100 text-purple-700 font-semibold text-xs shadow-2xs transition inline-flex items-center justify-center gap-1.5 cursor-pointer">
                 <i class="fas fa-cloud-arrow-down text-purple-600 text-[11px]"></i>
-                <span>Import from MikroTik</span>
+                <span>{{ __('Import from MikroTik') }}</span>
             </button>
 
             <!-- Routers Fleet Button -->
             <a href="{{ route('tenant.network.mikrotik') }}"
                class="h-[34px] px-3 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold text-xs shadow-2xs transition inline-flex items-center justify-center gap-1.5 cursor-pointer">
                 <i class="fas fa-server text-slate-500 text-[11px]"></i>
-                <span>MikroTik Routers</span>
+                <span>{{ __('MikroTik Routers') }}</span>
             </a>
 
             <!-- Add Package Button -->
             <a href="{{ route('tenant.network.packages.create') }}"
                class="h-[34px] px-3.5 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs shadow-xs transition inline-flex items-center justify-center gap-1.5 cursor-pointer">
                 <i class="fas fa-plus text-[10px]"></i>
-                <span>Add Package</span>
+                <span>{{ __('Add Package') }}</span>
             </a>
         </div>
     </div>
@@ -84,7 +84,7 @@
         <!-- Metric 1: Total Plans -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5 min-w-0">
-                <span class="text-[9px] font-medium text-slate-500 uppercase tracking-wider block truncate">Total Plans</span>
+                <span class="text-[9px] font-medium text-slate-500 uppercase tracking-wider block truncate">{{ __('Total Plans') }}</span>
                 <span class="text-[13px] font-bold text-slate-800 tracking-tight font-mono leading-tight block">{{ number_format($totalPackages) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md bg-slate-100 text-slate-600 flex items-center justify-center text-[10px] border border-slate-200 flex-shrink-0">
@@ -95,7 +95,7 @@
         <!-- Metric 2: Active Plans -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5 min-w-0">
-                <span class="text-[9px] font-medium text-emerald-700 uppercase tracking-wider block truncate">Active Plans</span>
+                <span class="text-[9px] font-medium text-emerald-700 uppercase tracking-wider block truncate">{{ __('Active Plans') }}</span>
                 <span class="text-[13px] font-bold text-emerald-600 tracking-tight font-mono leading-tight block">{{ number_format($activePackages) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md bg-emerald-50 text-emerald-600 flex items-center justify-center text-[10px] border border-emerald-100 flex-shrink-0">
@@ -106,7 +106,7 @@
         <!-- Metric 3: PPPoE Plans -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5 min-w-0">
-                <span class="text-[9px] font-medium text-blue-700 uppercase tracking-wider block truncate">PPPoE Plans</span>
+                <span class="text-[9px] font-medium text-blue-700 uppercase tracking-wider block truncate">{{ __('PPPoE Plans') }}</span>
                 <span class="text-[13px] font-bold text-blue-700 tracking-tight font-mono leading-tight block">{{ number_format($pppoePackages) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md bg-blue-50 text-blue-600 flex items-center justify-center text-[10px] border border-blue-100 flex-shrink-0">
@@ -117,7 +117,7 @@
         <!-- Metric 4: Hotspot Plans -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5 min-w-0">
-                <span class="text-[9px] font-medium text-amber-700 uppercase tracking-wider block truncate">Hotspot Plans</span>
+                <span class="text-[9px] font-medium text-amber-700 uppercase tracking-wider block truncate">{{ __('Hotspot Plans') }}</span>
                 <span class="text-[13px] font-bold text-amber-700 tracking-tight font-mono leading-tight block">{{ number_format($hotspotPackages) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md bg-amber-50 text-amber-600 flex items-center justify-center text-[10px] border border-amber-100 flex-shrink-0">
@@ -128,7 +128,7 @@
         <!-- Metric 5: Avg Price -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5 min-w-0">
-                <span class="text-[9px] font-medium text-purple-700 uppercase tracking-wider block truncate">Avg Monthly Price</span>
+                <span class="text-[9px] font-medium text-purple-700 uppercase tracking-wider block truncate">{{ __('Avg Monthly Price') }}</span>
                 <span class="text-[13px] font-bold text-purple-700 tracking-tight font-mono leading-tight block">@currency($avgPrice)</span>
             </div>
             <div class="w-6 h-6 rounded-md bg-purple-50 text-purple-600 flex items-center justify-center text-[10px] border border-purple-100 flex-shrink-0">
@@ -139,7 +139,7 @@
         <!-- Metric 6: Fleet Synced -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5 min-w-0">
-                <span class="text-[9px] font-medium text-indigo-700 uppercase tracking-wider block truncate">Fleet Synced</span>
+                <span class="text-[9px] font-medium text-indigo-700 uppercase tracking-wider block truncate">{{ __('Fleet Synced') }}</span>
                 <span class="text-[13px] font-bold text-indigo-700 tracking-tight font-mono leading-tight block">{{ number_format($syncedPackages) }}/{{ $totalPackages }}</span>
             </div>
             <div class="w-6 h-6 rounded-md bg-indigo-50 text-indigo-600 flex items-center justify-center text-[10px] border border-indigo-100 flex-shrink-0">
@@ -164,13 +164,13 @@
                     <input type="text" 
                            name="search" 
                            x-model="searchQuery" 
-                           placeholder="Search package name, profile, IP, notes..." 
+                           placeholder="{{ __('Search package name, profile, IP, notes...') }}" 
                            class="w-full h-[34px] pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition" />
                     <button type="button" 
                             x-show="searchQuery && searchQuery.length > 0" 
                             @click="searchQuery = ''; $nextTick(() => $el.closest('form').submit())"
                             class="absolute inset-y-0 right-0 flex items-center pr-2 text-slate-400 hover:text-rose-500 transition cursor-pointer"
-                            title="Clear search">
+                            title="{{ __('Clear Search') }}">
                         <i class="fas fa-times-circle text-xs"></i>
                     </button>
                 </div>
@@ -180,7 +180,7 @@
                     <select name="router_id" 
                             onchange="this.form.submit()" 
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                        <option value="">All Fleet Routers</option>
+                        <option value="">{{ __('All Fleet Routers') }}</option>
                         @foreach($routers as $r)
                             <option value="{{ $r->id }}" {{ (string)request('router_id') === (string)$r->id ? 'selected' : '' }}>
                                 {{ $r->name }}
@@ -194,10 +194,10 @@
                     <select name="service_type" 
                             onchange="this.form.submit()" 
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                        <option value="">All Services</option>
-                        <option value="pppoe" {{ request('service_type') === 'pppoe' ? 'selected' : '' }}>PPPoE Profile</option>
-                        <option value="hotspot" {{ request('service_type') === 'hotspot' ? 'selected' : '' }}>Hotspot Profile</option>
-                        <option value="static" {{ request('service_type') === 'static' ? 'selected' : '' }}>Static IP</option>
+                        <option value="">{{ __('All Services') }}</option>
+                        <option value="pppoe" {{ request('service_type') === 'pppoe' ? 'selected' : '' }}>{{ __('PPPoE Profile') }}</option>
+                        <option value="hotspot" {{ request('service_type') === 'hotspot' ? 'selected' : '' }}>{{ __('Hotspot Profile') }}</option>
+                        <option value="static" {{ request('service_type') === 'static' ? 'selected' : '' }}>{{ __('Static IP') }}</option>
                     </select>
                 </div>
 
@@ -206,11 +206,11 @@
                     <select name="per_page" 
                             onchange="this.form.submit()" 
                             class="w-full h-[34px] px-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-mono">
-                        <option value="15" {{ request('per_page', 20) == 15 ? 'selected' : '' }}>15 / page</option>
-                        <option value="20" {{ request('per_page', 20) == 20 ? 'selected' : '' }}>20 / page</option>
-                        <option value="30" {{ request('per_page', 20) == 30 ? 'selected' : '' }}>30 / page</option>
-                        <option value="50" {{ request('per_page', 20) == 50 ? 'selected' : '' }}>50 / page</option>
-                        <option value="100" {{ request('per_page', 20) == 100 ? 'selected' : '' }}>100 / page</option>
+                        <option value="15" {{ request('per_page', 20) == 15 ? 'selected' : '' }}>15 / {{ __('page') }}</option>
+                        <option value="20" {{ request('per_page', 20) == 20 ? 'selected' : '' }}>20 / {{ __('page') }}</option>
+                        <option value="30" {{ request('per_page', 20) == 30 ? 'selected' : '' }}>30 / {{ __('page') }}</option>
+                        <option value="50" {{ request('per_page', 20) == 50 ? 'selected' : '' }}>50 / {{ __('page') }}</option>
+                        <option value="100" {{ request('per_page', 20) == 100 ? 'selected' : '' }}>100 / {{ __('page') }}</option>
                     </select>
                 </div>
 
@@ -220,7 +220,7 @@
                         class="h-[34px] py-0 px-2.5 rounded-lg border border-slate-200 text-xs font-semibold flex items-center justify-center gap-1.5 transition flex-shrink-0 cursor-pointer"
                         :class="showMoreFilters ? 'bg-cyan-50 text-cyan-700 border-cyan-200' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'">
                     <i class="fas fa-sliders text-[10px]"></i>
-                    <span>More</span>
+                    <span>{{ __('More Filters') }}</span>
                     @if($activeMoreCount > 0)
                         <span class="w-4 h-4 rounded-full bg-cyan-600 text-white text-[9px] font-bold flex items-center justify-center">{{ $activeMoreCount }}</span>
                     @endif
@@ -232,12 +232,12 @@
                     <button type="submit" 
                             class="h-[34px] py-0 px-3 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer">
                         <i class="fas fa-filter text-[10px]"></i>
-                        <span>Filter</span>
+                        <span>{{ __('Filter') }}</span>
                     </button>
                     <a href="{{ route('tenant.network.packages') }}" 
                        class="h-[34px] py-0 px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer">
                         <i class="fas fa-rotate-left text-[10px]"></i>
-                        <span>Reset</span>
+                        <span>{{ __('Reset') }}</span>
                     </a>
                 </div>
             </div>
@@ -255,7 +255,7 @@
                     <select name="ip_pool_id" 
                             onchange="this.form.submit()" 
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                        <option value="">All IP Pools</option>
+                        <option value="">{{ __('All IP Pools') }}</option>
                         @foreach($ipPools as $p)
                             <option value="{{ $p->id }}" {{ (string)request('ip_pool_id') === (string)$p->id ? 'selected' : '' }}>
                                 {{ $p->name }} {{ $p->addresses_display && $p->addresses_display !== '-' ? '('.$p->addresses_display.')' : '' }}
@@ -269,9 +269,9 @@
                     <select name="active" 
                             onchange="this.form.submit()" 
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                        <option value="">All Statuses</option>
-                        <option value="1" {{ request('active') === '1' ? 'selected' : '' }}>Active Plans</option>
-                        <option value="0" {{ request('active') === '0' ? 'selected' : '' }}>Disabled Plans</option>
+                        <option value="">{{ __('All Statuses') }}</option>
+                        <option value="1" {{ request('active') === '1' ? 'selected' : '' }}>{{ __('Active Plans') }}</option>
+                        <option value="0" {{ request('active') === '0' ? 'selected' : '' }}>{{ __('Disabled Plans') }}</option>
                     </select>
                 </div>
             </div>
@@ -284,10 +284,10 @@
         <div class="px-3.5 py-2 bg-slate-50/80 border-b border-slate-200 flex items-center justify-between">
             <span class="font-normal text-slate-700 text-xs flex items-center gap-1.5">
                 <i class="fas fa-list text-slate-400 text-xs"></i>
-                <span>Bandwidth Packages &amp; Profile Directory</span>
+                <span>{{ __('Bandwidth Packages & Profile Directory') }}</span>
             </span>
             <span class="text-[11px] text-slate-500 font-mono font-normal">
-                Total {{ $packages->total() }} Packages
+                {{ __('Total :count Packages', ['count' => $packages->total()]) }}
             </span>
         </div>
 
@@ -296,13 +296,13 @@
                 <thead>
                     <tr>
                         <th class="w-10 text-center font-semibold">#</th>
-                        <th class="text-center font-semibold">Package Name</th>
-                        <th class="text-center font-semibold">Bandwidth (Down/Up)</th>
-                        <th class="text-center font-semibold">Monthly Price</th>
-                        <th class="text-center font-semibold">Service Type</th>
-                        <th class="text-center font-semibold">Fleet Router / IP Pool</th>
-                        <th class="text-center font-semibold">Status</th>
-                        <th class="w-10 text-center font-semibold no-sort">Action</th>
+                        <th class="text-center font-semibold">{{ __('Package Name') }}</th>
+                        <th class="text-center font-semibold">{{ __('Bandwidth (Down/Up)') }}</th>
+                        <th class="text-center font-semibold">{{ __('Monthly Price') }}</th>
+                        <th class="text-center font-semibold">{{ __('Service Type') }}</th>
+                        <th class="text-center font-semibold">{{ __('Fleet Router / IP Pool') }}</th>
+                        <th class="text-center font-semibold">{{ __('Status') }}</th>
+                        <th class="w-10 text-center font-semibold no-sort">{{ __('Action') }}</th>
                     </tr>
                 </thead>
                 <tbody class="text-slate-700">
@@ -318,7 +318,7 @@
                             <td class="text-left whitespace-nowrap">
                                 <a href="{{ route('tenant.network.packages.edit', $pkg->id) }}"
                                    class="font-semibold text-slate-900 hover:text-cyan-600 transition inline-flex items-center gap-1.5"
-                                   title="Click to Edit Package">
+                                   title="{{ __('Click to Edit Package') }}">
                                     <span>{{ $pkg->package_name ?: $pkg->name }}</span>
                                     @if($pkg->code)
                                         <span class="text-[10px] font-mono text-slate-400 font-normal">({{ $pkg->code }})</span>
@@ -347,16 +347,16 @@
                                 @if($pkg->service_type === 'pppoe')
                                     <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200">
                                         <i class="fas fa-network-wired text-[8px]"></i>
-                                        <span>PPPoE</span>
+                                        <span>{{ __('PPPoE') }}</span>
                                     </span>
                                 @elseif($pkg->service_type === 'hotspot')
                                     <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-amber-50 text-amber-700 border border-amber-200">
                                         <i class="fas fa-wifi text-[8px]"></i>
-                                        <span>Hotspot</span>
+                                        <span>{{ __('Hotspot') }}</span>
                                     </span>
                                 @else
                                     <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-700 border border-slate-200">
-                                        <span>Static IP</span>
+                                        <span>{{ __('Static IP') }}</span>
                                     </span>
                                 @endif
                             </td>
@@ -370,7 +370,7 @@
                                             <span>{{ $pkg->router->name }}</span>
                                         </span>
                                     @else
-                                        <span class="text-slate-400 text-xs">All Routers</span>
+                                        <span class="text-slate-400 text-xs">{{ __('All Routers') }}</span>
                                     @endif
 
                                     @if($pkg->ipPool || $pkg->remote_address)
@@ -388,12 +388,12 @@
                                 @if($pkg->is_active)
                                     <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
                                         <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                        <span>Active</span>
+                                        <span>{{ __('Active') }}</span>
                                     </span>
                                 @else
                                     <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-rose-50 text-rose-700 border border-rose-200">
                                         <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
-                                        <span>Disabled</span>
+                                        <span>{{ __('Disabled') }}</span>
                                     </span>
                                 @endif
                             </td>
@@ -403,7 +403,7 @@
                                 <button type="button" 
                                         @click.stop="toggleMenu({{ Js::from($pkg) }}, $event)" 
                                         class="w-6 h-6 mx-auto rounded-lg hover:bg-slate-200 text-slate-500 hover:text-cyan-700 transition cursor-pointer flex items-center justify-center text-[10px]"
-                                        title="Actions">
+                                        title="{{ __('Actions') }}">
                                     <i class="fas fa-ellipsis-v text-[10px] pointer-events-none"></i>
                                 </button>
                             </td>
@@ -415,19 +415,19 @@
                                     <div class="w-10 h-10 rounded-xl bg-cyan-50 text-cyan-600 mx-auto flex items-center justify-center text-base border border-cyan-100 shadow-xs">
                                         <i class="fas fa-boxes-stacked"></i>
                                     </div>
-                                    <h3 class="text-xs font-bold text-slate-800">No Internet Packages Found</h3>
-                                    <p class="text-[11px] text-slate-400 font-normal">Create your first bandwidth package or import existing user profiles directly from your MikroTik fleet.</p>
+                                    <h3 class="text-xs font-bold text-slate-800">{{ __('No Internet Packages Found') }}</h3>
+                                    <p class="text-[11px] text-slate-400 font-normal">{{ __('Create your first bandwidth package or import existing user profiles directly from your MikroTik fleet.') }}</p>
                                     <div class="pt-1 flex items-center justify-center gap-2">
                                         <a href="{{ route('tenant.network.packages.create') }}" 
                                            class="h-[34px] px-3.5 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs shadow-xs transition inline-flex items-center justify-center gap-1.5 cursor-pointer">
                                             <i class="fas fa-plus text-[10px]"></i>
-                                            <span>Add Package</span>
+                                            <span>{{ __('Add Package') }}</span>
                                         </a>
                                         <button type="button" 
                                                 @click="showImportModal = true"
                                                 class="h-[34px] px-3 rounded-lg border border-purple-200 bg-purple-50 hover:bg-purple-100 text-purple-700 font-semibold text-xs shadow-2xs transition inline-flex items-center justify-center gap-1.5 cursor-pointer">
                                             <i class="fas fa-cloud-arrow-down text-purple-600 text-[10px]"></i>
-                                            <span>Import Profiles</span>
+                                            <span>{{ __('Import Profiles') }}</span>
                                         </button>
                                     </div>
                                 </div>
@@ -442,7 +442,7 @@
         @if($packages->hasPages() || $packages->total() > 0)
             <div class="p-3 bg-slate-50/80 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-2">
                 <div class="text-[11px] text-slate-500 font-normal">
-                    Showing {{ $packages->firstItem() ?? 0 }} to {{ $packages->lastItem() ?? 0 }} of {{ $packages->total() }} results
+                    {{ __('Showing :first to :last of :total results', ['first' => $packages->firstItem() ?? 0, 'last' => $packages->lastItem() ?? 0, 'total' => $packages->total()]) }}
                 </div>
                 <div>
                     {{ $packages->links() }}
@@ -476,7 +476,7 @@
                     @click="viewDetailsFromMenu()"
                     class="w-full px-2.5 py-1.5 hover:bg-cyan-50 text-slate-700 hover:text-cyan-700 font-normal flex items-center gap-2 transition text-left cursor-pointer text-[11px]">
                 <i class="fas fa-eye text-cyan-600 w-3.5 text-center text-[10px]"></i>
-                <span>View Details</span>
+                <span>{{ __('View Details') }}</span>
             </button>
 
             <!-- Sync to Router -->
@@ -485,7 +485,7 @@
                     :disabled="!activeMenuPkg?.router_id || syncingPkgId === activeMenuPkg?.id"
                     class="w-full px-2.5 py-1.5 hover:bg-cyan-50 text-slate-700 hover:text-cyan-700 font-normal flex items-center gap-2 transition text-left cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed text-[11px]">
                 <i class="fas" :class="syncingPkgId === activeMenuPkg?.id ? 'fa-spinner fa-spin text-cyan-600' : 'fa-arrows-rotate text-cyan-600 w-3.5 text-center text-[10px]'"></i>
-                <span>Sync to Router</span>
+                <span>{{ __('Sync to Router') }}</span>
             </button>
 
             <!-- Copy Profile Name -->
@@ -493,7 +493,7 @@
                     @click="copyProfileFromMenu()"
                     class="w-full px-2.5 py-1.5 hover:bg-blue-50 text-slate-700 hover:text-blue-700 font-normal flex items-center gap-2 transition text-left cursor-pointer text-[11px]">
                 <i class="fas fa-copy text-blue-600 w-3.5 text-center text-[10px]"></i>
-                <span>Copy Profile Name</span>
+                <span>{{ __('Copy Profile Name') }}</span>
             </button>
         </div>
 
@@ -504,14 +504,14 @@
                     @click="toggleFromMenu()"
                     class="w-full px-2.5 py-1.5 hover:bg-slate-50 text-slate-700 hover:text-indigo-700 font-normal flex items-center gap-2 transition text-left cursor-pointer text-[11px]">
                 <i class="fas fa-power-off text-indigo-600 w-3.5 text-center text-[10px]"></i>
-                <span x-text="activeMenuPkg?.is_active ? 'Disable Package' : 'Enable Package'"></span>
+                <span x-text="activeMenuPkg?.is_active ? i18n.disablePackage : i18n.enablePackage"></span>
             </button>
 
             <!-- Edit Package (Dedicated Page) -->
             <a :href="'/admin/network/packages/' + activeMenuPkg?.id + '/edit'"
                class="w-full px-2.5 py-1.5 hover:bg-amber-50 text-slate-700 hover:text-amber-700 font-normal flex items-center gap-2 transition text-left cursor-pointer text-[11px]">
                 <i class="fas fa-pen-to-square text-amber-600 w-3.5 text-center text-[10px]"></i>
-                <span>Edit Package</span>
+                <span>{{ __('Edit Package') }}</span>
             </a>
 
             <!-- Delete Package -->
@@ -519,7 +519,7 @@
                     @click="deleteFromMenu()"
                     class="w-full px-2.5 py-1.5 hover:bg-rose-50 text-rose-600 font-normal flex items-center gap-2 transition text-left cursor-pointer text-[11px]">
                 <i class="fas fa-trash-can text-rose-600 w-3.5 text-center text-[10px]"></i>
-                <span>Delete Package</span>
+                <span>{{ __('Delete Package') }}</span>
             </button>
         </div>
     </div>
@@ -547,7 +547,7 @@
                     </div>
                     <div>
                         <h3 class="text-xs font-bold text-slate-900" x-text="selectedPkg?.package_name || selectedPkg?.name"></h3>
-                        <p class="text-[10.5px] text-slate-500 font-normal" x-text="'Profile: ' + (selectedPkg?.name || selectedPkg?.mikrotik_profile || '--')"></p>
+                        <p class="text-[10.5px] text-slate-500 font-normal" x-text="i18n.profileLabel + ': ' + (selectedPkg?.name || selectedPkg?.mikrotik_profile || '--')"></p>
                     </div>
                 </div>
                 <button type="button" @click="showDetailsModal = false" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center text-xs cursor-pointer">
@@ -560,51 +560,51 @@
                 <!-- Grid of Details -->
                 <div class="grid grid-cols-2 gap-2.5 p-3 bg-slate-50 rounded-lg border border-slate-200/70">
                     <div>
-                        <span class="text-[10px] text-slate-400 uppercase block font-medium">Service Type</span>
-                        <span class="font-semibold text-slate-800 uppercase" x-text="selectedPkg?.service_type || 'PPPoE'"></span>
+                        <span class="text-[10px] text-slate-400 uppercase block font-medium">{{ __('Service Type') }}</span>
+                        <span class="font-semibold text-slate-800 uppercase" x-text="serviceTypeLabel(selectedPkg?.service_type)"></span>
                     </div>
                     <div>
-                        <span class="text-[10px] text-slate-400 uppercase block font-medium">Monthly Price</span>
-                        <span class="font-mono font-bold text-cyan-800" x-text="'৳ ' + Number(selectedPkg?.price || 0).toFixed(2)"></span>
+                        <span class="text-[10px] text-slate-400 uppercase block font-medium">{{ __('Monthly Price') }}</span>
+                        <span class="font-mono font-bold text-cyan-800" x-text="formatCurrency(selectedPkg?.price)"></span>
                     </div>
                     <div>
-                        <span class="text-[10px] text-slate-400 uppercase block font-medium">Download Speed</span>
-                        <span class="font-mono font-bold text-cyan-700" x-text="(selectedPkg?.download_speed || '0') + ' Mbps'"></span>
+                        <span class="text-[10px] text-slate-400 uppercase block font-medium">{{ __('Download Speed') }}</span>
+                        <span class="font-mono font-bold text-cyan-700" x-text="(selectedPkg?.download_speed || '0') + ' ' + i18n.mbps"></span>
                     </div>
                     <div>
-                        <span class="text-[10px] text-slate-400 uppercase block font-medium">Upload Speed</span>
-                        <span class="font-mono font-bold text-purple-700" x-text="(selectedPkg?.upload_speed || '0') + ' Mbps'"></span>
+                        <span class="text-[10px] text-slate-400 uppercase block font-medium">{{ __('Upload Speed') }}</span>
+                        <span class="font-mono font-bold text-purple-700" x-text="(selectedPkg?.upload_speed || '0') + ' ' + i18n.mbps"></span>
                     </div>
                     <div>
-                        <span class="text-[10px] text-slate-400 uppercase block font-medium">Validity Period</span>
-                        <span class="font-mono text-slate-700" x-text="(selectedPkg?.validity_days || '30') + ' Days'"></span>
+                        <span class="text-[10px] text-slate-400 uppercase block font-medium">{{ __('Validity Period') }}</span>
+                        <span class="font-mono text-slate-700" x-text="(selectedPkg?.validity_days || '30') + ' ' + i18n.days"></span>
                     </div>
                     <div>
-                        <span class="text-[10px] text-slate-400 uppercase block font-medium">Status</span>
-                        <span class="font-medium" :class="selectedPkg?.is_active ? 'text-emerald-700' : 'text-rose-700'" x-text="selectedPkg?.is_active ? 'Active' : 'Disabled'"></span>
+                        <span class="text-[10px] text-slate-400 uppercase block font-medium">{{ __('Status') }}</span>
+                        <span class="font-medium" :class="selectedPkg?.is_active ? 'text-emerald-700' : 'text-rose-700'" x-text="selectedPkg?.is_active ? i18n.active : i18n.disabled"></span>
                     </div>
                 </div>
 
                 <!-- Network Policies -->
                 <div class="p-3 bg-slate-50 rounded-lg border border-slate-200/70 space-y-1.5 font-mono text-[11px]">
                     <div class="flex justify-between">
-                        <span class="text-slate-500">RouterOS Profile:</span>
+                        <span class="text-slate-500">{{ __('RouterOS Profile') }}:</span>
                         <span class="font-semibold text-indigo-900" x-text="selectedPkg?.name || '--'"></span>
                     </div>
                     <div class="flex justify-between">
-                        <span class="text-slate-500">Local Address (GW):</span>
+                        <span class="text-slate-500">{{ __('Local Address (GW)') }}:</span>
                         <span class="text-slate-800" x-text="selectedPkg?.local_address || '--'"></span>
                     </div>
                     <div class="flex justify-between">
-                        <span class="text-slate-500">Remote Address / Pool:</span>
+                        <span class="text-slate-500">{{ __('Remote Address / Pool') }}:</span>
                         <span class="text-purple-800" x-text="selectedPkg?.remote_address || '--'"></span>
                     </div>
                     <div class="flex justify-between">
-                        <span class="text-slate-500">Only One Session:</span>
+                        <span class="text-slate-500">{{ __('Only One Session') }}:</span>
                         <span class="text-slate-700 uppercase" x-text="selectedPkg?.only_one || 'default'"></span>
                     </div>
                     <div class="flex justify-between">
-                        <span class="text-slate-500">Address List:</span>
+                        <span class="text-slate-500">{{ __('Address List') }}:</span>
                         <span class="text-slate-700" x-text="selectedPkg?.address_list || '--'"></span>
                     </div>
                 </div>
@@ -612,15 +612,15 @@
                 <!-- Speeds Matrix -->
                 <div class="grid grid-cols-3 gap-2 text-center text-[10.5px]">
                     <div class="p-2 rounded bg-slate-50 border border-slate-200">
-                        <span class="text-slate-400 block">Facebook</span>
+                        <span class="text-slate-400 block">{{ __('Facebook') }}</span>
                         <span class="font-mono font-bold text-slate-700" x-text="(selectedPkg?.facebook_speed || '0') + ' M'"></span>
                     </div>
                     <div class="p-2 rounded bg-slate-50 border border-slate-200">
-                        <span class="text-slate-400 block">YouTube</span>
+                        <span class="text-slate-400 block">{{ __('YouTube') }}</span>
                         <span class="font-mono font-bold text-slate-700" x-text="(selectedPkg?.youtube_speed || '0') + ' M'"></span>
                     </div>
                     <div class="p-2 rounded bg-slate-50 border border-slate-200">
-                        <span class="text-slate-400 block">BDIX</span>
+                        <span class="text-slate-400 block">{{ __('BDIX') }}</span>
                         <span class="font-mono font-bold text-slate-700" x-text="(selectedPkg?.bdix_speed || '0') + ' M'"></span>
                     </div>
                 </div>
@@ -631,10 +631,10 @@
                 <a :href="'/admin/network/packages/' + selectedPkg?.id + '/edit'"
                    class="h-[30px] px-3 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-semibold text-xs shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer">
                     <i class="fas fa-pen-to-square text-[10px]"></i>
-                    <span>Edit Package</span>
+                    <span>{{ __('Edit Package') }}</span>
                 </a>
                 <button type="button" @click="showDetailsModal = false" class="h-[30px] px-3.5 rounded-lg border border-slate-300 hover:bg-slate-100 text-slate-700 font-semibold text-xs transition cursor-pointer">
-                    Close
+                    {{ __('Close') }}
                 </button>
             </div>
         </div>
@@ -662,8 +662,8 @@
                         <i class="fas fa-cloud-arrow-down"></i>
                     </div>
                     <div>
-                        <h3 class="text-xs font-bold text-slate-900">Import Profiles from MikroTik</h3>
-                        <p class="text-[10.5px] text-slate-500 font-normal">Scan PPP &amp; Hotspot user profiles</p>
+                        <h3 class="text-xs font-bold text-slate-900">{{ __('Import Profiles from MikroTik') }}</h3>
+                        <p class="text-[10.5px] text-slate-500 font-normal">{{ __('Scan PPP & Hotspot user profiles') }}</p>
                     </div>
                 </div>
                 <button type="button" @click="showImportModal = false" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center text-xs cursor-pointer">
@@ -677,10 +677,10 @@
                 
                 <div>
                     <label class="block text-[11px] font-semibold text-slate-700 mb-1">
-                        Select MikroTik Router <span class="text-rose-500">*</span>
+                        {{ __('Select MikroTik Router') }} <span class="text-rose-500">*</span>
                     </label>
                     <select name="router_id" required class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                        <option value="">Select a router...</option>
+                        <option value="">{{ __('Select a router...') }}</option>
                         @foreach($routers as $r)
                             <option value="{{ $r->id }}">{{ $r->name }} ({{ $r->ip_address }})</option>
                         @endforeach
@@ -689,23 +689,23 @@
 
                 <div>
                     <label class="block text-[11px] font-semibold text-slate-700 mb-1">
-                        Profiles to Import <span class="text-rose-500">*</span>
+                        {{ __('Profiles to Import') }} <span class="text-rose-500">*</span>
                     </label>
                     <select name="import_type" required class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                        <option value="both">Both PPPoE &amp; Hotspot Profiles</option>
-                        <option value="pppoe">PPPoE Profiles (/ppp/profile) Only</option>
-                        <option value="hotspot">Hotspot Profiles (/ip/hotspot/user/profile) Only</option>
+                        <option value="both">{{ __('Both PPPoE & Hotspot Profiles') }}</option>
+                        <option value="pppoe">{{ __('PPPoE Profiles (/ppp/profile) Only') }}</option>
+                        <option value="hotspot">{{ __('Hotspot Profiles (/ip/hotspot/user/profile) Only') }}</option>
                     </select>
                 </div>
 
                 <!-- Footer Buttons -->
                 <div class="px-4 py-2.5 bg-slate-50/80 border-t border-slate-200 -mx-4 -mb-4 flex items-center justify-end gap-2">
                     <button type="button" @click="showImportModal = false" class="h-[34px] px-3.5 rounded-lg border border-slate-300 hover:bg-slate-100 text-slate-700 font-semibold text-xs transition cursor-pointer">
-                        Cancel
+                        {{ __('Cancel') }}
                     </button>
                     <button type="submit" class="h-[34px] px-4 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs shadow-xs transition inline-flex items-center justify-center gap-1.5 cursor-pointer">
                         <i class="fas fa-cloud-arrow-down text-[10px]"></i>
-                        <span>Start Import</span>
+                        <span>{{ __('Start Import') }}</span>
                     </button>
                 </div>
             </form>
@@ -724,10 +724,64 @@ function packagesIndexManager() {
         activeMenuPkg: null,
         menuPos: { top: '0px', bottom: 'auto', right: '0px', left: 'auto' },
         syncingPkgId: null,
+        currencySymbol: @js($currencySymbol ?? '৳'),
+        currencyPosition: @js($currencyPosition ?? 'left'),
+        currencyDecimals: @js((int)($currencyDecimals ?? 2)),
+        i18n: {
+            disablePackage: @js(__('Disable Package')),
+            enablePackage: @js(__('Enable Package')),
+            profileLabel: @js(__('Profile')),
+            profileName: @js(__('Profile Name')),
+            pppoe: @js(__('PPPoE')),
+            hotspot: @js(__('Hotspot')),
+            staticIp: @js(__('Static IP')),
+            mbps: @js(__('Mbps')),
+            days: @js(__('Days')),
+            active: @js(__('Active')),
+            disabled: @js(__('Disabled')),
+            syncSuccess: @js(__('Package synced to MikroTik successfully.')),
+            syncFailed: @js(__('Sync to MikroTik failed.')),
+            syncNetworkError: @js(__('Network error while syncing package to router.')),
+            toggleFailed: @js(__('Failed to toggle package status.')),
+            toggleNetworkError: @js(__('Network error while toggling package status.')),
+            deleteTitle: @js(__('Delete Bandwidth Package?')),
+            deleteConfirmPrefix: @js(__('Are you sure you want to delete package')),
+            deleteWarning: @js(__('This will remove the package and profile from MikroTik and RADIUS systems.')),
+            deleteConfirmBtn: @js(__('Yes, Delete Package')),
+            cancelBtn: @js(__('Cancel')),
+            copiedDefault: @js(__('Copied')),
+            copiedToClipboard: @js(__('copied to clipboard!')),
+            copiedFallback: @js(__('copied!')),
+            copyFailed: @js(__('Could not copy to clipboard.')),
+        },
         toast: {
             show: false,
             message: '',
             type: 'success'
+        },
+
+        formatCurrency(amount) {
+            const formatted = Number(amount || 0).toFixed(this.currencyDecimals);
+            return this.currencyPosition === 'right'
+                ? `${formatted} ${this.currencySymbol}`
+                : `${this.currencySymbol} ${formatted}`;
+        },
+
+        serviceTypeLabel(type) {
+            const normalized = String(type || 'pppoe').toLowerCase();
+            if (normalized === 'hotspot') return this.i18n.hotspot;
+            if (normalized === 'static') return this.i18n.staticIp;
+            return this.i18n.pppoe;
+        },
+
+        escapeHtml(str) {
+            return String(str ?? '').replace(/[&<>"']/g, (m) => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;',
+            }[m]));
         },
 
         toggleMenu(pkg, event) {
@@ -776,7 +830,7 @@ function packagesIndexManager() {
             if (!this.activeMenuPkg) return;
             const profileName = this.activeMenuPkg.name || this.activeMenuPkg.mikrotik_profile || '';
             this.activeMenuPkg = null;
-            this.copyToClipboard(profileName, 'Profile Name');
+            this.copyToClipboard(profileName, this.i18n.profileName);
         },
 
         toggleFromMenu() {
@@ -806,12 +860,12 @@ function packagesIndexManager() {
                 });
                 const data = await res.json();
                 if (data.success) {
-                    this.showToast(data.message || 'Package synced to MikroTik successfully.', 'success');
+                    this.showToast(data.message || this.i18n.syncSuccess, 'success');
                 } else {
-                    this.showToast(data.message || 'Sync to MikroTik failed.', 'error');
+                    this.showToast(data.message || this.i18n.syncFailed, 'error');
                 }
             } catch (e) {
-                this.showToast('Network error while syncing package to router.', 'error');
+                this.showToast(this.i18n.syncNetworkError, 'error');
             } finally {
                 this.syncingPkgId = null;
             }
@@ -832,10 +886,10 @@ function packagesIndexManager() {
                     this.showToast(data.message, data.is_active ? 'success' : 'info');
                     setTimeout(() => window.location.reload(), 500);
                 } else {
-                    this.showToast('Failed to toggle package status.', 'error');
+                    this.showToast(data.message || this.i18n.toggleFailed, 'error');
                 }
             } catch (e) {
-                this.showToast('Network error while toggling package status.', 'error');
+                this.showToast(this.i18n.toggleNetworkError, 'error');
             }
         },
 
@@ -843,14 +897,14 @@ function packagesIndexManager() {
             this.activeMenuPkg = null;
             if (typeof Swal !== 'undefined') {
                 Swal.fire({
-                    title: 'Delete Bandwidth Package?',
-                    html: `<div class="text-xs text-slate-600 mt-1">Are you sure you want to delete package <strong class="text-slate-900 font-semibold">${name}</strong>?<br><span class="text-[11px] text-rose-500 mt-1 block">This will remove the package and profile from MikroTik and RADIUS systems.</span></div>`,
+                    title: this.i18n.deleteTitle,
+                    html: `<div class="text-xs text-slate-600 mt-1">${this.i18n.deleteConfirmPrefix} <strong class="text-slate-900 font-semibold">${this.escapeHtml(name)}</strong>?<br><span class="text-[11px] text-rose-500 mt-1 block">${this.i18n.deleteWarning}</span></div>`,
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonColor: '#e11d48',
                     cancelButtonColor: '#64748b',
-                    confirmButtonText: '<i class="far fa-trash-alt mr-1"></i> Yes, Delete Package',
-                    cancelButtonText: 'Cancel',
+                    confirmButtonText: `<i class="far fa-trash-alt mr-1"></i> ${this.i18n.deleteConfirmBtn}`,
+                    cancelButtonText: this.i18n.cancelBtn,
                     reverseButtons: true,
                     customClass: {
                         popup: 'rounded-2xl shadow-xl border border-slate-200 p-5',
@@ -870,7 +924,7 @@ function packagesIndexManager() {
                         form.submit();
                     }
                 });
-            } else if (confirm(`Are you sure you want to delete package '${name}'? This will remove the package and profile from MikroTik and RADIUS.`)) {
+            } else if (confirm(`${this.i18n.deleteConfirmPrefix} '${name}'? ${this.i18n.deleteWarning}`)) {
                 const form = document.createElement('form');
                 form.method = 'POST';
                 form.action = `/admin/network/packages/${id}`;
@@ -883,15 +937,16 @@ function packagesIndexManager() {
             }
         },
 
-        copyToClipboard(text, label = 'Copied') {
+        copyToClipboard(text, label = null) {
+            const copyLabel = label || this.i18n.copiedDefault;
             if (navigator.clipboard) {
                 navigator.clipboard.writeText(text).then(() => {
-                    this.showToast(`${label} copied to clipboard!`, 'success');
+                    this.showToast(`${copyLabel} ${this.i18n.copiedToClipboard}`, 'success');
                 }).catch(() => {
-                    this.showToast('Could not copy to clipboard.', 'error');
+                    this.showToast(this.i18n.copyFailed, 'error');
                 });
             } else {
-                this.showToast(`${label} copied!`, 'success');
+                this.showToast(`${copyLabel} ${this.i18n.copiedFallback}`, 'success');
             }
         },
 

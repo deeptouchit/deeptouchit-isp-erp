@@ -258,13 +258,13 @@ class OltController extends Controller
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
                 'success' => true,
-                'message' => 'OLT device created and connected successfully.',
+                'message' => __('OLT device created and connected successfully.'),
                 'olt' => $olt,
                 'redirect' => route('tenant.network.olt')
             ]);
         }
 
-        return redirect()->route('tenant.network.olt')->with('success', 'OLT device created and connected successfully.');
+        return redirect()->route('tenant.network.olt')->with('success', __('OLT device created and connected successfully.'));
     }
 
     /**
@@ -434,13 +434,13 @@ class OltController extends Controller
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
                 'success' => true,
-                'message' => 'OLT device updated successfully.',
+                'message' => __('OLT device updated successfully.'),
                 'olt' => $olt,
                 'redirect' => route('tenant.network.olt')
             ]);
         }
 
-        return redirect()->route('tenant.network.olt')->with('success', 'OLT device updated successfully.');
+        return redirect()->route('tenant.network.olt')->with('success', __('OLT device updated successfully.'));
     }
 
     /**
@@ -457,12 +457,12 @@ class OltController extends Controller
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
                 'success' => true,
-                'message' => 'OLT device and client inventory removed successfully.',
+                'message' => __('OLT device and client inventory removed successfully.'),
                 'redirect' => route('tenant.network.olt')
             ]);
         }
 
-        return redirect()->route('tenant.network.olt')->with('success', 'OLT device removed successfully.');
+        return redirect()->route('tenant.network.olt')->with('success', __('OLT device removed successfully.'));
     }
 
     /**
@@ -476,7 +476,7 @@ class OltController extends Controller
         if ($oltId) {
             $olt = TenantOlt::where('tenant_id', $tenant->id)->find($oltId);
             if (!$olt) {
-                return response()->json(['success' => false, 'message' => 'OLT device not found.'], 404);
+                return response()->json(['success' => false, 'message' => __('OLT device not found.')], 404);
             }
             $ip = $olt->ip_address;
             $port = (int) ($olt->web_port ?: 80);
@@ -514,10 +514,10 @@ class OltController extends Controller
         }
 
         if ($res['success']) {
-            return back()->with('success', $res['message']);
+            return back()->with('success', $res['message'] ?? __('OLT synchronized successfully.'));
         }
 
-        return back()->with('error', $res['message']);
+        return back()->with('error', $res['message'] ?? __('OLT synchronization failed.'));
     }
 
     /**
@@ -536,13 +536,16 @@ class OltController extends Controller
         if ($success) {
             return response()->json([
                 'success' => true,
-                'message' => "ONU {$validated['pon_port']}:{$validated['onu_id']} reboot command sent successfully.",
+                'message' => __('ONU :pon::onu reboot command sent successfully.', [
+                    'pon' => $validated['pon_port'],
+                    'onu' => $validated['onu_id'],
+                ]),
             ]);
         }
 
         return response()->json([
             'success' => false,
-            'message' => "Failed to reboot ONU. Check OLT connectivity.",
+            'message' => __('Failed to reboot ONU. Check OLT connectivity.'),
         ], 500);
     }
 
@@ -599,7 +602,7 @@ class OltController extends Controller
             'uptime_seconds' => $uptimeSeconds,
             'active_alarms_count' => count($alarms),
             'device_status' => $deviceStatus,
-            'last_sync' => $olt->last_sync_at?->diffForHumans() ?? 'Never',
+            'last_sync' => $olt->last_sync_at?->diffForHumans() ?? __('Never'),
         ]);
     }
 
@@ -668,7 +671,7 @@ class OltController extends Controller
 
         $portIndex = $request->input('port_index');
         if (!$portIndex) {
-            return response()->json(['success' => false, 'message' => 'Port index is required.'], 422);
+            return response()->json(['success' => false, 'message' => __('Port index is required.')], 422);
         }
 
         $ok = $this->oltApiService->resetPortStatistics(
@@ -681,7 +684,7 @@ class OltController extends Controller
 
         return response()->json([
             'success' => $ok,
-            'message' => $ok ? 'Port statistics cleared successfully!' : 'Failed to clear port statistics.'
+            'message' => $ok ? __('Port statistics cleared successfully!') : __('Failed to clear port statistics.')
         ]);
     }
 }

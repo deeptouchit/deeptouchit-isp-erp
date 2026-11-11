@@ -1,6 +1,6 @@
 @extends('tenant.layouts.app')
 
-@section('title', 'Routing Management - ' . ($tenant->company_name ?? $tenant->name))
+@section('title', __('Routing Management') . ' - ' . ($tenant->company_name ?? $tenant->name))
 
 @push('styles')
 {{-- Page-specific CSS --}}
@@ -39,9 +39,9 @@
                 <i class="fas fa-route"></i>
             </div>
             <div class="flex items-center gap-2">
-                <h1 class="text-xs font-bold text-slate-800 tracking-tight">Networks &amp; Routing (Routing Table)</h1>
+                <h1 class="text-xs font-bold text-slate-800 tracking-tight">{{ __('Networks & Routing (Routing Table)') }}</h1>
                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-cyan-50 text-cyan-700 border border-cyan-200">
-                    {{ number_format($totalRoutes) }} Routes
+                    {{ number_format($totalRoutes) }} {{ __('Routes') }}
                 </span>
             </div>
         </div>
@@ -52,21 +52,21 @@
                     @click="openImportModal()" 
                     class="h-[34px] px-3 py-0 rounded-lg border border-purple-200 bg-purple-50 hover:bg-purple-100 text-purple-700 font-semibold text-xs shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-rotate text-purple-600 text-xs" :class="{ 'fa-spin': importModal.syncing }"></i>
-                <span>Sync from MikroTik</span>
+                <span>{{ __('Sync from MikroTik') }}</span>
             </button>
 
             <!-- Link to MikroTik Routers -->
             <a href="{{ route('tenant.network.mikrotik') }}" 
                class="h-[34px] px-3 py-0 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-xs shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-server text-slate-400 text-xs"></i>
-                <span>View Routers</span>
+                <span>{{ __('View Routers') }}</span>
             </a>
 
             <!-- Standalone Create Route Page Link (AGENTS.md Compliance) -->
             <a href="{{ route('tenant.network.routing.create') }}" 
                class="h-[34px] px-3.5 py-0 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-plus text-[10px]"></i>
-                <span>Create Route</span>
+                <span>{{ __('Create Route') }}</span>
             </a>
         </div>
     </div>
@@ -76,7 +76,7 @@
         <!-- Card 1: Total Routes -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Total Routes</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">{{ __('Total Routes') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-slate-900">{{ number_format($totalRoutes) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-cyan-50 text-cyan-600 border-cyan-100 flex items-center justify-center">
@@ -87,7 +87,7 @@
         <!-- Card 2: Default Gateways -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-blue-600">Default Gateway</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-blue-600">{{ __('Default Gateway') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-blue-700">{{ number_format($defaultGateways) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-blue-50 text-blue-600 border-blue-100 flex items-center justify-center">
@@ -98,7 +98,7 @@
         <!-- Card 3: Static Routes -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-indigo-600">Static Routes</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-indigo-600">{{ __('Static Routes') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-indigo-700">{{ number_format($staticRoutes) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-indigo-50 text-indigo-600 border-indigo-100 flex items-center justify-center">
@@ -109,7 +109,7 @@
         <!-- Card 4: Dynamic Routes -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-purple-600">Dynamic (BGP/OSPF)</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-purple-600">{{ __('Dynamic (BGP/OSPF)') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-purple-700">{{ number_format($dynamicRoutes) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-purple-50 text-purple-600 border-purple-100 flex items-center justify-center">
@@ -120,7 +120,7 @@
         <!-- Card 5: Active Routes -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-emerald-600">Active Status</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-emerald-600">{{ __('Active Status') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-emerald-700">{{ number_format($activeRoutes) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-emerald-50 text-emerald-600 border-emerald-100 flex items-center justify-center">
@@ -131,7 +131,7 @@
         <!-- Card 6: MikroTik Synced -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-cyan-600">MikroTik Synced</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-cyan-600">{{ __('MikroTik Synced') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-cyan-700">{{ number_format($syncedRoutes) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-cyan-50 text-cyan-600 border-cyan-100 flex items-center justify-center">
@@ -156,14 +156,14 @@
                     <input type="text" 
                            name="search" 
                            x-model="searchQuery" 
-                           placeholder="Search Dst. Address, Gateway, Routing Table, Comment..." 
+                           placeholder="{{ __('Search Dst. Address, Gateway, Routing Table, Comment...') }}" 
                            class="w-full h-[34px] pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-normal" />
                     <!-- 1-Click Clear Button -->
                     <button type="button" 
                             x-show="searchQuery && searchQuery.length > 0" 
                             @click="searchQuery = ''; $nextTick(() => $el.closest('form').submit())" 
                             class="absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400 hover:text-slate-600 cursor-pointer"
-                            title="Clear search">
+                            title="{{ __('Clear search') }}">
                         <i class="fas fa-xmark text-xs"></i>
                     </button>
                 </div>
@@ -173,7 +173,7 @@
                     <select name="router_id" 
                             onchange="this.form.submit()" 
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-normal">
-                        <option value="">All Routers</option>
+                        <option value="">{{ __('All Routers') }}</option>
                         @foreach($routers as $r)
                             <option value="{{ $r->id }}" {{ (string)request('router_id') === (string)$r->id ? 'selected' : '' }}>
                                 {{ $r->name }}
@@ -187,12 +187,12 @@
                     <select name="type" 
                             onchange="this.form.submit()" 
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-normal">
-                        <option value="">All Types</option>
-                        <option value="static" {{ request('type') === 'static' ? 'selected' : '' }}>Static Gateway</option>
-                        <option value="bgp" {{ request('type') === 'bgp' ? 'selected' : '' }}>BGP Dynamic</option>
-                        <option value="ospf" {{ request('type') === 'ospf' ? 'selected' : '' }}>OSPF Internal</option>
-                        <option value="connected" {{ request('type') === 'connected' ? 'selected' : '' }}>Connected (DAC)</option>
-                        <option value="blackhole" {{ request('type') === 'blackhole' ? 'selected' : '' }}>Blackhole (Null0)</option>
+                        <option value="">{{ __('All Types') }}</option>
+                        <option value="static" {{ request('type') === 'static' ? 'selected' : '' }}>{{ __('Static Gateway') }}</option>
+                        <option value="bgp" {{ request('type') === 'bgp' ? 'selected' : '' }}>{{ __('BGP Dynamic') }}</option>
+                        <option value="ospf" {{ request('type') === 'ospf' ? 'selected' : '' }}>{{ __('OSPF Internal') }}</option>
+                        <option value="connected" {{ request('type') === 'connected' ? 'selected' : '' }}>{{ __('Connected (DAC)') }}</option>
+                        <option value="blackhole" {{ request('type') === 'blackhole' ? 'selected' : '' }}>{{ __('Blackhole (Null0)') }}</option>
                     </select>
                 </div>
 
@@ -202,11 +202,11 @@
                     <select name="per_page" 
                             onchange="this.form.submit()" 
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-normal">
-                        <option value="15" {{ $perPageVal === 15 ? 'selected' : '' }}>15 / page</option>
-                        <option value="30" {{ $perPageVal === 30 ? 'selected' : '' }}>30 / page</option>
-                        <option value="50" {{ $perPageVal === 50 ? 'selected' : '' }}>50 / page</option>
-                        <option value="100" {{ $perPageVal === 100 ? 'selected' : '' }}>100 / page</option>
-                        <option value="200" {{ $perPageVal === 200 ? 'selected' : '' }}>200 / page</option>
+                        <option value="15" {{ $perPageVal === 15 ? 'selected' : '' }}>15 / {{ __('page') }}</option>
+                        <option value="30" {{ $perPageVal === 30 ? 'selected' : '' }}>30 / {{ __('page') }}</option>
+                        <option value="50" {{ $perPageVal === 50 ? 'selected' : '' }}>50 / {{ __('page') }}</option>
+                        <option value="100" {{ $perPageVal === 100 ? 'selected' : '' }}>100 / {{ __('page') }}</option>
+                        <option value="200" {{ $perPageVal === 200 ? 'selected' : '' }}>200 / {{ __('page') }}</option>
                     </select>
                 </div>
 
@@ -217,7 +217,7 @@
                         :class="showMoreFilters || {{ $activeMoreCount }} > 0 ? 'bg-cyan-50/70 border-cyan-200 text-cyan-800' : 'bg-slate-50 hover:bg-slate-100 text-slate-700'">
                     <span class="flex items-center gap-1.5">
                         <i class="fas fa-sliders text-[11px]" :class="showMoreFilters ? 'text-cyan-600' : 'text-slate-400'"></i>
-                        <span>More</span>
+                        <span>{{ __('More') }}</span>
                     </span>
                     @if($activeMoreCount > 0)
                         <span class="px-1.5 py-0.2 rounded-full text-[9px] font-mono font-bold bg-cyan-600 text-white">
@@ -232,15 +232,15 @@
                 <div class="flex items-center gap-1.5 flex-shrink-0 md:ml-auto">
                     <button type="submit" 
                             class="h-[34px] py-0 px-3 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" 
-                            title="Apply Filters">
+                            title="{{ __('Apply Filters') }}">
                         <i class="fas fa-filter text-[10px]"></i>
-                        <span>Filter</span>
+                        <span>{{ __('Filter') }}</span>
                     </button>
                     <a href="{{ route('tenant.network.routing') }}" 
                        class="h-[34px] py-0 px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer" 
-                       title="Reset All Filters">
+                       title="{{ __('Reset All Filters') }}">
                         <i class="fas fa-rotate-left text-[10px]"></i>
-                        <span>Reset</span>
+                        <span>{{ __('Reset') }}</span>
                     </a>
                 </div>
             </div>
@@ -261,9 +261,9 @@
                     <select name="status" 
                             onchange="this.form.submit()" 
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-normal">
-                        <option value="">All Statuses</option>
-                        <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>Active</option>
-                        <option value="disabled" {{ request('status') === 'disabled' ? 'selected' : '' }}>Disabled</option>
+                        <option value="">{{ __('All Statuses') }}</option>
+                        <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>{{ __('Active') }}</option>
+                        <option value="disabled" {{ request('status') === 'disabled' ? 'selected' : '' }}>{{ __('Disabled') }}</option>
                     </select>
                 </div>
 
@@ -272,9 +272,9 @@
                     <select name="is_sync" 
                             onchange="this.form.submit()" 
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-normal">
-                        <option value="">All Sync States</option>
-                        <option value="1" {{ request('is_sync') === '1' ? 'selected' : '' }}>Synced to MikroTik</option>
-                        <option value="0" {{ request('is_sync') === '0' ? 'selected' : '' }}>Local / Unsynced</option>
+                        <option value="">{{ __('All Sync States') }}</option>
+                        <option value="1" {{ request('is_sync') === '1' ? 'selected' : '' }}>{{ __('Synced to MikroTik') }}</option>
+                        <option value="0" {{ request('is_sync') === '0' ? 'selected' : '' }}>{{ __('Local / Unsynced') }}</option>
                     </select>
                 </div>
 
@@ -283,7 +283,7 @@
                     <input type="text" 
                            name="routing_table" 
                            value="{{ request('routing_table') }}" 
-                           placeholder="Filter Routing Table (e.g. main)" 
+                           placeholder="{{ __('Filter Routing Table (e.g. main)') }}" 
                            class="w-full h-[34px] px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-normal">
                 </div>
             </div>
@@ -295,10 +295,10 @@
         <div class="px-3.5 py-2 bg-slate-50/80 border-b border-slate-200 flex items-center justify-between">
             <span class="font-normal text-slate-700 text-xs flex items-center gap-1.5">
                 <i class="fas fa-list text-slate-400 text-xs"></i>
-                <span>Master Routing Table Directory</span>
+                <span>{{ __('Master Routing Table Directory') }}</span>
             </span>
             <span class="text-[11px] text-slate-500 font-mono font-normal">
-                Total {{ $routes->total() }} Routes
+                {{ __('Total :count Routes', ['count' => $routes->total()]) }}
             </span>
         </div>
 
@@ -307,20 +307,28 @@
                 <thead>
                     <tr>
                         <th class="w-10 text-center font-semibold">#</th>
-                        <th class="text-center font-semibold">Status</th>
-                        <th class="text-center font-semibold">Router</th>
-                        <th class="text-center font-semibold">Dst. Address</th>
-                        <th class="text-center font-semibold">Gateway</th>
-                        <th class="text-center font-semibold">Distance</th>
-                        <th class="text-center font-semibold">Type</th>
-                        <th class="text-center font-semibold">Table</th>
-                        <th class="text-center font-semibold">Comment</th>
-                        <th class="w-10 text-center font-semibold no-sort">Action</th>
+                        <th class="text-center font-semibold">{{ __('Status') }}</th>
+                        <th class="text-center font-semibold">{{ __('Router') }}</th>
+                        <th class="text-center font-semibold">{{ __('Dst. Address') }}</th>
+                        <th class="text-center font-semibold">{{ __('Gateway') }}</th>
+                        <th class="text-center font-semibold">{{ __('Distance') }}</th>
+                        <th class="text-center font-semibold">{{ __('Type') }}</th>
+                        <th class="text-center font-semibold">{{ __('Table') }}</th>
+                        <th class="text-center font-semibold">{{ __('Comment') }}</th>
+                        <th class="w-10 text-center font-semibold no-sort">{{ __('Action') }}</th>
                     </tr>
                 </thead>
                 <tbody class="text-slate-700">
                     @forelse($routes as $index => $route)
                         @php
+                            $routeTypeLabel = match (strtolower($route->type)) {
+                                'bgp' => __('BGP Dynamic'),
+                                'ospf' => __('OSPF Internal'),
+                                'connected' => __('Connected (DAC)'),
+                                'blackhole' => __('Blackhole (Null0)'),
+                                default => __('Static Gateway'),
+                            };
+                            $routeStatusLabel = $route->status === 'active' ? __('Active') : __('Disabled');
                             $routePayload = [
                                 'id' => $route->id,
                                 'dst_address' => $route->dst_address,
@@ -328,11 +336,12 @@
                                 'distance' => (int)$route->distance,
                                 'routing_table' => $route->routing_table ?: 'main',
                                 'type' => $route->type,
-                                'type_label' => $route->type_badge['label'] ?? ucfirst($route->type),
+                                'type_label' => $routeTypeLabel,
                                 'router_id' => $route->router_id,
-                                'router_name' => $route->router?->name ?? 'Global',
+                                'router_name' => $route->router?->name ?? __('Global'),
                                 'router_ip' => $route->router?->ip_address ?? '',
                                 'status' => $route->status,
+                                'status_label' => $routeStatusLabel,
                                 'description' => $route->description,
                                 'is_sync_mikrotik' => (bool)$route->is_sync_mikrotik,
                             ];
@@ -348,12 +357,12 @@
                                 @if($route->status === 'active')
                                     <span class="inline-flex items-center justify-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono bg-emerald-50 text-emerald-700 border border-emerald-200">
                                         <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                        <span>Active</span>
+                                        <span>{{ __('Active') }}</span>
                                     </span>
                                 @else
                                     <span class="inline-flex items-center justify-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono bg-slate-100 text-slate-600 border border-slate-200">
                                         <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
-                                        <span>Disabled</span>
+                                        <span>{{ __('Disabled') }}</span>
                                     </span>
                                 @endif
                             </td>
@@ -368,7 +377,7 @@
                                         <span class="truncate max-w-[110px]">{{ $route->router->name }}</span>
                                     </a>
                                 @else
-                                    <span class="text-slate-400 font-mono text-[10px]">Global</span>
+                                    <span class="text-slate-400 font-mono text-[10px]">{{ __('Global') }}</span>
                                 @endif
                             </td>
 
@@ -377,13 +386,13 @@
                                 <span class="inline-flex items-center gap-1">
                                     <a href="{{ route('tenant.network.routing.edit', $route->id) }}" 
                                        class="hover:underline text-cyan-800 cursor-pointer font-mono font-semibold"
-                                       title="Click to Edit">
+                                       title="{{ __('Click to Edit') }}">
                                         {{ $route->dst_address }}
                                     </a>
                                     <button type="button" 
-                                            @click="copyToClipboard('{{ $route->dst_address }}', 'Dst Address')" 
+                                            @click="copyToClipboard(@js($route->dst_address), i18n.dstAddress)" 
                                             class="text-slate-400 hover:text-cyan-600 text-[10px] cursor-pointer" 
-                                            title="Copy Destination">
+                                            title="{{ __('Copy Destination') }}">
                                         <i class="fas fa-copy"></i>
                                     </button>
                                 </span>
@@ -394,9 +403,9 @@
                                 <span class="inline-flex items-center gap-1">
                                     <span class="text-indigo-700 bg-indigo-50 border border-indigo-100 px-1.5 py-0.5 rounded text-[10px]">{{ $route->gateway }}</span>
                                     <button type="button" 
-                                            @click="copyToClipboard('{{ $route->gateway }}', 'Gateway')" 
+                                            @click="copyToClipboard(@js($route->gateway), i18n.gateway)" 
                                             class="text-slate-400 hover:text-cyan-600 text-[10px] cursor-pointer" 
-                                            title="Copy Gateway">
+                                            title="{{ __('Copy Gateway') }}">
                                         <i class="fas fa-copy"></i>
                                     </button>
                                 </span>
@@ -412,7 +421,7 @@
                             <!-- 7. Type: Center Align -->
                             <td class="text-center font-mono text-[10px]">
                                 <span class="inline-flex px-1.5 py-0.5 rounded border {{ $route->type_badge['class'] ?? 'bg-slate-50 text-slate-700 border-slate-200' }}">
-                                    {{ $route->type_badge['label'] ?? ucfirst($route->type) }}
+                                    {{ $routeTypeLabel }}
                                 </span>
                             </td>
 
@@ -433,7 +442,7 @@
                                 <button type="button" 
                                         @click.stop="toggleMenu({{ Js::from($routePayload) }}, $event)" 
                                         class="route-action-btn w-5 h-5 mx-auto rounded hover:bg-slate-200 text-slate-500 hover:text-cyan-700 transition cursor-pointer flex items-center justify-center text-[10px]"
-                                        title="Actions">
+                                        title="{{ __('Actions') }}">
                                     <i class="fas fa-ellipsis-v text-[10px] pointer-events-none"></i>
                                 </button>
                             </td>
@@ -445,21 +454,21 @@
                                     <div class="w-10 h-10 rounded-xl bg-cyan-50 text-cyan-600 mx-auto flex items-center justify-center text-base border border-cyan-100 shadow-2xs">
                                         <i class="fas fa-route"></i>
                                     </div>
-                                    <h3 class="text-xs font-semibold text-slate-800">No Routing Records Found</h3>
+                                    <h3 class="text-xs font-semibold text-slate-800">{{ __('No Routing Records Found') }}</h3>
                                     <p class="text-[11px] text-slate-400 font-normal">
-                                        Create static routes or sync live routing table entries (/ip/route) from your MikroTik core router.
+                                        {{ __('Create static routes or sync live routing table entries (/ip/route) from your MikroTik core router.') }}
                                     </p>
                                     <div class="pt-1 flex items-center justify-center gap-2">
                                         <a href="{{ route('tenant.network.routing.create') }}" 
                                            class="h-[34px] bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs px-3.5 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                                             <i class="fas fa-plus text-[10px]"></i>
-                                            <span>Create Route</span>
+                                            <span>{{ __('Create Route') }}</span>
                                         </a>
                                         <button type="button" 
                                                 @click="openImportModal()" 
                                                 class="h-[34px] border border-purple-200 bg-purple-50 hover:bg-purple-100 text-purple-700 font-semibold text-xs px-3.5 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                                             <i class="fas fa-rotate text-purple-600 text-xs"></i>
-                                            <span>Sync from MikroTik</span>
+                                            <span>{{ __('Sync from MikroTik') }}</span>
                                         </button>
                                     </div>
                                 </div>
@@ -474,7 +483,7 @@
         @if($routes->hasPages() || $routes->total() > 0)
             <div class="p-3 bg-slate-50/80 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-2">
                 <div class="text-[11px] text-slate-500 font-normal">
-                    Showing {{ $routes->firstItem() ?? 0 }} to {{ $routes->lastItem() ?? 0 }} of {{ $routes->total() }} results
+                    {{ __('Showing :first to :last of :total results', ['first' => $routes->firstItem() ?? 0, 'last' => $routes->lastItem() ?? 0, 'total' => $routes->total()]) }}
                 </div>
                 <div>
                     {{ $routes->links() }}
@@ -507,14 +516,14 @@
                     @click="viewDetailsFromMenu()" 
                     class="w-full px-2.5 py-1 hover:bg-cyan-50 text-slate-700 hover:text-cyan-700 font-normal flex items-center gap-2 transition text-left cursor-pointer text-[11px]">
                 <i class="fas fa-eye text-cyan-600 w-3.5 text-center text-[10px]"></i>
-                <span>View Details</span>
+                <span>{{ __('View Details') }}</span>
             </button>
 
             <button type="button" 
                     @click="editFromMenu()" 
                     class="w-full px-2.5 py-1 hover:bg-amber-50 text-slate-700 hover:text-amber-700 font-normal flex items-center gap-2 transition text-left cursor-pointer text-[11px]">
                 <i class="fas fa-pen-to-square text-amber-500 w-3.5 text-center text-[10px]"></i>
-                <span>Edit Configuration</span>
+                <span>{{ __('Edit Configuration') }}</span>
             </button>
         </div>
 
@@ -524,14 +533,14 @@
                     @click="syncFromMenu()" 
                     class="w-full px-2.5 py-1 hover:bg-purple-50 text-slate-700 hover:text-purple-700 font-normal flex items-center gap-2 transition text-left cursor-pointer text-[11px]">
                 <i class="fas fa-rotate text-purple-600 w-3.5 text-center text-[10px]"></i>
-                <span>Push to MikroTik</span>
+                <span>{{ __('Push to MikroTik') }}</span>
             </button>
 
             <button type="button" 
                     @click="toggleStatusFromMenu()" 
                     class="w-full px-2.5 py-1 hover:bg-slate-50 text-slate-700 font-normal flex items-center gap-2 transition text-left cursor-pointer text-[11px]">
                 <i class="fas w-3.5 text-center text-[10px]" :class="activeMenuRoute?.status === 'active' ? 'fa-ban text-rose-500' : 'fa-check text-emerald-500'"></i>
-                <span x-text="activeMenuRoute?.status === 'active' ? 'Disable Route' : 'Enable Route'"></span>
+                <span x-text="activeMenuRoute?.status === 'active' ? i18n.disableRoute : i18n.enableRoute"></span>
             </button>
         </div>
 
@@ -541,7 +550,7 @@
                     @click="deleteFromMenu()" 
                     class="w-full px-2.5 py-1 hover:bg-rose-50 text-rose-600 font-normal flex items-center gap-2 transition text-left cursor-pointer text-[11px]">
                 <i class="far fa-trash-alt text-rose-500 w-3.5 text-center text-[10px]"></i>
-                <span>Delete Route</span>
+                <span>{{ __('Delete Route') }}</span>
             </button>
         </div>
     </div>
@@ -573,8 +582,8 @@
                         <i class="fas fa-route"></i>
                     </div>
                     <div>
-                        <h3 class="text-xs font-semibold text-slate-800" x-text="'Route: ' + (detailsModal.route?.dst_address || '')"></h3>
-                        <p class="text-[10.5px] text-slate-500 font-normal">Next-hop gateway telemetry, routing table &amp; metrics</p>
+                        <h3 class="text-xs font-semibold text-slate-800" x-text="i18n.routePrefix + ' ' + (detailsModal.route?.dst_address || '')"></h3>
+                        <p class="text-[10.5px] text-slate-500 font-normal">{{ __('Next-hop gateway telemetry, routing table & metrics') }}</p>
                     </div>
                 </div>
                 <button type="button" @click="closeDetailsModal()" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center text-xs cursor-pointer">
@@ -588,47 +597,47 @@
                 <!-- Specs Grid -->
                 <div class="grid grid-cols-2 gap-2 text-xs">
                     <div class="p-2 bg-slate-50 rounded-lg border border-slate-200/80">
-                        <span class="text-[10px] text-slate-400 block uppercase">Destination Network</span>
+                        <span class="text-[10px] text-slate-400 block uppercase">{{ __('Destination Network') }}</span>
                         <span class="font-mono text-slate-800 font-bold" x-text="detailsModal.route.dst_address"></span>
                     </div>
                     <div class="p-2 bg-slate-50 rounded-lg border border-slate-200/80">
-                        <span class="text-[10px] text-slate-400 block uppercase">Next-Hop Gateway</span>
+                        <span class="text-[10px] text-slate-400 block uppercase">{{ __('Next-Hop Gateway') }}</span>
                         <span class="font-mono text-indigo-700 font-semibold" x-text="detailsModal.route.gateway"></span>
                     </div>
                     <div class="p-2 bg-slate-50 rounded-lg border border-slate-200/80">
-                        <span class="text-[10px] text-slate-400 block uppercase">Distance (Metric)</span>
+                        <span class="text-[10px] text-slate-400 block uppercase">{{ __('Distance (Metric)') }}</span>
                         <span class="font-mono text-slate-800 font-semibold" x-text="detailsModal.route.distance"></span>
                     </div>
                     <div class="p-2 bg-slate-50 rounded-lg border border-slate-200/80">
-                        <span class="text-[10px] text-slate-400 block uppercase">Routing Table</span>
+                        <span class="text-[10px] text-slate-400 block uppercase">{{ __('Routing Table') }}</span>
                         <span class="font-mono text-slate-800" x-text="detailsModal.route.routing_table"></span>
                     </div>
                     <div class="p-2 bg-slate-50 rounded-lg border border-slate-200/80">
-                        <span class="text-[10px] text-slate-400 block uppercase">Route Protocol Type</span>
+                        <span class="text-[10px] text-slate-400 block uppercase">{{ __('Route Protocol Type') }}</span>
                         <span class="font-medium text-slate-800" x-text="detailsModal.route.type_label"></span>
                     </div>
                     <div class="p-2 bg-slate-50 rounded-lg border border-slate-200/80">
-                        <span class="text-[10px] text-slate-400 block uppercase">Associated Router</span>
+                        <span class="text-[10px] text-slate-400 block uppercase">{{ __('Associated Router') }}</span>
                         <span class="font-medium text-slate-800" x-text="detailsModal.route.router_name + (detailsModal.route.router_ip ? ` (${detailsModal.route.router_ip})` : '')"></span>
                     </div>
                     <div class="p-2 bg-slate-50 rounded-lg border border-slate-200/80">
-                        <span class="text-[10px] text-slate-400 block uppercase">Status</span>
+                        <span class="text-[10px] text-slate-400 block uppercase">{{ __('Status') }}</span>
                         <span class="font-medium capitalize" 
                               :class="detailsModal.route.status === 'active' ? 'text-emerald-700' : 'text-slate-600'" 
-                              x-text="detailsModal.route.status"></span>
+                              x-text="detailsModal.route.status_label || detailsModal.route.status"></span>
                     </div>
                     <div class="p-2 bg-slate-50 rounded-lg border border-slate-200/80">
-                        <span class="text-[10px] text-slate-400 block uppercase">MikroTik Sync</span>
+                        <span class="text-[10px] text-slate-400 block uppercase">{{ __('MikroTik Sync') }}</span>
                         <span class="font-medium" 
                               :class="detailsModal.route.is_sync_mikrotik ? 'text-purple-700' : 'text-slate-500'" 
-                              x-text="detailsModal.route.is_sync_mikrotik ? 'Synchronized' : 'Local Only'"></span>
+                              x-text="detailsModal.route.is_sync_mikrotik ? i18n.synchronized : i18n.localOnly"></span>
                     </div>
                 </div>
 
                 <!-- Description / Comment -->
                 <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200/80">
-                    <span class="text-[10px] text-slate-400 block uppercase mb-0.5">Comment / Description</span>
-                    <p class="text-slate-700 font-normal leading-relaxed" x-text="detailsModal.route.description || 'No comment provided.'"></p>
+                    <span class="text-[10px] text-slate-400 block uppercase mb-0.5">{{ __('Comment / Description') }}</span>
+                    <p class="text-slate-700 font-normal leading-relaxed" x-text="detailsModal.route.description || i18n.noCommentProvided"></p>
                 </div>
             </div>
 
@@ -637,12 +646,12 @@
                 <button type="button" 
                         @click="closeDetailsModal()" 
                         class="h-[34px] px-3.5 border border-slate-300 hover:bg-slate-100 text-slate-700 font-semibold text-xs rounded-lg transition cursor-pointer">
-                    Close
+                    {{ __('Close') }}
                 </button>
                 <a :href="detailsModal.route ? `/admin/network/routing/${detailsModal.route.id}/edit` : '#'" 
                    class="h-[34px] px-4 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                     <i class="fas fa-pen-to-square text-[10px]"></i>
-                    <span>Edit Route</span>
+                    <span>{{ __('Edit Route') }}</span>
                 </a>
             </div>
         </div>
@@ -675,8 +684,8 @@
                         <i class="fas fa-rotate"></i>
                     </div>
                     <div>
-                        <h3 class="text-xs font-semibold text-slate-800">Sync Routing from MikroTik</h3>
-                        <p class="text-[10.5px] text-slate-500 font-normal">Pull and synchronize /ip/route configurations</p>
+                        <h3 class="text-xs font-semibold text-slate-800">{{ __('Sync Routing from MikroTik') }}</h3>
+                        <p class="text-[10.5px] text-slate-500 font-normal">{{ __('Pull and synchronize /ip/route configurations') }}</p>
                     </div>
                 </div>
                 <button type="button" @click="closeImportModal()" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center text-xs cursor-pointer">
@@ -686,12 +695,12 @@
 
             <div class="p-4 space-y-3.5 text-xs">
                 <p class="text-slate-600 leading-relaxed font-normal">
-                    Select a MikroTik router below to pull all active routing records (<code class="bg-slate-100 px-1 py-0.5 rounded text-purple-700 font-mono text-[11px]">/ip/route</code>) directly into the database.
+                    {!! __('Select a MikroTik router below to pull all active routing records (:code) directly into the database.', ['code' => '<code class="bg-slate-100 px-1 py-0.5 rounded text-purple-700 font-mono text-[11px]">/ip/route</code>']) !!}
                 </p>
 
                 <div>
                     <label class="block text-[11px] font-semibold text-slate-700 mb-1">
-                        Select MikroTik Router <span class="text-rose-500">*</span>
+                        {{ __('Select MikroTik Router') }} <span class="text-rose-500">*</span>
                     </label>
                     <select x-model="importModal.router_id" 
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 outline-hidden transition font-normal">
@@ -702,11 +711,11 @@
                 </div>
 
                 <div class="p-3 bg-purple-50/60 border border-purple-100 rounded-lg text-purple-900 space-y-1">
-                    <span class="font-semibold block text-[11px]">✨ Automatic Sync Capabilities:</span>
+                    <span class="font-semibold block text-[11px]">✨ {{ __('Automatic Sync Capabilities:') }}</span>
                     <ul class="list-disc list-inside text-[10.5px] space-y-0.5 text-purple-800/90 font-normal">
-                        <li>Imports static gateways, default gateways, and distances.</li>
-                        <li>Identifies dynamic BGP and OSPF routes.</li>
-                        <li>Updates matching routes without duplicates.</li>
+                        <li>{{ __('Imports static gateways, default gateways, and distances.') }}</li>
+                        <li>{{ __('Identifies dynamic BGP and OSPF routes.') }}</li>
+                        <li>{{ __('Updates matching routes without duplicates.') }}</li>
                     </ul>
                 </div>
             </div>
@@ -715,14 +724,14 @@
                 <button type="button" 
                         @click="closeImportModal()" 
                         class="h-[34px] px-3.5 border border-slate-300 hover:bg-slate-100 text-slate-700 font-semibold text-xs rounded-lg transition cursor-pointer">
-                    Cancel
+                    {{ __('Cancel') }}
                 </button>
                 <button type="button" 
                         @click="syncFromMikrotik()" 
                         :disabled="importModal.syncing"
                         class="h-[34px] bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs px-4 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50">
                     <i class="fas fa-rotate text-[10px]" :class="{ 'fa-spin': importModal.syncing }"></i>
-                    <span x-text="importModal.syncing ? 'Pulling from Router...' : 'Start Sync'"></span>
+                    <span x-text="importModal.syncing ? i18n.pullingFromRouter : i18n.startSync"></span>
                 </button>
             </div>
         </div>
@@ -745,8 +754,39 @@ function routingManager() {
 
         importModal: {
             open: false,
-            router_id: '{{ $routers->first()?->id ?? "" }}',
+            router_id: @js((string) ($routers->first()?->id ?? '')),
             syncing: false
+        },
+
+        i18n: {
+            disableRoute: @js(__('Disable Route')),
+            enableRoute: @js(__('Enable Route')),
+            routePrefix: @js(__('Route:')),
+            synchronized: @js(__('Synchronized')),
+            localOnly: @js(__('Local Only')),
+            noCommentProvided: @js(__('No comment provided.')),
+            pullingFromRouter: @js(__('Pulling from Router...')),
+            startSync: @js(__('Start Sync')),
+            dstAddress: @js(__('Dst Address')),
+            gateway: @js(__('Gateway')),
+            textLabel: @js(__('Text')),
+            copiedToClipboardSuffix: @js(__('copied to clipboard!')),
+            copiedSuffix: @js(__('copied!')),
+            couldNotCopy: @js(__('Could not copy to clipboard.')),
+            failedUpdateStatus: @js(__('Failed to update status.')),
+            networkErrorStatus: @js(__('Network error while updating route status.')),
+            deleteTitle: @js(__('Delete Route?')),
+            deleteConfirmPrefix: @js(__('Are you sure you want to delete route for')),
+            deleteWarning: @js(__('Traffic routing to this destination will be dropped or follow default route.')),
+            yesDeleteRoute: @js(__('Yes, Delete Route')),
+            cancel: @js(__('Cancel')),
+            failedDelete: @js(__('Failed to delete route.')),
+            networkErrorDelete: @js(__('Network error while deleting route.')),
+            selectRouterFirst: @js(__('Please select a MikroTik router first.')),
+            failedSyncFromMikrotik: @js(__('Failed to sync from MikroTik.')),
+            networkErrorMikrotik: @js(__('Network error while communicating with MikroTik.')),
+            failedSyncWithMikrotik: @js(__('Failed to sync with MikroTik.')),
+            networkErrorSyncing: @js(__('Network error while syncing with MikroTik.'))
         },
 
         toggleMenu(route, event) {
@@ -824,10 +864,10 @@ function routingManager() {
                     this.showToast(data.message, 'success');
                     setTimeout(() => { window.location.reload(); }, 600);
                 } else {
-                    this.showToast(data.message || 'Failed to update status.', 'error');
+                    this.showToast(data.message || this.i18n.failedUpdateStatus, 'error');
                 }
             } catch (e) {
-                this.showToast('Network error while updating route status.', 'error');
+                this.showToast(this.i18n.networkErrorStatus, 'error');
             }
         },
 
@@ -845,30 +885,32 @@ function routingManager() {
             setTimeout(() => { this.toast.show = false; }, 3500);
         },
 
-        copyToClipboard(text, label = 'Text') {
+        copyToClipboard(text, label = null) {
             if (!text) return;
+            const displayLabel = label || this.i18n.textLabel;
             if (navigator.clipboard) {
                 navigator.clipboard.writeText(text).then(() => {
-                    this.showToast(`${label} copied to clipboard!`, 'success');
+                    this.showToast(`${displayLabel} ${this.i18n.copiedToClipboardSuffix}`, 'success');
                 }).catch(() => {
-                    this.showToast('Could not copy to clipboard.', 'error');
+                    this.showToast(this.i18n.couldNotCopy, 'error');
                 });
             } else {
-                this.showToast(`${label} copied!`, 'success');
+                this.showToast(`${displayLabel} ${this.i18n.copiedSuffix}`, 'success');
             }
         },
 
         confirmDelete(id, dstAddress) {
+            const safeDst = String(dstAddress ?? '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
             if (typeof Swal !== 'undefined') {
                 Swal.fire({
-                    title: 'Delete Route?',
-                    html: `<div class="text-xs text-slate-600 mt-1">Are you sure you want to delete route for <strong class="text-slate-900 font-semibold font-mono">${dstAddress}</strong>?<br><span class="text-[11px] text-rose-500 mt-1 block">Traffic routing to this destination will be dropped or follow default route.</span></div>`,
+                    title: this.i18n.deleteTitle,
+                    html: `<div class="text-xs text-slate-600 mt-1">${this.i18n.deleteConfirmPrefix} <strong class="text-slate-900 font-semibold font-mono">${safeDst}</strong>?<br><span class="text-[11px] text-rose-500 mt-1 block">${this.i18n.deleteWarning}</span></div>`,
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonColor: '#e11d48',
                     cancelButtonColor: '#64748b',
-                    confirmButtonText: '<i class="far fa-trash-alt mr-1"></i> Yes, Delete Route',
-                    cancelButtonText: 'Cancel',
+                    confirmButtonText: `<i class="far fa-trash-alt mr-1"></i> ${this.i18n.yesDeleteRoute}`,
+                    cancelButtonText: this.i18n.cancel,
                     reverseButtons: true,
                     customClass: {
                         popup: 'rounded-2xl shadow-xl border border-slate-200 p-5',
@@ -880,7 +922,7 @@ function routingManager() {
                         this.executeDelete(id);
                     }
                 });
-            } else if (confirm(`Are you sure you want to delete route '${dstAddress}'?`)) {
+            } else if (confirm(`${this.i18n.deleteConfirmPrefix} '${dstAddress}'?`)) {
                 this.executeDelete(id);
             }
         },
@@ -899,10 +941,10 @@ function routingManager() {
                     this.showToast(data.message, 'success');
                     setTimeout(() => { window.location.reload(); }, 600);
                 } else {
-                    this.showToast(data.message || 'Failed to delete route.', 'error');
+                    this.showToast(data.message || this.i18n.failedDelete, 'error');
                 }
             } catch (e) {
-                this.showToast('Network error while deleting route.', 'error');
+                this.showToast(this.i18n.networkErrorDelete, 'error');
             }
         },
 
@@ -916,7 +958,7 @@ function routingManager() {
 
         async syncFromMikrotik() {
             if (!this.importModal.router_id) {
-                this.showToast('Please select a MikroTik router first.', 'error');
+                this.showToast(this.i18n.selectRouterFirst, 'error');
                 return;
             }
             this.importModal.syncing = true;
@@ -936,10 +978,10 @@ function routingManager() {
                     this.closeImportModal();
                     setTimeout(() => window.location.reload(), 800);
                 } else {
-                    this.showToast(data.message || 'Failed to sync from MikroTik.', 'error');
+                    this.showToast(data.message || this.i18n.failedSyncFromMikrotik, 'error');
                 }
             } catch (e) {
-                this.showToast('Network error while communicating with MikroTik.', 'error');
+                this.showToast(this.i18n.networkErrorMikrotik, 'error');
             } finally {
                 this.importModal.syncing = false;
             }
@@ -958,10 +1000,10 @@ function routingManager() {
                 if (response.ok && data.success) {
                     this.showToast(data.message, 'success');
                 } else {
-                    this.showToast(data.message || 'Failed to sync with MikroTik.', 'error');
+                    this.showToast(data.message || this.i18n.failedSyncWithMikrotik, 'error');
                 }
             } catch (e) {
-                this.showToast('Network error while syncing with MikroTik.', 'error');
+                this.showToast(this.i18n.networkErrorSyncing, 'error');
             }
         }
     };

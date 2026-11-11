@@ -1,6 +1,6 @@
 @extends('tenant.layouts.app')
 
-@section('title', 'Network Topology & GIS Map - ' . ($tenant->company_name ?? $tenant->name))
+@section('title', __('Network Topology & GIS Map') . ' - ' . ($tenant->company_name ?? $tenant->name))
 
 @push('styles')
 <style>
@@ -45,9 +45,9 @@
                 <i class="fas fa-network-wired"></i>
             </div>
             <div class="flex items-center gap-2 min-w-0">
-                <h1 class="text-sm font-bold text-slate-900 tracking-tight whitespace-nowrap">Network Topology & GIS Map</h1>
+                <h1 class="text-sm font-bold text-slate-900 tracking-tight whitespace-nowrap">{{ __('Network Topology & GIS Map') }}</h1>
                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
-                    {{ $totalRouters + $totalOlts }} Nodes
+                    {{ __(':count Nodes', ['count' => $totalRouters + $totalOlts]) }}
                 </span>
             </div>
         </div>
@@ -58,26 +58,26 @@
                     @click="refreshData()" 
                     class="h-[34px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-0 px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs">
                 <i class="fas fa-arrows-rotate text-[11px]" :class="{'fa-spin text-cyan-600': isRefreshing}"></i>
-                <span>Refresh</span>
+                <span>{{ __('Refresh') }}</span>
             </button>
 
             {{-- Quick Links to Modules --}}
             <a href="{{ route('tenant.network.mikrotik') }}" 
                class="h-[34px] bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs py-0 px-2.5 rounded-lg border border-slate-200/80 shadow-2xs transition flex items-center justify-center gap-1.5">
                 <i class="fas fa-server text-blue-600 text-[10px]"></i>
-                <span class="hidden md:inline">Routers</span>
+                <span class="hidden md:inline">{{ __('Routers') }}</span>
             </a>
 
             <a href="{{ route('tenant.network.olt') }}" 
                class="h-[34px] bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs py-0 px-2.5 rounded-lg border border-slate-200/80 shadow-2xs transition flex items-center justify-center gap-1.5">
                 <i class="fas fa-ethernet text-purple-600 text-[10px]"></i>
-                <span class="hidden md:inline">OLTs</span>
+                <span class="hidden md:inline">{{ __('OLTs') }}</span>
             </a>
 
             <a href="{{ route('tenant.network.onu') }}" 
                class="h-[34px] bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-0 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer">
                 <i class="fas fa-users text-white text-[10px]"></i>
-                <span>ONUs</span>
+                <span>{{ __('ONUs') }}</span>
             </a>
         </div>
     </div>
@@ -87,7 +87,7 @@
         {{-- Card 1: Core Gateways --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5 min-w-0">
-                <span class="text-[9px] font-medium text-slate-500 uppercase tracking-wider block truncate">Core Gateways</span>
+                <span class="text-[9px] font-medium text-slate-500 uppercase tracking-wider block truncate">{{ __('Core Gateways') }}</span>
                 <span class="text-[13px] font-bold font-mono text-slate-900 leading-tight block truncate">
                     {{ $onlineRouters }} <span class="text-[10px] text-slate-400 font-normal">/ {{ $totalRouters }}</span>
                 </span>
@@ -100,7 +100,7 @@
         {{-- Card 2: OLT Distribution --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5 min-w-0">
-                <span class="text-[9px] font-medium text-purple-700 uppercase tracking-wider block truncate">OLT Distribution</span>
+                <span class="text-[9px] font-medium text-purple-700 uppercase tracking-wider block truncate">{{ __('OLT Distribution') }}</span>
                 <span class="text-[13px] font-bold font-mono text-purple-600 leading-tight block truncate">
                     {{ $onlineOlts }} <span class="text-[10px] text-purple-400 font-normal">/ {{ $totalOlts }}</span>
                 </span>
@@ -113,7 +113,7 @@
         {{-- Card 3: Total PON Ports --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5 min-w-0">
-                <span class="text-[9px] font-medium text-indigo-700 uppercase tracking-wider block truncate">Total PON Ports</span>
+                <span class="text-[9px] font-medium text-indigo-700 uppercase tracking-wider block truncate">{{ __('Total PON Ports') }}</span>
                 <span class="text-[13px] font-bold font-mono text-indigo-600 leading-tight block truncate">{{ number_format($totalPonPorts) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center justify-center text-[10px] shrink-0">
@@ -124,7 +124,7 @@
         {{-- Card 4: Total ONUs --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5 min-w-0">
-                <span class="text-[9px] font-medium text-slate-500 uppercase tracking-wider block truncate">Total ONUs</span>
+                <span class="text-[9px] font-medium text-slate-500 uppercase tracking-wider block truncate">{{ __('Total ONUs') }}</span>
                 <span class="text-[13px] font-bold font-mono text-slate-800 leading-tight block truncate">{{ number_format($totalOnus) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md bg-slate-50 text-slate-600 border border-slate-200 flex items-center justify-center text-[10px] shrink-0">
@@ -135,7 +135,7 @@
         {{-- Card 5: Online Active --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5 min-w-0">
-                <span class="text-[9px] font-medium text-emerald-700 uppercase tracking-wider block truncate">Online Active</span>
+                <span class="text-[9px] font-medium text-emerald-700 uppercase tracking-wider block truncate">{{ __('Online Active') }}</span>
                 <span class="text-[13px] font-bold font-mono text-emerald-600 leading-tight block truncate">{{ number_format($onlineOnus) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center text-[10px] shrink-0">
@@ -146,7 +146,7 @@
         {{-- Card 6: Offline / LOS --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5 min-w-0">
-                <span class="text-[9px] font-medium text-rose-700 uppercase tracking-wider block truncate">Offline / LOS</span>
+                <span class="text-[9px] font-medium text-rose-700 uppercase tracking-wider block truncate">{{ __('Offline / LOS') }}</span>
                 <span class="text-[13px] font-bold font-mono text-rose-600 leading-tight block truncate">{{ number_format($losOnus) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md bg-rose-50 text-rose-600 border border-rose-100 flex items-center justify-center text-[10px] shrink-0">
@@ -172,7 +172,7 @@
                 <input type="text" 
                        name="search" 
                        x-model="searchQuery" 
-                       placeholder="Search device, IP, MAC or PPPoE username..." 
+                       placeholder="{{ __('Search device, IP, MAC or PPPoE username...') }}" 
                        value="{{ request('search') }}"
                        class="w-full h-[34px] pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition" />
                 <button type="button" 
@@ -187,7 +187,7 @@
             {{-- Primary Filter: Router Filter --}}
             <select name="router_id" 
                     class="h-[34px] w-full md:w-44 text-xs bg-slate-50 border border-slate-200 rounded-lg px-2.5 text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden font-normal shrink-0">
-                <option value="">All Core Routers</option>
+                <option value="">{{ __('All Core Routers') }}</option>
                 @foreach($allRouters as $r)
                     <option value="{{ $r->id }}" {{ request('router_id') == $r->id ? 'selected' : '' }}>{{ $r->name }}</option>
                 @endforeach
@@ -200,14 +200,14 @@
                         class="h-[30px] px-2.5 rounded-md text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer"
                         :class="activeTab === 'tree' ? 'bg-white text-cyan-700 shadow-2xs' : 'text-slate-600 hover:text-slate-900'">
                     <i class="fas fa-sitemap text-[11px]"></i>
-                    <span class="hidden sm:inline">Topology Tree</span>
+                    <span class="hidden sm:inline">{{ __('Topology Tree') }}</span>
                 </button>
                 <button type="button" 
                         @click="activeTab = 'inventory'"
                         class="h-[30px] px-2.5 rounded-md text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer"
                         :class="activeTab === 'inventory' ? 'bg-white text-cyan-700 shadow-2xs' : 'text-slate-600 hover:text-slate-900'">
                     <i class="fas fa-list-check text-[11px]"></i>
-                    <span class="hidden sm:inline">Device Inventory</span>
+                    <span class="hidden sm:inline">{{ __('Device Inventory') }}</span>
                 </button>
             </div>
 
@@ -217,7 +217,7 @@
                     class="h-[34px] py-0 px-2.5 rounded-lg border text-xs font-medium transition flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
                     :class="showMoreFilters || {{ $activeMoreCount }} > 0 ? 'bg-cyan-50/70 border-cyan-200 text-cyan-800' : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'">
                 <i class="fas fa-sliders text-[11px] text-slate-500"></i>
-                <span>More Filters</span>
+                <span>{{ __('More Filters') }}</span>
                 @if($activeMoreCount > 0)
                     <span class="w-4 h-4 rounded-full bg-cyan-600 text-white text-[9px] font-bold flex items-center justify-center">{{ $activeMoreCount }}</span>
                 @endif
@@ -229,13 +229,13 @@
                 <button type="submit" 
                         class="h-[34px] bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-0 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer">
                     <i class="fas fa-filter text-[10px]"></i>
-                    <span>Filter</span>
+                    <span>{{ __('Filter') }}</span>
                 </button>
 
                 <a href="{{ route('tenant.network.map') }}" 
                    class="h-[34px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-0 px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer">
                     <i class="fas fa-rotate-left text-[10px]"></i>
-                    <span>Reset</span>
+                    <span>{{ __('Reset') }}</span>
                 </a>
             </div>
         </div>
@@ -255,7 +255,7 @@
             <div class="w-full sm:w-auto">
                 <select name="olt_id" 
                         class="h-[34px] w-full sm:w-52 text-xs bg-slate-50 border border-slate-200 rounded-lg px-2.5 text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden font-normal">
-                    <option value="">All Distribution OLTs</option>
+                    <option value="">{{ __('All Distribution OLTs') }}</option>
                     @foreach($allOlts as $o)
                         <option value="{{ $o->id }}" {{ request('olt_id') == $o->id ? 'selected' : '' }}>{{ $o->name }}</option>
                     @endforeach
@@ -266,9 +266,9 @@
             <div class="w-full sm:w-auto">
                 <select name="status" 
                         class="h-[34px] w-full sm:w-36 text-xs bg-slate-50 border border-slate-200 rounded-lg px-2.5 text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden font-normal">
-                    <option value="">All Statuses</option>
-                    <option value="online" {{ request('status') === 'online' ? 'selected' : '' }}>Online</option>
-                    <option value="offline" {{ request('status') === 'offline' ? 'selected' : '' }}>Offline</option>
+                    <option value="">{{ __('All Statuses') }}</option>
+                    <option value="online" {{ request('status') === 'online' ? 'selected' : '' }}>{{ __('Online') }}</option>
+                    <option value="offline" {{ request('status') === 'offline' ? 'selected' : '' }}>{{ __('Offline') }}</option>
                 </select>
             </div>
         </div>
@@ -280,10 +280,10 @@
         <div class="px-3.5 py-2 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2 text-xs">
             <div class="flex items-center gap-2 min-w-0">
                 <span class="font-bold text-slate-800 text-[11px] uppercase tracking-wider">
-                    Hierarchical Network Topology Graph
+                    {{ __('Hierarchical Network Topology Graph') }}
                 </span>
                 <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-slate-200 text-slate-700 font-medium">
-                    Live Status
+                    {{ __('Live Status') }}
                 </span>
             </div>
 
@@ -291,15 +291,15 @@
             <div class="flex items-center gap-3 text-[11px] text-slate-600 font-normal">
                 <div class="flex items-center gap-1.5">
                     <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-                    <span>Good (0 to -20 dBm)</span>
+                    <span>{{ __('Good (0 to -20 dBm)') }}</span>
                 </div>
                 <div class="flex items-center gap-1.5">
                     <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
-                    <span>Warning (-21 to -26 dBm)</span>
+                    <span>{{ __('Warning (-21 to -26 dBm)') }}</span>
                 </div>
                 <div class="flex items-center gap-1.5">
                     <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
-                    <span>Critical (-27 to -32 dBm)</span>
+                    <span>{{ __('Critical (-27 to -32 dBm)') }}</span>
                 </div>
             </div>
         </div>
@@ -314,8 +314,8 @@
                             <i class="fas fa-cloud"></i>
                         </div>
                         <div>
-                            <span class="text-[9px] font-medium text-cyan-600 uppercase tracking-widest block leading-tight">Upstream Transit</span>
-                            <span class="text-xs font-bold font-mono text-slate-900">ISP Internet Core Gateway</span>
+                            <span class="text-[9px] font-medium text-cyan-600 uppercase tracking-widest block leading-tight">{{ __('Upstream Transit') }}</span>
+                            <span class="text-xs font-bold font-mono text-slate-900">{{ __('ISP Internet Core Gateway') }}</span>
                         </div>
                     </div>
                 </div>
@@ -341,26 +341,26 @@
                                 </div>
                                 <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-medium {{ $routerNode['status'] === 'online' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200' }}">
                                     <span class="w-1.5 h-1.5 rounded-full {{ $routerNode['status'] === 'online' ? 'bg-emerald-500' : 'bg-rose-500' }}"></span>
-                                    <span>{{ strtoupper($routerNode['status']) }}</span>
+                                    <span>{{ $routerNode['status'] === 'online' ? __('ONLINE') : __('OFFLINE') }}</span>
                                 </span>
                             </div>
 
                             {{-- Router Quick Metrics --}}
                             <div class="grid grid-cols-2 gap-2 mt-2 text-[10px] text-slate-700">
                                 <div class="bg-slate-50 p-1.5 rounded border border-slate-200">
-                                    <span class="text-slate-500 block text-[9px]">CPU Load</span>
+                                    <span class="text-slate-500 block text-[9px]">{{ __('CPU Load') }}</span>
                                     <span class="font-mono font-bold text-blue-600">{{ $routerNode['cpu_load'] }}%</span>
                                 </div>
                                 <div class="bg-slate-50 p-1.5 rounded border border-slate-200">
-                                    <span class="text-slate-500 block text-[9px]">Connected OLTs</span>
-                                    <span class="font-mono font-bold text-purple-600">{{ count($routerNode['olts']) }} OLTs</span>
+                                    <span class="text-slate-500 block text-[9px]">{{ __('Connected OLTs') }}</span>
+                                    <span class="font-mono font-bold text-purple-600">{{ __(':count OLTs', ['count' => count($routerNode['olts'])]) }}</span>
                                 </div>
                             </div>
 
                             {{-- LEVEL 3 & 4: Sub-Tree OLT Distribution & PON Ports --}}
                             @if(!empty($routerNode['olts']))
                                 <div class="mt-3 pt-2 border-t border-slate-100 space-y-2">
-                                    <span class="text-[9px] font-semibold text-slate-500 uppercase tracking-wider block">Connected OLT Hubs:</span>
+                                    <span class="text-[9px] font-semibold text-slate-500 uppercase tracking-wider block">{{ __('Connected OLT Hubs:') }}</span>
                                     
                                     @foreach($routerNode['olts'] as $oltNode)
                                         <div class="bg-slate-50/90 rounded-lg p-2.5 border border-purple-200 hover:border-purple-400 transition"
@@ -388,21 +388,21 @@
                                 </div>
                             @else
                                 <div class="mt-2 text-center p-2 rounded bg-slate-50 text-[10px] text-slate-400 italic border border-slate-100">
-                                    No OLTs mapped to this gateway router.
+                                    {{ __('No OLTs mapped to this gateway router.') }}
                                 </div>
                             @endif
                         </div>
                     @empty
                         <div class="col-span-full text-center py-10 bg-white rounded-xl border border-slate-200 shadow-2xs">
                             <i class="fas fa-network-wired text-3xl text-slate-300 mb-2"></i>
-                            <h3 class="text-xs font-bold text-slate-700">No Network Devices Found</h3>
-                            <p class="text-[11px] text-slate-400 mt-0.5">Please add or configure routers and OLTs to view topology.</p>
+                            <h3 class="text-xs font-bold text-slate-700">{{ __('No Network Devices Found') }}</h3>
+                            <p class="text-[11px] text-slate-400 mt-0.5">{{ __('Please add or configure routers and OLTs to view topology.') }}</p>
                             <div class="mt-3 flex items-center justify-center gap-2">
                                 <a href="{{ route('tenant.network.mikrotik.create') }}" class="px-3 py-1.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-xs font-semibold shadow-xs">
-                                    + Add Core Router
+                                    + {{ __('Add Core Router') }}
                                 </a>
                                 <a href="{{ route('tenant.network.olt.create') }}" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200">
-                                    + Add OLT Hub
+                                    + {{ __('Add OLT Hub') }}
                                 </a>
                             </div>
                         </div>
@@ -418,8 +418,8 @@
          class="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden">
         
         <div class="px-3.5 py-2.5 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
-            <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Network Devices & Optical Status Inventory</h3>
-            <span class="text-[11px] text-slate-500 font-normal">Active inventory: {{ count($routers) + count($olts) }} Nodes</span>
+            <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">{{ __('Network Devices & Optical Status Inventory') }}</h3>
+            <span class="text-[11px] text-slate-500 font-normal">{{ __('Active inventory: :count Nodes', ['count' => count($routers) + count($olts)]) }}</span>
         </div>
 
         <div class="overflow-x-auto">
@@ -427,13 +427,13 @@
                 <thead>
                     <tr>
                         <th class="w-12 text-center font-semibold">#</th>
-                        <th class="text-center font-semibold">Device Type</th>
-                        <th class="text-center font-semibold">Device Name</th>
-                        <th class="text-center font-semibold">IP / MAC Address</th>
-                        <th class="text-center font-semibold">Parent / Gateway</th>
-                        <th class="text-center font-semibold">Metrics / Capacity</th>
-                        <th class="text-center font-semibold">Status</th>
-                        <th class="w-24 text-center font-semibold no-sort">Action</th>
+                        <th class="text-center font-semibold">{{ __('Device Type') }}</th>
+                        <th class="text-center font-semibold">{{ __('Device Name') }}</th>
+                        <th class="text-center font-semibold">{{ __('IP / MAC Address') }}</th>
+                        <th class="text-center font-semibold">{{ __('Parent / Gateway') }}</th>
+                        <th class="text-center font-semibold">{{ __('Metrics / Capacity') }}</th>
+                        <th class="text-center font-semibold">{{ __('Status') }}</th>
+                        <th class="w-24 text-center font-semibold no-sort">{{ __('Action') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -442,22 +442,22 @@
                         <tr>
                             <td class="text-center font-mono text-slate-500">R-{{ $rIndex + 1 }}</td>
                             <td class="text-center">
-                                <span class="px-2 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200 whitespace-nowrap">Core Router</span>
+                                <span class="px-2 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200 whitespace-nowrap">{{ __('Core Router') }}</span>
                             </td>
                             <td class="text-left font-semibold text-slate-900 whitespace-nowrap">{{ $r->name }}</td>
                             <td class="text-center font-mono text-slate-800 whitespace-nowrap">{{ $r->ip_address }}</td>
-                            <td class="text-center text-slate-500 whitespace-nowrap">WAN Uplink</td>
-                            <td class="text-right font-mono text-slate-700 whitespace-nowrap">CPU: {{ $r->cpu_load ?? 12 }}%</td>
+                            <td class="text-center text-slate-500 whitespace-nowrap">{{ __('WAN Uplink') }}</td>
+                            <td class="text-right font-mono text-slate-700 whitespace-nowrap">{{ __('CPU') }}: {{ $r->cpu_load ?? 12 }}%</td>
                             <td class="text-center whitespace-nowrap">
                                 <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium {{ $r->status === 'online' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200' }}">
                                     <span class="w-1.5 h-1.5 rounded-full {{ $r->status === 'online' ? 'bg-emerald-500' : 'bg-rose-500' }}"></span>
-                                    <span>{{ ucfirst($r->status ?? 'online') }}</span>
+                                    <span>{{ ($r->status ?? 'online') === 'online' ? __('Online') : __('Offline') }}</span>
                                 </span>
                             </td>
                             <td class="text-center whitespace-nowrap">
                                 <a href="{{ route('tenant.network.mikrotik.show', $r->id) }}" 
                                    class="px-2.5 py-1 rounded bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 transition text-[11px] font-semibold">
-                                    Inspect
+                                    {{ __('Inspect') }}
                                 </a>
                             </td>
                         </tr>
@@ -468,22 +468,22 @@
                         <tr>
                             <td class="text-center font-mono text-slate-500">O-{{ $oIndex + 1 }}</td>
                             <td class="text-center">
-                                <span class="px-2 py-0.5 rounded text-[10px] font-medium bg-purple-50 text-purple-700 border border-purple-200 whitespace-nowrap">OLT Distribution</span>
+                                <span class="px-2 py-0.5 rounded text-[10px] font-medium bg-purple-50 text-purple-700 border border-purple-200 whitespace-nowrap">{{ __('OLT Distribution') }}</span>
                             </td>
                             <td class="text-left font-semibold text-slate-900 whitespace-nowrap">{{ $o->name }}</td>
                             <td class="text-center font-mono text-slate-800 whitespace-nowrap">{{ $o->ip_address }}</td>
-                            <td class="text-center text-slate-700 whitespace-nowrap">{{ $o->router?->name ?? 'Standalone Hub' }}</td>
-                            <td class="text-right font-mono text-purple-700 whitespace-nowrap">{{ $o->total_pon_ports ?? 8 }} PON Ports</td>
+                            <td class="text-center text-slate-700 whitespace-nowrap">{{ $o->router?->name ?? __('Standalone Hub') }}</td>
+                            <td class="text-right font-mono text-purple-700 whitespace-nowrap">{{ __(':count PON Ports', ['count' => $o->total_pon_ports ?? 8]) }}</td>
                             <td class="text-center whitespace-nowrap">
                                 <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium {{ $o->status === 'online' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200' }}">
                                     <span class="w-1.5 h-1.5 rounded-full {{ $o->status === 'online' ? 'bg-emerald-500' : 'bg-rose-500' }}"></span>
-                                    <span>{{ ucfirst($o->status ?? 'online') }}</span>
+                                    <span>{{ ($o->status ?? 'online') === 'online' ? __('Online') : __('Offline') }}</span>
                                 </span>
                             </td>
                             <td class="text-center whitespace-nowrap">
                                 <a href="{{ route('tenant.network.olt.show', $o->id) }}" 
                                    class="px-2.5 py-1 rounded bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200 transition text-[11px] font-semibold">
-                                    Inspect
+                                    {{ __('Inspect') }}
                                 </a>
                             </td>
                         </tr>
@@ -494,8 +494,8 @@
                             <td colspan="8" class="text-center py-8">
                                 <div class="max-w-xs mx-auto text-center space-y-1">
                                     <i class="fas fa-network-wired text-2xl text-slate-300"></i>
-                                    <p class="text-xs font-semibold text-slate-700">No Network Devices Configured</p>
-                                    <p class="text-[11px] text-slate-400">Add a core router or OLT to view inventory.</p>
+                                    <p class="text-xs font-semibold text-slate-700">{{ __('No Network Devices Configured') }}</p>
+                                    <p class="text-[11px] text-slate-400">{{ __('Add a core router or OLT to view inventory.') }}</p>
                                 </div>
                             </td>
                         </tr>
@@ -548,7 +548,7 @@
                                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-medium"
                                       :class="drawer.status === 'online' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'">
                                     <span class="w-1.5 h-1.5 rounded-full" :class="drawer.status === 'online' ? 'bg-emerald-400 animate-pulse' : 'bg-rose-400'"></span>
-                                    <span x-text="(drawer.status || 'online').toUpperCase()"></span>
+                                    <span x-text="drawer.status === 'offline' ? i18n.statusOfflineUpper : i18n.statusOnlineUpper"></span>
                                 </span>
                             </div>
                             <span class="text-[11px] text-slate-400 truncate block mt-0.5" x-text="drawer.subtitle || drawer.typeBadge"></span>
@@ -557,7 +557,7 @@
                     <button type="button" 
                             @click="closeDrawer()" 
                             class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition flex items-center justify-center cursor-pointer shrink-0 ml-2"
-                            title="Close Inspector (Esc)">
+                            title="{{ __('Close Inspector (Esc)') }}">
                         <i class="fas fa-times text-sm"></i>
                     </button>
                 </div>
@@ -578,8 +578,8 @@
                     {{-- Channel Health Progress Ratio for PON / OLT --}}
                     <div x-show="drawer.nodeType === 'pon' || drawer.nodeType === 'olt'" class="p-3 bg-white rounded-lg border border-slate-200 shadow-2xs space-y-1.5">
                         <div class="flex items-center justify-between text-[11px]">
-                            <span class="font-medium text-slate-700">Channel Efficiency & Online Ratio</span>
-                            <span class="font-mono font-bold" :class="drawer.onlinePercent >= 80 ? 'text-emerald-600' : 'text-amber-600'" x-text="drawer.onlinePercent + '% Online'"></span>
+                            <span class="font-medium text-slate-700">{{ __('Channel Efficiency & Online Ratio') }}</span>
+                            <span class="font-mono font-bold" :class="drawer.onlinePercent >= 80 ? 'text-emerald-600' : 'text-amber-600'" x-text="i18n.percentOnline.replace('__PCT__', drawer.onlinePercent)"></span>
                         </div>
                         <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden flex">
                             <div class="bg-emerald-500 h-2 transition-all duration-500" :style="`width: ${drawer.onlinePercent}%`"></div>
@@ -590,8 +590,8 @@
                     {{-- Technical Specifications Table --}}
                     <div class="bg-white rounded-lg border border-slate-200 shadow-2xs overflow-hidden">
                         <div class="px-3 py-2 bg-slate-50/80 border-b border-slate-200 flex items-center justify-between">
-                            <span class="text-[10px] font-bold text-slate-700 uppercase tracking-wider">Device Technical Specs</span>
-                            <span class="text-[10px] text-slate-400 font-mono">Live State</span>
+                            <span class="text-[10px] font-bold text-slate-700 uppercase tracking-wider">{{ __('Device Technical Specs') }}</span>
+                            <span class="text-[10px] text-slate-400 font-mono">{{ __('Live State') }}</span>
                         </div>
                         <div class="divide-y divide-slate-100">
                             <template x-for="(val, key) in drawer.details" :key="key">
@@ -600,10 +600,10 @@
                                     <div class="flex items-center gap-1.5 font-mono font-semibold text-slate-800">
                                         <span x-text="val"></span>
                                         <button type="button" 
-                                                x-show="key.includes('IP') || key.includes('MAC')" 
+                                                x-show="(drawer.copyableKeys && drawer.copyableKeys.includes(key)) || key.includes('IP') || key.includes('MAC')" 
                                                 @click="copyToClipboard(val, key)"
                                                 class="text-slate-400 hover:text-cyan-600 cursor-pointer"
-                                                title="Copy to Clipboard">
+                                                title="{{ __('Copy to Clipboard') }}">
                                             <i class="far fa-copy text-[10px]"></i>
                                         </button>
                                     </div>
@@ -616,10 +616,8 @@
                     <div x-show="drawer.items && drawer.items.length > 0" class="space-y-2.5">
                         <div class="flex items-center justify-between">
                             <div>
-                                <h4 class="text-xs font-bold text-slate-900 leading-tight">Connected Subscribers & ONTs</h4>
-                                <span class="text-[10px] text-slate-500 font-normal">
-                                    Showing <span class="font-bold text-slate-800" x-text="filteredDrawerItems.length"></span> of <span class="font-bold text-slate-800" x-text="drawer.items.length"></span> ONUs
-                                </span>
+                                <h4 class="text-xs font-bold text-slate-900 leading-tight">{{ __('Connected Subscribers & ONTs') }}</h4>
+                                <span class="text-[10px] text-slate-500 font-normal" x-html="formatShowingDrawerOnus()"></span>
                             </div>
                         </div>
 
@@ -630,7 +628,7 @@
                                 <i class="fas fa-search absolute left-2.5 top-2.5 text-slate-400 text-[10px]"></i>
                                 <input type="text" 
                                        x-model="drawer.searchQuery" 
-                                       placeholder="Search MAC, Name, Model..." 
+                                       placeholder="{{ __('Search MAC, Name, Model...') }}" 
                                        class="w-full pl-7 pr-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-800 placeholder-slate-400 focus:ring-1 focus:ring-cyan-500 focus:border-cyan-500 shadow-2xs" />
                                 <button type="button" 
                                         x-show="drawer.searchQuery" 
@@ -646,19 +644,19 @@
                                         @click="drawer.statusFilter = 'all'"
                                         class="px-2 py-1 rounded text-[10px] font-medium transition cursor-pointer border"
                                         :class="drawer.statusFilter === 'all' ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'">
-                                    All
+                                    {{ __('All') }}
                                 </button>
                                 <button type="button" 
                                         @click="drawer.statusFilter = 'online'"
                                         class="px-2 py-1 rounded text-[10px] font-medium transition cursor-pointer border"
                                         :class="drawer.statusFilter === 'online' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'">
-                                    Online
+                                    {{ __('Online') }}
                                 </button>
                                 <button type="button" 
                                         @click="drawer.statusFilter = 'offline'"
                                         class="px-2 py-1 rounded text-[10px] font-medium transition cursor-pointer border"
                                         :class="drawer.statusFilter === 'offline' ? 'bg-rose-600 text-white border-rose-600' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'">
-                                    Offline
+                                    {{ __('Offline') }}
                                 </button>
                             </div>
                         </div>
@@ -683,13 +681,13 @@
                                                   'bg-rose-50 text-rose-700 border-rose-200': item.status !== 'online' || (item.rx_power_dbm !== null && item.rx_power_dbm < -26),
                                                   'bg-slate-100 text-slate-500 border-slate-200': item.rx_power_dbm === null
                                               }"
-                                              x-text="item.rx_power_dbm !== null ? (item.rx_power_dbm + ' dBm') : (item.status === 'online' ? 'Online' : 'LOS')"></span>
+                                              x-text="item.rx_power_dbm !== null ? (item.rx_power_dbm + ' dBm') : (item.status === 'online' ? i18n.online : i18n.los)"></span>
                                     </div>
 
                                     <div class="grid grid-cols-2 gap-2 text-[10px] text-slate-500 font-mono pt-1 border-t border-slate-100">
                                         <div class="flex items-center gap-1 truncate">
                                             <i class="fas fa-fingerprint text-[9px] text-slate-400"></i>
-                                            <span class="truncate" x-text="item.mac_address || 'No MAC'"></span>
+                                            <span class="truncate" x-text="item.mac_address || i18n.noMac"></span>
                                         </div>
                                         <div class="flex items-center justify-end gap-1 text-slate-600">
                                             <i class="fas fa-ruler-horizontal text-[9px] text-slate-400"></i>
@@ -699,10 +697,10 @@
 
                                     {{-- PPPoE / Details Subline --}}
                                     <div x-show="item.pppoe_username || item.desc" class="flex items-center justify-between text-[10px] text-slate-600 bg-slate-50 px-2 py-1 rounded">
-                                        <span class="truncate text-cyan-800 font-medium" x-text="item.pppoe_username ? ('PPPoE: ' + item.pppoe_username) : (item.desc || '')"></span>
+                                        <span class="truncate text-cyan-800 font-medium" x-text="item.pppoe_username ? (i18n.pppoePrefix + item.pppoe_username) : (item.desc || '')"></span>
                                         <a :href="`/admin/network/onu?search=${encodeURIComponent(item.mac_address || item.name)}`" 
                                            class="text-cyan-600 hover:text-cyan-800 font-semibold shrink-0">
-                                            Diagnose →
+                                            {{ __('Diagnose') }} →
                                         </a>
                                     </div>
                                 </div>
@@ -711,8 +709,8 @@
                             {{-- Zero State for Search Filter --}}
                             <div x-show="filteredDrawerItems.length === 0" class="p-6 text-center text-slate-400 bg-white rounded-lg border border-slate-200">
                                 <i class="fas fa-search text-xl text-slate-300 mb-1"></i>
-                                <p class="text-xs text-slate-600 font-medium">No matching subscribers found</p>
-                                <span class="text-[10px] text-slate-400">Try adjusting your search keyword or status filter.</span>
+                                <p class="text-xs text-slate-600 font-medium">{{ __('No matching subscribers found') }}</p>
+                                <span class="text-[10px] text-slate-400">{{ __('Try adjusting your search keyword or status filter.') }}</span>
                             </div>
                         </div>
                     </div>
@@ -723,12 +721,12 @@
                     <button type="button" 
                             @click="closeDrawer()" 
                             class="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-medium transition cursor-pointer">
-                        Close
+                        {{ __('Close') }}
                     </button>
                     <a :href="drawer.link || '#'" 
                        class="flex-1 py-1.5 px-3 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-xs font-semibold shadow-xs transition flex items-center justify-center gap-1.5 text-center">
                         <i class="fas fa-external-link-alt text-[10px]"></i>
-                        <span x-text="drawer.linkText || 'Configure in Module'"></span>
+                        <span x-text="drawer.linkText || i18n.configureInModule"></span>
                     </a>
                 </div>
             </div>
@@ -741,6 +739,57 @@
 <script>
 function networkMapManager() {
     return {
+        i18n: {
+            statusOnlineUpper: @js(__('ONLINE')),
+            statusOfflineUpper: @js(__('OFFLINE')),
+            percentOnline: @js(__(':pct% Online', ['pct' => '__PCT__'])),
+            showingDrawerOnus: @js(__('Showing :filtered of :total ONUs', ['filtered' => '__FILTERED__', 'total' => '__TOTAL__'])),
+            online: @js(__('Online')),
+            los: @js(__('LOS')),
+            noMac: @js(__('No MAC')),
+            pppoePrefix: @js(__('PPPoE') . ': '),
+            configureInModule: @js(__('Configure in Module')),
+            coreGatewayRouter: @js(__('Core Gateway Router')),
+            connectedOlts: @js(__('Connected OLTs')),
+            totalOnus: @js(__('Total ONUs')),
+            onlineActive: @js(__('Online Active')),
+            cpuLoad: @js(__('CPU Load')),
+            deviceName: @js(__('Device Name')),
+            managementIp: @js(__('Management IP')),
+            hardwareModel: @js(__('Hardware Model')),
+            systemUptime: @js(__('System Uptime')),
+            running: @js(__('Running')),
+            devicesCount: @js(__(':count Devices', ['count' => '__COUNT__'])),
+            operationalStatus: @js(__('Operational Status')),
+            manageRouterInModule: @js(__('Manage Router in Module')),
+            distributionTier: @js(__('Distribution Tier')),
+            offlineLos: @js(__('Offline / LOS')),
+            ponPorts: @js(__('PON Ports')),
+            oltName: @js(__('OLT Name')),
+            brandAndModel: @js(__('Brand & Model')),
+            uplinkGateway: @js(__('Uplink Gateway')),
+            coreRouter: @js(__('Core Router')),
+            ponCapacity: @js(__('PON Capacity')),
+            activePortsCount: @js(__(':count Active Ports', ['count' => '__COUNT__'])),
+            inspectOltAndPons: @js(__('Inspect OLT & PONs')),
+            opticalDistributionChannel: @js(__('Optical Distribution Channel')),
+            ponPort: @js(__('PON Port')),
+            efficiency: @js(__('Efficiency')),
+            channelName: @js(__('Channel Name')),
+            parentOlt: @js(__('Parent OLT')),
+            oltDistribution: @js(__('OLT Distribution')),
+            oltManagementIp: @js(__('OLT Management IP')),
+            totalSubscribers: @js(__('Total Subscribers')),
+            endpointsCount: @js(__(':count Endpoints', ['count' => '__COUNT__'])),
+            activePercent: @js(__(':count Active (:pct%)', ['count' => '__COUNT__', 'pct' => '__PCT__'])),
+            portTechnology: @js(__('Port Technology')),
+            viewAllChannelOnus: @js(__('View All Channel ONUs')),
+            valueLabel: @js(__('Value')),
+            copiedToClipboard: @js(__(':label copied to clipboard!', ['label' => '__LABEL__'])),
+            failedToCopy: @js(__('Failed to copy')),
+            topologyRefreshed: @js(__('Network topology data refreshed.'))
+        },
+
         activeTab: 'tree',
         isRefreshing: false,
         toast: {
@@ -770,11 +819,20 @@ function networkMapManager() {
             stats: [],
             onlinePercent: 100,
             details: {},
+            copyableKeys: [],
             items: [],
             searchQuery: '',
             statusFilter: 'all',
             link: '#',
-            linkText: 'Configure in Module'
+            linkText: ''
+        },
+
+        formatShowingDrawerOnus() {
+            const filtered = `<span class="font-bold text-slate-800">${this.filteredDrawerItems.length}</span>`;
+            const total = `<span class="font-bold text-slate-800">${(this.drawer.items || []).length}</span>`;
+            return this.i18n.showingDrawerOnus
+                .replace('__FILTERED__', filtered)
+                .replace('__TOTAL__', total);
         },
 
         get filteredDrawerItems() {
@@ -835,29 +893,30 @@ function networkMapManager() {
                 const onlineRatio = totalOnus > 0 ? Math.round((onlineOnus / totalOnus) * 100) : 100;
 
                 this.drawer.title = data.name;
-                this.drawer.subtitle = 'Core Gateway Router • ' + (data.model || 'MikroTik CCR/RB');
+                this.drawer.subtitle = this.i18n.coreGatewayRouter + ' • ' + (data.model || 'MikroTik CCR/RB');
                 this.drawer.status = data.status || 'online';
                 this.drawer.iconBg = 'bg-blue-600 text-white';
                 this.drawer.iconClass = 'fas fa-server';
                 this.drawer.onlinePercent = onlineRatio;
                 this.drawer.stats = [
-                    { label: 'Connected OLTs', value: (data.olts ? data.olts.length : 0), color: 'text-blue-600' },
-                    { label: 'Total ONUs', value: totalOnus, color: 'text-slate-800' },
-                    { label: 'Online Active', value: onlineOnus, color: 'text-emerald-600' },
-                    { label: 'CPU Load', value: (data.cpu_load || 12) + '%', color: 'text-amber-600' }
+                    { label: this.i18n.connectedOlts, value: (data.olts ? data.olts.length : 0), color: 'text-blue-600' },
+                    { label: this.i18n.totalOnus, value: totalOnus, color: 'text-slate-800' },
+                    { label: this.i18n.onlineActive, value: onlineOnus, color: 'text-emerald-600' },
+                    { label: this.i18n.cpuLoad, value: (data.cpu_load || 12) + '%', color: 'text-amber-600' }
                 ];
+                this.drawer.copyableKeys = [this.i18n.managementIp];
                 this.drawer.details = {
-                    'Device Name': data.name,
-                    'Management IP': data.ip_address,
-                    'Hardware Model': data.model || 'MikroTik RouterOS',
-                    'CPU Load': (data.cpu_load || 12) + '%',
-                    'System Uptime': data.uptime || 'Running',
-                    'Connected OLTs': (data.olts ? data.olts.length : 0) + ' Devices',
-                    'Operational Status': (data.status || 'online').toUpperCase()
+                    [this.i18n.deviceName]: data.name,
+                    [this.i18n.managementIp]: data.ip_address,
+                    [this.i18n.hardwareModel]: data.model || 'MikroTik RouterOS',
+                    [this.i18n.cpuLoad]: (data.cpu_load || 12) + '%',
+                    [this.i18n.systemUptime]: data.uptime || this.i18n.running,
+                    [this.i18n.connectedOlts]: this.i18n.devicesCount.replace('__COUNT__', (data.olts ? data.olts.length : 0)),
+                    [this.i18n.operationalStatus]: (data.status === 'offline' ? this.i18n.statusOfflineUpper : this.i18n.statusOnlineUpper)
                 };
                 this.drawer.items = allRouterOnus;
                 this.drawer.link = `/admin/network/mikrotik/${data.id}`;
-                this.drawer.linkText = 'Manage Router in Module';
+                this.drawer.linkText = this.i18n.manageRouterInModule;
 
             } else if (type === 'olt') {
                 let allOltOnus = [];
@@ -882,28 +941,29 @@ function networkMapManager() {
                 const onlineRatio = totalOnus > 0 ? Math.round((onlineOnus / totalOnus) * 100) : 0;
 
                 this.drawer.title = data.name;
-                this.drawer.subtitle = (data.brand || 'OLT') + ' ' + (data.model || '') + ' • Distribution Tier';
+                this.drawer.subtitle = (data.brand || 'OLT') + ' ' + (data.model || '') + ' • ' + this.i18n.distributionTier;
                 this.drawer.status = data.status || 'online';
                 this.drawer.iconBg = 'bg-purple-600 text-white';
                 this.drawer.iconClass = 'fas fa-network-wired';
                 this.drawer.onlinePercent = onlineRatio;
                 this.drawer.stats = [
-                    { label: 'Total ONUs', value: totalOnus, color: 'text-slate-800' },
-                    { label: 'Online Active', value: onlineOnus, color: 'text-emerald-600' },
-                    { label: 'Offline / LOS', value: offlineOnus, color: 'text-rose-600' },
-                    { label: 'PON Ports', value: data.total_pon_ports || (data.pon_ports ? data.pon_ports.length : 8), color: 'text-purple-600' }
+                    { label: this.i18n.totalOnus, value: totalOnus, color: 'text-slate-800' },
+                    { label: this.i18n.onlineActive, value: onlineOnus, color: 'text-emerald-600' },
+                    { label: this.i18n.offlineLos, value: offlineOnus, color: 'text-rose-600' },
+                    { label: this.i18n.ponPorts, value: data.total_pon_ports || (data.pon_ports ? data.pon_ports.length : 8), color: 'text-purple-600' }
                 ];
+                this.drawer.copyableKeys = [this.i18n.managementIp];
                 this.drawer.details = {
-                    'OLT Name': data.name,
-                    'Management IP': data.ip_address,
-                    'Brand & Model': (data.brand || '') + ' ' + (data.model || ''),
-                    'Uplink Gateway': (data.router ? data.router.name : 'Core Router'),
-                    'PON Capacity': (data.total_pon_ports || (data.pon_ports ? data.pon_ports.length : 8)) + ' Active Ports',
-                    'Operational Status': (data.status || 'online').toUpperCase()
+                    [this.i18n.oltName]: data.name,
+                    [this.i18n.managementIp]: data.ip_address,
+                    [this.i18n.brandAndModel]: (data.brand || '') + ' ' + (data.model || ''),
+                    [this.i18n.uplinkGateway]: (data.router ? data.router.name : this.i18n.coreRouter),
+                    [this.i18n.ponCapacity]: this.i18n.activePortsCount.replace('__COUNT__', (data.total_pon_ports || (data.pon_ports ? data.pon_ports.length : 8))),
+                    [this.i18n.operationalStatus]: (data.status === 'offline' ? this.i18n.statusOfflineUpper : this.i18n.statusOnlineUpper)
                 };
                 this.drawer.items = allOltOnus;
                 this.drawer.link = `/admin/network/olt/${data.id}`;
-                this.drawer.linkText = 'Inspect OLT & PONs';
+                this.drawer.linkText = this.i18n.inspectOltAndPons;
 
             } else if (type === 'pon') {
                 const totalOnus = data.total_onus || (data.onus ? data.onus.length : 0);
@@ -912,28 +972,29 @@ function networkMapManager() {
                 const onlineRatio = totalOnus > 0 ? Math.round((onlineOnus / totalOnus) * 100) : 0;
 
                 this.drawer.title = (parentData?.name ? (parentData.name + ' - ') : '') + data.name;
-                this.drawer.subtitle = 'Optical Distribution Channel • ' + (parentData?.brand || 'PON Port');
+                this.drawer.subtitle = this.i18n.opticalDistributionChannel + ' • ' + (parentData?.brand || this.i18n.ponPort);
                 this.drawer.status = data.status || (onlineOnus > 0 ? 'online' : (totalOnus === 0 ? 'online' : 'offline'));
                 this.drawer.iconBg = 'bg-cyan-600 text-white';
                 this.drawer.iconClass = 'fas fa-ethernet';
                 this.drawer.onlinePercent = onlineRatio;
                 this.drawer.stats = [
-                    { label: 'Total ONUs', value: totalOnus, color: 'text-slate-800' },
-                    { label: 'Online Active', value: onlineOnus, color: 'text-emerald-600' },
-                    { label: 'Offline / LOS', value: offlineOnus, color: 'text-rose-600' },
-                    { label: 'Efficiency', value: onlineRatio + '%', color: 'text-cyan-600' }
+                    { label: this.i18n.totalOnus, value: totalOnus, color: 'text-slate-800' },
+                    { label: this.i18n.onlineActive, value: onlineOnus, color: 'text-emerald-600' },
+                    { label: this.i18n.offlineLos, value: offlineOnus, color: 'text-rose-600' },
+                    { label: this.i18n.efficiency, value: onlineRatio + '%', color: 'text-cyan-600' }
                 ];
+                this.drawer.copyableKeys = [this.i18n.oltManagementIp];
                 this.drawer.details = {
-                    'Channel Name': data.name,
-                    'Parent OLT': (parentData?.name || 'OLT Distribution'),
-                    'OLT Management IP': (parentData?.ip_address || '-'),
-                    'Total Subscribers': totalOnus + ' Endpoints',
-                    'Online Active': onlineOnus + ' Active (' + onlineRatio + '%)',
-                    'Port Technology': (parentData?.brand?.includes('EPON') ? 'EPON 1.25G' : 'GPON 2.5G / EPON')
+                    [this.i18n.channelName]: data.name,
+                    [this.i18n.parentOlt]: (parentData?.name || this.i18n.oltDistribution),
+                    [this.i18n.oltManagementIp]: (parentData?.ip_address || '-'),
+                    [this.i18n.totalSubscribers]: this.i18n.endpointsCount.replace('__COUNT__', totalOnus),
+                    [this.i18n.onlineActive]: this.i18n.activePercent.replace('__COUNT__', onlineOnus).replace('__PCT__', onlineRatio),
+                    [this.i18n.portTechnology]: (parentData?.brand?.includes('EPON') ? 'EPON 1.25G' : 'GPON 2.5G / EPON')
                 };
                 this.drawer.items = data.onus || [];
                 this.drawer.link = `/admin/network/onu?search=${encodeURIComponent(data.name)}`;
-                this.drawer.linkText = 'View All Channel ONUs';
+                this.drawer.linkText = this.i18n.viewAllChannelOnus;
             }
         },
 
@@ -941,11 +1002,12 @@ function networkMapManager() {
             this.drawer.open = false;
         },
 
-        copyToClipboard(text, label = 'Value') {
+        copyToClipboard(text, label = null) {
             if (!text) return;
+            const displayLabel = label || this.i18n.valueLabel;
             if (navigator.clipboard && window.isSecureContext) {
                 navigator.clipboard.writeText(text).then(() => {
-                    this.showToast(`${label} copied to clipboard!`, 'success');
+                    this.showToast(this.i18n.copiedToClipboard.replace('__LABEL__', displayLabel), 'success');
                 });
             } else {
                 const textArea = document.createElement("textarea");
@@ -958,9 +1020,9 @@ function networkMapManager() {
                 textArea.select();
                 try {
                     document.execCommand('copy');
-                    this.showToast(`${label} copied to clipboard!`, 'success');
+                    this.showToast(this.i18n.copiedToClipboard.replace('__LABEL__', displayLabel), 'success');
                 } catch (err) {
-                    this.showToast('Failed to copy', 'error');
+                    this.showToast(this.i18n.failedToCopy, 'error');
                 }
                 textArea.remove();
             }
@@ -971,7 +1033,7 @@ function networkMapManager() {
             try {
                 setTimeout(() => {
                     this.isRefreshing = false;
-                    this.showToast('Network topology data refreshed.', 'success');
+                    this.showToast(this.i18n.topologyRefreshed, 'success');
                     window.location.reload();
                 }, 700);
             } catch (e) {

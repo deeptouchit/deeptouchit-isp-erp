@@ -37,7 +37,7 @@ class MikrotikController extends Controller
             $tenant = \App\Models\Tenant::first();
         }
         if (!$tenant) {
-            abort(404, 'ISP Tenant record not found.');
+            abort(404, __('ISP Tenant record not found.'));
         }
         return $tenant;
     }
@@ -246,7 +246,7 @@ class MikrotikController extends Controller
         }
 
         return redirect()->route('tenant.network.mikrotik')
-            ->with('success', "MikroTik Gateway '{$router->name}' added successfully.");
+            ->with('success', __("MikroTik Gateway ':name' added successfully.", ['name' => $router->name]));
     }
 
     /**
@@ -376,7 +376,7 @@ class MikrotikController extends Controller
         $this->radiusService->syncNasClients($tenant);
 
         return redirect()->route('tenant.network.mikrotik')
-            ->with('success', "MikroTik Gateway '{$router->name}' updated successfully.");
+            ->with('success', __("MikroTik Gateway ':name' updated successfully.", ['name' => $router->name]));
     }
 
     /**
@@ -389,24 +389,30 @@ class MikrotikController extends Controller
 
         if (!$router->is_active) {
             $router->status = 'offline';
-            $router->last_error = 'Router disabled by administrator.';
+            $router->last_error = __('Router disabled by administrator.');
         } else {
             $router->last_error = null;
         }
 
         $router->save();
 
-        $stateText = $router->is_active ? 'enabled' : 'disabled';
+        $jsonMessage = $router->is_active
+            ? __("Router ':name' is now enabled.", ['name' => $router->name])
+            : __("Router ':name' is now disabled.", ['name' => $router->name]);
 
         if (request()->wantsJson()) {
             return response()->json([
                 'success' => true,
                 'is_active' => $router->is_active,
-                'message' => "Router '{$router->name}' is now {$stateText}.",
+                'message' => $jsonMessage,
             ]);
         }
 
-        return back()->with('success', "MikroTik Gateway '{$router->name}' has been {$stateText} successfully.");
+        $flashMessage = $router->is_active
+            ? __("MikroTik Gateway ':name' has been enabled successfully.", ['name' => $router->name])
+            : __("MikroTik Gateway ':name' has been disabled successfully.", ['name' => $router->name]);
+
+        return back()->with('success', $flashMessage);
     }
 
     /**
@@ -423,7 +429,7 @@ class MikrotikController extends Controller
         $this->radiusService->syncNasClients($tenant);
 
         return redirect()->route('tenant.network.mikrotik')
-            ->with('success', "MikroTik Gateway '{$name}' deleted successfully.");
+            ->with('success', __("MikroTik Gateway ':name' deleted successfully.", ['name' => $name]));
     }
 
     /**
@@ -468,25 +474,25 @@ class MikrotikController extends Controller
         $router = $this->findTenantRouter($id);
 
         if (!$router->is_active) {
-            return back()->with('error', "Cannot sync disabled router '{$router->name}'. Please enable it first.");
+            return back()->with('error', __("Cannot sync disabled router ':name'. Please enable it first.", ['name' => $router->name]));
         }
 
         if ($router->connection_type === 'radius') {
             $this->radiusService->syncNasClients($tenant);
             $res = $this->apiService->syncRouter($router);
             if ($res['success']) {
-                return back()->with('success', "RADIUS Gateway '{$router->name}' synchronized with FreeRADIUS NAS table & RouterOS API.");
+                return back()->with('success', __("RADIUS Gateway ':name' synchronized with FreeRADIUS NAS table & RouterOS API.", ['name' => $router->name]));
             }
-            return back()->with('warning', "FreeRADIUS NAS synchronized, but router is unreachable via API: {$res['message']}");
+            return back()->with('warning', __('FreeRADIUS NAS synchronized, but router is unreachable via API: :message', ['message' => $res['message']]));
         }
 
         $result = $this->apiService->syncRouter($router);
 
         if ($result['success']) {
-            return back()->with('success', "Live sync completed: {$result['message']}");
+            return back()->with('success', __('Live sync completed: :message', ['message' => $result['message']]));
         }
 
-        return back()->with('error', "Sync failed: {$result['message']}");
+        return back()->with('error', __('Sync failed: :message', ['message' => $result['message']]));
     }
 
     /**
@@ -519,7 +525,7 @@ class MikrotikController extends Controller
         $router = $this->findTenantRouter($id);
 
         if (!$router->is_active) {
-            $msg = "Cannot reboot disabled router '{$router->name}'.";
+            $msg = __("Cannot reboot disabled router ':name'.", ['name' => $router->name]);
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json(['success' => false, 'message' => $msg], 422);
             }
@@ -529,15 +535,17 @@ class MikrotikController extends Controller
         $success = $this->apiService->reboot($router);
 
         if ($success) {
-            $router->update(['status' => 'offline', 'last_error' => 'Reboot command initiated.']);
-            $msg = "Reboot signal sent to router '{$router->name}'. System is restarting.";
+            $router->update(['status' => 'offline', 'last_error' => __('Reboot command initiated.')]);
+            $msg = __("Reboot signal sent to router ':name'. System is restarting.", ['name' => $router->name]);
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json(['success' => true, 'message' => $msg]);
             }
             return back()->with('success', $msg);
         }
 
-        $err = 'Failed to send reboot signal: ' . ($this->apiService->getLastError() ?: 'Check router API connection and credentials');
+        $err = __('Failed to send reboot signal: :error', [
+            'error' => $this->apiService->getLastError() ?: __('Check router API connection and credentials'),
+        ]);
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json(['success' => false, 'message' => $err], 400);
         }
@@ -556,7 +564,7 @@ class MikrotikController extends Controller
                 'success' => false,
                 'is_active' => false,
                 'status' => 'disabled',
-                'message' => 'Router gateway is disabled. Real-time telemetry is paused.',
+                'message' => __('Router gateway is disabled. Real-time telemetry is paused.'),
                 'latency_ms' => 0,
                 'identity' => $router->name,
                 'cpu_load' => null,
@@ -565,9 +573,9 @@ class MikrotikController extends Controller
                 'uptime' => $router->uptime,
                 'model' => $router->model,
                 'ros_version' => $router->ros_version,
-                'last_sync_at' => 'Disabled',
-                'last_sync_human' => 'Disabled',
-                'last_error' => 'Router gateway disabled by administrator',
+                'last_sync_at' => __('Disabled'),
+                'last_sync_human' => __('Disabled'),
+                'last_error' => __('Router gateway disabled by administrator'),
             ]);
         }
 
@@ -590,8 +598,8 @@ class MikrotikController extends Controller
             'cpu_frequency' => $res['cpu_frequency'] ?? null,
             'free_hdd' => $res['free_hdd'] ?? null,
             'total_hdd' => $res['total_hdd'] ?? null,
-            'last_sync_at' => $router->last_sync_at ? $router->last_sync_at->format('H:i:s') : 'Just now',
-            'last_sync_human' => $router->last_sync_at ? $router->last_sync_at->diffForHumans() : 'Just now',
+            'last_sync_at' => $router->last_sync_at ? $router->last_sync_at->format('H:i:s') : __('Just now'),
+            'last_sync_human' => $router->last_sync_at ? $router->last_sync_at->diffForHumans() : __('Just now'),
             'last_error' => $router->last_error,
         ]);
     }

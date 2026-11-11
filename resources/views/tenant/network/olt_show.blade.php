@@ -1,6 +1,6 @@
 @extends('tenant.layouts.app')
 
-@section('title', ($olt->name ?? 'OLT Chassis') . ' - 16-PON Linear Carrier Panel')
+@section('title', ($olt->name ?? __('OLT Chassis')) . ' - ' . __('16-PON Linear Carrier Panel'))
 
 @section('content')
 <div class="space-y-4" x-data="oltShowManager()">
@@ -23,7 +23,7 @@
     <!-- Top Action & Navigation Header -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
         <div class="flex items-center gap-3">
-            <a href="{{ route('tenant.network.olt') }}" class="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition" title="Back to OLT Directory">
+            <a href="{{ route('tenant.network.olt') }}" class="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition" title="{{ __('Back to OLT Directory') }}">
                 <i class="fas fa-arrow-left text-xs"></i>
             </a>
             <div class="w-10 h-10 rounded-xl bg-blue-50 border border-blue-200/60 flex items-center justify-center text-blue-600 shadow-2xs">
@@ -34,15 +34,15 @@
                     <h1 class="text-base font-extrabold text-slate-900 tracking-tight">{{ $olt->name }}</h1>
                     <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10.5px] font-extrabold {{ $olt->status === 'online' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200' }}">
                         <span class="w-1.5 h-1.5 rounded-full {{ $olt->status === 'online' ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500' }}"></span>
-                        <span>{{ strtoupper($olt->status) }}</span>
+                        <span>{{ $olt->status === 'online' ? __('ONLINE') : __('OFFLINE') }}</span>
                     </span>
                     <span class="px-2 py-0.5 rounded text-[10.5px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
-                        {{ $olt->vendor ?? 'OLT' }} {{ $olt->model ?? 'Chassis' }}
+                        {{ $olt->vendor ?? 'OLT' }} {{ $olt->model ?? __('Chassis') }}
                     </span>
                     @if($olt->router)
-                        <a href="{{ route('tenant.network.mikrotik.show', $olt->router->id) }}" class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10.5px] font-bold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 transition" title="Parent MikroTik Router">
+                        <a href="{{ route('tenant.network.mikrotik.show', $olt->router->id) }}" class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10.5px] font-bold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 transition" title="{{ __('Parent MikroTik Router') }}">
                             <i class="fas fa-server text-[9px] text-indigo-500"></i>
-                            <span>Router: {{ $olt->router->name }} ({{ $olt->router->ip_address }})</span>
+                            <span>{{ __('Router') }}: {{ $olt->router->name }} ({{ $olt->router->ip_address }})</span>
                         </a>
                     @endif
                 </div>
@@ -53,7 +53,7 @@
             <!-- All Client ONUs Link -->
             <a href="{{ route('tenant.network.onu', ['olt_id' => $olt->id]) }}" class="px-3 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs shadow-xs transition flex items-center gap-1.5">
                 <i class="fas fa-satellite-dish text-slate-500 text-xs"></i>
-                <span>All Client ONUs</span>
+                <span>{{ __('All Client ONUs') }}</span>
             </a>
 
             <!-- Sync Button -->
@@ -62,13 +62,13 @@
                     :disabled="syncing" 
                     class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs shadow-xs transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50">
                 <i class="fas fa-sync-alt text-[10px]" :class="{ 'fa-spin': syncing }"></i>
-                <span x-text="syncing ? 'Syncing...' : 'Sync OLT'"></span>
+                <span x-text="syncing ? i18n.syncing : i18n.syncOlt"></span>
             </button>
 
             <!-- Edit OLT Button -->
             <a href="{{ route('tenant.network.olt.edit', $olt->id) }}" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs border border-slate-200 transition flex items-center gap-1.5">
                 <i class="fas fa-cog text-[10px]"></i>
-                <span>Configure OLT</span>
+                <span>{{ __('Configure OLT') }}</span>
             </a>
         </div>
     </div>
@@ -83,11 +83,11 @@
 
             <div class="flex items-center gap-2 text-xs">
                 <span class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-semibold border border-slate-200">
-                    Total Ports: <strong class="font-mono text-slate-900">{{ $totalPorts }}</strong>
+                    {{ __('Total Ports') }}: <strong class="font-mono text-slate-900">{{ $totalPorts }}</strong>
                 </span>
                 <span class="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 font-semibold border border-emerald-200 flex items-center gap-1.5">
                     <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <span>Online: <strong class="font-mono text-emerald-800">{{ $onlinePortsCount }}</strong></span>
+                    <span>{{ __('Online') }}: <strong class="font-mono text-emerald-800">{{ $onlinePortsCount }}</strong></span>
                 </span>
             </div>
         </div>
@@ -105,7 +105,7 @@
                         @endphp
                         <a href="{{ $hasOnus ? route('tenant.network.onu', ['olt_id' => $olt->id, 'pon_port' => $p['full_port']]) : '#' }}" 
                            class="group flex flex-col items-center text-center p-1.5 rounded-xl transition duration-150 flex-1 min-w-[54px] {{ $isOnline ? 'hover:bg-emerald-50/50 cursor-pointer hover:-translate-y-0.5' : ($hasOnus ? 'hover:bg-slate-50 cursor-pointer hover:-translate-y-0.5' : 'opacity-40 cursor-default') }}"
-                           title="{{ $p['title'] }} ({{ $p['full_port'] }}): {{ $p['online'] }} Online / {{ $p['offline'] }} Offline - Click to view ONUs">
+                           title="{{ __(':title (:port): :online Online / :offline Offline - Click to view ONUs', ['title' => $p['title'], 'port' => $p['full_port'], 'online' => $p['online'], 'offline' => $p['offline']]) }}">
                             
                             <!-- SFP Port Icon (Concentric rounded box matching chassis hardware) -->
                             <div class="w-10 h-10 rounded-xl border-2 flex items-center justify-center transition-all bg-white shadow-2xs {{ $isOnline ? 'border-emerald-500 text-emerald-600 shadow-emerald-50 group-hover:ring-2 group-hover:ring-emerald-300' : 'border-slate-300 text-slate-300' }}">
@@ -150,18 +150,18 @@
                     <div class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs">
                         <i class="fas fa-heartbeat"></i>
                     </div>
-                    <span class="text-xs font-bold text-slate-800 uppercase tracking-wider">Device Live Telemetry</span>
+                    <span class="text-xs font-bold text-slate-800 uppercase tracking-wider">{{ __('Device Live Telemetry') }}</span>
                 </div>
                 <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10.5px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <span>Live</span>
+                    <span>{{ __('Live') }}</span>
                 </span>
             </div>
 
             @php
                 $cpuVal = $olt->cpu_load ? (int)$olt->cpu_load : 0;
                 $memVal = $olt->memory_usage ? (int)$olt->memory_usage : 0;
-                $tempVal = $olt->temperature ? (number_format($olt->temperature, 1) . '°C') : 'Normal';
+                $tempVal = $olt->temperature ? (number_format($olt->temperature, 1) . '°C') : __('Normal');
             @endphp
 
             <div class="grid grid-cols-3 divide-x divide-slate-100 pt-3.5 pb-1 items-center">
@@ -172,9 +172,9 @@
                             <path class="text-slate-100" stroke-width="3.5" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                             <path class="text-blue-500" stroke-dasharray="{{ $cpuVal > 0 ? $cpuVal : 2 }}, 100" stroke-width="3.5" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                         </svg>
-                        <span class="absolute text-xs font-extrabold text-slate-800 font-mono">{{ $cpuVal > 0 ? $cpuVal . '%' : 'N/A' }}</span>
+                        <span class="absolute text-xs font-extrabold text-slate-800 font-mono">{{ $cpuVal > 0 ? $cpuVal . '%' : __('N/A') }}</span>
                     </div>
-                    <span class="text-xs font-semibold text-slate-700 mt-2 block">CPU Load</span>
+                    <span class="text-xs font-semibold text-slate-700 mt-2 block">{{ __('CPU Load') }}</span>
                 </div>
 
                 <!-- 2. Memory Gauge -->
@@ -184,9 +184,9 @@
                             <path class="text-slate-100" stroke-width="3.5" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                             <path class="text-indigo-500" stroke-dasharray="{{ $memVal > 0 ? $memVal : 2 }}, 100" stroke-width="3.5" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                         </svg>
-                        <span class="absolute text-xs font-extrabold text-slate-800 font-mono">{{ $memVal > 0 ? $memVal . '%' : 'N/A' }}</span>
+                        <span class="absolute text-xs font-extrabold text-slate-800 font-mono">{{ $memVal > 0 ? $memVal . '%' : __('N/A') }}</span>
                     </div>
-                    <span class="text-xs font-semibold text-slate-700 mt-2 block">Memory</span>
+                    <span class="text-xs font-semibold text-slate-700 mt-2 block">{{ __('Memory') }}</span>
                 </div>
 
                 <!-- 3. Temperature -->
@@ -197,7 +197,7 @@
                     <div class="text-sm font-extrabold text-slate-800 font-mono tracking-tight mt-0.5">
                         {{ $tempVal }}
                     </div>
-                    <span class="text-xs font-semibold text-slate-500 block mt-0.5">Temperature</span>
+                    <span class="text-xs font-semibold text-slate-500 block mt-0.5">{{ __('Temperature') }}</span>
                 </div>
             </div>
         </div>
@@ -209,44 +209,44 @@
                     <div class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xs">
                         <i class="fas fa-microchip"></i>
                     </div>
-                    <span class="text-xs font-bold text-slate-800 uppercase tracking-wider">Device System Specifications</span>
+                    <span class="text-xs font-bold text-slate-800 uppercase tracking-wider">{{ __('Device System Specifications') }}</span>
                 </div>
                 <span class="px-2 py-0.5 rounded text-[10.5px] font-bold {{ $olt->status === 'online' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200' }}">
-                    {{ strtoupper($olt->status) }}
+                    {{ $olt->status === 'online' ? __('ONLINE') : __('OFFLINE') }}
                 </span>
             </div>
 
             <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-3 text-xs">
                 <div>
-                    <span class="text-slate-400 block text-[10px] uppercase font-semibold">Device Model</span>
+                    <span class="text-slate-400 block text-[10px] uppercase font-semibold">{{ __('Device Model') }}</span>
                     <span class="font-bold text-slate-800 font-mono">{{ $olt->model ?? '--' }}</span>
                 </div>
                 <div>
-                    <span class="text-slate-400 block text-[10px] uppercase font-semibold">Vendor / Brand</span>
+                    <span class="text-slate-400 block text-[10px] uppercase font-semibold">{{ __('Vendor / Brand') }}</span>
                     <span class="font-bold text-slate-800">{{ $olt->vendor ?? '--' }}</span>
                 </div>
                 <div>
-                    <span class="text-slate-400 block text-[10px] uppercase font-semibold">Serial Number (SN)</span>
+                    <span class="text-slate-400 block text-[10px] uppercase font-semibold">{{ __('Serial Number (SN)') }}</span>
                     <span class="font-bold text-slate-800 font-mono">{{ $olt->serial_number ?? '--' }}</span>
                 </div>
                 <div>
-                    <span class="text-slate-400 block text-[10px] uppercase font-semibold">Hardware Version</span>
+                    <span class="text-slate-400 block text-[10px] uppercase font-semibold">{{ __('Hardware Version') }}</span>
                     <span class="font-bold text-slate-800 font-mono">{{ $olt->hardware_version ?? '--' }}</span>
                 </div>
                 <div>
-                    <span class="text-slate-400 block text-[10px] uppercase font-semibold">Firmware Version</span>
+                    <span class="text-slate-400 block text-[10px] uppercase font-semibold">{{ __('Firmware Version') }}</span>
                     <span class="font-bold text-slate-800 font-mono">{{ $olt->firmware_version ?? '--' }}</span>
                 </div>
                 <div>
-                    <span class="text-slate-400 block text-[10px] uppercase font-semibold">MAC Address</span>
+                    <span class="text-slate-400 block text-[10px] uppercase font-semibold">{{ __('MAC Address') }}</span>
                     <span class="font-bold text-slate-800 font-mono">{{ $olt->mac_address ?? '--' }}</span>
                 </div>
                 <div>
-                    <span class="text-slate-400 block text-[10px] uppercase font-semibold">IP Address</span>
+                    <span class="text-slate-400 block text-[10px] uppercase font-semibold">{{ __('IP Address') }}</span>
                     <span class="font-bold text-slate-800 font-mono">{{ $olt->ip_address }}:{{ $olt->web_port ?? 80 }}</span>
                 </div>
                 <div>
-                    <span class="text-slate-400 block text-[10px] uppercase font-semibold">System Uptime</span>
+                    <span class="text-slate-400 block text-[10px] uppercase font-semibold">{{ __('System Uptime') }}</span>
                     <span class="font-bold text-slate-800 font-mono">{{ $olt->uptime ?? '--' }}</span>
                 </div>
             </div>
@@ -261,6 +261,13 @@
 function oltShowManager() {
     return {
         syncing: false,
+        i18n: {
+            syncing: @js(__('Syncing...')),
+            syncOlt: @js(__('Sync OLT')),
+            syncSuccess: @js(__('OLT synchronized successfully!')),
+            syncFailed: @js(__('Failed to sync OLT.')),
+            syncNetworkError: @js(__('Network error while syncing OLT.')),
+        },
         toast: { show: false, message: '', type: 'success' },
 
         showToast: function(message, type) {
@@ -287,13 +294,13 @@ function oltShowManager() {
                 });
                 var data = await response.json();
                 if (data.success) {
-                    self.showToast(data.message || 'OLT synchronized successfully!', 'success');
+                    self.showToast(data.message || self.i18n.syncSuccess, 'success');
                     setTimeout(function() { window.location.reload(); }, 800);
                 } else {
-                    self.showToast(data.message || 'Failed to sync OLT.', 'error');
+                    self.showToast(data.message || self.i18n.syncFailed, 'error');
                 }
             } catch (e) {
-                self.showToast('Network error while syncing OLT.', 'error');
+                self.showToast(self.i18n.syncNetworkError, 'error');
             } finally {
                 self.syncing = false;
             }

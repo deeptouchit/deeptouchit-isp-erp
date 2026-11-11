@@ -25,7 +25,7 @@ class IpPoolController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            abort(404, 'ISP Tenant record not found.');
+            abort(404, __('ISP Tenant record not found.'));
         }
 
         $routers = TenantRouter::where('tenant_id', $tenant->id)->get(['id', 'name', 'ip_address']);
@@ -144,7 +144,7 @@ class IpPoolController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            abort(404, 'ISP Tenant record not found.');
+            abort(404, __('ISP Tenant record not found.'));
         }
 
         $routers = TenantRouter::where('tenant_id', $tenant->id)->get(['id', 'name', 'ip_address']);
@@ -160,7 +160,7 @@ class IpPoolController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            abort(404, 'ISP Tenant record not found.');
+            abort(404, __('ISP Tenant record not found.'));
         }
 
         $pool = TenantIpPool::where('tenant_id', $tenant->id)->with('router')->findOrFail($id);
@@ -177,7 +177,7 @@ class IpPoolController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+            return response()->json(['success' => false, 'message' => __('Unauthorized')], 401);
         }
 
         $validated = $request->validate([
@@ -205,9 +205,9 @@ class IpPoolController extends Controller
         $rangesInput = $validated['ranges'] ?? (($validated['range_start'] ?? '') . (!empty($validated['range_end']) ? '-' . $validated['range_end'] : ''));
         if (empty($rangesInput)) {
             if ($request->wantsJson() || $request->ajax()) {
-                return response()->json(['success' => false, 'message' => 'Please provide IP range addresses (e.g. 10.10.0.2-10.10.3.254).'], 422);
+                return response()->json(['success' => false, 'message' => __('Please provide IP range addresses (e.g. 10.10.0.2-10.10.3.254).')], 422);
             }
-            return back()->withInput()->withErrors(['ranges' => 'Please provide IP range addresses (e.g. 10.10.0.2-10.10.3.254).']);
+            return back()->withInput()->withErrors(['ranges' => __('Please provide IP range addresses (e.g. 10.10.0.2-10.10.3.254).')]);
         }
 
         $parsed = TenantIpPool::parseRange($rangesInput);
@@ -248,14 +248,18 @@ class IpPoolController extends Controller
         }
 
         if ($request->wantsJson() || $request->ajax()) {
+            $message = $pool->is_sync_mikrotik
+                ? __("IP Pool ':name' (:count IPs) created successfully and synced to MikroTik.", ['name' => $pool->name, 'count' => $totalIps])
+                : __("IP Pool ':name' (:count IPs) created successfully.", ['name' => $pool->name, 'count' => $totalIps]);
+
             return response()->json([
                 'success' => true,
-                'message' => "IP Pool '{$pool->name}' ({$totalIps} IPs) created successfully." . ($pool->is_sync_mikrotik ? ' Synced to MikroTik.' : ''),
+                'message' => $message,
                 'pool' => $pool->fresh()->load('router'),
             ]);
         }
 
-        return redirect()->route('tenant.network.ip-pools')->with('success', "IP Pool '{$pool->name}' created successfully.");
+        return redirect()->route('tenant.network.ip-pools')->with('success', __("IP Pool ':name' created successfully.", ['name' => $pool->name]));
     }
 
     /**
@@ -265,7 +269,7 @@ class IpPoolController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+            return response()->json(['success' => false, 'message' => __('Unauthorized')], 401);
         }
 
         $pool = TenantIpPool::where('tenant_id', $tenant->id)->with('router')->findOrFail($id);
@@ -283,7 +287,7 @@ class IpPoolController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+            return response()->json(['success' => false, 'message' => __('Unauthorized')], 401);
         }
 
         $pool = TenantIpPool::where('tenant_id', $tenant->id)->findOrFail($id);
@@ -351,12 +355,12 @@ class IpPoolController extends Controller
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
                 'success' => true,
-                'message' => "IP Pool '{$pool->name}' updated successfully.",
+                'message' => __("IP Pool ':name' updated successfully.", ['name' => $pool->name]),
                 'pool' => $pool->fresh()->load('router'),
             ]);
         }
 
-        return redirect()->route('tenant.network.ip-pools')->with('success', "IP Pool '{$pool->name}' updated successfully.");
+        return redirect()->route('tenant.network.ip-pools')->with('success', __("IP Pool ':name' updated successfully.", ['name' => $pool->name]));
     }
 
     /**
@@ -366,7 +370,7 @@ class IpPoolController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+            return response()->json(['success' => false, 'message' => __('Unauthorized')], 401);
         }
 
         $pool = TenantIpPool::where('tenant_id', $tenant->id)->with('router')->findOrFail($id);
@@ -386,11 +390,11 @@ class IpPoolController extends Controller
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
                 'success' => true,
-                'message' => "IP Pool '{$name}' deleted successfully.",
+                'message' => __("IP Pool ':name' deleted successfully.", ['name' => $name]),
             ]);
         }
 
-        return redirect()->route('tenant.network.ip-pools')->with('success', "IP Pool '{$name}' deleted successfully.");
+        return redirect()->route('tenant.network.ip-pools')->with('success', __("IP Pool ':name' deleted successfully.", ['name' => $name]));
     }
 
     /**
@@ -400,22 +404,26 @@ class IpPoolController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+            return response()->json(['success' => false, 'message' => __('Unauthorized')], 401);
         }
 
         $pool = TenantIpPool::where('tenant_id', $tenant->id)->findOrFail($id);
         $newStatus = $pool->status === 'active' ? 'disabled' : 'active';
         $pool->update(['status' => $newStatus]);
 
+        $statusMessage = $newStatus === 'active'
+            ? __("IP Pool ':name' status changed to active.", ['name' => $pool->name])
+            : __("IP Pool ':name' status changed to disabled.", ['name' => $pool->name]);
+
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
                 'success' => true,
-                'message' => "IP Pool '{$pool->name}' status changed to {$newStatus}.",
+                'message' => $statusMessage,
                 'status' => $newStatus,
             ]);
         }
 
-        return redirect()->route('tenant.network.ip-pools')->with('success', "IP Pool status updated.");
+        return redirect()->route('tenant.network.ip-pools')->with('success', __('IP Pool status updated.'));
     }
 
     /**
@@ -425,7 +433,7 @@ class IpPoolController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+            return response()->json(['success' => false, 'message' => __('Unauthorized')], 401);
         }
 
         $pool = TenantIpPool::where('tenant_id', $tenant->id)->with('router')->findOrFail($id);
@@ -433,7 +441,7 @@ class IpPoolController extends Controller
         if (!$pool->router) {
             return response()->json([
                 'success' => false,
-                'message' => 'No MikroTik router is assigned to this IP pool. Please edit the pool and select a Router.',
+                'message' => __('No MikroTik router is assigned to this IP pool. Please edit the pool and select a Router.'),
             ], 422);
         }
 
@@ -454,7 +462,7 @@ class IpPoolController extends Controller
 
         return response()->json([
             'success' => false,
-            'message' => $result['message'] ?? 'Failed to communicate with MikroTik router.',
+            'message' => $result['message'] ?? __('Failed to communicate with MikroTik router.'),
         ], 500);
     }
 
@@ -465,7 +473,7 @@ class IpPoolController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+            return response()->json(['success' => false, 'message' => __('Unauthorized')], 401);
         }
 
         $validated = $request->validate([
@@ -478,7 +486,7 @@ class IpPoolController extends Controller
         if (!$res['success']) {
             return response()->json([
                 'success' => false,
-                'message' => $res['message'] ?? 'Failed to pull IP pools from MikroTik router.',
+                'message' => $res['message'] ?? __('Failed to pull IP pools from MikroTik router.'),
             ], 500);
         }
 
@@ -547,7 +555,11 @@ class IpPoolController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => "Successfully synchronized with MikroTik ({$router->name}): {$imported} new pools imported, {$updated} existing pools updated.",
+            'message' => __('Successfully synchronized with MikroTik (:router): :imported new pools imported, :updated existing pools updated.', [
+                'router' => $router->name,
+                'imported' => $imported,
+                'updated' => $updated,
+            ]),
             'imported_count' => $imported,
             'updated_count' => $updated,
             'total_from_mikrotik' => count($res['pools']),

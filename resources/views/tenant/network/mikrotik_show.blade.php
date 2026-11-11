@@ -1,6 +1,6 @@
 @extends('tenant.layouts.app')
 
-@section('title', ($router->name ?? 'MikroTik Gateway') . ' - NOC Monitor')
+@section('title', ($router->name ?? __('MikroTik Gateway')) . ' - ' . __('NOC Monitor'))
 
 @section('content')
 <div class="space-y-3" x-data="mikrotikShowManager()" x-init="init()">
@@ -25,7 +25,7 @@
         <div class="flex items-center gap-2.5">
             <a href="{{ route('tenant.network.mikrotik') }}" 
                class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition cursor-pointer" 
-               title="Back to MikroTik Directory">
+               title="{{ __('Back to MikroTik Directory') }}">
                 <i class="fas fa-arrow-left text-xs"></i>
             </a>
             <div class="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold shadow-2xs flex-shrink-0"
@@ -39,13 +39,13 @@
                 <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold border transition-colors duration-300"
                       :class="status === 'online' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : (status === 'disabled' ? 'bg-slate-100 text-slate-600 border-slate-200' : 'bg-rose-50 text-rose-700 border-rose-200')">
                     <span class="w-1.5 h-1.5 rounded-full" :class="status === 'online' ? 'bg-emerald-500 animate-pulse' : (status === 'disabled' ? 'bg-slate-400' : 'bg-rose-500')"></span>
-                    <span x-text="status.toUpperCase()"></span>
+                    <span x-text="formatStatus(status)"></span>
                 </span>
 
                 <!-- Architecture Badge -->
                 <span class="px-2 py-0.5 rounded text-[10px] font-bold font-mono {{ $router->connection_badge['class'] }}">
                     <i class="fas {{ $router->connection_badge['icon'] }} text-[8.5px] mr-1"></i>
-                    <span>{{ $router->connection_badge['label'] }}</span>
+                    <span>{{ __($router->connection_badge['label']) }}</span>
                 </span>
 
                 <!-- Host IP Badge -->
@@ -63,9 +63,9 @@
                     @click="toggleLiveStream()" 
                     class="px-2.5 py-1.5 rounded-lg border text-xs font-semibold shadow-2xs transition flex items-center gap-1.5 cursor-pointer"
                     :class="autoRefresh ? 'bg-emerald-50 border-emerald-300 text-emerald-800' : 'bg-slate-50 border-slate-200 text-slate-500'"
-                    :title="autoRefresh ? 'Real-Time Auto Stream Active (Every 4s)' : 'Real-Time Stream Paused'">
+                    :title="autoRefresh ? i18n.liveStreamActiveTitle : i18n.liveStreamPausedTitle">
                 <span class="w-2 h-2 rounded-full" :class="autoRefresh ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'"></span>
-                <span x-text="autoRefresh ? 'Live Stream Active' : 'Live Stream Paused'"></span>
+                <span x-text="autoRefresh ? i18n.liveStreamActive : i18n.liveStreamPaused"></span>
             </button>
 
             <!-- Sync Telemetry Now -->
@@ -74,21 +74,21 @@
                     :disabled="isPolling || !{{ $router->is_active ? 'true' : 'false' }}"
                     class="px-2.5 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs shadow-xs transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50">
                 <i class="fas fa-sync-alt text-[10px]" :class="{ 'fa-spin': isPolling }"></i>
-                <span x-text="isPolling ? 'Probing...' : 'Probe Live'"></span>
+                <span x-text="isPolling ? i18n.probing : i18n.probeLive"></span>
             </button>
 
             <!-- Configure Button -->
             <a href="{{ route('tenant.network.mikrotik') }}" 
                class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs border border-slate-200 transition flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-server text-[10px]"></i>
-                <span>Routers Fleet</span>
+                <span>{{ __('Routers Fleet') }}</span>
             </a>
 
             <!-- Reboot Button (SweetAlert2) -->
             <button type="button" 
                     @click="confirmReboot()"
                     class="p-1.5 rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs transition cursor-pointer" 
-                    title="Reboot Router Gateway">
+                    title="{{ __('Reboot Router Gateway') }}">
                 <i class="fas fa-power-off text-xs"></i>
             </button>
 
@@ -105,10 +105,10 @@
         <!-- Metric 1: Health State & Latency -->
         <div class="px-3 py-2 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5 min-w-0">
-                <span class="text-[10px] font-medium text-slate-500 uppercase tracking-wider block truncate">Status / Latency</span>
+                <span class="text-[10px] font-medium text-slate-500 uppercase tracking-wider block truncate">{{ __('Status / Latency') }}</span>
                 <span class="text-sm font-extrabold tracking-tight font-mono leading-none block"
                       :class="status === 'online' ? 'text-emerald-700' : (status === 'disabled' ? 'text-slate-600' : 'text-rose-700')"
-                      x-text="status === 'online' ? (latency + ' ms RTT') : (status === 'disabled' ? 'DISABLED' : 'OFFLINE')">
+                      x-text="status === 'online' ? (latency + ' ' + i18n.msRtt) : (status === 'disabled' ? i18n.statusDisabled : i18n.statusOffline)">
                 </span>
             </div>
             <div class="w-7 h-7 rounded-md flex items-center justify-center text-xs border flex-shrink-0"
@@ -120,7 +120,7 @@
         <!-- Metric 2: Live CPU Load -->
         <div class="px-3 py-2 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5 min-w-0">
-                <span class="text-[10px] font-medium text-blue-700 uppercase tracking-wider block truncate">CPU Load</span>
+                <span class="text-[10px] font-medium text-blue-700 uppercase tracking-wider block truncate">{{ __('CPU Load') }}</span>
                 <span class="text-sm font-extrabold text-blue-700 tracking-tight font-mono leading-none block" 
                       x-text="status === 'online' && cpuLoad !== null ? (cpuLoad + '%') : '--'"></span>
             </div>
@@ -132,7 +132,7 @@
         <!-- Metric 3: RAM Available -->
         <div class="px-3 py-2 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5 min-w-0">
-                <span class="text-[10px] font-medium text-emerald-700 uppercase tracking-wider block truncate">RAM Free</span>
+                <span class="text-[10px] font-medium text-emerald-700 uppercase tracking-wider block truncate">{{ __('RAM Free') }}</span>
                 <span class="text-sm font-extrabold text-emerald-700 tracking-tight font-mono leading-none block" 
                       x-text="status === 'online' && freeMemory > 0 ? formatBytes(freeMemory) : '--'"></span>
             </div>
@@ -144,9 +144,9 @@
         <!-- Metric 4: Real-Time Live Uptime -->
         <div class="px-3 py-2 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5 min-w-0">
-                <span class="text-[10px] font-medium text-purple-700 uppercase tracking-wider block truncate">Live Uptime</span>
+                <span class="text-[10px] font-medium text-purple-700 uppercase tracking-wider block truncate">{{ __('Live Uptime') }}</span>
                 <span class="text-xs font-extrabold text-purple-700 tracking-tight font-mono leading-none block truncate" 
-                      x-text="status === 'online' && uptimeStr ? formatUptime(uptimeStr) : (status === 'disabled' ? 'Disabled' : 'Offline')"></span>
+                      x-text="status === 'online' && uptimeStr ? formatUptime(uptimeStr) : (status === 'disabled' ? i18n.disabled : i18n.offline)"></span>
             </div>
             <div class="w-7 h-7 rounded-md bg-purple-50 text-purple-600 flex items-center justify-center text-xs border border-purple-100 flex-shrink-0">
                 <i class="fas fa-clock"></i>
@@ -156,8 +156,8 @@
         <!-- Metric 5: Connected OLTs -->
         <div class="px-3 py-2 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5 min-w-0">
-                <span class="text-[10px] font-medium text-indigo-700 uppercase tracking-wider block truncate">Connected OLTs</span>
-                <span class="text-sm font-extrabold text-indigo-700 tracking-tight font-mono leading-none block">{{ $router->olts->count() }} Chassis</span>
+                <span class="text-[10px] font-medium text-indigo-700 uppercase tracking-wider block truncate">{{ __('Connected OLTs') }}</span>
+                <span class="text-sm font-extrabold text-indigo-700 tracking-tight font-mono leading-none block">{{ $router->olts->count() }} {{ __('Chassis') }}</span>
             </div>
             <div class="w-7 h-7 rounded-md bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs border border-indigo-100 flex-shrink-0">
                 <i class="fas fa-sitemap"></i>
@@ -176,10 +176,10 @@
                     <div class="w-6 h-6 rounded-md bg-blue-50 text-blue-600 flex items-center justify-center text-xs">
                         <i class="fas fa-heartbeat"></i>
                     </div>
-                    <span class="text-xs font-bold text-slate-800">Hardware Telemetry</span>
+                    <span class="text-xs font-bold text-slate-800">{{ __('Hardware Telemetry') }}</span>
                 </div>
                 <div class="flex items-center gap-1.5 text-[10px] text-slate-400 font-mono">
-                    <span>Sampled:</span>
+                    <span>{{ __('Sampled:') }}</span>
                     <strong class="text-slate-700" x-text="lastSyncAt"></strong>
                 </div>
             </div>
@@ -189,20 +189,20 @@
                 <div class="p-3.5 rounded-lg bg-rose-50/70 border border-rose-200 space-y-2">
                     <div class="flex items-center gap-2 text-rose-800 font-semibold text-xs">
                         <i class="fas fa-circle-exclamation text-rose-600"></i>
-                        <span>Router Unreachable / Telemetry Unavailable</span>
+                        <span>{{ __('Router Unreachable / Telemetry Unavailable') }}</span>
                     </div>
                     <p class="text-[11px] text-rose-700 leading-relaxed font-mono break-all" 
-                       x-text="lastError || 'Cannot establish socket connection to {{ $router->ip_address }}:{{ $router->api_port ?: 8728 }}. Please verify router power and IP reachability.'"></p>
+                       x-text="lastError || i18n.unreachableDefault"></p>
                     <div class="pt-1 flex items-center gap-2 flex-wrap">
                         <button type="button" 
                                 @click="pollTelemetry(true)" 
                                 :disabled="isPolling"
                                 class="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-md text-[11px] font-semibold transition cursor-pointer inline-flex items-center gap-1.5 shadow-2xs">
                             <i class="fas fa-rotate" :class="{ 'fa-spin': isPolling }"></i>
-                            <span x-text="isPolling ? 'Probing...' : 'Probe Live Connection'"></span>
+                            <span x-text="isPolling ? i18n.probing : i18n.probeLiveConnection"></span>
                         </button>
                         <a href="{{ route('tenant.network.mikrotik') }}" class="text-[11px] font-semibold text-rose-700 hover:underline">
-                            Router Settings &rarr;
+                            {{ __('Router Settings') }} &rarr;
                         </a>
                     </div>
                 </div>
@@ -217,18 +217,18 @@
                             <div class="flex items-center justify-between">
                                 <span class="font-bold text-emerald-800 flex items-center gap-1.5">
                                     <i class="fas fa-shield-halved text-emerald-600"></i>
-                                    <span>FreeRADIUS AAA Gateway Active</span>
+                                    <span>{{ __('FreeRADIUS AAA Gateway Active') }}</span>
                                 </span>
-                                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 uppercase">ONLINE</span>
+                                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 uppercase">{{ __('ONLINE') }}</span>
                             </div>
                             <div class="grid grid-cols-2 gap-2 text-[11px] text-slate-700 font-mono">
-                                <div class="bg-white/80 p-1.5 rounded border border-emerald-100">Auth Port: <strong class="text-slate-900">UDP 1812</strong></div>
-                                <div class="bg-white/80 p-1.5 rounded border border-emerald-100">Accounting: <strong class="text-slate-900">UDP 1813</strong></div>
-                                <div class="bg-white/80 p-1.5 rounded border border-emerald-100">CoA / PoD: <strong class="text-slate-900">Port {{ $router->coa_port ?: 3799 }}</strong></div>
-                                <div class="bg-white/80 p-1.5 rounded border border-emerald-100">Subscribers: <strong class="text-slate-900">{{ $router->customers?->count() ?? 0 }} Managed</strong></div>
+                                <div class="bg-white/80 p-1.5 rounded border border-emerald-100">{{ __('Auth Port:') }} <strong class="text-slate-900">UDP 1812</strong></div>
+                                <div class="bg-white/80 p-1.5 rounded border border-emerald-100">{{ __('Accounting:') }} <strong class="text-slate-900">UDP 1813</strong></div>
+                                <div class="bg-white/80 p-1.5 rounded border border-emerald-100">{{ __('CoA / PoD:') }} <strong class="text-slate-900">{{ __('Port') }} {{ $router->coa_port ?: 3799 }}</strong></div>
+                                <div class="bg-white/80 p-1.5 rounded border border-emerald-100">{{ __('Subscribers:') }} <strong class="text-slate-900">{{ $router->customers?->count() ?? 0 }} {{ __('Managed') }}</strong></div>
                             </div>
                             <p class="text-[10.5px] text-slate-500 font-sans border-t border-emerald-200/60 pt-2 leading-relaxed">
-                                Operating in High-Performance FreeRADIUS Mode. Subscriber bandwidth and PPPoE sessions are authenticated and shaped directly via RADIUS attributes.
+                                {{ __('Operating in High-Performance FreeRADIUS Mode. Subscriber bandwidth and PPPoE sessions are authenticated and shaped directly via RADIUS attributes.') }}
                             </p>
                         </div>
                     </template>
@@ -240,7 +240,7 @@
                                 <div class="flex items-center justify-between text-xs">
                                     <span class="font-medium text-slate-600 flex items-center gap-1.5">
                                         <i class="fas fa-microchip text-[11px] text-blue-500"></i>
-                                        <span>CPU Utilization</span>
+                                        <span>{{ __('CPU Utilization') }}</span>
                                     </span>
                                     <span class="font-bold font-mono text-blue-700" x-text="cpuLoad !== null ? (cpuLoad + '%') : '0%'"></span>
                                 </div>
@@ -256,7 +256,7 @@
                                 <div class="flex items-center justify-between text-xs">
                                     <span class="font-medium text-slate-600 flex items-center gap-1.5">
                                         <i class="fas fa-memory text-[11px] text-emerald-500"></i>
-                                        <span>RAM Memory Usage</span>
+                                        <span>{{ __('RAM Memory Usage') }}</span>
                                     </span>
                                     <span class="font-bold font-mono text-emerald-700" x-text="formatBytes(totalMemory - freeMemory) + ' / ' + formatBytes(totalMemory) + ' (' + calcUsedMemPercent() + '%)'"></span>
                                 </div>
@@ -271,7 +271,7 @@
                                 <div class="flex items-center justify-between text-xs">
                                     <span class="font-medium text-slate-600 flex items-center gap-1.5">
                                         <i class="fas fa-hard-drive text-[11px] text-purple-500"></i>
-                                        <span>Storage (NAND / Disk)</span>
+                                        <span>{{ __('Storage (NAND / Disk)') }}</span>
                                     </span>
                                     <span class="font-bold font-mono text-purple-700" x-text="formatBytes(totalHdd - freeHdd) + ' / ' + formatBytes(totalHdd)"></span>
                                 </div>
@@ -286,16 +286,16 @@
                     <!-- Telemetry Details Grid -->
                     <div class="grid grid-cols-3 gap-2 pt-1 border-t border-slate-100 text-xs">
                         <div class="p-2 rounded-lg bg-slate-50">
-                            <span class="text-[9.5px] text-slate-400 uppercase font-semibold block">Board Model</span>
+                            <span class="text-[9.5px] text-slate-400 uppercase font-semibold block">{{ __('Board Model') }}</span>
                             <span class="font-bold text-slate-800 font-mono truncate block text-[11px]" x-text="model || 'RouterBOARD'"></span>
                         </div>
                         <div class="p-2 rounded-lg bg-slate-50">
-                            <span class="text-[9.5px] text-slate-400 uppercase font-semibold block">RouterOS</span>
+                            <span class="text-[9.5px] text-slate-400 uppercase font-semibold block">{{ __('RouterOS') }}</span>
                             <span class="font-bold text-blue-600 font-mono text-[11px] block" x-text="rosVersion ? ('v' + rosVersion) : '--'"></span>
                         </div>
                         <div class="p-2 rounded-lg bg-slate-50">
-                            <span class="text-[9.5px] text-slate-400 uppercase font-semibold block">Architecture</span>
-                            <span class="font-bold text-slate-800 font-mono text-[11px] block truncate" x-text="archName ? (cpuCount + ' CPU (' + archName + ')') : '--'"></span>
+                            <span class="text-[9.5px] text-slate-400 uppercase font-semibold block">{{ __('Architecture') }}</span>
+                            <span class="font-bold text-slate-800 font-mono text-[11px] block truncate" x-text="archName ? (cpuCount + ' ' + i18n.cpu + ' (' + archName + ')') : '--'"></span>
                         </div>
                     </div>
                 </div>
@@ -307,13 +307,13 @@
             <div class="px-3.5 py-2 bg-slate-50/80 border-b border-slate-200 flex items-center justify-between">
                 <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                     <i class="fas fa-terminal text-cyan-600 text-xs"></i>
-                    <span>FreeRADIUS Terminal Setup Script</span>
+                    <span>{{ __('FreeRADIUS Terminal Setup Script') }}</span>
                 </span>
                 <button type="button" 
-                        @click="copyToClipboard(radiusScript, 'FreeRADIUS Terminal Script')"
+                        @click="copyToClipboard(radiusScript, i18n.radiusTerminalScript)"
                         class="px-2 py-0.5 rounded-md bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-[10.5px] shadow-2xs transition flex items-center gap-1 cursor-pointer">
                     <i class="fas fa-copy text-[9px]"></i>
-                    <span>Copy</span>
+                    <span>{{ __('Copy') }}</span>
                 </button>
             </div>
 
@@ -322,8 +322,8 @@
             </div>
 
             <div class="px-3.5 py-1.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-[10.5px] text-slate-500 font-mono">
-                <span>AAA Service: <strong>PPP & Hotspot</strong></span>
-                <span>CoA Listen: <strong class="text-emerald-700">Port 3799</strong></span>
+                <span>{{ __('AAA Service:') }} <strong>{{ __('PPP & Hotspot') }}</strong></span>
+                <span>{{ __('CoA Listen:') }} <strong class="text-emerald-700">{{ __('Port') }} 3799</strong></span>
             </div>
         </div>
 
@@ -337,10 +337,10 @@
             <div class="px-3.5 py-2 bg-slate-50/80 border-b border-slate-200 flex items-center justify-between">
                 <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                     <i class="fas fa-sitemap text-indigo-600 text-xs"></i>
-                    <span>Connected OLT Chassis ({{ $router->olts->count() }})</span>
+                    <span>{{ __('Connected OLT Chassis') }} ({{ $router->olts->count() }})</span>
                 </span>
                 <a href="{{ route('tenant.network.olt.create') }}" class="text-[11px] font-bold text-cyan-600 hover:text-cyan-800">
-                    + Add OLT
+                    {{ __('+ Add OLT') }}
                 </a>
             </div>
 
@@ -349,10 +349,10 @@
                     <thead>
                         <tr>
                             <th class="w-10">#</th>
-                            <th>OLT Name</th>
-                            <th class="text-center">IP Address</th>
-                            <th class="text-center">Status</th>
-                            <th class="w-16 text-center no-sort">Action</th>
+                            <th>{{ __('OLT Name') }}</th>
+                            <th class="text-center">{{ __('IP Address') }}</th>
+                            <th class="text-center">{{ __('Status') }}</th>
+                            <th class="w-16 text-center no-sort">{{ __('Action') }}</th>
                         </tr>
                     </thead>
                     <tbody class="text-slate-700">
@@ -367,18 +367,18 @@
                                 <td class="text-center font-mono text-slate-700">{{ $olt->ip_address }}</td>
                                 <td class="text-center">
                                     <span class="px-1.5 py-0.5 rounded text-[9.5px] font-bold {{ $olt->status === 'online' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200' }}">
-                                        {{ strtoupper($olt->status) }}
+                                        {{ __(strtoupper($olt->status)) }}
                                     </span>
                                 </td>
                                 <td class="text-center">
                                     <a href="{{ route('tenant.network.olt.show', $olt->id) }}" class="px-2 py-0.5 rounded bg-cyan-50 text-cyan-700 text-[10.5px] font-semibold hover:bg-cyan-100 border border-cyan-200">
-                                        View
+                                        {{ __('View') }}
                                     </a>
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="p-3 text-center text-slate-400 text-xs">No OLT chassis linked to this router gateway yet.</td>
+                                <td colspan="5" class="p-3 text-center text-slate-400 text-xs">{{ __('No OLT chassis linked to this router gateway yet.') }}</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -391,10 +391,10 @@
             <div class="px-3.5 py-2 bg-slate-50/80 border-b border-slate-200 flex items-center justify-between">
                 <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                     <i class="fas fa-network-wired text-purple-600 text-xs"></i>
-                    <span>Allocated IP Pools ({{ $ipPools->count() }})</span>
+                    <span>{{ __('Allocated IP Pools') }} ({{ $ipPools->count() }})</span>
                 </span>
                 <a href="{{ route('tenant.network.ip-pools') }}" class="text-[11px] font-bold text-cyan-600 hover:text-cyan-800">
-                    Manage Pools
+                    {{ __('Manage Pools') }}
                 </a>
             </div>
 
@@ -403,9 +403,9 @@
                     <thead>
                         <tr>
                             <th class="w-10">#</th>
-                            <th>Pool Name</th>
-                            <th class="text-center">Subnet CIDR / Range</th>
-                            <th class="text-center">Type</th>
+                            <th>{{ __('Pool Name') }}</th>
+                            <th class="text-center">{{ __('Subnet CIDR / Range') }}</th>
+                            <th class="text-center">{{ __('Type') }}</th>
                         </tr>
                     </thead>
                     <tbody class="text-slate-700">
@@ -422,7 +422,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="4" class="p-3 text-center text-slate-400 text-xs">No IP Pools allocated to this router yet.</td>
+                                <td colspan="4" class="p-3 text-center text-slate-400 text-xs">{{ __('No IP Pools allocated to this router yet.') }}</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -449,13 +449,76 @@ function mikrotikShowManager() {
         totalHdd: 0,
         latency: 0,
         uptimeStr: '{{ $router->status === "online" ? ($router->uptime ?: "") : "" }}',
-        lastSyncAt: '{{ $router->last_sync_at ? $router->last_sync_at->diffForHumans() : "Never synced" }}',
+        lastSyncAt: @js($router->last_sync_at ? $router->last_sync_at->diffForHumans() : __('Never synced')),
         lastError: @json($router->last_error ?: ''),
         isPolling: false,
         autoRefresh: {{ $router->status === 'online' ? 'true' : 'false' }},
         pollInterval: null,
         radiusScript: @json($radiusCliScript),
         toast: { show: false, message: '', type: 'success' },
+
+        i18n: {
+            statusOnline: @js(__('ONLINE')),
+            statusOffline: @js(__('OFFLINE')),
+            statusDisabled: @js(__('DISABLED')),
+            statusPending: @js(__('PENDING')),
+            disabled: @js(__('Disabled')),
+            offline: @js(__('Offline')),
+            online: @js(__('Online')),
+            liveStreamActiveTitle: @js(__('Real-Time Auto Stream Active (Every 4s)')),
+            liveStreamPausedTitle: @js(__('Real-Time Stream Paused')),
+            liveStreamActive: @js(__('Live Stream Active')),
+            liveStreamPaused: @js(__('Live Stream Paused')),
+            probing: @js(__('Probing...')),
+            probeLive: @js(__('Probe Live')),
+            probeLiveConnection: @js(__('Probe Live Connection')),
+            msRtt: @js(__('ms RTT')),
+            cpu: @js(__('CPU')),
+            radiusTerminalScript: @js(__('FreeRADIUS Terminal Script')),
+            unreachableDefault: @js(__('Cannot establish socket connection to :endpoint. Please verify router power and IP reachability.', ['endpoint' => $router->ip_address . ':' . ($router->api_port ?: 8728)])),
+            liveMonitoringStarted: @js(__('Real-time live monitoring started.')),
+            liveStreamPausedToast: @js(__('Real-time live stream paused.')),
+            weeks: @js(__('Weeks')),
+            week: @js(__('Week')),
+            days: @js(__('Days')),
+            day: @js(__('Day')),
+            hours: @js(__('Hours')),
+            hour: @js(__('Hour')),
+            mins: @js(__('Mins')),
+            secSuffix: @js(__('s')),
+            scriptFallback: @js(__('Script')),
+            copiedToClipboard: @js(__('copied to clipboard!')),
+            copyFailed: @js(__('Could not copy to clipboard.')),
+            sendingRebootTitle: @js(__('Sending Reboot Signal...')),
+            sendingRebootDesc: @js(__('Connecting to MikroTik RouterOS API and initiating system reboot...')),
+            rebooting: @js(__('Rebooting...')),
+            rebootInitiatedTitle: @js(__('Reboot Initiated!')),
+            routerRestarting: @js(__('Router is restarting.')),
+            rebootInitiatedToast: @js(__('Router reboot initiated.')),
+            rebootFailedTitle: @js(__('Reboot Failed')),
+            rebootFailedDesc: @js(__('Could not send reboot signal to MikroTik.')),
+            rebootFailedToast: @js(__('Reboot failed.')),
+            networkErrorTitle: @js(__('Network Error')),
+            serverCommError: @js(__('Failed to communicate with the server.')),
+            rebootNetworkError: @js(__('Network error while rebooting router.')),
+            rebootConfirmTitle: @js(__('Reboot MikroTik Router?')),
+            rebootConfirmPrefix: @js(__('Are you sure you want to reboot router')),
+            rebootConfirmWarning: @js(__('All active subscriber sessions (PPP & Hotspot) will momentarily disconnect.')),
+            rebootConfirmBtn: @js(__('Yes, Reboot Gateway')),
+            cancelBtn: @js(__('Cancel')),
+            rebootPlainWarning: @js(__('WARNING: Are you sure you want to reboot router')),
+            telemetrySynced: @js(__('Live telemetry synchronized successfully!')),
+            routerUnreachableApi: @js(__('Router unreachable via API.')),
+            routerProbeFailed: @js(__('Router probe failed.')),
+            networkCommError: @js(__('Network communication error with server.')),
+        },
+
+        formatStatus: function(st) {
+            if (st === 'online') return this.i18n.statusOnline;
+            if (st === 'disabled') return this.i18n.statusDisabled;
+            if (st === 'pending') return this.i18n.statusPending;
+            return this.i18n.statusOffline;
+        },
 
         init: function() {
             var self = this;
@@ -477,12 +540,12 @@ function mikrotikShowManager() {
         toggleLiveStream: function() {
             this.autoRefresh = !this.autoRefresh;
             if (this.autoRefresh) {
-                this.showToast('Real-time live monitoring started.', 'success');
+                this.showToast(this.i18n.liveMonitoringStarted, 'success');
                 this.pollTelemetry(false);
                 this.startStream();
             } else {
                 if (this.pollInterval) clearInterval(this.pollInterval);
-                this.showToast('Real-time live stream paused.', 'info');
+                this.showToast(this.i18n.liveStreamPausedToast, 'info');
             }
         },
 
@@ -511,7 +574,7 @@ function mikrotikShowManager() {
         },
 
         formatUptime: function(raw) {
-            if (!raw || raw === 'Live' || raw === 'null') return 'Online';
+            if (!raw || raw === 'Live' || raw === 'null') return this.i18n.online;
             var str = String(raw).trim();
 
             var w = (str.match(/(\d+)\s*w/i) || [])[1];
@@ -530,11 +593,11 @@ function mikrotikShowManager() {
             }
 
             var parts = [];
-            if (w && parseInt(w) > 0) parts.push(w + (parseInt(w) > 1 ? ' Weeks' : ' Week'));
-            if (d && parseInt(d) > 0) parts.push(d + (parseInt(d) > 1 ? ' Days' : ' Day'));
-            if (h && parseInt(h) > 0) parts.push(h + (parseInt(h) > 1 ? ' Hours' : ' Hour'));
-            if (m && parseInt(m) > 0) parts.push(m + ' Mins');
-            if (s && parts.length < 2 && parseInt(s) > 0) parts.push(s + 's');
+            if (w && parseInt(w) > 0) parts.push(w + ' ' + (parseInt(w) > 1 ? this.i18n.weeks : this.i18n.week));
+            if (d && parseInt(d) > 0) parts.push(d + ' ' + (parseInt(d) > 1 ? this.i18n.days : this.i18n.day));
+            if (h && parseInt(h) > 0) parts.push(h + ' ' + (parseInt(h) > 1 ? this.i18n.hours : this.i18n.hour));
+            if (m && parseInt(m) > 0) parts.push(m + ' ' + this.i18n.mins);
+            if (s && parts.length < 2 && parseInt(s) > 0) parts.push(s + this.i18n.secSuffix);
 
             if (parts.length > 0) {
                 return parts.join(', ');
@@ -557,9 +620,9 @@ function mikrotikShowManager() {
             if (!text) return;
             var self = this;
             navigator.clipboard.writeText(text).then(function() {
-                self.showToast((label || 'Script') + ' copied to clipboard!', 'success');
+                self.showToast((label || self.i18n.scriptFallback) + ' ' + self.i18n.copiedToClipboard, 'success');
             }).catch(function() {
-                self.showToast('Could not copy to clipboard.', 'error');
+                self.showToast(self.i18n.copyFailed, 'error');
             });
         },
 
@@ -570,8 +633,8 @@ function mikrotikShowManager() {
             var proceedReboot = async function() {
                 if (typeof Swal !== 'undefined') {
                     Swal.fire({
-                        title: 'Sending Reboot Signal...',
-                        html: "<div class='text-xs text-slate-600 mt-1'>Connecting to MikroTik RouterOS API and initiating system reboot...</div>",
+                        title: self.i18n.sendingRebootTitle,
+                        html: "<div class='text-xs text-slate-600 mt-1'>" + self.i18n.sendingRebootDesc + "</div>",
                         allowOutsideClick: false,
                         allowEscapeKey: false,
                         didOpen: function() {
@@ -595,12 +658,12 @@ function mikrotikShowManager() {
                     var data = await response.json();
                     if (data.success) {
                         self.status = 'offline';
-                        self.uptimeStr = 'Rebooting...';
+                        self.uptimeStr = self.i18n.rebooting;
                         if (typeof Swal !== 'undefined') {
                             Swal.fire({
                                 icon: 'success',
-                                title: 'Reboot Initiated!',
-                                html: "<div class='text-xs text-slate-600 mt-1'>" + (data.message || 'Router is restarting.') + "</div>",
+                                title: self.i18n.rebootInitiatedTitle,
+                                html: "<div class='text-xs text-slate-600 mt-1'>" + (data.message || self.i18n.routerRestarting) + "</div>",
                                 timer: 4500,
                                 confirmButtonColor: '#0891b2',
                                 customClass: {
@@ -609,14 +672,14 @@ function mikrotikShowManager() {
                                 }
                             });
                         } else {
-                            self.showToast(data.message || 'Router reboot initiated.', 'success');
+                            self.showToast(data.message || self.i18n.rebootInitiatedToast, 'success');
                         }
                     } else {
                         if (typeof Swal !== 'undefined') {
                             Swal.fire({
                                 icon: 'error',
-                                title: 'Reboot Failed',
-                                text: data.message || 'Could not send reboot signal to MikroTik.',
+                                title: self.i18n.rebootFailedTitle,
+                                text: data.message || self.i18n.rebootFailedDesc,
                                 confirmButtonColor: '#e11d48',
                                 customClass: {
                                     popup: 'rounded-2xl shadow-xl border border-slate-200 p-5',
@@ -624,15 +687,15 @@ function mikrotikShowManager() {
                                 }
                             });
                         } else {
-                            self.showToast(data.message || 'Reboot failed.', 'error');
+                            self.showToast(data.message || self.i18n.rebootFailedToast, 'error');
                         }
                     }
                 } catch (err) {
                     if (typeof Swal !== 'undefined') {
                         Swal.fire({
                             icon: 'error',
-                            title: 'Network Error',
-                            text: 'Failed to communicate with the server.',
+                            title: self.i18n.networkErrorTitle,
+                            text: self.i18n.serverCommError,
                             confirmButtonColor: '#e11d48',
                             customClass: {
                                 popup: 'rounded-2xl shadow-xl border border-slate-200 p-5',
@@ -640,21 +703,21 @@ function mikrotikShowManager() {
                             }
                         });
                     } else {
-                        self.showToast('Network error while rebooting router.', 'error');
+                        self.showToast(self.i18n.rebootNetworkError, 'error');
                     }
                 }
             };
 
             if (typeof Swal !== 'undefined') {
                 Swal.fire({
-                    title: 'Reboot MikroTik Router?',
-                    html: "<div class='text-xs text-slate-600 mt-1.5 leading-relaxed'>Are you sure you want to reboot router <strong class='text-slate-900 font-semibold'>" + routerName + "</strong>?<br><span class='text-rose-600 text-[11.5px] font-medium'>All active subscriber sessions (PPP & Hotspot) will momentarily disconnect.</span></div>",
+                    title: self.i18n.rebootConfirmTitle,
+                    html: "<div class='text-xs text-slate-600 mt-1.5 leading-relaxed'>" + self.i18n.rebootConfirmPrefix + " <strong class='text-slate-900 font-semibold'>" + routerName + "</strong>?<br><span class='text-rose-600 text-[11.5px] font-medium'>" + self.i18n.rebootConfirmWarning + "</span></div>",
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonColor: '#e11d48',
                     cancelButtonColor: '#64748b',
-                    confirmButtonText: '<i class="fas fa-power-off mr-1"></i> Yes, Reboot Gateway',
-                    cancelButtonText: 'Cancel',
+                    confirmButtonText: '<i class="fas fa-power-off mr-1"></i> ' + self.i18n.rebootConfirmBtn,
+                    cancelButtonText: self.i18n.cancelBtn,
                     reverseButtons: true,
                     customClass: {
                         popup: 'rounded-2xl shadow-xl border border-slate-200 p-5',
@@ -666,7 +729,7 @@ function mikrotikShowManager() {
                         proceedReboot();
                     }
                 });
-            } else if (confirm('WARNING: Are you sure you want to reboot router ' + routerName + '? All active sessions will momentarily disconnect.')) {
+            } else if (confirm(self.i18n.rebootPlainWarning + ' ' + routerName + '? ' + self.i18n.rebootConfirmWarning)) {
                 proceedReboot();
             }
         },
@@ -698,20 +761,20 @@ function mikrotikShowManager() {
                     self.lastError = '';
 
                     if (manual) {
-                        self.showToast('Live telemetry synchronized successfully!', 'success');
+                        self.showToast(self.i18n.telemetrySynced, 'success');
                     }
                 } else {
                     self.status = data.status || 'offline';
-                    self.lastError = data.message || 'Router unreachable via API.';
+                    self.lastError = data.message || self.i18n.routerUnreachableApi;
                     if (data.last_sync_at) self.lastSyncAt = data.last_sync_at;
 
                     if (manual) {
-                        self.showToast(data.message || 'Router probe failed.', 'error');
+                        self.showToast(data.message || self.i18n.routerProbeFailed, 'error');
                     }
                 }
             } catch (e) {
                 self.status = 'offline';
-                self.lastError = 'Network communication error with server.';
+                self.lastError = self.i18n.networkCommError;
                 console.error('Telemetry sampling error:', e);
             } finally {
                 self.isPolling = false;

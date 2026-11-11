@@ -1,6 +1,6 @@
 @extends('tenant.layouts.app')
 
-@section('title', 'Create VLAN - ' . ($tenant->company_name ?? $tenant->name))
+@section('title', __('Create VLAN') . ' - ' . ($tenant->company_name ?? $tenant->name))
 
 @push('styles')
     {{-- Page-specific CSS --}}
@@ -16,9 +16,9 @@
                 <i class="fas fa-sitemap"></i>
             </div>
             <div class="flex items-center gap-2">
-                <h1 class="text-xs font-bold text-slate-800 tracking-tight">Create Virtual LAN (VLAN)</h1>
+                <h1 class="text-xs font-bold text-slate-800 tracking-tight">{{ __('Create Virtual LAN (VLAN)') }}</h1>
                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-cyan-50 text-cyan-700 border border-cyan-200">
-                    IEEE 802.1Q
+                    {{ __('IEEE 802.1Q') }}
                 </span>
             </div>
         </div>
@@ -27,7 +27,7 @@
             <a href="{{ route('tenant.network.vlans') }}" 
                class="h-[34px] px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200/80 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-arrow-left text-[11px]"></i>
-                <span>Back to VLANs</span>
+                <span>{{ __('Back to VLANs') }}</span>
             </a>
         </div>
     </div>
@@ -37,7 +37,7 @@
         <div class="bg-rose-50 border border-rose-200 rounded-xl p-3 text-xs text-rose-800">
             <div class="flex items-center gap-2 font-semibold mb-1 text-rose-900">
                 <i class="fas fa-triangle-exclamation text-rose-600"></i>
-                <span>Please correct the errors below:</span>
+                <span>{{ __('Please correct the errors below:') }}</span>
             </div>
             <ul class="list-disc list-inside space-y-0.5 text-[11px] text-rose-700">
                 @foreach($errors->all() as $error)
@@ -56,16 +56,16 @@
             <div class="space-y-3">
                 <div class="flex items-center justify-between border-b border-slate-100 pb-2">
                     <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-                        1. VLAN Identity &amp; 802.1Q Tag
+                        {{ __('1. VLAN Identity & 802.1Q Tag') }}
                     </span>
-                    <span class="text-[10.5px] text-slate-400">Standard 802.1Q Tag identifier &amp; Service Classification</span>
+                    <span class="text-[10.5px] text-slate-400">{{ __('Standard 802.1Q Tag identifier & Service Classification') }}</span>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                     <!-- VLAN ID -->
                     <div>
                         <label class="block text-[11px] font-medium text-slate-700 mb-1">
-                            VLAN ID (Tag) <span class="text-rose-500">*</span>
+                            {{ __('VLAN ID (Tag)') }} <span class="text-rose-500">*</span>
                         </label>
                         <input type="number" 
                                name="vlan_id" 
@@ -73,48 +73,48 @@
                                required 
                                min="1" 
                                max="4094" 
-                               placeholder="e.g. 100" 
+                               placeholder="{{ __('e.g. 100') }}" 
                                class="w-full h-[34px] px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                     </div>
 
                     <!-- VLAN Name -->
                     <div>
                         <label class="block text-[11px] font-medium text-slate-700 mb-1">
-                            VLAN Name <span class="text-rose-500">*</span>
+                            {{ __('VLAN Name') }} <span class="text-rose-500">*</span>
                         </label>
                         <input type="text" 
                                name="name" 
                                value="{{ old('name') }}" 
                                required 
-                               placeholder="e.g. vlan100-pppoe-core" 
+                               placeholder="{{ __('e.g. vlan100-pppoe-core') }}" 
                                class="w-full h-[34px] px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                     </div>
 
                     <!-- VLAN Type -->
                     <div>
                         <label class="block text-[11px] font-medium text-slate-700 mb-1">
-                            VLAN Type <span class="text-rose-500">*</span>
+                            {{ __('VLAN Type') }} <span class="text-rose-500">*</span>
                         </label>
                         <select name="type" 
                                 class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                            <option value="service" {{ old('type', 'service') === 'service' ? 'selected' : '' }}>Service (PPPoE / Client)</option>
-                            <option value="management" {{ old('type') === 'management' ? 'selected' : '' }}>Management (OLT / Switch)</option>
-                            <option value="corporate" {{ old('type') === 'corporate' ? 'selected' : '' }}>Corporate Leased Line</option>
-                            <option value="cgnat" {{ old('type') === 'cgnat' ? 'selected' : '' }}>CGNAT Trunk</option>
-                            <option value="voice" {{ old('type') === 'voice' ? 'selected' : '' }}>VoIP Voice</option>
-                            <option value="tr069" {{ old('type') === 'tr069' ? 'selected' : '' }}>TR-069 ACS</option>
+                            <option value="service" {{ old('type', 'service') === 'service' ? 'selected' : '' }}>{{ __('Service (PPPoE / Client)') }}</option>
+                            <option value="management" {{ old('type') === 'management' ? 'selected' : '' }}>{{ __('Management (OLT / Switch)') }}</option>
+                            <option value="corporate" {{ old('type') === 'corporate' ? 'selected' : '' }}>{{ __('Corporate Leased Line') }}</option>
+                            <option value="cgnat" {{ old('type') === 'cgnat' ? 'selected' : '' }}>{{ __('CGNAT Trunk') }}</option>
+                            <option value="voice" {{ old('type') === 'voice' ? 'selected' : '' }}>{{ __('VoIP Voice') }}</option>
+                            <option value="tr069" {{ old('type') === 'tr069' ? 'selected' : '' }}>{{ __('TR-069 ACS') }}</option>
                         </select>
                     </div>
 
                     <!-- Status -->
                     <div>
                         <label class="block text-[11px] font-medium text-slate-700 mb-1">
-                            Status <span class="text-rose-500">*</span>
+                            {{ __('Status') }} <span class="text-rose-500">*</span>
                         </label>
                         <select name="status" 
                                 class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                            <option value="active" {{ old('status', 'active') === 'active' ? 'selected' : '' }}>Active</option>
-                            <option value="disabled" {{ old('status') === 'disabled' ? 'selected' : '' }}>Disabled</option>
+                            <option value="active" {{ old('status', 'active') === 'active' ? 'selected' : '' }}>{{ __('Active') }}</option>
+                            <option value="disabled" {{ old('status') === 'disabled' ? 'selected' : '' }}>{{ __('Disabled') }}</option>
                         </select>
                     </div>
                 </div>
@@ -124,22 +124,22 @@
             <div class="space-y-3 pt-2">
                 <div class="flex items-center justify-between border-t border-slate-100 pt-3">
                     <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-                        2. Router &amp; Interface Attachment
+                        {{ __('2. Router & Interface Attachment') }}
                     </span>
-                    <span class="text-[10.5px] text-slate-400">Parent interface on MikroTik hardware and optional OLT mapping</span>
+                    <span class="text-[10.5px] text-slate-400">{{ __('Parent interface on MikroTik hardware and optional OLT mapping') }}</span>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <!-- Associated Router -->
                     <div>
                         <label class="block text-[11px] font-medium text-slate-700 mb-1">
-                            Associated Router
+                            {{ __('Associated Router') }}
                         </label>
                         <select name="router_id" 
                                 x-model="selectedRouterId" 
                                 @change="onRouterChange()" 
                                 class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                            <option value="">-- Standalone (No Router Link) --</option>
+                            <option value="">{{ __('-- Standalone (No Router Link) --') }}</option>
                             @foreach($routers as $r)
                                 <option value="{{ $r->id }}" {{ old('router_id') == $r->id ? 'selected' : '' }}>
                                     {{ $r->name }} ({{ $r->ip_address }})
@@ -152,10 +152,10 @@
                     <div>
                         <div class="flex items-center justify-between mb-1">
                             <label class="block text-[11px] font-medium text-slate-700">
-                                Parent Interface <span class="text-rose-500">*</span>
+                                {{ __('Parent Interface') }} <span class="text-rose-500">*</span>
                             </label>
                             <span x-show="loadingInterfaces" class="text-[10px] text-cyan-600 flex items-center gap-1">
-                                <i class="fas fa-spinner fa-spin text-[9px]"></i> Loading...
+                                <i class="fas fa-spinner fa-spin text-[9px]"></i> {{ __('Loading...') }}
                             </span>
                         </div>
                         <input type="text" 
@@ -163,7 +163,7 @@
                                x-model="interfaceInput" 
                                list="routerInterfacesList" 
                                required 
-                               placeholder="e.g. ether1, sfp-sfpplus1, bridge" 
+                               placeholder="{{ __('e.g. ether1, sfp-sfpplus1, bridge') }}" 
                                class="w-full h-[34px] px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                         <datalist id="routerInterfacesList">
                             <template x-for="iface in interfaceOptions" :key="iface">
@@ -182,11 +182,11 @@
                     <!-- Associated OLT -->
                     <div>
                         <label class="block text-[11px] font-medium text-slate-700 mb-1">
-                            Associated OLT (Optional)
+                            {{ __('Associated OLT (Optional)') }}
                         </label>
                         <select name="olt_id" 
                                 class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                            <option value="">-- None / Core Router Only --</option>
+                            <option value="">{{ __('-- None / Core Router Only --') }}</option>
                             @foreach($olts as $o)
                                 <option value="{{ $o->id }}" {{ old('olt_id') == $o->id ? 'selected' : '' }}>
                                     {{ $o->name }} ({{ $o->ip_address }})
@@ -201,40 +201,40 @@
             <div class="space-y-3 pt-2">
                 <div class="flex items-center justify-between border-t border-slate-100 pt-3">
                     <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-                        3. IP Addressing &amp; Subnet Configuration
+                        {{ __('3. IP Addressing & Subnet Configuration') }}
                     </span>
-                    <span class="text-[10.5px] text-slate-400">Layer-3 Gateway, Subnet &amp; DHCP Settings</span>
+                    <span class="text-[10.5px] text-slate-400">{{ __('Layer-3 Gateway, Subnet & DHCP Settings') }}</span>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <!-- Subnet CIDR -->
                     <div>
                         <label class="block text-[11px] font-medium text-slate-700 mb-1">
-                            Subnet CIDR (Optional)
+                            {{ __('Subnet CIDR (Optional)') }}
                         </label>
                         <input type="text" 
                                name="subnet" 
                                value="{{ old('subnet') }}" 
-                               placeholder="e.g. 10.100.0.0/24" 
+                               placeholder="{{ __('e.g. 10.100.0.0/24') }}" 
                                class="w-full h-[34px] px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                     </div>
 
                     <!-- Gateway IP -->
                     <div>
                         <label class="block text-[11px] font-medium text-slate-700 mb-1">
-                            Gateway IP Address (Optional)
+                            {{ __('Gateway IP Address (Optional)') }}
                         </label>
                         <input type="text" 
                                name="gateway" 
                                value="{{ old('gateway') }}" 
-                               placeholder="e.g. 10.100.0.1" 
+                               placeholder="{{ __('e.g. 10.100.0.1') }}" 
                                class="w-full h-[34px] px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                     </div>
 
                     <!-- MTU -->
                     <div>
                         <label class="block text-[11px] font-medium text-slate-700 mb-1">
-                            MTU (Bytes)
+                            {{ __('MTU (Bytes)') }}
                         </label>
                         <input type="number" 
                                name="mtu" 
@@ -255,7 +255,7 @@
                                {{ old('dhcp_enabled') ? 'checked' : '' }} 
                                class="w-4 h-4 text-cyan-600 rounded border-slate-300 focus:ring-cyan-500">
                         <span class="text-xs font-medium text-slate-700">
-                            Enable DHCP Server on this VLAN interface (Assign dynamic IP pool)
+                            {{ __('Enable DHCP Server on this VLAN interface (Assign dynamic IP pool)') }}
                         </span>
                     </label>
                 </div>
@@ -265,18 +265,18 @@
             <div class="space-y-3 pt-2">
                 <div class="flex items-center justify-between border-t border-slate-100 pt-3">
                     <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-                        4. MikroTik Sync &amp; Metadata
+                        {{ __('4. MikroTik Sync & Metadata') }}
                     </span>
                 </div>
 
                 <div>
                     <label class="block text-[11px] font-medium text-slate-700 mb-1">
-                        Comment / Description (MikroTik Interface Comment)
+                        {{ __('Comment / Description (MikroTik Interface Comment)') }}
                     </label>
                     <input type="text" 
                            name="description" 
                            value="{{ old('description') }}" 
-                           placeholder="e.g. PPPoE Service VLAN for Residential Zone A" 
+                           placeholder="{{ __('e.g. PPPoE Service VLAN for Residential Zone A') }}" 
                            class="w-full h-[34px] px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                 </div>
 
@@ -284,10 +284,10 @@
                 <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/80 flex items-center justify-between">
                     <div>
                         <label for="is_sync_mikrotik" class="text-xs font-semibold text-slate-800 cursor-pointer block">
-                            Push VLAN to Associated MikroTik Router
+                            {{ __('Push VLAN to Associated MikroTik Router') }}
                         </label>
                         <p class="text-[11px] text-slate-500">
-                            When enabled and a router is selected, this VLAN interface will immediately be provisioned under <code class="font-mono text-purple-700 bg-purple-50 px-1 py-0.5 rounded">/interface/vlan</code> via RouterOS API.
+                            {!! __('When enabled and a router is selected, this VLAN interface will immediately be provisioned under :code via RouterOS API.', ['code' => '<code class="font-mono text-purple-700 bg-purple-50 px-1 py-0.5 rounded">/interface/vlan</code>']) !!}
                         </p>
                     </div>
                     <div class="flex items-center">
@@ -305,12 +305,12 @@
             <div class="pt-3 border-t border-slate-200 flex items-center justify-end gap-2">
                 <a href="{{ route('tenant.network.vlans') }}" 
                    class="h-[34px] px-4 border border-slate-300 hover:bg-slate-100 text-slate-700 font-semibold text-xs rounded-lg transition flex items-center justify-center cursor-pointer">
-                    Cancel
+                    {{ __('Cancel') }}
                 </a>
                 <button type="submit" 
                         class="h-[34px] px-5 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                     <i class="fas fa-plus text-[10px]"></i>
-                    <span>Create VLAN</span>
+                    <span>{{ __('Create VLAN') }}</span>
                 </button>
             </div>
         </form>
@@ -322,8 +322,8 @@
 <script>
 function vlanCreateManager() {
     return {
-        selectedRouterId: '{{ old('router_id', '') }}',
-        interfaceInput: '{{ old('interface', 'ether1') }}',
+        selectedRouterId: @js((string) old('router_id', '')),
+        interfaceInput: @js(old('interface', 'ether1')),
         interfaceOptions: ['ether1', 'ether2', 'ether3', 'ether4', 'ether5', 'bridge'],
         loadingInterfaces: false,
 

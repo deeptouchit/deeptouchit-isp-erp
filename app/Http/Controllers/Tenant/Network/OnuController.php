@@ -24,7 +24,7 @@ class OnuController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            abort(404, 'ISP Tenant record not found.');
+            abort(404, __('ISP Tenant record not found.'));
         }
 
         $olts = TenantOlt::where('tenant_id', $tenant->id)->get();
@@ -284,14 +284,14 @@ class OnuController extends Controller
         @set_time_limit(300);
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+            return response()->json(['success' => false, 'message' => __('Unauthorized')], 401);
         }
 
         $olts = TenantOlt::where('tenant_id', $tenant->id)->get();
         if ($olts->isEmpty()) {
             return response()->json([
                 'success' => false,
-                'message' => 'No active OLT hardware gateways configured. Please register an OLT device first.',
+                'message' => __('No active OLT hardware gateways configured. Please register an OLT device first.'),
             ], 422);
         }
 
@@ -304,10 +304,10 @@ class OnuController extends Controller
                 $res = $this->oltApiService->syncOlt($olt);
                 if (!empty($res['success'])) {
                     $syncedCount++;
-                    $details[] = "{$olt->name}: " . ($res['message'] ?? 'Synced');
+                    $details[] = "{$olt->name}: " . ($res['message'] ?? __('Synced'));
                 } else {
                     $failedCount++;
-                    $details[] = "{$olt->name}: " . ($res['message'] ?? 'Connection error');
+                    $details[] = "{$olt->name}: " . ($res['message'] ?? __('Connection error'));
                 }
             } catch (\Throwable $e) {
                 $failedCount++;
@@ -333,7 +333,13 @@ class OnuController extends Controller
                 $q->whereNotNull('customer_id')->orWhereNotNull('router_mac');
             })->count();
 
-        $msg = "Synchronized {$syncedCount} of " . $olts->count() . " OLT(s). Total {$totalOnus} ONUs ({$onlineOnus} online, {$linkedCount} linked with clients).";
+        $msg = __('Synchronized :synced of :total OLT(s). Total :onus ONUs (:online online, :linked linked with clients).', [
+            'synced' => $syncedCount,
+            'total' => $olts->count(),
+            'onus' => $totalOnus,
+            'online' => $onlineOnus,
+            'linked' => $linkedCount,
+        ]);
 
         return response()->json([
             'success' => $syncedCount > 0,
@@ -353,7 +359,7 @@ class OnuController extends Controller
         @set_time_limit(180);
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+            return response()->json(['success' => false, 'message' => __('Unauthorized')], 401);
         }
 
         try {
@@ -369,13 +375,15 @@ class OnuController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => "Client auto-linking completed successfully. {$linkedCount} ONUs are now linked with customer profiles.",
+                'message' => __('Client auto-linking completed successfully. :count ONUs are now linked with customer profiles.', [
+                    'count' => $linkedCount,
+                ]),
                 'linked_onus' => $linkedCount,
             ]);
         } catch (\Throwable $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to auto-link customers: ' . $e->getMessage(),
+                'message' => __('Failed to auto-link customers: :error', ['error' => $e->getMessage()]),
             ], 500);
         }
     }
@@ -387,7 +395,7 @@ class OnuController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+            return response()->json(['success' => false, 'message' => __('Unauthorized')], 401);
         }
 
         $onu = TenantOnu::where('tenant_id', $tenant->id)->with(['olt', 'customer'])->findOrFail($id);
@@ -406,7 +414,7 @@ class OnuController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+            return response()->json(['success' => false, 'message' => __('Unauthorized')], 401);
         }
 
         $onu = TenantOnu::where('tenant_id', $tenant->id)->with('olt')->findOrFail($id);
@@ -440,7 +448,9 @@ class OnuController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'ONU configuration saved successfully' . ($oltResult['pushed_to_olt'] ? ' and synchronized with OLT.' : '.'),
+            'message' => $oltResult['pushed_to_olt']
+                ? __('ONU configuration saved successfully and synchronized with OLT.')
+                : __('ONU configuration saved successfully.'),
             'onu' => $onu,
         ]);
     }
@@ -452,7 +462,7 @@ class OnuController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+            return response()->json(['success' => false, 'message' => __('Unauthorized')], 401);
         }
 
         $onu = TenantOnu::where('tenant_id', $tenant->id)->with('olt')->findOrFail($id);
@@ -461,7 +471,7 @@ class OnuController extends Controller
         if (!$olt) {
             return response()->json([
                 'success' => false,
-                'message' => 'Associated OLT not found.',
+                'message' => __('Associated OLT not found.'),
             ], 404);
         }
 
@@ -470,13 +480,17 @@ class OnuController extends Controller
         if ($success) {
             return response()->json([
                 'success' => true,
-                'message' => "ONU {$onu->pon_port}:#{$onu->onu_id} ({$onu->name}) reboot signal sent successfully.",
+                'message' => __('ONU :port:#:id (:name) reboot signal sent successfully.', [
+                    'port' => $onu->pon_port,
+                    'id' => $onu->onu_id,
+                    'name' => $onu->name,
+                ]),
             ]);
         }
 
         return response()->json([
             'success' => false,
-            'message' => "Failed to send reboot signal to ONU. Check OLT communication.",
+            'message' => __('Failed to send reboot signal to ONU. Check OLT communication.'),
         ], 500);
     }
 
@@ -487,7 +501,7 @@ class OnuController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+            return response()->json(['success' => false, 'message' => __('Unauthorized')], 401);
         }
 
         $onu = TenantOnu::where('tenant_id', $tenant->id)->with('olt')->findOrFail($id);
@@ -496,7 +510,7 @@ class OnuController extends Controller
         if (!$olt) {
             return response()->json([
                 'success' => false,
-                'message' => 'Associated OLT not found.',
+                'message' => __('Associated OLT not found.'),
             ], 404);
         }
 
@@ -504,7 +518,10 @@ class OnuController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => "Factory default reset command sent to ONU {$onu->pon_port}:#{$onu->onu_id}.",
+            'message' => __('Factory default reset command sent to ONU :port:#:id.', [
+                'port' => $onu->pon_port,
+                'id' => $onu->onu_id,
+            ]),
         ]);
     }
 
@@ -515,7 +532,7 @@ class OnuController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+            return response()->json(['success' => false, 'message' => __('Unauthorized')], 401);
         }
 
         $onu = TenantOnu::where('tenant_id', $tenant->id)->with('olt')->findOrFail($id);
@@ -524,7 +541,7 @@ class OnuController extends Controller
         if (!$olt) {
             return response()->json([
                 'success' => false,
-                'message' => 'Associated OLT not found.',
+                'message' => __('Associated OLT not found.'),
             ], 404);
         }
 
@@ -543,7 +560,9 @@ class OnuController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => $telemetry ? 'Live optical telemetry fetched successfully.' : 'Optical telemetry updated from latest cache.',
+            'message' => $telemetry
+                ? __('Live optical telemetry fetched successfully.')
+                : __('Optical telemetry updated from latest cache.'),
             'telemetry' => $telemetry,
             'onu' => $onu,
         ]);

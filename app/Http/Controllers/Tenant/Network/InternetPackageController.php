@@ -37,7 +37,7 @@ class InternetPackageController extends Controller
             $tenant = \App\Models\Tenant::first();
         }
         if (!$tenant) {
-            abort(404, 'ISP Tenant record not found.');
+            abort(404, __('ISP Tenant record not found.'));
         }
         return $tenant;
     }
@@ -244,18 +244,30 @@ class InternetPackageController extends Controller
         // Automatically synchronize to FreeRADIUS group attributes
         $this->radiusService->syncPackageGroup($package);
 
-        $syncNote = "";
         if ($package->router_id && $request->boolean('sync_now', true)) {
             $syncRes = $this->pushPackageToRouter($package);
             if (!empty($syncRes['success'])) {
-                $syncNote = " and synchronized with MikroTik ({$package->router?->name})";
+                $flashMessage = __("Internet Package ':package' (:profile) created and synchronized with MikroTik (:router).", [
+                    'package' => $package->package_name,
+                    'profile' => $package->name,
+                    'router' => $package->router?->name,
+                ]);
             } else {
-                $syncNote = " (MikroTik sync note: " . ($syncRes['message'] ?? 'Could not reach router') . ")";
+                $flashMessage = __("Internet Package ':package' (:profile) created (MikroTik sync note: :note).", [
+                    'package' => $package->package_name,
+                    'profile' => $package->name,
+                    'note' => $syncRes['message'] ?? __('Could not reach router'),
+                ]);
             }
+        } else {
+            $flashMessage = __("Internet Package ':package' (:profile) created.", [
+                'package' => $package->package_name,
+                'profile' => $package->name,
+            ]);
         }
 
         return redirect()->route('tenant.network.packages')
-            ->with('success', "Internet Package '{$package->package_name}' ({$package->name}) created{$syncNote}.");
+            ->with('success', $flashMessage);
     }
 
     /**
@@ -356,18 +368,30 @@ class InternetPackageController extends Controller
         // Automatically synchronize updated attributes to FreeRADIUS group
         $this->radiusService->syncPackageGroup($package);
 
-        $syncNote = "";
         if ($package->router_id && ($request->boolean('sync_now') || $package->is_sync_mikrotik || $request->has('sync_now'))) {
             $syncRes = $this->pushPackageToRouter($package);
             if (!empty($syncRes['success'])) {
-                $syncNote = " and updated on MikroTik ({$package->router?->name})";
+                $flashMessage = __("Internet Package ':package' (:profile) updated and synchronized with MikroTik (:router).", [
+                    'package' => $package->package_name,
+                    'profile' => $package->name,
+                    'router' => $package->router?->name,
+                ]);
             } else {
-                $syncNote = " (MikroTik sync note: " . ($syncRes['message'] ?? 'Could not reach router') . ")";
+                $flashMessage = __("Internet Package ':package' (:profile) updated (MikroTik sync note: :note).", [
+                    'package' => $package->package_name,
+                    'profile' => $package->name,
+                    'note' => $syncRes['message'] ?? __('Could not reach router'),
+                ]);
             }
+        } else {
+            $flashMessage = __("Internet Package ':package' (:profile) updated.", [
+                'package' => $package->package_name,
+                'profile' => $package->name,
+            ]);
         }
 
         return redirect()->route('tenant.network.packages')
-            ->with('success', "Internet Package '{$package->package_name}' ({$package->name}) updated{$syncNote}.");
+            ->with('success', $flashMessage);
     }
 
     /**
@@ -400,7 +424,7 @@ class InternetPackageController extends Controller
         $package->delete();
 
         return redirect()->route('tenant.network.packages')
-            ->with('success', "Internet Package '{$name}' removed from system, RADIUS, and MikroTik.");
+            ->with('success', __("Internet Package ':name' removed from system, RADIUS, and MikroTik.", ['name' => $name]));
     }
 
     /**
@@ -417,17 +441,23 @@ class InternetPackageController extends Controller
         // Update RADIUS group
         $this->radiusService->syncPackageGroup($package);
 
-        $stateText = $package->is_active ? 'enabled' : 'disabled';
+        $jsonMessage = $package->is_active
+            ? __("Package ':name' is now enabled.", ['name' => $package->name])
+            : __("Package ':name' is now disabled.", ['name' => $package->name]);
 
         if ($request->wantsJson() || $request->ajax() || str_contains($request->header('Accept', ''), 'json')) {
             return response()->json([
                 'success' => true,
                 'is_active' => $package->is_active,
-                'message' => "Package '{$package->name}' is now {$stateText}.",
+                'message' => $jsonMessage,
             ]);
         }
 
-        return redirect()->back()->with('success', "Package '{$package->name}' has been {$stateText} successfully.");
+        $flashMessage = $package->is_active
+            ? __("Package ':name' has been enabled successfully.", ['name' => $package->name])
+            : __("Package ':name' has been disabled successfully.", ['name' => $package->name]);
+
+        return redirect()->back()->with('success', $flashMessage);
     }
 
     /**
@@ -440,13 +470,14 @@ class InternetPackageController extends Controller
         $package = TenantInternetPackage::where('tenant_id', $tenant->id)->with(['router', 'ipPool'])->findOrFail($id);
 
         if (!$package->router_id || !$package->router) {
+            $noRouterMessage = __("Cannot sync: Package ':name' has no assigned MikroTik Router.", ['name' => $package->name]);
             if ($request->wantsJson() || $request->ajax() || str_contains($request->header('Accept', ''), 'json')) {
                 return response()->json([
                     'success' => false,
-                    'message' => "Cannot sync: Package '{$package->name}' has no assigned MikroTik Router.",
+                    'message' => $noRouterMessage,
                 ], 422);
             }
-            return redirect()->back()->with('error', "Cannot sync: Package '{$package->name}' has no assigned MikroTik Router.");
+            return redirect()->back()->with('error', $noRouterMessage);
         }
 
         $res = $this->pushPackageToRouter($package);
@@ -488,7 +519,10 @@ class InternetPackageController extends Controller
                 $pullRes = $this->mikrotikApiService->pullPppProfiles($router);
                 if (!$pullRes['success']) {
                     return redirect()->route('tenant.network.packages')
-                        ->with('error', "Failed to connect to MikroTik '{$router->name}': " . ($pullRes['message'] ?? 'Connection error'));
+                        ->with('error', __("Failed to connect to MikroTik ':router': :message", [
+                            'router' => $router->name,
+                            'message' => $pullRes['message'] ?? __('Connection error'),
+                        ]));
                 }
 
                 foreach ($pullRes['profiles'] as $p) {
@@ -549,7 +583,7 @@ class InternetPackageController extends Controller
                             'validity_unit' => 'days',
                             'mikrotik_profile' => $profileName,
                             'is_active' => true,
-                            'description' => "Imported from MikroTik router '{$router->name}' (/ppp/profile)",
+                            'description' => __("Imported from MikroTik router ':router' (/ppp/profile)", ['router' => $router->name]),
                         ]));
                         $importedCount++;
                     }
@@ -614,7 +648,7 @@ class InternetPackageController extends Controller
                                 'validity_unit' => 'days',
                                 'mikrotik_profile' => $profileName,
                                 'is_active' => true,
-                                'description' => "Imported from MikroTik router '{$router->name}' (/ip/hotspot/user/profile)",
+                                'description' => __("Imported from MikroTik router ':router' (/ip/hotspot/user/profile)", ['router' => $router->name]),
                             ]));
                             $importedCount++;
                         }
@@ -623,12 +657,16 @@ class InternetPackageController extends Controller
             }
 
             return redirect()->route('tenant.network.packages')
-                ->with('success', "Import Complete: {$importedCount} new packages created, {$updatedCount} profiles updated from '{$router->name}'.");
+                ->with('success', __('Import Complete: :imported new packages created, :updated profiles updated from :router.', [
+                    'imported' => $importedCount,
+                    'updated' => $updatedCount,
+                    'router' => $router->name,
+                ]));
 
         } catch (\Exception $e) {
             Log::error("Failed to import packages from MikroTik Router #{$router->id}: " . $e->getMessage());
             return redirect()->route('tenant.network.packages')
-                ->with('error', "Import failed from MikroTik: {$e->getMessage()}");
+                ->with('error', __('Import failed from MikroTik: :error', ['error' => $e->getMessage()]));
         }
     }
 
@@ -639,7 +677,7 @@ class InternetPackageController extends Controller
     {
         $package->loadMissing(['router', 'ipPool']);
         if (!$package->router_id || !$package->router) {
-            return ['success' => false, 'message' => "Cannot sync: Package '{$package->name}' has no assigned MikroTik Router."];
+            return ['success' => false, 'message' => __("Cannot sync: Package ':name' has no assigned MikroTik Router.", ['name' => $package->name])];
         }
 
         try {
@@ -685,7 +723,7 @@ class InternetPackageController extends Controller
             Log::error("Failed to push package #{$package->id} to MikroTik: " . $e->getMessage());
             return [
                 'success' => false,
-                'message' => "MikroTik Sync failed: {$e->getMessage()}",
+                'message' => __('MikroTik Sync failed: :error', ['error' => $e->getMessage()]),
             ];
         }
     }
