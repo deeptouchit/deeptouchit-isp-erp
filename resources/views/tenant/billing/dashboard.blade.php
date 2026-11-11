@@ -43,8 +43,8 @@
     ];
 
     $featureBadges = [
-        ['enabled' => (bool) ($plan->allow_radius ?? true), 'label' => 'RADIUS'],
-        ['enabled' => (bool) ($plan->allow_wireguard ?? false), 'label' => 'WireGuard'],
+        ['enabled' => (bool) ($plan->allow_radius ?? true), 'label' => __('RADIUS')],
+        ['enabled' => (bool) ($plan->allow_wireguard ?? false), 'label' => __('WireGuard')],
         ['enabled' => (bool) ($plan->allow_snmp_monitoring ?? false), 'label' => __('SNMP Monitoring')],
     ];
 @endphp
@@ -308,7 +308,7 @@
                                 </td>
                                 <td class="text-center">
                                     <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold border {{ $inv->status === 'paid' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-amber-200 bg-amber-50 text-amber-700' }}">
-                                        {{ __(ucfirst($inv->status)) }}
+                                        {{ __(ucwords(str_replace('_', ' ', $inv->status ?? 'unpaid'))) }}
                                     </span>
                                 </td>
                                 <td class="text-center">
@@ -374,7 +374,7 @@
                                 </td>
                                 <td class="text-center">
                                     <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold border {{ $pmt->status === 'success' || $pmt->status === 'completed' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-rose-200 bg-rose-50 text-rose-700' }}">
-                                        {{ __(ucfirst($pmt->status)) }}
+                                        {{ __(ucwords(str_replace('_', ' ', $pmt->status ?? 'pending'))) }}
                                     </span>
                                 </td>
                                 <td class="text-center font-mono text-slate-500 text-[11px]">

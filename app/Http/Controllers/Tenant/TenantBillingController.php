@@ -286,7 +286,7 @@ class TenantBillingController extends Controller
             if (!empty($response['success']) && !empty($response['redirect_url'])) {
                 return redirect($response['redirect_url']);
             }
-            return back()->with('error', $response['message'] ?? 'Failed to initiate payment gateway session.');
+            return back()->with('error', $response['message'] ?? __('Failed to initiate payment gateway session.'));
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
         }
@@ -306,7 +306,7 @@ class TenantBillingController extends Controller
         $status = $request->get('status');
 
         if (!$paymentRef || $status !== 'success') {
-            return redirect()->route('tenant.billing.dashboard')->with('error', 'Payment was cancelled or failed.');
+            return redirect()->route('tenant.billing.dashboard')->with('error', __('Payment was cancelled or failed.'));
         }
 
         // Strictly verify transaction belongs to the currently authenticated tenant
@@ -315,7 +315,7 @@ class TenantBillingController extends Controller
             ->first();
 
         if (!$transaction) {
-            return redirect()->route('tenant.billing.dashboard')->with('error', 'Invalid transaction reference or unauthorized tenant access.');
+            return redirect()->route('tenant.billing.dashboard')->with('error', __('Invalid transaction reference or unauthorized tenant access.'));
         }
 
         // Verify gateway execution with tenant context
@@ -324,12 +324,12 @@ class TenantBillingController extends Controller
 
         if ($verifyResult['success']) {
             $msg = !empty($verifyResult['already_processed'])
-                ? "Payment was already processed. Trx ID: {$verifyResult['trx_id']}."
-                : "Payment successful! Trx ID: {$verifyResult['trx_id']}. Your subscription is active.";
+                ? __('Payment was already processed. Trx ID: :trx.', ['trx' => $verifyResult['trx_id']])
+                : __('Payment successful! Trx ID: :trx. Your subscription is active.', ['trx' => $verifyResult['trx_id']]);
             return redirect()->route('tenant.billing.dashboard')->with('success', $msg);
         }
 
-        return redirect()->route('tenant.billing.dashboard')->with('error', $verifyResult['message'] ?? 'Payment verification failed.');
+        return redirect()->route('tenant.billing.dashboard')->with('error', $verifyResult['message'] ?? __('Payment verification failed.'));
     }
 
     /**
