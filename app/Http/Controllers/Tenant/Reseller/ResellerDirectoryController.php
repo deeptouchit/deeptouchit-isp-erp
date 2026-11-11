@@ -27,7 +27,7 @@ class ResellerDirectoryController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            abort(404, 'Tenant record not found.');
+            abort(404, __('Tenant record not found.'));
         }
 
         $search = $request->input('search');
@@ -136,7 +136,7 @@ class ResellerDirectoryController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            abort(403, 'Unauthorized.');
+            abort(403, __('Unauthorized.'));
         }
 
         // Enforce ISP Tenant Plan Reseller Quota via PlanQuotaService
@@ -176,10 +176,10 @@ class ResellerDirectoryController extends Controller
             if ($request->wantsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => "Reseller code '{$validated['code']}' already exists.",
+                    'message' => __('Reseller code :code already exists.', ['code' => $validated['code']]),
                 ], 422);
             }
-            return back()->withErrors(['code' => 'Reseller code already exists.'])->withInput();
+            return back()->withErrors(['code' => __('Reseller code already exists.')])->withInput();
         }
 
         // Check unique prefix within tenant
@@ -191,10 +191,10 @@ class ResellerDirectoryController extends Controller
                 if ($request->wantsJson()) {
                     return response()->json([
                         'success' => false,
-                        'message' => "Customer Username prefix '{$prefix}' is already used by another reseller.",
+                        'message' => __('Customer Username prefix :prefix is already used by another reseller.', ['prefix' => $prefix]),
                     ], 422);
                 }
-                return back()->withErrors(['prefix' => 'Prefix already used by another reseller.'])->withInput();
+                return back()->withErrors(['prefix' => __('Prefix already used by another reseller.')])->withInput();
             }
         }
 
@@ -241,21 +241,21 @@ class ResellerDirectoryController extends Controller
             if ($request->wantsJson()) {
                 return response()->json([
                     'success' => true,
-                    'message' => "Reseller '{$reseller->name}' created successfully!",
+                    'message' => __('Reseller :name created successfully!', ['name' => $reseller->name]),
                     'reseller' => $reseller,
                 ]);
             }
 
-            return redirect()->route('tenant.resellers.index')->with('success', "Reseller '{$reseller->name}' created successfully!");
+            return redirect()->route('tenant.resellers.index')->with('success', __('Reseller :name created successfully!', ['name' => $reseller->name]));
         } catch (\Throwable $e) {
             DB::rollBack();
             if ($request->wantsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Failed to create reseller: ' . $e->getMessage(),
+                    'message' => __('Failed to create reseller: :error', ['error' => $e->getMessage()]),
                 ], 500);
             }
-            return back()->with('error', 'Failed to create reseller: ' . $e->getMessage())->withInput();
+            return back()->with('error', __('Failed to create reseller: :error', ['error' => $e->getMessage()]))->withInput();
         }
     }
 
@@ -266,7 +266,7 @@ class ResellerDirectoryController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            abort(403, 'Unauthorized.');
+            abort(403, __('Unauthorized.'));
         }
 
         $reseller = TenantReseller::where('tenant_id', $tenant->id)
@@ -347,7 +347,7 @@ class ResellerDirectoryController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            abort(403, 'Unauthorized.');
+            abort(403, __('Unauthorized.'));
         }
 
         $reseller = TenantReseller::where('tenant_id', $tenant->id)->findOrFail($id);
@@ -379,9 +379,9 @@ class ResellerDirectoryController extends Controller
             ->exists();
         if ($codeExists) {
             if ($request->wantsJson()) {
-                return response()->json(['success' => false, 'message' => "Code '{$validated['code']}' is already in use."], 422);
+                return response()->json(['success' => false, 'message' => __('Code :code is already in use.', ['code' => $validated['code']])], 422);
             }
-            return back()->withErrors(['code' => 'Code already in use.'])->withInput();
+            return back()->withErrors(['code' => __('Code already in use.')])->withInput();
         }
 
         // Check prefix uniqueness excluding this record
@@ -392,9 +392,9 @@ class ResellerDirectoryController extends Controller
                 ->exists();
             if ($prefixExists) {
                 if ($request->wantsJson()) {
-                    return response()->json(['success' => false, 'message' => "Prefix '{$prefix}' is already in use."], 422);
+                    return response()->json(['success' => false, 'message' => __('Prefix :prefix is already in use.', ['prefix' => $prefix])], 422);
                 }
-                return back()->withErrors(['prefix' => 'Prefix already in use.'])->withInput();
+                return back()->withErrors(['prefix' => __('Prefix already in use.')])->withInput();
             }
         }
 
@@ -419,12 +419,12 @@ class ResellerDirectoryController extends Controller
         if ($request->wantsJson()) {
             return response()->json([
                 'success' => true,
-                'message' => "Reseller '{$reseller->name}' updated successfully!",
+                'message' => __('Reseller :name updated successfully!', ['name' => $reseller->name]),
                 'reseller' => $reseller,
             ]);
         }
 
-        return redirect()->route('tenant.resellers.index')->with('success', "Reseller '{$reseller->name}' updated successfully!");
+        return redirect()->route('tenant.resellers.index')->with('success', __('Reseller :name updated successfully!', ['name' => $reseller->name]));
     }
 
     /**
@@ -434,7 +434,7 @@ class ResellerDirectoryController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            abort(403, 'Unauthorized.');
+            abort(403, __('Unauthorized.'));
         }
 
         $reseller = TenantReseller::where('tenant_id', $tenant->id)->findOrFail($id);
@@ -446,9 +446,16 @@ class ResellerDirectoryController extends Controller
 
         $reseller->update(['status' => $newStatus]);
 
+        $statusMessage = match ($newStatus) {
+            'active' => __('Reseller :name has been activated.', ['name' => $reseller->name]),
+            'suspended' => __('Reseller :name has been suspended.', ['name' => $reseller->name]),
+            'inactive' => __('Reseller :name has been deactivated.', ['name' => $reseller->name]),
+            default => __('Reseller :name status updated.', ['name' => $reseller->name]),
+        };
+
         return response()->json([
             'success' => true,
-            'message' => "Reseller '{$reseller->name}' status changed to " . ucfirst($newStatus) . ".",
+            'message' => $statusMessage,
             'new_status' => $newStatus,
         ]);
     }
@@ -460,7 +467,7 @@ class ResellerDirectoryController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            abort(403, 'Unauthorized.');
+            abort(403, __('Unauthorized.'));
         }
 
         $reseller = TenantReseller::where('tenant_id', $tenant->id)->findOrFail($id);
@@ -484,7 +491,7 @@ class ResellerDirectoryController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => "Wallet balance updated! New Balance: {$newBalance}",
+            'message' => __('Wallet balance updated! New Balance: :balance', ['balance' => number_format($newBalance, 2)]),
             'new_balance' => $newBalance,
         ]);
     }
@@ -496,7 +503,7 @@ class ResellerDirectoryController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            abort(403, 'Unauthorized.');
+            abort(403, __('Unauthorized.'));
         }
 
         $reseller = TenantReseller::where('tenant_id', $tenant->id)->findOrFail($id);
@@ -506,11 +513,11 @@ class ResellerDirectoryController extends Controller
         if (request()->wantsJson()) {
             return response()->json([
                 'success' => true,
-                'message' => "Reseller '{$name}' deleted successfully.",
+                'message' => __('Reseller :name deleted successfully.', ['name' => $name]),
             ]);
         }
 
-        return redirect()->route('tenant.resellers.index')->with('success', "Reseller '{$name}' deleted successfully.");
+        return redirect()->route('tenant.resellers.index')->with('success', __('Reseller :name deleted successfully.', ['name' => $name]));
     }
 
     /**
@@ -520,7 +527,7 @@ class ResellerDirectoryController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            abort(404, 'Tenant record not found.');
+            abort(404, __('Tenant record not found.'));
         }
 
         $totalResellers = TenantReseller::where('tenant_id', $tenant->id)->count();
@@ -587,7 +594,7 @@ class ResellerDirectoryController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            abort(404, 'Tenant record not found.');
+            abort(404, __('Tenant record not found.'));
         }
 
         $request->validate([
@@ -623,9 +630,9 @@ class ResellerDirectoryController extends Controller
         $handle = fopen($path, 'r');
         if (!$handle) {
             if ($request->wantsJson()) {
-                return response()->json(['success' => false, 'message' => 'Unable to read uploaded file.'], 422);
+                return response()->json(['success' => false, 'message' => __('Unable to read uploaded file.')], 422);
             }
-            return back()->with('error', 'Unable to read uploaded file.');
+            return back()->with('error', __('Unable to read uploaded file.'));
         }
 
         // Strip UTF-8 BOM if present
@@ -638,9 +645,9 @@ class ResellerDirectoryController extends Controller
         if (!$headerRow) {
             fclose($handle);
             if ($request->wantsJson()) {
-                return response()->json(['success' => false, 'message' => 'The uploaded file is empty.'], 422);
+                return response()->json(['success' => false, 'message' => __('The uploaded file is empty.')], 422);
             }
-            return back()->with('error', 'The uploaded file is empty.');
+            return back()->with('error', __('The uploaded file is empty.'));
         }
 
         // Normalize headers
@@ -679,7 +686,7 @@ class ResellerDirectoryController extends Controller
                 }
                 if (empty($name)) {
                     $skipped++;
-                    $errors[] = "Row {$rowNum}: Reseller Name is missing.";
+                    $errors[] = __('Row :row: Reseller Name is missing.', ['row' => $rowNum]);
                     continue;
                 }
 
@@ -817,9 +824,16 @@ class ResellerDirectoryController extends Controller
             DB::commit();
             fclose($handle);
 
-            $msg = "Import completed! Successfully imported {$imported} resellers.";
-            if ($updated > 0) $msg .= " Updated {$updated} existing.";
-            if ($skipped > 0) $msg .= " Skipped {$skipped} duplicates/empty.";
+            $parts = [
+                __('Import completed! Successfully imported :count resellers.', ['count' => $imported]),
+            ];
+            if ($updated > 0) {
+                $parts[] = __('Updated :count existing.', ['count' => $updated]);
+            }
+            if ($skipped > 0) {
+                $parts[] = __('Skipped :count duplicates/empty.', ['count' => $skipped]);
+            }
+            $msg = implode(' ', $parts);
 
             if ($request->wantsJson()) {
                 return response()->json([
@@ -842,11 +856,11 @@ class ResellerDirectoryController extends Controller
             if ($request->wantsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Import failed: ' . $e->getMessage()
+                    'message' => __('Import failed: :error', ['error' => $e->getMessage()])
                 ], 500);
             }
 
-            return back()->with('error', 'Import failed: ' . $e->getMessage());
+            return back()->with('error', __('Import failed: :error', ['error' => $e->getMessage()]));
         }
     }
 }

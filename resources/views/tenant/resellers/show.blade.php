@@ -1,6 +1,6 @@
 @extends('tenant.layouts.app')
 
-@section('title', ($reseller->name ?? 'Reseller Details') . ' - ' . ($tenant->company_name ?? $tenant->name))
+@section('title', ($reseller->name ?? __('Reseller Details')) . ' - ' . ($tenant->company_name ?? $tenant->name))
 
 @push('styles')
     {{-- Page-specific CSS --}}
@@ -81,7 +81,7 @@
                     class="px-3 py-1.5 rounded-lg text-xs font-semibold border transition inline-flex items-center gap-1.5 cursor-pointer"
                     :class="reseller.status === 'active' ? 'bg-rose-50 hover:bg-rose-100 text-rose-700 border-rose-200' : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200'">
                 <i class="fas" :class="statusToggling ? 'fa-spinner fa-spin' : (reseller.status === 'active' ? 'fa-ban' : 'fa-check')"></i>
-                <span x-text="reseller.status === 'active' ? '{{ __('Suspend') }}' : '{{ __('Activate') }}'"></span>
+                <span x-text="reseller.status === 'active' ? i18n.suspend : i18n.activate"></span>
             </button>
         </div>
     </div>
@@ -139,7 +139,7 @@
             <div class="min-w-0">
                 <span class="text-[9px] font-medium text-amber-700 uppercase tracking-wider block truncate">{{ __('Allocated CIR') }}</span>
                 <span class="text-[13px] font-bold font-mono text-amber-800 leading-tight block truncate">
-                    {{ $totalBandwidthMbps > 0 ? $totalBandwidthMbps . ' Mbps' : '--' }}
+                    {{ $totalBandwidthMbps > 0 ? $totalBandwidthMbps . ' ' . __('Mbps') : '--' }}
                 </span>
             </div>
             <div class="w-6 h-6 rounded-md bg-amber-50 text-amber-600 border border-amber-100 flex items-center justify-center text-[10px] flex-shrink-0">
@@ -174,7 +174,7 @@
                         <i class="fas fa-id-card text-purple-600 text-[11px]"></i>
                         <span>{{ __('Reseller Information') }}</span>
                     </span>
-                    <span class="text-[10px] font-mono font-medium text-slate-500">ID: #{{ $reseller->id }}</span>
+                    <span class="text-[10px] font-mono font-medium text-slate-500">{{ __('ID') }}: #{{ $reseller->id }}</span>
                 </div>
 
                 <div class="p-3.5 space-y-2.5 text-xs">
@@ -244,7 +244,7 @@
                         <span>{{ __('Billing & Commercial Terms') }}</span>
                     </span>
                     <span class="inline-flex px-1.5 py-0.5 rounded text-[10px] font-mono border {{ $reseller->billing_badge['class'] ?? 'bg-slate-50 text-slate-700 border-slate-200' }}">
-                        {{ $reseller->billing_badge['label'] ?? $reseller->billing_type }}
+                        {{ __($reseller->billing_badge['label'] ?? $reseller->billing_type) }}
                     </span>
                 </div>
 
@@ -292,7 +292,7 @@
                     <div class="flex justify-between items-center py-1">
                         <span class="text-slate-500">{{ __('Panel Status') }}</span>
                         <span class="inline-flex px-1.5 py-0.5 rounded text-[10px] font-mono border {{ $reseller->panel_badge['class'] ?? 'bg-slate-50 text-slate-700 border-slate-200' }}">
-                            {{ $reseller->panel_badge['label'] ?? $reseller->panel_billing_status }}
+                            {{ __($reseller->panel_badge['label'] ?? $reseller->panel_billing_status) }}
                         </span>
                     </div>
                 </div>
@@ -351,7 +351,7 @@
                         </span>
                         <div class="flex items-center gap-2">
                             <span class="font-mono text-[11px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
-                                {{ __('Total CIR') }}: {{ $bandwidth->total_bandwidth_mbps ?? 0 }} Mbps
+                                {{ __('Total CIR') }}: {{ $bandwidth->total_bandwidth_mbps ?? 0 }} {{ __('Mbps') }}
                             </span>
                             <a href="{{ route('tenant.resellers.bandwidth') }}" class="text-[11px] text-cyan-700 font-semibold hover:underline">
                                 {{ __('Manage Bandwidth') }} &rarr;
@@ -363,15 +363,15 @@
                         <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
                             <div class="p-2 bg-slate-50 rounded-lg border border-slate-200">
                                 <span class="text-[9.5px] uppercase font-semibold text-slate-500 block">{{ __('Global Transit') }}</span>
-                                <span class="text-xs font-mono font-bold text-slate-800 block mt-0.5">{{ $bandwidth->global_bandwidth_mbps ?? 0 }} Mbps</span>
+                                <span class="text-xs font-mono font-bold text-slate-800 block mt-0.5">{{ $bandwidth->global_bandwidth_mbps ?? 0 }} {{ __('Mbps') }}</span>
                             </div>
                             <div class="p-2 bg-slate-50 rounded-lg border border-slate-200">
                                 <span class="text-[9.5px] uppercase font-semibold text-slate-500 block">{{ __('BDIX Peering') }}</span>
-                                <span class="text-xs font-mono font-bold text-slate-800 block mt-0.5">{{ $bandwidth->bdix_bandwidth_mbps ?? 0 }} Mbps</span>
+                                <span class="text-xs font-mono font-bold text-slate-800 block mt-0.5">{{ $bandwidth->bdix_bandwidth_mbps ?? 0 }} {{ __('Mbps') }}</span>
                             </div>
                             <div class="p-2 bg-slate-50 rounded-lg border border-slate-200">
                                 <span class="text-[9.5px] uppercase font-semibold text-slate-500 block">{{ __('CDN / Cache') }}</span>
-                                <span class="text-xs font-mono font-bold text-slate-800 block mt-0.5">{{ $bandwidth->cdn_bandwidth_mbps ?? 0 }} Mbps</span>
+                                <span class="text-xs font-mono font-bold text-slate-800 block mt-0.5">{{ $bandwidth->cdn_bandwidth_mbps ?? 0 }} {{ __('Mbps') }}</span>
                             </div>
                             <div class="p-2 bg-slate-50 rounded-lg border border-slate-200">
                                 <span class="text-[9.5px] uppercase font-semibold text-slate-500 block">{{ __('Monthly Charge') }}</span>
@@ -463,7 +463,7 @@
                                         @else
                                             <span class="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-full text-[10px] bg-slate-100 text-slate-600 border border-slate-200">
                                                 <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
-                                                <span>{{ ucfirst($cust->status) }}</span>
+                                                <span>{{ __(ucfirst($cust->status ?? 'inactive')) }}</span>
                                             </span>
                                         @endif
                                     </td>
@@ -519,14 +519,14 @@
                                     <td class="font-mono text-slate-700">{{ $st->email }}</td>
                                     <td class="font-mono text-[10px]">
                                         <span class="px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-100">
-                                            {{ ucfirst($st->role ?? 'Staff') }}
+                                            {{ __(ucfirst($st->role ?? 'Staff')) }}
                                         </span>
                                     </td>
                                     <td class="font-mono text-slate-700">{{ $st->phone ?: '--' }}</td>
                                     <td class="text-center">
                                         <span class="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-full text-[10px] {{ $st->status === 'active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-600 border-slate-200' }}">
                                             <span class="w-1.5 h-1.5 rounded-full {{ $st->status === 'active' ? 'bg-emerald-500' : 'bg-slate-400' }}"></span>
-                                            <span>{{ ucfirst($st->status ?? 'active') }}</span>
+                                            <span>{{ __(ucfirst($st->status ?? 'active')) }}</span>
                                         </span>
                                     </td>
                                 </tr>
@@ -576,7 +576,7 @@
                                     </td>
                                     <td class="font-mono text-[10px]">
                                         <span class="px-1.5 py-0.5 rounded bg-slate-50 text-slate-700 border border-slate-200">
-                                            {{ str_replace('_', ' ', $inv->type ?? 'INVOICE') }}
+                                            {{ __(str_replace('_', ' ', $inv->type ?? 'INVOICE')) }}
                                         </span>
                                     </td>
                                     <td class="font-mono text-slate-700">
@@ -599,7 +599,7 @@
                                             </span>
                                         @else
                                             <span class="inline-flex px-1.5 py-0.2 rounded-full text-[10px] bg-amber-50 text-amber-700 border border-amber-200 font-medium">
-                                                {{ ucfirst(strtolower($inv->status ?? 'Draft')) }}
+                                                {{ __(ucfirst(strtolower($inv->status ?? 'Draft'))) }}
                                             </span>
                                         @endif
                                     </td>
@@ -703,7 +703,7 @@
                             :disabled="rechargeModal.submitting" 
                             class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs px-4 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                         <i class="fas" :class="rechargeModal.submitting ? 'fa-spinner fa-spin' : 'fa-check'"></i>
-                        <span x-text="rechargeModal.submitting ? '{{ __('Processing...') }}' : '{{ __('Submit') }}'"></span>
+                        <span x-text="rechargeModal.submitting ? i18n.processing : i18n.submit"></span>
                     </button>
                 </div>
             </form>
@@ -757,7 +757,7 @@
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div>
                         <label class="block font-medium text-slate-700 mb-1">{{ __('Username Prefix') }}</label>
-                        <input type="text" x-model="editModal.form.prefix" placeholder="e.g. SN" class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none font-mono">
+                        <input type="text" x-model="editModal.form.prefix" placeholder="{{ __('e.g. SN') }}" class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none font-mono">
                     </div>
 
                     <div>
@@ -806,7 +806,7 @@
 
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div>
-                        <label class="block font-medium text-slate-700 mb-1">{{ __('Monthly Panel Fee') }}</label>
+                        <label class="block font-medium text-slate-700 mb-1">{{ __('Monthly Panel Fee') }} ({{ $currencySymbol ?? '৳' }})</label>
                         <input type="number" step="0.01" min="0" x-model="editModal.form.monthly_panel_charge" class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none font-mono">
                     </div>
 
@@ -838,7 +838,7 @@
                             :disabled="editModal.saving" 
                             class="bg-cyan-600 hover:bg-cyan-700 text-white font-medium text-xs px-4 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                         <i class="fas" :class="editModal.saving ? 'fa-spinner fa-spin' : 'fa-check'"></i>
-                        <span x-text="editModal.saving ? '{{ __('Saving...') }}' : '{{ __('Save Changes') }}'"></span>
+                        <span x-text="editModal.saving ? i18n.saving : i18n.saveChanges"></span>
                     </button>
                 </div>
             </form>
@@ -853,7 +853,25 @@
 function resellerShowManager(initialReseller) {
     return {
         reseller: initialReseller,
-        currencySymbol: '{{ $currencySymbol ?? '৳' }}',
+        currencySymbol: @js($currencySymbol ?? '৳'),
+        i18n: {
+            suspend: @js(__('Suspend')),
+            activate: @js(__('Activate')),
+            processing: @js(__('Processing...')),
+            submit: @js(__('Submit')),
+            saving: @js(__('Saving...')),
+            saveChanges: @js(__('Save Changes')),
+            enterValidAmount: @js(__('Please enter a valid amount.')),
+            balanceUpdatedSuccess: @js(__('Balance updated successfully!')),
+            failedUpdateBalance: @js(__('Failed to update balance.')),
+            networkErrorBalance: @js(__('Network error while updating balance.')),
+            resellerUpdatedSuccess: @js(__('Reseller updated successfully!')),
+            failedUpdateReseller: @js(__('Failed to update reseller.')),
+            networkErrorReseller: @js(__('Network error while updating reseller.')),
+            statusUpdatedSuccess: @js(__('Status updated successfully!')),
+            failedToggleStatus: @js(__('Failed to toggle status.')),
+            networkErrorToggleStatus: @js(__('Network error while toggling status.'))
+        },
         statusToggling: false,
         toast: { show: false, message: '', type: 'success' },
 
@@ -899,7 +917,7 @@ function resellerShowManager(initialReseller) {
 
         async submitRecharge() {
             if (!this.rechargeModal.form.amount || parseFloat(this.rechargeModal.form.amount) <= 0) {
-                this.showToast('Please enter a valid amount.', 'error');
+                this.showToast(this.i18n.enterValidAmount, 'error');
                 return;
             }
 
@@ -918,13 +936,13 @@ function resellerShowManager(initialReseller) {
                 const data = await res.json();
                 if (data.success) {
                     this.reseller.wallet_balance = data.new_balance;
-                    this.showToast(data.message || 'Balance updated successfully!', 'success');
+                    this.showToast(data.message || this.i18n.balanceUpdatedSuccess, 'success');
                     this.closeRechargeModal();
                 } else {
-                    this.showToast(data.message || 'Failed to update balance.', 'error');
+                    this.showToast(data.message || this.i18n.failedUpdateBalance, 'error');
                 }
             } catch (err) {
-                this.showToast('Network error while updating balance.', 'error');
+                this.showToast(this.i18n.networkErrorBalance, 'error');
             } finally {
                 this.rechargeModal.submitting = false;
             }
@@ -970,15 +988,15 @@ function resellerShowManager(initialReseller) {
 
                 const data = await res.json();
                 if (data.success) {
-                    this.showToast(data.message || 'Reseller updated successfully!', 'success');
+                    this.showToast(data.message || this.i18n.resellerUpdatedSuccess, 'success');
                     setTimeout(() => {
                         window.location.reload();
                     }, 800);
                 } else {
-                    this.showToast(data.message || 'Failed to update reseller.', 'error');
+                    this.showToast(data.message || this.i18n.failedUpdateReseller, 'error');
                 }
             } catch (err) {
-                this.showToast('Network error while updating reseller.', 'error');
+                this.showToast(this.i18n.networkErrorReseller, 'error');
             } finally {
                 this.editModal.saving = false;
             }
@@ -1000,12 +1018,12 @@ function resellerShowManager(initialReseller) {
                 const data = await res.json();
                 if (data.success) {
                     this.reseller.status = data.new_status;
-                    this.showToast(data.message, 'success');
+                    this.showToast(data.message || this.i18n.statusUpdatedSuccess, 'success');
                 } else {
-                    this.showToast(data.message || 'Failed to toggle status.', 'error');
+                    this.showToast(data.message || this.i18n.failedToggleStatus, 'error');
                 }
             } catch (err) {
-                this.showToast('Network error while toggling status.', 'error');
+                this.showToast(this.i18n.networkErrorToggleStatus, 'error');
             } finally {
                 this.statusToggling = false;
             }

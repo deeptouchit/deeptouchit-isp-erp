@@ -22,7 +22,7 @@ class ResellerSubscriptionController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            abort(404, 'Tenant record not found.');
+            abort(404, __('Tenant record not found.'));
         }
 
         $search = $request->input('search');
@@ -124,7 +124,7 @@ class ResellerSubscriptionController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            abort(403, 'Unauthorized.');
+            abort(403, __('Unauthorized.'));
         }
 
         $validated = $request->validate([
@@ -147,12 +147,16 @@ class ResellerSubscriptionController extends Controller
             $available = (float) $reseller->wallet_balance + (float) $reseller->credit_limit;
             if ($available < $amount) {
                 if ($request->wantsJson()) {
+                    $currencySymbol = $tenant->currency_symbol ?? '৳';
                     return response()->json([
                         'success' => false,
-                        'message' => "Insufficient wallet balance. Available: ৳{$available}, Required: ৳{$amount}",
+                        'message' => __('Insufficient wallet balance. Available: :available, Required: :required', [
+                            'available' => $currencySymbol . number_format($available, 2),
+                            'required' => $currencySymbol . number_format($amount, 2),
+                        ]),
                     ], 422);
                 }
-                return back()->with('error', "Insufficient wallet balance for {$reseller->name}.");
+                return back()->with('error', __('Insufficient wallet balance for :name.', ['name' => $reseller->name]));
             }
         }
 
@@ -195,12 +199,19 @@ class ResellerSubscriptionController extends Controller
                 'paid_at' => $isPaid ? now() : null,
                 'period_start' => $periodStart,
                 'period_end' => $periodEnd,
-                'notes' => $validated['notes'] ?: "Software subscription renewed for {$months} month(s). Extended to {$periodEnd}.",
+                'notes' => $validated['notes'] ?: __('Software subscription renewed for :months month(s). Extended to :date.', [
+                    'months' => $months,
+                    'date' => $periodEnd,
+                ]),
             ]);
 
             DB::commit();
 
-            $msg = "Software subscription renewed for '{$reseller->name}' until " . $newExpiry->format('d M, Y') . " (Invoice: {$invoiceNo}).";
+            $msg = __("Software subscription renewed for ':name' until :date (Invoice: :invoice).", [
+                'name' => $reseller->name,
+                'date' => $newExpiry->format('d M, Y'),
+                'invoice' => $invoiceNo,
+            ]);
 
             if ($request->wantsJson()) {
                 return response()->json([
@@ -213,10 +224,11 @@ class ResellerSubscriptionController extends Controller
             return redirect()->route('tenant.resellers.subscriptions')->with('success', $msg);
         } catch (\Throwable $e) {
             DB::rollBack();
+            $errorMsg = __('Renewal failed: :error', ['error' => $e->getMessage()]);
             if ($request->wantsJson()) {
-                return response()->json(['success' => false, 'message' => 'Renewal failed: ' . $e->getMessage()], 500);
+                return response()->json(['success' => false, 'message' => $errorMsg], 500);
             }
-            return back()->with('error', 'Renewal failed: ' . $e->getMessage());
+            return back()->with('error', $errorMsg);
         }
     }
 
@@ -227,7 +239,7 @@ class ResellerSubscriptionController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            abort(403, 'Unauthorized.');
+            abort(403, __('Unauthorized.'));
         }
 
         $validated = $request->validate([
@@ -283,7 +295,7 @@ class ResellerSubscriptionController extends Controller
                     'paid_at' => $canDeduct ? now() : null,
                     'period_start' => $monthDate->toDateString(),
                     'period_end' => $monthDate->copy()->endOfMonth()->toDateString(),
-                    'notes' => "Monthly software panel fee for " . $monthDate->format('F Y'),
+                    'notes' => __('Monthly software panel fee for :month', ['month' => $monthDate->format('F Y')]),
                 ]);
 
                 $generatedCount++;
@@ -292,7 +304,12 @@ class ResellerSubscriptionController extends Controller
 
             DB::commit();
 
-            $msg = "Generated {$generatedCount} software invoices for " . $monthDate->format('F Y') . " (Total: ৳" . number_format($totalBilled, 2) . ").";
+            $currencySymbol = $tenant->currency_symbol ?? '৳';
+            $msg = __('Generated :count software invoices for :month (Total: :total).', [
+                'count' => $generatedCount,
+                'month' => $monthDate->format('F Y'),
+                'total' => $currencySymbol . number_format($totalBilled, 2),
+            ]);
 
             if ($request->wantsJson()) {
                 return response()->json([
@@ -305,10 +322,11 @@ class ResellerSubscriptionController extends Controller
             return redirect()->route('tenant.resellers.subscriptions')->with('success', $msg);
         } catch (\Throwable $e) {
             DB::rollBack();
+            $errorMsg = __('Bulk billing failed: :error', ['error' => $e->getMessage()]);
             if ($request->wantsJson()) {
-                return response()->json(['success' => false, 'message' => 'Bulk billing failed: ' . $e->getMessage()], 500);
+                return response()->json(['success' => false, 'message' => $errorMsg], 500);
             }
-            return back()->with('error', 'Bulk billing failed: ' . $e->getMessage());
+            return back()->with('error', $errorMsg);
         }
     }
 
@@ -319,7 +337,7 @@ class ResellerSubscriptionController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            abort(403, 'Unauthorized.');
+            abort(403, __('Unauthorized.'));
         }
 
         $validated = $request->validate([
@@ -338,7 +356,7 @@ class ResellerSubscriptionController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => "Panel subscription settings updated for '{$reseller->name}'!",
+            'message' => __("Panel subscription settings updated for ':name'!", ['name' => $reseller->name]),
         ]);
     }
 
@@ -349,7 +367,7 @@ class ResellerSubscriptionController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            abort(403, 'Unauthorized.');
+            abort(403, __('Unauthorized.'));
         }
 
         $reseller = TenantReseller::where('tenant_id', $tenant->id)->findOrFail($id);
@@ -361,9 +379,15 @@ class ResellerSubscriptionController extends Controller
 
         $reseller->update(['panel_billing_status' => $newStatus]);
 
+        $message = match ($newStatus) {
+            'ACTIVE' => __("Reseller ':name' panel status set to Active.", ['name' => $reseller->name]),
+            'GRACE_PERIOD' => __("Reseller ':name' panel status set to Grace Period.", ['name' => $reseller->name]),
+            default => __("Reseller ':name' panel status set to Expired.", ['name' => $reseller->name]),
+        };
+
         return response()->json([
             'success' => true,
-            'message' => "Reseller '{$reseller->name}' panel status set to {$newStatus}.",
+            'message' => $message,
             'new_status' => $newStatus,
         ]);
     }

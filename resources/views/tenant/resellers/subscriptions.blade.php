@@ -1,6 +1,6 @@
 @extends('tenant.layouts.app')
 
-@section('title', 'Reseller Panel Licenses - ' . ($tenant->company_name ?? $tenant->name))
+@section('title', __('Reseller Panel Licenses') . ' - ' . ($tenant->company_name ?? $tenant->name))
 
 @push('styles')
 {{-- Page-specific CSS --}}
@@ -39,9 +39,9 @@
                 <i class="fas fa-key"></i>
             </div>
             <div class="flex items-center gap-2 min-w-0">
-                <h1 class="text-sm font-bold text-slate-900 tracking-tight whitespace-nowrap">Panel Licenses</h1>
+                <h1 class="text-sm font-bold text-slate-900 tracking-tight whitespace-nowrap">{{ __('Panel Licenses') }}</h1>
                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
-                    {{ $totalResellersCount }} Tracked
+                    {{ __(':count Tracked', ['count' => $totalResellersCount]) }}
                 </span>
             </div>
         </div>
@@ -50,9 +50,9 @@
             {{-- Link to Subscription Invoices --}}
             <a href="{{ route('tenant.resellers.invoices') }}" 
                class="h-[34px] bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs py-0 px-2.5 rounded-lg border border-slate-200/80 shadow-2xs transition flex items-center justify-center gap-1.5"
-               title="View Subscription Billing Invoices">
+               title="{{ __('View Subscription Billing Invoices') }}">
                 <i class="fas fa-file-invoice-dollar text-slate-500 text-[10px]"></i>
-                <span class="hidden md:inline">Invoices</span>
+                <span class="hidden md:inline">{{ __('Invoices') }}</span>
             </a>
 
             {{-- Generate Monthly Bills Button --}}
@@ -60,7 +60,7 @@
                     @click="openBulkBillModal()" 
                     class="h-[34px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-0 px-2.5 rounded-lg border border-slate-200/80 shadow-2xs transition flex items-center justify-center gap-1.5 cursor-pointer">
                 <i class="fas fa-wand-magic-sparkles text-cyan-600 text-[10px]"></i>
-                <span>Generate Invoices</span>
+                <span>{{ __('Generate Invoices') }}</span>
             </button>
 
             {{-- Renew / Extend License Button --}}
@@ -68,7 +68,7 @@
                     @click="openRenewModal()" 
                     class="h-[34px] bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-0 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer">
                 <i class="fas fa-arrows-rotate text-[10px]"></i>
-                <span>Renew License</span>
+                <span>{{ __('Renew License') }}</span>
             </button>
         </div>
     </div>
@@ -78,7 +78,7 @@
         {{-- Card 1: Software Monthly MRR --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5 min-w-0">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Monthly MRR</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">{{ __('Monthly MRR') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-slate-900 truncate">@currency($totalMonthlyMRR)</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-cyan-50 text-cyan-600 border-cyan-100 flex items-center justify-center">
@@ -89,7 +89,7 @@
         {{-- Card 2: Active Licenses --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5 min-w-0">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-emerald-600">Active Licenses</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-emerald-600">{{ __('Active Licenses') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-emerald-700 truncate">{{ number_format($activePanelsCount) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-emerald-50 text-emerald-600 border-emerald-100 flex items-center justify-center">
@@ -100,7 +100,7 @@
         {{-- Card 3: Expiring Soon --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5 min-w-0">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-amber-600">Expiring (&le; 7d)</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-amber-600">{{ __('Expiring (≤ 7d)') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-amber-700 truncate">{{ number_format($expiringSoonCount) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-amber-50 text-amber-600 border-amber-100 flex items-center justify-center">
@@ -111,7 +111,7 @@
         {{-- Card 4: Expired Panels --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5 min-w-0">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-rose-600">Expired Panels</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-rose-600">{{ __('Expired Panels') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-rose-700 truncate">{{ number_format($expiredPanelsCount) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-rose-50 text-rose-600 border-rose-100 flex items-center justify-center">
@@ -122,7 +122,7 @@
         {{-- Card 5: Grace Period --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5 min-w-0">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-purple-600">Grace Period</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-purple-600">{{ __('Grace Period') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-purple-700 truncate">{{ number_format($gracePeriodCount) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-purple-50 text-purple-600 border-purple-100 flex items-center justify-center">
@@ -133,7 +133,7 @@
         {{-- Card 6: Total Resellers --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5 min-w-0">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Total Tracked</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">{{ __('Total Tracked') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-slate-800 truncate">{{ number_format($totalResellersCount) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-slate-100 text-slate-600 border-slate-200 flex items-center justify-center">
@@ -159,7 +159,7 @@
                 <input type="text" 
                        name="search" 
                        x-model="searchQuery" 
-                       placeholder="Search Reseller Name, Code, Prefix, Contact, Mobile..." 
+                       placeholder="{{ __('Search Reseller Name, Code, Prefix, Contact, Mobile...') }}" 
                        value="{{ request('search') }}"
                        autocomplete="off"
                        class="w-full h-[34px] pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-normal" />
@@ -175,21 +175,21 @@
             {{-- Primary Filter: Panel Status --}}
             <select name="panel_status" 
                     class="h-[34px] w-full md:w-44 text-xs bg-slate-50 border border-slate-200 rounded-lg px-2.5 text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden font-normal shrink-0">
-                <option value="">All Panel Statuses</option>
-                <option value="active" {{ request('panel_status') === 'active' ? 'selected' : '' }}>Active Licenses</option>
-                <option value="expiring_soon" {{ request('panel_status') === 'expiring_soon' ? 'selected' : '' }}>Expiring Soon (&le; 7d)</option>
-                <option value="expired" {{ request('panel_status') === 'expired' ? 'selected' : '' }}>Expired Panels</option>
-                <option value="grace_period" {{ request('panel_status') === 'grace_period' ? 'selected' : '' }}>Grace Period</option>
+                <option value="">{{ __('All Panel Statuses') }}</option>
+                <option value="active" {{ request('panel_status') === 'active' ? 'selected' : '' }}>{{ __('Active Licenses') }}</option>
+                <option value="expiring_soon" {{ request('panel_status') === 'expiring_soon' ? 'selected' : '' }}>{{ __('Expiring Soon (≤ 7d)') }}</option>
+                <option value="expired" {{ request('panel_status') === 'expired' ? 'selected' : '' }}>{{ __('Expired Panels') }}</option>
+                <option value="grace_period" {{ request('panel_status') === 'grace_period' ? 'selected' : '' }}>{{ __('Grace Period') }}</option>
             </select>
 
             {{-- Pagination Selector (per_page) --}}
             @php $perPageVal = (int)request('per_page', 20); @endphp
             <select name="per_page" 
                     class="h-[34px] w-full md:w-28 text-xs bg-slate-50 border border-slate-200 rounded-lg px-2.5 text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden font-normal shrink-0">
-                <option value="10" {{ $perPageVal === 10 ? 'selected' : '' }}>10 / page</option>
-                <option value="20" {{ $perPageVal === 20 ? 'selected' : '' }}>20 / page</option>
-                <option value="50" {{ $perPageVal === 50 ? 'selected' : '' }}>50 / page</option>
-                <option value="100" {{ $perPageVal === 100 ? 'selected' : '' }}>100 / page</option>
+                <option value="10" {{ $perPageVal === 10 ? 'selected' : '' }}>10 / {{ __('page') }}</option>
+                <option value="20" {{ $perPageVal === 20 ? 'selected' : '' }}>20 / {{ __('page') }}</option>
+                <option value="50" {{ $perPageVal === 50 ? 'selected' : '' }}>50 / {{ __('page') }}</option>
+                <option value="100" {{ $perPageVal === 100 ? 'selected' : '' }}>100 / {{ __('page') }}</option>
             </select>
 
             {{-- More Filters Accordion Toggle Button --}}
@@ -198,7 +198,7 @@
                     class="h-[34px] py-0 px-2.5 rounded-lg border text-xs font-medium transition flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
                     :class="showMoreFilters || {{ $activeMoreCount }} > 0 ? 'bg-cyan-50/70 border-cyan-200 text-cyan-800' : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'">
                 <i class="fas fa-sliders text-[11px] text-slate-500"></i>
-                <span>More Filters</span>
+                <span>{{ __('More Filters') }}</span>
                 @if($activeMoreCount > 0)
                     <span class="w-4 h-4 rounded-full bg-cyan-600 text-white text-[9px] font-bold flex items-center justify-center">{{ $activeMoreCount }}</span>
                 @endif
@@ -210,13 +210,13 @@
                 <button type="submit" 
                         class="h-[34px] bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-0 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer">
                     <i class="fas fa-filter text-[10px]"></i>
-                    <span>Filter</span>
+                    <span>{{ __('Filter') }}</span>
                 </button>
 
                 <a href="{{ route('tenant.resellers.subscriptions') }}" 
                    class="h-[34px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-0 px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer">
                     <i class="fas fa-rotate-left text-[10px]"></i>
-                    <span>Reset</span>
+                    <span>{{ __('Reset') }}</span>
                 </a>
             </div>
         </div>
@@ -236,7 +236,7 @@
             <div class="w-full sm:w-auto">
                 <select name="reseller_id" 
                         class="h-[34px] w-full sm:w-56 text-xs bg-slate-50 border border-slate-200 rounded-lg px-2.5 text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden font-normal">
-                    <option value="">All Resellers</option>
+                    <option value="">{{ __('All Resellers') }}</option>
                     @foreach($allResellers as $r)
                         <option value="{{ $r->id }}" {{ request('reseller_id') == $r->id ? 'selected' : '' }}>
                             {{ $r->name }} ({{ $r->code }})
@@ -249,10 +249,10 @@
             <div class="w-full sm:w-auto">
                 <select name="billing_type" 
                         class="h-[34px] w-full sm:w-48 text-xs bg-slate-50 border border-slate-200 rounded-lg px-2.5 text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden font-normal">
-                    <option value="">All Billing Models</option>
-                    <option value="PREPAID_WALLET" {{ request('billing_type') === 'PREPAID_WALLET' ? 'selected' : '' }}>Prepaid Wallet</option>
-                    <option value="POSTPAID_MONTHLY" {{ request('billing_type') === 'POSTPAID_MONTHLY' ? 'selected' : '' }}>Postpaid Monthly</option>
-                    <option value="BANDWIDTH_WHOLESALE" {{ request('billing_type') === 'BANDWIDTH_WHOLESALE' ? 'selected' : '' }}>Bandwidth Wholesale</option>
+                    <option value="">{{ __('All Billing Models') }}</option>
+                    <option value="PREPAID_WALLET" {{ request('billing_type') === 'PREPAID_WALLET' ? 'selected' : '' }}>{{ __('Prepaid Wallet') }}</option>
+                    <option value="POSTPAID_MONTHLY" {{ request('billing_type') === 'POSTPAID_MONTHLY' ? 'selected' : '' }}>{{ __('Postpaid Monthly') }}</option>
+                    <option value="BANDWIDTH_WHOLESALE" {{ request('billing_type') === 'BANDWIDTH_WHOLESALE' ? 'selected' : '' }}>{{ __('Bandwidth Wholesale') }}</option>
                 </select>
             </div>
         </div>
@@ -263,10 +263,10 @@
         <div class="px-3.5 py-2 bg-slate-50/80 border-b border-slate-200 flex items-center justify-between">
             <span class="font-bold text-slate-800 text-[11px] uppercase tracking-wider flex items-center gap-1.5">
                 <i class="fas fa-key text-slate-400 text-xs"></i>
-                <span>Panel Licenses &amp; Software Subscriptions</span>
+                <span>{{ __('Panel Licenses & Software Subscriptions') }}</span>
             </span>
             <span class="text-[11px] text-slate-500 font-mono font-normal">
-                Total {{ $resellers->total() }} Records
+                {{ __('Total :count Records', ['count' => $resellers->total()]) }}
             </span>
         </div>
 
@@ -275,16 +275,16 @@
                 <thead>
                     <tr>
                         <th class="w-10 text-center font-semibold">#</th>
-                        <th class="text-center font-semibold">License Status</th>
-                        <th class="text-center font-semibold">Code</th>
-                        <th class="text-center font-semibold">Reseller Name</th>
-                        <th class="text-center font-semibold">Prefix</th>
-                        <th class="text-center font-semibold">Billing Model</th>
-                        <th class="text-center font-semibold">Monthly Panel Fee</th>
-                        <th class="text-center font-semibold">Expiry Date</th>
-                        <th class="text-center font-semibold">Days Remaining</th>
-                        <th class="text-center font-semibold">Wallet Balance</th>
-                        <th class="w-10 text-center font-semibold no-sort">Action</th>
+                        <th class="text-center font-semibold">{{ __('License Status') }}</th>
+                        <th class="text-center font-semibold">{{ __('Code') }}</th>
+                        <th class="text-center font-semibold">{{ __('Reseller Name') }}</th>
+                        <th class="text-center font-semibold">{{ __('Prefix') }}</th>
+                        <th class="text-center font-semibold">{{ __('Billing Model') }}</th>
+                        <th class="text-center font-semibold">{{ __('Monthly Panel Fee') }}</th>
+                        <th class="text-center font-semibold">{{ __('Expiry Date') }}</th>
+                        <th class="text-center font-semibold">{{ __('Days Remaining') }}</th>
+                        <th class="text-center font-semibold">{{ __('Wallet Balance') }}</th>
+                        <th class="w-10 text-center font-semibold no-sort">{{ __('Action') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -322,23 +322,23 @@
                                     @if($daysLeft !== null && $daysLeft <= 7)
                                         <span class="inline-flex items-center justify-center gap-1 px-2 py-0.5 rounded-full text-[10px] bg-amber-50 text-amber-700 border border-amber-200">
                                             <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                                            <span>Expiring Soon</span>
+                                            <span>{{ __('Expiring Soon') }}</span>
                                         </span>
                                     @else
                                         <span class="inline-flex items-center justify-center gap-1 px-2 py-0.5 rounded-full text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200">
                                             <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                            <span>Active</span>
+                                            <span>{{ __('Active') }}</span>
                                         </span>
                                     @endif
                                 @elseif($res->panel_billing_status === 'GRACE_PERIOD')
                                     <span class="inline-flex items-center justify-center gap-1 px-2 py-0.5 rounded-full text-[10px] bg-cyan-50 text-cyan-700 border border-cyan-200">
                                         <span class="w-1.5 h-1.5 rounded-full bg-cyan-500"></span>
-                                        <span>Grace Period</span>
+                                        <span>{{ __('Grace Period') }}</span>
                                     </span>
                                 @else
                                     <span class="inline-flex items-center justify-center gap-1 px-2 py-0.5 rounded-full text-[10px] bg-rose-50 text-rose-700 border border-rose-200">
                                         <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
-                                        <span>Expired</span>
+                                        <span>{{ __('Expired') }}</span>
                                     </span>
                                 @endif
                             </td>
@@ -369,7 +369,7 @@
                             {{-- 6. Billing Model --}}
                             <td class="text-center font-mono text-[10px] whitespace-nowrap">
                                 <span class="inline-flex px-1.5 py-0.5 rounded border {{ $billingBadge['class'] ?? 'bg-slate-50 text-slate-700 border-slate-200' }}">
-                                    {{ $billingBadge['label'] ?? $res->billing_type }}
+                                    {{ __($billingBadge['label'] ?? $res->billing_type) }}
                                 </span>
                             </td>
 
@@ -383,7 +383,7 @@
                                 @if($expiryDate)
                                     <span>{{ $expiryDate->format('d M, Y') }}</span>
                                 @else
-                                    <span class="text-slate-400">Unlimited / Unset</span>
+                                    <span class="text-slate-400">{{ __('Unlimited / Unset') }}</span>
                                 @endif
                             </td>
 
@@ -391,11 +391,11 @@
                             <td class="text-center font-mono font-semibold whitespace-nowrap">
                                 @if($expiryDate)
                                     @if($daysLeft > 7)
-                                        <span class="text-emerald-600">{{ $daysLeft }} days</span>
+                                        <span class="text-emerald-600">{{ $daysLeft }} {{ __('days') }}</span>
                                     @elseif($daysLeft >= 0)
-                                        <span class="text-amber-600">{{ $daysLeft }} days left</span>
+                                        <span class="text-amber-600">{{ $daysLeft }} {{ __('days left') }}</span>
                                     @else
-                                        <span class="text-rose-600">{{ abs($daysLeft) }}d overdue</span>
+                                        <span class="text-rose-600">{{ __(':days days overdue', ['days' => abs($daysLeft)]) }}</span>
                                     @endif
                                 @else
                                     <span class="text-slate-400">--</span>
@@ -412,7 +412,7 @@
                                 <button type="button" 
                                         @click.stop="toggleMenu({{ Js::from($resPayload) }}, $event)" 
                                         class="lic-action-btn w-6 h-6 mx-auto rounded-md hover:bg-slate-100 text-slate-500 hover:text-cyan-700 transition cursor-pointer flex items-center justify-center text-[10px]"
-                                        title="Actions">
+                                        title="{{ __('Actions') }}">
                                     <i class="fas fa-ellipsis-v text-[10px] pointer-events-none"></i>
                                 </button>
                             </td>
@@ -424,13 +424,13 @@
                                     <div class="w-10 h-10 rounded-xl bg-cyan-50 text-cyan-600 mx-auto flex items-center justify-center text-base border border-cyan-100 shadow-2xs">
                                         <i class="fas fa-key"></i>
                                     </div>
-                                    <h3 class="text-xs font-bold text-slate-800">No Panel Licenses Found</h3>
-                                    <p class="text-[11px] text-slate-400 font-normal">Add resellers under Reseller Directory to manage licenses and software billing.</p>
+                                    <h3 class="text-xs font-bold text-slate-800">{{ __('No Panel Licenses Found') }}</h3>
+                                    <p class="text-[11px] text-slate-400 font-normal">{{ __('Add resellers under Reseller Directory to manage licenses and software billing.') }}</p>
                                     <div class="pt-1 flex items-center justify-center gap-2">
                                         <a href="{{ route('tenant.resellers.index') }}" 
                                            class="bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs px-3.5 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                                             <i class="fas fa-handshake text-[10px]"></i>
-                                            <span>Open Reseller Directory</span>
+                                            <span>{{ __('Open Reseller Directory') }}</span>
                                         </a>
                                     </div>
                                 </div>
@@ -445,7 +445,7 @@
         @if($resellers->hasPages())
             <div class="px-3.5 py-2.5 bg-slate-50/80 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-2">
                 <span class="text-[11px] text-slate-500 font-normal">
-                    Showing {{ $resellers->firstItem() }} to {{ $resellers->lastItem() }} of {{ $resellers->total() }} licenses
+                    {{ __('Showing :first to :last of :total licenses', ['first' => $resellers->firstItem(), 'last' => $resellers->lastItem(), 'total' => $resellers->total()]) }}
                 </span>
                 <div>
                     {{ $resellers->links() }}
@@ -478,18 +478,18 @@
                     @click="openRenewModal(activeMenu); activeMenu = null;" 
                     class="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-slate-700 hover:text-cyan-700 flex items-center gap-2 transition cursor-pointer text-[11px]">
                 <i class="fas fa-arrows-rotate w-3.5 text-cyan-600 text-[10px]"></i>
-                <span>Renew License</span>
+                <span>{{ __('Renew License') }}</span>
             </button>
             <button type="button" 
                     @click="openEditSettingsModal(activeMenu); activeMenu = null;" 
                     class="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-slate-700 hover:text-cyan-700 flex items-center gap-2 transition cursor-pointer text-[11px]">
                 <i class="fas fa-gear w-3.5 text-slate-400 text-[10px]"></i>
-                <span>Edit License Settings</span>
+                <span>{{ __('Edit License Settings') }}</span>
             </button>
             <a :href="`{{ route('tenant.resellers.invoices') }}?reseller_id=${activeMenu?.id || ''}`" 
                class="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-slate-700 hover:text-cyan-700 flex items-center gap-2 transition cursor-pointer text-[11px]">
                 <i class="fas fa-file-invoice-dollar w-3.5 text-slate-400 text-[10px]"></i>
-                <span>View Reseller Invoices</span>
+                <span>{{ __('View Reseller Invoices') }}</span>
             </a>
         </div>
 
@@ -500,13 +500,13 @@
                     class="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition cursor-pointer text-[11px]"
                     :class="activeMenu?.panel_billing_status === 'ACTIVE' ? 'hover:text-rose-600' : 'hover:text-emerald-600'">
                 <i class="fas w-3.5 text-[10px]" :class="activeMenu?.panel_billing_status === 'ACTIVE' ? 'fa-pause text-rose-500' : 'fa-play text-emerald-500'"></i>
-                <span x-text="activeMenu?.panel_billing_status === 'ACTIVE' ? 'Set to Expired / Block' : 'Activate Panel Access'"></span>
+                <span x-text="activeMenu?.panel_billing_status === 'ACTIVE' ? i18n.setExpiredBlock : i18n.activatePanelAccess"></span>
             </button>
             <button type="button" 
                     @click="openDetailsModal(activeMenu); activeMenu = null;" 
                     class="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-slate-700 hover:text-cyan-700 flex items-center gap-2 transition cursor-pointer text-[11px]">
                 <i class="fas fa-circle-info w-3.5 text-slate-400 text-[10px]"></i>
-                <span>Inspect License Specs</span>
+                <span>{{ __('Inspect License Specs') }}</span>
             </button>
         </div>
     </div>
@@ -538,8 +538,8 @@
                         <i class="fas fa-arrows-rotate"></i>
                     </div>
                     <div>
-                        <h3 class="text-xs font-bold text-slate-800">Renew Reseller License</h3>
-                        <p class="text-[10.5px] text-slate-500 font-normal">Extend panel software subscription and generate invoice</p>
+                        <h3 class="text-xs font-bold text-slate-800">{{ __('Renew Reseller License') }}</h3>
+                        <p class="text-[10.5px] text-slate-500 font-normal">{{ __('Extend panel software subscription and generate invoice') }}</p>
                     </div>
                 </div>
                 <button type="button" @click="modals.renew = false" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center text-xs cursor-pointer">
@@ -552,19 +552,19 @@
                 {{-- Reseller Selection --}}
                 <div>
                     <label class="block text-[11px] font-semibold text-slate-700 mb-1">
-                        Select Reseller <span class="text-rose-500">*</span>
+                        {{ __('Select Reseller') }} <span class="text-rose-500">*</span>
                     </label>
                     <select x-model="renewForm.reseller_id" 
                             @change="onResellerChange()"
                             class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 outline-hidden transition font-normal">
-                        <option value="">-- Choose Reseller --</option>
+                        <option value="">{{ __('-- Choose Reseller --') }}</option>
                         @foreach($allResellers as $r)
                             <option value="{{ $r->id }}" 
                                     data-fee="{{ $r->monthly_panel_charge }}"
                                     data-expiry="{{ $r->panel_expiry_date }}"
                                     data-wallet="{{ $r->wallet_balance }}"
                                     data-credit="{{ $r->credit_limit }}">
-                                {{ $r->name }} ({{ $r->code }}) • Fee: ৳{{ number_format($r->monthly_panel_charge) }}
+                                {{ $r->name }} ({{ $r->code }}) • {{ __('Fee') }}: @currency($r->monthly_panel_charge)
                             </option>
                         @endforeach
                     </select>
@@ -573,16 +573,16 @@
                 {{-- Reseller Summary Card if Selected --}}
                 <div x-show="selectedResellerMeta" class="p-2.5 bg-slate-50 rounded-lg border border-slate-200 space-y-1.5">
                     <div class="flex items-center justify-between text-[11px]">
-                        <span class="text-slate-500">Current Expiry:</span>
-                        <span class="font-mono font-semibold text-slate-800" x-text="selectedResellerMeta?.expiry || 'Unset / Unlimited'"></span>
+                        <span class="text-slate-500">{{ __('Current Expiry') }}:</span>
+                        <span class="font-mono font-semibold text-slate-800" x-text="selectedResellerMeta?.expiry || i18n.unsetUnlimited"></span>
                     </div>
                     <div class="flex items-center justify-between text-[11px]">
-                        <span class="text-slate-500">Monthly Panel Fee:</span>
-                        <span class="font-mono font-bold text-slate-900" x-text="'৳' + (selectedResellerMeta?.fee || 0)"></span>
+                        <span class="text-slate-500">{{ __('Monthly Panel Fee') }}:</span>
+                        <span class="font-mono font-bold text-slate-900" x-text="formatCurrency(selectedResellerMeta?.fee || 0)"></span>
                     </div>
                     <div class="flex items-center justify-between text-[11px]">
-                        <span class="text-slate-500">Wallet Available:</span>
-                        <span class="font-mono font-semibold text-emerald-600" x-text="'৳' + (selectedResellerMeta?.wallet || 0)"></span>
+                        <span class="text-slate-500">{{ __('Wallet Available') }}:</span>
+                        <span class="font-mono font-semibold text-emerald-600" x-text="formatCurrency(selectedResellerMeta?.wallet || 0)"></span>
                     </div>
                 </div>
 
@@ -590,24 +590,24 @@
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-[11px] font-semibold text-slate-700 mb-1">
-                            Renewal Months <span class="text-rose-500">*</span>
+                            {{ __('Renewal Months') }} <span class="text-rose-500">*</span>
                         </label>
                         <select x-model="renewForm.months" 
                                 @change="recalcRenewAmount()"
                                 class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 outline-hidden transition font-normal">
-                            <option value="1">1 Month</option>
-                            <option value="2">2 Months</option>
-                            <option value="3">3 Months (Quarterly)</option>
-                            <option value="6">6 Months (Half-Yearly)</option>
-                            <option value="12">12 Months (1 Year)</option>
-                            <option value="24">24 Months (2 Years)</option>
+                            <option value="1">{{ __('1 Month') }}</option>
+                            <option value="2">{{ __('2 Months') }}</option>
+                            <option value="3">{{ __('3 Months (Quarterly)') }}</option>
+                            <option value="6">{{ __('6 Months (Half-Yearly)') }}</option>
+                            <option value="12">{{ __('12 Months (1 Year)') }}</option>
+                            <option value="24">{{ __('24 Months (2 Years)') }}</option>
                         </select>
                     </div>
 
                     {{-- Total Amount --}}
                     <div>
                         <label class="block text-[11px] font-semibold text-slate-700 mb-1">
-                            Total Bill (৳) <span class="text-rose-500">*</span>
+                            {{ __('Total Bill') }} ({{ $currencySymbol ?? '৳' }}) <span class="text-rose-500">*</span>
                         </label>
                         <input type="number" 
                                step="0.01" 
@@ -619,25 +619,25 @@
                 {{-- Payment Method --}}
                 <div>
                     <label class="block text-[11px] font-semibold text-slate-700 mb-1">
-                        Settlement Method <span class="text-rose-500">*</span>
+                        {{ __('Settlement Method') }} <span class="text-rose-500">*</span>
                     </label>
                     <select x-model="renewForm.payment_method" 
                             class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 outline-hidden transition font-normal">
-                        <option value="WALLET_DEDUCT">Deduct from Reseller Wallet</option>
-                        <option value="CASH">Paid in Cash</option>
-                        <option value="BKASH">bKash Merchant / Personal</option>
-                        <option value="NAGAD">Nagad Payment</option>
-                        <option value="BANK">Bank Transfer / Deposit</option>
-                        <option value="DUE">Mark as Due Invoice</option>
+                        <option value="WALLET_DEDUCT">{{ __('Deduct from Reseller Wallet') }}</option>
+                        <option value="CASH">{{ __('Paid in Cash') }}</option>
+                        <option value="BKASH">{{ __('bKash Merchant / Personal') }}</option>
+                        <option value="NAGAD">{{ __('Nagad Payment') }}</option>
+                        <option value="BANK">{{ __('Bank Transfer / Deposit') }}</option>
+                        <option value="DUE">{{ __('Mark as Due Invoice') }}</option>
                     </select>
                 </div>
 
                 {{-- Notes --}}
                 <div>
-                    <label class="block text-[11px] font-semibold text-slate-700 mb-1">Reference / Note</label>
+                    <label class="block text-[11px] font-semibold text-slate-700 mb-1">{{ __('Reference / Note') }}</label>
                     <input type="text" 
                            x-model="renewForm.notes" 
-                           placeholder="e.g. Special software license renewal voucher" 
+                           placeholder="{{ __('e.g. Special software license renewal voucher') }}" 
                            class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 outline-hidden transition font-normal" />
                 </div>
             </div>
@@ -647,14 +647,14 @@
                 <button type="button" 
                         @click="modals.renew = false" 
                         class="border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs px-3.5 py-1.5 rounded-lg transition cursor-pointer">
-                    Cancel
+                    {{ __('Cancel') }}
                 </button>
                 <button type="button" 
                         @click="submitRenew()" 
                         :disabled="saving"
                         class="bg-cyan-600 hover:bg-cyan-700 text-white font-medium text-xs px-4 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50">
                     <i class="fas fa-check text-[10px]" :class="{ 'fa-spin fa-spinner': saving }"></i>
-                    <span x-text="saving ? 'Processing...' : 'Confirm Renewal'"></span>
+                    <span x-text="saving ? i18n.processing : i18n.confirmRenewal"></span>
                 </button>
             </div>
         </div>
@@ -687,7 +687,7 @@
                         <i class="fas fa-gear"></i>
                     </div>
                     <div>
-                        <h3 class="text-xs font-bold text-slate-800">Edit License Terms</h3>
+                        <h3 class="text-xs font-bold text-slate-800">{{ __('Edit License Terms') }}</h3>
                         <p class="text-[10.5px] text-slate-500 font-normal" x-text="editSettingsForm.resellerName"></p>
                     </div>
                 </div>
@@ -700,7 +700,7 @@
             <div class="p-4 space-y-3.5 text-xs">
                 <div>
                     <label class="block text-[11px] font-semibold text-slate-700 mb-1">
-                        Monthly Panel Fee (৳) <span class="text-rose-500">*</span>
+                        {{ __('Monthly Panel Fee') }} ({{ $currencySymbol ?? '৳' }}) <span class="text-rose-500">*</span>
                     </label>
                     <input type="number" 
                            step="0.01" min="0" 
@@ -710,7 +710,7 @@
 
                 <div>
                     <label class="block text-[11px] font-semibold text-slate-700 mb-1">
-                        Panel Expiry Date
+                        {{ __('Panel Expiry Date') }}
                     </label>
                     <input type="date" 
                            x-model="editSettingsForm.panel_expiry_date" 
@@ -719,13 +719,13 @@
 
                 <div>
                     <label class="block text-[11px] font-semibold text-slate-700 mb-1">
-                        Billing Status <span class="text-rose-500">*</span>
+                        {{ __('Billing Status') }} <span class="text-rose-500">*</span>
                     </label>
                     <select x-model="editSettingsForm.panel_billing_status" 
                             class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 outline-hidden transition font-normal">
-                        <option value="ACTIVE">ACTIVE (Authorized Access)</option>
-                        <option value="EXPIRED">EXPIRED (Suspended Access)</option>
-                        <option value="GRACE_PERIOD">GRACE_PERIOD (Temporary Warning)</option>
+                        <option value="ACTIVE">{{ __('ACTIVE (Authorized Access)') }}</option>
+                        <option value="EXPIRED">{{ __('EXPIRED (Suspended Access)') }}</option>
+                        <option value="GRACE_PERIOD">{{ __('GRACE_PERIOD (Temporary Warning)') }}</option>
                     </select>
                 </div>
             </div>
@@ -735,14 +735,14 @@
                 <button type="button" 
                         @click="modals.editSettings = false" 
                         class="border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs px-3.5 py-1.5 rounded-lg transition cursor-pointer">
-                    Cancel
+                    {{ __('Cancel') }}
                 </button>
                 <button type="button" 
                         @click="submitEditSettings()" 
                         :disabled="saving"
                         class="bg-cyan-600 hover:bg-cyan-700 text-white font-medium text-xs px-4 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50">
                     <i class="fas fa-check text-[10px]" :class="{ 'fa-spin fa-spinner': saving }"></i>
-                    <span x-text="saving ? 'Saving...' : 'Save Settings'"></span>
+                    <span x-text="saving ? i18n.saving : i18n.saveSettings"></span>
                 </button>
             </div>
         </div>
@@ -775,8 +775,8 @@
                         <i class="fas fa-wand-magic-sparkles"></i>
                     </div>
                     <div>
-                        <h3 class="text-xs font-bold text-slate-800">Generate Monthly Invoices</h3>
-                        <p class="text-[10.5px] text-slate-500 font-normal">Automate monthly software licensing bills for resellers</p>
+                        <h3 class="text-xs font-bold text-slate-800">{{ __('Generate Monthly Invoices') }}</h3>
+                        <p class="text-[10.5px] text-slate-500 font-normal">{{ __('Automate monthly software licensing bills for resellers') }}</p>
                     </div>
                 </div>
                 <button type="button" @click="modals.bulkBill = false" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center text-xs cursor-pointer">
@@ -789,14 +789,14 @@
                 <div class="p-3 bg-cyan-50/60 rounded-lg border border-cyan-100 text-slate-700 text-xs space-y-1">
                     <div class="font-semibold text-cyan-900 flex items-center gap-1.5">
                         <i class="fas fa-circle-info text-cyan-600"></i>
-                        <span>Automated Billing Logic</span>
+                        <span>{{ __('Automated Billing Logic') }}</span>
                     </div>
-                    <p class="text-[11px] text-slate-600">This action scans all resellers with active monthly panel fees (&gt; 0) and creates a monthly license invoice for the selected billing month.</p>
+                    <p class="text-[11px] text-slate-600">{{ __('This action scans all resellers with active monthly panel fees (> 0) and creates a monthly license invoice for the selected billing month.') }}</p>
                 </div>
 
                 <div>
                     <label class="block text-[11px] font-semibold text-slate-700 mb-1">
-                        Billing Month <span class="text-rose-500">*</span>
+                        {{ __('Billing Month') }} <span class="text-rose-500">*</span>
                     </label>
                     <input type="month" 
                            x-model="bulkBillForm.billing_month" 
@@ -809,14 +809,14 @@
                 <button type="button" 
                         @click="modals.bulkBill = false" 
                         class="border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs px-3.5 py-1.5 rounded-lg transition cursor-pointer">
-                    Cancel
+                    {{ __('Cancel') }}
                 </button>
                 <button type="button" 
                         @click="submitBulkBill()" 
                         :disabled="saving"
                         class="bg-cyan-600 hover:bg-cyan-700 text-white font-medium text-xs px-4 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50">
                     <i class="fas fa-wand-magic-sparkles text-[10px]" :class="{ 'fa-spin fa-spinner': saving }"></i>
-                    <span x-text="saving ? 'Generating...' : 'Generate Invoices'"></span>
+                    <span x-text="saving ? i18n.generating : i18n.generateInvoices"></span>
                 </button>
             </div>
         </div>
@@ -861,38 +861,38 @@
             <div class="p-4 space-y-2 text-xs">
                 <div class="bg-slate-50 rounded-lg border border-slate-200 divide-y divide-slate-100">
                     <div class="px-3 py-2 flex items-center justify-between text-[11px]">
-                        <span class="text-slate-500">Contact Person:</span>
+                        <span class="text-slate-500">{{ __('Contact Person') }}:</span>
                         <span class="font-medium text-slate-800" x-text="detailsItem?.contact_person || '--'"></span>
                     </div>
                     <div class="px-3 py-2 flex items-center justify-between text-[11px]">
-                        <span class="text-slate-500">Mobile Phone:</span>
+                        <span class="text-slate-500">{{ __('Mobile Phone') }}:</span>
                         <span class="font-mono text-slate-800" x-text="detailsItem?.mobile || '--'"></span>
                     </div>
                     <div class="px-3 py-2 flex items-center justify-between text-[11px]">
-                        <span class="text-slate-500">PPPoE Prefix:</span>
+                        <span class="text-slate-500">{{ __('PPPoE Prefix') }}:</span>
                         <span class="font-mono text-purple-700" x-text="detailsItem?.prefix ? (detailsItem.prefix + '_*') : '--'"></span>
                     </div>
                     <div class="px-3 py-2 flex items-center justify-between text-[11px]">
-                        <span class="text-slate-500">Monthly Panel Fee:</span>
-                        <span class="font-mono font-bold text-slate-900" x-text="'৳' + (detailsItem?.monthly_panel_charge || 0)"></span>
+                        <span class="text-slate-500">{{ __('Monthly Panel Fee') }}:</span>
+                        <span class="font-mono font-bold text-slate-900" x-text="formatCurrency(detailsItem?.monthly_panel_charge || 0)"></span>
                     </div>
                     <div class="px-3 py-2 flex items-center justify-between text-[11px]">
-                        <span class="text-slate-500">License Expiry Date:</span>
-                        <span class="font-mono font-semibold text-slate-800" x-text="detailsItem?.panel_expiry_date || 'Unset / Unlimited'"></span>
+                        <span class="text-slate-500">{{ __('License Expiry Date') }}:</span>
+                        <span class="font-mono font-semibold text-slate-800" x-text="detailsItem?.panel_expiry_date || i18n.unsetUnlimited"></span>
                     </div>
                     <div class="px-3 py-2 flex items-center justify-between text-[11px]">
-                        <span class="text-slate-500">Billing Model:</span>
-                        <span class="font-mono text-slate-800" x-text="detailsItem?.billing_type"></span>
+                        <span class="text-slate-500">{{ __('Billing Model') }}:</span>
+                        <span class="font-mono text-slate-800" x-text="billingTypeLabel(detailsItem?.billing_type)"></span>
                     </div>
                     <div class="px-3 py-2 flex items-center justify-between text-[11px]">
-                        <span class="text-slate-500">Wallet Balance:</span>
-                        <span class="font-mono font-bold text-emerald-600" x-text="'৳' + (detailsItem?.wallet_balance || 0)"></span>
+                        <span class="text-slate-500">{{ __('Wallet Balance') }}:</span>
+                        <span class="font-mono font-bold text-emerald-600" x-text="formatCurrency(detailsItem?.wallet_balance || 0)"></span>
                     </div>
                     <div class="px-3 py-2 flex items-center justify-between text-[11px]">
-                        <span class="text-slate-500">Panel Access Status:</span>
+                        <span class="text-slate-500">{{ __('Panel Access Status') }}:</span>
                         <span class="font-mono font-semibold" 
                               :class="detailsItem?.panel_billing_status === 'ACTIVE' ? 'text-emerald-600' : 'text-rose-600'" 
-                              x-text="detailsItem?.panel_billing_status"></span>
+                              x-text="panelStatusLabel(detailsItem?.panel_billing_status)"></span>
                     </div>
                 </div>
             </div>
@@ -901,7 +901,7 @@
                 <button type="button" 
                         @click="modals.details = false" 
                         class="border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs px-3.5 py-1.5 rounded-lg transition cursor-pointer">
-                    Close
+                    {{ __('Close') }}
                 </button>
             </div>
         </div>
@@ -913,6 +913,8 @@
 <script>
 function panelLicensesManager() {
     return {
+        currencySymbol: @js($currencySymbol ?? '৳'),
+        currencyPosition: @js($currencyPosition ?? 'left'),
         activeMenu: null,
         menuPos: { top: '0px', bottom: 'auto', right: '10px', left: 'auto' },
         saving: false,
@@ -941,6 +943,68 @@ function panelLicensesManager() {
         },
         bulkBillForm: {
             billing_month: '{{ date('Y-m') }}'
+        },
+        i18n: {
+            setExpiredBlock: @js(__('Set to Expired / Block')),
+            activatePanelAccess: @js(__('Activate Panel Access')),
+            unsetUnlimited: @js(__('Unset / Unlimited')),
+            processing: @js(__('Processing...')),
+            confirmRenewal: @js(__('Confirm Renewal')),
+            saving: @js(__('Saving...')),
+            saveSettings: @js(__('Save Settings')),
+            generating: @js(__('Generating...')),
+            generateInvoices: @js(__('Generate Invoices')),
+            selectResellerError: @js(__('Please select a reseller.')),
+            licenseRenewedSuccess: @js(__('License renewed successfully!')),
+            renewError: @js(__('Error renewing license.')),
+            renewNetworkError: @js(__('Network error while processing renewal.')),
+            settingsSavedSuccess: @js(__('Settings saved successfully!')),
+            settingsSaveError: @js(__('Error saving settings.')),
+            settingsNetworkError: @js(__('Network error while saving settings.')),
+            invoicesGeneratedSuccess: @js(__('Invoices generated successfully!')),
+            invoicesGenerateError: @js(__('Error generating invoices.')),
+            invoicesNetworkError: @js(__('Network error generating bills.')),
+            statusUpdatedSuccess: @js(__('Status updated!')),
+            statusUpdateError: @js(__('Error updating status.')),
+            statusNetworkError: @js(__('Network error toggling status.')),
+            prepaidWallet: @js(__('Prepaid Wallet')),
+            postpaidMonthly: @js(__('Postpaid Monthly')),
+            bandwidthWholesale: @js(__('Bandwidth Wholesale')),
+            statusActive: @js(__('ACTIVE')),
+            statusExpired: @js(__('EXPIRED')),
+            statusGracePeriod: @js(__('GRACE_PERIOD'))
+        },
+
+        init() {
+            const flashSuccess = @json(session('success'));
+            const flashError = @json(session('error'));
+            if (flashSuccess) {
+                this.showToast(flashSuccess, 'success');
+            } else if (flashError) {
+                this.showToast(flashError, 'error');
+            }
+        },
+
+        formatCurrency(amount) {
+            const val = parseFloat(amount) || 0;
+            const formatted = val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            return this.currencyPosition === 'right'
+                ? `${formatted} ${this.currencySymbol}`
+                : `${this.currencySymbol} ${formatted}`;
+        },
+
+        billingTypeLabel(type) {
+            if (type === 'PREPAID_WALLET') return this.i18n.prepaidWallet;
+            if (type === 'POSTPAID_MONTHLY') return this.i18n.postpaidMonthly;
+            if (type === 'BANDWIDTH_WHOLESALE') return this.i18n.bandwidthWholesale;
+            return type || '--';
+        },
+
+        panelStatusLabel(status) {
+            if (status === 'ACTIVE') return this.i18n.statusActive;
+            if (status === 'EXPIRED') return this.i18n.statusExpired;
+            if (status === 'GRACE_PERIOD') return this.i18n.statusGracePeriod;
+            return status || '--';
         },
 
         showToast(message, type = 'success') {
@@ -1026,7 +1090,7 @@ function panelLicensesManager() {
 
         async submitRenew() {
             if (!this.renewForm.reseller_id) {
-                this.showToast('Please select a reseller.', 'error');
+                this.showToast(this.i18n.selectResellerError, 'error');
                 return;
             }
             this.saving = true;
@@ -1042,14 +1106,14 @@ function panelLicensesManager() {
                 });
                 const data = await res.json();
                 if (res.ok && data.success) {
-                    this.showToast(data.message || 'License renewed successfully!', 'success');
+                    this.showToast(data.message || this.i18n.licenseRenewedSuccess, 'success');
                     this.modals.renew = false;
                     setTimeout(() => window.location.reload(), 600);
                 } else {
-                    this.showToast(data.message || 'Error renewing license.', 'error');
+                    this.showToast(data.message || this.i18n.renewError, 'error');
                 }
             } catch (e) {
-                this.showToast('Network error while processing renewal.', 'error');
+                this.showToast(this.i18n.renewNetworkError, 'error');
             } finally {
                 this.saving = false;
             }
@@ -1078,14 +1142,14 @@ function panelLicensesManager() {
                 });
                 const data = await res.json();
                 if (res.ok && data.success) {
-                    this.showToast(data.message || 'Settings saved successfully!', 'success');
+                    this.showToast(data.message || this.i18n.settingsSavedSuccess, 'success');
                     this.modals.editSettings = false;
                     setTimeout(() => window.location.reload(), 600);
                 } else {
-                    this.showToast(data.message || 'Error saving settings.', 'error');
+                    this.showToast(data.message || this.i18n.settingsSaveError, 'error');
                 }
             } catch (e) {
-                this.showToast('Network error while saving settings.', 'error');
+                this.showToast(this.i18n.settingsNetworkError, 'error');
             } finally {
                 this.saving = false;
             }
@@ -1110,14 +1174,14 @@ function panelLicensesManager() {
                 });
                 const data = await res.json();
                 if (res.ok && data.success) {
-                    this.showToast(data.message || 'Invoices generated successfully!', 'success');
+                    this.showToast(data.message || this.i18n.invoicesGeneratedSuccess, 'success');
                     this.modals.bulkBill = false;
                     setTimeout(() => window.location.reload(), 600);
                 } else {
-                    this.showToast(data.message || 'Error generating invoices.', 'error');
+                    this.showToast(data.message || this.i18n.invoicesGenerateError, 'error');
                 }
             } catch (e) {
-                this.showToast('Network error generating bills.', 'error');
+                this.showToast(this.i18n.invoicesNetworkError, 'error');
             } finally {
                 this.saving = false;
             }
@@ -1137,13 +1201,13 @@ function panelLicensesManager() {
                 });
                 const data = await res.json();
                 if (res.ok && data.success) {
-                    this.showToast(data.message || 'Status updated!', 'success');
+                    this.showToast(data.message || this.i18n.statusUpdatedSuccess, 'success');
                     setTimeout(() => window.location.reload(), 500);
                 } else {
-                    this.showToast(data.message || 'Error updating status.', 'error');
+                    this.showToast(data.message || this.i18n.statusUpdateError, 'error');
                 }
             } catch (e) {
-                this.showToast('Network error toggling status.', 'error');
+                this.showToast(this.i18n.statusNetworkError, 'error');
             }
         },
 

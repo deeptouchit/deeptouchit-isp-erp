@@ -1,6 +1,6 @@
 @extends('tenant.layouts.app')
 
-@section('title', 'Reseller Directory - ' . ($tenant->company_name ?? $tenant->name))
+@section('title', __('Reseller Directory') . ' - ' . ($tenant->company_name ?? $tenant->name))
 
 @push('styles')
 {{-- Page-specific CSS --}}
@@ -39,12 +39,12 @@
                 <i class="fas fa-handshake"></i>
             </div>
             <div class="flex items-center gap-2 min-w-0">
-                <h1 class="text-sm font-bold text-slate-900 tracking-tight whitespace-nowrap">Resellers</h1>
+                <h1 class="text-sm font-bold text-slate-900 tracking-tight whitespace-nowrap">{{ __('Resellers') }}</h1>
                 {{-- Plan Quota Badge --}}
                 <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold border {{ $isQuotaReached ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-purple-50 text-purple-700 border-purple-200' }}"
-                      title="Reseller quota allowed in your ISP plan">
+                      title="{{ __('Reseller quota allowed in your ISP plan') }}">
                     <i class="fas fa-layer-group text-[9px]"></i>
-                    <span>Plan: {{ $plan->name ?? 'Standard' }} ({{ $totalResellers }}/{{ $resellerQuota > 0 ? $resellerQuota : '∞' }})</span>
+                    <span>{{ __('Plan') }}: {{ $plan->name ?? __('Standard') }} ({{ $totalResellers }}/{{ $resellerQuota > 0 ? $resellerQuota : '∞' }})</span>
                 </span>
             </div>
         </div>
@@ -53,24 +53,24 @@
             {{-- Wholesale Bandwidth Link --}}
             <a href="{{ route('tenant.resellers.bandwidth') }}" 
                class="h-[34px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-0 px-2.5 rounded-lg border border-slate-200/80 shadow-2xs transition flex items-center justify-center gap-1.5"
-               title="Manage Dedicated & Wholesale Bandwidth Allocation">
+               title="{{ __('Manage Dedicated & Wholesale Bandwidth Allocation') }}">
                 <i class="fas fa-network-wired text-cyan-600 text-[10px]"></i>
-                <span class="hidden md:inline">Wholesale Bandwidth</span>
+                <span class="hidden md:inline">{{ __('Wholesale Bandwidth') }}</span>
             </a>
 
             {{-- Wallets Link --}}
             <a href="{{ route('tenant.resellers.wallets') }}" 
                class="h-[34px] bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs py-0 px-2.5 rounded-lg border border-slate-200/80 shadow-2xs transition flex items-center justify-center gap-1.5">
                 <i class="fas fa-wallet text-slate-500 text-[10px]"></i>
-                <span class="hidden sm:inline">Wallets</span>
+                <span class="hidden sm:inline">{{ __('Wallets') }}</span>
             </a>
 
             {{-- Import Resellers (Excel / CSV) --}}
             <a href="{{ route('tenant.resellers.import') }}" 
                class="h-[34px] bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-semibold text-xs py-0 px-2.5 rounded-lg border border-emerald-200/80 shadow-2xs transition flex items-center justify-center gap-1.5"
-               title="Bulk Import Resellers from Excel / CSV">
+               title="{{ __('Bulk Import Resellers from Excel / CSV') }}">
                 <i class="fas fa-file-excel text-emerald-600 text-[10px]"></i>
-                <span>Import</span>
+                <span>{{ __('Import') }}</span>
             </a>
 
             {{-- Add New Reseller Button --}}
@@ -78,7 +78,7 @@
                     @click="openCreateModal()" 
                     class="h-[34px] font-semibold text-xs py-0 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer text-white {{ $isQuotaReached ? 'bg-slate-700 hover:bg-slate-800' : 'bg-cyan-600 hover:bg-cyan-700' }}">
                 <i class="fas fa-plus text-[10px]"></i>
-                <span>Onboard Reseller</span>
+                <span>{{ __('Onboard Reseller') }}</span>
             </button>
         </div>
     </div>
@@ -88,7 +88,7 @@
         {{-- Card 1: Total Resellers / Quota --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5 min-w-0">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Plan Quota</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">{{ __('Plan Quota') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block truncate {{ $isQuotaReached ? 'text-rose-600' : 'text-slate-900' }}">
                     {{ $totalResellers }} / {{ $resellerQuota > 0 ? $resellerQuota : '∞' }}
                 </span>
@@ -101,7 +101,7 @@
         {{-- Card 2: Active Resellers --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5 min-w-0">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-emerald-600">Active Resellers</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-emerald-600">{{ __('Active Resellers') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block truncate text-emerald-700">{{ number_format($activeResellers) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-emerald-50 text-emerald-600 border-emerald-100 flex items-center justify-center">
@@ -112,7 +112,7 @@
         {{-- Card 3: Prepaid Model --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5 min-w-0">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-purple-600">Prepaid Model</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-purple-600">{{ __('Prepaid Model') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block truncate text-purple-700">{{ number_format($prepaidResellers) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-purple-50 text-purple-600 border-purple-100 flex items-center justify-center">
@@ -123,7 +123,7 @@
         {{-- Card 4: Postpaid / Trunk --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5 min-w-0">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-blue-600">Postpaid / Trunk</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-blue-600">{{ __('Postpaid / Trunk') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block truncate text-blue-700">{{ number_format($postpaidResellers) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-blue-50 text-blue-600 border-blue-100 flex items-center justify-center">
@@ -134,7 +134,7 @@
         {{-- Card 5: Total Wallet Balance --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5 min-w-0">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-emerald-600">Total Wallets</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-emerald-600">{{ __('Total Wallets') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block truncate text-emerald-700">@currency($totalWalletBalance)</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-emerald-50 text-emerald-600 border-emerald-100 flex items-center justify-center">
@@ -145,7 +145,7 @@
         {{-- Card 6: Monthly Software Fees --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5 min-w-0">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-indigo-600">Monthly Software</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-indigo-600">{{ __('Monthly Software') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block truncate text-indigo-700">@currency($totalMonthlySoftwareFees)</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-indigo-50 text-indigo-600 border-indigo-100 flex items-center justify-center">
@@ -171,7 +171,7 @@
                 <input type="text" 
                        name="search" 
                        x-model="searchQuery" 
-                       placeholder="Search Name, Code, Prefix, Contact, Mobile, Email..." 
+                       placeholder="{{ __('Search Name, Code, Prefix, Contact, Mobile, Email...') }}" 
                        value="{{ request('search') }}"
                        autocomplete="off"
                        class="w-full h-[34px] pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-normal" />
@@ -187,30 +187,30 @@
             {{-- Primary Filter: Billing Model --}}
             <select name="billing_type" 
                     class="h-[34px] w-full md:w-44 text-xs bg-slate-50 border border-slate-200 rounded-lg px-2.5 text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden font-normal shrink-0">
-                <option value="">All Billing Models</option>
-                <option value="PREPAID_WALLET" {{ request('billing_type') === 'PREPAID_WALLET' ? 'selected' : '' }}>Prepaid Wallet</option>
-                <option value="POSTPAID_MONTHLY" {{ request('billing_type') === 'POSTPAID_MONTHLY' ? 'selected' : '' }}>Postpaid Monthly</option>
-                <option value="BANDWIDTH_WHOLESALE" {{ request('billing_type') === 'BANDWIDTH_WHOLESALE' ? 'selected' : '' }}>Bandwidth Wholesale</option>
+                <option value="">{{ __('All Billing Models') }}</option>
+                <option value="PREPAID_WALLET" {{ request('billing_type') === 'PREPAID_WALLET' ? 'selected' : '' }}>{{ __('Prepaid Wallet') }}</option>
+                <option value="POSTPAID_MONTHLY" {{ request('billing_type') === 'POSTPAID_MONTHLY' ? 'selected' : '' }}>{{ __('Postpaid Monthly') }}</option>
+                <option value="BANDWIDTH_WHOLESALE" {{ request('billing_type') === 'BANDWIDTH_WHOLESALE' ? 'selected' : '' }}>{{ __('Bandwidth Wholesale') }}</option>
             </select>
 
             {{-- Primary Filter: Status --}}
             <select name="status" 
                     class="h-[34px] w-full md:w-36 text-xs bg-slate-50 border border-slate-200 rounded-lg px-2.5 text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden font-normal shrink-0">
-                <option value="">All Statuses</option>
-                <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>Active</option>
-                <option value="inactive" {{ request('status') === 'inactive' ? 'selected' : '' }}>Inactive</option>
-                <option value="suspended" {{ request('status') === 'suspended' ? 'selected' : '' }}>Suspended</option>
+                <option value="">{{ __('All Statuses') }}</option>
+                <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>{{ __('Active') }}</option>
+                <option value="inactive" {{ request('status') === 'inactive' ? 'selected' : '' }}>{{ __('Inactive') }}</option>
+                <option value="suspended" {{ request('status') === 'suspended' ? 'selected' : '' }}>{{ __('Suspended') }}</option>
             </select>
 
             {{-- Pagination Selector (per_page) --}}
             @php $perPageVal = (int)request('per_page', 20); @endphp
             <select name="per_page" 
                     class="h-[34px] w-full md:w-28 text-xs bg-slate-50 border border-slate-200 rounded-lg px-2.5 text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden font-normal shrink-0">
-                <option value="15" {{ $perPageVal === 15 ? 'selected' : '' }}>15 / page</option>
-                <option value="20" {{ $perPageVal === 20 ? 'selected' : '' }}>20 / page</option>
-                <option value="30" {{ $perPageVal === 30 ? 'selected' : '' }}>30 / page</option>
-                <option value="50" {{ $perPageVal === 50 ? 'selected' : '' }}>50 / page</option>
-                <option value="100" {{ $perPageVal === 100 ? 'selected' : '' }}>100 / page</option>
+                <option value="15" {{ $perPageVal === 15 ? 'selected' : '' }}>15 / {{ __('page') }}</option>
+                <option value="20" {{ $perPageVal === 20 ? 'selected' : '' }}>20 / {{ __('page') }}</option>
+                <option value="30" {{ $perPageVal === 30 ? 'selected' : '' }}>30 / {{ __('page') }}</option>
+                <option value="50" {{ $perPageVal === 50 ? 'selected' : '' }}>50 / {{ __('page') }}</option>
+                <option value="100" {{ $perPageVal === 100 ? 'selected' : '' }}>100 / {{ __('page') }}</option>
             </select>
 
             {{-- More Filters Accordion Toggle Button --}}
@@ -219,7 +219,7 @@
                     class="h-[34px] py-0 px-2.5 rounded-lg border text-xs font-medium transition flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
                     :class="showMoreFilters || {{ $activeMoreCount }} > 0 ? 'bg-cyan-50/70 border-cyan-200 text-cyan-800' : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'">
                 <i class="fas fa-sliders text-[11px] text-slate-500"></i>
-                <span>More Filters</span>
+                <span>{{ __('More Filters') }}</span>
                 @if($activeMoreCount > 0)
                     <span class="w-4 h-4 rounded-full bg-cyan-600 text-white text-[9px] font-bold flex items-center justify-center">{{ $activeMoreCount }}</span>
                 @endif
@@ -231,13 +231,13 @@
                 <button type="submit" 
                         class="h-[34px] bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-0 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer">
                     <i class="fas fa-filter text-[10px]"></i>
-                    <span>Filter</span>
+                    <span>{{ __('Filter') }}</span>
                 </button>
 
                 <a href="{{ route('tenant.resellers.index') }}" 
                    class="h-[34px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-0 px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer">
                     <i class="fas fa-rotate-left text-[10px]"></i>
-                    <span>Reset</span>
+                    <span>{{ __('Reset') }}</span>
                 </a>
             </div>
         </div>
@@ -257,10 +257,10 @@
             <div class="w-full sm:w-auto">
                 <select name="wallet_state" 
                         class="h-[34px] w-full sm:w-48 text-xs bg-slate-50 border border-slate-200 rounded-lg px-2.5 text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden font-normal">
-                    <option value="">All Wallet Balances</option>
-                    <option value="positive" {{ request('wallet_state') === 'positive' ? 'selected' : '' }}>Positive Balance (&gt; 0)</option>
-                    <option value="zero_negative" {{ request('wallet_state') === 'zero_negative' ? 'selected' : '' }}>Zero or Negative (&le; 0)</option>
-                    <option value="credit_exceeded" {{ request('wallet_state') === 'credit_exceeded' ? 'selected' : '' }}>Exceeded Credit Limit</option>
+                    <option value="">{{ __('All Wallet Balances') }}</option>
+                    <option value="positive" {{ request('wallet_state') === 'positive' ? 'selected' : '' }}>{{ __('Positive Balance (> 0)') }}</option>
+                    <option value="zero_negative" {{ request('wallet_state') === 'zero_negative' ? 'selected' : '' }}>{{ __('Zero or Negative (≤ 0)') }}</option>
+                    <option value="credit_exceeded" {{ request('wallet_state') === 'credit_exceeded' ? 'selected' : '' }}>{{ __('Exceeded Credit Limit') }}</option>
                 </select>
             </div>
 
@@ -268,9 +268,9 @@
             <div class="w-full sm:w-auto">
                 <select name="has_prefix" 
                         class="h-[34px] w-full sm:w-44 text-xs bg-slate-50 border border-slate-200 rounded-lg px-2.5 text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden font-normal">
-                    <option value="">All Reseller Prefixes</option>
-                    <option value="yes" {{ request('has_prefix') === 'yes' ? 'selected' : '' }}>Has PPPoE Prefix</option>
-                    <option value="no" {{ request('has_prefix') === 'no' ? 'selected' : '' }}>No Prefix Assigned</option>
+                    <option value="">{{ __('All Reseller Prefixes') }}</option>
+                    <option value="yes" {{ request('has_prefix') === 'yes' ? 'selected' : '' }}>{{ __('Has PPPoE Prefix') }}</option>
+                    <option value="no" {{ request('has_prefix') === 'no' ? 'selected' : '' }}>{{ __('No Prefix Assigned') }}</option>
                 </select>
             </div>
         </div>
@@ -281,10 +281,10 @@
         <div class="px-3.5 py-2 bg-slate-50/80 border-b border-slate-200 flex items-center justify-between">
             <span class="font-bold text-slate-800 text-[11px] uppercase tracking-wider flex items-center gap-1.5">
                 <i class="fas fa-list text-slate-400 text-xs"></i>
-                <span>Reseller Directory</span>
+                <span>{{ __('Reseller Directory') }}</span>
             </span>
             <span class="text-[11px] text-slate-500 font-mono font-normal">
-                Total {{ $resellers->total() }} Resellers
+                {{ __('Total :count Resellers', ['count' => $resellers->total()]) }}
             </span>
         </div>
 
@@ -293,17 +293,17 @@
                 <thead>
                     <tr>
                         <th class="w-10 text-center font-semibold">#</th>
-                        <th class="text-center font-semibold">Status</th>
-                        <th class="text-center font-semibold">Code</th>
-                        <th class="text-center font-semibold">Reseller Name</th>
-                        <th class="text-center font-semibold">Prefix</th>
-                        <th class="text-center font-semibold">Contact Person</th>
-                        <th class="text-center font-semibold">Mobile</th>
-                        <th class="text-center font-semibold">Billing Model</th>
-                        <th class="text-center font-semibold">Commission</th>
-                        <th class="text-center font-semibold">Wallet Balance</th>
-                        <th class="text-center font-semibold">Monthly Fee</th>
-                        <th class="w-10 text-center font-semibold no-sort">Action</th>
+                        <th class="text-center font-semibold">{{ __('Status') }}</th>
+                        <th class="text-center font-semibold">{{ __('Code') }}</th>
+                        <th class="text-center font-semibold">{{ __('Reseller Name') }}</th>
+                        <th class="text-center font-semibold">{{ __('Prefix') }}</th>
+                        <th class="text-center font-semibold">{{ __('Contact Person') }}</th>
+                        <th class="text-center font-semibold">{{ __('Mobile') }}</th>
+                        <th class="text-center font-semibold">{{ __('Billing Model') }}</th>
+                        <th class="text-center font-semibold">{{ __('Commission') }}</th>
+                        <th class="text-center font-semibold">{{ __('Wallet Balance') }}</th>
+                        <th class="text-center font-semibold">{{ __('Monthly Fee') }}</th>
+                        <th class="w-10 text-center font-semibold no-sort">{{ __('Action') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -341,17 +341,17 @@
                                 @if($res->status === 'active')
                                     <span class="inline-flex items-center justify-center gap-1 px-2 py-0.5 rounded-full text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200">
                                         <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                        <span>Active</span>
+                                        <span>{{ __('Active') }}</span>
                                     </span>
                                 @elseif($res->status === 'suspended')
                                     <span class="inline-flex items-center justify-center gap-1 px-2 py-0.5 rounded-full text-[10px] bg-rose-50 text-rose-700 border border-rose-200">
                                         <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
-                                        <span>Suspended</span>
+                                        <span>{{ __('Suspended') }}</span>
                                     </span>
                                 @else
                                     <span class="inline-flex items-center justify-center gap-1 px-2 py-0.5 rounded-full text-[10px] bg-slate-100 text-slate-600 border border-slate-200">
                                         <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
-                                        <span>Inactive</span>
+                                        <span>{{ __('Inactive') }}</span>
                                     </span>
                                 @endif
                             </td>
@@ -390,7 +390,7 @@
                             {{-- 8. Billing Model --}}
                             <td class="text-center font-mono text-[10px] whitespace-nowrap">
                                 <span class="inline-flex px-1.5 py-0.5 rounded border {{ $billingBadge['class'] ?? 'bg-slate-50 text-slate-700 border-slate-200' }}">
-                                    {{ $billingBadge['label'] ?? $res->billing_type }}
+                                    {{ __($billingBadge['label'] ?? $res->billing_type) }}
                                 </span>
                             </td>
 
@@ -414,7 +414,7 @@
                                 <button type="button" 
                                         @click.stop="toggleMenu({{ Js::from($resPayload) }}, $event)" 
                                         class="res-action-btn w-6 h-6 mx-auto rounded-md hover:bg-slate-100 text-slate-500 hover:text-cyan-700 transition cursor-pointer flex items-center justify-center text-[10px]"
-                                        title="Actions">
+                                        title="{{ __('Actions') }}">
                                     <i class="fas fa-ellipsis-v text-[10px] pointer-events-none"></i>
                                 </button>
                             </td>
@@ -426,14 +426,14 @@
                                     <div class="w-10 h-10 rounded-xl bg-cyan-50 text-cyan-600 mx-auto flex items-center justify-center text-base border border-cyan-100 shadow-2xs">
                                         <i class="fas fa-handshake"></i>
                                     </div>
-                                    <h3 class="text-xs font-bold text-slate-800">No Resellers Found</h3>
-                                    <p class="text-[11px] text-slate-400 font-normal">Onboard your first reseller to start managing clients and wallet balances.</p>
+                                    <h3 class="text-xs font-bold text-slate-800">{{ __('No Resellers Found') }}</h3>
+                                    <p class="text-[11px] text-slate-400 font-normal">{{ __('Onboard your first reseller to start managing clients and wallet balances.') }}</p>
                                     <div class="pt-1 flex items-center justify-center gap-2">
                                         <button type="button" 
                                                 @click="openCreateModal()" 
                                                 class="bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs px-3.5 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                                             <i class="fas fa-plus text-[10px]"></i>
-                                            <span>Onboard Reseller</span>
+                                            <span>{{ __('Onboard Reseller') }}</span>
                                         </button>
                                     </div>
                                 </div>
@@ -448,7 +448,7 @@
         @if($resellers->hasPages() || $resellers->total() > 0)
             <div class="p-3 bg-slate-50/80 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-2">
                 <div class="text-[11px] text-slate-500 font-normal">
-                    Showing {{ $resellers->firstItem() ?? 0 }} to {{ $resellers->lastItem() ?? 0 }} of {{ $resellers->total() }} results
+                    {{ __('Showing :first to :last of :total results', ['first' => $resellers->firstItem() ?? 0, 'last' => $resellers->lastItem() ?? 0, 'total' => $resellers->total()]) }}
                 </div>
                 <div>
                     {{ $resellers->links() }}
@@ -487,7 +487,7 @@
                     @click="rechargeFromMenu()" 
                     class="w-full px-2.5 py-1.5 hover:bg-emerald-50 text-emerald-800 font-normal flex items-center gap-2 transition text-left cursor-pointer text-[11px]">
                 <i class="fas fa-wallet text-emerald-600 w-3.5 text-center text-[10px]"></i>
-                <span>Quick Wallet Top-up</span>
+                <span>{{ __('Quick Wallet Top-up') }}</span>
             </button>
         </div>
 
@@ -497,14 +497,14 @@
                     @click="editFromMenu()" 
                     class="w-full px-2.5 py-1.5 hover:bg-amber-50 text-slate-700 hover:text-amber-700 font-normal flex items-center gap-2 transition text-left cursor-pointer text-[11px]">
                 <i class="fas fa-pen-to-square text-amber-500 w-3.5 text-center text-[10px]"></i>
-                <span>Edit Configuration</span>
+                <span>{{ __('Edit Configuration') }}</span>
             </button>
 
             <button type="button" 
                     @click="toggleStatusFromMenu()" 
                     class="w-full px-2.5 py-1.5 hover:bg-cyan-50 text-slate-700 hover:text-cyan-700 font-normal flex items-center gap-2 transition text-left cursor-pointer text-[11px]">
                 <i class="fas w-3.5 text-center text-[10px]" :class="activeMenuRes?.status === 'active' ? 'fa-ban text-rose-500' : 'fa-check text-emerald-500'"></i>
-                <span x-text="activeMenuRes?.status === 'active' ? 'Suspend Reseller' : 'Activate Reseller'"></span>
+                <span x-text="activeMenuRes?.status === 'active' ? i18n.suspendReseller : i18n.activateReseller"></span>
             </button>
         </div>
 
@@ -514,7 +514,7 @@
                     @click="deleteFromMenu()" 
                     class="w-full px-2.5 py-1.5 hover:bg-rose-50 text-rose-600 font-normal flex items-center gap-2 transition text-left cursor-pointer text-[11px]">
                 <i class="far fa-trash-alt text-rose-500 w-3.5 text-center text-[10px]"></i>
-                <span>Delete Reseller</span>
+                <span>{{ __('Delete Reseller') }}</span>
             </button>
         </div>
     </div>
@@ -546,8 +546,8 @@
                         <i class="fas" :class="modal.isEdit ? 'fa-pen-to-square' : 'fa-handshake'"></i>
                     </div>
                     <div>
-                        <h3 class="text-xs font-bold text-slate-800" x-text="modal.isEdit ? 'Edit Reseller' : 'Onboard New Reseller'"></h3>
-                        <p class="text-[10.5px] text-slate-500 font-normal">Configure business identity, username prefix, billing terms, and portal credentials</p>
+                        <h3 class="text-xs font-bold text-slate-800" x-text="modal.isEdit ? i18n.editReseller : i18n.onboardNewReseller"></h3>
+                        <p class="text-[10.5px] text-slate-500 font-normal">{{ __('Configure business identity, username prefix, billing terms, and portal credentials') }}</p>
                     </div>
                 </div>
                 <button type="button" @click="closeModal()" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center text-xs cursor-pointer">
@@ -563,18 +563,18 @@
                     <div class="p-3 bg-rose-50 border border-rose-200 rounded-lg flex items-start gap-2.5 text-rose-800 text-xs" x-show="!modal.isEdit">
                         <i class="fas fa-triangle-exclamation text-rose-600 mt-0.5 shrink-0"></i>
                         <div>
-                            <strong class="font-semibold block">Plan Reseller Quota Limit Reached ({{ $totalResellers }}/{{ $resellerQuota }})</strong>
-                            <span class="text-[11px] text-rose-600">Your ISP subscription plan (<strong>{{ $plan->name ?? 'Standard' }}</strong>) allows up to {{ $resellerQuota }} resellers. To add more resellers, please upgrade your subscription plan.</span>
+                            <strong class="font-semibold block">{{ __('Plan Reseller Quota Limit Reached (:used/:limit)', ['used' => $totalResellers, 'limit' => $resellerQuota]) }}</strong>
+                            <span class="text-[11px] text-rose-600">{!! __('Your ISP subscription plan (:plan) allows up to :limit resellers. To add more resellers, please upgrade your subscription plan.', ['plan' => '<strong>' . e($plan->name ?? __('Standard')) . '</strong>', 'limit' => $resellerQuota]) !!}</span>
                         </div>
                     </div>
                 @else
                     <div class="p-2.5 bg-purple-50/60 border border-purple-100 rounded-lg flex items-center justify-between text-xs" x-show="!modal.isEdit">
                         <div class="flex items-center gap-1.5 text-purple-800">
                             <i class="fas fa-layer-group text-purple-600"></i>
-                            <span><strong>Plan Quota:</strong> {{ $totalResellers }} of {{ $resellerQuota > 0 ? $resellerQuota : 'Unlimited' }} resellers used ({{ $plan->name ?? 'Current Plan' }})</span>
+                            <span><strong>{{ __('Plan Quota') }}:</strong> {{ __(':used of :limit resellers used (:plan)', ['used' => $totalResellers, 'limit' => $resellerQuota > 0 ? $resellerQuota : __('Unlimited'), 'plan' => $plan->name ?? __('Current Plan')]) }}</span>
                         </div>
                         <span class="text-[10.5px] font-semibold text-purple-700 bg-white px-2 py-0.5 rounded border border-purple-200">
-                            {{ $quotaRemaining }} remaining
+                            {{ __(':count remaining', ['count' => $quotaRemaining]) }}
                         </span>
                     </div>
                 @endif
@@ -583,29 +583,29 @@
                 <div class="p-3 bg-slate-50 rounded-lg border border-slate-200/80 space-y-2.5">
                     <span class="text-[11px] font-semibold text-slate-800 flex items-center gap-1.5">
                         <i class="fas fa-building text-cyan-600"></i>
-                        <span>1. Business Identity &amp; Contact</span>
+                        <span>{{ __('1. Business Identity & Contact') }}</span>
                     </span>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {{-- Company Name --}}
                         <div>
                             <label class="block text-[11px] font-semibold text-slate-700 mb-1">
-                                Company / Reseller Name <span class="text-rose-500">*</span>
+                                {{ __('Company / Reseller Name') }} <span class="text-rose-500">*</span>
                             </label>
                             <input type="text" 
                                    x-model="modal.form.name" 
-                                   placeholder="e.g. SpeedNet Chittagong" 
+                                   placeholder="{{ __('e.g. SpeedNet Chittagong') }}" 
                                    class="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-cyan-500 outline-hidden transition font-normal" />
                         </div>
 
                         {{-- Reseller Code --}}
                         <div>
                             <label class="block text-[11px] font-semibold text-slate-700 mb-1">
-                                Reseller Code <span class="text-rose-500">*</span>
+                                {{ __('Reseller Code') }} <span class="text-rose-500">*</span>
                             </label>
                             <input type="text" 
                                    x-model="modal.form.code" 
-                                   placeholder="e.g. RES-101" 
+                                   placeholder="{{ __('e.g. RES-101') }}" 
                                    class="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-mono text-slate-800 focus:border-cyan-500 outline-hidden transition font-normal" />
                         </div>
                     </div>
@@ -614,34 +614,34 @@
                         {{-- Username Prefix --}}
                         <div>
                             <label class="block text-[11px] font-semibold text-slate-700 mb-1">
-                                Username Prefix (PPPoE)
+                                {{ __('Username Prefix (PPPoE)') }}
                             </label>
                             <input type="text" 
                                    x-model="modal.form.prefix" 
-                                   placeholder="e.g. spd" 
+                                   placeholder="{{ __('e.g. spd') }}" 
                                    class="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-mono text-purple-700 focus:border-cyan-500 outline-hidden transition font-normal" />
-                            <span class="text-[9.5px] text-slate-400 mt-0.5 block">Format: prefix_* (e.g. spd_user1)</span>
+                            <span class="text-[9.5px] text-slate-400 mt-0.5 block">{{ __('Format: prefix_* (e.g. spd_user1)') }}</span>
                         </div>
 
                         {{-- Contact Person --}}
                         <div>
                             <label class="block text-[11px] font-semibold text-slate-700 mb-1">
-                                Contact Person <span class="text-rose-500">*</span>
+                                {{ __('Contact Person') }} <span class="text-rose-500">*</span>
                             </label>
                             <input type="text" 
                                    x-model="modal.form.contact_person" 
-                                   placeholder="e.g. Md. Rafiqul Islam" 
+                                   placeholder="{{ __('e.g. Md. Rafiqul Islam') }}" 
                                    class="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-cyan-500 outline-hidden transition font-normal" />
                         </div>
 
                         {{-- Mobile Number --}}
                         <div>
                             <label class="block text-[11px] font-semibold text-slate-700 mb-1">
-                                Mobile Number <span class="text-rose-500">*</span>
+                                {{ __('Mobile Number') }} <span class="text-rose-500">*</span>
                             </label>
                             <input type="text" 
                                    x-model="modal.form.mobile" 
-                                   placeholder="e.g. 01819000000" 
+                                   placeholder="{{ __('e.g. 01819000000') }}" 
                                    class="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-mono text-slate-800 focus:border-cyan-500 outline-hidden transition font-normal" />
                         </div>
                     </div>
@@ -649,7 +649,7 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {{-- Email --}}
                         <div>
-                            <label class="block text-[11px] font-semibold text-slate-700 mb-1">Email Address</label>
+                            <label class="block text-[11px] font-semibold text-slate-700 mb-1">{{ __('Email Address') }}</label>
                             <input type="email" 
                                    name="reseller_email_nobrowser_fill"
                                    autocomplete="off"
@@ -660,10 +660,10 @@
 
                         {{-- Address --}}
                         <div>
-                            <label class="block text-[11px] font-semibold text-slate-700 mb-1">Territory / Office Address</label>
+                            <label class="block text-[11px] font-semibold text-slate-700 mb-1">{{ __('Territory / Office Address') }}</label>
                             <input type="text" 
                                    x-model="modal.form.address" 
-                                   placeholder="e.g. Agrabad C/A, Chattogram" 
+                                   placeholder="{{ __('e.g. Agrabad C/A, Chattogram') }}" 
                                    class="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-cyan-500 outline-hidden transition font-normal" />
                         </div>
                     </div>
@@ -673,27 +673,27 @@
                 <div class="p-3 bg-slate-50 rounded-lg border border-slate-200/80 space-y-2.5">
                     <span class="text-[11px] font-semibold text-slate-800 flex items-center gap-1.5">
                         <i class="fas fa-wallet text-cyan-600"></i>
-                        <span>2. Billing Model &amp; Financials</span>
+                        <span>{{ __('2. Billing Model & Financials') }}</span>
                     </span>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                         {{-- Billing Type --}}
                         <div>
                             <label class="block text-[11px] font-semibold text-slate-700 mb-1">
-                                Billing Model <span class="text-rose-500">*</span>
+                                {{ __('Billing Model') }} <span class="text-rose-500">*</span>
                             </label>
                             <select x-model="modal.form.billing_type" 
                                     class="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-cyan-500 outline-hidden transition font-normal">
-                                <option value="PREPAID_WALLET">Prepaid Wallet</option>
-                                <option value="POSTPAID_MONTHLY">Postpaid Monthly</option>
-                                <option value="BANDWIDTH_WHOLESALE">Bandwidth Wholesale</option>
+                                <option value="PREPAID_WALLET">{{ __('Prepaid Wallet') }}</option>
+                                <option value="POSTPAID_MONTHLY">{{ __('Postpaid Monthly') }}</option>
+                                <option value="BANDWIDTH_WHOLESALE">{{ __('Bandwidth Wholesale') }}</option>
                             </select>
                         </div>
 
                         {{-- Commission Rate % --}}
                         <div>
                             <label class="block text-[11px] font-semibold text-slate-700 mb-1">
-                                Commission Rate (%) <span class="text-rose-500">*</span>
+                                {{ __('Commission Rate (%)') }} <span class="text-rose-500">*</span>
                             </label>
                             <input type="number" 
                                    step="0.1" min="0" max="100" 
@@ -705,7 +705,7 @@
                         {{-- Initial Balance (only for new) --}}
                         <div x-show="!modal.isEdit">
                             <label class="block text-[11px] font-semibold text-slate-700 mb-1">
-                                Initial Wallet (<span x-text="currencySymbol"></span>)
+                                {{ __('Initial Wallet') }} (<span x-text="currencySymbol"></span>)
                             </label>
                             <input type="number" 
                                    step="0.01" 
@@ -717,7 +717,7 @@
                         {{-- Credit Limit --}}
                         <div>
                             <label class="block text-[11px] font-semibold text-slate-700 mb-1">
-                                Credit Limit (<span x-text="currencySymbol"></span>)
+                                {{ __('Credit Limit') }} (<span x-text="currencySymbol"></span>)
                             </label>
                             <input type="number" 
                                    step="0.01" min="0" 
@@ -732,25 +732,25 @@
                 <div class="p-3 bg-slate-50 rounded-lg border border-slate-200/80 space-y-2.5">
                     <span class="text-[11px] font-semibold text-slate-800 flex items-center gap-1.5">
                         <i class="fas fa-laptop-code text-cyan-600"></i>
-                        <span>3. Software Subscription &amp; Status</span>
+                        <span>{{ __('3. Software Subscription & Status') }}</span>
                     </span>
 
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         {{-- Monthly Charge --}}
                         <div>
                             <label class="block text-[11px] font-semibold text-slate-700 mb-1">
-                                Monthly Panel Fee (<span x-text="currencySymbol"></span>)
+                                {{ __('Monthly Panel Fee') }} (<span x-text="currencySymbol"></span>)
                             </label>
                             <input type="number" 
                                    step="0.01" min="0" 
                                    x-model="modal.form.monthly_panel_charge" 
-                                   placeholder="e.g. 500.00" 
+                                   placeholder="{{ __('e.g. 500.00') }}" 
                                    class="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-mono text-slate-800 focus:border-cyan-500 outline-hidden transition font-normal" />
                         </div>
 
                         {{-- Panel Expiry Date --}}
                         <div>
-                            <label class="block text-[11px] font-semibold text-slate-700 mb-1">Panel Expiry Date</label>
+                            <label class="block text-[11px] font-semibold text-slate-700 mb-1">{{ __('Panel Expiry Date') }}</label>
                             <input type="date" 
                                    x-model="modal.form.panel_expiry_date" 
                                    class="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-cyan-500 outline-hidden transition font-normal" />
@@ -759,13 +759,13 @@
                         {{-- Status --}}
                         <div>
                             <label class="block text-[11px] font-semibold text-slate-700 mb-1">
-                                Account Status <span class="text-rose-500">*</span>
+                                {{ __('Account Status') }} <span class="text-rose-500">*</span>
                             </label>
                             <select x-model="modal.form.status" 
                                     class="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-cyan-500 outline-hidden transition font-normal">
-                                <option value="active">Active (Operational)</option>
-                                <option value="inactive">Inactive</option>
-                                <option value="suspended">Suspended (Blocked)</option>
+                                <option value="active">{{ __('Active (Operational)') }}</option>
+                                <option value="inactive">{{ __('Inactive') }}</option>
+                                <option value="suspended">{{ __('Suspended (Blocked)') }}</option>
                             </select>
                         </div>
                     </div>
@@ -776,32 +776,32 @@
                     <div class="flex items-center justify-between">
                         <span class="text-[11px] font-semibold text-cyan-900 flex items-center gap-1.5">
                             <i class="fas fa-shield-halved text-cyan-600"></i>
-                            <span>4. Reseller Admin Portal Access</span>
+                            <span>{{ __('4. Reseller Admin Portal Access') }}</span>
                         </span>
                         <label class="inline-flex items-center gap-1.5 cursor-pointer select-none">
                             <input type="checkbox" x-model="modal.form.create_portal_user" class="rounded border-slate-300 text-cyan-600 focus:ring-cyan-500">
-                            <span class="text-xs text-slate-700 font-semibold">Create Portal Login</span>
+                            <span class="text-xs text-slate-700 font-semibold">{{ __('Create Portal Login') }}</span>
                         </label>
                     </div>
 
                     <div x-show="modal.form.create_portal_user" class="pt-1">
-                        <label class="block text-[11px] font-semibold text-slate-700 mb-1">Initial Portal Password</label>
+                        <label class="block text-[11px] font-semibold text-slate-700 mb-1">{{ __('Initial Portal Password') }}</label>
                         <input type="password" 
                                name="reseller_pwd_nobrowser_fill"
                                autocomplete="new-password"
                                x-model="modal.form.portal_password" 
-                               placeholder="Default: 12345678" 
+                               placeholder="{{ __('Default: 12345678') }}" 
                                class="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-mono text-slate-800 focus:border-cyan-500 outline-hidden transition font-normal" />
-                        <span class="text-[10px] text-slate-500 mt-0.5 block">Login email will be the reseller contact email provided above.</span>
+                        <span class="text-[10px] text-slate-500 mt-0.5 block">{{ __('Login email will be the reseller contact email provided above.') }}</span>
                     </div>
                 </div>
 
                 {{-- SECTION 5: Notes / Agreement --}}
                 <div>
-                    <label class="block text-[11px] font-semibold text-slate-700 mb-1">Notes / Contract Details</label>
+                    <label class="block text-[11px] font-semibold text-slate-700 mb-1">{{ __('Notes / Contract Details') }}</label>
                     <textarea rows="2" 
                               x-model="modal.form.notes" 
-                              placeholder="Contract agreement terms, territory coverage, special discount notes..." 
+                              placeholder="{{ __('Contract agreement terms, territory coverage, special discount notes...') }}" 
                               class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 outline-hidden transition font-normal"></textarea>
                 </div>
             </div>
@@ -811,14 +811,14 @@
                 <button type="button" 
                         @click="closeModal()" 
                         class="border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs px-3.5 py-1.5 rounded-lg transition cursor-pointer">
-                    Cancel
+                    {{ __('Cancel') }}
                 </button>
                 <button type="button" 
                         @click="saveReseller()" 
                         :disabled="modal.saving || (!modal.isEdit && {{ $isQuotaReached ? 'true' : 'false' }})"
                         class="bg-cyan-600 hover:bg-cyan-700 text-white font-medium text-xs px-4 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
                     <i class="fas fa-check text-[10px]" :class="{ 'fa-spin fa-spinner': modal.saving }"></i>
-                    <span x-text="modal.saving ? 'Saving...' : (modal.isEdit ? 'Save Changes' : 'Onboard Reseller')"></span>
+                    <span x-text="modal.saving ? i18n.saving : (modal.isEdit ? i18n.saveChanges : i18n.onboardReseller)"></span>
                 </button>
             </div>
         </div>
@@ -851,7 +851,7 @@
                         <i class="fas fa-wallet"></i>
                     </div>
                     <div>
-                        <h3 class="text-xs font-bold text-slate-800">Quick Wallet Recharge</h3>
+                        <h3 class="text-xs font-bold text-slate-800">{{ __('Quick Wallet Recharge') }}</h3>
                         <p class="text-[10.5px] text-slate-500 font-mono font-normal" x-text="rechargeModal.resellerName"></p>
                     </div>
                 </div>
@@ -864,7 +864,7 @@
                 {{-- Current Balance Display --}}
                 <div class="p-2.5 bg-emerald-50/50 rounded-lg border border-emerald-100 flex items-center justify-between">
                     <div>
-                        <span class="text-[9.5px] text-emerald-800 uppercase font-semibold block tracking-wider">Available Balance</span>
+                        <span class="text-[9.5px] text-emerald-800 uppercase font-semibold block tracking-wider">{{ __('Available Balance') }}</span>
                         <span class="text-sm font-extrabold text-emerald-700 font-mono block leading-none mt-0.5">
                             <span x-text="currencySymbol"></span>&nbsp;<span x-text="rechargeModal.currentBalance"></span>
                         </span>
@@ -876,21 +876,21 @@
 
                 {{-- Transaction Type Toggle --}}
                 <div>
-                    <label class="block text-[11px] font-semibold text-slate-700 mb-1">Transaction Type <span class="text-rose-500">*</span></label>
+                    <label class="block text-[11px] font-semibold text-slate-700 mb-1">{{ __('Transaction Type') }} <span class="text-rose-500">*</span></label>
                     <div class="grid grid-cols-2 gap-2">
                         <button type="button" 
                                 @click="rechargeModal.form.type = 'credit'"
                                 :class="rechargeModal.form.type === 'credit' ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'"
                                 class="py-1.5 px-3 rounded-lg border text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer">
                             <i class="fas fa-circle-plus text-[10px]"></i>
-                            <span>Add (Credit)</span>
+                            <span>{{ __('Add (Credit)') }}</span>
                         </button>
                         <button type="button" 
                                 @click="rechargeModal.form.type = 'debit'"
                                 :class="rechargeModal.form.type === 'debit' ? 'bg-rose-600 text-white border-rose-600 shadow-xs' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'"
                                 class="py-1.5 px-3 rounded-lg border text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer">
                             <i class="fas fa-circle-minus text-[10px]"></i>
-                            <span>Deduct (Debit)</span>
+                            <span>{{ __('Deduct (Debit)') }}</span>
                         </button>
                     </div>
                 </div>
@@ -898,24 +898,24 @@
                 {{-- Amount --}}
                 <div>
                     <label class="block text-[11px] font-semibold text-slate-800 mb-1">
-                        Amount (<span x-text="currencySymbol"></span>) <span class="text-rose-500">*</span>
+                        {{ __('Amount') }} (<span x-text="currencySymbol"></span>) <span class="text-rose-500">*</span>
                     </label>
                     <div class="relative">
                         <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400 font-mono font-bold text-xs" x-text="currencySymbol"></span>
                         <input type="number" 
                                step="0.01" min="1" 
                                x-model="rechargeModal.form.amount" 
-                               placeholder="e.g. 5000.00" 
+                               placeholder="{{ __('e.g. 5000.00') }}" 
                                class="w-full pl-8 pr-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-900 text-xs font-mono font-bold focus:bg-white focus:border-cyan-500 outline-hidden transition font-normal" />
                     </div>
                 </div>
 
                 {{-- Reference / Note --}}
                 <div>
-                    <label class="block text-[11px] font-semibold text-slate-700 mb-1">Reference / Note</label>
+                    <label class="block text-[11px] font-semibold text-slate-700 mb-1">{{ __('Reference / Note') }}</label>
                     <input type="text" 
                            x-model="rechargeModal.form.notes" 
-                           placeholder="e.g. Bank deposit / bKash TxnID #987654" 
+                           placeholder="{{ __('e.g. Bank deposit / bKash TxnID #987654') }}" 
                            class="w-full px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 text-xs focus:bg-white focus:border-cyan-500 outline-hidden transition font-normal" />
                 </div>
             </div>
@@ -924,14 +924,14 @@
                 <button type="button" 
                         @click="closeRechargeModal()" 
                         class="border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs px-3.5 py-1.5 rounded-lg transition cursor-pointer">
-                    Cancel
+                    {{ __('Cancel') }}
                 </button>
                 <button type="button" 
                         @click="submitRecharge()" 
                         :disabled="rechargeModal.saving"
                         class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs px-4 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50">
                     <i class="fas fa-check text-[10px]" :class="{ 'fa-spin fa-spinner': rechargeModal.saving }"></i>
-                    <span x-text="rechargeModal.saving ? 'Processing...' : 'Submit Transaction'"></span>
+                    <span x-text="rechargeModal.saving ? i18n.processing : i18n.submitTransaction"></span>
                 </button>
             </div>
         </div>
@@ -943,8 +943,39 @@
 <script>
 function resellerDirectoryManager() {
     return {
-        currencySymbol: '{{ $currencySymbol ?? '৳' }}',
-        nextCode: '{{ $nextCode ?? 'RES-001' }}',
+        currencySymbol: @js($currencySymbol ?? '৳'),
+        nextCode: @js($nextCode ?? 'RES-001'),
+        i18n: {
+            suspendReseller: @js(__('Suspend Reseller')),
+            activateReseller: @js(__('Activate Reseller')),
+            editReseller: @js(__('Edit Reseller')),
+            onboardNewReseller: @js(__('Onboard New Reseller')),
+            saving: @js(__('Saving...')),
+            saveChanges: @js(__('Save Changes')),
+            onboardReseller: @js(__('Onboard Reseller')),
+            processing: @js(__('Processing...')),
+            submitTransaction: @js(__('Submit Transaction')),
+            fillRequiredFields: @js(__('Please fill all required fields (Name, Code, Contact Person, Mobile).')),
+            resellerSavedSuccess: @js(__('Reseller saved successfully!')),
+            validationErrorSaving: @js(__('Validation error while saving reseller.')),
+            networkErrorSaving: @js(__('Network error saving reseller.')),
+            enterValidAmount: @js(__('Please enter a valid amount.')),
+            walletUpdatedSuccess: @js(__('Wallet balance updated!')),
+            failedUpdateWallet: @js(__('Failed to update wallet.')),
+            errorAdjustingWallet: @js(__('Error adjusting wallet')),
+            statusUpdated: @js(__('Status updated!')),
+            failedUpdateStatus: @js(__('Failed to update status.')),
+            errorTogglingStatus: @js(__('Error toggling status')),
+            deleteResellerTitle: @js(__('Delete Reseller?')),
+            deleteResellerConfirmHtml: @js(__('Are you sure you want to delete :name?')),
+            deleteResellerWarning: @js(__('Associated reseller records and permissions will be removed.')),
+            yesDeleteReseller: @js(__('Yes, Delete Reseller')),
+            cancel: @js(__('Cancel')),
+            deleteResellerFallback: @js(__('Are you sure you want to delete reseller :name?')),
+            resellerDeleted: @js(__('Reseller deleted.')),
+            failedDeleteReseller: @js(__('Failed to delete reseller.')),
+            errorDeletingReseller: @js(__('Error deleting reseller'))
+        },
         activeMenuRes: null,
         menuPos: { top: '0px', bottom: 'auto', right: '0px', left: 'auto' },
         toast: { show: false, message: '', type: 'success' },
@@ -1047,6 +1078,15 @@ function resellerDirectoryManager() {
             this.deleteReseller(res.id, res.name);
         },
 
+        escapeHtml(str) {
+            return String(str ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        },
+
         showToast(message, type = 'success') {
             this.toast.message = message;
             this.toast.type = type;
@@ -1126,7 +1166,7 @@ function resellerDirectoryManager() {
 
         async saveReseller() {
             if (!this.modal.form.name || !this.modal.form.code || !this.modal.form.contact_person || !this.modal.form.mobile) {
-                this.showToast('Please fill all required fields (Name, Code, Contact Person, Mobile).', 'error');
+                this.showToast(this.i18n.fillRequiredFields, 'error');
                 return;
             }
 
@@ -1148,14 +1188,14 @@ function resellerDirectoryManager() {
                 });
                 const data = await res.json();
                 if (res.ok && data.success) {
-                    this.showToast(data.message || 'Reseller saved successfully!', 'success');
+                    this.showToast(data.message || this.i18n.resellerSavedSuccess, 'success');
                     this.closeModal();
                     setTimeout(() => window.location.reload(), 600);
                 } else {
-                    this.showToast(data.message || 'Validation error while saving reseller.', 'error');
+                    this.showToast(data.message || this.i18n.validationErrorSaving, 'error');
                 }
             } catch (err) {
-                this.showToast('Network error saving reseller.', 'error');
+                this.showToast(this.i18n.networkErrorSaving, 'error');
             } finally {
                 this.modal.saving = false;
             }
@@ -1163,7 +1203,7 @@ function resellerDirectoryManager() {
 
         async submitRecharge() {
             if (!this.rechargeModal.form.amount || parseFloat(this.rechargeModal.form.amount) <= 0) {
-                this.showToast('Please enter a valid amount.', 'error');
+                this.showToast(this.i18n.enterValidAmount, 'error');
                 return;
             }
             this.rechargeModal.saving = true;
@@ -1179,14 +1219,14 @@ function resellerDirectoryManager() {
                 });
                 const data = await res.json();
                 if (res.ok && data.success) {
-                    this.showToast(data.message || 'Wallet balance updated!', 'success');
+                    this.showToast(data.message || this.i18n.walletUpdatedSuccess, 'success');
                     this.closeRechargeModal();
                     setTimeout(() => window.location.reload(), 600);
                 } else {
-                    this.showToast(data.message || 'Failed to update wallet.', 'error');
+                    this.showToast(data.message || this.i18n.failedUpdateWallet, 'error');
                 }
             } catch (e) {
-                this.showToast('Error adjusting wallet', 'error');
+                this.showToast(this.i18n.errorAdjustingWallet, 'error');
             } finally {
                 this.rechargeModal.saving = false;
             }
@@ -1205,27 +1245,29 @@ function resellerDirectoryManager() {
                 });
                 const data = await res.json();
                 if (res.ok && data.success) {
-                    this.showToast(data.message || 'Status updated!', 'success');
+                    this.showToast(data.message || this.i18n.statusUpdated, 'success');
                     setTimeout(() => window.location.reload(), 500);
                 } else {
-                    this.showToast(data.message || 'Failed to update status.', 'error');
+                    this.showToast(data.message || this.i18n.failedUpdateStatus, 'error');
                 }
             } catch (e) {
-                this.showToast('Error toggling status', 'error');
+                this.showToast(this.i18n.errorTogglingStatus, 'error');
             }
         },
 
         deleteReseller(id, name) {
             if (typeof Swal !== 'undefined') {
+                const safeNameHtml = `<strong class="text-slate-900 font-semibold">${this.escapeHtml(name)}</strong>`;
+                const confirmText = this.escapeHtml(this.i18n.deleteResellerConfirmHtml).replace(':name', safeNameHtml);
                 Swal.fire({
-                    title: 'Delete Reseller?',
-                    html: `<div class="text-xs text-slate-600 mt-1">Are you sure you want to delete <strong class="text-slate-900 font-semibold">${name}</strong>?<br><span class="text-[11px] text-rose-500 mt-1 block">Associated reseller records and permissions will be removed.</span></div>`,
+                    title: this.i18n.deleteResellerTitle,
+                    html: `<div class="text-xs text-slate-600 mt-1">${confirmText}<br><span class="text-[11px] text-rose-500 mt-1 block">${this.escapeHtml(this.i18n.deleteResellerWarning)}</span></div>`,
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonColor: '#e11d48',
                     cancelButtonColor: '#64748b',
-                    confirmButtonText: '<i class="far fa-trash-alt mr-1"></i> Yes, Delete Reseller',
-                    cancelButtonText: 'Cancel',
+                    confirmButtonText: `<i class="far fa-trash-alt mr-1"></i> ${this.escapeHtml(this.i18n.yesDeleteReseller)}`,
+                    cancelButtonText: this.i18n.cancel,
                     reverseButtons: true,
                     customClass: {
                         popup: 'rounded-2xl shadow-xl border border-slate-200 p-5',
@@ -1237,7 +1279,7 @@ function resellerDirectoryManager() {
                         this.executeDelete(id);
                     }
                 });
-            } else if (confirm(`Are you sure you want to delete reseller '${name}'?`)) {
+            } else if (confirm(this.i18n.deleteResellerFallback.replace(':name', name))) {
                 this.executeDelete(id);
             }
         },
@@ -1253,13 +1295,13 @@ function resellerDirectoryManager() {
                 });
                 const data = await res.json();
                 if (res.ok && data.success) {
-                    this.showToast(data.message || 'Reseller deleted.', 'success');
+                    this.showToast(data.message || this.i18n.resellerDeleted, 'success');
                     setTimeout(() => window.location.reload(), 500);
                 } else {
-                    this.showToast(data.message || 'Failed to delete reseller.', 'error');
+                    this.showToast(data.message || this.i18n.failedDeleteReseller, 'error');
                 }
             } catch (e) {
-                this.showToast('Error deleting reseller', 'error');
+                this.showToast(this.i18n.errorDeletingReseller, 'error');
             }
         }
     };
