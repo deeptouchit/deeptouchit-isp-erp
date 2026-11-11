@@ -1,6 +1,6 @@
 @extends('tenant.layouts.app')
 
-@section('title', 'Upstream Bandwidth & Carrier Accounting - ' . ($tenant->company_name ?? $tenant->name))
+@section('title', __('Upstream Bandwidth & Carrier Accounting') . ' - ' . ($tenant->company_name ?? $tenant->name))
 
 @push('styles')
     {{-- Page specific CSS --}}
@@ -9,58 +9,57 @@
 @section('content')
 <div class="space-y-3" x-data="upstreamManager()" @scroll.window="activeMenu = null" @resize.window="activeMenu = null">
 
-    {{-- 1. TOP HEADER BAR (Strictly Icon + Title + Action Buttons ONLY - AGENTS.md Rule 2.A) --}}
+    {{-- 1. TOP HEADER BAR (Strictly Icon + Title + Action Buttons ONLY) --}}
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-white p-3 rounded-xl border border-slate-200 shadow-xs">
         <div class="flex items-center gap-2.5">
             <div class="w-8 h-8 rounded-lg bg-cyan-50 text-cyan-600 border border-cyan-100 flex items-center justify-center text-sm shadow-2xs flex-shrink-0">
                 <i class="fas fa-tower-broadcast"></i>
             </div>
             <div class="flex items-center gap-2 flex-wrap">
-                <h1 class="text-sm font-bold text-slate-800 tracking-tight">Upstream Bandwidth &amp; Carrier Accounting</h1>
+                <h1 class="text-sm font-bold text-slate-800 tracking-tight">{{ __('Upstream Bandwidth & Carrier Accounting') }}</h1>
                 <span class="px-2 py-0.5 rounded-md text-[10px] font-mono font-medium bg-slate-100 text-slate-600 border border-slate-200">
-                    Total {{ number_format($providers->total()) }}
+                    {{ __('Total') }} {{ number_format($providers->total()) }}
                 </span>
             </div>
         </div>
 
         <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap flex-shrink-0">
-            <button type="button" 
+            <button type="button"
                     @click="openCreateModal()"
                     class="h-[34px] px-3.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-xs font-semibold shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-plus text-xs"></i>
-                <span>Add Carrier</span>
+                <span>{{ __('Add Carrier') }}</span>
             </button>
-            <button type="button" 
+            <button type="button"
                     @click="openInvoiceModal()"
                     class="h-[34px] px-3 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-semibold shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-file-invoice-dollar text-xs"></i>
-                <span>Record Bill</span>
+                <span>{{ __('Record Bill') }}</span>
             </button>
-            <button type="button" 
+            <button type="button"
                     @click="openPaymentModal()"
                     class="h-[34px] px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-money-bill-transfer text-xs"></i>
-                <span>Disburse Payment</span>
+                <span>{{ __('Disburse Payment') }}</span>
             </button>
-            <a href="{{ route('tenant.upstream.invoices') }}" 
+            <a href="{{ route('tenant.upstream.invoices') }}"
                class="h-[34px] px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200/80 transition flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-file-invoice text-xs text-blue-600"></i>
-                <span>Carrier Bills</span>
+                <span>{{ __('Carrier Bills') }}</span>
             </a>
-            <a href="{{ route('tenant.upstream.payments') }}" 
+            <a href="{{ route('tenant.upstream.payments') }}"
                class="h-[34px] px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200/80 transition flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-receipt text-xs text-emerald-600"></i>
-                <span>Payment Vouchers</span>
+                <span>{{ __('Payment Vouchers') }}</span>
             </a>
         </div>
     </div>
 
-    {{-- 2. KPI SUMMARY STRIP (Strictly 6 Cards - AGENTS.md Rule 2.B) --}}
+    {{-- 2. KPI SUMMARY STRIP (Strictly 6 Cards) --}}
     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
-        {{-- Card 1: Total Upstream Capacity --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Total Upstream</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">{{ __('Total Upstream') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-slate-900 truncate">
                     {{ $totalUpstreamMbps >= 1000 ? round($totalUpstreamMbps / 1000, 2) . ' Gbps' : number_format($totalUpstreamMbps) . ' Mbps' }}
                 </span>
@@ -70,10 +69,9 @@
             </div>
         </div>
 
-        {{-- Card 2: Global Internet Capacity --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Global Internet</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">{{ __('Global Internet') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-blue-700 truncate">
                     {{ $globalMbps >= 1000 ? round($globalMbps / 1000, 2) . ' Gbps' : number_format($globalMbps) . ' Mbps' }}
                 </span>
@@ -83,10 +81,9 @@
             </div>
         </div>
 
-        {{-- Card 3: Peering & Cache Capacity --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Peering &amp; Cache</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">{{ __('Peering & Cache') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-purple-700 truncate">
                     {{ $peeringCacheMbps >= 1000 ? round($peeringCacheMbps / 1000, 2) . ' Gbps' : number_format($peeringCacheMbps) . ' Mbps' }}
                 </span>
@@ -96,10 +93,9 @@
             </div>
         </div>
 
-        {{-- Card 4: Monthly Carrier Cost --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Monthly Est Cost</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">{{ __('Monthly Est Cost') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-rose-700 truncate">@currency($monthlyCarrierCost)</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-rose-50 text-rose-600 border-rose-100 flex items-center justify-center">
@@ -107,10 +103,9 @@
             </div>
         </div>
 
-        {{-- Card 5: Carrier Total Due Balance --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Carrier Total Due</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">{{ __('Carrier Total Due') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-amber-700 truncate">@currency($carrierTotalDue)</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-amber-50 text-amber-600 border-amber-100 flex items-center justify-center">
@@ -118,10 +113,9 @@
             </div>
         </div>
 
-        {{-- Card 6: Gross Bandwidth Margin --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Est Gross Margin</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">{{ __('Est Gross Margin') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block {{ $grossMargin >= 0 ? 'text-emerald-700' : 'text-rose-700' }} truncate">@currency($grossMargin)</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-emerald-50 text-emerald-600 border-emerald-100 flex items-center justify-center">
@@ -130,30 +124,32 @@
         </div>
     </div>
 
-    {{-- 3. SEARCH & MULTI-FILTER TOOLBAR (Customer-Standard 2-Tier Filter System - AGENTS.md Rule 2.C) --}}
+    {{-- 3. SEARCH & MULTI-FILTER TOOLBAR (Customer-Standard 2-Tier Filter System) --}}
     @php
         $isMoreOpen = (!empty(request('carrier_type')));
         $activeMoreCount = (!empty(request('carrier_type')) ? 1 : 0);
     @endphp
-    <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5" 
+    <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5"
          x-data="{ showMoreFilters: {{ $isMoreOpen ? 'true' : 'false' }}, searchQuery: '{{ addslashes(request('search', '')) }}' }">
         <form method="GET" action="{{ route('tenant.upstream.index') }}" class="space-y-2.5">
-            
+
             {{-- 1st Tier: Primary Single Row --}}
             <div class="flex flex-col md:flex-row items-stretch md:items-center gap-2">
                 {{-- Intelligent Live Search Box with 1-Click Clear --}}
                 <div class="relative flex-1 min-w-[200px]">
                     <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-xs transition-colors"
                        :class="searchQuery ? 'text-cyan-600 font-bold' : 'text-slate-400'"></i>
-                    <input type="text" 
-                           name="search" 
-                           x-model="searchQuery" 
-                           value="{{ request('search') }}" 
-                           placeholder="Search carrier, contact, phone, bank account..." 
+                    <input type="text"
+                           name="search"
+                           x-model="searchQuery"
+                           value="{{ request('search') }}"
+                           placeholder="{{ __('Search carrier, contact, phone, bank account...') }}"
                            class="h-[34px] w-full pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                    <button type="button" 
-                            x-show="searchQuery && searchQuery.length > 0" 
-                            @click="searchQuery = ''; $nextTick(() => $el.closest('form').submit())" 
+                    <button type="button"
+                            x-show="searchQuery && searchQuery.length > 0"
+                            x-cloak
+                            @click="searchQuery = ''; $nextTick(() => $el.closest('form').submit())"
+                            title="{{ __('Clear Search') }}"
                             class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded cursor-pointer">
                         <i class="fas fa-xmark text-xs"></i>
                     </button>
@@ -161,7 +157,7 @@
 
                 {{-- Primary Filter: Core Router --}}
                 <select name="router_id" class="h-[34px] w-full md:w-48 bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 focus:bg-white focus:border-cyan-500 focus:outline-hidden font-medium cursor-pointer transition">
-                    <option value="">All Core Routers</option>
+                    <option value="">{{ __('All Core Routers') }}</option>
                     @foreach($routers as $r)
                         <option value="{{ $r->id }}" {{ request('router_id') == $r->id ? 'selected' : '' }}>{{ $r->name }} ({{ $r->ip_address }})</option>
                     @endforeach
@@ -169,84 +165,89 @@
 
                 {{-- Primary Filter: Status --}}
                 <select name="status" class="h-[34px] w-full md:w-32 bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 focus:bg-white focus:border-cyan-500 focus:outline-hidden font-medium cursor-pointer transition">
-                    <option value="">All Statuses</option>
-                    <option value="1" {{ request('status') === '1' ? 'selected' : '' }}>Active</option>
-                    <option value="0" {{ request('status') === '0' ? 'selected' : '' }}>Inactive</option>
+                    <option value="">{{ __('All Statuses') }}</option>
+                    <option value="1" {{ request('status') === '1' ? 'selected' : '' }}>{{ __('Active') }}</option>
+                    <option value="0" {{ request('status') === '0' ? 'selected' : '' }}>{{ __('Inactive') }}</option>
                 </select>
 
                 {{-- Pagination Selector (per_page) --}}
                 <select name="per_page" class="h-[34px] w-full md:w-28 flex-shrink-0 bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 focus:bg-white focus:border-cyan-500 focus:outline-hidden font-mono cursor-pointer transition">
-                    <option value="15" {{ request('per_page', '20') == '15' ? 'selected' : '' }}>15 / page</option>
-                    <option value="20" {{ request('per_page', '20') == '20' ? 'selected' : '' }}>20 / page</option>
-                    <option value="50" {{ request('per_page') == '50' ? 'selected' : '' }}>50 / page</option>
-                    <option value="100" {{ request('per_page') == '100' ? 'selected' : '' }}>100 / page</option>
+                    <option value="15" {{ request('per_page', '20') == '15' ? 'selected' : '' }}>15 / {{ __('page') }}</option>
+                    <option value="20" {{ request('per_page', '20') == '20' ? 'selected' : '' }}>20 / {{ __('page') }}</option>
+                    <option value="50" {{ request('per_page') == '50' ? 'selected' : '' }}>50 / {{ __('page') }}</option>
+                    <option value="100" {{ request('per_page') == '100' ? 'selected' : '' }}>100 / {{ __('page') }}</option>
                 </select>
 
                 {{-- More Filters Toggle Accordion Button --}}
-                <button type="button" 
-                        @click="showMoreFilters = !showMoreFilters" 
+                <button type="button"
+                        @click="showMoreFilters = !showMoreFilters"
+                        title="{{ __('Toggle Advanced Filters') }}"
                         class="h-[34px] px-2.5 py-0 bg-slate-50 hover:bg-slate-100 text-slate-700 font-medium text-xs rounded-lg border border-slate-200 transition flex items-center justify-center gap-1.5 cursor-pointer flex-shrink-0"
                         :class="showMoreFilters ? 'border-cyan-400 bg-cyan-50/50 text-cyan-800' : ''">
                     <i class="fas fa-sliders text-[11px] text-slate-500"></i>
-                    <span>More</span>
+                    <span>{{ __('More Filters') }}</span>
                     @if($activeMoreCount > 0)
                         <span class="w-4 h-4 rounded-full bg-cyan-600 text-white text-[9px] font-bold flex items-center justify-center">{{ $activeMoreCount }}</span>
                     @endif
                     <i class="fas text-[10px] transition-transform duration-200" :class="showMoreFilters ? 'fa-chevron-up text-cyan-600' : 'fa-chevron-down text-slate-400'"></i>
                 </button>
 
-                {{-- Strict Filter & Reset Action Buttons Sequence (AGENTS.md Rule 2.C) --}}
+                {{-- Strict Filter & Reset Action Buttons Sequence --}}
                 <div class="flex items-center gap-1.5 flex-shrink-0 md:ml-auto">
-                    <button type="submit" class="h-[34px] bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-0 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer">
+                    <button type="submit"
+                            title="{{ __('Apply Filters') }}"
+                            class="h-[34px] bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-0 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer">
                         <i class="fas fa-filter text-[10px]"></i>
-                        <span>Filter</span>
+                        <span>{{ __('Filter') }}</span>
                     </button>
-                    <a href="{{ route('tenant.upstream.index') }}" class="h-[34px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-0 px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer" title="Reset All Filters">
+                    <a href="{{ route('tenant.upstream.index') }}"
+                       class="h-[34px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-0 px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer"
+                       title="{{ __('Reset Filters') }}">
                         <i class="fas fa-rotate-left text-[10px]"></i>
-                        <span>Reset</span>
+                        <span>{{ __('Reset') }}</span>
                     </a>
                 </div>
             </div>
 
             {{-- 2nd Tier: Secondary Filters Drawer --}}
-            <div x-show="showMoreFilters" 
-                 x-cloak 
+            <div x-show="showMoreFilters"
+                 x-cloak
                  x-transition:enter="transition ease-out duration-150"
                  x-transition:enter-start="opacity-0 -translate-y-1"
                  x-transition:enter-end="opacity-100 translate-y-0"
                  class="pt-2 border-t border-slate-100 flex flex-wrap items-center gap-2">
-                
+
                 {{-- Carrier Type Filter --}}
                 <div class="w-full sm:w-auto">
-                    <label class="block text-[9.5px] uppercase font-bold text-slate-400 mb-0.5">Carrier Category / Type</label>
+                    <label class="block text-[9.5px] uppercase font-bold text-slate-400 mb-0.5">{{ __('Carrier Category') }}</label>
                     <select name="carrier_type" class="h-[34px] w-full sm:w-56 bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 focus:bg-white focus:border-cyan-500 focus:outline-hidden font-medium cursor-pointer transition">
-                        <option value="">All Carrier Types</option>
-                        <option value="Upstream Carrier" {{ request('carrier_type') == 'Upstream Carrier' ? 'selected' : '' }}>Upstream Carrier / IIG</option>
-                        <option value="ITC Carrier" {{ request('carrier_type') == 'ITC Carrier' ? 'selected' : '' }}>ITC Carrier</option>
-                        <option value="NTTN Transmission" {{ request('carrier_type') == 'NTTN Transmission' ? 'selected' : '' }}>NTTN Transmission Provider</option>
-                        <option value="BDIX Peering" {{ request('carrier_type') == 'BDIX Peering' ? 'selected' : '' }}>BDIX / Local Peering</option>
-                        <option value="CDN / Cache Partner" {{ request('carrier_type') == 'CDN / Cache Partner' ? 'selected' : '' }}>CDN / Cache Partner</option>
+                        <option value="">{{ __('All Carrier Types') }}</option>
+                        <option value="Upstream Carrier" {{ request('carrier_type') == 'Upstream Carrier' ? 'selected' : '' }}>{{ __('Upstream Carrier') }}</option>
+                        <option value="ITC Carrier" {{ request('carrier_type') == 'ITC Carrier' ? 'selected' : '' }}>{{ __('ITC Carrier') }}</option>
+                        <option value="NTTN Transmission" {{ request('carrier_type') == 'NTTN Transmission' ? 'selected' : '' }}>{{ __('NTTN Transmission') }}</option>
+                        <option value="BDIX Peering" {{ request('carrier_type') == 'BDIX Peering' ? 'selected' : '' }}>{{ __('BDIX Peering') }}</option>
+                        <option value="CDN / Cache Partner" {{ request('carrier_type') == 'CDN / Cache Partner' ? 'selected' : '' }}>{{ __('CDN / Cache Partner') }}</option>
                     </select>
                 </div>
             </div>
         </form>
     </div>
 
-    {{-- 4. MASTER COMPACT TABLE (<table class="saas-table"> - AGENTS.md Rule 2.D & Updated Columns Policy) --}}
+    {{-- 4. MASTER COMPACT TABLE (<table class="saas-table">) --}}
     <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
         <div class="overflow-x-auto">
             <table class="saas-table">
                 <thead>
                     <tr>
-                        <th class="w-10 text-center font-semibold">#</th>
-                        <th class="text-center font-semibold">Carrier Provider</th>
-                        <th class="text-center font-semibold">Type</th>
-                        <th class="text-center font-semibold">Core Router &amp; Port</th>
-                        <th class="text-center font-semibold">Total Capacity</th>
-                        <th class="text-center font-semibold">Monthly Bill</th>
-                        <th class="text-center font-semibold">Due Balance</th>
-                        <th class="text-center font-semibold">Status</th>
-                        <th class="w-12 text-center font-semibold no-sort">Action</th>
+                        <th class="w-10 text-center font-semibold no-sort">#</th>
+                        <th class="text-center font-semibold">{{ __('Carrier Provider') }}</th>
+                        <th class="text-center font-semibold">{{ __('Type') }}</th>
+                        <th class="text-center font-semibold">{{ __('Core Router & Port') }}</th>
+                        <th class="text-center font-semibold">{{ __('Total Capacity') }}</th>
+                        <th class="text-center font-semibold">{{ __('Monthly Bill') }}</th>
+                        <th class="text-center font-semibold">{{ __('Due Balance') }}</th>
+                        <th class="text-center font-semibold">{{ __('Status') }}</th>
+                        <th class="w-12 text-center font-semibold no-sort">{{ __('Action') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -259,14 +260,12 @@
                             $dueBal = (float) $provider->invoices->sum('due_amount');
                         @endphp
                         <tr>
-                            {{-- 1. Index --}}
                             <td class="text-center font-mono text-slate-400 text-xs w-10">
                                 {{ $providers->firstItem() + $index }}
                             </td>
 
-                            {{-- 2. Carrier Provider (text-left) --}}
                             <td class="text-left font-bold text-slate-800 text-xs whitespace-nowrap">
-                                <span class="cursor-pointer hover:text-cyan-700 hover:underline" 
+                                <span class="cursor-pointer hover:text-cyan-700 hover:underline"
                                       @click="viewDetails({{ json_encode([
                                           'id' => $provider->id,
                                           'name' => $provider->name,
@@ -293,7 +292,6 @@
                                 </span>
                             </td>
 
-                            {{-- 3. Carrier Type (text-center badge) --}}
                             <td class="text-center whitespace-nowrap">
                                 @php
                                     $t = strtolower($provider->carrier_type ?? '');
@@ -311,11 +309,10 @@
                                     }
                                 @endphp
                                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold border {{ $badgeClass }}">
-                                    {{ $provider->carrier_type ?: 'Carrier' }}
+                                    {{ __($provider->carrier_type ?: 'Upstream Carrier') }}
                                 </span>
                             </td>
 
-                            {{-- 4. Core Router & Port (text-left) --}}
                             <td class="text-left text-slate-700 text-xs whitespace-nowrap">
                                 @if($primaryLink && $primaryLink->router)
                                     <span>{{ $primaryLink->router->name }}</span>
@@ -323,43 +320,38 @@
                                         <span class="ml-1 px-1.5 py-0.2 rounded text-[9.5px] font-mono bg-slate-100 text-slate-600 border border-slate-200">{{ $primaryLink->interface_port }}</span>
                                     @endif
                                 @else
-                                    <span class="text-slate-400">Direct Delivery</span>
+                                    <span class="text-slate-400">{{ __('Direct Delivery') }}</span>
                                 @endif
                             </td>
 
-                            {{-- 5. Total Capacity (text-right font-mono) --}}
                             <td class="text-right font-mono font-bold text-slate-800 text-xs whitespace-nowrap">
                                 {{ $totCapacity >= 1000 ? round($totCapacity / 1000, 2) . ' Gbps' : number_format($totCapacity) . ' Mbps' }}
                             </td>
 
-                            {{-- 6. Monthly Bill (text-right font-mono) --}}
                             <td class="text-right font-mono font-bold text-slate-900 text-xs whitespace-nowrap">
                                 @currency($estBill)
                             </td>
 
-                            {{-- 7. Due Balance (text-right font-mono) --}}
                             <td class="text-right font-mono font-bold text-xs whitespace-nowrap {{ $dueBal > 0 ? 'text-amber-700' : 'text-slate-400' }}">
                                 @currency($dueBal)
                             </td>
 
-                            {{-- 8. Status (text-center badge) --}}
                             <td class="text-center whitespace-nowrap">
                                 @if($provider->is_active)
                                     <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold border border-emerald-200 bg-emerald-50 text-emerald-700">
                                         <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                        <span>Active</span>
+                                        <span>{{ __('Active') }}</span>
                                     </span>
                                 @else
                                     <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold border border-rose-200 bg-rose-50 text-rose-700">
                                         <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
-                                        <span>Inactive</span>
+                                        <span>{{ __('Inactive') }}</span>
                                     </span>
                                 @endif
                             </td>
 
-                            {{-- 9. Action (3-Dot Floating Trigger) --}}
                             <td class="text-center whitespace-nowrap">
-                                <button type="button" 
+                                <button type="button"
                                         @click="toggleMenu({{ json_encode([
                                             'id' => $provider->id,
                                             'name' => $provider->name,
@@ -383,7 +375,7 @@
                                             'payments_count' => $provider->payments->count(),
                                         ]) }}, $event)"
                                         class="w-7 h-7 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition flex items-center justify-center mx-auto cursor-pointer"
-                                        title="Actions">
+                                        title="{{ __('Actions') }}">
                                     <i class="fas fa-ellipsis-v text-[10px]"></i>
                                 </button>
                             </td>
@@ -395,11 +387,11 @@
                                     <div class="w-10 h-10 rounded-full bg-cyan-50 text-cyan-600 mx-auto flex items-center justify-center text-sm border border-cyan-100">
                                         <i class="fas fa-tower-broadcast"></i>
                                     </div>
-                                    <p class="text-xs font-semibold text-slate-700">No Upstream Carriers Registered</p>
-                                    <p class="text-[11px] text-slate-400 leading-tight">Register your upstream IIG, ITC, and NTTN transmission links to monitor bandwidth and carrier billing.</p>
+                                    <p class="text-xs font-semibold text-slate-700">{{ __('No Upstream Carriers Registered') }}</p>
+                                    <p class="text-[11px] text-slate-400 leading-tight whitespace-normal">{{ __('Register your upstream IIG, ITC, and NTTN transmission links to monitor bandwidth and carrier billing.') }}</p>
                                     <button type="button" @click="openCreateModal()" class="mt-2 h-[30px] px-3 bg-cyan-50 hover:bg-cyan-100 text-cyan-700 rounded-lg text-xs font-semibold border border-cyan-200 transition inline-flex items-center gap-1.5 cursor-pointer">
                                         <i class="fas fa-plus text-[10px]"></i>
-                                        <span>Add Carrier Now</span>
+                                        <span>{{ __('Add Carrier Now') }}</span>
                                     </button>
                                 </div>
                             </td>
@@ -413,7 +405,7 @@
         @if($providers->hasPages())
             <div class="px-4 py-2.5 border-t border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-2">
                 <span class="text-xs text-slate-500 font-medium">
-                    Showing {{ $providers->firstItem() }} to {{ $providers->lastItem() }} of {{ $providers->total() }} upstream carriers
+                    {{ __('Showing :first to :last of :total upstream carriers', ['first' => $providers->firstItem(), 'last' => $providers->lastItem(), 'total' => $providers->total()]) }}
                 </span>
                 <div>
                     {{ $providers->links() }}
@@ -422,85 +414,80 @@
         @endif
     </div>
 
-    {{-- 5. GLOBAL FLOATING 3-DOT ACTION MENU (AGENTS.md Rule 2.E) --}}
-    <div x-show="activeMenu" 
-         x-cloak 
-         @click.away="activeMenu = null" 
-         class="fixed z-50 bg-white rounded-xl border border-slate-200 shadow-xl py-1 w-52 text-xs font-medium text-slate-700 space-y-0.5 divide-y divide-slate-100 animate-in fade-in zoom-in-95 duration-100"
+    {{-- 5. GLOBAL FLOATING 3-DOT ACTION MENU --}}
+    <div x-show="activeMenu"
+         x-cloak
+         @click.away="activeMenu = null"
+         class="fixed z-50 bg-white rounded-xl border border-slate-200 shadow-xl py-1 w-52 text-xs font-medium text-slate-700 space-y-0.5 divide-y divide-slate-100"
          :style="{ top: menuPos.top, bottom: menuPos.bottom, right: menuPos.right, left: menuPos.left }">
-        
-        {{-- Group 1: Diagnostics & Info --}}
+
         <div class="py-1">
-            <button type="button" 
-                    @click="viewDetails(activeMenu)" 
+            <button type="button"
+                    @click="viewDetails(activeMenu)"
                     class="w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-slate-700 transition cursor-pointer">
                 <i class="fas fa-circle-info w-4 text-cyan-600 text-[11px]"></i>
-                <span>View Capacity Details</span>
+                <span>{{ __('View Capacity Details') }}</span>
             </button>
-            <button type="button" 
-                    @click="openInvoiceModal(activeMenu)" 
+            <button type="button"
+                    @click="openInvoiceModal(activeMenu)"
                     class="w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-slate-700 transition cursor-pointer">
                 <i class="fas fa-file-invoice-dollar w-4 text-slate-600 text-[11px]"></i>
-                <span>Record Monthly Bill</span>
+                <span>{{ __('Record Monthly Bill') }}</span>
             </button>
-            <button type="button" 
-                    @click="openPaymentModal(activeMenu)" 
+            <button type="button"
+                    @click="openPaymentModal(activeMenu)"
                     class="w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-slate-700 transition cursor-pointer">
                 <i class="fas fa-money-bill-transfer w-4 text-emerald-600 text-[11px]"></i>
-                <span>Disburse Payment</span>
+                <span>{{ __('Disburse Payment') }}</span>
             </button>
         </div>
 
-        {{-- Group 2: Configuration & Status --}}
         <div class="py-1">
-            <button type="button" 
-                    @click="openEditModal(activeMenu)" 
+            <button type="button"
+                    @click="openEditModal(activeMenu)"
                     class="w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-slate-700 transition cursor-pointer">
                 <i class="fas fa-pen-to-square w-4 text-blue-500 text-[11px]"></i>
-                <span>Edit Carrier &amp; Rates</span>
+                <span>{{ __('Edit Carrier & Rates') }}</span>
             </button>
-            <button type="button" 
-                    @click="toggleCarrierStatus(activeMenu)" 
+            <button type="button"
+                    @click="toggleCarrierStatus(activeMenu)"
                     class="w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-slate-700 transition cursor-pointer">
                 <i class="fas fa-power-off w-4 text-amber-500 text-[11px]"></i>
-                <span x-text="activeMenu?.is_active ? 'Disable Carrier' : 'Enable Carrier'"></span>
+                <span x-text="activeMenu?.is_active ? i18n.disableCarrier : i18n.enableCarrier"></span>
             </button>
         </div>
 
-        {{-- Group 3: Danger --}}
         <div class="py-1">
-            <button type="button" 
-                    @click="deleteCarrier(activeMenu)" 
+            <button type="button"
+                    @click="deleteCarrier(activeMenu)"
                     class="w-full text-left px-3 py-1.5 hover:bg-rose-50 flex items-center gap-2 text-rose-600 transition cursor-pointer">
                 <i class="fas fa-trash-can w-4 text-rose-400 text-[11px]"></i>
-                <span>Delete Carrier</span>
+                <span>{{ __('Delete Carrier') }}</span>
             </button>
         </div>
     </div>
 
-    {{-- 6. PRODUCTION-GRADE NATURAL MODALS (AGENTS.md Rule 3 & Strict Uniform Height h-[34px]) --}}
+    {{-- 6. PRODUCTION-GRADE NATURAL MODALS --}}
 
     {{-- Modal 1: Add / Edit Carrier Provider & Link Modal --}}
-    <div x-show="showProviderModal" 
-         x-cloak 
+    <div x-show="showProviderModal"
+         x-cloak
          class="bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 fixed inset-0 z-50 overflow-y-auto">
-        <div class="bg-white rounded-xl border border-slate-200/90 shadow-2xl w-full max-w-3xl overflow-hidden my-6 flex flex-col animate-in fade-in zoom-in-95 duration-150"
+        <div class="bg-white rounded-xl border border-slate-200/90 shadow-2xl w-full max-w-3xl overflow-hidden my-6 flex flex-col"
              @click.away="showProviderModal = false">
-            
-            {{-- Modal Header --}}
+
             <div class="bg-slate-50/80 border-b border-slate-200 px-4 py-3 flex items-center justify-between flex-shrink-0">
                 <div class="flex items-center gap-2">
                     <div class="w-7 h-7 rounded-lg bg-cyan-50 text-cyan-600 border border-cyan-100 flex items-center justify-center text-xs flex-shrink-0">
                         <i class="fas fa-tower-broadcast"></i>
                     </div>
-                    <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider" x-text="isEditMode ? 'Edit Upstream Carrier & Capacity' : 'Add Upstream Carrier Provider'"></h3>
+                    <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider" x-text="isEditMode ? i18n.editCarrierTitle : i18n.addCarrierTitle"></h3>
                 </div>
                 <button type="button" @click="showProviderModal = false" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center cursor-pointer">
                     <i class="fas fa-times text-xs"></i>
                 </button>
             </div>
 
-            {{-- Modal Form Body --}}
             <form :action="isEditMode ? `/admin/upstream/providers/${currentProvider.id}` : '{{ route('tenant.upstream.provider.store') }}'" method="POST" class="p-4 space-y-4 max-h-[76vh] overflow-y-auto text-xs">
                 @csrf
                 <input type="hidden" name="_method" value="PUT" x-bind:disabled="!isEditMode">
@@ -510,101 +497,101 @@
                 <div class="space-y-2.5">
                     <div class="flex items-center gap-1.5 pb-1 border-b border-slate-100">
                         <i class="fas fa-building text-[10px] text-cyan-600"></i>
-                        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">1. Carrier Company Information</span>
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">1. {{ __('Carrier Information') }}</span>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-2.5">
                         <div class="md:col-span-2">
                             <label class="block text-[10.5px] font-bold uppercase text-slate-600 mb-1">
-                                Carrier / Provider Name <span class="text-rose-500">*</span>
+                                {{ __('Carrier Provider') }} <span class="text-rose-500">*</span>
                             </label>
-                            <input type="text" 
-                                   name="name" 
-                                   x-model="formData.name" 
-                                   required 
-                                   placeholder="e.g. Summit Communications Ltd." 
+                            <input type="text"
+                                   name="name"
+                                   x-model="formData.name"
+                                   required
+                                   placeholder="Summit Communications Ltd."
                                    class="h-[34px] w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                         </div>
 
                         <div>
                             <label class="block text-[10.5px] font-bold uppercase text-slate-600 mb-1">
-                                Carrier Type / Category <span class="text-rose-500">*</span>
+                                {{ __('Carrier Category') }} <span class="text-rose-500">*</span>
                             </label>
-                            <select name="carrier_type" 
-                                    x-model="formData.carrier_type" 
+                            <select name="carrier_type"
+                                    x-model="formData.carrier_type"
                                     required
                                     class="h-[34px] w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 focus:bg-white focus:border-cyan-500 focus:outline-hidden font-medium cursor-pointer transition">
-                                <option value="Upstream Carrier">Upstream Carrier / IIG</option>
-                                <option value="ITC Carrier">ITC Carrier</option>
-                                <option value="NTTN Transmission">NTTN Transmission</option>
-                                <option value="BDIX Peering">BDIX Peering</option>
-                                <option value="CDN / Cache Partner">CDN / Cache Partner</option>
+                                <option value="Upstream Carrier">{{ __('Upstream Carrier') }}</option>
+                                <option value="ITC Carrier">{{ __('ITC Carrier') }}</option>
+                                <option value="NTTN Transmission">{{ __('NTTN Transmission') }}</option>
+                                <option value="BDIX Peering">{{ __('BDIX Peering') }}</option>
+                                <option value="CDN / Cache Partner">{{ __('CDN / Cache Partner') }}</option>
                             </select>
                         </div>
 
                         <div>
                             <label class="block text-[10.5px] font-bold uppercase text-slate-600 mb-1">
-                                Contact Person Name
+                                {{ __('Contact Person') }}
                             </label>
-                            <input type="text" 
-                                   name="contact_person" 
-                                   x-model="formData.contact_person" 
-                                   placeholder="e.g. Md. Rafiqul Islam" 
+                            <input type="text"
+                                   name="contact_person"
+                                   x-model="formData.contact_person"
+                                   placeholder="Md. Rafiqul Islam"
                                    class="h-[34px] w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                         </div>
 
                         <div>
                             <label class="block text-[10.5px] font-bold uppercase text-slate-600 mb-1">
-                                Contact Phone Number
+                                {{ __('Contact Phone') }}
                             </label>
-                            <input type="text" 
-                                   name="phone" 
-                                   x-model="formData.phone" 
-                                   placeholder="e.g. 017xxxxxxxx" 
+                            <input type="text"
+                                   name="phone"
+                                   x-model="formData.phone"
+                                   placeholder="017xxxxxxxx"
                                    class="h-[34px] w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 font-mono focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                         </div>
 
                         <div>
                             <label class="block text-[10.5px] font-bold uppercase text-slate-600 mb-1">
-                                Contact Email Address
+                                {{ __('Email') }}
                             </label>
-                            <input type="email" 
-                                   name="email" 
-                                   x-model="formData.email" 
-                                   placeholder="e.g. noc@carrier.com" 
+                            <input type="email"
+                                   name="email"
+                                   x-model="formData.email"
+                                   placeholder="noc@carrier.com"
                                    class="h-[34px] w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 font-mono focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                         </div>
 
                         <div>
                             <label class="block text-[10.5px] font-bold uppercase text-slate-600 mb-1">
-                                Bank Name &amp; Branch
+                                {{ __('Bank Name / Branch') }}
                             </label>
-                            <input type="text" 
-                                   name="bank_name" 
-                                   x-model="formData.bank_name" 
-                                   placeholder="e.g. City Bank - Gulshan" 
+                            <input type="text"
+                                   name="bank_name"
+                                   x-model="formData.bank_name"
+                                   placeholder="City Bank - Gulshan"
                                    class="h-[34px] w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                         </div>
 
                         <div>
                             <label class="block text-[10.5px] font-bold uppercase text-slate-600 mb-1">
-                                Bank Account Number
+                                {{ __('Bank Account Number') }}
                             </label>
-                            <input type="text" 
-                                   name="bank_account_no" 
-                                   x-model="formData.bank_account_no" 
-                                   placeholder="e.g. 1102938475001" 
+                            <input type="text"
+                                   name="bank_account_no"
+                                   x-model="formData.bank_account_no"
+                                   placeholder="1102938475001"
                                    class="h-[34px] w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 font-mono focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                         </div>
 
                         <div>
                             <label class="block text-[10.5px] font-bold uppercase text-slate-600 mb-1">
-                                Routing Number
+                                {{ __('Routing Number') }}
                             </label>
-                            <input type="text" 
-                                   name="routing_no" 
-                                   x-model="formData.routing_no" 
-                                   placeholder="e.g. 225272635" 
+                            <input type="text"
+                                   name="routing_no"
+                                   x-model="formData.routing_no"
+                                   placeholder="225272635"
                                    class="h-[34px] w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 font-mono focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                         </div>
                     </div>
@@ -614,18 +601,18 @@
                 <div class="space-y-2.5 pt-1">
                     <div class="flex items-center gap-1.5 pb-1 border-b border-slate-100">
                         <i class="fas fa-network-wired text-[10px] text-cyan-600"></i>
-                        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">2. Core Router &amp; Delivery Link</span>
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">2. {{ __('Core Router & Port') }}</span>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-2.5">
                         <div>
                             <label class="block text-[10.5px] font-bold uppercase text-slate-600 mb-1">
-                                Connected Core Router
+                                {{ __('Connected Core Router') }}
                             </label>
-                            <select name="router_id" 
-                                    x-model="formData.router_id" 
+                            <select name="router_id"
+                                    x-model="formData.router_id"
                                     class="h-[34px] w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 focus:bg-white focus:border-cyan-500 focus:outline-hidden font-medium cursor-pointer transition">
-                                <option value="">Select Core Router</option>
+                                <option value="">{{ __('Select Core Router') }}</option>
                                 @foreach($routers as $r)
                                     <option value="{{ $r->id }}">{{ $r->name }} ({{ $r->ip_address }})</option>
                                 @endforeach
@@ -634,23 +621,23 @@
 
                         <div>
                             <label class="block text-[10.5px] font-bold uppercase text-slate-600 mb-1">
-                                Interface Port / SFP
+                                {{ __('Interface Port / SFP') }}
                             </label>
-                            <input type="text" 
-                                   name="interface_port" 
-                                   x-model="formData.interface_port" 
-                                   placeholder="e.g. sfp-sfpplus1" 
+                            <input type="text"
+                                   name="interface_port"
+                                   x-model="formData.interface_port"
+                                   placeholder="sfp-sfpplus1"
                                    class="h-[34px] w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 font-mono focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                         </div>
 
                         <div>
                             <label class="block text-[10.5px] font-bold uppercase text-slate-600 mb-1">
-                                Circuit ID / Tag
+                                {{ __('Circuit ID / Tag') }}
                             </label>
-                            <input type="text" 
-                                   name="circuit_id" 
-                                   x-model="formData.circuit_id" 
-                                   placeholder="e.g. CKT-DH-901" 
+                            <input type="text"
+                                   name="circuit_id"
+                                   x-model="formData.circuit_id"
+                                   placeholder="CKT-DH-901"
                                    class="h-[34px] w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 font-mono focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                         </div>
                     </div>
@@ -661,29 +648,27 @@
                     <div class="flex items-center justify-between pb-1 border-b border-slate-100">
                         <div class="flex items-center gap-1.5">
                             <i class="fas fa-chart-pie text-[10px] text-cyan-600"></i>
-                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">3. Purchased Capacity (Mbps) &amp; Unit Rates ({{ $currencySymbol }}/Mbps)</span>
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">3. {{ __('Purchased Capacity & Unit Rates') }} ({{ $currencySymbol }}/Mbps)</span>
                         </div>
-                        <span class="text-[10.5px] font-mono font-bold text-cyan-700" x-text="`Total Bandwidth: ${totalMbps()} Mbps`"></span>
+                        <span class="text-[10.5px] font-mono font-bold text-cyan-700" x-text="`${i18n.totalBandwidth}: ${totalMbps()} Mbps`"></span>
                     </div>
 
-                    {{-- Structured Capacity Breakdown Table --}}
                     <div class="border border-slate-200 rounded-lg overflow-hidden bg-white shadow-2xs">
                         <table class="w-full text-xs text-left">
                             <thead class="bg-slate-100/90 text-[10px] uppercase font-bold text-slate-600 border-b border-slate-200 tracking-wider">
                                 <tr>
-                                    <th class="py-2 px-3">Traffic Stream</th>
-                                    <th class="py-2 px-3 w-32 text-right">Capacity (Mbps)</th>
-                                    <th class="py-2 px-3 w-36 text-right">Unit Rate ({{ $currencySymbol }}/Mbps)</th>
-                                    <th class="py-2 px-3 w-32 text-right">Monthly Sub-total</th>
+                                    <th class="py-2 px-3">{{ __('Traffic Stream') }}</th>
+                                    <th class="py-2 px-3 w-32 text-right">{{ __('Capacity (Mbps)') }}</th>
+                                    <th class="py-2 px-3 w-36 text-right">{{ __('Unit Rate') }} ({{ $currencySymbol }}/Mbps)</th>
+                                    <th class="py-2 px-3 w-32 text-right">{{ __('Subtotal') }}</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100 text-slate-700">
-                                {{-- 1. Global Internet --}}
                                 <tr class="hover:bg-blue-50/30 transition">
                                     <td class="py-1.5 px-3 font-semibold text-blue-700">
                                         <div class="flex items-center gap-1.5">
                                             <i class="fas fa-globe text-[11px] w-4 text-blue-500"></i>
-                                            <span>Global Internet (IP Transit)</span>
+                                            <span>{{ __('Global Internet (IP Transit)') }}</span>
                                         </div>
                                     </td>
                                     <td class="py-1 px-2">
@@ -695,12 +680,11 @@
                                     <td class="py-1.5 px-3 text-right font-mono font-bold text-slate-800" x-text="`{{ $currencySymbol }} ${((Number(formData.global_mbps || 0) * Number(formData.global_rate || 0))).toFixed(2)}`"></td>
                                 </tr>
 
-                                {{-- 2. BDIX Peering --}}
                                 <tr class="hover:bg-emerald-50/30 transition">
                                     <td class="py-1.5 px-3 font-semibold text-emerald-700">
                                         <div class="flex items-center gap-1.5">
                                             <i class="fas fa-network-wired text-[11px] w-4 text-emerald-500"></i>
-                                            <span>BDIX Peering</span>
+                                            <span>{{ __('BDIX Peering') }}</span>
                                         </div>
                                     </td>
                                     <td class="py-1 px-2">
@@ -712,12 +696,11 @@
                                     <td class="py-1.5 px-3 text-right font-mono font-bold text-slate-800" x-text="`{{ $currencySymbol }} ${((Number(formData.bdix_mbps || 0) * Number(formData.bdix_rate || 0))).toFixed(2)}`"></td>
                                 </tr>
 
-                                {{-- 3. CDN Cache --}}
                                 <tr class="hover:bg-purple-50/30 transition">
                                     <td class="py-1.5 px-3 font-semibold text-purple-700">
                                         <div class="flex items-center gap-1.5">
                                             <i class="fas fa-bolt text-[11px] w-4 text-purple-500"></i>
-                                            <span>CDN Cache / Akamai</span>
+                                            <span>{{ __('CDN Cache') }}</span>
                                         </div>
                                     </td>
                                     <td class="py-1 px-2">
@@ -729,12 +712,11 @@
                                     <td class="py-1.5 px-3 text-right font-mono font-bold text-slate-800" x-text="`{{ $currencySymbol }} ${((Number(formData.cdn_mbps || 0) * Number(formData.cdn_rate || 0))).toFixed(2)}`"></td>
                                 </tr>
 
-                                {{-- 4. Google GGC --}}
                                 <tr class="hover:bg-amber-50/30 transition">
                                     <td class="py-1.5 px-3 font-semibold text-amber-700">
                                         <div class="flex items-center gap-1.5">
                                             <i class="fab fa-google text-[11px] w-4 text-amber-500"></i>
-                                            <span>Google Cache (GGC)</span>
+                                            <span>{{ __('Google Cache (GGC)') }}</span>
                                         </div>
                                     </td>
                                     <td class="py-1 px-2">
@@ -746,12 +728,11 @@
                                     <td class="py-1.5 px-3 text-right font-mono font-bold text-slate-800" x-text="`{{ $currencySymbol }} ${((Number(formData.ggc_mbps || 0) * Number(formData.ggc_rate || 0))).toFixed(2)}`"></td>
                                 </tr>
 
-                                {{-- 5. Facebook FNA --}}
                                 <tr class="hover:bg-indigo-50/30 transition">
                                     <td class="py-1.5 px-3 font-semibold text-indigo-700">
                                         <div class="flex items-center gap-1.5">
                                             <i class="fab fa-facebook text-[11px] w-4 text-indigo-500"></i>
-                                            <span>Facebook Cache (FNA)</span>
+                                            <span>{{ __('Facebook Cache (FNA)') }}</span>
                                         </div>
                                     </td>
                                     <td class="py-1 px-2">
@@ -763,12 +744,11 @@
                                     <td class="py-1.5 px-3 text-right font-mono font-bold text-slate-800" x-text="`{{ $currencySymbol }} ${((Number(formData.fna_mbps || 0) * Number(formData.fna_rate || 0))).toFixed(2)}`"></td>
                                 </tr>
 
-                                {{-- 6. Other / Peering --}}
                                 <tr class="hover:bg-slate-50/50 transition">
                                     <td class="py-1.5 px-3 font-semibold text-slate-700">
                                         <div class="flex items-center gap-1.5">
                                             <i class="fas fa-server text-[11px] w-4 text-slate-400"></i>
-                                            <span>Other / Private Peering</span>
+                                            <span>{{ __('Other / Private Peering') }}</span>
                                         </div>
                                     </td>
                                     <td class="py-1 px-2">
@@ -783,41 +763,39 @@
                         </table>
                     </div>
 
-                    {{-- Transmission Charge & Est Bill Box --}}
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5 p-3 bg-slate-50 border border-slate-200 rounded-lg">
                         <div>
                             <label class="block text-[10.5px] font-bold uppercase text-slate-600 mb-1">
-                                Monthly Transmission Charge ({{ $currencySymbol }})
+                                {{ __('Monthly Transmission Charge') }} ({{ $currencySymbol }})
                             </label>
-                            <input type="number" 
-                                   step="0.01" 
-                                   min="0" 
-                                   name="monthly_transmission_cost" 
-                                   x-model.number="formData.monthly_transmission_cost" 
-                                   placeholder="0.00" 
+                            <input type="number"
+                                   step="0.01"
+                                   min="0"
+                                   name="monthly_transmission_cost"
+                                   x-model.number="formData.monthly_transmission_cost"
+                                   placeholder="0.00"
                                    class="h-[34px] w-full bg-white border border-slate-200 rounded-lg text-xs px-3 font-mono focus:border-cyan-500 focus:outline-hidden transition">
                         </div>
 
                         <div class="flex flex-col justify-center bg-white p-2.5 rounded-lg border border-slate-200">
                             <div class="flex items-center justify-between text-xs mb-1">
-                                <span class="text-slate-500 font-medium">Total Bandwidth:</span>
+                                <span class="text-slate-500 font-medium">{{ __('Total Bandwidth') }}:</span>
                                 <span class="font-bold font-mono text-slate-800" x-text="`${totalMbps()} Mbps`"></span>
                             </div>
                             <div class="flex items-center justify-between text-xs border-t border-slate-100 pt-1">
-                                <span class="text-slate-700 font-semibold">Est. Monthly Total Bill:</span>
+                                <span class="text-slate-700 font-semibold">{{ __('Est. Monthly Total Bill') }}:</span>
                                 <span class="font-bold font-mono text-cyan-700 text-sm" x-text="`{{ $currencySymbol }} ${estMonthlyCost()}`"></span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {{-- Modal Footer --}}
                 <div class="pt-3 border-t border-slate-200 flex items-center justify-end gap-2 flex-shrink-0">
                     <button type="button" @click="showProviderModal = false" class="h-[34px] border border-slate-300 hover:bg-slate-100 text-slate-700 font-semibold text-xs px-3.5 rounded-lg transition cursor-pointer">
-                        Cancel
+                        {{ __('Cancel') }}
                     </button>
                     <button type="submit" class="h-[34px] bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs px-4 rounded-lg shadow-xs transition cursor-pointer">
-                        <span x-text="isEditMode ? 'Update Carrier Profile' : 'Save Upstream Carrier'"></span>
+                        <span x-text="isEditMode ? i18n.updateCarrierBtn : i18n.saveCarrierBtn"></span>
                     </button>
                 </div>
             </form>
@@ -825,18 +803,18 @@
     </div>
 
     {{-- Modal 2: Record Carrier Invoice / Monthly Bill Modal --}}
-    <div x-show="showInvoiceModal" 
-         x-cloak 
+    <div x-show="showInvoiceModal"
+         x-cloak
          class="bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 fixed inset-0 z-50 overflow-y-auto">
-        <div class="bg-white rounded-xl border border-slate-200/90 shadow-2xl w-full max-w-lg overflow-hidden my-6 flex flex-col animate-in fade-in zoom-in-95 duration-150"
+        <div class="bg-white rounded-xl border border-slate-200/90 shadow-2xl w-full max-w-lg overflow-hidden my-6 flex flex-col"
              @click.away="showInvoiceModal = false">
-            
+
             <div class="bg-slate-50/80 border-b border-slate-200 px-4 py-3 flex items-center justify-between flex-shrink-0">
                 <div class="flex items-center gap-2">
                     <div class="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center justify-center text-xs flex-shrink-0">
                         <i class="fas fa-file-invoice-dollar"></i>
                     </div>
-                    <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Record Carrier Monthly Bill</h3>
+                    <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">{{ __('Record Upstream Carrier Bill') }}</h3>
                 </div>
                 <button type="button" @click="showInvoiceModal = false" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center cursor-pointer">
                     <i class="fas fa-times text-xs"></i>
@@ -846,52 +824,52 @@
             <form action="{{ route('tenant.upstream.invoice.store') }}" method="POST" class="p-4 space-y-3 text-xs">
                 @csrf
                 <div>
-                    <label class="block text-[10.5px] font-bold uppercase text-slate-600 mb-1">Carrier Provider <span class="text-rose-500">*</span></label>
+                    <label class="block text-[10.5px] font-bold uppercase text-slate-600 mb-1">{{ __('Carrier Provider') }} <span class="text-rose-500">*</span></label>
                     <select name="provider_id" x-model="invoiceData.provider_id" required class="h-[34px] w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 focus:bg-white focus:border-cyan-500 focus:outline-hidden font-medium cursor-pointer transition">
-                        <option value="">Select Carrier</option>
+                        <option value="">{{ __('Select Carrier') }}</option>
                         @foreach($providers as $p)
-                            <option value="{{ $p->id }}">{{ $p->name }} ({{ $p->carrier_type }})</option>
+                            <option value="{{ $p->id }}">{{ $p->name }} ({{ __($p->carrier_type ?: 'Upstream Carrier') }})</option>
                         @endforeach
                     </select>
                 </div>
 
                 <div class="grid grid-cols-2 gap-2.5">
                     <div>
-                        <label class="block text-[10.5px] font-bold uppercase text-slate-600 mb-1">Invoice / Bill No <span class="text-rose-500">*</span></label>
-                        <input type="text" name="invoice_no" x-model="invoiceData.invoice_no" required placeholder="e.g. SMT-2026-09" class="h-[34px] w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 font-mono focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
+                        <label class="block text-[10.5px] font-bold uppercase text-slate-600 mb-1">{{ __('Invoice / Bill No') }} <span class="text-rose-500">*</span></label>
+                        <input type="text" name="invoice_no" x-model="invoiceData.invoice_no" required placeholder="SMT-2026-09" class="h-[34px] w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 font-mono focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                     </div>
                     <div>
-                        <label class="block text-[10.5px] font-bold uppercase text-slate-600 mb-1">Billing Month <span class="text-rose-500">*</span></label>
+                        <label class="block text-[10.5px] font-bold uppercase text-slate-600 mb-1">{{ __('Billing Month') }} <span class="text-rose-500">*</span></label>
                         <input type="date" name="billing_month" x-model="invoiceData.billing_month" required class="h-[34px] w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 font-mono focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                     </div>
                 </div>
 
                 <div class="grid grid-cols-3 gap-2">
                     <div>
-                        <label class="block text-[10.5px] font-bold uppercase text-slate-600 mb-1">Bandwidth Cost <span class="text-rose-500">*</span></label>
+                        <label class="block text-[10.5px] font-bold uppercase text-slate-600 mb-1">{{ __('Bandwidth Cost') }} <span class="text-rose-500">*</span></label>
                         <input type="number" step="0.01" min="0" name="bandwidth_cost" x-model.number="invoiceData.bandwidth_cost" required placeholder="0.00" class="h-[34px] w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 font-mono text-right focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                     </div>
                     <div>
-                        <label class="block text-[10.5px] font-bold uppercase text-slate-600 mb-1">NTTN / Trans.</label>
+                        <label class="block text-[10.5px] font-bold uppercase text-slate-600 mb-1">{{ __('Transmission / NTTN') }}</label>
                         <input type="number" step="0.01" min="0" name="transmission_cost" x-model.number="invoiceData.transmission_cost" placeholder="0.00" class="h-[34px] w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 font-mono text-right focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                     </div>
                     <div>
-                        <label class="block text-[10.5px] font-bold uppercase text-slate-600 mb-1">VAT / Tax</label>
+                        <label class="block text-[10.5px] font-bold uppercase text-slate-600 mb-1">{{ __('Govt VAT / Tax') }}</label>
                         <input type="number" step="0.01" min="0" name="vat_tax" x-model.number="invoiceData.vat_tax" placeholder="0.00" class="h-[34px] w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 font-mono text-right focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                     </div>
                 </div>
 
                 <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-between font-mono text-xs">
-                    <span class="font-bold text-slate-600">Total Billed Amount:</span>
+                    <span class="font-bold text-slate-600">{{ __('Total Billed Amount') }}:</span>
                     <span class="font-bold text-cyan-800 text-sm" x-text="`{{ $currencySymbol }} ${(Number(invoiceData.bandwidth_cost || 0) + Number(invoiceData.transmission_cost || 0) + Number(invoiceData.vat_tax || 0)).toFixed(2)}`"></span>
                 </div>
 
                 <div class="pt-2 border-t border-slate-200 flex items-center justify-end gap-2 flex-shrink-0">
                     <button type="button" @click="showInvoiceModal = false" class="h-[34px] border border-slate-300 hover:bg-slate-100 text-slate-700 font-semibold text-xs px-3.5 rounded-lg transition cursor-pointer">
-                        Cancel
+                        {{ __('Cancel') }}
                     </button>
                     <button type="submit" class="h-[34px] bg-slate-800 hover:bg-slate-900 text-white font-semibold text-xs px-4 rounded-lg shadow-xs transition cursor-pointer">
-                        Record Carrier Bill
+                        {{ __('Save Bill') }}
                     </button>
                 </div>
             </form>
@@ -899,18 +877,18 @@
     </div>
 
     {{-- Modal 3: Disburse Payment & Generate Voucher Modal --}}
-    <div x-show="showPaymentModal" 
-         x-cloak 
+    <div x-show="showPaymentModal"
+         x-cloak
          class="bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 fixed inset-0 z-50 overflow-y-auto">
-        <div class="bg-white rounded-xl border border-slate-200/90 shadow-2xl w-full max-w-lg overflow-hidden my-6 flex flex-col animate-in fade-in zoom-in-95 duration-150"
+        <div class="bg-white rounded-xl border border-slate-200/90 shadow-2xl w-full max-w-lg overflow-hidden my-6 flex flex-col"
              @click.away="showPaymentModal = false">
-            
+
             <div class="bg-slate-50/80 border-b border-slate-200 px-4 py-3 flex items-center justify-between flex-shrink-0">
                 <div class="flex items-center gap-2">
                     <div class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center text-xs flex-shrink-0">
                         <i class="fas fa-money-bill-transfer"></i>
                     </div>
-                    <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Disburse Payment to Carrier</h3>
+                    <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">{{ __('Disburse Payment to Carrier') }}</h3>
                 </div>
                 <button type="button" @click="showPaymentModal = false" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center cursor-pointer">
                     <i class="fas fa-times text-xs"></i>
@@ -920,54 +898,54 @@
             <form action="{{ route('tenant.upstream.payment.store') }}" method="POST" class="p-4 space-y-3 text-xs">
                 @csrf
                 <div>
-                    <label class="block text-[10.5px] font-bold uppercase text-slate-600 mb-1">Carrier Provider <span class="text-rose-500">*</span></label>
+                    <label class="block text-[10.5px] font-bold uppercase text-slate-600 mb-1">{{ __('Carrier Provider') }} <span class="text-rose-500">*</span></label>
                     <select name="provider_id" x-model="paymentData.provider_id" required class="h-[34px] w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 focus:bg-white focus:border-cyan-500 focus:outline-hidden font-medium cursor-pointer transition">
-                        <option value="">Select Carrier</option>
+                        <option value="">{{ __('Select Carrier') }}</option>
                         @foreach($providers as $p)
-                            <option value="{{ $p->id }}">{{ $p->name }} (Due: @currency($p->invoices->sum('due_amount')))</option>
+                            <option value="{{ $p->id }}">{{ $p->name }} ({{ __('Due') }}: @currency($p->invoices->sum('due_amount')))</option>
                         @endforeach
                     </select>
                 </div>
 
                 <div class="grid grid-cols-2 gap-2.5">
                     <div>
-                        <label class="block text-[10.5px] font-bold uppercase text-slate-600 mb-1">Paid Amount ({{ $currencySymbol }}) <span class="text-rose-500">*</span></label>
+                        <label class="block text-[10.5px] font-bold uppercase text-slate-600 mb-1">{{ __('Paid Amount') }} ({{ $currencySymbol }}) <span class="text-rose-500">*</span></label>
                         <input type="number" step="0.01" min="1" name="amount" x-model.number="paymentData.amount" required placeholder="0.00" class="h-[34px] w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 font-mono font-bold text-emerald-700 text-right focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                     </div>
                     <div>
-                        <label class="block text-[10.5px] font-bold uppercase text-slate-600 mb-1">Payment Method <span class="text-rose-500">*</span></label>
+                        <label class="block text-[10.5px] font-bold uppercase text-slate-600 mb-1">{{ __('Payment Method') }} <span class="text-rose-500">*</span></label>
                         <select name="payment_method" x-model="paymentData.payment_method" required class="h-[34px] w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 focus:bg-white focus:border-cyan-500 focus:outline-hidden font-medium cursor-pointer transition">
-                            <option value="BANK_TRANSFER">Bank Transfer / BEFTN</option>
-                            <option value="CHEQUE">Bank Cheque</option>
-                            <option value="RTGS">RTGS Instant</option>
-                            <option value="CASH">Cash</option>
-                            <option value="OTHER">Other</option>
+                            <option value="BANK_TRANSFER">{{ __('Bank Transfer / BEFTN') }}</option>
+                            <option value="CHEQUE">{{ __('Bank Cheque') }}</option>
+                            <option value="RTGS">{{ __('RTGS Instant') }}</option>
+                            <option value="CASH">{{ __('Cash') }}</option>
+                            <option value="OTHER">{{ __('Other Method') }}</option>
                         </select>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-2 gap-2.5">
                     <div>
-                        <label class="block text-[10.5px] font-bold uppercase text-slate-600 mb-1">Bank Name / Branch</label>
-                        <input type="text" name="bank_name" x-model="paymentData.bank_name" placeholder="e.g. City Bank" class="h-[34px] w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
+                        <label class="block text-[10.5px] font-bold uppercase text-slate-600 mb-1">{{ __('Bank Name / Branch') }}</label>
+                        <input type="text" name="bank_name" x-model="paymentData.bank_name" placeholder="City Bank - Gulshan" class="h-[34px] w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                     </div>
                     <div>
-                        <label class="block text-[10.5px] font-bold uppercase text-slate-600 mb-1">Cheque / Trx Reference</label>
-                        <input type="text" name="transaction_ref" x-model="paymentData.transaction_ref" placeholder="Ref No / Cheque No" class="h-[34px] w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 font-mono focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
+                        <label class="block text-[10.5px] font-bold uppercase text-slate-600 mb-1">{{ __('Cheque / Trx Reference') }}</label>
+                        <input type="text" name="transaction_ref" x-model="paymentData.transaction_ref" placeholder="{{ __('Ref No / Cheque No') }}" class="h-[34px] w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 font-mono focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-[10.5px] font-bold uppercase text-slate-600 mb-1">Payment Date <span class="text-rose-500">*</span></label>
+                    <label class="block text-[10.5px] font-bold uppercase text-slate-600 mb-1">{{ __('Payment Date') }} <span class="text-rose-500">*</span></label>
                     <input type="datetime-local" name="paid_at" x-model="paymentData.paid_at" required class="h-[34px] w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 font-mono focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                 </div>
 
                 <div class="pt-2 border-t border-slate-200 flex items-center justify-end gap-2 flex-shrink-0">
                     <button type="button" @click="showPaymentModal = false" class="h-[34px] border border-slate-300 hover:bg-slate-100 text-slate-700 font-semibold text-xs px-3.5 rounded-lg transition cursor-pointer">
-                        Cancel
+                        {{ __('Cancel') }}
                     </button>
                     <button type="submit" class="h-[34px] bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs px-4 rounded-lg shadow-xs transition cursor-pointer">
-                        Disburse &amp; Generate Voucher
+                        {{ __('Disburse & Generate Voucher') }}
                     </button>
                 </div>
             </form>
@@ -975,18 +953,18 @@
     </div>
 
     {{-- Modal 4: View Details & Cost Breakdown Modal --}}
-    <div x-show="showDetailsModal" 
-         x-cloak 
+    <div x-show="showDetailsModal"
+         x-cloak
          class="bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 fixed inset-0 z-50 overflow-y-auto">
-        <div class="bg-white rounded-xl border border-slate-200/90 shadow-2xl w-full max-w-xl overflow-hidden my-6 flex flex-col animate-in fade-in zoom-in-95 duration-150"
+        <div class="bg-white rounded-xl border border-slate-200/90 shadow-2xl w-full max-w-xl overflow-hidden my-6 flex flex-col"
              @click.away="showDetailsModal = false">
-            
+
             <div class="bg-slate-50/80 border-b border-slate-200 px-4 py-3 flex items-center justify-between flex-shrink-0">
                 <div class="flex items-center gap-2">
                     <div class="w-7 h-7 rounded-lg bg-cyan-50 text-cyan-600 border border-cyan-100 flex items-center justify-center text-xs flex-shrink-0">
                         <i class="fas fa-circle-info"></i>
                     </div>
-                    <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider" x-text="detailsData?.name + ' - Capacity & Rates'"></h3>
+                    <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider" x-text="`${detailsData?.name || ''} - ${i18n.capacityAndRates}`"></h3>
                 </div>
                 <button type="button" @click="showDetailsModal = false" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center cursor-pointer">
                     <i class="fas fa-times text-xs"></i>
@@ -994,60 +972,57 @@
             </div>
 
             <div class="p-4 space-y-3.5 max-h-[75vh] overflow-y-auto text-xs">
-                {{-- 2-Column Summary Cards --}}
                 <div class="grid grid-cols-2 gap-2.5">
                     <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200/80">
-                        <span class="text-[9px] uppercase tracking-wider text-slate-400 block font-bold">Total Bandwidth</span>
+                        <span class="text-[9px] uppercase tracking-wider text-slate-400 block font-bold">{{ __('Total Bandwidth') }}</span>
                         <span class="text-sm font-bold font-mono text-cyan-800" x-text="`${detailsData?.tot_capacity || 0} Mbps`"></span>
                     </div>
                     <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200/80">
-                        <span class="text-[9px] uppercase tracking-wider text-slate-400 block font-bold">Monthly Bill / Due</span>
+                        <span class="text-[9px] uppercase tracking-wider text-slate-400 block font-bold">{{ __('Monthly Bill') }}</span>
                         <span class="text-sm font-bold font-mono text-rose-700" x-text="`{{ $currencySymbol }}${detailsData?.est_bill || 0}`"></span>
                     </div>
                 </div>
 
-                {{-- Link & Rate Breakdown --}}
                 <div class="space-y-2">
-                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block border-b border-slate-100 pb-1">Capacity by Traffic Type</span>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block border-b border-slate-100 pb-1">{{ __('Capacity by Traffic Type') }}</span>
                     <div class="grid grid-cols-3 gap-2 text-xs">
                         <div class="p-2 rounded bg-slate-50 border border-slate-200">
-                            <span class="text-[10px] text-blue-700 font-semibold block">Global Internet</span>
+                            <span class="text-[10px] text-blue-700 font-semibold block">{{ __('Global Internet') }}</span>
                             <span class="font-mono font-bold text-slate-800" x-text="`${detailsData?.primary_link?.global_mbps || 0}M @ {{ $currencySymbol }}${detailsData?.primary_link?.global_rate || 0}`"></span>
                         </div>
                         <div class="p-2 rounded bg-slate-50 border border-slate-200">
-                            <span class="text-[10px] text-emerald-700 font-semibold block">BDIX Peering</span>
+                            <span class="text-[10px] text-emerald-700 font-semibold block">{{ __('BDIX Peering') }}</span>
                             <span class="font-mono font-bold text-slate-800" x-text="`${detailsData?.primary_link?.bdix_mbps || 0}M @ {{ $currencySymbol }}${detailsData?.primary_link?.bdix_rate || 0}`"></span>
                         </div>
                         <div class="p-2 rounded bg-slate-50 border border-slate-200">
-                            <span class="text-[10px] text-purple-700 font-semibold block">CDN Cache</span>
+                            <span class="text-[10px] text-purple-700 font-semibold block">{{ __('CDN Cache') }}</span>
                             <span class="font-mono font-bold text-slate-800" x-text="`${detailsData?.primary_link?.cdn_mbps || 0}M @ {{ $currencySymbol }}${detailsData?.primary_link?.cdn_rate || 0}`"></span>
                         </div>
                         <div class="p-2 rounded bg-slate-50 border border-slate-200">
-                            <span class="text-[10px] text-amber-700 font-semibold block">Google GGC</span>
+                            <span class="text-[10px] text-amber-700 font-semibold block">{{ __('Google Cache (GGC)') }}</span>
                             <span class="font-mono font-bold text-slate-800" x-text="`${detailsData?.primary_link?.ggc_mbps || 0}M @ {{ $currencySymbol }}${detailsData?.primary_link?.ggc_rate || 0}`"></span>
                         </div>
                         <div class="p-2 rounded bg-slate-50 border border-slate-200">
-                            <span class="text-[10px] text-indigo-700 font-semibold block">Facebook FNA</span>
+                            <span class="text-[10px] text-indigo-700 font-semibold block">{{ __('Facebook Cache (FNA)') }}</span>
                             <span class="font-mono font-bold text-slate-800" x-text="`${detailsData?.primary_link?.fna_mbps || 0}M @ {{ $currencySymbol }}${detailsData?.primary_link?.fna_rate || 0}`"></span>
                         </div>
                         <div class="p-2 rounded bg-slate-50 border border-slate-200">
-                            <span class="text-[10px] text-slate-600 font-semibold block">Transmission Fee</span>
+                            <span class="text-[10px] text-slate-600 font-semibold block">{{ __('Transmission Fee') }}</span>
                             <span class="font-mono font-bold text-slate-800" x-text="`{{ $currencySymbol }}${detailsData?.primary_link?.monthly_transmission_cost || 0}`"></span>
                         </div>
                     </div>
                 </div>
 
-                {{-- Bank Info --}}
                 <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-xs space-y-1">
-                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Bank Account Details</span>
-                    <div class="text-slate-800 font-medium" x-text="`Bank: ${detailsData?.bank_name || 'N/A'}`"></div>
-                    <div class="text-slate-600 font-mono" x-text="`A/C: ${detailsData?.bank_account_no || 'N/A'} (Branch: ${detailsData?.bank_branch || 'N/A'})`"></div>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">{{ __('Bank Account Details') }}</span>
+                    <div class="text-slate-800 font-medium" x-text="`${i18n.bankLabel}: ${detailsData?.bank_name || '-'}`"></div>
+                    <div class="text-slate-600 font-mono" x-text="`${i18n.accountLabel}: ${detailsData?.bank_account_no || '-'} (${i18n.branchLabel}: ${detailsData?.bank_branch || '-'})`"></div>
                 </div>
             </div>
 
             <div class="px-4 py-2.5 bg-slate-50/80 border-t border-slate-200 flex items-center justify-end flex-shrink-0">
                 <button type="button" @click="showDetailsModal = false" class="h-[34px] border border-slate-300 hover:bg-slate-100 text-slate-700 font-semibold text-xs px-4 rounded-lg transition cursor-pointer">
-                    Close
+                    {{ __('Close') }}
                 </button>
             </div>
         </div>
@@ -1069,6 +1044,29 @@
             isEditMode: false,
             currentProvider: {},
             detailsData: {},
+            i18n: {
+                disableCarrier: @js(__('Disable Carrier')),
+                enableCarrier: @js(__('Enable Carrier')),
+                editCarrierTitle: @js(__('Edit Upstream Carrier & Capacity')),
+                addCarrierTitle: @js(__('Add Upstream Carrier Provider')),
+                updateCarrierBtn: @js(__('Update Carrier Profile')),
+                saveCarrierBtn: @js(__('Save Upstream Carrier')),
+                totalBandwidth: @js(__('Total Bandwidth')),
+                capacityAndRates: @js(__('Capacity & Rates')),
+                bankLabel: @js(__('Bank')),
+                accountLabel: @js(__('Account')),
+                branchLabel: @js(__('Branch')),
+                statusUpdated: @js(__('Status Updated')),
+                errorTitle: @js(__('Error')),
+                statusUpdateFailed: @js(__('Failed to update carrier status.')),
+                deleteTitle: @js(__('Delete Upstream Carrier?')),
+                deleteConfirmPrefix: @js(__('Are you sure you want to delete')),
+                deleteConfirmBtn: @js(__('Yes, Delete Carrier')),
+                cancelBtn: @js(__('Cancel')),
+                deletedTitle: @js(__('Carrier Deleted')),
+                cannotDeleteTitle: @js(__('Cannot Delete')),
+                deleteErrorMsg: @js(__('An error occurred while deleting the carrier.')),
+            },
 
             formData: {
                 name: '',
@@ -1287,7 +1285,7 @@
                         item.is_active = res.is_active;
                         Swal.fire({
                             icon: 'success',
-                            title: 'Status Updated',
+                            title: this.i18n.statusUpdated,
                             text: res.message,
                             timer: 1500,
                             showConfirmButton: false
@@ -1298,8 +1296,8 @@
                 } catch (e) {
                     Swal.fire({
                         icon: 'error',
-                        title: 'Error',
-                        text: 'Failed to update carrier status.'
+                        title: this.i18n.errorTitle,
+                        text: this.i18n.statusUpdateFailed
                     });
                 }
             },
@@ -1307,14 +1305,14 @@
             async deleteCarrier(item) {
                 this.activeMenu = null;
                 const result = await Swal.fire({
-                    title: 'Delete Upstream Carrier?',
-                    text: `Are you sure you want to delete '${item.name}'? This action cannot be undone.`,
+                    title: this.i18n.deleteTitle,
+                    text: `${this.i18n.deleteConfirmPrefix} '${item.name}'?`,
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonColor: '#e11d48',
                     cancelButtonColor: '#64748b',
-                    confirmButtonText: 'Yes, Delete Carrier',
-                    cancelButtonText: 'Cancel'
+                    confirmButtonText: this.i18n.deleteConfirmBtn,
+                    cancelButtonText: this.i18n.cancelBtn
                 });
 
                 if (result.isConfirmed) {
@@ -1331,7 +1329,7 @@
                         if (data.success) {
                             Swal.fire({
                                 icon: 'success',
-                                title: 'Carrier Deleted',
+                                title: this.i18n.deletedTitle,
                                 text: data.message,
                                 timer: 1500,
                                 showConfirmButton: false
@@ -1341,15 +1339,15 @@
                         } else {
                             Swal.fire({
                                 icon: 'error',
-                                title: 'Cannot Delete',
+                                title: this.i18n.cannotDeleteTitle,
                                 text: data.message
                             });
                         }
                     } catch (err) {
                         Swal.fire({
                             icon: 'error',
-                            title: 'Error',
-                            text: 'An error occurred while deleting the carrier.'
+                            title: this.i18n.errorTitle,
+                            text: this.i18n.deleteErrorMsg
                         });
                     }
                 }
@@ -1361,8 +1359,8 @@
         @if(session('success'))
             Swal.fire({
                 icon: 'success',
-                title: 'Success!',
-                text: "{{ session('success') }}",
+                title: @js(__('Success')),
+                text: @json(session('success')),
                 timer: 2000,
                 showConfirmButton: false
             });
@@ -1371,8 +1369,8 @@
         @if(session('error'))
             Swal.fire({
                 icon: 'error',
-                title: 'Action Failed',
-                text: "{{ session('error') }}"
+                title: @js(__('Error')),
+                text: @json(session('error'))
             });
         @endif
     });

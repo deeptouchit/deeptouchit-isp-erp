@@ -212,7 +212,7 @@ class TenantUpstreamController extends Controller
             $link->save();
         });
 
-        return back()->with('success', "Upstream Carrier '{$validated['name']}' added successfully.");
+        return back()->with('success', __("Upstream Carrier ':name' added successfully.", ['name' => $validated['name']]));
     }
 
     /**
@@ -311,7 +311,7 @@ class TenantUpstreamController extends Controller
             $link->save();
         });
 
-        return back()->with('success', "Upstream Carrier '{$provider->name}' updated successfully.");
+        return back()->with('success', __("Upstream Carrier ':name' updated successfully.", ['name' => $provider->name]));
     }
 
     /**
@@ -324,17 +324,19 @@ class TenantUpstreamController extends Controller
         $provider->is_active = !$provider->is_active;
         $provider->save();
 
-        $stateText = $provider->is_active ? 'enabled' : 'disabled';
+        $msg = $provider->is_active
+            ? __("Carrier ':name' has been enabled successfully.", ['name' => $provider->name])
+            : __("Carrier ':name' has been disabled successfully.", ['name' => $provider->name]);
 
         if ($request->wantsJson() || $request->ajax() || str_contains($request->header('Accept', ''), 'json')) {
             return response()->json([
                 'success' => true,
                 'is_active' => $provider->is_active,
-                'message' => "Carrier '{$provider->name}' is now {$stateText}.",
+                'message' => $msg,
             ]);
         }
 
-        return back()->with('success', "Carrier '{$provider->name}' has been {$stateText} successfully.");
+        return back()->with('success', $msg);
     }
 
     /**
@@ -382,7 +384,7 @@ class TenantUpstreamController extends Controller
             'notes' => $validated['notes'] ?? null,
         ]);
 
-        return back()->with('success', "Carrier Bill '{$validated['invoice_no']}' recorded successfully.");
+        return back()->with('success', __("Carrier Bill ':no' recorded successfully.", ['no' => $validated['invoice_no']]));
     }
 
     /**
@@ -445,7 +447,7 @@ class TenantUpstreamController extends Controller
             }
         });
 
-        return back()->with('success', "Payment voucher generated & recorded successfully.");
+        return back()->with('success', __('Payment voucher generated & recorded successfully.'));
     }
 
     /**
@@ -473,7 +475,10 @@ class TenantUpstreamController extends Controller
 
         $invoicesCount = $provider->invoices()->count();
         if ($invoicesCount > 0) {
-            $msg = "Cannot delete carrier '{$provider->name}' because it has {$invoicesCount} billing invoices recorded.";
+            $msg = __("Cannot delete carrier ':name' because it has :count billing invoices recorded.", [
+                'name' => $provider->name,
+                'count' => $invoicesCount,
+            ]);
             if ($request->wantsJson() || $request->ajax() || str_contains($request->header('Accept', ''), 'json')) {
                 return response()->json(['success' => false, 'message' => $msg], 422);
             }
@@ -483,7 +488,7 @@ class TenantUpstreamController extends Controller
         $providerName = $provider->name;
         $provider->delete();
 
-        $msg = "Carrier '{$providerName}' deleted successfully.";
+        $msg = __("Carrier ':name' deleted successfully.", ['name' => $providerName]);
         if ($request->wantsJson() || $request->ajax() || str_contains($request->header('Accept', ''), 'json')) {
             return response()->json(['success' => true, 'message' => $msg]);
         }
@@ -581,7 +586,7 @@ class TenantUpstreamController extends Controller
         $invoiceNo = $invoice->invoice_no;
         $invoice->delete();
 
-        $msg = "Carrier Bill '{$invoiceNo}' deleted successfully.";
+        $msg = __("Carrier Bill ':no' deleted successfully.", ['no' => $invoiceNo]);
         if ($request->wantsJson() || $request->ajax() || str_contains($request->header('Accept', ''), 'json')) {
             return response()->json(['success' => true, 'message' => $msg]);
         }
@@ -697,7 +702,7 @@ class TenantUpstreamController extends Controller
             $payment->delete();
         });
 
-        $msg = "Payment Voucher '{$voucherNo}' deleted and invoice adjusted.";
+        $msg = __("Payment Voucher ':no' deleted and invoice adjusted.", ['no' => $voucherNo]);
         if ($request->wantsJson() || $request->ajax() || str_contains($request->header('Accept', ''), 'json')) {
             return response()->json(['success' => true, 'message' => $msg]);
         }
