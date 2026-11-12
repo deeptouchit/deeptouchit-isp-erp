@@ -25,7 +25,7 @@ class TenantInventoryReportController extends Controller
         $tenant = $tenantId ? Tenant::find($tenantId) : (auth()->user()?->tenant ?? Tenant::first());
 
         if (!$tenant) {
-            abort(403, 'Tenant context not found. Please log in.');
+            abort(403, __('Tenant context not found. Please log in.'));
         }
 
         return $tenant;
@@ -136,8 +136,11 @@ class TenantInventoryReportController extends Controller
             ->take(6)
             ->get();
 
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
+
         return view('tenant.reports.inventory', compact(
             'tenant',
+            'currencySymbol',
             'activeTab',
             'category',
             'statusFilter',
@@ -182,9 +185,11 @@ class TenantInventoryReportController extends Controller
 
         $coreOlts = TenantOlt::where('tenant_id', $tenant->id)->get();
         $coreRouters = TenantRouter::where('tenant_id', $tenant->id)->get();
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
 
         return view('tenant.reports.inventory_print', compact(
             'tenant',
+            'currencySymbol',
             'catalog',
             'totalAssetValuation',
             'totalOlts',
@@ -218,31 +223,33 @@ class TenantInventoryReportController extends Controller
             'Expires' => '0',
         ];
 
-        return response()->stream(function () use ($catalog, $tenant) {
+        $currency = $tenant->currency_symbol ?? '৳';
+
+        return response()->stream(function () use ($catalog, $tenant, $currency) {
             $handle = fopen('php://output', 'w');
             fprintf($handle, chr(0xEF) . chr(0xBB) . chr(0xBF)); // UTF-8 BOM
 
             // Header Block
             fputcsv($handle, [$tenant->company_name ?? $tenant->name]);
-            fputcsv($handle, ['EQUIPMENT & HARDWARE INVENTORY AUDIT STATEMENT']);
-            fputcsv($handle, ['Generated At', date('d-M-Y h:i:s A')]);
+            fputcsv($handle, [__('EQUIPMENT & HARDWARE INVENTORY AUDIT STATEMENT')]);
+            fputcsv($handle, [__('Generated At'), now()->translatedFormat('d-M-Y h:i:s A')]);
             fputcsv($handle, []);
 
             // Column Headers
             fputcsv($handle, [
-                'SL',
-                'Item SKU / Code',
-                'Item Description & Specification',
-                'Category',
-                'Brand / Manufacturer',
-                'Unit Type',
-                'Warehouse Stock',
-                'Deployed / In-Field',
-                'Total Asset Units',
-                'Unit Price (BDT)',
-                'Total Valuation (BDT)',
-                'Reorder Threshold',
-                'Inventory Health Status',
+                __('SL'),
+                __('Item SKU / Code'),
+                __('Item Description & Specification'),
+                __('Category'),
+                __('Brand / Manufacturer'),
+                __('Unit Type'),
+                __('Warehouse Stock'),
+                __('Deployed / In-Field'),
+                __('Total Asset Units'),
+                __('Unit Price (:currency)', ['currency' => $currency]),
+                __('Total Valuation (:currency)', ['currency' => $currency]),
+                __('Reorder Threshold'),
+                __('Inventory Health Status'),
             ]);
 
             $totalVal = 0;
@@ -251,7 +258,7 @@ class TenantInventoryReportController extends Controller
                 $itemValuation = $itemTotalUnits * $item['unit_price'];
                 $totalVal += $itemValuation;
 
-                $status = ($item['in_stock'] <= $item['reorder_level']) ? 'LOW STOCK WARNING' : 'HEALTHY IN-STOCK';
+                $status = ($item['in_stock'] <= $item['reorder_level']) ? __('LOW STOCK WARNING') : __('HEALTHY IN-STOCK');
 
                 fputcsv($handle, [
                     $idx + 1,
@@ -271,7 +278,7 @@ class TenantInventoryReportController extends Controller
             }
 
             fputcsv($handle, []);
-            fputcsv($handle, ['', '', '', '', '', '', '', '', 'GRAND TOTAL VALUATION (BDT)', '', number_format($totalVal, 2, '.', '')]);
+            fputcsv($handle, ['', '', '', '', '', '', '', '', __('GRAND TOTAL VALUATION (:currency)', ['currency' => $currency]), '', number_format($totalVal, 2, '.', '')]);
 
             fclose($handle);
         }, 200, $headers);
@@ -289,11 +296,11 @@ class TenantInventoryReportController extends Controller
             // Category 1: Optical Network Units (ONUs / GPON / EPON)
             [
                 'sku' => 'EQ-ONU-VSOL-V2801',
-                'item_name' => 'VSOL V2801SG Single Port GEPON/XPON ONU',
-                'category' => 'Active Optical Terminals (ONU)',
+                'item_name' => __('VSOL V2801SG Single Port GEPON/XPON ONU'),
+                'category' => __('Active Optical Terminals (ONU)'),
                 'category_key' => 'onus',
                 'brand' => 'V-SOL',
-                'unit' => 'Pcs',
+                'unit' => __('Pcs'),
                 'in_stock' => 38,
                 'deployed' => 267,
                 'reorder_level' => 15,
@@ -301,11 +308,11 @@ class TenantInventoryReportController extends Controller
             ],
             [
                 'sku' => 'EQ-ONU-HWTC-HG8310M',
-                'item_name' => 'Huawei EchoLife HG8310M Gigabit GPON Terminal',
-                'category' => 'Active Optical Terminals (ONU)',
+                'item_name' => __('Huawei EchoLife HG8310M Gigabit GPON Terminal'),
+                'category' => __('Active Optical Terminals (ONU)'),
                 'category_key' => 'onus',
                 'brand' => 'Huawei',
-                'unit' => 'Pcs',
+                'unit' => __('Pcs'),
                 'in_stock' => 18,
                 'deployed' => 178,
                 'reorder_level' => 10,
@@ -313,11 +320,11 @@ class TenantInventoryReportController extends Controller
             ],
             [
                 'sku' => 'EQ-ONU-ZTE-F601',
-                'item_name' => 'ZTE ZXHN F601 Optical Network Terminal (Gigabit)',
-                'category' => 'Active Optical Terminals (ONU)',
+                'item_name' => __('ZTE ZXHN F601 Optical Network Terminal (Gigabit)'),
+                'category' => __('Active Optical Terminals (ONU)'),
                 'category_key' => 'onus',
                 'brand' => 'ZTE',
-                'unit' => 'Pcs',
+                'unit' => __('Pcs'),
                 'in_stock' => 9,
                 'deployed' => 77,
                 'reorder_level' => 10,
@@ -327,11 +334,11 @@ class TenantInventoryReportController extends Controller
             // Category 2: Core OLTs & Chassis Hardware
             [
                 'sku' => 'EQ-OLT-DN08EP',
-                'item_name' => 'DN OPTIC DN08EP-EX-4S+ 8-Port EPON OLT 10G Uplink',
-                'category' => 'Central Office Core OLTs',
+                'item_name' => __('DN OPTIC DN08EP-EX-4S+ 8-Port EPON OLT 10G Uplink'),
+                'category' => __('Central Office Core OLTs'),
                 'category_key' => 'olts',
                 'brand' => 'DN OPTIC',
-                'unit' => 'Units',
+                'unit' => __('Units'),
                 'in_stock' => 0,
                 'deployed' => 2,
                 'reorder_level' => 1,
@@ -339,11 +346,11 @@ class TenantInventoryReportController extends Controller
             ],
             [
                 'sku' => 'EQ-OLT-HSGQ-E04',
-                'item_name' => 'HSGQ-E04 4-Port Standalone EPON Optical Line Terminal',
-                'category' => 'Central Office Core OLTs',
+                'item_name' => __('HSGQ-E04 4-Port Standalone EPON Optical Line Terminal'),
+                'category' => __('Central Office Core OLTs'),
                 'category_key' => 'olts',
                 'brand' => 'HSGQ',
-                'unit' => 'Units',
+                'unit' => __('Units'),
                 'in_stock' => 1,
                 'deployed' => 1,
                 'reorder_level' => 1,
@@ -351,11 +358,11 @@ class TenantInventoryReportController extends Controller
             ],
             [
                 'sku' => 'EQ-OLT-VSOL-V1600D',
-                'item_name' => 'V-SOL V1600D4 4-Port EPON OLT 1U Chassis',
-                'category' => 'Central Office Core OLTs',
+                'item_name' => __('V-SOL V1600D4 4-Port EPON OLT 1U Chassis'),
+                'category' => __('Central Office Core OLTs'),
                 'category_key' => 'olts',
                 'brand' => 'V-SOL',
-                'unit' => 'Units',
+                'unit' => __('Units'),
                 'in_stock' => 1,
                 'deployed' => 1,
                 'reorder_level' => 1,
@@ -365,11 +372,11 @@ class TenantInventoryReportController extends Controller
             // Category 3: Core MikroTik Routers & High-Performance Switches
             [
                 'sku' => 'EQ-RTR-CCR2004',
-                'item_name' => 'MikroTik CCR2004-16G-2S+ Core Cloud Router (16G SFP+)',
-                'category' => 'Core Routing & BGP Engines',
+                'item_name' => __('MikroTik CCR2004-16G-2S+ Core Cloud Router (16G SFP+)'),
+                'category' => __('Core Routing & BGP Engines'),
                 'category_key' => 'routers',
                 'brand' => 'MikroTik',
-                'unit' => 'Units',
+                'unit' => __('Units'),
                 'in_stock' => 0,
                 'deployed' => 1,
                 'reorder_level' => 1,
@@ -377,11 +384,11 @@ class TenantInventoryReportController extends Controller
             ],
             [
                 'sku' => 'EQ-RTR-CCR1009',
-                'item_name' => 'MikroTik CCR1009-7G-1C-1S+ 9-Core Gigabit Router',
-                'category' => 'Core Routing & BGP Engines',
+                'item_name' => __('MikroTik CCR1009-7G-1C-1S+ 9-Core Gigabit Router'),
+                'category' => __('Core Routing & BGP Engines'),
                 'category_key' => 'routers',
                 'brand' => 'MikroTik',
-                'unit' => 'Units',
+                'unit' => __('Units'),
                 'in_stock' => 1,
                 'deployed' => 1,
                 'reorder_level' => 1,
@@ -389,11 +396,11 @@ class TenantInventoryReportController extends Controller
             ],
             [
                 'sku' => 'EQ-SW-CRS326',
-                'item_name' => 'MikroTik CRS326-24G-2S+RM 24-Port Gigabit Smart Switch',
-                'category' => 'Distribution Switches',
+                'item_name' => __('MikroTik CRS326-24G-2S+RM 24-Port Gigabit Smart Switch'),
+                'category' => __('Distribution Switches'),
                 'category_key' => 'routers',
                 'brand' => 'MikroTik',
-                'unit' => 'Units',
+                'unit' => __('Units'),
                 'in_stock' => 2,
                 'deployed' => 4,
                 'reorder_level' => 1,
@@ -403,11 +410,11 @@ class TenantInventoryReportController extends Controller
             // Category 4: Optical Fiber Drums & Drop Cables
             [
                 'sku' => 'FBR-24C-ADSS-1000M',
-                'item_name' => '24-Core ADSS Armored Outdoor Fiber Drum (1000m Reel)',
-                'category' => 'Optical Fiber Distribution Cables',
+                'item_name' => __('24-Core ADSS Armored Outdoor Fiber Drum (1000m Reel)'),
+                'category' => __('Optical Fiber Distribution Cables'),
                 'category_key' => 'fiber_cable',
                 'brand' => 'FiberHome / OPTO',
-                'unit' => 'Drums',
+                'unit' => __('Drums'),
                 'in_stock' => 4,
                 'deployed' => 18,
                 'reorder_level' => 2,
@@ -415,11 +422,11 @@ class TenantInventoryReportController extends Controller
             ],
             [
                 'sku' => 'FBR-12C-AERIAL-1000M',
-                'item_name' => '12-Core Figure-8 Aerial Fiber Optic Drum (1000m Reel)',
-                'category' => 'Optical Fiber Distribution Cables',
+                'item_name' => __('12-Core Figure-8 Aerial Fiber Optic Drum (1000m Reel)'),
+                'category' => __('Optical Fiber Distribution Cables'),
                 'category_key' => 'fiber_cable',
                 'brand' => 'CommScope / HT',
-                'unit' => 'Drums',
+                'unit' => __('Drums'),
                 'in_stock' => 6,
                 'deployed' => 24,
                 'reorder_level' => 3,
@@ -427,11 +434,11 @@ class TenantInventoryReportController extends Controller
             ],
             [
                 'sku' => 'FBR-02C-DROP-2000M',
-                'item_name' => '2-Core FTTH Flat Self-Supporting Drop Cable Drum (2000m)',
-                'category' => 'Optical Fiber Distribution Cables',
+                'item_name' => __('2-Core FTTH Flat Self-Supporting Drop Cable Drum (2000m)'),
+                'category' => __('Optical Fiber Distribution Cables'),
                 'category_key' => 'fiber_cable',
                 'brand' => 'OptiLink',
-                'unit' => 'Drums',
+                'unit' => __('Drums'),
                 'in_stock' => 8,
                 'deployed' => 35,
                 'reorder_level' => 4,
@@ -441,11 +448,11 @@ class TenantInventoryReportController extends Controller
             // Category 5: Passive Optical Splitters & Joint Closures (TJ Boxes)
             [
                 'sku' => 'PAS-SPL-1X8-PLC',
-                'item_name' => '1:8 PLC Cassette Optical Fiber Splitter (SC/UPC)',
-                'category' => 'Passive Optical Splitters & TJ Boxes',
+                'item_name' => __('1:8 PLC Cassette Optical Fiber Splitter (SC/UPC)'),
+                'category' => __('Passive Optical Splitters & TJ Boxes'),
                 'category_key' => 'splitters_tj',
                 'brand' => 'Rosenberger',
-                'unit' => 'Pcs',
+                'unit' => __('Pcs'),
                 'in_stock' => 45,
                 'deployed' => 140,
                 'reorder_level' => 20,
@@ -453,11 +460,11 @@ class TenantInventoryReportController extends Controller
             ],
             [
                 'sku' => 'PAS-SPL-1X16-PLC',
-                'item_name' => '1:16 PLC Blockless Optical Splitter (SC/APC)',
-                'category' => 'Passive Optical Splitters & TJ Boxes',
+                'item_name' => __('1:16 PLC Blockless Optical Splitter (SC/APC)'),
+                'category' => __('Passive Optical Splitters & TJ Boxes'),
                 'category_key' => 'splitters_tj',
                 'brand' => 'Rosenberger',
-                'unit' => 'Pcs',
+                'unit' => __('Pcs'),
                 'in_stock' => 28,
                 'deployed' => 86,
                 'reorder_level' => 15,
@@ -465,11 +472,11 @@ class TenantInventoryReportController extends Controller
             ],
             [
                 'sku' => 'PAS-TJ-CLOSURE-48C',
-                'item_name' => '48-Core Dome Waterproof Fiber Joint Closure (TJ Box)',
-                'category' => 'Passive Optical Splitters & TJ Boxes',
+                'item_name' => __('48-Core Dome Waterproof Fiber Joint Closure (TJ Box)'),
+                'category' => __('Passive Optical Splitters & TJ Boxes'),
                 'category_key' => 'splitters_tj',
                 'brand' => 'FiberBox Pro',
-                'unit' => 'Pcs',
+                'unit' => __('Pcs'),
                 'in_stock' => 14,
                 'deployed' => 42,
                 'reorder_level' => 8,
@@ -479,11 +486,11 @@ class TenantInventoryReportController extends Controller
             // Category 6: Patch Cords, SFP Transceivers & Fast Connectors
             [
                 'sku' => 'ACC-SFP-10G-10KM',
-                'item_name' => '10G SFP+ Single Mode 1310nm 10km Optical Transceiver',
-                'category' => 'Transceivers & Connectors',
+                'item_name' => __('10G SFP+ Single Mode 1310nm 10km Optical Transceiver'),
+                'category' => __('Transceivers & Connectors'),
                 'category_key' => 'patch_cords',
                 'brand' => 'Cisco / Finisar Compatible',
-                'unit' => 'Pairs',
+                'unit' => __('Pairs'),
                 'in_stock' => 12,
                 'deployed' => 16,
                 'reorder_level' => 6,
@@ -491,11 +498,11 @@ class TenantInventoryReportController extends Controller
             ],
             [
                 'sku' => 'ACC-PATCH-SC-3M',
-                'item_name' => 'SC/UPC to SC/UPC Simplex 3-Meter Fiber Patch Cord',
-                'category' => 'Transceivers & Connectors',
+                'item_name' => __('SC/UPC to SC/UPC Simplex 3-Meter Fiber Patch Cord'),
+                'category' => __('Transceivers & Connectors'),
                 'category_key' => 'patch_cords',
                 'brand' => 'OptiLink',
-                'unit' => 'Pcs',
+                'unit' => __('Pcs'),
                 'in_stock' => 120,
                 'deployed' => 650,
                 'reorder_level' => 50,
@@ -503,11 +510,11 @@ class TenantInventoryReportController extends Controller
             ],
             [
                 'sku' => 'ACC-FAST-CONN-SC',
-                'item_name' => 'SC/UPC Fast Optical Quick Mechanical Connector (Pack of 100)',
-                'category' => 'Transceivers & Connectors',
+                'item_name' => __('SC/UPC Fast Optical Quick Mechanical Connector (Pack of 100)'),
+                'category' => __('Transceivers & Connectors'),
                 'category_key' => 'patch_cords',
                 'brand' => 'Kingfisher',
-                'unit' => 'Packs',
+                'unit' => __('Packs'),
                 'in_stock' => 15,
                 'deployed' => 48,
                 'reorder_level' => 5,

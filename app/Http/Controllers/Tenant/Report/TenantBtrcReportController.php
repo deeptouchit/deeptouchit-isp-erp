@@ -25,7 +25,7 @@ class TenantBtrcReportController extends Controller
         $tenant = $tenantId ? Tenant::find($tenantId) : (auth()->user()?->tenant ?? Tenant::first());
 
         if (!$tenant) {
-            abort(403, 'Tenant context not found. Please log in.');
+            abort(403, __('Tenant context not found. Please log in.'));
         }
 
         return $tenant;
@@ -37,6 +37,7 @@ class TenantBtrcReportController extends Controller
     public function index(Request $request): View
     {
         $tenant = $this->getTenant();
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
         $activeTab = $request->get('tab', 'subscribers'); // subscribers, nat_logs, upstream
         $zoneId = $request->get('zone_id', 'all');
         $kycStatus = $request->get('kyc_status', 'all'); // all, verified, missing, static_ip
@@ -119,10 +120,10 @@ class TenantBtrcReportController extends Controller
 
         // 5. Tab 3: Upstream IIG & ITC Bandwidth Declarations
         $upstreamDeclarations = [
-            ['provider_name' => 'Summit Communications Ltd.', 'license_type' => 'IIG (International Internet Gateway)', 'allocated_mbps' => 500, 'circuit_id' => 'SCL-IIG-DHK-9921', 'handover_point' => 'Kakrail POP, Dhaka', 'status' => 'ACTIVE'],
-            ['provider_name' => 'Fiber@Home Ltd. (IIG)', 'license_type' => 'IIG (International Internet Gateway)', 'allocated_mbps' => 300, 'circuit_id' => 'FAH-IIG-CXB-4081', 'handover_point' => 'Mohakhali POP, Dhaka', 'status' => 'ACTIVE'],
-            ['provider_name' => 'Bangladesh Internet Exchange (BDIX)', 'license_type' => 'National Peering (IXP)', 'allocated_mbps' => 1000, 'circuit_id' => 'BDIX-PEER-10G-08', 'handover_point' => 'Redana Tower, Dhaka', 'status' => 'ACTIVE'],
-            ['provider_name' => 'Google Global Cache (GGC)', 'license_type' => 'Edge Content Cache', 'allocated_mbps' => 1000, 'circuit_id' => 'GGC-EDGE-NODE-01', 'handover_point' => 'On-Premise POP', 'status' => 'ACTIVE'],
+            ['provider_name' => __('Summit Communications Ltd.'), 'license_type' => __('IIG (International Internet Gateway)'), 'allocated_mbps' => 500, 'circuit_id' => 'SCL-IIG-DHK-9921', 'handover_point' => __('Kakrail POP, Dhaka'), 'status' => 'ACTIVE', 'status_label' => __('Active')],
+            ['provider_name' => __('Fiber@Home Ltd. (IIG)'), 'license_type' => __('IIG (International Internet Gateway)'), 'allocated_mbps' => 300, 'circuit_id' => 'FAH-IIG-CXB-4081', 'handover_point' => __('Mohakhali POP, Dhaka'), 'status' => 'ACTIVE', 'status_label' => __('Active')],
+            ['provider_name' => __('Bangladesh Internet Exchange (BDIX)'), 'license_type' => __('National Peering (IXP)'), 'allocated_mbps' => 1000, 'circuit_id' => 'BDIX-PEER-10G-08', 'handover_point' => __('Redana Tower, Dhaka'), 'status' => 'ACTIVE', 'status_label' => __('Active')],
+            ['provider_name' => __('Google Global Cache (GGC)'), 'license_type' => __('Edge Content Cache'), 'allocated_mbps' => 1000, 'circuit_id' => 'GGC-EDGE-NODE-01', 'handover_point' => __('On-Premise POP'), 'status' => 'ACTIVE', 'status_label' => __('Active')],
         ];
 
         // 6. Deep-Dive Compliance Metrics
@@ -134,21 +135,22 @@ class TenantBtrcReportController extends Controller
         ];
 
         $mediumDistribution = [
-            ['label' => 'FTTH Fiber Optic (GEPON/GPON)', 'count' => (int)($totalSubscribersCount * 0.9), 'share_pct' => 90.0, 'color' => 'emerald'],
-            ['label' => 'Ethernet Cat6 / UTP Distribution', 'count' => (int)($totalSubscribersCount * 0.08), 'share_pct' => 8.0, 'color' => 'cyan'],
-            ['label' => 'Wireless Point-to-Point (PTP)', 'count' => (int)($totalSubscribersCount * 0.02), 'share_pct' => 2.0, 'color' => 'amber'],
+            ['label' => __('FTTH Fiber Optic (GEPON/GPON)'), 'count' => (int)($totalSubscribersCount * 0.9), 'share_pct' => 90.0, 'color' => 'emerald'],
+            ['label' => __('Ethernet Cat6 / UTP Distribution'), 'count' => (int)($totalSubscribersCount * 0.08), 'share_pct' => 8.0, 'color' => 'cyan'],
+            ['label' => __('Wireless Point-to-Point (PTP)'), 'count' => (int)($totalSubscribersCount * 0.02), 'share_pct' => 2.0, 'color' => 'amber'],
         ];
 
         $logServerHealth = [
-            'syslog_status' => 'ONLINE (Logging Active)',
+            'syslog_status' => __('ONLINE (Logging Active)'),
             'storage_path' => '/var/log/isp_btrc_nat.log',
-            'daily_logs_volume' => '1.42 GB / Day',
-            'retention_policy' => '365 Days Mandatory Law',
-            'last_archived_at' => Carbon::now()->subHours(2)->format('d M Y, h:i A'),
+            'daily_logs_volume' => __(':size GB / Day', ['size' => '1.42']),
+            'retention_policy' => __('365 Days Mandatory Law'),
+            'last_archived_at' => Carbon::now()->subHours(2)->translatedFormat('d M Y, h:i A'),
         ];
 
         return view('tenant.reports.btrc', compact(
             'tenant',
+            'currencySymbol',
             'activeTab',
             'zoneId',
             'kycStatus',
@@ -179,6 +181,7 @@ class TenantBtrcReportController extends Controller
     public function printReport(Request $request): View
     {
         $tenant = $this->getTenant();
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
         $totalSubscribersCount = TenantCustomer::where('tenant_id', $tenant->id)->count();
         $activeSubscribersCount = TenantCustomer::where('tenant_id', $tenant->id)->whereIn('status', ['active', 'online'])->count();
         $nidVerifiedCount = TenantCustomer::where('tenant_id', $tenant->id)->whereNotNull('national_id')->where('national_id', '!=', '')->count();
@@ -191,6 +194,7 @@ class TenantBtrcReportController extends Controller
 
         return view('tenant.reports.btrc_print', compact(
             'tenant',
+            'currencySymbol',
             'totalSubscribersCount',
             'activeSubscribersCount',
             'nidVerifiedCount',
@@ -225,56 +229,63 @@ class TenantBtrcReportController extends Controller
             fprintf($handle, chr(0xEF) . chr(0xBB) . chr(0xBF)); // UTF-8 BOM
 
             // BTRC Header Block
-            fputcsv($handle, ['BANGLADESH TELECOMMUNICATION REGULATORY COMMISSION (BTRC)']);
-            fputcsv($handle, ['ISP OPERATOR SUBSCRIBER REGISTRY & REGULATORY COMPLIANCE LOG']);
-            fputcsv($handle, ['Operator Name', $tenant->company_name ?? $tenant->name]);
-            fputcsv($handle, ['ISP License / Workspace ID', 'ISP-LIC-' . str_pad($tenant->id, 5, '0', STR_PAD_LEFT)]);
-            fputcsv($handle, ['Report Generation Date', date('d-M-Y h:i:s A')]);
+            fputcsv($handle, [__('BANGLADESH TELECOMMUNICATION REGULATORY COMMISSION (BTRC)')]);
+            fputcsv($handle, [__('ISP OPERATOR SUBSCRIBER REGISTRY & REGULATORY COMPLIANCE LOG')]);
+            fputcsv($handle, [__('Operator Name'), $tenant->company_name ?? $tenant->name]);
+            fputcsv($handle, [__('ISP License / Workspace ID'), 'ISP-LIC-' . str_pad($tenant->id, 5, '0', STR_PAD_LEFT)]);
+            fputcsv($handle, [__('Report Generation Date'), Carbon::now()->translatedFormat('d-M-Y h:i:s A')]);
             fputcsv($handle, []);
 
             // Mandatory BTRC Table Columns
             fputcsv($handle, [
-                'SL',
-                'Subscriber ID',
-                'Subscriber Full Name',
-                'Father / Spouse Name',
-                'National ID (NID / Smart Card)',
-                'Mobile Number',
-                'Installation Address',
-                'District',
-                'Thana / Upazila',
-                'Allocated Bandwidth (Mbps)',
-                'Assigned IP Address',
-                'MAC / ONU Serial',
-                'Connection Type',
-                'Connection Activation Date',
-                'Service Status',
+                __('SL'),
+                __('Subscriber ID'),
+                __('Subscriber Full Name'),
+                __('Father / Spouse Name'),
+                __('National ID (NID / Smart Card)'),
+                __('Mobile Number'),
+                __('Installation Address'),
+                __('District'),
+                __('Thana / Upazila'),
+                __('Allocated Bandwidth (Mbps)'),
+                __('Assigned IP Address'),
+                __('MAC / ONU Serial'),
+                __('Connection Type'),
+                __('Connection Activation Date'),
+                __('Service Status'),
             ]);
 
             foreach ($subscribers as $idx => $s) {
-                $speed = $s->package?->download_speed ? $s->package->download_speed . ' Mbps' : 'Standard';
+                $speed = $s->package?->download_speed ? __(':speed Mbps', ['speed' => $s->package->download_speed]) : __('Standard');
                 $ip = $s->ip_address ?: ('10.10.' . (int)($s->id / 254) . '.' . max(2, $s->id % 254));
                 $mac = $s->mac_address ?: ($s->onu_mac_sn ?: 'FHTT-SN' . str_pad($s->id, 6, '0', STR_PAD_LEFT));
-                $district = $s->district ?: 'Dhaka';
-                $thana = $s->thana ?: 'Gulshan';
-                $connDate = $s->created_at ? $s->created_at->format('d-M-Y') : date('d-M-Y');
+                $district = $s->district ?: __('Dhaka');
+                $thana = $s->thana ?: __('Gulshan');
+                $connDate = $s->created_at ? $s->created_at->translatedFormat('d-M-Y') : Carbon::now()->translatedFormat('d-M-Y');
+                $statusLabel = match (strtolower((string) $s->status)) {
+                    'active', 'online' => __('Active'),
+                    'due' => __('Due'),
+                    'suspended' => __('Suspended'),
+                    'disconnected' => __('Disconnected'),
+                    default => ucfirst((string) $s->status),
+                };
 
                 fputcsv($handle, [
                     $idx + 1,
                     $s->customer_id ?? ('SO' . str_pad($s->id, 4, '0', STR_PAD_LEFT)),
                     $s->name,
-                    $s->father_name ?: 'N/A',
-                    $s->national_id ?: 'Pending Verification',
+                    $s->father_name ?: __('N/A'),
+                    $s->national_id ?: __('Pending Verification'),
                     $s->phone,
-                    $s->address ?: 'Dhaka, Bangladesh',
+                    $s->address ?: __('Dhaka, Bangladesh'),
                     $district,
                     $thana,
                     $speed,
                     $ip,
                     $mac,
-                    $s->connection_type ?: 'FTTH Fiber',
+                    $s->connection_type ?: __('FTTH Fiber'),
                     $connDate,
-                    strtoupper($s->status),
+                    mb_strtoupper($statusLabel, 'UTF-8'),
                 ]);
             }
 
@@ -292,11 +303,11 @@ class TenantBtrcReportController extends Controller
         $now = Carbon::now();
 
         $destinations = [
-            ['ip' => '142.250.190.46', 'service' => 'Google Search (HTTPS:443)'],
-            ['ip' => '157.240.241.35', 'service' => 'Facebook / Meta CDN (HTTPS:443)'],
-            ['ip' => '104.244.42.1', 'service' => 'X / Twitter (HTTPS:443)'],
-            ['ip' => '13.107.42.14', 'service' => 'Microsoft Azure (HTTPS:443)'],
-            ['ip' => '103.14.28.5', 'service' => 'BDIX Local CDN (HTTP:80)'],
+            ['ip' => '142.250.190.46', 'service' => __('Google Search (HTTPS:443)')],
+            ['ip' => '157.240.241.35', 'service' => __('Facebook / Meta CDN (HTTPS:443)')],
+            ['ip' => '104.244.42.1', 'service' => __('X / Twitter (HTTPS:443)')],
+            ['ip' => '13.107.42.14', 'service' => __('Microsoft Azure (HTTPS:443)')],
+            ['ip' => '103.14.28.5', 'service' => __('BDIX Local CDN (HTTP:80)')],
         ];
 
         foreach ($customers as $i => $cust) {
@@ -307,7 +318,7 @@ class TenantBtrcReportController extends Controller
             $publicPort = rand(10000, 25000);
 
             $logs[] = [
-                'timestamp' => (clone $now)->subSeconds($i * 45)->format('d M Y, H:i:s'),
+                'timestamp' => (clone $now)->subSeconds($i * 45)->translatedFormat('d M Y, H:i:s'),
                 'username' => $cust->username ?: 'user_' . $cust->id,
                 'customer_name' => $cust->name,
                 'private_source' => $privateIp . ':' . $privatePort,

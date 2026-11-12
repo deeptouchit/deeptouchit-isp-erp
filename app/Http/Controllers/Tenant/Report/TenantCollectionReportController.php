@@ -30,7 +30,7 @@ class TenantCollectionReportController extends Controller
         $tenant = $tenantId ? Tenant::find($tenantId) : (auth()->user()?->tenant ?? Tenant::first());
 
         if (!$tenant) {
-            abort(403, 'Tenant context not found. Please log in.');
+            abort(403, __('Tenant context not found. Please log in.'));
         }
 
         return $tenant;
@@ -392,38 +392,47 @@ class TenantCollectionReportController extends Controller
             fprintf($handle, chr(0xEF) . chr(0xBB) . chr(0xBF)); // UTF-8 BOM
 
             // Title block
-            fputcsv($handle, [$tenant->name . ' - Collection & Due Audit Statement']);
-            fputcsv($handle, ['Generated At', date('d M Y, h:i A')]);
+            fputcsv($handle, [__(':company - Collection & Due Audit Statement', ['company' => $tenant->name])]);
+            fputcsv($handle, [__('Generated At'), now()->translatedFormat('d M Y, h:i A')]);
             fputcsv($handle, []);
 
             // Header row
             fputcsv($handle, [
-                'Customer ID',
-                'Subscriber Name',
-                'PPPoE Username',
-                'Phone',
-                'Coverage Zone',
-                'Package',
-                'Monthly Bill',
-                'Outstanding Due',
-                'Wallet Balance',
-                'Status',
-                'Assigned Collector',
+                __('Customer ID'),
+                __('Subscriber Name'),
+                __('PPPoE Username'),
+                __('Phone'),
+                __('Coverage Zone'),
+                __('Package'),
+                __('Monthly Bill'),
+                __('Outstanding Due'),
+                __('Wallet Balance'),
+                __('Status'),
+                __('Assigned Collector'),
             ]);
 
             foreach ($customers as $c) {
+                $statusLabel = match (strtolower((string) $c->status)) {
+                    'active' => __('Active'),
+                    'online' => __('Online'),
+                    'due' => __('Due'),
+                    'suspended' => __('Suspended'),
+                    'disconnected' => __('Disconnected'),
+                    default => __(ucfirst((string) $c->status)),
+                };
+
                 fputcsv($handle, [
                     $c->customer_id ?? ('CUST-' . $c->id),
                     $c->name,
                     $c->username,
                     $c->phone,
-                    $c->coverageZone?->name ?? 'Default Area',
+                    $c->coverageZone?->name ?? __('Default Area'),
                     $c->package?->name ?? $c->package_name,
                     number_format($c->monthly_bill, 2, '.', ''),
                     number_format($c->due_amount, 2, '.', ''),
                     number_format($c->wallet_balance, 2, '.', ''),
-                    strtoupper($c->status),
-                    $c->collector?->name ?? 'Unassigned',
+                    $statusLabel,
+                    $c->collector?->name ?? __('Unassigned'),
                 ]);
             }
 
@@ -504,11 +513,20 @@ class TenantCollectionReportController extends Controller
             $targetTotal = $collected + $targetDue;
             $targetRate = $targetTotal > 0 ? round(($collected / $targetTotal) * 100, 1) : 0;
 
+            $roleLabel = match (strtolower((string) $user->role)) {
+                'isp_admin' => __('ISP Admin'),
+                'collector' => __('Collector'),
+                'bill_collector' => __('Bill Collector'),
+                'manager' => __('Manager'),
+                'branch_manager' => __('Branch Manager'),
+                default => __(ucwords(str_replace('_', ' ', (string) $user->role))),
+            };
+
             $matrix[] = [
                 'id' => $user->id,
                 'name' => $user->name,
                 'phone' => $user->phone ?? $user->email,
-                'role' => ucwords(str_replace('_', ' ', $user->role)),
+                'role' => $roleLabel,
                 'assigned_count' => $assignedCount,
                 'target_billed' => $targetBilled,
                 'total_collected' => $collected,
@@ -546,11 +564,11 @@ class TenantCollectionReportController extends Controller
             $receivable = $collected + $totalDue;
             $effRate = $receivable > 0 ? round(($collected / $receivable) * 100, 1) : 0;
 
-            $speedText = ($pkg->download_speed ? $pkg->download_speed . 'M' : '') ?: ($pkg->name ?? 'Standard');
+            $speedText = ($pkg->download_speed ? $pkg->download_speed . 'M' : '') ?: ($pkg->name ?? __('Standard'));
 
             $matrix[] = [
                 'id' => $pkg->id,
-                'name' => $pkg->package_name ?: ($pkg->name ?: 'Standard Package'),
+                'name' => $pkg->package_name ?: ($pkg->name ?: __('Standard Package')),
                 'speed' => $speedText,
                 'price' => (float)$pkg->price,
                 'subscribers_count' => $subsCount,
@@ -649,10 +667,27 @@ class TenantCollectionReportController extends Controller
         foreach ($gatewayRows as $row) {
             $method = strtolower($row->payment_method ?? 'cash');
             $sharePct = $grandTotal > 0 ? round(($row->total_amount / $grandTotal) * 100, 1) : 0;
+            $channelName = match ($method) {
+                'cash' => __('Cash'),
+                'bkash' => __('bKash'),
+                'bkash_merchant' => __('bKash Merchant'),
+                'nagad' => __('Nagad'),
+                'nagad_merchant' => __('Nagad Merchant'),
+                'rocket' => __('Rocket'),
+                'upay' => __('Upay'),
+                'sslcommerz' => __('SSLCommerz'),
+                'shurjopay' => __('ShurjoPay'),
+                'aamarpay' => __('AamarPay'),
+                'stripe' => __('Stripe'),
+                'bank' => __('Bank'),
+                'online', 'online_pgw' => __('Online Payment'),
+                'pos' => __('POS'),
+                default => __(ucwords(str_replace('_', ' ', $row->payment_method ?: 'Cash'))),
+            };
 
             $matrix[] = [
                 'method_key' => $method,
-                'channel_name' => ucwords(str_replace('_', ' ', $row->payment_method ?: 'Cash')),
+                'channel_name' => $channelName,
                 'txn_count' => (int) $row->txn_count,
                 'total_amount' => (float) $row->total_amount,
                 'share_pct' => $sharePct,
@@ -673,10 +708,10 @@ class TenantCollectionReportController extends Controller
             ->get();
 
         $aging = [
-            'current' => ['label' => '0-30 Days (Current)', 'amount' => 0.0, 'count' => 0, 'color' => 'emerald'],
-            'overdue_30' => ['label' => '31-60 Days (Overdue)', 'amount' => 0.0, 'count' => 0, 'color' => 'amber'],
-            'critical_60' => ['label' => '61-90 Days (Critical)', 'amount' => 0.0, 'count' => 0, 'color' => 'orange'],
-            'bad_debt_90' => ['label' => '90+ Days (High Risk)', 'amount' => 0.0, 'count' => 0, 'color' => 'rose'],
+            'current' => ['label' => __('0-30 Days (Current)'), 'amount' => 0.0, 'count' => 0, 'color' => 'emerald'],
+            'overdue_30' => ['label' => __('31-60 Days (Overdue)'), 'amount' => 0.0, 'count' => 0, 'color' => 'amber'],
+            'critical_60' => ['label' => __('61-90 Days (Critical)'), 'amount' => 0.0, 'count' => 0, 'color' => 'orange'],
+            'bad_debt_90' => ['label' => __('90+ Days (High Risk)'), 'amount' => 0.0, 'count' => 0, 'color' => 'rose'],
         ];
 
         $now = Carbon::now();

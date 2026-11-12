@@ -1,6 +1,6 @@
 @extends('tenant.layouts.app')
 
-@section('title', 'Revenue & Growth Report - ' . ($tenant->company_name ?? $tenant->name))
+@section('title', __('Revenue & Growth Report - :company', ['company' => $tenant->company_name ?? $tenant->name]))
 
 @push('styles')
 <style>
@@ -19,14 +19,14 @@
             <div class="w-7 h-7 rounded-lg bg-rose-50 text-rose-600 border border-rose-100 flex items-center justify-center text-xs flex-shrink-0">
                 <i class="fas fa-chart-line"></i>
             </div>
-            <h1 class="text-sm font-bold text-slate-800 tracking-tight">Revenue &amp; Business Growth Analytics</h1>
+            <h1 class="text-sm font-bold text-slate-800 tracking-tight">{{ __('Revenue & Business Growth Analytics') }}</h1>
         </div>
 
         <div class="flex items-center gap-2 flex-wrap">
             {{-- Quick Filter Indicator Tag --}}
             <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold bg-slate-100 text-slate-700 border border-slate-200">
                 <i class="fas fa-calendar-days text-slate-500 text-[10px]"></i>
-                <span>{{ $from->format('d M Y') }} - {{ $to->format('d M Y') }}</span>
+                <span>{{ $from->translatedFormat('d M Y') }} - {{ $to->translatedFormat('d M Y') }}</span>
             </span>
 
             {{-- Dedicated Full-Page Print Button --}}
@@ -34,14 +34,14 @@
                target="_blank" 
                class="bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 font-medium text-xs px-3 py-1.5 rounded-lg shadow-2xs transition inline-flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-print text-blue-600 text-[11px]"></i>
-                <span>Print Statement</span>
+                <span>{{ __('Print Statement') }}</span>
             </a>
 
             {{-- Export CSV Stream Button --}}
             <a href="{{ route('tenant.reports.revenue.export', request()->all()) }}" 
                class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs px-3.5 py-1.5 rounded-lg shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-file-csv text-[11px]"></i>
-                <span>Export CSV</span>
+                <span>{{ __('Export CSV') }}</span>
             </a>
         </div>
     </div>
@@ -51,7 +51,7 @@
         {{-- Card 1: Total Revenue (Collected) --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Total Revenue</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Total Revenue') }}</span>
                 <span class="text-[13px] font-bold font-mono text-emerald-700 leading-tight block">
                     @currency($totalRevenue)
                 </span>
@@ -64,7 +64,7 @@
         {{-- Card 2: Operating Expenses (OPEX) --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Operating OPEX</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Operating OPEX') }}</span>
                 <span class="text-[13px] font-bold font-mono text-rose-700 leading-tight block">
                     @currency($periodExpenses)
                 </span>
@@ -77,7 +77,7 @@
         {{-- Card 3: Net Operating Profit --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Net Profit ({{ round($profitMarginPct, 1) }}%)</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Net Profit (:percent%)', ['percent' => round($profitMarginPct, 1)]) }}</span>
                 <span class="text-[13px] font-bold font-mono {{ $netProfit >= 0 ? 'text-cyan-700' : 'text-rose-700' }} leading-tight block">
                     @currency($netProfit)
                 </span>
@@ -90,7 +90,7 @@
         {{-- Card 4: Contracted MRR --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Contracted MRR</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Contracted MRR') }}</span>
                 <span class="text-[13px] font-bold font-mono text-indigo-700 leading-tight block">
                     @currency($totalMrr)
                 </span>
@@ -103,7 +103,7 @@
         {{-- Card 5: ARPU (Avg Revenue/User) --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">ARPU (Per User)</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('ARPU (Per User)') }}</span>
                 <span class="text-[13px] font-bold font-mono text-amber-700 leading-tight block">
                     @currency($arpu)
                 </span>
@@ -116,7 +116,7 @@
         {{-- Card 6: MoM Revenue Growth --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">MoM Growth Rate</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('MoM Growth Rate') }}</span>
                 <span class="text-[13px] font-bold font-mono {{ $growthRatePct >= 0 ? 'text-emerald-700' : 'text-rose-700' }} leading-tight block">
                     {{ ($growthRatePct >= 0 ? '+' : '') . round($growthRatePct, 1) }}%
                 </span>
@@ -155,13 +155,13 @@
                     <input type="text" 
                            name="search" 
                            x-model="searchQuery"
-                           placeholder="Filter matrix or keyword..." 
+                           placeholder="{{ __('Filter matrix or keyword...') }}" 
                            class="w-full h-[34px] pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs">
                     <button type="button" 
                             x-show="searchQuery && searchQuery.length > 0" 
                             @click="searchQuery = ''; $nextTick(() => $el.closest('form').submit())" 
                             class="absolute inset-y-0 right-0 pr-2 flex items-center text-slate-400 hover:text-slate-600 transition cursor-pointer"
-                            title="Clear search">
+                            title="{{ __('Clear search') }}">
                         <i class="fas fa-times-circle text-xs"></i>
                     </button>
                 </div>
@@ -172,16 +172,16 @@
                             x-model="selectedPreset" 
                             @change="handlePeriodChange($event.target.value); $nextTick(() => $el.closest('form').submit())"
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs cursor-pointer">
-                        <option value="today" {{ $preset === 'today' ? 'selected' : '' }}>Today</option>
-                        <option value="yesterday" {{ $preset === 'yesterday' ? 'selected' : '' }}>Yesterday</option>
-                        <option value="this_week" {{ $preset === 'this_week' ? 'selected' : '' }}>This Week</option>
-                        <option value="this_month" {{ $preset === 'this_month' ? 'selected' : '' }}>This Month</option>
-                        <option value="last_month" {{ $preset === 'last_month' ? 'selected' : '' }}>Last Month</option>
-                        <option value="this_quarter" {{ $preset === 'this_quarter' ? 'selected' : '' }}>This Quarter</option>
-                        <option value="this_year" {{ $preset === 'this_year' ? 'selected' : '' }}>This Year ({{ date('Y') }})</option>
-                        <option value="last_12_months" {{ $preset === 'last_12_months' ? 'selected' : '' }}>Last 12 Months</option>
-                        <option value="all" {{ $preset === 'all' ? 'selected' : '' }}>All Time</option>
-                        <option value="custom" {{ $preset === 'custom' ? 'selected' : '' }}>Custom Date Range</option>
+                        <option value="today" {{ $preset === 'today' ? 'selected' : '' }}>{{ __('Today') }}</option>
+                        <option value="yesterday" {{ $preset === 'yesterday' ? 'selected' : '' }}>{{ __('Yesterday') }}</option>
+                        <option value="this_week" {{ $preset === 'this_week' ? 'selected' : '' }}>{{ __('This Week') }}</option>
+                        <option value="this_month" {{ $preset === 'this_month' ? 'selected' : '' }}>{{ __('This Month') }}</option>
+                        <option value="last_month" {{ $preset === 'last_month' ? 'selected' : '' }}>{{ __('Last Month') }}</option>
+                        <option value="this_quarter" {{ $preset === 'this_quarter' ? 'selected' : '' }}>{{ __('This Quarter') }}</option>
+                        <option value="this_year" {{ $preset === 'this_year' ? 'selected' : '' }}>{{ __('This Year (:year)', ['year' => date('Y')]) }}</option>
+                        <option value="last_12_months" {{ $preset === 'last_12_months' ? 'selected' : '' }}>{{ __('Last 12 Months') }}</option>
+                        <option value="all" {{ $preset === 'all' ? 'selected' : '' }}>{{ __('All Time') }}</option>
+                        <option value="custom" {{ $preset === 'custom' ? 'selected' : '' }}>{{ __('Custom Date Range') }}</option>
                     </select>
                 </div>
 
@@ -190,12 +190,12 @@
                     <select name="stream" 
                             onchange="this.form.submit()"
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs cursor-pointer">
-                        <option value="all" {{ $stream === 'all' ? 'selected' : '' }}>All Streams (Combined)</option>
-                        <option value="retail" {{ $stream === 'retail' ? 'selected' : '' }}>Retail Subscribers Billing</option>
-                        <option value="wholesale" {{ $stream === 'wholesale' ? 'selected' : '' }}>Sub-ISP Wholesale</option>
-                        <option value="recharge" {{ $stream === 'recharge' ? 'selected' : '' }}>Wallet Recharges</option>
-                        <option value="gateway" {{ $stream === 'gateway' ? 'selected' : '' }}>Payment Gateways</option>
-                        <option value="direct" {{ $stream === 'direct' ? 'selected' : '' }}>Direct Incomes</option>
+                        <option value="all" {{ $stream === 'all' ? 'selected' : '' }}>{{ __('All Streams (Combined)') }}</option>
+                        <option value="retail" {{ $stream === 'retail' ? 'selected' : '' }}>{{ __('Retail Subscribers Billing') }}</option>
+                        <option value="wholesale" {{ $stream === 'wholesale' ? 'selected' : '' }}>{{ __('Sub-ISP Wholesale') }}</option>
+                        <option value="recharge" {{ $stream === 'recharge' ? 'selected' : '' }}>{{ __('Wallet Recharges') }}</option>
+                        <option value="gateway" {{ $stream === 'gateway' ? 'selected' : '' }}>{{ __('Payment Gateways') }}</option>
+                        <option value="direct" {{ $stream === 'direct' ? 'selected' : '' }}>{{ __('Direct Incomes') }}</option>
                     </select>
                 </div>
 
@@ -204,7 +204,7 @@
                         @click="showMoreFilters = !showMoreFilters" 
                         class="h-[34px] py-0 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-xs rounded-lg border border-slate-200 transition flex items-center justify-center gap-1.5 flex-shrink-0 cursor-pointer">
                     <i class="fas fa-sliders text-[11px] text-slate-500"></i>
-                    <span>More Filters</span>
+                    <span>{{ __('More Filters') }}</span>
                     @if($activeMoreCount > 0)
                         <span class="w-4 h-4 rounded-full bg-cyan-600 text-white text-[9px] font-bold flex items-center justify-center font-mono">
                             {{ $activeMoreCount }}
@@ -217,15 +217,15 @@
                 <div class="flex items-center gap-1.5 flex-shrink-0 md:ml-auto">
                     <button type="submit" 
                             class="h-[34px] py-0 px-3 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer flex-shrink-0" 
-                            title="Apply Filters">
+                            title="{{ __('Apply Filters') }}">
                         <i class="fas fa-filter text-[10px]"></i>
-                        <span>Filter</span>
+                        <span>{{ __('Filter') }}</span>
                     </button>
                     <a href="{{ route('tenant.reports.revenue') }}" 
                        class="h-[34px] py-0 px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer flex-shrink-0" 
-                       title="Reset All Filters">
+                       title="{{ __('Reset All Filters') }}">
                         <i class="fas fa-rotate-left text-[10px]"></i>
-                        <span>Reset</span>
+                        <span>{{ __('Reset') }}</span>
                     </a>
                 </div>
             </div>
@@ -246,7 +246,7 @@
                     <input type="date" 
                            name="date_from" 
                            x-model="dateFrom" 
-                           title="From Date"
+                           title="{{ __('From Date') }}"
                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs font-mono">
                 </div>
 
@@ -255,7 +255,7 @@
                     <input type="date" 
                            name="date_to" 
                            x-model="dateTo" 
-                           title="To Date"
+                           title="{{ __('To Date') }}"
                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs font-mono">
                 </div>
 
@@ -264,7 +264,7 @@
                     <select name="zone_id" 
                             onchange="this.form.submit()"
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs cursor-pointer">
-                        <option value="all">All Coverage Zones</option>
+                        <option value="all">{{ __('All Coverage Zones') }}</option>
                         @foreach($allZones as $z)
                             <option value="{{ $z->id }}" {{ (string)$zoneId === (string)$z->id ? 'selected' : '' }}>{{ $z->name }}</option>
                         @endforeach
@@ -276,7 +276,7 @@
                     <select name="package_id" 
                             onchange="this.form.submit()"
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs cursor-pointer">
-                        <option value="all">All Internet Packages</option>
+                        <option value="all">{{ __('All Internet Packages') }}</option>
                         @foreach($allPackages as $p)
                             <option value="{{ $p->id }}" {{ (string)$packageId === (string)$p->id ? 'selected' : '' }}>{{ $p->name }}</option>
                         @endforeach
@@ -291,27 +291,27 @@
         <div class="px-3.5 py-2.5 border-b border-slate-200 flex items-center justify-between bg-slate-50/60">
             <div class="flex items-center gap-2">
                 <i class="fas fa-table-columns text-slate-500 text-xs"></i>
-                <h2 class="text-xs font-bold text-slate-800 uppercase tracking-wide">12-Month Historical Growth Matrix</h2>
+                <h2 class="text-xs font-bold text-slate-800 uppercase tracking-wide">{{ __('12-Month Historical Growth Matrix') }}</h2>
             </div>
-            <span class="text-[11px] text-slate-500 font-medium">Month-over-Month (MoM) Financial &amp; Base Analytics</span>
+            <span class="text-[11px] text-slate-500 font-medium">{{ __('Month-over-Month (MoM) Financial & Base Analytics') }}</span>
         </div>
 
         <div class="overflow-x-auto">
             <table class="saas-table">
                 <thead>
                     <tr>
-                        <th class="w-24 text-center font-semibold">Month</th>
-                        <th class="text-center font-semibold">Retail</th>
-                        <th class="text-center font-semibold">Wholesale</th>
-                        <th class="text-center font-semibold">Direct</th>
-                        <th class="text-center font-semibold font-bold text-slate-900">Total Rev</th>
-                        <th class="text-center font-semibold text-rose-700">Expense</th>
-                        <th class="text-center font-semibold">Net Profit</th>
-                        <th class="text-center font-semibold w-16">Margin</th>
-                        <th class="text-center font-semibold w-20">MoM %</th>
-                        <th class="text-center font-semibold w-20">Subs</th>
-                        <th class="text-center font-semibold w-20">ARPU</th>
-                        <th class="no-sort w-14 text-center font-semibold">Action</th>
+                        <th class="w-24 text-center font-semibold">{{ __('Month') }}</th>
+                        <th class="text-center font-semibold">{{ __('Retail') }}</th>
+                        <th class="text-center font-semibold">{{ __('Wholesale') }}</th>
+                        <th class="text-center font-semibold">{{ __('Direct') }}</th>
+                        <th class="text-center font-semibold font-bold text-slate-900">{{ __('Total Rev') }}</th>
+                        <th class="text-center font-semibold text-rose-700">{{ __('Expense') }}</th>
+                        <th class="text-center font-semibold">{{ __('Net Profit') }}</th>
+                        <th class="text-center font-semibold w-16">{{ __('Margin') }}</th>
+                        <th class="text-center font-semibold w-20">{{ __('MoM %') }}</th>
+                        <th class="text-center font-semibold w-20">{{ __('Subs') }}</th>
+                        <th class="text-center font-semibold w-20">{{ __('ARPU') }}</th>
+                        <th class="no-sort w-14 text-center font-semibold">{{ __('Action') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -389,7 +389,7 @@
                                 <button type="button" 
                                         @click="openMonthModal({{ json_encode($row) }})"
                                         class="w-6 h-6 rounded-md hover:bg-slate-100 text-cyan-700 hover:text-cyan-900 inline-flex items-center justify-center transition cursor-pointer" 
-                                        title="View Month Details">
+                                        title="{{ __('View Month Details') }}">
                                     <i class="fas fa-circle-info text-[11px]"></i>
                                 </button>
                             </td>
@@ -402,13 +402,13 @@
                                         <i class="fas fa-chart-line text-slate-400"></i>
                                     </div>
                                     <div class="space-y-0.5">
-                                        <h3 class="text-xs font-semibold text-slate-700">No Revenue Data</h3>
-                                        <p class="text-[11px] text-slate-400 font-normal">No historical revenue matrix recorded for the selected filter range.</p>
+                                        <h3 class="text-xs font-semibold text-slate-700">{{ __('No Revenue Data') }}</h3>
+                                        <p class="text-[11px] text-slate-400 font-normal">{{ __('No historical revenue matrix recorded for the selected filter range.') }}</p>
                                     </div>
                                     <div class="pt-1">
                                         <a href="{{ route('tenant.reports.revenue') }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-xs font-semibold shadow-xs transition cursor-pointer">
                                             <i class="fas fa-rotate-left text-[10px]"></i>
-                                            <span>Reset Filters</span>
+                                            <span>{{ __('Reset Filters') }}</span>
                                         </a>
                                     </div>
                                 </div>
@@ -427,9 +427,9 @@
             <div class="flex items-center justify-between pb-2 border-b border-slate-100">
                 <div class="flex items-center gap-2">
                     <i class="fas fa-cubes text-cyan-600 text-xs"></i>
-                    <h3 class="text-xs font-bold text-slate-800">Top Revenue Packages</h3>
+                    <h3 class="text-xs font-bold text-slate-800">{{ __('Top Revenue Packages') }}</h3>
                 </div>
-                <span class="text-[10px] uppercase font-bold text-slate-400">Share %</span>
+                <span class="text-[10px] uppercase font-bold text-slate-400">{{ __('Share %') }}</span>
             </div>
 
             <div class="space-y-2.5">
@@ -440,7 +440,7 @@
                             <span class="font-mono font-bold text-slate-900">@currency($pkg['monthly_revenue'])</span>
                         </div>
                         <div class="flex items-center justify-between text-[10.5px] text-slate-500">
-                            <span>{{ $pkg['subscribers_count'] }} Active Users ({{ $pkg['speed'] }})</span>
+                            <span>{{ __(':count Active Users (:speed)', ['count' => $pkg['subscribers_count'], 'speed' => $pkg['speed']]) }}</span>
                             <span class="font-mono font-semibold text-cyan-700">{{ $pkg['share_pct'] }}%</span>
                         </div>
                         <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
@@ -448,7 +448,7 @@
                         </div>
                     </div>
                 @empty
-                    <p class="text-center text-xs text-slate-400 py-4">No package analytics found.</p>
+                    <p class="text-center text-xs text-slate-400 py-4">{{ __('No package analytics found.') }}</p>
                 @endforelse
             </div>
         </div>
@@ -458,9 +458,9 @@
             <div class="flex items-center justify-between pb-2 border-b border-slate-100">
                 <div class="flex items-center gap-2">
                     <i class="fas fa-location-dot text-indigo-600 text-xs"></i>
-                    <h3 class="text-xs font-bold text-slate-800">Top Coverage Zones</h3>
+                    <h3 class="text-xs font-bold text-slate-800">{{ __('Top Coverage Zones') }}</h3>
                 </div>
-                <span class="text-[10px] uppercase font-bold text-slate-400">MRR Share</span>
+                <span class="text-[10px] uppercase font-bold text-slate-400">{{ __('MRR Share') }}</span>
             </div>
 
             <div class="space-y-2.5">
@@ -468,15 +468,15 @@
                     <div class="p-2 bg-slate-50 rounded-lg border border-slate-200/80 flex items-center justify-between text-xs">
                         <div>
                             <span class="font-bold text-slate-800 block">{{ $z->name }}</span>
-                            <span class="text-[10.5px] text-slate-500">{{ $z->customers_count }} Subscribers</span>
+                            <span class="text-[10.5px] text-slate-500">{{ __(':count Subscribers', ['count' => $z->customers_count]) }}</span>
                         </div>
                         <div class="text-right">
                             <span class="font-mono font-bold text-indigo-700 block">@currency($z->total_mrr ?? 0)</span>
-                            <span class="text-[10px] uppercase font-bold text-slate-400">Monthly Yield</span>
+                            <span class="text-[10px] uppercase font-bold text-slate-400">{{ __('Monthly Yield') }}</span>
                         </div>
                     </div>
                 @empty
-                    <p class="text-center text-xs text-slate-400 py-4">No zone data mapped yet.</p>
+                    <p class="text-center text-xs text-slate-400 py-4">{{ __('No zone data mapped yet.') }}</p>
                 @endforelse
             </div>
         </div>
@@ -486,9 +486,9 @@
             <div class="flex items-center justify-between pb-2 border-b border-slate-100">
                 <div class="flex items-center gap-2">
                     <i class="fas fa-wallet text-emerald-600 text-xs"></i>
-                    <h3 class="text-xs font-bold text-slate-800">Collection Channels</h3>
+                    <h3 class="text-xs font-bold text-slate-800">{{ __('Collection Channels') }}</h3>
                 </div>
-                <span class="text-[10px] uppercase font-bold text-slate-400">Inflow</span>
+                <span class="text-[10px] uppercase font-bold text-slate-400">{{ __('Inflow') }}</span>
             </div>
 
             <div class="space-y-2">
@@ -509,14 +509,14 @@
                                 @endif
                             </div>
                             <div>
-                                <span class="font-bold text-slate-800 uppercase block">{{ $ch->payment_method }}</span>
-                                <span class="text-[10px] text-slate-500">{{ $ch->count }} Transactions</span>
+                                <span class="font-bold text-slate-800 uppercase block">{{ __(strtoupper($ch->payment_method)) }}</span>
+                                <span class="text-[10px] text-slate-500">{{ __(':count Transactions', ['count' => $ch->count]) }}</span>
                             </div>
                         </div>
                         <span class="font-mono font-bold text-emerald-700">@currency($ch->total)</span>
                     </div>
                 @empty
-                    <p class="text-center text-xs text-slate-400 py-4">No collection logs in this period.</p>
+                    <p class="text-center text-xs text-slate-400 py-4">{{ __('No collection logs in this period.') }}</p>
                 @endforelse
             </div>
         </div>
@@ -536,7 +536,7 @@
                         <i class="fas fa-calendar-check"></i>
                     </div>
                     <div>
-                        <h3 class="text-xs font-semibold text-slate-800">Monthly Revenue Audit</h3>
+                        <h3 class="text-xs font-semibold text-slate-800">{{ __('Monthly Revenue Audit') }}</h3>
                         <p class="text-[10.5px] text-slate-500 font-normal font-mono" x-text="selectedMonthModal?.month_label"></p>
                     </div>
                 </div>
@@ -549,45 +549,45 @@
             <div class="p-4 space-y-3 text-xs" x-show="selectedMonthModal">
                 <div class="grid grid-cols-2 gap-2">
                     <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200/80">
-                        <span class="text-[10px] uppercase font-bold text-slate-400 block">Total Revenue</span>
+                        <span class="text-[10px] uppercase font-bold text-slate-400 block">{{ __('Total Revenue') }}</span>
                         <span class="font-bold font-mono text-emerald-700 text-sm mt-0.5 block" x-text="formatCurrency(selectedMonthModal?.total_revenue)"></span>
                     </div>
                     <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200/80">
-                        <span class="text-[10px] uppercase font-bold text-slate-400 block">Net Operating Profit</span>
+                        <span class="text-[10px] uppercase font-bold text-slate-400 block">{{ __('Net Operating Profit') }}</span>
                         <span class="font-bold font-mono text-cyan-800 text-sm mt-0.5 block" x-text="formatCurrency(selectedMonthModal?.net_profit)"></span>
                     </div>
                 </div>
 
                 <div class="space-y-1.5 p-3 bg-slate-50 rounded-lg border border-slate-200/80">
                     <div class="flex items-center justify-between text-xs py-0.5">
-                        <span class="text-slate-500">Retail Subscriber Collections:</span>
+                        <span class="text-slate-500">{{ __('Retail Subscriber Collections:') }}</span>
                         <span class="font-mono font-semibold text-slate-800" x-text="formatCurrency(selectedMonthModal?.retail_revenue)"></span>
                     </div>
                     <div class="flex items-center justify-between text-xs py-0.5">
-                        <span class="text-slate-500">Sub-ISP Wholesale Billing:</span>
+                        <span class="text-slate-500">{{ __('Sub-ISP Wholesale Billing:') }}</span>
                         <span class="font-mono font-semibold text-slate-800" x-text="formatCurrency(selectedMonthModal?.wholesale_revenue)"></span>
                     </div>
                     <div class="flex items-center justify-between text-xs py-0.5">
-                        <span class="text-slate-500">Direct / Other Income:</span>
+                        <span class="text-slate-500">{{ __('Direct / Other Income:') }}</span>
                         <span class="font-mono font-semibold text-slate-800" x-text="formatCurrency(selectedMonthModal?.direct_revenue)"></span>
                     </div>
                     <div class="flex items-center justify-between text-xs py-0.5 border-t border-slate-200 pt-1">
-                        <span class="text-rose-600 font-semibold">Operating OPEX Expenses:</span>
+                        <span class="text-rose-600 font-semibold">{{ __('Operating OPEX Expenses:') }}</span>
                         <span class="font-mono font-bold text-rose-700" x-text="formatCurrency(selectedMonthModal?.total_expenses)"></span>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-3 gap-2 text-center">
                     <div class="p-2 bg-slate-50 rounded-lg border border-slate-200/80">
-                        <span class="text-[9px] uppercase font-bold text-slate-400 block">Profit Margin</span>
+                        <span class="text-[9px] uppercase font-bold text-slate-400 block">{{ __('Profit Margin') }}</span>
                         <span class="font-mono font-bold text-cyan-800 text-xs block" x-text="selectedMonthModal?.profit_margin_pct + '%'"></span>
                     </div>
                     <div class="p-2 bg-slate-50 rounded-lg border border-slate-200/80">
-                        <span class="text-[9px] uppercase font-bold text-slate-400 block">Active Users</span>
+                        <span class="text-[9px] uppercase font-bold text-slate-400 block">{{ __('Active Users') }}</span>
                         <span class="font-mono font-bold text-slate-800 text-xs block" x-text="selectedMonthModal?.active_subscribers"></span>
                     </div>
                     <div class="p-2 bg-slate-50 rounded-lg border border-slate-200/80">
-                        <span class="text-[9px] uppercase font-bold text-slate-400 block">Monthly ARPU</span>
+                        <span class="text-[9px] uppercase font-bold text-slate-400 block">{{ __('Monthly ARPU') }}</span>
                         <span class="font-mono font-bold text-slate-800 text-xs block" x-text="formatCurrency(selectedMonthModal?.arpu)"></span>
                     </div>
                 </div>
@@ -596,7 +596,7 @@
             {{-- Modal Footer --}}
             <div class="px-4 py-2.5 bg-slate-50/80 border-t border-slate-200 flex items-center justify-end gap-2">
                 <button type="button" @click="selectedMonthModal = null" class="border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs px-4 py-1.5 rounded-lg transition cursor-pointer">
-                    Close Audit
+                    {{ __('Close Audit') }}
                 </button>
             </div>
         </div>
@@ -679,7 +679,7 @@ function revenueReportManager() {
         },
 
         formatCurrency(amount) {
-            const sym = '{{ $currencySymbol ?? "৳" }}';
+            const sym = @json($currencySymbol ?? '৳');
             return sym + ' ' + this.formatNumber(amount);
         }
     };

@@ -28,7 +28,7 @@ class TenantRevenueReportController extends Controller
         $tenant = $tenantId ? Tenant::find($tenantId) : (auth()->user()?->tenant ?? Tenant::first());
 
         if (!$tenant) {
-            abort(403, 'Tenant context not found. Please log in.');
+            abort(403, __('Tenant context not found. Please log in.'));
         }
 
         return $tenant;
@@ -197,10 +197,10 @@ class TenantRevenueReportController extends Controller
             ->map(function($pkg) use ($contractedRetailMrr) {
                 $pkgRevenue = (float) ($pkg->price * $pkg->customers_count);
                 $sharePct = $contractedRetailMrr > 0 ? ($pkgRevenue / $contractedRetailMrr) * 100 : 0;
-                $speedText = ($pkg->download_speed ? $pkg->download_speed . 'M' : '') ?: ($pkg->name ?? 'Standard');
+                $speedText = ($pkg->download_speed ? $pkg->download_speed . 'M' : '') ?: ($pkg->name ?? __('Standard'));
                 return [
                     'id' => $pkg->id,
-                    'name' => $pkg->package_name ?: ($pkg->name ?: 'Standard Package'),
+                    'name' => $pkg->package_name ?: ($pkg->name ?: __('Standard Package')),
                     'speed' => $speedText,
                     'price' => (float)$pkg->price,
                     'subscribers_count' => $pkg->customers_count,
@@ -345,23 +345,23 @@ class TenantRevenueReportController extends Controller
             fprintf($handle, chr(0xEF) . chr(0xBB) . chr(0xBF)); // UTF-8 BOM
 
             // Title block
-            fputcsv($handle, [$tenant->name . ' - Monthly Revenue & Business Growth Analytics']);
-            fputcsv($handle, ['Generated At', date('d M Y, h:i A')]);
+            fputcsv($handle, [__(':tenant - Monthly Revenue & Business Growth Analytics', ['tenant' => $tenant->name])]);
+            fputcsv($handle, [__('Generated At'), now()->translatedFormat('d M Y, h:i A')]);
             fputcsv($handle, []);
 
             // Header row
             fputcsv($handle, [
-                'Month',
-                'Retail Revenue',
-                'Wholesale Revenue',
-                'Direct Incomes',
-                'Total Revenue',
-                'Operating OPEX',
-                'Net Profit',
-                'Profit Margin %',
-                'MoM Growth %',
-                'Active Subscribers',
-                'ARPU',
+                __('Month'),
+                __('Retail Revenue'),
+                __('Wholesale Revenue'),
+                __('Direct Incomes'),
+                __('Total Revenue'),
+                __('Operating OPEX'),
+                __('Net Profit'),
+                __('Profit Margin %'),
+                __('MoM Growth %'),
+                __('Active Subscribers'),
+                __('ARPU'),
             ]);
 
             foreach ($matrix as $row) {
@@ -397,7 +397,7 @@ class TenantRevenueReportController extends Controller
             $monthStart = (clone $targetMonth)->startOfMonth();
             $monthEnd = (clone $targetMonth)->endOfMonth();
             $monthKey = $targetMonth->format('Y-m');
-            $monthLabel = $targetMonth->format('M Y');
+            $monthLabel = $targetMonth->translatedFormat('M Y');
 
             // Retail Revenue in Month
             $retail = (float) TenantCustomerPayment::where('tenant_id', $tenantId)

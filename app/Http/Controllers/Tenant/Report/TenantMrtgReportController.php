@@ -27,7 +27,7 @@ class TenantMrtgReportController extends Controller
         $tenant = $tenantId ? Tenant::find($tenantId) : (auth()->user()?->tenant ?? Tenant::first());
 
         if (!$tenant) {
-            abort(403, 'Tenant context not found. Please log in.');
+            abort(403, __('Tenant context not found. Please log in.'));
         }
 
         return $tenant;
@@ -39,6 +39,7 @@ class TenantMrtgReportController extends Controller
     public function index(Request $request): View
     {
         $tenant = $this->getTenant();
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
         $routerId = $request->get('router_id', 'all');
         $timescale = $request->get('timescale', 'daily'); // daily, weekly, monthly, yearly, live
         $interfaceType = $request->get('interface_type', 'all'); // all, wan, bdix, lan, trunk
@@ -94,10 +95,10 @@ class TenantMrtgReportController extends Controller
 
         // 7. Traffic Distribution Breakdown
         $trafficDistribution = [
-            ['label' => 'International IIG / ITC (Global Transit)', 'share_pct' => 58.5, 'bandwidth_mbps' => round($peakDownloadMbps * 0.585, 1), 'color' => 'indigo'],
-            ['label' => 'BDIX Domestic Peering (Local IX)', 'share_pct' => 26.5, 'bandwidth_mbps' => round($peakDownloadMbps * 0.265, 1), 'color' => 'cyan'],
-            ['label' => 'CDN / Cache Nodes (Google, Meta, Akamai)', 'share_pct' => 11.5, 'bandwidth_mbps' => round($peakDownloadMbps * 0.115, 1), 'color' => 'emerald'],
-            ['label' => 'Local Reseller & Sub-ISP Trunks', 'share_pct' => 3.5, 'bandwidth_mbps' => round($peakDownloadMbps * 0.035, 1), 'color' => 'amber'],
+            ['label' => __('International IIG / ITC (Global Transit)'), 'share_pct' => 58.5, 'bandwidth_mbps' => round($peakDownloadMbps * 0.585, 1), 'color' => 'indigo'],
+            ['label' => __('BDIX Domestic Peering (Local IX)'), 'share_pct' => 26.5, 'bandwidth_mbps' => round($peakDownloadMbps * 0.265, 1), 'color' => 'cyan'],
+            ['label' => __('CDN / Cache Nodes (Google, Meta, Akamai)'), 'share_pct' => 11.5, 'bandwidth_mbps' => round($peakDownloadMbps * 0.115, 1), 'color' => 'emerald'],
+            ['label' => __('Local Reseller & Sub-ISP Trunks'), 'share_pct' => 3.5, 'bandwidth_mbps' => round($peakDownloadMbps * 0.035, 1), 'color' => 'amber'],
         ];
 
         // 8. Top Consuming Resellers / Wholesale Bandwidth
@@ -124,6 +125,7 @@ class TenantMrtgReportController extends Controller
 
         return view('tenant.reports.mrtg', compact(
             'tenant',
+            'currencySymbol',
             'allRouters',
             'selectedRouter',
             'routerId',
@@ -152,6 +154,7 @@ class TenantMrtgReportController extends Controller
     public function printReport(Request $request): View
     {
         $tenant = $this->getTenant();
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
         $allRouters = TenantRouter::where('tenant_id', $tenant->id)->where('is_active', true)->orderBy('name')->get();
         $selectedRouter = $allRouters->first();
 
@@ -172,6 +175,7 @@ class TenantMrtgReportController extends Controller
 
         return view('tenant.reports.mrtg_print', compact(
             'tenant',
+            'currencySymbol',
             'allRouters',
             'selectedRouter',
             'totalSubscribedBandwidthMbps',
@@ -200,8 +204,8 @@ class TenantMrtgReportController extends Controller
             'rx_mbps' => round($rx, 2),
             'tx_mbps' => round($tx, 2),
             'bdix_mbps' => round($bdix, 2),
-            'rx_formatted' => $rx >= 1000 ? round($rx / 1000, 2) . ' Gbps' : round($rx, 1) . ' Mbps',
-            'tx_formatted' => $tx >= 1000 ? round($tx / 1000, 2) . ' Gbps' : round($tx, 1) . ' Mbps',
+            'rx_formatted' => $rx >= 1000 ? __(':value Gbps', ['value' => round($rx / 1000, 2)]) : __(':value Mbps', ['value' => round($rx, 1)]),
+            'tx_formatted' => $tx >= 1000 ? __(':value Gbps', ['value' => round($tx / 1000, 2)]) : __(':value Mbps', ['value' => round($tx, 1)]),
         ]);
     }
 
@@ -228,22 +232,22 @@ class TenantMrtgReportController extends Controller
             fprintf($handle, chr(0xEF) . chr(0xBB) . chr(0xBF)); // UTF-8 BOM
 
             // Title block
-            fputcsv($handle, [$tenant->name . ' - Bandwidth & MRTG Interface Utilization Statement']);
-            fputcsv($handle, ['Generated At', date('d M Y, h:i A')]);
+            fputcsv($handle, [__(':tenant - Bandwidth & MRTG Interface Utilization Statement', ['tenant' => $tenant->name])]);
+            fputcsv($handle, [__('Generated At'), Carbon::now()->translatedFormat('d M Y, h:i A')]);
             fputcsv($handle, []);
 
             // Header row
             fputcsv($handle, [
-                'Router Node',
-                'Interface / Port',
-                'Classification',
-                'Link Capacity',
-                'Current Download (RX Mbps)',
-                'Current Upload (TX Mbps)',
-                'Peak Download (RX Mbps)',
-                'Peak Upload (TX Mbps)',
-                'Utilization %',
-                'Link Status',
+                __('Router Node'),
+                __('Interface / Port'),
+                __('Classification'),
+                __('Link Capacity'),
+                __('Current Download (RX Mbps)'),
+                __('Current Upload (TX Mbps)'),
+                __('Peak Download (RX Mbps)'),
+                __('Peak Upload (TX Mbps)'),
+                __('Utilization %'),
+                __('Link Status'),
             ]);
 
             foreach ($interfaces as $iface) {
@@ -257,7 +261,7 @@ class TenantMrtgReportController extends Controller
                     number_format($iface['peak_rx_mbps'], 2, '.', ''),
                     number_format($iface['peak_tx_mbps'], 2, '.', ''),
                     $iface['load_pct'] . '%',
-                    $iface['status'],
+                    $iface['status_label'] ?? __($iface['status']),
                 ]);
             }
 
@@ -275,11 +279,11 @@ class TenantMrtgReportController extends Controller
 
         foreach ($routerList as $router) {
             $rawInterfaces = [
-                ['name' => 'ether1-WAN-IIG', 'type' => 'wan', 'type_label' => 'Upstream IIG / ITC', 'capacity' => 1000, 'capacity_label' => '1.0 Gbps (1G SFP)', 'rx' => 485.4, 'tx' => 142.2, 'peak_rx' => 620.0, 'peak_tx' => 195.0, 'status' => 'UP'],
-                ['name' => 'ether2-BDIX-Peering', 'type' => 'bdix', 'type_label' => 'BDIX Domestic Peering', 'capacity' => 1000, 'capacity_label' => '1.0 Gbps (1G SFP)', 'rx' => 210.8, 'tx' => 95.4, 'peak_rx' => 290.0, 'peak_tx' => 130.0, 'status' => 'UP'],
-                ['name' => 'sfp-plus1-Core-Trunk', 'type' => 'trunk', 'type_label' => '10G OLT Core Trunk', 'capacity' => 10000, 'capacity_label' => '10.0 Gbps (10G SFP+)', 'rx' => 580.2, 'tx' => 180.5, 'peak_rx' => 740.0, 'peak_tx' => 240.0, 'status' => 'UP'],
-                ['name' => 'vlan100-Reseller-Trunk', 'type' => 'trunk', 'type_label' => 'Sub-ISP Wholesale VLAN', 'capacity' => 1000, 'capacity_label' => '1.0 Gbps (VLAN Trunk)', 'rx' => 165.3, 'tx' => 48.2, 'peak_rx' => 220.0, 'peak_tx' => 75.0, 'status' => 'UP'],
-                ['name' => 'ether3-LAN-Subscribers', 'type' => 'lan', 'type_label' => 'Retail PPPoE Distribution', 'capacity' => 1000, 'capacity_label' => '1.0 Gbps (Copper)', 'rx' => 415.6, 'tx' => 132.8, 'peak_rx' => 510.0, 'peak_tx' => 170.0, 'status' => 'UP'],
+                ['name' => 'ether1-WAN-IIG', 'type' => 'wan', 'type_label' => __('Upstream IIG / ITC'), 'capacity' => 1000, 'capacity_label' => __('1.0 Gbps (1G SFP)'), 'rx' => 485.4, 'tx' => 142.2, 'peak_rx' => 620.0, 'peak_tx' => 195.0, 'status' => 'UP'],
+                ['name' => 'ether2-BDIX-Peering', 'type' => 'bdix', 'type_label' => __('BDIX Domestic Peering'), 'capacity' => 1000, 'capacity_label' => __('1.0 Gbps (1G SFP)'), 'rx' => 210.8, 'tx' => 95.4, 'peak_rx' => 290.0, 'peak_tx' => 130.0, 'status' => 'UP'],
+                ['name' => 'sfp-plus1-Core-Trunk', 'type' => 'trunk', 'type_label' => __('10G OLT Core Trunk'), 'capacity' => 10000, 'capacity_label' => __('10.0 Gbps (10G SFP+)'), 'rx' => 580.2, 'tx' => 180.5, 'peak_rx' => 740.0, 'peak_tx' => 240.0, 'status' => 'UP'],
+                ['name' => 'vlan100-Reseller-Trunk', 'type' => 'trunk', 'type_label' => __('Sub-ISP Wholesale VLAN'), 'capacity' => 1000, 'capacity_label' => __('1.0 Gbps (VLAN Trunk)'), 'rx' => 165.3, 'tx' => 48.2, 'peak_rx' => 220.0, 'peak_tx' => 75.0, 'status' => 'UP'],
+                ['name' => 'ether3-LAN-Subscribers', 'type' => 'lan', 'type_label' => __('Retail PPPoE Distribution'), 'capacity' => 1000, 'capacity_label' => __('1.0 Gbps (Copper)'), 'rx' => 415.6, 'tx' => 132.8, 'peak_rx' => 510.0, 'peak_tx' => 170.0, 'status' => 'UP'],
             ];
 
             foreach ($rawInterfaces as $iface) {
@@ -303,6 +307,7 @@ class TenantMrtgReportController extends Controller
                     'peak_tx_mbps' => $iface['peak_tx'],
                     'load_pct' => $load,
                     'status' => $iface['status'],
+                    'status_label' => $iface['status'] === 'UP' ? __('UP') : __($iface['status']),
                 ];
             }
         }
@@ -342,7 +347,7 @@ class TenantMrtgReportController extends Controller
             // Last 7 days
             for ($i = 6; $i >= 0; $i--) {
                 $date = Carbon::now()->subDays($i);
-                $labels[] = $date->format('D, d M');
+                $labels[] = $date->translatedFormat('D, d M');
                 $var = rand(-30, 30);
                 $rxData[] = max(20, round($peakRx + $var, 1));
                 $txData[] = max(10, round($peakTx + ($var * 0.35), 1));
@@ -352,7 +357,7 @@ class TenantMrtgReportController extends Controller
             // Last 30 days
             for ($i = 29; $i >= 0; $i--) {
                 $date = Carbon::now()->subDays($i);
-                $labels[] = $date->format('d M');
+                $labels[] = $date->translatedFormat('d M');
                 $var = rand(-40, 40);
                 $rxData[] = max(20, round($peakRx + $var, 1));
                 $txData[] = max(10, round($peakTx + ($var * 0.35), 1));
@@ -362,7 +367,7 @@ class TenantMrtgReportController extends Controller
             // Last 12 months
             for ($i = 11; $i >= 0; $i--) {
                 $date = Carbon::now()->subMonths($i);
-                $labels[] = $date->format('M Y');
+                $labels[] = $date->translatedFormat('M Y');
                 $growthFactor = (12 - $i) / 12;
                 $rxData[] = max(50, round($peakRx * (0.6 + ($growthFactor * 0.4)), 1));
                 $txData[] = max(20, round($peakTx * (0.6 + ($growthFactor * 0.4)), 1));
