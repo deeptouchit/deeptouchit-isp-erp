@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Users Directory Statement - {{ $tenant->company_name ?? $tenant->name }}</title>
+    <title>{{ __('Users Directory Statement') }} - {{ $tenant->company_name ?? $tenant->name }}</title>
     <style>
         @page {
             size: A4 portrait;
@@ -99,18 +99,18 @@
 
     <div class="no-print" style="margin-bottom: 15px; text-align: right;">
         <button onclick="window.print()" style="padding: 6px 16px; background: #0891b2; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px;">
-            Print / Save as PDF
+            {{ __('Print / Save as PDF') }}
         </button>
     </div>
 
     <div class="header">
         <div>
             <h1 class="company-name">{{ $tenant->company_name ?? $tenant->name }}</h1>
-            <h2 class="report-title">System User Accounts &amp; Security Directory</h2>
+            <h2 class="report-title">{{ __('System User Accounts & Security Directory') }}</h2>
         </div>
         <div class="meta-info">
-            <div>Printed On: <strong>{{ date('d-M-Y h:i A') }}</strong></div>
-            <div>Total Users: <strong>{{ $users->count() }} Accounts</strong></div>
+            <div>{{ __('Printed On:') }} <strong>{{ now()->translatedFormat('d-M-Y h:i A') }}</strong></div>
+            <div>{{ __('Total Users:') }} <strong>{{ __(':count Accounts', ['count' => $users->count()]) }}</strong></div>
         </div>
     </div>
 
@@ -118,12 +118,12 @@
         <thead>
             <tr>
                 <th class="text-center" style="width: 30px;">#</th>
-                <th>Full Name</th>
-                <th>Email / Login ID</th>
-                <th class="text-center">Phone</th>
-                <th class="text-center">Assigned Role</th>
-                <th class="text-center">Designation</th>
-                <th class="text-center" style="width: 70px;">Status</th>
+                <th>{{ __('Full Name') }}</th>
+                <th>{{ __('Email / Login ID') }}</th>
+                <th class="text-center">{{ __('Phone') }}</th>
+                <th class="text-center">{{ __('Assigned Role') }}</th>
+                <th class="text-center">{{ __('Designation') }}</th>
+                <th class="text-center" style="width: 70px;">{{ __('Status') }}</th>
             </tr>
         </thead>
         <tbody>
@@ -133,11 +133,11 @@
                     <td style="font-weight: 600;">{{ $u->name }}</td>
                     <td class="font-mono" style="color: #475569;">{{ $u->email }}</td>
                     <td class="text-center font-mono">{{ $u->phone ?? $u->mobile ?? '—' }}</td>
-                    <td class="text-center" style="font-weight: 600;">{{ $u->role_badge['label'] ?? ucfirst($u->role) }}</td>
+                    <td class="text-center" style="font-weight: 600;">{{ __($u->role_badge['label'] ?? ucfirst($u->role)) }}</td>
                     <td class="text-center" style="color: #64748b;">{{ $u->designation ?? '—' }}</td>
                     <td class="text-center">
                         <span class="badge {{ $u->status === 'active' ? 'badge-active' : 'badge-suspended' }}">
-                            {{ ucfirst($u->status ?? 'active') }}
+                            {{ __($u->status_badge['label'] ?? ucfirst($u->status ?? 'active')) }}
                         </span>
                     </td>
                 </tr>
@@ -146,8 +146,8 @@
     </table>
 
     <div class="footer">
-        <div>Confidential &bull; Internal System Administration Record</div>
-        <div>{{ $tenant->company_name ?? $tenant->name }} ERP Platform</div>
+        <div>{{ __('Confidential • Internal System Administration Record') }}</div>
+        <div>{{ __(':company ERP Platform', ['company' => $tenant->company_name ?? $tenant->name]) }}</div>
     </div>
 
 </body>

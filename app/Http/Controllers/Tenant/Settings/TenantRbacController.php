@@ -30,7 +30,7 @@ class TenantRbacController extends Controller
             $tenant = \App\Models\Tenant::first();
         }
         if (!$tenant) {
-            abort(404, 'ISP Tenant record not found.');
+            abort(404, __('ISP Tenant record not found.'));
         }
         return $tenant;
     }
@@ -42,6 +42,7 @@ class TenantRbacController extends Controller
     {
         $tenant = $this->getTenant();
         $tenantId = $tenant->id;
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
 
         // Auto-seed default standard ISP roles if none exist for this tenant
         $this->ensureDefaultRolesExist($tenantId);
@@ -118,6 +119,7 @@ class TenantRbacController extends Controller
 
         return view('tenant.settings.rbac', compact(
             'tenant',
+            'currencySymbol',
             'roles',
             'permissionCatalog',
             'stats',
@@ -137,6 +139,7 @@ class TenantRbacController extends Controller
     public function create(Request $request): View
     {
         $tenant = $this->getTenant();
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
         $permissionCatalog = TenantRole::getPermissionCatalog();
 
         $totalPermissions = 0;
@@ -146,6 +149,7 @@ class TenantRbacController extends Controller
 
         return view('tenant.settings.rbac_create', compact(
             'tenant',
+            'currencySymbol',
             'permissionCatalog',
             'totalPermissions'
         ));
@@ -157,6 +161,7 @@ class TenantRbacController extends Controller
     public function edit($id): View
     {
         $tenant = $this->getTenant();
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
         $role = TenantRole::where('tenant_id', $tenant->id)->findOrFail($id);
         $permissionCatalog = TenantRole::getPermissionCatalog();
 
@@ -172,6 +177,7 @@ class TenantRbacController extends Controller
 
         return view('tenant.settings.rbac_edit', compact(
             'tenant',
+            'currencySymbol',
             'role',
             'permissionCatalog',
             'totalPermissions',
@@ -219,14 +225,18 @@ class TenantRbacController extends Controller
             'tenant_id' => $tenant->id,
             'actor_type' => 'tenant',
             'actor_id' => Auth::id() ?? 1,
-            'actor_name' => Auth::user()?->name ?? 'Admin',
+            'actor_name' => Auth::user()?->name ?? __('Admin'),
             'event_type' => 'RBAC_ROLE_CREATED',
-            'description' => "Created custom RBAC role '{$role->display_name}' ({$role->name}) with " . count($role->permissions ?? []) . " permissions.",
+            'description' => __('Created custom RBAC role \':display_name\' (:name) with :count permissions.', [
+                'display_name' => $role->display_name,
+                'name' => $role->name,
+                'count' => count($role->permissions ?? []),
+            ]),
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
         ]);
 
-        return redirect()->route('tenant.settings.rbac')->with('success', "Role '{$role->display_name}' created successfully.");
+        return redirect()->route('tenant.settings.rbac')->with('success', __('Role \':name\' created successfully.', ['name' => __($role->display_name)]));
     }
 
     /**
@@ -242,11 +252,14 @@ class TenantRbacController extends Controller
             ->select('id', 'name', 'email', 'phone', 'mobile', 'staff_id', 'designation', 'status')
             ->get();
 
+        $badge = $role->badge;
+        $badge['label'] = __($badge['label']);
+
         return response()->json([
             'success' => true,
             'role' => $role,
             'assigned_staff' => $assignedStaff,
-            'badge' => $role->badge,
+            'badge' => $badge,
         ]);
     }
 
@@ -280,14 +293,18 @@ class TenantRbacController extends Controller
             'tenant_id' => $tenant->id,
             'actor_type' => 'tenant',
             'actor_id' => Auth::id() ?? 1,
-            'actor_name' => Auth::user()?->name ?? 'Admin',
+            'actor_name' => Auth::user()?->name ?? __('Admin'),
             'event_type' => 'RBAC_ROLE_UPDATED',
-            'description' => "Updated RBAC role '{$role->display_name}' ({$role->name}) permissions matrix (" . count($role->permissions ?? []) . " capabilities).",
+            'description' => __('Updated RBAC role \':display_name\' (:name) permissions matrix (:count capabilities).', [
+                'display_name' => $role->display_name,
+                'name' => $role->name,
+                'count' => count($role->permissions ?? []),
+            ]),
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
         ]);
 
-        return redirect()->route('tenant.settings.rbac')->with('success', "Role '{$role->display_name}' updated successfully.");
+        return redirect()->route('tenant.settings.rbac')->with('success', __('Role \':name\' updated successfully.', ['name' => __($role->display_name)]));
     }
 
     /**
@@ -298,7 +315,7 @@ class TenantRbacController extends Controller
         $tenant = $this->getTenant();
         $sourceRole = TenantRole::where('tenant_id', $tenant->id)->findOrFail($id);
 
-        $newName = $sourceRole->display_name . ' (Copy)';
+        $newName = __(':name (Copy)', ['name' => __($sourceRole->display_name)]);
         $baseSlug = Str::slug($sourceRole->name . '_copy', '_');
         $slug = $baseSlug;
         $counter = 1;
@@ -311,7 +328,7 @@ class TenantRbacController extends Controller
             'tenant_id' => $tenant->id,
             'name' => $slug,
             'display_name' => $newName,
-            'description' => "Cloned from '{$sourceRole->display_name}'. " . ($sourceRole->description ?? ''),
+            'description' => trim(__('Cloned from \':name\'.', ['name' => __($sourceRole->display_name)]) . ($sourceRole->description ? ' ' . __($sourceRole->description) : '')),
             'color' => $sourceRole->color,
             'icon' => $sourceRole->icon,
             'is_system' => false,
@@ -323,14 +340,20 @@ class TenantRbacController extends Controller
             'tenant_id' => $tenant->id,
             'actor_type' => 'tenant',
             'actor_id' => Auth::id() ?? 1,
-            'actor_name' => Auth::user()?->name ?? 'Admin',
+            'actor_name' => Auth::user()?->name ?? __('Admin'),
             'event_type' => 'RBAC_ROLE_CLONED',
-            'description' => "Cloned RBAC role '{$sourceRole->display_name}' into '{$cloned->display_name}'.",
+            'description' => __('Cloned RBAC role \':source\' into \':target\'.', [
+                'source' => $sourceRole->display_name,
+                'target' => $cloned->display_name,
+            ]),
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
         ]);
 
-        return back()->with('success', "Role '{$sourceRole->display_name}' successfully duplicated as '{$cloned->display_name}'.");
+        return back()->with('success', __('Role \':source\' successfully duplicated as \':target\'.', [
+            'source' => __($sourceRole->display_name),
+            'target' => $cloned->display_name,
+        ]));
     }
 
     /**
@@ -345,24 +368,30 @@ class TenantRbacController extends Controller
             if ($request->wantsJson() || $request->ajax() || str_contains($request->header('Accept', ''), 'json')) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'The ISP Super Admin system role cannot be disabled.',
+                    'message' => __('The ISP Super Admin system role cannot be disabled.'),
                 ], 422);
             }
-            return back()->with('error', 'The ISP Super Admin system role cannot be disabled.');
+            return back()->with('error', __('The ISP Super Admin system role cannot be disabled.'));
         }
 
         $role->status = $role->status === 'active' ? 'disabled' : 'active';
         $role->save();
 
-        $stateText = $role->status === 'active' ? 'enabled' : 'disabled';
+        $logMessage = $role->status === 'active'
+            ? __('Role \':name\' is now enabled.', ['name' => __($role->display_name)])
+            : __('Role \':name\' is now disabled.', ['name' => __($role->display_name)]);
+
+        $flashMessage = $role->status === 'active'
+            ? __('Role \':name\' has been enabled successfully.', ['name' => __($role->display_name)])
+            : __('Role \':name\' has been disabled successfully.', ['name' => __($role->display_name)]);
 
         TenantActivityLog::create([
             'tenant_id' => $tenant->id,
             'actor_type' => 'tenant',
             'actor_id' => Auth::id() ?? 1,
-            'actor_name' => Auth::user()?->name ?? 'Admin',
+            'actor_name' => Auth::user()?->name ?? __('Admin'),
             'event_type' => 'RBAC_ROLE_STATUS_TOGGLED',
-            'description' => "Role '{$role->display_name}' is now {$stateText}.",
+            'description' => $logMessage,
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
         ]);
@@ -371,11 +400,11 @@ class TenantRbacController extends Controller
             return response()->json([
                 'success' => true,
                 'status' => $role->status,
-                'message' => "Role '{$role->display_name}' is now {$stateText}.",
+                'message' => $logMessage,
             ]);
         }
 
-        return back()->with('success', "Role '{$role->display_name}' has been {$stateText} successfully.");
+        return back()->with('success', $flashMessage);
     }
 
     /**
@@ -387,12 +416,15 @@ class TenantRbacController extends Controller
         $role = TenantRole::where('tenant_id', $tenant->id)->findOrFail($id);
 
         if ($role->name === 'isp_admin') {
-            return back()->with('error', "Primary ISP Super Admin ('{$role->display_name}') role is protected and cannot be deleted.");
+            return back()->with('error', __('Primary ISP Super Admin (\':name\') role is protected and cannot be deleted.', ['name' => __($role->display_name)]));
         }
 
         $staffCount = User::where('tenant_id', $tenant->id)->where('role', $role->name)->count();
         if ($staffCount > 0) {
-            return back()->with('error', "Cannot delete role '{$role->display_name}' because {$staffCount} active employees are currently assigned to it. Please reassign them first.");
+            return back()->with('error', __('Cannot delete role \':name\' because :count active employees are currently assigned to it. Please reassign them first.', [
+                'name' => __($role->display_name),
+                'count' => $staffCount,
+            ]));
         }
 
         $roleName = $role->display_name;
@@ -402,14 +434,14 @@ class TenantRbacController extends Controller
             'tenant_id' => $tenant->id,
             'actor_type' => 'tenant',
             'actor_id' => Auth::id() ?? 1,
-            'actor_name' => Auth::user()?->name ?? 'Admin',
+            'actor_name' => Auth::user()?->name ?? __('Admin'),
             'event_type' => 'RBAC_ROLE_DELETED',
-            'description' => "Deleted custom RBAC role '{$roleName}'.",
+            'description' => __('Deleted custom RBAC role \':name\'.', ['name' => $roleName]),
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
         ]);
 
-        return back()->with('success', "Custom role '{$roleName}' deleted successfully.");
+        return back()->with('success', __('Custom role \':name\' deleted successfully.', ['name' => __($roleName)]));
     }
 
     /**
@@ -418,6 +450,7 @@ class TenantRbacController extends Controller
     public function printReport(Request $request): View
     {
         $tenant = $this->getTenant();
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
         $roles = TenantRole::where('tenant_id', $tenant->id)->orderBy('is_system', 'desc')->get();
         $permissionCatalog = TenantRole::getPermissionCatalog();
 
@@ -428,7 +461,7 @@ class TenantRbacController extends Controller
             'assigned_staff' => User::where('tenant_id', $tenant->id)->where('role', '!=', 'owner')->count(),
         ];
 
-        return view('tenant.settings.rbac_print', compact('tenant', 'roles', 'permissionCatalog', 'stats'));
+        return view('tenant.settings.rbac_print', compact('tenant', 'currencySymbol', 'roles', 'permissionCatalog', 'stats'));
     }
 
     /**
@@ -455,33 +488,33 @@ class TenantRbacController extends Controller
 
             // Header Block
             fputcsv($handle, [$tenant->company_name ?? $tenant->name]);
-            fputcsv($handle, ['ROLE-BASED ACCESS CONTROL (RBAC) & PERMISSIONS AUDIT MATRIX']);
-            fputcsv($handle, ['Generated At', date('d-M-Y h:i:s A')]);
+            fputcsv($handle, [__('ROLE-BASED ACCESS CONTROL (RBAC) & PERMISSIONS AUDIT MATRIX')]);
+            fputcsv($handle, [__('Generated At'), now()->translatedFormat('d-M-Y h:i:s A')]);
             fputcsv($handle, []);
 
             // Columns
             fputcsv($handle, [
-                'SL',
-                'Role Display Name',
-                'System Key / Slug',
-                'Classification',
-                'Assigned Staff Count',
-                'Total Permissions',
-                'Status',
-                'Role Description',
-                'Assigned Capabilities / Permissions',
+                __('SL'),
+                __('Role Display Name'),
+                __('System Key / Slug'),
+                __('Classification'),
+                __('Assigned Staff Count'),
+                __('Total Permissions'),
+                __('Status'),
+                __('Role Description'),
+                __('Assigned Capabilities / Permissions'),
             ]);
 
             foreach ($roles as $idx => $r) {
                 fputcsv($handle, [
                     $idx + 1,
-                    $r->display_name,
+                    __($r->badge['label']),
                     $r->name,
-                    $r->is_system ? 'System Preset' : 'Custom Defined',
+                    $r->is_system ? __('System Preset') : __('Custom Defined'),
                     $r->staff_count,
                     count($r->permissions ?? []),
-                    strtoupper($r->status),
-                    $r->description,
+                    $r->status === 'active' ? __('ACTIVE') : ($r->status === 'disabled' ? __('DISABLED') : strtoupper($r->status)),
+                    $r->description ? __($r->description) : '',
                     implode(', ', $r->permissions ?? []),
                 ]);
             }

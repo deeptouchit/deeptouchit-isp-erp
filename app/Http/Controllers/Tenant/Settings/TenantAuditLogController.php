@@ -169,8 +169,11 @@ class TenantAuditLogController extends Controller
             ->filter()
             ->values();
 
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
+
         return view('tenant.settings.audit_logs', compact(
             'tenant',
+            'currencySymbol',
             'logs',
             'stats',
             'search',
@@ -192,22 +195,25 @@ class TenantAuditLogController extends Controller
     {
         $tenant = $this->getTenant();
         $log = TenantActivityLog::where('tenant_id', $tenant->id)->findOrFail($id);
+        $device = $log->device;
+        $device['browser'] = __($device['browser']);
+        $device['platform'] = __($device['platform']);
 
         return response()->json([
             'success' => true,
             'log' => [
                 'id' => $log->id,
-                'actor_name' => $log->actor_name ?? 'System Daemon',
+                'actor_name' => $log->actor_name ?? __('System Daemon'),
                 'actor_type' => $log->actor_type ?? 'system',
                 'actor_badge' => $log->actor_badge,
                 'event_type' => $log->event_type,
                 'event_badge' => $log->event_type_badge,
                 'description' => $log->description,
                 'ip_address' => $log->ip_address ?? '127.0.0.1',
-                'user_agent' => $log->user_agent ?? 'N/A',
-                'device' => $log->device,
+                'user_agent' => $log->user_agent ?? __('N/A'),
+                'device' => $device,
                 'metadata' => $log->metadata ?? [],
-                'created_at' => $log->formatted_created_at,
+                'created_at' => $log->created_at ? $log->created_at->translatedFormat('d-M-Y h:i:s A') : __('N/A'),
                 'relative_time' => $log->relative_time,
             ]
         ]);
@@ -227,11 +233,11 @@ class TenantAuditLogController extends Controller
         if (request()->wantsJson() || request()->ajax()) {
             return response()->json([
                 'success' => true,
-                'message' => "Audit log entry #{$logId} ({$eventType}) deleted successfully."
+                'message' => __('Audit log entry #:id (:event) deleted successfully.', ['id' => $logId, 'event' => $eventType])
             ]);
         }
 
-        return back()->with('success', "Audit log entry #{$logId} deleted successfully.");
+        return back()->with('success', __('Audit log entry #:id deleted successfully.', ['id' => $logId]));
     }
 
     /**
@@ -256,9 +262,9 @@ class TenantAuditLogController extends Controller
             'tenant_id' => $tenant->id,
             'actor_type' => 'tenant',
             'actor_id' => Auth::id(),
-            'actor_name' => Auth::user()->name ?? 'ISP Administrator',
+            'actor_name' => Auth::user()->name ?? __('ISP Administrator'),
             'event_type' => 'AUDIT_LOGS_PURGED',
-            'description' => "Purged {$deletedCount} historical audit log entries older than {$days} days.",
+            'description' => __('Purged :count historical audit log entries older than :days days.', ['count' => $deletedCount, 'days' => $days]),
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
             'metadata' => [
@@ -268,7 +274,7 @@ class TenantAuditLogController extends Controller
             ],
         ]);
 
-        $msg = "Purged {$deletedCount} audit log records older than {$days} days successfully.";
+        $msg = __('Purged :count audit log records older than :days days successfully.', ['count' => $deletedCount, 'days' => $days]);
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
@@ -327,14 +333,24 @@ class TenantAuditLogController extends Controller
 
         return response()->streamDownload(function () use ($logs) {
             $handle = fopen('php://output', 'w');
-            fputcsv($handle, ['ID', 'Timestamp (UTC+6)', 'Actor Name', 'Actor Type', 'Event Type', 'Description', 'IP Address', 'User Agent', 'Metadata Payload']);
+            fputcsv($handle, [
+                __('ID'),
+                __('Timestamp (UTC+6)'),
+                __('Actor Name'),
+                __('Actor Type'),
+                __('Event Type'),
+                __('Description'),
+                __('IP Address'),
+                __('User Agent'),
+                __('Metadata Payload'),
+            ]);
 
             foreach ($logs as $l) {
                 fputcsv($handle, [
                     $l->id,
-                    $l->formatted_created_at,
-                    $l->actor_name ?? 'System',
-                    $l->actor_type ?? 'system',
+                    $l->created_at ? $l->created_at->translatedFormat('d-M-Y h:i:s A') : __('N/A'),
+                    $l->actor_name ?? __('System'),
+                    $l->actor_badge['label'] ?? ($l->actor_type ?? 'system'),
                     $l->event_type,
                     $l->description,
                     $l->ip_address,
@@ -396,10 +412,12 @@ class TenantAuditLogController extends Controller
             'total_events' => TenantActivityLog::where('tenant_id', $tenantId)->count(),
             'today_events' => TenantActivityLog::where('tenant_id', $tenantId)->whereDate('created_at', Carbon::today()->toDateString())->count(),
             'security_events' => TenantActivityLog::where('tenant_id', $tenantId)->where('event_type', 'like', '%AUTH%')->count(),
-            'printed_at' => Carbon::now()->format('d-M-Y h:i:s A'),
-            'printed_by' => Auth::user()->name ?? 'ISP Administrator',
+            'printed_at' => Carbon::now()->translatedFormat('d-M-Y h:i:s A'),
+            'printed_by' => Auth::user()->name ?? __('ISP Administrator'),
         ];
 
-        return view('tenant.settings.audit_print', compact('tenant', 'logs', 'stats'));
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
+
+        return view('tenant.settings.audit_print', compact('tenant', 'currencySymbol', 'logs', 'stats'));
     }
 }

@@ -1,6 +1,6 @@
 @extends('tenant.layouts.app')
 
-@section('title', 'System Users & Login Accounts - ' . ($tenant->company_name ?? $tenant->name))
+@section('title', __('System Users & Login Accounts') . ' - ' . ($tenant->company_name ?? $tenant->name))
 
 @push('styles')
     {{-- Page-specific CSS --}}
@@ -15,20 +15,20 @@
             <div class="w-8 h-8 rounded-lg bg-cyan-50 text-cyan-600 border border-cyan-100 flex items-center justify-center text-sm shadow-2xs flex-shrink-0">
                 <i class="fas fa-users-gear"></i>
             </div>
-            <h1 class="text-sm font-bold text-slate-800 tracking-tight">System Users &amp; Login Accounts</h1>
+            <h1 class="text-sm font-bold text-slate-800 tracking-tight">{{ __('System Users & Login Accounts') }}</h1>
         </div>
         <div class="flex items-center gap-2">
             <a href="{{ route('tenant.users.print') }}" target="_blank" class="h-[34px] py-0 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200/80 transition flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-print text-slate-500 text-xs"></i>
-                <span>Print Directory</span>
+                <span>{{ __('Print Directory') }}</span>
             </a>
             <a href="{{ route('tenant.users.export') }}" class="h-[34px] py-0 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200/80 transition flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-file-csv text-slate-500 text-xs"></i>
-                <span>Export CSV</span>
+                <span>{{ __('Export CSV') }}</span>
             </a>
             <button type="button" @click="openCreateModal()" class="h-[34px] py-0 px-3.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-xs font-semibold shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-user-plus text-xs"></i>
-                <span>Create User</span>
+                <span>{{ __('Create User') }}</span>
             </button>
         </div>
     </div>
@@ -38,9 +38,9 @@
         {{-- Card 1: Total Users --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">User Accounts</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('User Accounts') }}</span>
                 <span class="text-[13px] font-bold font-mono text-indigo-700 leading-tight block">
-                    {{ $stats['total_users'] }} Users
+                    {{ __(':count Users', ['count' => $stats['total_users']]) }}
                 </span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border border-indigo-200 bg-indigo-50 text-indigo-600 flex items-center justify-center flex-shrink-0">
@@ -51,9 +51,9 @@
         {{-- Card 2: ISP Admins --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">ISP Admins</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('ISP Admins') }}</span>
                 <span class="text-[13px] font-bold font-mono text-purple-700 leading-tight block">
-                    {{ $stats['admin_users'] }} Admins
+                    {{ __(':count Admins', ['count' => $stats['admin_users']]) }}
                 </span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border border-purple-200 bg-purple-50 text-purple-600 flex items-center justify-center flex-shrink-0">
@@ -64,9 +64,9 @@
         {{-- Card 3: Staff Operators --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Staff Operators</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Staff Operators') }}</span>
                 <span class="text-[13px] font-bold font-mono text-blue-700 leading-tight block">
-                    {{ $stats['staff_users'] }} Operators
+                    {{ __(':count Operators', ['count' => $stats['staff_users']]) }}
                 </span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border border-blue-200 bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0">
@@ -77,9 +77,9 @@
         {{-- Card 4: Active Logins --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Active Logins</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Active Logins') }}</span>
                 <span class="text-[13px] font-bold font-mono text-emerald-700 leading-tight block">
-                    {{ $stats['active_users'] }} Active
+                    {{ __(':count Active', ['count' => $stats['active_users']]) }}
                 </span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border border-emerald-200 bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0">
@@ -90,9 +90,9 @@
         {{-- Card 5: Suspended Accounts --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Disabled Accounts</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Disabled Accounts') }}</span>
                 <span class="text-[13px] font-bold font-mono {{ $stats['suspended_users'] > 0 ? 'text-amber-600' : 'text-slate-700' }} leading-tight block">
-                    {{ $stats['suspended_users'] }} Inactive
+                    {{ __(':count Inactive', ['count' => $stats['suspended_users']]) }}
                 </span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border {{ $stats['suspended_users'] > 0 ? 'border-amber-200 bg-amber-50 text-amber-600' : 'border-slate-200 bg-slate-50 text-slate-600' }} flex items-center justify-center flex-shrink-0">
@@ -103,9 +103,9 @@
         {{-- Card 6: Assigned RBAC Roles --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Assigned Roles</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Assigned Roles') }}</span>
                 <span class="text-[13px] font-bold font-mono text-cyan-700 leading-tight block">
-                    {{ $stats['assigned_roles'] }} Roles
+                    {{ __(':count Roles', ['count' => $stats['assigned_roles']]) }}
                 </span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border border-cyan-200 bg-cyan-50 text-cyan-600 flex items-center justify-center flex-shrink-0">
@@ -118,7 +118,7 @@
     <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5"
          x-data="{ 
              showMoreFilters: {{ $isMoreOpen ? 'true' : 'false' }}, 
-             searchQuery: '{{ addslashes(request('search', '')) }}' 
+             searchQuery: @js(request('search', '')) 
          }">
         <form method="GET" action="{{ route('tenant.users.index') }}" class="space-y-2.5">
             {{-- 1st Tier: Primary Single Row --}}
@@ -130,7 +130,7 @@
                     <input type="text" 
                            name="search" 
                            x-model="searchQuery"
-                           placeholder="Search by name, email, phone or staff ID..." 
+                           placeholder="{{ __('Search by name, email, phone or staff ID...') }}" 
                            class="w-full h-[34px] pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                     <button type="button" 
                             x-show="searchQuery && searchQuery.length > 0" 
@@ -142,28 +142,28 @@
 
                 {{-- Primary Filter: Role --}}
                 <select name="role" class="w-full md:w-44 h-[34px] bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                    <option value="all">All Assigned Roles</option>
+                    <option value="all">{{ __('All Assigned Roles') }}</option>
                     @foreach($availableRoles as $role)
                         <option value="{{ $role->name }}" {{ $roleFilter === $role->name ? 'selected' : '' }}>
-                            {{ $role->display_name }}
+                            {{ __($role->display_name) }}
                         </option>
                     @endforeach
                 </select>
 
                 {{-- Primary Filter: Status --}}
                 <select name="status" class="w-full md:w-36 h-[34px] bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                    <option value="all">All Status</option>
-                    <option value="active" {{ $statusFilter === 'active' ? 'selected' : '' }}>Active Only</option>
-                    <option value="suspended" {{ $statusFilter === 'suspended' ? 'selected' : '' }}>Suspended</option>
-                    <option value="inactive" {{ $statusFilter === 'inactive' ? 'selected' : '' }}>Inactive</option>
+                    <option value="all">{{ __('All Status') }}</option>
+                    <option value="active" {{ $statusFilter === 'active' ? 'selected' : '' }}>{{ __('Active Only') }}</option>
+                    <option value="suspended" {{ $statusFilter === 'suspended' ? 'selected' : '' }}>{{ __('Suspended') }}</option>
+                    <option value="inactive" {{ $statusFilter === 'inactive' ? 'selected' : '' }}>{{ __('Inactive') }}</option>
                 </select>
 
                 {{-- Pagination Selector (per_page) --}}
                 <select name="per_page" class="w-full md:w-28 flex-shrink-0 h-[34px] bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                    <option value="10" {{ $perPage == 10 ? 'selected' : '' }}>10 / page</option>
-                    <option value="20" {{ $perPage == 20 ? 'selected' : '' }}>20 / page</option>
-                    <option value="50" {{ $perPage == 50 ? 'selected' : '' }}>50 / page</option>
-                    <option value="100" {{ $perPage == 100 ? 'selected' : '' }}>100 / page</option>
+                    <option value="10" {{ $perPage == 10 ? 'selected' : '' }}>{{ __(':count / page', ['count' => 10]) }}</option>
+                    <option value="20" {{ $perPage == 20 ? 'selected' : '' }}>{{ __(':count / page', ['count' => 20]) }}</option>
+                    <option value="50" {{ $perPage == 50 ? 'selected' : '' }}>{{ __(':count / page', ['count' => 50]) }}</option>
+                    <option value="100" {{ $perPage == 100 ? 'selected' : '' }}>{{ __(':count / page', ['count' => 100]) }}</option>
                 </select>
 
                 {{-- "More Filters" Accordion Toggle Button --}}
@@ -172,7 +172,7 @@
                         class="h-[34px] py-0 px-2.5 rounded-lg border text-xs font-semibold flex items-center justify-center gap-1.5 transition flex-shrink-0 cursor-pointer"
                         :class="showMoreFilters || {{ $activeMoreCount > 0 ? 'true' : 'false' }} ? 'bg-cyan-50 border-cyan-300 text-cyan-800' : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'">
                     <i class="fas fa-sliders text-xs"></i>
-                    <span>More Filters</span>
+                    <span>{{ __('More Filters') }}</span>
                     @if($activeMoreCount > 0)
                         <span class="w-4 h-4 rounded-full bg-cyan-600 text-white text-[9px] font-bold flex items-center justify-center">{{ $activeMoreCount }}</span>
                     @endif
@@ -183,15 +183,15 @@
                 <div class="flex items-center gap-1.5 flex-shrink-0 md:ml-auto">
                     <button type="submit" 
                             class="h-[34px] py-0 px-3 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" 
-                            title="Apply Filters">
+                            title="{{ __('Apply Filters') }}">
                         <i class="fas fa-filter text-[10px]"></i>
-                        <span>Filter</span>
+                        <span>{{ __('Filter') }}</span>
                     </button>
                     <a href="{{ route('tenant.users.index') }}" 
                        class="h-[34px] py-0 px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer" 
-                       title="Reset Filters">
+                       title="{{ __('Reset Filters') }}">
                         <i class="fas fa-rotate-left text-[10px]"></i>
-                        <span>Reset</span>
+                        <span>{{ __('Reset') }}</span>
                     </a>
                 </div>
             </div>
@@ -201,9 +201,9 @@
                 {{-- Scope Affiliation Filter --}}
                 <div class="w-full sm:w-56">
                     <select name="scope" class="w-full h-[34px] bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                        <option value="all" {{ $scopeFilter === 'all' || !$scopeFilter ? 'selected' : '' }}>All Affiliations</option>
-                        <option value="isp" {{ $scopeFilter === 'isp' ? 'selected' : '' }}>ISP Headquarters Core</option>
-                        <option value="reseller" {{ $scopeFilter === 'reseller' ? 'selected' : '' }}>Partner Sub-ISPs</option>
+                        <option value="all" {{ $scopeFilter === 'all' || !$scopeFilter ? 'selected' : '' }}>{{ __('All Affiliations') }}</option>
+                        <option value="isp" {{ $scopeFilter === 'isp' ? 'selected' : '' }}>{{ __('ISP Headquarters Core') }}</option>
+                        <option value="reseller" {{ $scopeFilter === 'reseller' ? 'selected' : '' }}>{{ __('Partner Sub-ISPs') }}</option>
                     </select>
                 </div>
             </div>
@@ -218,12 +218,12 @@
                 <thead>
                     <tr>
                         <th class="w-10 text-center font-semibold">#</th>
-                        <th class="text-center font-semibold">User Name</th>
-                        <th class="text-center font-semibold">Email / Login ID</th>
-                        <th class="text-center font-semibold">Phone</th>
-                        <th class="text-center font-semibold">Assigned Role</th>
-                        <th class="text-center font-semibold">Status</th>
-                        <th class="w-14 text-center font-semibold no-sort">Action</th>
+                        <th class="text-center font-semibold">{{ __('User Name') }}</th>
+                        <th class="text-center font-semibold">{{ __('Email / Login ID') }}</th>
+                        <th class="text-center font-semibold">{{ __('Phone') }}</th>
+                        <th class="text-center font-semibold">{{ __('Assigned Role') }}</th>
+                        <th class="text-center font-semibold">{{ __('Status') }}</th>
+                        <th class="w-14 text-center font-semibold no-sort">{{ __('Action') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -262,7 +262,7 @@
                             <td class="text-center whitespace-nowrap">
                                 <span class="px-2 py-0.5 rounded text-[10px] font-semibold border inline-flex items-center gap-1 {{ $roleBadge['class'] ?? 'bg-slate-100 text-slate-700 border-slate-200' }}">
                                     <i class="fas {{ $roleBadge['icon'] ?? 'fa-user' }} text-[8.5px]"></i>
-                                    <span>{{ $roleBadge['label'] ?? ucfirst($u->role) }}</span>
+                                    <span>{{ __($roleBadge['label'] ?? ucfirst($u->role)) }}</span>
                                 </span>
                             </td>
 
@@ -270,16 +270,16 @@
                             <td class="text-center whitespace-nowrap">
                                 <span class="px-2 py-0.5 rounded text-[10px] font-semibold border inline-flex items-center gap-1 {{ $statusBadge['class'] ?? 'bg-slate-100 text-slate-700 border-slate-200' }}">
                                     <i class="fas {{ $statusBadge['icon'] ?? 'fa-circle-check' }} text-[8.5px]"></i>
-                                    <span>{{ $statusBadge['label'] ?? ucfirst($u->status) }}</span>
+                                    <span>{{ __($statusBadge['label'] ?? ucfirst($u->status)) }}</span>
                                 </span>
                             </td>
 
                             {{-- Action 3-Dot Menu (Center) --}}
                             <td class="text-center whitespace-nowrap">
                                 <button type="button" 
-                                        @click="toggleMenu({{ json_encode(['id' => $u->id, 'name' => $u->name, 'email' => $u->email, 'role' => $u->role, 'status' => $u->status, 'phone' => $u->phone, 'designation' => $u->designation]) }}, $event)"
+                                        @click="toggleMenu(@js(['id' => $u->id, 'name' => $u->name, 'email' => $u->email, 'role' => $u->role, 'status' => $u->status, 'phone' => $u->phone, 'designation' => $u->designation]), $event)"
                                         class="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
-                                        title="Actions">
+                                        title="{{ __('Actions') }}">
                                     <i class="fas fa-ellipsis-v text-[10px]"></i>
                                 </button>
                             </td>
@@ -291,10 +291,10 @@
                                     <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 text-sm">
                                         <i class="fas fa-users-slash"></i>
                                     </div>
-                                    <span class="text-xs font-medium text-slate-600">No user login accounts found matching your criteria.</span>
+                                    <span class="text-xs font-medium text-slate-600">{{ __('No user login accounts found matching your criteria.') }}</span>
                                     <a href="{{ route('tenant.users.index') }}" class="mt-1 inline-flex items-center gap-1 text-xs text-cyan-600 font-semibold hover:underline">
                                         <i class="fas fa-rotate-left text-[10px]"></i>
-                                        <span>Reset All Filters</span>
+                                        <span>{{ __('Reset All Filters') }}</span>
                                     </a>
                                 </div>
                             </td>
@@ -308,7 +308,7 @@
         @if($users->hasPages())
             <div class="p-2.5 border-t border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-2">
                 <span class="text-xs text-slate-500 font-medium">
-                    Showing {{ $users->firstItem() }} to {{ $users->lastItem() }} of {{ $users->total() }} user accounts
+                    {{ __('Showing :from to :to of :total user accounts', ['from' => $users->firstItem(), 'to' => $users->lastItem(), 'total' => $users->total()]) }}
                 </span>
                 <div>
                     {{ $users->links() }}
@@ -328,15 +328,15 @@
         <div class="py-1">
             <button type="button" @click="viewUserDetails(activeMenu.id); activeMenu = null" class="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition cursor-pointer">
                 <i class="fas fa-id-card text-slate-400 w-3.5"></i>
-                <span>View User Details</span>
+                <span>{{ __('View User Details') }}</span>
             </button>
             <button type="button" @click="openEditModal(activeMenu); activeMenu = null" class="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition cursor-pointer">
                 <i class="fas fa-user-pen text-cyan-600 w-3.5"></i>
-                <span>Edit User Account</span>
+                <span>{{ __('Edit User Account') }}</span>
             </button>
             <button type="button" @click="openPasswordModal(activeMenu); activeMenu = null" class="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition cursor-pointer">
                 <i class="fas fa-key text-amber-500 w-3.5"></i>
-                <span>Reset Password</span>
+                <span>{{ __('Reset Password') }}</span>
             </button>
         </div>
 
@@ -344,7 +344,7 @@
         <div class="py-1">
             <button type="button" @click="toggleUserStatus(activeMenu); activeMenu = null" class="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition cursor-pointer">
                 <i class="fas fa-power-off text-indigo-500 w-3.5"></i>
-                <span x-text="activeMenu && activeMenu.status === 'active' ? 'Suspend Account' : 'Activate Account'"></span>
+                <span x-text="activeMenu && activeMenu.status === 'active' ? @js(__('Suspend Account')) : @js(__('Activate Account'))"></span>
             </button>
         </div>
 
@@ -352,7 +352,7 @@
         <div class="py-1">
             <button type="button" @click="deleteUserAction(activeMenu); activeMenu = null" class="w-full text-left px-3 py-1.5 hover:bg-rose-50 text-rose-600 flex items-center gap-2 transition cursor-pointer">
                 <i class="fas fa-trash-can text-rose-500 w-3.5"></i>
-                <span>Delete Account</span>
+                <span>{{ __('Delete Account') }}</span>
             </button>
         </div>
     </div>
@@ -374,8 +374,8 @@
                         <i class="fas fa-user-plus"></i>
                     </div>
                     <div>
-                        <h3 class="text-xs font-semibold text-slate-800">Create New User Account</h3>
-                        <span class="text-[10px] text-slate-500 font-normal">Add login account and assign RBAC system permissions</span>
+                        <h3 class="text-xs font-semibold text-slate-800">{{ __('Create New User Account') }}</h3>
+                        <span class="text-[10px] text-slate-500 font-normal">{{ __('Add login account and assign RBAC system permissions') }}</span>
                     </div>
                 </div>
                 <button type="button" @click="showCreateModal = false" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center cursor-pointer">
@@ -388,49 +388,49 @@
                 @csrf
 
                 <div>
-                    <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Full Name <span class="text-rose-500">*</span></label>
-                    <input type="text" name="name" required placeholder="e.g. Mahfuzur Rahman" class="w-full h-[34px] px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
+                    <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">{{ __('Full Name') }} <span class="text-rose-500">*</span></label>
+                    <input type="text" name="name" required placeholder="{{ __('e.g. Mahfuzur Rahman') }}" class="w-full h-[34px] px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Email / Login ID <span class="text-rose-500">*</span></label>
-                        <input type="email" name="email" required placeholder="user@domain.com" class="w-full h-[34px] px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-mono">
+                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">{{ __('Email / Login ID') }} <span class="text-rose-500">*</span></label>
+                        <input type="email" name="email" required placeholder="{{ __('user@domain.com') }}" class="w-full h-[34px] px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-mono">
                     </div>
                     <div>
-                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Phone Number</label>
-                        <input type="text" name="phone" placeholder="01819-000000" class="w-full h-[34px] px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-mono">
+                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">{{ __('Phone Number') }}</label>
+                        <input type="text" name="phone" placeholder="{{ __('01819-000000') }}" class="w-full h-[34px] px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-mono">
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Assigned RBAC Role <span class="text-rose-500">*</span></label>
+                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">{{ __('Assigned RBAC Role') }} <span class="text-rose-500">*</span></label>
                         <select name="role" required class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                            <option value="">Select a Role...</option>
+                            <option value="">{{ __('Select a Role...') }}</option>
                             @foreach($availableRoles as $role)
-                                <option value="{{ $role->name }}">{{ $role->display_name }}</option>
+                                <option value="{{ $role->name }}">{{ __($role->display_name) }}</option>
                             @endforeach
                         </select>
                     </div>
                     <div>
-                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Initial Status</label>
+                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">{{ __('Initial Status') }}</label>
                         <select name="status" class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                            <option value="active">Active (Permitted)</option>
-                            <option value="suspended">Suspended</option>
-                            <option value="inactive">Inactive</option>
+                            <option value="active">{{ __('Active (Permitted)') }}</option>
+                            <option value="suspended">{{ __('Suspended') }}</option>
+                            <option value="inactive">{{ __('Inactive') }}</option>
                         </select>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Account Password <span class="text-rose-500">*</span></label>
-                        <input type="password" name="password" required minlength="6" placeholder="Min 6 characters" class="w-full h-[34px] px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
+                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">{{ __('Account Password') }} <span class="text-rose-500">*</span></label>
+                        <input type="password" name="password" required minlength="6" placeholder="{{ __('Min 6 characters') }}" class="w-full h-[34px] px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                     </div>
                     <div>
-                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Designation / Note</label>
-                        <input type="text" name="designation" placeholder="e.g. NOC Engineer" class="w-full h-[34px] px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
+                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">{{ __('Designation / Note') }}</label>
+                        <input type="text" name="designation" placeholder="{{ __('e.g. NOC Engineer') }}" class="w-full h-[34px] px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                     </div>
                 </div>
             </form>
@@ -438,11 +438,11 @@
             {{-- Modal Footer --}}
             <div class="px-4 py-2.5 bg-slate-50/80 border-t border-slate-200 flex items-center justify-between flex-shrink-0">
                 <button type="button" @click="showCreateModal = false" class="h-[34px] py-0 border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs px-3.5 rounded-lg transition cursor-pointer">
-                    Cancel
+                    {{ __('Cancel') }}
                 </button>
                 <button type="submit" form="createUserForm" class="h-[34px] py-0 bg-cyan-600 hover:bg-cyan-700 text-white font-medium text-xs px-4 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                     <i class="fas fa-check text-xs"></i>
-                    <span>Create User</span>
+                    <span>{{ __('Create User') }}</span>
                 </button>
             </div>
         </div>
@@ -463,8 +463,8 @@
                         <i class="fas fa-user-pen"></i>
                     </div>
                     <div>
-                        <h3 class="text-xs font-semibold text-slate-800" x-text="`Edit User: ${editUserForm.name}`"></h3>
-                        <span class="text-[10px] text-slate-500 font-normal">Update account details, role and credentials</span>
+                        <h3 class="text-xs font-semibold text-slate-800" x-text="@js(__('Edit User: :name')).replace(':name', editUserForm.name || '')"></h3>
+                        <span class="text-[10px] text-slate-500 font-normal">{{ __('Update account details, role and credentials') }}</span>
                     </div>
                 </div>
                 <button type="button" @click="showEditModal = false" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center cursor-pointer">
@@ -478,47 +478,47 @@
                 @method('PUT')
 
                 <div>
-                    <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Full Name <span class="text-rose-500">*</span></label>
+                    <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">{{ __('Full Name') }} <span class="text-rose-500">*</span></label>
                     <input type="text" name="name" x-model="editUserForm.name" required class="w-full h-[34px] px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Email / Login ID <span class="text-rose-500">*</span></label>
+                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">{{ __('Email / Login ID') }} <span class="text-rose-500">*</span></label>
                         <input type="email" name="email" x-model="editUserForm.email" required class="w-full h-[34px] px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-mono">
                     </div>
                     <div>
-                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Phone Number</label>
-                        <input type="text" name="phone" x-model="editUserForm.phone" placeholder="01819-000000" class="w-full h-[34px] px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-mono">
+                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">{{ __('Phone Number') }}</label>
+                        <input type="text" name="phone" x-model="editUserForm.phone" placeholder="{{ __('01819-000000') }}" class="w-full h-[34px] px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-mono">
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Assigned RBAC Role <span class="text-rose-500">*</span></label>
+                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">{{ __('Assigned RBAC Role') }} <span class="text-rose-500">*</span></label>
                         <select name="role" x-model="editUserForm.role" required class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                             @foreach($availableRoles as $role)
-                                <option value="{{ $role->name }}">{{ $role->display_name }}</option>
+                                <option value="{{ $role->name }}">{{ __($role->display_name) }}</option>
                             @endforeach
                         </select>
                     </div>
                     <div>
-                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Status</label>
+                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">{{ __('Status') }}</label>
                         <select name="status" x-model="editUserForm.status" class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                            <option value="active">Active (Permitted)</option>
-                            <option value="suspended">Suspended</option>
-                            <option value="inactive">Inactive</option>
+                            <option value="active">{{ __('Active (Permitted)') }}</option>
+                            <option value="suspended">{{ __('Suspended') }}</option>
+                            <option value="inactive">{{ __('Inactive') }}</option>
                         </select>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">New Password (Optional)</label>
-                        <input type="password" name="password" minlength="6" placeholder="Leave blank to keep current" class="w-full h-[34px] px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
+                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">{{ __('New Password (Optional)') }}</label>
+                        <input type="password" name="password" minlength="6" placeholder="{{ __('Leave blank to keep current') }}" class="w-full h-[34px] px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                     </div>
                     <div>
-                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Designation</label>
+                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">{{ __('Designation') }}</label>
                         <input type="text" name="designation" x-model="editUserForm.designation" class="w-full h-[34px] px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                     </div>
                 </div>
@@ -527,11 +527,11 @@
             {{-- Modal Footer --}}
             <div class="px-4 py-2.5 bg-slate-50/80 border-t border-slate-200 flex items-center justify-between flex-shrink-0">
                 <button type="button" @click="showEditModal = false" class="h-[34px] py-0 border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs px-3.5 rounded-lg transition cursor-pointer">
-                    Cancel
+                    {{ __('Cancel') }}
                 </button>
                 <button type="submit" form="editUserForm" class="h-[34px] py-0 bg-cyan-600 hover:bg-cyan-700 text-white font-medium text-xs px-4 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                     <i class="fas fa-check text-xs"></i>
-                    <span>Save Changes</span>
+                    <span>{{ __('Save Changes') }}</span>
                 </button>
             </div>
         </div>
@@ -551,7 +551,7 @@
                         <i class="fas fa-id-card"></i>
                     </div>
                     <div>
-                        <h3 class="text-xs font-semibold text-slate-800" x-text="selectedUser?.name || 'User Profile'"></h3>
+                        <h3 class="text-xs font-semibold text-slate-800" x-text="selectedUser?.name || @js(__('User Profile'))"></h3>
                         <span class="text-[10px] text-slate-500 font-normal" x-text="selectedUser?.email"></span>
                     </div>
                 </div>
@@ -563,35 +563,35 @@
             <div class="p-4 space-y-3 text-xs">
                 <div class="p-3 bg-slate-50 rounded-lg border border-slate-200/80 space-y-2">
                     <div class="flex justify-between items-center">
-                        <span class="text-slate-500">Staff / User ID:</span>
+                        <span class="text-slate-500">{{ __('Staff / User ID:') }}</span>
                         <span class="font-mono font-bold text-slate-800" x-text="selectedUser?.staff_id || ('USR-' + selectedUser?.id)"></span>
                     </div>
                     <div class="flex justify-between items-center">
-                        <span class="text-slate-500">Assigned Role:</span>
+                        <span class="text-slate-500">{{ __('Assigned Role:') }}</span>
                         <span class="font-semibold text-indigo-700" x-text="selectedUser?.role_badge?.label || selectedUser?.role"></span>
                     </div>
                     <div class="flex justify-between items-center">
-                        <span class="text-slate-500">Account Status:</span>
+                        <span class="text-slate-500">{{ __('Account Status:') }}</span>
                         <span class="font-semibold text-emerald-700" x-text="selectedUser?.status_badge?.label || selectedUser?.status"></span>
                     </div>
                     <div class="flex justify-between items-center">
-                        <span class="text-slate-500">Affiliation:</span>
-                        <span class="font-medium text-slate-700" x-text="selectedUser?.scope_badge?.label || 'ISP Headquarters'"></span>
+                        <span class="text-slate-500">{{ __('Affiliation:') }}</span>
+                        <span class="font-medium text-slate-700" x-text="selectedUser?.scope_badge?.label || @js(__('ISP Headquarters'))"></span>
                     </div>
                     <div class="flex justify-between items-center">
-                        <span class="text-slate-500">Phone:</span>
-                        <span class="font-mono text-slate-700" x-text="selectedUser?.phone || selectedUser?.mobile || 'Not provided'"></span>
+                        <span class="text-slate-500">{{ __('Phone:') }}</span>
+                        <span class="font-mono text-slate-700" x-text="selectedUser?.phone || selectedUser?.mobile || @js(__('Not provided'))"></span>
                     </div>
                     <div class="flex justify-between items-center">
-                        <span class="text-slate-500">Designation:</span>
-                        <span class="text-slate-700" x-text="selectedUser?.designation || 'Staff Member'"></span>
+                        <span class="text-slate-500">{{ __('Designation:') }}</span>
+                        <span class="text-slate-700" x-text="selectedUser?.designation || @js(__('Staff Member'))"></span>
                     </div>
                 </div>
             </div>
 
             <div class="px-4 py-2.5 bg-slate-50/80 border-t border-slate-200 flex items-center justify-end flex-shrink-0">
                 <button type="button" @click="showDetailsModal = false" class="h-[34px] py-0 border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs px-4 rounded-lg transition cursor-pointer">
-                    Close
+                    {{ __('Close') }}
                 </button>
             </div>
         </div>
@@ -611,7 +611,7 @@
                         <i class="fas fa-key"></i>
                     </div>
                     <div>
-                        <h3 class="text-xs font-semibold text-slate-800">Reset Account Password</h3>
+                        <h3 class="text-xs font-semibold text-slate-800">{{ __('Reset Account Password') }}</h3>
                         <span class="text-[10px] text-slate-500 font-normal" x-text="passwordUser?.name"></span>
                     </div>
                 </div>
@@ -623,18 +623,18 @@
             <form id="resetPasswordForm" :action="`/admin/users/${passwordUser?.id}/reset-password`" method="POST" class="p-4 space-y-3 text-xs">
                 @csrf
                 <div>
-                    <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">New Password <span class="text-rose-500">*</span></label>
-                    <input type="password" name="new_password" required minlength="6" placeholder="Enter new password" class="w-full h-[34px] px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
+                    <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">{{ __('New Password') }} <span class="text-rose-500">*</span></label>
+                    <input type="password" name="new_password" required minlength="6" placeholder="{{ __('Enter new password') }}" class="w-full h-[34px] px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                 </div>
             </form>
 
             <div class="px-4 py-2.5 bg-slate-50/80 border-t border-slate-200 flex items-center justify-between flex-shrink-0">
                 <button type="button" @click="showPasswordModal = false" class="h-[34px] py-0 border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs px-3.5 rounded-lg transition cursor-pointer">
-                    Cancel
+                    {{ __('Cancel') }}
                 </button>
                 <button type="submit" form="resetPasswordForm" class="h-[34px] py-0 bg-amber-600 hover:bg-amber-700 text-white font-medium text-xs px-4 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                     <i class="fas fa-key text-xs"></i>
-                    <span>Set Password</span>
+                    <span>{{ __('Set Password') }}</span>
                 </button>
             </div>
         </div>
@@ -721,23 +721,31 @@
                 } catch (err) {
                     Swal.fire({
                         icon: 'error',
-                        title: 'Error',
-                        text: 'Failed to fetch user account details.',
+                        title: @js(__('Error')),
+                        text: @js(__('Failed to fetch user account details.')),
                         confirmButtonColor: '#0891b2'
                     });
                 }
             },
 
             toggleUserStatus(user) {
-                const actionText = user.status === 'active' ? 'suspend' : 'activate';
+                const isSuspending = user.status === 'active';
+                const modalTitle = isSuspending ? @js(__('Suspend Account?')) : @js(__('Activate Account?'));
+                const modalText = (isSuspending
+                    ? @js(__("Are you sure you want to suspend login access for ':name'?"))
+                    : @js(__("Are you sure you want to activate login access for ':name'?"))
+                ).replace(':name', user.name);
+                const confirmText = isSuspending ? @js(__('Yes, Suspend')) : @js(__('Yes, Activate'));
+
                 Swal.fire({
-                    title: `${actionText.charAt(0).toUpperCase() + actionText.slice(1)} Account?`,
-                    text: `Are you sure you want to ${actionText} login access for '${user.name}'?`,
+                    title: modalTitle,
+                    text: modalText,
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonColor: '#0891b2',
                     cancelButtonColor: '#64748b',
-                    confirmButtonText: `Yes, ${actionText}`
+                    confirmButtonText: confirmText,
+                    cancelButtonText: @js(__('Cancel'))
                 }).then((result) => {
                     if (result.isConfirmed) {
                         const form = document.createElement('form');
@@ -752,13 +760,16 @@
 
             deleteUserAction(user) {
                 Swal.fire({
-                    title: 'Delete User Account?',
-                    text: `Are you sure you want to permanently delete '${user.name}' (${user.email})?`,
+                    title: @js(__('Delete User Account?')),
+                    text: @js(__("Are you sure you want to permanently delete ':name' (:email)?"))
+                        .replace(':name', user.name)
+                        .replace(':email', user.email),
                     icon: 'error',
                     showCancelButton: true,
                     confirmButtonColor: '#e11d48',
                     cancelButtonColor: '#64748b',
-                    confirmButtonText: 'Yes, Delete Account'
+                    confirmButtonText: @js(__('Yes, Delete Account')),
+                    cancelButtonText: @js(__('Cancel'))
                 }).then((result) => {
                     if (result.isConfirmed) {
                         const form = document.createElement('form');

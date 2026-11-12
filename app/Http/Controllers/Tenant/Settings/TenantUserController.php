@@ -32,7 +32,7 @@ class TenantUserController extends Controller
             $tenant = Tenant::first();
         }
         if (!$tenant) {
-            abort(404, 'ISP Tenant record not found.');
+            abort(404, __('ISP Tenant record not found.'));
         }
         return $tenant;
     }
@@ -115,8 +115,11 @@ class TenantUserController extends Controller
             ->orderBy('display_name', 'asc')
             ->get();
 
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
+
         return view('tenant.users.index', compact(
             'tenant',
+            'currencySymbol',
             'users',
             'stats',
             'availableRoles',
@@ -168,14 +171,18 @@ class TenantUserController extends Controller
             'tenant_id' => $tenant->id,
             'actor_type' => 'tenant',
             'actor_id' => Auth::id() ?? 1,
-            'actor_name' => Auth::user()?->name ?? 'Admin',
+            'actor_name' => Auth::user()?->name ?? __('Admin'),
             'event_type' => 'USER_ACCOUNT_CREATED',
-            'description' => "Created system user login account '{$user->name}' ({$user->email}) with role '{$user->role}'.",
+            'description' => __("Created system user login account ':name' (:email) with role ':role'.", [
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->role,
+            ]),
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
         ]);
 
-        return back()->with('success', "User account '{$user->name}' created successfully.");
+        return back()->with('success', __("User account ':name' created successfully.", ['name' => $user->name]));
     }
 
     /**
@@ -227,7 +234,7 @@ class TenantUserController extends Controller
 
         // Safety: Do not allow logged-in user to suspend their own account
         if (Auth::id() === $user->id && $request->status !== 'active') {
-            return back()->with('error', 'You cannot suspend or deactivate your currently logged-in account.');
+            return back()->with('error', __('You cannot suspend or deactivate your currently logged-in account.'));
         }
 
         $userData = [
@@ -249,14 +256,17 @@ class TenantUserController extends Controller
             'tenant_id' => $tenant->id,
             'actor_type' => 'tenant',
             'actor_id' => Auth::id() ?? 1,
-            'actor_name' => Auth::user()?->name ?? 'Admin',
+            'actor_name' => Auth::user()?->name ?? __('Admin'),
             'event_type' => 'USER_ACCOUNT_UPDATED',
-            'description' => "Updated system user login account '{$user->name}' ({$user->email}).",
+            'description' => __("Updated system user login account ':name' (:email).", [
+                'name' => $user->name,
+                'email' => $user->email,
+            ]),
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
         ]);
 
-        return back()->with('success', "User account '{$user->name}' updated successfully.");
+        return back()->with('success', __("User account ':name' updated successfully.", ['name' => $user->name]));
     }
 
     /**
@@ -270,22 +280,31 @@ class TenantUserController extends Controller
             ->findOrFail($id);
 
         if (Auth::id() === $user->id) {
-            $msg = 'You cannot suspend your own logged-in user account.';
+            $msg = __('You cannot suspend your own logged-in user account.');
             return $request->wantsJson() ? response()->json(['success' => false, 'message' => $msg], 422) : back()->with('error', $msg);
         }
 
         $user->status = $user->status === 'active' ? 'suspended' : 'active';
         $user->save();
 
-        $stateText = $user->status === 'active' ? 'activated' : 'suspended';
+        $isActivated = $user->status === 'active';
+        $activityDescription = $isActivated
+            ? __("User account ':name' (:email) is now activated.", ['name' => $user->name, 'email' => $user->email])
+            : __("User account ':name' (:email) is now suspended.", ['name' => $user->name, 'email' => $user->email]);
+        $jsonMessage = $isActivated
+            ? __("User account ':name' is now activated.", ['name' => $user->name])
+            : __("User account ':name' is now suspended.", ['name' => $user->name]);
+        $flashMessage = $isActivated
+            ? __("User account ':name' has been activated successfully.", ['name' => $user->name])
+            : __("User account ':name' has been suspended successfully.", ['name' => $user->name]);
 
         TenantActivityLog::create([
             'tenant_id' => $tenant->id,
             'actor_type' => 'tenant',
             'actor_id' => Auth::id() ?? 1,
-            'actor_name' => Auth::user()?->name ?? 'Admin',
+            'actor_name' => Auth::user()?->name ?? __('Admin'),
             'event_type' => 'USER_STATUS_TOGGLED',
-            'description' => "User account '{$user->name}' ({$user->email}) is now {$stateText}.",
+            'description' => $activityDescription,
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
         ]);
@@ -294,11 +313,11 @@ class TenantUserController extends Controller
             return response()->json([
                 'success' => true,
                 'status' => $user->status,
-                'message' => "User account '{$user->name}' is now {$stateText}.",
+                'message' => $jsonMessage,
             ]);
         }
 
-        return back()->with('success', "User account '{$user->name}' has been {$stateText} successfully.");
+        return back()->with('success', $flashMessage);
     }
 
     /**
@@ -322,14 +341,17 @@ class TenantUserController extends Controller
             'tenant_id' => $tenant->id,
             'actor_type' => 'tenant',
             'actor_id' => Auth::id() ?? 1,
-            'actor_name' => Auth::user()?->name ?? 'Admin',
+            'actor_name' => Auth::user()?->name ?? __('Admin'),
             'event_type' => 'USER_PASSWORD_RESET',
-            'description' => "Reset password for user account '{$user->name}' ({$user->email}).",
+            'description' => __("Reset password for user account ':name' (:email).", [
+                'name' => $user->name,
+                'email' => $user->email,
+            ]),
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
         ]);
 
-        return back()->with('success', "Password for user '{$user->name}' has been updated successfully.");
+        return back()->with('success', __("Password for user ':name' has been updated successfully.", ['name' => $user->name]));
     }
 
     /**
@@ -343,13 +365,13 @@ class TenantUserController extends Controller
             ->findOrFail($id);
 
         if (Auth::id() === $user->id) {
-            return back()->with('error', 'You cannot delete your own logged-in user account.');
+            return back()->with('error', __('You cannot delete your own logged-in user account.'));
         }
 
         if ($user->role === 'isp_admin') {
             $adminCount = User::where('tenant_id', $tenant->id)->where('role', 'isp_admin')->count();
             if ($adminCount <= 1) {
-                return back()->with('error', 'Cannot delete the sole remaining Super Admin account for this tenant.');
+                return back()->with('error', __('Cannot delete the sole remaining Super Admin account for this tenant.'));
             }
         }
 
@@ -361,14 +383,17 @@ class TenantUserController extends Controller
             'tenant_id' => $tenant->id,
             'actor_type' => 'tenant',
             'actor_id' => Auth::id() ?? 1,
-            'actor_name' => Auth::user()?->name ?? 'Admin',
+            'actor_name' => Auth::user()?->name ?? __('Admin'),
             'event_type' => 'USER_ACCOUNT_DELETED',
-            'description' => "Deleted user login account '{$userName}' ({$userEmail}).",
+            'description' => __("Deleted user login account ':name' (:email).", [
+                'name' => $userName,
+                'email' => $userEmail,
+            ]),
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
         ]);
 
-        return back()->with('success', "User account '{$userName}' deleted successfully.");
+        return back()->with('success', __("User account ':name' deleted successfully.", ['name' => $userName]));
     }
 
     /**
@@ -399,22 +424,22 @@ class TenantUserController extends Controller
 
             // Company Title
             fputcsv($handle, [$tenant->company_name ?? $tenant->name]);
-            fputcsv($handle, ['SYSTEM USER ACCOUNTS & LOGIN DIRECTORY']);
-            fputcsv($handle, ['Exported At', date('d-M-Y h:i:s A')]);
+            fputcsv($handle, [__('SYSTEM USER ACCOUNTS & LOGIN DIRECTORY')]);
+            fputcsv($handle, [__('Exported At'), now()->translatedFormat('d-M-Y h:i:s A')]);
             fputcsv($handle, []);
 
             // Column Headers
             fputcsv($handle, [
-                'SL',
-                'Staff / User ID',
-                'Full Name',
-                'Email / Login ID',
-                'Phone',
-                'Assigned Role',
-                'Designation',
-                'Account Status',
-                'Scope Affiliation',
-                'Created At',
+                __('SL'),
+                __('Staff / User ID'),
+                __('Full Name'),
+                __('Email / Login ID'),
+                __('Phone'),
+                __('Assigned Role'),
+                __('Designation'),
+                __('Account Status'),
+                __('Scope Affiliation'),
+                __('Created At'),
             ]);
 
             foreach ($users as $index => $u) {
@@ -423,12 +448,12 @@ class TenantUserController extends Controller
                     $u->staff_id ?? ('USR-' . str_pad($u->id, 4, '0', STR_PAD_LEFT)),
                     $u->name,
                     $u->email,
-                    $u->phone ?? $u->mobile ?? 'N/A',
-                    $u->role_badge['label'] ?? $u->role,
-                    $u->designation ?? 'N/A',
-                    ucfirst($u->status ?? 'Active'),
-                    $u->scope_badge['label'] ?? 'ISP Core',
-                    $u->created_at ? $u->created_at->format('d-M-Y h:i A') : 'N/A',
+                    $u->phone ?? $u->mobile ?? __('N/A'),
+                    __($u->role_badge['label'] ?? $u->role),
+                    $u->designation ?? __('N/A'),
+                    __($u->status_badge['label'] ?? ucfirst($u->status ?? 'active')),
+                    __($u->scope_badge['label'] ?? 'ISP Core'),
+                    $u->created_at ? $u->created_at->translatedFormat('d-M-Y h:i A') : __('N/A'),
                 ]);
             }
 
@@ -442,13 +467,14 @@ class TenantUserController extends Controller
     public function printReport(Request $request): View
     {
         $tenant = $this->getTenant();
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
         $users = User::where('tenant_id', $tenant->id)
             ->where('role', '!=', 'owner')
             ->with(['reseller'])
             ->orderBy('id', 'desc')
             ->get();
 
-        return view('tenant.users.print', compact('tenant', 'users'));
+        return view('tenant.users.print', compact('tenant', 'currencySymbol', 'users'));
     }
 }
 
