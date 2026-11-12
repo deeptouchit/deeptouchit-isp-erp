@@ -218,9 +218,16 @@ class SidebarMenuService
             }
         }
 
-        // Query status param fallback match
+        // Query status param fallback match (scoped strictly to the item's own routes)
         if (!empty($item['status_in']) && in_array(request('status'), $item['status_in'], true)) {
-            return true;
+            $statusRoutes = array_values(array_filter(array_merge(
+                (array) ($item['status_routes'] ?? []),
+                [$item['route'] ?? null, $item['fallback_route'] ?? null]
+            )));
+
+            if (empty($statusRoutes) || request()->routeIs(...$statusRoutes)) {
+                return true;
+            }
         }
 
         return false;
