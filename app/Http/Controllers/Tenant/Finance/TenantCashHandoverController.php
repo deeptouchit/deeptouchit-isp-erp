@@ -286,7 +286,7 @@ class TenantCashHandoverController extends Controller
             $excess = max(0, $handedOverAmount - $systemCash);
 
             // 3. Admin / Owner direct cash collection auto-vaulting check
-            $collector = User::find($collectorId);
+            $collector = User::where('tenant_id', $tenant->id)->find($collectorId);
             $isCollectorAdmin = $collector && ($collector->isOwner() || $collector->isIspAdmin());
             $status = $isCollectorAdmin ? 'approved' : 'pending';
 

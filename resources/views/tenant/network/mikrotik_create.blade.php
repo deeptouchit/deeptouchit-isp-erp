@@ -39,7 +39,7 @@
             <i class="fas fa-triangle-exclamation text-rose-600 text-sm"></i>
             <span>{!! __('You have reached your Plan limit of :limit MikroTik router(s). Upgrade your subscription to add more gateways.', ['limit' => '<strong>' . e($mikrotikQuota) . '</strong>']) !!}</span>
         </div>
-        <a href="{{ route('tenant.subscription.index') }}" class="h-[28px] px-3 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-[11px] font-semibold transition flex items-center gap-1">
+        <a href="{{ route('tenant.billing.dashboard') }}" class="h-[28px] px-3 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-[11px] font-semibold transition flex items-center gap-1">
             <span>{{ __('Upgrade Plan') }}</span>
             <i class="fas fa-arrow-right text-[10px]"></i>
         </a>

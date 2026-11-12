@@ -36,7 +36,14 @@ class TenantDashboardController extends Controller
             return app()->make(TenantCollectorDashboardController::class)->index($request);
         }
 
-        $tenant = $user?->tenant ?? ($user?->tenant_id ? Tenant::find($user->tenant_id) : Tenant::first());
+        $tenant = $user?->tenant;
+        if (!$tenant && $user?->tenant_id) {
+            $tenant = Tenant::find($user->tenant_id);
+        }
+        $tenantId = session('tenant_id');
+        if (!$tenant && $tenantId) {
+            $tenant = Tenant::find($tenantId);
+        }
 
         if (!$tenant) {
             abort(404, 'ISP Tenant record not found.');

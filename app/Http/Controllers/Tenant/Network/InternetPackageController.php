@@ -204,7 +204,7 @@ class InternetPackageController extends Controller
 
         $remoteAddress = $validated['remote_address'] ?? null;
         if (empty($remoteAddress) && !empty($validated['ip_pool_id'])) {
-            $pool = TenantIpPool::find($validated['ip_pool_id']);
+            $pool = TenantIpPool::where('tenant_id', $tenant->id)->find($validated['ip_pool_id']);
             if ($pool) {
                 $remoteAddress = $pool->name;
             }
@@ -331,7 +331,7 @@ class InternetPackageController extends Controller
 
         $remoteAddress = $validated['remote_address'] ?? null;
         if (empty($remoteAddress) && !empty($validated['ip_pool_id'])) {
-            $pool = TenantIpPool::find($validated['ip_pool_id']);
+            $pool = TenantIpPool::where('tenant_id', $tenant->id)->find($validated['ip_pool_id']);
             if ($pool) {
                 $remoteAddress = $pool->name;
             }

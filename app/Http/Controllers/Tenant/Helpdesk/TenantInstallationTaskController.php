@@ -21,8 +21,15 @@ class TenantInstallationTaskController extends Controller
      */
     protected function getTenant(): Tenant
     {
-        $tenantId = session('tenant_id') ?? auth()->user()?->tenant_id;
-        $tenant = $tenantId ? Tenant::find($tenantId) : (auth()->user()?->tenant ?? Tenant::first());
+        $user = auth()->user();
+        $tenant = $user?->tenant;
+        if (!$tenant && $user?->tenant_id) {
+            $tenant = Tenant::find($user->tenant_id);
+        }
+        $tenantId = session('tenant_id');
+        if (!$tenant && $tenantId) {
+            $tenant = Tenant::find($tenantId);
+        }
 
         if (!$tenant) {
             abort(403, __('Tenant context not found. Please log in.'));
@@ -225,7 +232,7 @@ class TenantInstallationTaskController extends Controller
             $taskNumber = 'INST-' . date('y') . '-' . str_pad(rand(100, 9999), 4, '0', STR_PAD_LEFT);
         }
 
-        $tech = $request->assigned_technician_id ? User::find($request->assigned_technician_id) : null;
+        $tech = $request->assigned_technician_id ? User::where('tenant_id', $tenantId)->find($request->assigned_technician_id) : null;
 
         TenantInstallationTask::create([
             'tenant_id' => $tenantId,

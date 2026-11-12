@@ -140,7 +140,7 @@ class TenantCustomerInvoice extends Model
                 'icon' => 'fa-check-circle',
                 'dot' => 'bg-emerald-500'
             ],
-            'partially_paid' => [
+            'partially_paid', 'partial' => [
                 'label' => __('Partial'),
                 'class' => 'bg-amber-50 text-amber-700 border-amber-200',
                 'icon' => 'fa-circle-half-stroke',

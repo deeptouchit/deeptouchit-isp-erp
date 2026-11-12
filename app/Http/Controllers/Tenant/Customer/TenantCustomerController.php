@@ -244,7 +244,7 @@ class TenantCustomerController extends Controller
             $rYear = (int) substr($rMonth, 0, 4);
             $rMonthNum = (int) substr($rMonth, 5, 2);
             $query->whereHas('payments', function ($pq) use ($rYear, $rMonthNum) {
-                $pq->where('status', 'completed')
+                $pq->whereIn('status', ['completed', 'approved'])
                    ->whereYear(DB::raw('COALESCE(paid_at, created_at)'), $rYear)
                    ->whereMonth(DB::raw('COALESCE(paid_at, created_at)'), $rMonthNum);
             });
@@ -257,7 +257,7 @@ class TenantCustomerController extends Controller
             $endOfU = Carbon::createFromDate($uYear, $uMonthNum, 1)->endOfMonth();
             $query->where('created_at', '<=', $endOfU)
                   ->whereDoesntHave('payments', function ($pq) use ($uYear, $uMonthNum) {
-                      $pq->where('status', 'completed')
+                      $pq->whereIn('status', ['completed', 'approved'])
                          ->whereYear(DB::raw('COALESCE(paid_at, created_at)'), $uYear)
                          ->whereMonth(DB::raw('COALESCE(paid_at, created_at)'), $uMonthNum);
                   });
@@ -457,7 +457,7 @@ class TenantCustomerController extends Controller
 
         $customerId = !empty($validated['customer_id']) ? $validated['customer_id'] : TenantCustomer::generateNextCustomerId($tenant->id);
 
-        $package = !empty($validated['package_id']) ? TenantInternetPackage::find($validated['package_id']) : null;
+        $package = !empty($validated['package_id']) ? TenantInternetPackage::where('tenant_id', $tenant->id)->find($validated['package_id']) : null;
         $monthlyBill = $validated['monthly_bill'] ?? ($package?->price ?? 0.00);
 
         $currency = $tenant->currency_symbol ?? '৳';
@@ -932,7 +932,7 @@ class TenantCustomerController extends Controller
             'remarks' => 'nullable|string|max:500',
         ]);
 
-        $package = !empty($validated['package_id']) ? TenantInternetPackage::find($validated['package_id']) : null;
+        $package = !empty($validated['package_id']) ? TenantInternetPackage::where('tenant_id', $tenant->id)->find($validated['package_id']) : null;
 
         if (!empty($validated['customer_id'])) {
             $customer->customer_id = $validated['customer_id'];

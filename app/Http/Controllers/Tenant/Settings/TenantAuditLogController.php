@@ -24,7 +24,18 @@ class TenantAuditLogController extends Controller
     protected function getTenant(): Tenant
     {
         $tenantId = session('tenant_id') ?? Auth::user()->tenant_id ?? 1;
-        return Tenant::find($tenantId) ?? Tenant::first();
+        $user = auth()->user();
+        $tenant = $user?->tenant;
+        if (!$tenant && $user?->tenant_id) {
+            $tenant = Tenant::find($user->tenant_id);
+        }
+        if (!$tenant && $tenantId) {
+            $tenant = Tenant::find($tenantId);
+        }
+        if (!$tenant) {
+            abort(403, __("Tenant context not found. Please log in."));
+        }
+        return $tenant;
     }
 
     /**

@@ -17,10 +17,17 @@ class TenantFinancialLedgerController extends Controller
     /**
      * Resolve the active Tenant.
      */
-    protected function getTenant()
+    protected function getTenant(): Tenant
     {
+        $user = auth()->user();
+        $tenant = $user?->tenant;
+        if (!$tenant && $user?->tenant_id) {
+            $tenant = Tenant::find($user->tenant_id);
+        }
         $tenantId = session('tenant_id');
-        $tenant = $tenantId ? Tenant::find($tenantId) : Tenant::first();
+        if (!$tenant && $tenantId) {
+            $tenant = Tenant::find($tenantId);
+        }
 
         if (!$tenant) {
             abort(403, __('Tenant context not found. Please log in.'));

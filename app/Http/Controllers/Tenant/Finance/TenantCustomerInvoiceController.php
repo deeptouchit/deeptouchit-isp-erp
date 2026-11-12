@@ -601,7 +601,7 @@ class TenantCustomerInvoiceController extends Controller
             'payment_method' => $validated['payment_method'],
             'transaction_id' => $validated['transaction_id'] ?? null,
             'collected_by' => Auth::id() ?: 1,
-            'status' => 'approved',
+            'status' => 'completed',
             'notes' => __('Payment for Invoice #:invoice.', ['invoice' => $invoice->invoice_no]) . (!empty($validated['notes']) ? ' ' . $validated['notes'] : ''),
             'paid_at' => Carbon::now(),
         ]);

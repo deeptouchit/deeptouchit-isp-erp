@@ -160,7 +160,7 @@ class TenantCustomerPaymentController extends Controller
             try {
                 $invoice = TenantCustomerInvoice::where('tenant_id', $tenant->id)
                     ->where('customer_id', $customer->id)
-                    ->whereIn('status', ['unpaid', 'partial', 'overdue'])
+                    ->whereIn('status', ['unpaid', 'partial', 'partially_paid', 'overdue'])
                     ->orderBy('due_date', 'asc')
                     ->first();
 
@@ -175,7 +175,7 @@ class TenantCustomerPaymentController extends Controller
                     } else {
                         $invoice->paid_amount = (float)$invoice->paid_amount + $totalCoverage;
                         $invoice->due_amount = max(0, (float)$invoice->total_payable - (float)$invoice->paid_amount);
-                        $invoice->status = 'partial';
+                        $invoice->status = 'partially_paid';
                     }
                     $invoice->paid_at = Carbon::now();
                     $invoice->payment_method = $method;
@@ -762,7 +762,7 @@ class TenantCustomerPaymentController extends Controller
                         ->where('customer_id', $customer->id)
                         ->where(function ($q) use ($billingMonth) {
                             $q->where('billing_month', $billingMonth)
-                              ->orWhereIn('status', ['unpaid', 'partial', 'overdue']);
+                              ->orWhereIn('status', ['unpaid', 'partial', 'partially_paid', 'overdue']);
                         })
                         ->orderBy('due_date', 'asc')
                         ->first();
