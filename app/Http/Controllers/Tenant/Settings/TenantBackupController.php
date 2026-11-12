@@ -35,7 +35,7 @@ class TenantBackupController extends Controller
             $tenant = \App\Models\Tenant::first();
         }
         if (!$tenant) {
-            abort(404, 'ISP Tenant record not found.');
+            abort(404, __('ISP Tenant record not found.'));
         }
         return $tenant;
     }
@@ -89,10 +89,11 @@ class TenantBackupController extends Controller
         $formattedStorage = $this->formatBytes($totalSizeBytes);
 
         $latestBackup = $allBackups->sortByDesc('id')->first();
-        $lastBackupTime = $latestBackup?->created_at ? $latestBackup->created_at->locale('en')->diffForHumans() : 'None Yet';
+        $lastBackupTime = $latestBackup?->created_at ? $latestBackup->created_at->locale(app()->getLocale())->diffForHumans() : __('None Yet');
 
         $verifiedCount = $allBackups->where('status', 'verified')->count();
-        $healthRate = $totalSnapshots > 0 ? round(($verifiedCount / $totalSnapshots) * 100) . '% Healthy' : '100% Healthy';
+        $healthRateValue = $totalSnapshots > 0 ? round(($verifiedCount / $totalSnapshots) * 100) : 100;
+        $healthRate = __(':rate% Healthy', ['rate' => $healthRateValue]);
 
         $protectedTablesCount = count($this->getTablesForType('full_database'));
 
@@ -101,9 +102,11 @@ class TenantBackupController extends Controller
             'storage_consumed' => $formattedStorage,
             'last_backup' => $lastBackupTime,
             'health_rate' => $healthRate,
-            'cloud_sync' => 'Local Storage',
-            'tables_count' => "{$protectedTablesCount} Tables",
+            'cloud_sync' => __('Local Storage'),
+            'tables_count' => __(':count Tables', ['count' => $protectedTablesCount]),
         ];
+
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
 
         return view('tenant.settings.backup', compact(
             'tenant',
@@ -113,7 +116,8 @@ class TenantBackupController extends Controller
             'typeFilter',
             'triggerFilter',
             'statusFilter',
-            'perPage'
+            'perPage',
+            'currencySymbol'
         ));
     }
 
@@ -136,14 +140,18 @@ class TenantBackupController extends Controller
                 triggerType: 'manual_admin',
                 notes: $request->notes,
                 actorId: Auth::id(),
-                actorName: Auth::user()?->name ?? 'Admin',
+                actorName: Auth::user()?->name ?? __('Admin'),
                 ipAddress: $request->ip(),
                 userAgent: $request->userAgent()
             );
 
-            return back()->with('success', "Backup '{$backup->filename}' created successfully ({$backup->formatted_size}, {$backup->records_count} records).");
+            return back()->with('success', __("Backup ':filename' created successfully (:size, :records records).", [
+                'filename' => $backup->filename,
+                'size' => $backup->formatted_size,
+                'records' => $backup->records_count,
+            ]));
         } catch (\Throwable $e) {
-            return back()->with('error', "Failed to create backup: " . $e->getMessage());
+            return back()->with('error', __('Failed to create backup: :error', ['error' => $e->getMessage()]));
         }
     }
 
@@ -162,7 +170,7 @@ class TenantBackupController extends Controller
             return response()->json([
                 'success' => false,
                 'valid' => false,
-                'message' => "Backup file was not found in storage.",
+                'message' => __('Backup file was not found in storage.'),
             ], 404);
         }
 
@@ -198,8 +206,8 @@ class TenantBackupController extends Controller
             'size' => $backup->formatted_size,
             'tables' => $backup->tables_count,
             'records' => $backup->records_count,
-            'verified_at' => Carbon::now()->format('d-M-Y h:i:s A'),
-            'message' => $isGzipValid ? "Backup file is healthy and verified." : "Backup file is damaged or unreadable.",
+            'verified_at' => Carbon::now()->translatedFormat('d-M-Y h:i:s A'),
+            'message' => $isGzipValid ? __('Backup file is healthy and verified.') : __('Backup file is damaged or unreadable.'),
         ]);
     }
 
@@ -214,16 +222,16 @@ class TenantBackupController extends Controller
         $fullPath = storage_path("app/{$backup->file_path}");
 
         if (!File::exists($fullPath)) {
-            return back()->with('error', "Backup file not found in storage.");
+            return back()->with('error', __('Backup file not found in storage.'));
         }
 
         TenantActivityLog::create([
             'tenant_id' => $tenant->id,
             'actor_type' => 'tenant',
             'actor_id' => Auth::id() ?? 1,
-            'actor_name' => Auth::user()?->name ?? 'Admin',
+            'actor_name' => Auth::user()?->name ?? __('Admin'),
             'event_type' => 'SYSTEM_BACKUP_DOWNLOADED',
-            'description' => "Downloaded backup '{$backup->filename}'.",
+            'description' => __("Downloaded backup ':filename'.", ['filename' => $backup->filename]),
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
         ]);
@@ -245,14 +253,20 @@ class TenantBackupController extends Controller
             'tenant_id' => $tenant->id,
             'actor_type' => 'tenant',
             'actor_id' => Auth::id() ?? 1,
-            'actor_name' => Auth::user()?->name ?? 'Admin',
+            'actor_name' => Auth::user()?->name ?? __('Admin'),
             'event_type' => 'SYSTEM_RESTORE_TRIGGERED',
-            'description' => "Restored database from backup '{$backup->filename}' ({$backup->records_count} records).",
+            'description' => __("Restored database from backup ':filename' (:records records).", [
+                'filename' => $backup->filename,
+                'records' => $backup->records_count,
+            ]),
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
         ]);
 
-        return back()->with('success', "Database restore check completed for '{$backup->filename}'. All {$backup->tables_count} tables are healthy.");
+        return back()->with('success', __("Database restore check completed for ':filename'. All :tables tables are healthy.", [
+            'filename' => $backup->filename,
+            'tables' => $backup->tables_count,
+        ]));
     }
 
     /**
@@ -275,14 +289,14 @@ class TenantBackupController extends Controller
             'tenant_id' => $tenant->id,
             'actor_type' => 'tenant',
             'actor_id' => Auth::id() ?? 1,
-            'actor_name' => Auth::user()?->name ?? 'Admin',
+            'actor_name' => Auth::user()?->name ?? __('Admin'),
             'event_type' => 'SYSTEM_BACKUP_DELETED',
-            'description' => "Deleted backup '{$filename}'.",
+            'description' => __("Deleted backup ':filename'.", ['filename' => $filename]),
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
         ]);
 
-        return back()->with('success', "Backup '{$filename}' deleted successfully.");
+        return back()->with('success', __("Backup ':filename' deleted successfully.", ['filename' => $filename]));
     }
 
     /**
@@ -307,38 +321,38 @@ class TenantBackupController extends Controller
                         }
                     }
                 }
-                $msg = "Database optimized successfully ({$optimized} tables cleaned).";
+                $msg = __('Database optimized successfully (:count tables cleaned).', ['count' => $optimized]);
                 break;
 
             case 'clear_cache':
                 Artisan::call('view:clear');
                 Artisan::call('route:clear');
                 Artisan::call('cache:clear');
-                $msg = 'System cache cleared successfully.';
+                $msg = __('System cache cleared successfully.');
                 break;
 
             case 'cleanup_logs':
                 $cutoff = now()->subDays(90);
                 $deletedLogs = TenantActivityLog::where('tenant_id', $tenant->id)->where('created_at', '<', $cutoff)->delete();
-                $msg = "Deleted {$deletedLogs} old activity logs successfully.";
+                $msg = __('Deleted :count old activity logs successfully.', ['count' => $deletedLogs]);
                 break;
 
             case 'sync_cloud':
-                $freeSpace = function_exists('disk_free_space') ? $this->formatBytes(disk_free_space(storage_path())) : 'Unlimited';
-                $msg = "Storage check complete. Available free space: {$freeSpace}.";
+                $freeSpace = function_exists('disk_free_space') ? $this->formatBytes(disk_free_space(storage_path())) : __('Unlimited');
+                $msg = __('Storage check complete. Available free space: :space.', ['space' => $freeSpace]);
                 break;
 
             default:
-                return back()->with('error', 'Unknown maintenance action.');
+                return back()->with('error', __('Unknown maintenance action.'));
         }
 
         TenantActivityLog::create([
             'tenant_id' => $tenant->id,
             'actor_type' => 'tenant',
             'actor_id' => Auth::id() ?? 1,
-            'actor_name' => Auth::user()?->name ?? 'Admin',
+            'actor_name' => Auth::user()?->name ?? __('Admin'),
             'event_type' => 'SYSTEM_MAINTENANCE_RUN',
-            'description' => "Executed maintenance task '{$action}': {$msg}",
+            'description' => __("Executed maintenance task ':action': :message", ['action' => $action, 'message' => $msg]),
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
         ]);
@@ -364,11 +378,13 @@ class TenantBackupController extends Controller
         $stats = [
             'total_snapshots' => $backups->count(),
             'storage_consumed' => $this->formatBytes($backups->sum('file_size_bytes')),
-            'last_backup' => $backups->first()?->created_at ? $backups->first()->created_at->format('d-M-Y h:i A') : 'N/A',
+            'last_backup' => $backups->first()?->created_at ? $backups->first()->created_at->translatedFormat('d-M-Y h:i A') : __('N/A'),
             'verified_count' => $backups->whereIn('status', ['completed', 'verified'])->count(),
         ];
 
-        return view('tenant.settings.backup_print', compact('tenant', 'backups', 'stats'));
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
+
+        return view('tenant.settings.backup_print', compact('tenant', 'backups', 'stats', 'currencySymbol'));
     }
 
     /**
@@ -395,38 +411,38 @@ class TenantBackupController extends Controller
 
             // Header Block
             fputcsv($handle, [$tenant->company_name ?? $tenant->name]);
-            fputcsv($handle, ['SYSTEM DATABASE BACKUP & MAINTENANCE AUDIT LOG']);
-            fputcsv($handle, ['Generated At', date('d-M-Y h:i:s A')]);
+            fputcsv($handle, [__('SYSTEM DATABASE BACKUP & MAINTENANCE AUDIT LOG')]);
+            fputcsv($handle, [__('Generated At'), now()->translatedFormat('d-M-Y h:i:s A')]);
             fputcsv($handle, []);
 
             // Columns
             fputcsv($handle, [
-                'SL',
-                'Snapshot Filename',
-                'Backup Type',
-                'Trigger Source',
-                'Storage Location',
-                'File Size',
-                'MD5 Checksum',
-                'Protected Tables',
-                'Total Records',
-                'Status',
-                'Created Timestamp',
+                __('SL'),
+                __('Snapshot Filename'),
+                __('Backup Type'),
+                __('Trigger Source'),
+                __('Storage Location'),
+                __('File Size'),
+                __('MD5 Checksum'),
+                __('Protected Tables'),
+                __('Total Records'),
+                __('Status'),
+                __('Created Timestamp'),
             ]);
 
             foreach ($backups as $idx => $b) {
                 fputcsv($handle, [
                     $idx + 1,
                     $b->filename,
-                    $b->type_badge['label'],
-                    $b->trigger_badge['label'],
-                    strtoupper(str_replace('_', ' ', $b->storage_location)),
+                    __($b->type_badge['label']),
+                    __($b->trigger_badge['label']),
+                    __(ucwords(str_replace('_', ' ', $b->storage_location ?? 'local'))),
                     $b->formatted_size,
                     $b->checksum_md5,
                     $b->tables_count,
                     $b->records_count,
-                    strtoupper($b->status),
-                    $b->created_at ? $b->created_at->format('d-M-Y h:i:s A') : 'N/A',
+                    __($b->status_badge['label']),
+                    $b->created_at ? $b->created_at->translatedFormat('d-M-Y h:i:s A') : __('N/A'),
                 ]);
             }
 

@@ -25,7 +25,7 @@ class TenantAutomationController extends Controller
         $tenant = $tenantId ? Tenant::find($tenantId) : (auth()->user()?->tenant ?? Tenant::first());
 
         if (!$tenant) {
-            abort(403, 'Tenant context not found. Please log in.');
+            abort(403, __('Tenant context not found. Please log in.'));
         }
 
         return $tenant;
@@ -105,13 +105,21 @@ class TenantAutomationController extends Controller
         $healthRate = $totalLogsCount > 0 ? round(($successLogsCount / $totalLogsCount) * 100, 1) : 100.0;
 
         $stats = [
-            'autocut_status' => $settings->auto_cut_enabled ? ($settings->grace_period_days > 0 ? 'Active (' . $settings->grace_period_days . 'd Grace)' : 'Active (On Expiry)') : 'Disabled',
+            'autocut_status' => $settings->auto_cut_enabled
+                ? ($settings->grace_period_days > 0
+                    ? __('Active (:days Days Grace)', ['days' => $settings->grace_period_days])
+                    : __('Active (On Expiry)'))
+                : __('Disabled'),
             'overdue_at_risk' => $overdueCustomers ?: 0,
             'currently_suspended' => $suspendedCount ?: 0,
-            'auto_billing' => $settings->auto_billing_enabled ? 'Daily @ ' . ($settings->billing_generation_time ?: '00:05') : 'Disabled',
-            'auto_reconnect' => $settings->auto_reconnect_enabled ? 'Instant' : 'Manual',
-            'cron_health' => $healthRate . '% OK',
+            'auto_billing' => $settings->auto_billing_enabled
+                ? __('Daily @ :time', ['time' => $settings->billing_generation_time ?: '00:05'])
+                : __('Disabled'),
+            'auto_reconnect' => $settings->auto_reconnect_enabled ? __('Instant') : __('Manual'),
+            'cron_health' => __(':rate% OK', ['rate' => $healthRate]),
         ];
+
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
 
         return view('tenant.settings.automation', compact(
             'tenant',
@@ -122,7 +130,8 @@ class TenantAutomationController extends Controller
             'search',
             'status',
             'trigger',
-            'perPage'
+            'perPage',
+            'currencySymbol'
         ));
     }
 
@@ -180,14 +189,14 @@ class TenantAutomationController extends Controller
             'tenant_id' => $tenant->id,
             'actor_type' => 'tenant',
             'actor_id' => auth()->id() ?? 1,
-            'actor_name' => auth()->user()?->name ?? 'Admin',
+            'actor_name' => auth()->user()?->name ?? __('Admin'),
             'event_type' => 'AUTOMATION_SETTINGS_UPDATED',
-            'description' => 'Updated Automation & Auto-Cut Rules',
+            'description' => __('Updated Automation & Auto-Cut Rules'),
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
         ]);
 
-        return back()->with('success', 'Automation rules updated successfully.');
+        return back()->with('success', __('Automation rules updated successfully.'));
     }
 
     /**
@@ -219,20 +228,20 @@ class TenantAutomationController extends Controller
 
                 AutomationLog::create([
                     'tenant_id' => $tenantId,
-                    'task_name' => 'Automated Database Snapshot',
+                    'task_name' => __('Automated Database Snapshot'),
                     'triggered_by' => 'manual_admin',
                     'status' => 'success',
                     'duration_ms' => $duration,
                     'metrics' => ['backup_file' => $filename],
-                    'output_summary' => "Manual trigger: Database backup snapshot '{$filename}' initiated successfully.",
+                    'output_summary' => __("Manual trigger: Database backup snapshot ':filename' initiated successfully.", ['filename' => $filename]),
                     'created_at' => now(),
                 ]);
 
-                $msg = "Database Backup Snapshot '{$filename}' initiated successfully.";
+                $msg = __("Database Backup Snapshot ':filename' initiated successfully.", ['filename' => $filename]);
                 break;
 
             default:
-                return back()->with('error', 'Unknown automation task.');
+                return back()->with('error', __('Unknown automation task.'));
         }
 
         if ($request->wantsJson() || $request->ajax() || str_contains($request->header('Accept', ''), 'json')) {
@@ -253,8 +262,9 @@ class TenantAutomationController extends Controller
         $tenant = $this->getTenant();
         $settings = TenantAutomationSetting::firstOrCreate(['tenant_id' => $tenant->id]);
         $recentLogs = AutomationLog::where('tenant_id', $tenant->id)->latest('id')->take(10)->get();
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
 
-        return view('tenant.settings.automation_print', compact('tenant', 'settings', 'recentLogs'));
+        return view('tenant.settings.automation_print', compact('tenant', 'settings', 'recentLogs', 'currencySymbol'));
     }
 
     /**
@@ -281,30 +291,41 @@ class TenantAutomationController extends Controller
 
             // Header Block
             fputcsv($handle, [$tenant->company_name ?? $tenant->name]);
-            fputcsv($handle, ['AUTOMATION CRON & AUTO-CUT EXECUTION AUDIT LOG']);
-            fputcsv($handle, ['Generated At', date('d-M-Y h:i:s A')]);
+            fputcsv($handle, [__('AUTOMATION CRON & AUTO-CUT EXECUTION AUDIT LOG')]);
+            fputcsv($handle, [__('Generated At'), now()->translatedFormat('d-M-Y h:i:s A')]);
             fputcsv($handle, []);
 
             // Column Headers
             fputcsv($handle, [
-                'SL',
-                'Task / Cron Job Name',
-                'Trigger Type',
-                'Execution Duration (ms)',
-                'Execution Status',
-                'Output Summary & Telemetry',
-                'Executed At',
+                __('SL'),
+                __('Task / Cron Job Name'),
+                __('Trigger Type'),
+                __('Execution Duration (ms)'),
+                __('Execution Status'),
+                __('Output Summary & Telemetry'),
+                __('Executed At'),
             ]);
 
             foreach ($logs as $idx => $l) {
+                $triggerLabel = match ($l->triggered_by) {
+                    'manual_admin' => __('Manual Admin'),
+                    'cron_scheduler' => __('System Cron'),
+                    default => $l->triggered_by ? strtoupper(str_replace('_', ' ', $l->triggered_by)) : __('Cron'),
+                };
+                $statusLabel = match ($l->status) {
+                    'success' => __('Success'),
+                    'failed' => __('Failed'),
+                    default => ucfirst((string) $l->status),
+                };
+
                 fputcsv($handle, [
                     $idx + 1,
                     $l->task_name,
-                    strtoupper(str_replace('_', ' ', $l->triggered_by ?? 'CRON')),
-                    $l->duration_ms . ' ms',
-                    strtoupper($l->status),
+                    $triggerLabel,
+                    __(':ms ms', ['ms' => $l->duration_ms]),
+                    $statusLabel,
                     $l->output_summary,
-                    $l->created_at ? $l->created_at->format('d-M-Y h:i:s A') : 'N/A',
+                    $l->created_at ? $l->created_at->translatedFormat('d-M-Y h:i:s A') : __('N/A'),
                 ]);
             }
 
@@ -325,9 +346,9 @@ class TenantAutomationController extends Controller
             'tenant_id' => $tenant->id,
             'actor_type' => 'tenant',
             'actor_id' => auth()->id() ?? 1,
-            'actor_name' => auth()->user()?->name ?? 'Admin',
+            'actor_name' => auth()->user()?->name ?? __('Admin'),
             'event_type' => 'AUTOMATION_LOGS_CLEARED',
-            'description' => "Cleared {$count} automation audit logs.",
+            'description' => __('Cleared :count automation audit logs.', ['count' => $count]),
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
         ]);
@@ -335,11 +356,11 @@ class TenantAutomationController extends Controller
         if ($request->wantsJson() || $request->ajax() || str_contains($request->header('Accept', ''), 'json')) {
             return response()->json([
                 'success' => true,
-                'message' => "All {$count} automation logs cleared successfully.",
+                'message' => __('All :count automation logs cleared successfully.', ['count' => $count]),
             ]);
         }
 
-        return redirect()->route('tenant.settings.automation', ['tab' => 'logs'])->with('success', "All {$count} automation logs cleared successfully.");
+        return redirect()->route('tenant.settings.automation', ['tab' => 'logs'])->with('success', __('All :count automation logs cleared successfully.', ['count' => $count]));
     }
 
     /**
@@ -355,10 +376,10 @@ class TenantAutomationController extends Controller
         if ($request->wantsJson() || $request->ajax() || str_contains($request->header('Accept', ''), 'json')) {
             return response()->json([
                 'success' => true,
-                'message' => "Log for '{$taskName}' deleted successfully.",
+                'message' => __("Log for ':task' deleted successfully.", ['task' => $taskName]),
             ]);
         }
 
-        return redirect()->route('tenant.settings.automation', ['tab' => 'logs'])->with('success', "Log for '{$taskName}' deleted successfully.");
+        return redirect()->route('tenant.settings.automation', ['tab' => 'logs'])->with('success', __("Log for ':task' deleted successfully.", ['task' => $taskName]));
     }
 }

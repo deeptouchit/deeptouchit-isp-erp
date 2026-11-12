@@ -1,6 +1,6 @@
 @extends('tenant.layouts.app')
 
-@section('title', 'SMS & Notification Settings - ' . ($tenant->company_name ?? $tenant->name))
+@section('title', __('SMS & Notification Settings') . ' - ' . ($tenant->company_name ?? $tenant->name))
 
 @push('styles')
     {{-- Page-specific CSS --}}
@@ -15,20 +15,20 @@
             <div class="w-8 h-8 rounded-lg bg-cyan-50 text-cyan-600 border border-cyan-100 flex items-center justify-center text-sm shadow-2xs flex-shrink-0">
                 <i class="fas fa-comment-sms"></i>
             </div>
-            <h1 class="text-sm font-bold text-slate-800 tracking-tight">SMS &amp; Notification Settings</h1>
+            <h1 class="text-sm font-bold text-slate-800 tracking-tight">{{ __('SMS & Notification Settings') }}</h1>
         </div>
         <div class="flex items-center gap-1.5 flex-wrap">
             <button type="button" @click="openAddGatewayModal()" class="h-[34px] py-0 px-3 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-xs font-semibold shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-plus text-xs"></i>
-                <span>Add Gateway</span>
+                <span>{{ __('Add Gateway') }}</span>
             </button>
             <button type="button" @click="testModalOpen = true" class="h-[34px] py-0 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200/80 transition flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-paper-plane text-slate-500 text-xs"></i>
-                <span>Test Dispatch</span>
+                <span>{{ __('Test Dispatch') }}</span>
             </button>
             <a href="{{ route('tenant.settings.sms-gateway.print') }}" target="_blank" class="h-[34px] py-0 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200/80 transition flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-print text-slate-500 text-xs"></i>
-                <span>Print Policy</span>
+                <span>{{ __('Print Policy') }}</span>
             </a>
         </div>
     </div>
@@ -38,7 +38,7 @@
         {{-- Card 1: SMS Credits Balance --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">SMS Balance</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('SMS Balance') }}</span>
                 <span class="text-[13px] font-bold font-mono text-emerald-600 leading-tight block">
                     @currency($stats['sms_balance'])
                 </span>
@@ -51,7 +51,7 @@
         {{-- Card 2: Total Dispatched --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Total Sent</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Total Sent') }}</span>
                 <span class="text-[13px] font-bold font-mono text-slate-800 leading-tight block">
                     {{ number_format($stats['total_sent']) }}
                 </span>
@@ -64,7 +64,7 @@
         {{-- Card 3: Delivery Success Rate --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Delivery Rate</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Delivery Rate') }}</span>
                 <span class="text-[13px] font-bold font-mono text-cyan-700 leading-tight block">
                     {{ $stats['delivery_rate'] }}%
                 </span>
@@ -77,7 +77,7 @@
         {{-- Card 4: Approved Sender Masking --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Sender Masking</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Sender Masking') }}</span>
                 <span class="text-[13px] font-bold font-mono text-indigo-700 leading-tight block truncate">
                     {{ $stats['sender_masking'] }}
                 </span>
@@ -90,9 +90,9 @@
         {{-- Card 5: Active Templates --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Active Triggers</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Active Triggers') }}</span>
                 <span class="text-[13px] font-bold font-mono text-purple-700 leading-tight block truncate">
-                    {{ $stats['active_templates'] }} Ready
+                    {{ __(':count Ready', ['count' => $stats['active_templates']]) }}
                 </span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border border-purple-200 bg-purple-50 text-purple-600 flex items-center justify-center flex-shrink-0">
@@ -103,9 +103,9 @@
         {{-- Card 6: Connected Gateways --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Gateways</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Gateways') }}</span>
                 <span class="text-[13px] font-bold font-mono text-blue-700 leading-tight block truncate">
-                    {{ $stats['active_gateways'] }} Active
+                    {{ __(':count Active', ['count' => $stats['active_gateways']]) }}
                 </span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border border-blue-200 bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0">
@@ -121,21 +121,21 @@
                 class="h-[36px] px-3.5 text-xs font-semibold rounded-t-lg transition border-b-2 cursor-pointer flex items-center gap-1.5 whitespace-nowrap"
                 :class="activeTab === 'templates' ? 'border-cyan-600 text-cyan-700 bg-cyan-50/50' : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50'">
             <i class="fas fa-envelope-open-text text-xs"></i>
-            <span>1. Notification Templates &amp; Alerts ({{ $templates->count() }})</span>
+            <span>{{ __('1. Notification Templates & Alerts (:count)', ['count' => $templates->count()]) }}</span>
         </button>
         <button type="button" 
                 @click="activeTab = 'gateways'"
                 class="h-[36px] px-3.5 text-xs font-semibold rounded-t-lg transition border-b-2 cursor-pointer flex items-center gap-1.5 whitespace-nowrap"
                 :class="activeTab === 'gateways' ? 'border-cyan-600 text-cyan-700 bg-cyan-50/50' : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50'">
             <i class="fas fa-tower-broadcast text-xs"></i>
-            <span>2. Gateway Routes &amp; Providers ({{ $gateways->count() }})</span>
+            <span>{{ __('2. Gateway Routes & Providers (:count)', ['count' => $gateways->count()]) }}</span>
         </button>
         <button type="button" 
                 @click="activeTab = 'logs'"
                 class="h-[36px] px-3.5 text-xs font-semibold rounded-t-lg transition border-b-2 cursor-pointer flex items-center gap-1.5 whitespace-nowrap"
                 :class="activeTab === 'logs' ? 'border-cyan-600 text-cyan-700 bg-cyan-50/50' : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50'">
             <i class="fas fa-clock-rotate-left text-xs"></i>
-            <span>3. Outbound Delivery Logs ({{ $logs->total() }})</span>
+            <span>{{ __('3. Outbound Delivery Logs (:count)', ['count' => $logs->total()]) }}</span>
         </button>
     </div>
 
@@ -146,13 +146,13 @@
                 <table class="saas-table">
                     <thead>
                         <tr>
-                            <th class="w-10 text-center font-semibold">#</th>
-                            <th class="text-center font-semibold">Event Trigger</th>
-                            <th class="text-center font-semibold">SMS Channel</th>
-                            <th class="text-center font-semibold">WhatsApp Channel</th>
-                            <th class="text-center font-semibold">Message Preview</th>
-                            <th class="text-center font-semibold">Status</th>
-                            <th class="w-20 text-center no-sort font-semibold">Action</th>
+                            <th class="w-10 text-center font-semibold">{{ __('#') }}</th>
+                            <th class="text-center font-semibold">{{ __('Event Trigger') }}</th>
+                            <th class="text-center font-semibold">{{ __('SMS Channel') }}</th>
+                            <th class="text-center font-semibold">{{ __('WhatsApp Channel') }}</th>
+                            <th class="text-center font-semibold">{{ __('Message Preview') }}</th>
+                            <th class="text-center font-semibold">{{ __('Status') }}</th>
+                            <th class="w-20 text-center no-sort font-semibold">{{ __('Action') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -177,11 +177,11 @@
                                 <td class="text-center">
                                     @if($t->send_sms)
                                         <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold border border-emerald-200 bg-emerald-50 text-emerald-700 whitespace-nowrap">
-                                            <i class="fas fa-check text-[9px]"></i> SMS
+                                            <i class="fas fa-check text-[9px]"></i> {{ __('SMS') }}
                                         </span>
                                     @else
                                         <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium text-slate-400 bg-slate-100 whitespace-nowrap">
-                                            OFF
+                                            {{ __('OFF') }}
                                         </span>
                                     @endif
                                 </td>
@@ -190,11 +190,11 @@
                                 <td class="text-center">
                                     @if($t->send_whatsapp)
                                         <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold border border-green-200 bg-green-50 text-green-700 whitespace-nowrap">
-                                            <i class="fab fa-whatsapp text-[10px]"></i> WA
+                                            <i class="fab fa-whatsapp text-[10px]"></i> {{ __('WA') }}
                                         </span>
                                     @else
                                         <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium text-slate-400 bg-slate-100 whitespace-nowrap">
-                                            OFF
+                                            {{ __('OFF') }}
                                         </span>
                                     @endif
                                 </td>
@@ -207,7 +207,7 @@
                                 {{-- Status Badge --}}
                                 <td class="text-center">
                                     <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border {{ $t->is_active ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-slate-50 text-slate-500' }} whitespace-nowrap">
-                                        <span>{{ $t->is_active ? 'ACTIVE' : 'DISABLED' }}</span>
+                                        <span>{{ $t->is_active ? __('ACTIVE') : __('DISABLED') }}</span>
                                     </span>
                                 </td>
 
@@ -217,7 +217,7 @@
                                             @click="openEditTemplateModal({{ json_encode($t) }})"
                                             class="h-[28px] px-2.5 bg-cyan-50 hover:bg-cyan-100 text-cyan-700 rounded-md text-xs font-semibold border border-cyan-200 transition inline-flex items-center justify-center gap-1 mx-auto cursor-pointer">
                                         <i class="fas fa-pen-to-square text-[10px]"></i>
-                                        <span>Edit</span>
+                                        <span>{{ __('Edit') }}</span>
                                     </button>
                                 </td>
                             </tr>
@@ -228,7 +228,7 @@
                                         <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 mb-2">
                                             <i class="fas fa-envelope-open-text text-base"></i>
                                         </div>
-                                        <span class="text-xs font-semibold text-slate-600">No Notification Templates Configured</span>
+                                        <span class="text-xs font-semibold text-slate-600">{{ __('No Notification Templates Configured') }}</span>
                                     </div>
                                 </td>
                             </tr>
@@ -246,16 +246,16 @@
                 <table class="saas-table">
                     <thead>
                         <tr>
-                            <th class="w-10 text-center font-semibold">#</th>
-                            <th class="text-center font-semibold">Gateway Name</th>
-                            <th class="text-center font-semibold">Channel</th>
-                            <th class="text-center font-semibold">Provider Engine</th>
-                            <th class="text-center font-semibold">Sender ID / Masking</th>
-                            <th class="text-center font-semibold">Unit Rate</th>
-                            <th class="text-center font-semibold">Credit Balance</th>
-                            <th class="text-center font-semibold">Default</th>
-                            <th class="text-center font-semibold">Status</th>
-                            <th class="w-16 text-center no-sort font-semibold">Action</th>
+                            <th class="w-10 text-center font-semibold">{{ __('#') }}</th>
+                            <th class="text-center font-semibold">{{ __('Gateway Name') }}</th>
+                            <th class="text-center font-semibold">{{ __('Channel') }}</th>
+                            <th class="text-center font-semibold">{{ __('Provider Engine') }}</th>
+                            <th class="text-center font-semibold">{{ __('Sender ID / Masking') }}</th>
+                            <th class="text-center font-semibold">{{ __('Unit Rate') }}</th>
+                            <th class="text-center font-semibold">{{ __('Credit Balance') }}</th>
+                            <th class="text-center font-semibold">{{ __('Default') }}</th>
+                            <th class="text-center font-semibold">{{ __('Status') }}</th>
+                            <th class="w-16 text-center no-sort font-semibold">{{ __('Action') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -276,18 +276,18 @@
                                 {{-- Channel --}}
                                 <td class="text-center">
                                     <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold font-mono uppercase {{ $g->channel_type === 'whatsapp' ? 'border border-green-200 bg-green-50 text-green-700' : 'border border-cyan-200 bg-cyan-50 text-cyan-700' }} whitespace-nowrap">
-                                        {{ $g->channel_type }}
+                                        {{ $g->channel_type === 'whatsapp' ? __('WhatsApp') : __('SMS') }}
                                     </span>
                                 </td>
 
                                 {{-- Provider Engine --}}
                                 <td class="text-center font-mono text-xs text-slate-700">
-                                    {{ strtoupper($g->provider) }}
+                                    {{ match($g->provider) { 'greenweb' => __('Greenweb BD'), 'bulksmsbd' => __('BulkSMS BD'), 'onnorokom' => __('Onnorokom SMS'), 'alphasms' => __('Alpha SMS'), 'infobip' => __('Infobip'), 'twilio' => __('Twilio SMS'), 'whatsapp_cloud' => __('Meta WhatsApp Cloud API'), default => strtoupper($g->provider) } }}
                                 </td>
 
                                 {{-- Sender ID --}}
                                 <td class="text-center font-mono font-bold text-indigo-700 text-xs">
-                                    {{ $g->sender_id ?: 'Non-Masking' }}
+                                    {{ $g->sender_id ?: __('Non-Masking') }}
                                 </td>
 
                                 {{-- Unit Rate --}}
@@ -304,17 +304,17 @@
                                 <td class="text-center">
                                     @if($g->is_default)
                                         <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap">
-                                            <i class="fas fa-star text-[9px]"></i> Primary
+                                            <i class="fas fa-star text-[9px]"></i> {{ __('Primary') }}
                                         </span>
                                     @else
-                                        <span class="text-[10px] text-slate-400">Secondary</span>
+                                        <span class="text-[10px] text-slate-400">{{ __('Secondary') }}</span>
                                     @endif
                                 </td>
 
                                 {{-- Status --}}
                                 <td class="text-center">
                                     <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border {{ $g->is_active ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-slate-50 text-slate-500' }} whitespace-nowrap">
-                                        {{ $g->is_active ? 'ACTIVE' : 'DISABLED' }}
+                                        {{ $g->is_active ? __('ACTIVE') : __('DISABLED') }}
                                     </span>
                                 </td>
 
@@ -324,7 +324,7 @@
                                         <button type="button" 
                                                 @click="toggleGatewayMenu({{ json_encode($g) }}, $event)"
                                                 class="w-7 h-7 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition flex items-center justify-center mx-auto cursor-pointer"
-                                                title="Actions">
+                                                title="{{ __('Actions') }}">
                                             <i class="fas fa-ellipsis-v text-[10px]"></i>
                                         </button>
                                     </div>
@@ -337,11 +337,11 @@
                                         <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 mb-2">
                                             <i class="fas fa-tower-broadcast text-base"></i>
                                         </div>
-                                        <span class="text-xs font-semibold text-slate-600">No Gateway Routes Configured</span>
-                                        <p class="text-[11px] text-slate-400 mt-1">Connect Greenweb, BulkSMS BD, or Twilio to automate notifications.</p>
+                                        <span class="text-xs font-semibold text-slate-600">{{ __('No Gateway Routes Configured') }}</span>
+                                        <p class="text-[11px] text-slate-400 mt-1">{{ __('Connect Greenweb, BulkSMS BD, or Twilio to automate notifications.') }}</p>
                                         <button type="button" @click="openAddGatewayModal()" class="mt-3 h-[30px] px-3 bg-cyan-600 hover:bg-cyan-700 text-white font-medium text-xs rounded-lg transition inline-flex items-center gap-1.5 cursor-pointer">
                                             <i class="fas fa-plus text-xs"></i>
-                                            <span>Add Gateway</span>
+                                            <span>{{ __('Add Gateway') }}</span>
                                         </button>
                                     </div>
                                 </td>
@@ -367,7 +367,7 @@
                     <input type="text" 
                            name="search" 
                            x-model="searchQuery" 
-                           placeholder="Search by recipient mobile, message text..." 
+                           placeholder="{{ __('Search by recipient mobile, message text...') }}" 
                            class="h-[34px] w-full pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                     <button type="button" 
                             x-show="searchQuery && searchQuery.length > 0" 
@@ -380,33 +380,33 @@
                 {{-- Status Dropdown --}}
                 <div class="w-full md:w-44 flex-shrink-0">
                     <select name="status" class="h-[34px] w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition cursor-pointer">
-                        <option value="all">All Delivery Statuses</option>
-                        <option value="delivered" {{ $status === 'delivered' ? 'selected' : '' }}>Delivered / Success</option>
-                        <option value="failed" {{ $status === 'failed' ? 'selected' : '' }}>Failed / Error</option>
+                        <option value="all">{{ __('All Delivery Statuses') }}</option>
+                        <option value="delivered" {{ $status === 'delivered' ? 'selected' : '' }}>{{ __('Delivered / Success') }}</option>
+                        <option value="failed" {{ $status === 'failed' ? 'selected' : '' }}>{{ __('Failed / Error') }}</option>
                     </select>
                 </div>
 
                 {{-- Notification Type Dropdown --}}
                 <div class="w-full md:w-44 flex-shrink-0">
                     <select name="type" class="h-[34px] w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition cursor-pointer">
-                        <option value="all">All Channels / Types</option>
-                        <option value="payment_sms" {{ ($type ?? '') === 'payment_sms' ? 'selected' : '' }}>Payment Receipts</option>
-                        <option value="due_reminder" {{ ($type ?? '') === 'due_reminder' ? 'selected' : '' }}>Due Bill Reminders</option>
-                        <option value="welcome" {{ ($type ?? '') === 'welcome' ? 'selected' : '' }}>Welcome SMS</option>
-                        <option value="suspension" {{ ($type ?? '') === 'suspension' ? 'selected' : '' }}>Suspension Warnings</option>
-                        <option value="test_sms" {{ ($type ?? '') === 'test_sms' ? 'selected' : '' }}>Test Dispatch</option>
-                        <option value="whatsapp" {{ ($type ?? '') === 'whatsapp' ? 'selected' : '' }}>WhatsApp</option>
+                        <option value="all">{{ __('All Channels / Types') }}</option>
+                        <option value="payment_sms" {{ ($type ?? '') === 'payment_sms' ? 'selected' : '' }}>{{ __('Payment Receipts') }}</option>
+                        <option value="due_reminder" {{ ($type ?? '') === 'due_reminder' ? 'selected' : '' }}>{{ __('Due Bill Reminders') }}</option>
+                        <option value="welcome" {{ ($type ?? '') === 'welcome' ? 'selected' : '' }}>{{ __('Welcome SMS') }}</option>
+                        <option value="suspension" {{ ($type ?? '') === 'suspension' ? 'selected' : '' }}>{{ __('Suspension Warnings') }}</option>
+                        <option value="test_sms" {{ ($type ?? '') === 'test_sms' ? 'selected' : '' }}>{{ __('Test Dispatch') }}</option>
+                        <option value="whatsapp" {{ ($type ?? '') === 'whatsapp' ? 'selected' : '' }}>{{ __('WhatsApp') }}</option>
                     </select>
                 </div>
 
                 {{-- Pagination Selector --}}
                 <div class="w-full md:w-28 flex-shrink-0">
                     <select name="per_page" class="h-[34px] w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition cursor-pointer">
-                        <option value="15" {{ $perPage == 15 ? 'selected' : '' }}>15 / page</option>
-                        <option value="20" {{ $perPage == 20 ? 'selected' : '' }}>20 / page</option>
-                        <option value="30" {{ $perPage == 30 ? 'selected' : '' }}>30 / page</option>
-                        <option value="50" {{ $perPage == 50 ? 'selected' : '' }}>50 / page</option>
-                        <option value="100" {{ $perPage == 100 ? 'selected' : '' }}>100 / page</option>
+                        <option value="15" {{ $perPage == 15 ? 'selected' : '' }}>{{ __(':count / page', ['count' => 15]) }}</option>
+                        <option value="20" {{ $perPage == 20 ? 'selected' : '' }}>{{ __(':count / page', ['count' => 20]) }}</option>
+                        <option value="30" {{ $perPage == 30 ? 'selected' : '' }}>{{ __(':count / page', ['count' => 30]) }}</option>
+                        <option value="50" {{ $perPage == 50 ? 'selected' : '' }}>{{ __(':count / page', ['count' => 50]) }}</option>
+                        <option value="100" {{ $perPage == 100 ? 'selected' : '' }}>{{ __(':count / page', ['count' => 100]) }}</option>
                     </select>
                 </div>
 
@@ -414,11 +414,11 @@
                 <div class="flex items-center gap-1.5 flex-shrink-0 md:ml-auto">
                     <button type="submit" class="h-[34px] py-0 px-3 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer">
                         <i class="fas fa-filter text-[10px]"></i>
-                        <span>Filter</span>
+                        <span>{{ __('Filter') }}</span>
                     </button>
                     <a href="{{ route('tenant.settings.sms-gateway', ['tab' => 'logs']) }}" class="h-[34px] py-0 px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer">
                         <i class="fas fa-rotate-left text-[10px]"></i>
-                        <span>Reset</span>
+                        <span>{{ __('Reset') }}</span>
                     </a>
                 </div>
             </form>
@@ -426,16 +426,16 @@
             {{-- Bulk Export & Clear Actions Sub-Bar --}}
             <div class="pt-2 border-t border-slate-100 flex items-center justify-between">
                 <span class="text-xs text-slate-500">
-                    Showing {{ $logs->firstItem() ?? 0 }} to {{ $logs->lastItem() ?? 0 }} of {{ $logs->total() }} recorded outbound events
+                    {{ __('Showing :from to :to of :total recorded outbound events', ['from' => $logs->firstItem() ?? 0, 'to' => $logs->lastItem() ?? 0, 'total' => $logs->total()]) }}
                 </span>
                 <div class="flex items-center gap-2">
                     <a href="{{ route('tenant.settings.sms-gateway.export') }}" class="h-[30px] px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200/80 transition inline-flex items-center gap-1.5 cursor-pointer">
                         <i class="fas fa-file-csv text-emerald-600 text-xs"></i>
-                        <span>Export CSV</span>
+                        <span>{{ __('Export CSV') }}</span>
                     </a>
                     <button type="button" @click="clearAllLogs()" class="h-[30px] px-3 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg text-xs font-semibold border border-rose-200 transition inline-flex items-center gap-1.5 cursor-pointer">
                         <i class="fas fa-trash-can text-rose-600 text-xs"></i>
-                        <span>Clear All Logs</span>
+                        <span>{{ __('Clear All Logs') }}</span>
                     </button>
                 </div>
             </div>
@@ -447,14 +447,14 @@
                 <table class="saas-table">
                     <thead>
                         <tr>
-                            <th class="w-10 text-center font-semibold">#</th>
-                            <th class="text-center font-semibold">Recipient Mobile</th>
-                            <th class="text-center font-semibold">Notification Type</th>
-                            <th class="text-center font-semibold">Message Text Preview</th>
-                            <th class="text-center font-semibold">Parts / Cost</th>
-                            <th class="text-center font-semibold">Delivery Status</th>
-                            <th class="text-center font-semibold">Dispatched At</th>
-                            <th class="w-16 text-center no-sort font-semibold">Action</th>
+                            <th class="w-10 text-center font-semibold">{{ __('#') }}</th>
+                            <th class="text-center font-semibold">{{ __('Recipient Mobile') }}</th>
+                            <th class="text-center font-semibold">{{ __('Notification Type') }}</th>
+                            <th class="text-center font-semibold">{{ __('Message Text Preview') }}</th>
+                            <th class="text-center font-semibold">{{ __('Parts / Cost') }}</th>
+                            <th class="text-center font-semibold">{{ __('Delivery Status') }}</th>
+                            <th class="text-center font-semibold">{{ __('Dispatched At') }}</th>
+                            <th class="w-16 text-center no-sort font-semibold">{{ __('Action') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -470,7 +470,7 @@
                                 {{-- Type --}}
                                 <td class="text-center">
                                     <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold font-mono border border-slate-200 bg-slate-50 text-slate-600 whitespace-nowrap">
-                                        {{ strtoupper(str_replace('_', ' ', $l->sms_type ?? 'SMS')) }}
+                                        {{ match(strtolower($l->sms_type ?? 'sms')) { 'payment_sms' => __('Payment Receipt'), 'due_reminder' => __('Due Reminder'), 'welcome' => __('Welcome SMS'), 'suspension' => __('Suspension Warning'), 'test_sms' => __('Test Dispatch'), 'whatsapp' => __('WhatsApp'), default => strtoupper(str_replace('_', ' ', $l->sms_type ?? 'SMS')) } }}
                                     </span>
                                 </td>
 
@@ -481,7 +481,7 @@
 
                                 {{-- Parts / Cost --}}
                                 <td class="text-right font-mono text-xs text-slate-700">
-                                    <span class="text-slate-500">{{ $l->parts_count ?: 1 }}P</span>
+                                    <span class="text-slate-500">{{ __(':countP', ['count' => $l->parts_count ?: 1]) }}</span>
                                     <span class="text-slate-400">/</span>
                                     <span class="font-bold text-slate-800">@currency($l->total_cost)</span>
                                 </td>
@@ -489,13 +489,13 @@
                                 {{-- Status --}}
                                 <td class="text-center">
                                     <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border {{ in_array($l->status, ['delivered', 'success', 'sent']) ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-rose-200 bg-rose-50 text-rose-700' }} whitespace-nowrap">
-                                        <span>{{ strtoupper($l->status) }}</span>
+                                        <span>{{ match(strtolower($l->status ?? '')) { 'delivered' => __('DELIVERED'), 'success' => __('SUCCESS'), 'sent' => __('SENT'), 'failed' => __('FAILED'), 'pending' => __('PENDING'), default => strtoupper($l->status) } }}</span>
                                     </span>
                                 </td>
 
                                 {{-- Dispatched At --}}
                                 <td class="text-center font-mono text-slate-500 text-[11px]">
-                                    {{ $l->created_at ? $l->created_at->format('d-M-Y h:i A') : 'N/A' }}
+                                    {{ $l->created_at ? $l->created_at->translatedFormat('d-M-Y h:i A') : __('N/A') }}
                                 </td>
 
                                 {{-- Action Dropdown (AGENTS.md Rule 2.E) --}}
@@ -504,7 +504,7 @@
                                         <button type="button" 
                                                 @click="toggleLogMenu({{ json_encode($l) }}, $event)"
                                                 class="w-7 h-7 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition flex items-center justify-center mx-auto cursor-pointer"
-                                                title="Actions">
+                                                title="{{ __('Actions') }}">
                                             <i class="fas fa-ellipsis-v text-[10px]"></i>
                                         </button>
                                     </div>
@@ -517,8 +517,8 @@
                                         <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 mb-2">
                                             <i class="fas fa-paper-plane text-base"></i>
                                         </div>
-                                        <span class="text-xs font-semibold text-slate-600">No Outbound Delivery Logs Found</span>
-                                        <p class="text-[11px] text-slate-400 mt-1">Dispatched customer SMS notifications and automated alerts will appear here.</p>
+                                        <span class="text-xs font-semibold text-slate-600">{{ __('No Outbound Delivery Logs Found') }}</span>
+                                        <p class="text-[11px] text-slate-400 mt-1">{{ __('Dispatched customer SMS notifications and automated alerts will appear here.') }}</p>
                                     </div>
                                 </td>
                             </tr>
@@ -531,7 +531,7 @@
             @if($logs->hasPages())
                 <div class="p-3 border-t border-slate-200 bg-slate-50/50 flex items-center justify-between">
                     <span class="text-xs text-slate-500">
-                        Page {{ $logs->currentPage() }} of {{ $logs->lastPage() }}
+                        {{ __('Page :current of :last', ['current' => $logs->currentPage(), 'last' => $logs->lastPage()]) }}
                     </span>
                     <div>
                         {{ $logs->links() }}
@@ -554,14 +554,14 @@
                 @click="openEditGatewayModal(activeGatewayMenu); activeGatewayMenu = null" 
                 class="w-full px-3 py-2 text-left text-slate-700 hover:bg-slate-50 hover:text-slate-900 flex items-center gap-2 cursor-pointer">
             <i class="fas fa-pen-to-square text-cyan-600 w-3.5 text-center"></i>
-            <span>Edit Configuration</span>
+            <span>{{ __('Edit Configuration') }}</span>
         </button>
 
         <button type="button" 
                 @click="toggleGatewayStatus(activeGatewayMenu); activeGatewayMenu = null" 
                 class="w-full px-3 py-2 text-left text-slate-700 hover:bg-slate-50 hover:text-slate-900 flex items-center gap-2 cursor-pointer">
             <i class="fas fa-power-off text-indigo-600 w-3.5 text-center"></i>
-            <span x-text="activeGatewayMenu?.is_active ? 'Disable Route' : 'Enable Route'"></span>
+            <span x-text="activeGatewayMenu?.is_active ? @js(__('Disable Route')) : @js(__('Enable Route'))"></span>
         </button>
 
         <div class="h-px bg-slate-100 my-1"></div>
@@ -570,7 +570,7 @@
                 @click="deleteGateway(activeGatewayMenu); activeGatewayMenu = null" 
                 class="w-full px-3 py-2 text-left text-rose-600 hover:bg-rose-50 flex items-center gap-2 cursor-pointer">
             <i class="fas fa-trash-can text-rose-500 w-3.5 text-center"></i>
-            <span>Delete Gateway</span>
+            <span>{{ __('Delete Gateway') }}</span>
         </button>
     </div>
 
@@ -585,7 +585,7 @@
                 @click="viewLogDetails(activeLogMenu); activeLogMenu = null" 
                 class="w-full px-3 py-2 text-left text-slate-700 hover:bg-slate-50 hover:text-slate-900 flex items-center gap-2 cursor-pointer">
             <i class="fas fa-eye text-cyan-600 w-3.5 text-center"></i>
-            <span>View Full Details</span>
+            <span>{{ __('View Full Details') }}</span>
         </button>
 
         <div class="h-px bg-slate-100 my-1"></div>
@@ -594,7 +594,7 @@
                 @click="deleteSingleLog(activeLogMenu?.id, activeLogMenu?.recipient_phone); activeLogMenu = null" 
                 class="w-full px-3 py-2 text-left text-rose-600 hover:bg-rose-50 flex items-center gap-2 cursor-pointer">
             <i class="fas fa-trash-can text-rose-500 w-3.5 text-center"></i>
-            <span>Delete Record</span>
+            <span>{{ __('Delete Record') }}</span>
         </button>
     </div>
 
@@ -616,8 +616,8 @@
                             <i class="fas fa-pen-to-square"></i>
                         </div>
                         <div>
-                            <h3 class="text-xs font-semibold text-slate-800" x-text="activeTemplate?.title || 'Edit Template'"></h3>
-                            <span class="text-[10.5px] text-slate-500 font-normal">Custom text &amp; dynamic placeholders for this notification event</span>
+                            <h3 class="text-xs font-semibold text-slate-800" x-text="activeTemplate?.title || @js(__('Edit Template'))"></h3>
+                            <span class="text-[10.5px] text-slate-500 font-normal">{{ __('Custom text & dynamic placeholders for this notification event') }}</span>
                         </div>
                     </div>
                     <button type="button" @click="editTemplateModalOpen = false" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center cursor-pointer">
@@ -629,7 +629,7 @@
                 <div class="p-4 space-y-3.5 text-xs">
                     {{-- Dynamic Tags Helper Pills --}}
                     <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200/80 space-y-1.5">
-                        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">Click Tag to Insert in Message:</span>
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">{{ __('Click Tag to Insert in Message:') }}</span>
                         <div class="flex flex-wrap gap-1">
                             <template x-for="tag in ['{customer_name}', '{customer_id}', '{amount}', '{due_date}', '{billing_month}', '{receipt_no}', '{company_name}', '{portal_url}', '{helpline}']">
                                 <button type="button" 
@@ -644,9 +644,9 @@
                     {{-- SMS Body --}}
                     <div>
                         <div class="flex items-center justify-between mb-1">
-                            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider">SMS Message Text (Plain Text)</label>
+                            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider">{{ __('SMS Message Text (Plain Text)') }}</label>
                             <span class="text-[10.5px] font-mono text-slate-500">
-                                <span x-text="charCount">0</span> chars (<span x-text="smsParts">1</span> SMS Part)
+                                <span x-text="charCount">0</span> {{ __('chars') }} (<span x-text="smsParts">1</span> {{ __('SMS Part') }})
                             </span>
                         </div>
                         <textarea id="templateSmsBody" 
@@ -661,7 +661,7 @@
 
                     {{-- WhatsApp Body --}}
                     <div>
-                        <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">WhatsApp Message Text (Markdown Supported)</label>
+                        <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">{{ __('WhatsApp Message Text (Markdown Supported)') }}</label>
                         <textarea name="whatsapp_body" 
                                   rows="3" 
                                   x-model="activeTemplate.whatsapp_body" 
@@ -673,15 +673,15 @@
                     <div class="grid grid-cols-3 gap-2 pt-2 border-t border-slate-100">
                         <label class="flex items-center gap-2 cursor-pointer p-2 bg-slate-50 rounded-lg border border-slate-200/80">
                             <input type="checkbox" name="send_sms" value="1" :checked="activeTemplate?.send_sms" class="rounded border-slate-300 text-cyan-600 focus:ring-cyan-500 cursor-pointer">
-                            <span class="text-xs font-semibold text-slate-700">Send via SMS</span>
+                            <span class="text-xs font-semibold text-slate-700">{{ __('Send via SMS') }}</span>
                         </label>
                         <label class="flex items-center gap-2 cursor-pointer p-2 bg-slate-50 rounded-lg border border-slate-200/80">
                             <input type="checkbox" name="send_whatsapp" value="1" :checked="activeTemplate?.send_whatsapp" class="rounded border-slate-300 text-green-600 focus:ring-green-500 cursor-pointer">
-                            <span class="text-xs font-semibold text-slate-700">Send WhatsApp</span>
+                            <span class="text-xs font-semibold text-slate-700">{{ __('Send WhatsApp') }}</span>
                         </label>
                         <label class="flex items-center gap-2 cursor-pointer p-2 bg-slate-50 rounded-lg border border-slate-200/80">
                             <input type="checkbox" name="is_active" value="1" :checked="activeTemplate?.is_active" class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer">
-                            <span class="text-xs font-semibold text-slate-700">Active Trigger</span>
+                            <span class="text-xs font-semibold text-slate-700">{{ __('Active Trigger') }}</span>
                         </label>
                     </div>
                 </div>
@@ -689,11 +689,11 @@
                 {{-- Modal Footer --}}
                 <div class="px-4 py-2.5 bg-slate-50/80 border-t border-slate-200 flex items-center justify-end gap-2">
                     <button type="button" @click="editTemplateModalOpen = false" class="h-[34px] py-0 px-3.5 border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs rounded-lg transition cursor-pointer">
-                        Cancel
+                        {{ __('Cancel') }}
                     </button>
                     <button type="submit" class="h-[34px] py-0 px-4 bg-cyan-600 hover:bg-cyan-700 text-white font-medium text-xs rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                         <i class="fas fa-floppy-disk text-xs"></i>
-                        <span>Save Template</span>
+                        <span>{{ __('Save Template') }}</span>
                     </button>
                 </div>
             </form>
@@ -715,8 +715,8 @@
                             <i class="fas fa-paper-plane"></i>
                         </div>
                         <div>
-                            <h3 class="text-xs font-semibold text-slate-800">Send Live Test Message</h3>
-                            <span class="text-[10.5px] text-slate-500 font-normal">Test instant outbound delivery to any mobile number</span>
+                            <h3 class="text-xs font-semibold text-slate-800">{{ __('Send Live Test Message') }}</h3>
+                            <span class="text-[10.5px] text-slate-500 font-normal">{{ __('Test instant outbound delivery to any mobile number') }}</span>
                         </div>
                     </div>
                     <button type="button" @click="testModalOpen = false" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center cursor-pointer">
@@ -728,40 +728,40 @@
                 <div class="p-4 space-y-3.5 text-xs">
                     {{-- Channel --}}
                     <div>
-                        <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">Dispatch Channel *</label>
+                        <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">{{ __('Dispatch Channel *') }}</label>
                         <div class="grid grid-cols-2 gap-2">
                             <label class="flex items-center gap-2 p-2 bg-slate-50 rounded-lg border border-slate-200 cursor-pointer">
                                 <input type="radio" name="channel" value="sms" checked class="text-cyan-600">
-                                <span class="font-semibold text-slate-700">SMS Gateway</span>
+                                <span class="font-semibold text-slate-700">{{ __('SMS Gateway') }}</span>
                             </label>
                             <label class="flex items-center gap-2 p-2 bg-slate-50 rounded-lg border border-slate-200 cursor-pointer">
                                 <input type="radio" name="channel" value="whatsapp" class="text-green-600">
-                                <span class="font-semibold text-slate-700">WhatsApp Gateway</span>
+                                <span class="font-semibold text-slate-700">{{ __('WhatsApp Gateway') }}</span>
                             </label>
                         </div>
                     </div>
 
                     {{-- Recipient Mobile --}}
                     <div>
-                        <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">Recipient Mobile Number *</label>
+                        <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">{{ __('Recipient Mobile Number *') }}</label>
                         <input type="text" name="recipient_phone" required placeholder="018XXXXXXXX" class="h-[34px] w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 font-mono text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                     </div>
 
                     {{-- Message Text --}}
                     <div>
-                        <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">Test Message Text *</label>
-                        <textarea name="test_message" rows="3" required class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-2 text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition leading-relaxed">Test notification from {{ $tenant->name ?? 'ISP System' }}. Your connection is healthy.</textarea>
+                        <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">{{ __('Test Message Text *') }}</label>
+                        <textarea name="test_message" rows="3" required class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-2 text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition leading-relaxed">{{ __('Test notification from :company. Your connection is healthy.', ['company' => $tenant->name ?? __('ISP System')]) }}</textarea>
                     </div>
                 </div>
 
                 {{-- Modal Footer --}}
                 <div class="px-4 py-2.5 bg-slate-50/80 border-t border-slate-200 flex items-center justify-end gap-2">
                     <button type="button" @click="testModalOpen = false" class="h-[34px] py-0 px-3.5 border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs rounded-lg transition cursor-pointer">
-                        Cancel
+                        {{ __('Cancel') }}
                     </button>
                     <button type="submit" class="h-[34px] py-0 px-4 bg-cyan-600 hover:bg-cyan-700 text-white font-medium text-xs rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                         <i class="fas fa-paper-plane text-xs"></i>
-                        <span>Send Test Now</span>
+                        <span>{{ __('Send Test Now') }}</span>
                     </button>
                 </div>
             </form>
@@ -786,8 +786,8 @@
                             <i class="fas fa-tower-broadcast"></i>
                         </div>
                         <div>
-                            <h3 class="text-xs font-semibold text-slate-800" x-text="isEditingGateway ? 'Edit Gateway Configuration' : 'Connect New Messaging Gateway'"></h3>
-                            <span class="text-[10.5px] text-slate-500 font-normal">Configure API credentials, sender ID and rates</span>
+                            <h3 class="text-xs font-semibold text-slate-800" x-text="isEditingGateway ? @js(__('Edit Gateway Configuration')) : @js(__('Connect New Messaging Gateway'))"></h3>
+                            <span class="text-[10.5px] text-slate-500 font-normal">{{ __('Configure API credentials, sender ID and rates') }}</span>
                         </div>
                     </div>
                     <button type="button" @click="gatewayModalOpen = false" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center cursor-pointer">
@@ -799,54 +799,54 @@
                 <div class="p-4 space-y-3 text-xs">
                     <div class="grid grid-cols-2 gap-3" x-show="!isEditingGateway">
                         <div>
-                            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">Channel Type *</label>
+                            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">{{ __('Channel Type *') }}</label>
                             <select name="channel_type" x-model="gatewayForm.channel_type" class="h-[34px] w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                                <option value="sms">SMS Gateway</option>
-                                <option value="whatsapp">WhatsApp Gateway</option>
+                                <option value="sms">{{ __('SMS Gateway') }}</option>
+                                <option value="whatsapp">{{ __('WhatsApp Gateway') }}</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">Provider Engine *</label>
+                            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">{{ __('Provider Engine *') }}</label>
                             <select name="provider" x-model="gatewayForm.provider" class="h-[34px] w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                                <option value="greenweb">Greenweb BD</option>
-                                <option value="bulksmsbd">BulkSMS BD</option>
-                                <option value="onnorokom">Onnorokom SMS</option>
-                                <option value="alphasms">Alpha SMS</option>
-                                <option value="infobip">Infobip</option>
-                                <option value="twilio">Twilio SMS</option>
-                                <option value="whatsapp_cloud">Meta WhatsApp Cloud API</option>
+                                <option value="greenweb">{{ __('Greenweb BD') }}</option>
+                                <option value="bulksmsbd">{{ __('BulkSMS BD') }}</option>
+                                <option value="onnorokom">{{ __('Onnorokom SMS') }}</option>
+                                <option value="alphasms">{{ __('Alpha SMS') }}</option>
+                                <option value="infobip">{{ __('Infobip') }}</option>
+                                <option value="twilio">{{ __('Twilio SMS') }}</option>
+                                <option value="whatsapp_cloud">{{ __('Meta WhatsApp Cloud API') }}</option>
                             </select>
                         </div>
                     </div>
 
                     <div>
-                        <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">Gateway Connection Name *</label>
-                        <input type="text" name="name" x-model="gatewayForm.name" required placeholder="e.g. Greenweb Primary Masking" class="h-[34px] w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
+                        <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">{{ __('Gateway Connection Name *') }}</label>
+                        <input type="text" name="name" x-model="gatewayForm.name" required placeholder="{{ __('e.g. Greenweb Primary Masking') }}" class="h-[34px] w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                     </div>
 
                     <div class="grid grid-cols-2 gap-3">
                         <div>
-                            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">Sender ID / Masking</label>
-                            <input type="text" name="sender_id" x-model="gatewayForm.sender_id" placeholder="e.g. 8809611XXXXX or Brand Name" class="h-[34px] w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 font-mono focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
+                            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">{{ __('Sender ID / Masking') }}</label>
+                            <input type="text" name="sender_id" x-model="gatewayForm.sender_id" placeholder="{{ __('e.g. 8809611XXXXX or Brand Name') }}" class="h-[34px] w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 font-mono focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                         </div>
                         <div>
-                            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">API Endpoint URL</label>
+                            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">{{ __('API Endpoint URL') }}</label>
                             <input type="text" name="api_endpoint" x-model="gatewayForm.api_endpoint" placeholder="https://api.sms-provider.com/send" class="h-[34px] w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 font-mono focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                         </div>
                     </div>
 
                     <div>
-                        <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">API Token / Secret Key *</label>
-                        <input type="text" name="api_key" x-model="gatewayForm.api_key" required placeholder="Enter Gateway API Key" class="h-[34px] w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 font-mono focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
+                        <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">{{ __('API Token / Secret Key *') }}</label>
+                        <input type="text" name="api_key" x-model="gatewayForm.api_key" required placeholder="{{ __('Enter Gateway API Key') }}" class="h-[34px] w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 font-mono focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                     </div>
 
                     <div class="grid grid-cols-2 gap-3">
                         <div>
-                            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">Cost Per SMS (BDT)</label>
+                            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">{{ __('Cost Per SMS (:currency)', ['currency' => $currencySymbol ?? '৳']) }}</label>
                             <input type="number" step="0.01" name="cost_per_sms" x-model="gatewayForm.cost_per_sms" required placeholder="0.35" class="h-[34px] w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 font-mono focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                         </div>
                         <div>
-                            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">Current Balance (BDT)</label>
+                            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">{{ __('Current Balance (:currency)', ['currency' => $currencySymbol ?? '৳']) }}</label>
                             <input type="number" step="0.01" name="balance" x-model="gatewayForm.balance" required placeholder="1000.00" class="h-[34px] w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 font-mono focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                         </div>
                     </div>
@@ -854,7 +854,7 @@
                     <div class="pt-2 border-t border-slate-100">
                         <label class="flex items-center gap-2 cursor-pointer">
                             <input type="checkbox" name="is_default" value="1" x-model="gatewayForm.is_default" class="rounded border-slate-300 text-cyan-600 focus:ring-cyan-500 cursor-pointer">
-                            <span class="text-xs font-semibold text-slate-700">Set as Primary Default Gateway</span>
+                            <span class="text-xs font-semibold text-slate-700">{{ __('Set as Primary Default Gateway') }}</span>
                         </label>
                     </div>
                 </div>
@@ -862,11 +862,11 @@
                 {{-- Modal Footer --}}
                 <div class="px-4 py-2.5 bg-slate-50/80 border-t border-slate-200 flex items-center justify-end gap-2">
                     <button type="button" @click="gatewayModalOpen = false" class="h-[34px] py-0 px-3.5 border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs rounded-lg transition cursor-pointer">
-                        Cancel
+                        {{ __('Cancel') }}
                     </button>
                     <button type="submit" class="h-[34px] py-0 px-4 bg-cyan-600 hover:bg-cyan-700 text-white font-medium text-xs rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                         <i class="fas fa-floppy-disk text-xs"></i>
-                        <span x-text="isEditingGateway ? 'Update Gateway' : 'Save Gateway'"></span>
+                        <span x-text="isEditingGateway ? @js(__('Update Gateway')) : @js(__('Save Gateway'))"></span>
                     </button>
                 </div>
             </form>
@@ -884,7 +884,7 @@
                         <i class="fas fa-file-lines"></i>
                     </div>
                     <div>
-                        <h3 class="text-xs font-semibold text-slate-800">SMS Outbound Delivery Details</h3>
+                        <h3 class="text-xs font-semibold text-slate-800">{{ __('SMS Outbound Delivery Details') }}</h3>
                         <span class="text-[10.5px] text-slate-500 font-normal" x-text="activeLog?.recipient_phone"></span>
                     </div>
                 </div>
@@ -896,37 +896,37 @@
             <div class="p-4 space-y-3 text-xs">
                 <div class="grid grid-cols-2 gap-2 bg-slate-50 p-3 rounded-lg border border-slate-200/80">
                     <div>
-                        <span class="text-[10px] uppercase font-bold text-slate-400 block">Recipient Mobile</span>
+                        <span class="text-[10px] uppercase font-bold text-slate-400 block">{{ __('Recipient Mobile') }}</span>
                         <span class="font-mono font-bold text-slate-800 text-xs" x-text="activeLog?.recipient_phone"></span>
                     </div>
                     <div>
-                        <span class="text-[10px] uppercase font-bold text-slate-400 block">Delivery Status</span>
-                        <span class="font-bold uppercase text-xs" :class="activeLog?.status === 'delivered' ? 'text-emerald-600' : 'text-rose-600'" x-text="activeLog?.status"></span>
+                        <span class="text-[10px] uppercase font-bold text-slate-400 block">{{ __('Delivery Status') }}</span>
+                        <span class="font-bold uppercase text-xs" :class="['delivered', 'success', 'sent'].includes(activeLog?.status) ? 'text-emerald-600' : 'text-rose-600'" x-text="translateStatus(activeLog?.status)"></span>
                     </div>
                     <div>
-                        <span class="text-[10px] uppercase font-bold text-slate-400 block">Parts &amp; Length</span>
-                        <span class="font-mono text-slate-700" x-text="`${activeLog?.parts_count || 1} Parts (${activeLog?.character_count || 0} Chars)`"></span>
+                        <span class="text-[10px] uppercase font-bold text-slate-400 block">{{ __('Parts & Length') }}</span>
+                        <span class="font-mono text-slate-700" x-text="`${activeLog?.parts_count || 1} ${@js(__('Parts'))} (${activeLog?.character_count || 0} ${@js(__('Chars'))})`"></span>
                     </div>
                     <div>
-                        <span class="text-[10px] uppercase font-bold text-slate-400 block">Total Cost</span>
-                        <span class="font-mono font-bold text-slate-800" x-text="`৳${activeLog?.total_cost || '0.00'}`"></span>
+                        <span class="text-[10px] uppercase font-bold text-slate-400 block">{{ __('Total Cost') }}</span>
+                        <span class="font-mono font-bold text-slate-800" x-text="`${currencySymbol}${activeLog?.total_cost || '0.00'}`"></span>
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Message Body</label>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">{{ __('Message Body') }}</label>
                     <div class="p-3 bg-slate-50 rounded-lg border border-slate-200 font-mono text-slate-800 text-[11px] leading-relaxed select-all" x-text="activeLog?.message_body"></div>
                 </div>
 
                 <div>
-                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Gateway API Response Payload</label>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">{{ __('Gateway API Response Payload') }}</label>
                     <pre class="p-3 bg-slate-900 text-cyan-300 rounded-lg font-mono text-[10.5px] overflow-x-auto max-h-40 leading-relaxed" x-text="formatJson(activeLog?.api_response)"></pre>
                 </div>
             </div>
 
             <div class="px-4 py-2.5 bg-slate-50/80 border-t border-slate-200 flex items-center justify-end">
                 <button type="button" @click="logDetailsModalOpen = false" class="h-[34px] py-0 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-xs rounded-lg transition cursor-pointer">
-                    Close
+                    {{ __('Close') }}
                 </button>
             </div>
         </div>
@@ -939,8 +939,9 @@
 <script>
     function notificationManager() {
         return {
-            activeTab: '{{ $tab }}',
-            searchQuery: '{{ addslashes($search) }}',
+            currencySymbol: @js($currencySymbol ?? '৳'),
+            activeTab: @js($tab),
+            searchQuery: @js($search),
             editTemplateModalOpen: false,
             testModalOpen: false,
             gatewayModalOpen: false,
@@ -1015,6 +1016,18 @@
                 };
             },
 
+            translateStatus(status) {
+                const map = {
+                    delivered: @js(__('DELIVERED')),
+                    success: @js(__('SUCCESS')),
+                    sent: @js(__('SENT')),
+                    failed: @js(__('FAILED')),
+                    pending: @js(__('PENDING'))
+                };
+                const key = (status || '').toLowerCase();
+                return map[key] || (status || '').toUpperCase();
+            },
+
             openEditTemplateModal(template) {
                 this.activeTemplate = JSON.parse(JSON.stringify(template));
                 this.calculateSmsParts();
@@ -1045,7 +1058,7 @@
                     channel_type: 'sms',
                     provider: 'greenweb',
                     name: '',
-                    sender_id: '{{ $tenant->sms_sender_id ?: 'TITHI' }}',
+                    sender_id: @js($tenant->sms_sender_id ?: 'TITHI'),
                     api_endpoint: '',
                     api_key: '',
                     cost_per_sms: 0.35,
@@ -1085,7 +1098,7 @@
                 .then(data => {
                     Swal.fire({
                         icon: 'success',
-                        title: 'Status Updated',
+                        title: @js(__('Status Updated')),
                         text: data.message,
                         timer: 1500,
                         showConfirmButton: false
@@ -1097,13 +1110,14 @@
 
             deleteGateway(gateway) {
                 Swal.fire({
-                    title: 'Delete Gateway Route?',
-                    text: `Are you sure you want to remove '${gateway.name}'?`,
+                    title: @js(__('Delete Gateway Route?')),
+                    text: @js(__("Are you sure you want to remove ':name'?", ['name' => '__NAME__'])).replace('__NAME__', gateway.name),
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonColor: '#e11d48',
                     cancelButtonColor: '#64748b',
-                    confirmButtonText: 'Yes, Delete'
+                    confirmButtonText: @js(__('Yes, Delete')),
+                    cancelButtonText: @js(__('Cancel'))
                 }).then((result) => {
                     if (result.isConfirmed) {
                         fetch(`/admin/settings/sms-gateway/gateways/${gateway.id}`, {
@@ -1126,7 +1140,7 @@
             },
 
             formatJson(str) {
-                if (!str) return 'No API Response Payload';
+                if (!str) return @js(__('No API Response Payload'));
                 try {
                     const parsed = typeof str === 'string' ? JSON.parse(str) : str;
                     return JSON.stringify(parsed, null, 2);
@@ -1137,13 +1151,14 @@
 
             clearAllLogs() {
                 Swal.fire({
-                    title: 'Clear All Delivery Logs?',
-                    text: 'Are you sure you want to delete all SMS logs? This action cannot be undone.',
+                    title: @js(__('Clear All Delivery Logs?')),
+                    text: @js(__('Are you sure you want to delete all SMS logs? This action cannot be undone.')),
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonColor: '#e11d48',
                     cancelButtonColor: '#64748b',
-                    confirmButtonText: 'Yes, Clear All'
+                    confirmButtonText: @js(__('Yes, Clear All')),
+                    cancelButtonText: @js(__('Cancel'))
                 }).then((result) => {
                     if (result.isConfirmed) {
                         fetch('{{ route("tenant.settings.sms-gateway.logs.clear") }}', {
@@ -1157,7 +1172,7 @@
                         .then(data => {
                             Swal.fire({
                                 icon: 'success',
-                                title: 'Logs Cleared',
+                                title: @js(__('Logs Cleared')),
                                 text: data.message,
                                 confirmButtonColor: '#0891b2'
                             }).then(() => {
@@ -1170,13 +1185,14 @@
 
             deleteSingleLog(id, phone) {
                 Swal.fire({
-                    title: 'Delete Log?',
-                    text: `Delete outbound SMS log for ${phone}?`,
+                    title: @js(__('Delete Log?')),
+                    text: @js(__('Delete outbound SMS log for :phone?', ['phone' => '__PHONE__'])).replace('__PHONE__', phone),
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonColor: '#e11d48',
                     cancelButtonColor: '#64748b',
-                    confirmButtonText: 'Yes, Delete'
+                    confirmButtonText: @js(__('Yes, Delete')),
+                    cancelButtonText: @js(__('Cancel'))
                 }).then((result) => {
                     if (result.isConfirmed) {
                         fetch(`/admin/settings/sms-gateway/logs/${id}`, {
@@ -1190,7 +1206,7 @@
                         .then(data => {
                             Swal.fire({
                                 icon: 'success',
-                                title: 'Deleted',
+                                title: @js(__('Deleted')),
                                 text: data.message,
                                 timer: 1500,
                                 showConfirmButton: false

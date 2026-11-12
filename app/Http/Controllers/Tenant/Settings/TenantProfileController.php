@@ -20,7 +20,7 @@ class TenantProfileController extends Controller
         $tenant = $tenantId ? Tenant::find($tenantId) : (auth()->user()?->tenant ?? Tenant::first());
 
         if (!$tenant) {
-            abort(403, 'Tenant context not found. Please log in.');
+            abort(403, __('Tenant context not found. Please log in.'));
         }
 
         return $tenant;
@@ -32,18 +32,19 @@ class TenantProfileController extends Controller
     public function index(Request $request): View
     {
         $tenant = $this->getTenant();
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
 
         // 6 KPI Overview Cards for Settings Summary
         $stats = [
-            'license_type' => $tenant->btrc_license_type ?: 'Nationwide ISP',
-            'btrc_status' => !empty($tenant->btrc_license_no) ? 'Verified' : 'Pending',
-            'subscription_status' => ucfirst($tenant->status ?? 'Active'),
-            'trade_license' => !empty($tenant->trade_license_no) ? 'Registered' : 'N/A',
-            'support_line' => $tenant->support_hotline ? 'Active' : 'Not Set',
-            'mail_status' => $tenant->mail_enabled ? 'Connected' : 'Disabled',
+            'license_type' => $tenant->btrc_license_type ? __($tenant->btrc_license_type) : __('Nationwide ISP'),
+            'btrc_status' => !empty($tenant->btrc_license_no) ? __('Verified') : __('Pending'),
+            'subscription_status' => __(ucfirst(strtolower($tenant->status ?? 'active'))),
+            'trade_license' => !empty($tenant->trade_license_no) ? __('Registered') : __('N/A'),
+            'support_line' => $tenant->support_hotline ? __('Active') : __('Not Set'),
+            'mail_status' => $tenant->mail_enabled ? __('Connected') : __('Disabled'),
         ];
 
-        return view('tenant.settings.profile', compact('tenant', 'stats'));
+        return view('tenant.settings.profile', compact('tenant', 'stats', 'currencySymbol'));
     }
 
     /**
@@ -146,14 +147,14 @@ class TenantProfileController extends Controller
             'tenant_id' => $tenant->id,
             'actor_type' => 'tenant',
             'actor_id' => auth()->id() ?? 1,
-            'actor_name' => auth()->user()?->name ?? 'Admin',
+            'actor_name' => auth()->user()?->name ?? __('Admin'),
             'event_type' => 'PROFILE_SETTINGS_UPDATED',
-            'description' => 'Updated Company Profile & Email Gateway Settings',
+            'description' => __('Updated Company Profile & Email Gateway Settings'),
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
         ]);
 
-        return back()->with('success', 'Company profile and email settings updated successfully.');
+        return back()->with('success', __('Company profile and email settings updated successfully.'));
     }
 
     /**
@@ -167,7 +168,7 @@ class TenantProfileController extends Controller
         if (empty($testEmail) || !filter_var($testEmail, FILTER_VALIDATE_EMAIL)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Please provide a valid test recipient email address.',
+                'message' => __('Please provide a valid test recipient email address.'),
             ], 422);
         }
 
@@ -195,8 +196,9 @@ class TenantProfileController extends Controller
     public function printCertificate(Request $request): View
     {
         $tenant = $this->getTenant();
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
 
-        return view('tenant.settings.profile_print', compact('tenant'));
+        return view('tenant.settings.profile_print', compact('tenant', 'currencySymbol'));
     }
 
     /**
@@ -205,28 +207,29 @@ class TenantProfileController extends Controller
     public function userProfile(Request $request): View
     {
         $tenant = $this->getTenant();
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
         $user = auth()->user();
 
         $roleTitle = match($user->role) {
-            'isp_collector', 'collector', 'reseller_collector' => 'Bill Collector',
-            'isp_technician', 'technician', 'reseller_technician' => 'Technician',
-            'isp_noc' => 'NOC Engineer',
-            'isp_lineman' => 'Lineman',
-            'isp_manager', 'manager' => 'Manager',
-            'isp_admin', 'admin', 'owner' => 'ISP Administrator',
-            default => ucwords(str_replace('_', ' ', $user->role ?? 'Staff'))
+            'isp_collector', 'collector', 'reseller_collector' => __('Bill Collector'),
+            'isp_technician', 'technician', 'reseller_technician' => __('Technician'),
+            'isp_noc' => __('NOC Engineer'),
+            'isp_lineman' => __('Lineman'),
+            'isp_manager', 'manager' => __('Manager'),
+            'isp_admin', 'admin', 'owner' => __('ISP Administrator'),
+            default => ucwords(str_replace('_', ' ', $user->role ?? __('Staff')))
         };
 
         $stats = [
             'staff_id' => $user->staff_id ?: ($user->username ?: 'STF-' . str_pad($user->id, 4, '0', STR_PAD_LEFT)),
             'role_title' => $roleTitle,
-            'mobile' => $user->mobile ?: ($user->phone ?: 'N/A'),
+            'mobile' => $user->mobile ?: ($user->phone ?: __('N/A')),
             'email' => $user->email,
-            'joined_date' => $user->created_at ? $user->created_at->format('d M, Y') : date('d M, Y'),
-            'status' => strtoupper($user->status ?? 'ACTIVE'),
+            'joined_date' => $user->created_at ? $user->created_at->translatedFormat('d M, Y') : now()->translatedFormat('d M, Y'),
+            'status' => __(ucfirst(strtolower($user->status ?? 'active'))),
         ];
 
-        return view('tenant.profile.index', compact('user', 'tenant', 'stats'));
+        return view('tenant.profile.index', compact('user', 'tenant', 'stats', 'currencySymbol'));
     }
 
     /**

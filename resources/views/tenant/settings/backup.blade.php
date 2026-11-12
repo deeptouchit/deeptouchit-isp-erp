@@ -1,6 +1,6 @@
 @extends('tenant.layouts.app')
 
-@section('title', 'Database Backup & Maintenance - ' . ($tenant->company_name ?? $tenant->name))
+@section('title', __('Database Backup & Maintenance') . ' - ' . ($tenant->company_name ?? $tenant->name))
 
 @push('styles')
     {{-- Page-specific CSS --}}
@@ -15,20 +15,20 @@
             <div class="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 border border-purple-100 flex items-center justify-center text-sm shadow-2xs flex-shrink-0">
                 <i class="fas fa-database"></i>
             </div>
-            <h1 class="text-sm font-bold text-slate-800 tracking-tight">Database Backup &amp; Maintenance</h1>
+            <h1 class="text-sm font-bold text-slate-800 tracking-tight">{{ __('Database Backup & Maintenance') }}</h1>
         </div>
         <div class="flex items-center gap-2">
             <a href="{{ route('tenant.settings.backup.print') }}" target="_blank" class="h-[34px] px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200/80 transition flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-print text-slate-500 text-xs"></i>
-                <span>Print List</span>
+                <span>{{ __('Print List') }}</span>
             </a>
             <a href="{{ route('tenant.settings.backup.export') }}" class="h-[34px] px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200/80 transition flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-file-csv text-emerald-600 text-xs"></i>
-                <span>Export CSV</span>
+                <span>{{ __('Export CSV') }}</span>
             </a>
             <button type="button" @click="openSnapshotModal()" class="h-[34px] px-3.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-xs font-semibold shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-plus text-xs"></i>
-                <span>Create Backup</span>
+                <span>{{ __('Create Backup') }}</span>
             </button>
         </div>
     </div>
@@ -38,9 +38,9 @@
         {{-- Card 1: Total Backups --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Total Backups</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Total Backups') }}</span>
                 <span class="text-[13px] font-bold font-mono text-indigo-700 leading-tight block truncate">
-                    {{ $stats['total_snapshots'] }} Files
+                    {{ __(':count Files', ['count' => $stats['total_snapshots']]) }}
                 </span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border border-indigo-200 bg-indigo-50 text-indigo-600 flex items-center justify-center flex-shrink-0">
@@ -51,7 +51,7 @@
         {{-- Card 2: Backup Size --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Backup Size</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Backup Size') }}</span>
                 <span class="text-[13px] font-bold font-mono text-purple-700 leading-tight block truncate">
                     {{ $stats['storage_consumed'] }}
                 </span>
@@ -64,7 +64,7 @@
         {{-- Card 3: Last Backup --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Last Backup</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Last Backup') }}</span>
                 <span class="text-[13px] font-bold font-mono text-cyan-700 leading-tight block truncate">
                     {{ $stats['last_backup'] }}
                 </span>
@@ -77,7 +77,7 @@
         {{-- Card 4: Health Status --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Health Status</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Health Status') }}</span>
                 <span class="text-[13px] font-bold font-mono text-emerald-700 leading-tight block truncate">
                     {{ $stats['health_rate'] }}
                 </span>
@@ -90,7 +90,7 @@
         {{-- Card 5: Storage Location --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Storage</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Storage') }}</span>
                 <span class="text-[13px] font-bold font-mono text-blue-700 leading-tight block truncate">
                     {{ $stats['cloud_sync'] }}
                 </span>
@@ -103,7 +103,7 @@
         {{-- Card 6: Protected Tables --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Protected Tables</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Protected Tables') }}</span>
                 <span class="text-[13px] font-bold font-mono text-amber-600 leading-tight block truncate">
                     {{ $stats['tables_count'] }}
                 </span>
@@ -120,24 +120,24 @@
             <div class="w-6 h-6 rounded-md bg-amber-50 text-amber-600 border border-amber-100 flex items-center justify-center text-xs flex-shrink-0">
                 <i class="fas fa-wrench"></i>
             </div>
-            <h4 class="text-xs font-bold text-slate-800">System Maintenance &amp; Database Optimization</h4>
+            <h4 class="text-xs font-bold text-slate-800">{{ __('System Maintenance & Database Optimization') }}</h4>
         </div>
         <div class="flex flex-wrap items-center gap-1.5">
-            <button type="button" @click="runMaintenanceTool('optimize_db', 'Optimize Database', 'Clean and optimize database tables for enhanced performance?')" class="h-[34px] px-3 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200 transition flex items-center gap-1.5 cursor-pointer">
+            <button type="button" @click="runMaintenanceTool('optimize_db')" class="h-[34px] px-3 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200 transition flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-bolt text-amber-500 text-xs"></i>
-                <span>Optimize Database</span>
+                <span>{{ __('Optimize Database') }}</span>
             </button>
-            <button type="button" @click="runMaintenanceTool('clear_cache', 'Clear System Cache', 'Clear all compiled application and blade template cache?')" class="h-[34px] px-3 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200 transition flex items-center gap-1.5 cursor-pointer">
+            <button type="button" @click="runMaintenanceTool('clear_cache')" class="h-[34px] px-3 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200 transition flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-broom text-blue-500 text-xs"></i>
-                <span>Clear Cache</span>
+                <span>{{ __('Clear Cache') }}</span>
             </button>
-            <button type="button" @click="runMaintenanceTool('cleanup_logs', 'Clean Old Logs', 'Delete system activity audit logs older than 90 days to free storage?')" class="h-[34px] px-3 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200 transition flex items-center gap-1.5 cursor-pointer">
+            <button type="button" @click="runMaintenanceTool('cleanup_logs')" class="h-[34px] px-3 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200 transition flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-trash-can text-rose-500 text-xs"></i>
-                <span>Clean Old Logs</span>
+                <span>{{ __('Clean Old Logs') }}</span>
             </button>
-            <button type="button" @click="runMaintenanceTool('sync_cloud', 'Check Storage', 'Check available backup filesystem space on the server?')" class="h-[34px] px-3 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200 transition flex items-center gap-1.5 cursor-pointer">
+            <button type="button" @click="runMaintenanceTool('sync_cloud')" class="h-[34px] px-3 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200 transition flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-hard-drive text-purple-500 text-xs"></i>
-                <span>Check Storage</span>
+                <span>{{ __('Check Storage') }}</span>
             </button>
         </div>
     </div>
@@ -161,7 +161,7 @@
                            name="search" 
                            x-model="searchQuery" 
                            value="{{ $search }}" 
-                           placeholder="Search filename, checksum, or notes..." 
+                           placeholder="{{ __('Search filename, checksum, or notes...') }}" 
                            class="h-[34px] w-full pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                     <button type="button" 
                             x-show="searchQuery && searchQuery.length > 0" 
@@ -173,28 +173,28 @@
 
                 {{-- Primary Filter: Type --}}
                 <select name="type" class="h-[34px] w-full md:w-48 bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 focus:bg-white focus:border-cyan-500 focus:outline-hidden font-medium cursor-pointer transition">
-                    <option value="all" {{ $typeFilter === 'all' || !$typeFilter ? 'selected' : '' }}>All Backup Types</option>
-                    <option value="full_database" {{ $typeFilter === 'full_database' ? 'selected' : '' }}>Full Database Backup</option>
-                    <option value="subscribers_only" {{ $typeFilter === 'subscribers_only' ? 'selected' : '' }}>Customers &amp; PPPoE</option>
-                    <option value="mikrotik_rsc" {{ $typeFilter === 'mikrotik_rsc' ? 'selected' : '' }}>Router Config Scripts</option>
-                    <option value="billing_ledger" {{ $typeFilter === 'billing_ledger' ? 'selected' : '' }}>Billing &amp; Ledger</option>
-                    <option value="system_config" {{ $typeFilter === 'system_config' ? 'selected' : '' }}>System Configuration</option>
+                    <option value="all" {{ $typeFilter === 'all' || !$typeFilter ? 'selected' : '' }}>{{ __('All Backup Types') }}</option>
+                    <option value="full_database" {{ $typeFilter === 'full_database' ? 'selected' : '' }}>{{ __('Full Database Backup') }}</option>
+                    <option value="subscribers_only" {{ $typeFilter === 'subscribers_only' ? 'selected' : '' }}>{{ __('Customers & PPPoE') }}</option>
+                    <option value="mikrotik_rsc" {{ $typeFilter === 'mikrotik_rsc' ? 'selected' : '' }}>{{ __('Router Config Scripts') }}</option>
+                    <option value="billing_ledger" {{ $typeFilter === 'billing_ledger' ? 'selected' : '' }}>{{ __('Billing & Ledger') }}</option>
+                    <option value="system_config" {{ $typeFilter === 'system_config' ? 'selected' : '' }}>{{ __('System Configuration') }}</option>
                 </select>
 
                 {{-- Primary Filter: Status --}}
                 <select name="status" class="h-[34px] w-full md:w-36 bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 focus:bg-white focus:border-cyan-500 focus:outline-hidden font-medium cursor-pointer transition">
-                    <option value="all">All Statuses</option>
-                    <option value="verified" {{ $statusFilter === 'verified' ? 'selected' : '' }}>Verified (Healthy)</option>
-                    <option value="completed" {{ $statusFilter === 'completed' ? 'selected' : '' }}>Completed</option>
-                    <option value="failed" {{ $statusFilter === 'failed' ? 'selected' : '' }}>Failed</option>
+                    <option value="all">{{ __('All Statuses') }}</option>
+                    <option value="verified" {{ $statusFilter === 'verified' ? 'selected' : '' }}>{{ __('Verified (Healthy)') }}</option>
+                    <option value="completed" {{ $statusFilter === 'completed' ? 'selected' : '' }}>{{ __('Completed') }}</option>
+                    <option value="failed" {{ $statusFilter === 'failed' ? 'selected' : '' }}>{{ __('Failed') }}</option>
                 </select>
 
                 {{-- Pagination Selector (per_page) --}}
                 <select name="per_page" class="h-[34px] w-full md:w-28 flex-shrink-0 bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 focus:bg-white focus:border-cyan-500 focus:outline-hidden font-mono cursor-pointer transition">
-                    <option value="15" {{ $perPage == 15 ? 'selected' : '' }}>15 / page</option>
-                    <option value="20" {{ $perPage == 20 ? 'selected' : '' }}>20 / page</option>
-                    <option value="50" {{ $perPage == 50 ? 'selected' : '' }}>50 / page</option>
-                    <option value="100" {{ $perPage == 100 ? 'selected' : '' }}>100 / page</option>
+                    <option value="15" {{ $perPage == 15 ? 'selected' : '' }}>{{ __(':count / page', ['count' => 15]) }}</option>
+                    <option value="20" {{ $perPage == 20 ? 'selected' : '' }}>{{ __(':count / page', ['count' => 20]) }}</option>
+                    <option value="50" {{ $perPage == 50 ? 'selected' : '' }}>{{ __(':count / page', ['count' => 50]) }}</option>
+                    <option value="100" {{ $perPage == 100 ? 'selected' : '' }}>{{ __(':count / page', ['count' => 100]) }}</option>
                 </select>
 
                 {{-- More Filters Toggle Accordion Button --}}
@@ -203,7 +203,7 @@
                         class="h-[34px] px-2.5 py-0 bg-slate-50 hover:bg-slate-100 text-slate-700 font-medium text-xs rounded-lg border border-slate-200 transition flex items-center justify-center gap-1.5 cursor-pointer flex-shrink-0"
                         :class="showMoreFilters ? 'border-cyan-400 bg-cyan-50/50 text-cyan-800' : ''">
                     <i class="fas fa-sliders text-[11px] text-slate-500"></i>
-                    <span>More</span>
+                    <span>{{ __('More') }}</span>
                     @if($activeMoreCount > 0)
                         <span class="w-4 h-4 rounded-full bg-cyan-600 text-white text-[9px] font-bold flex items-center justify-center">{{ $activeMoreCount }}</span>
                     @endif
@@ -214,11 +214,11 @@
                 <div class="flex items-center gap-1.5 flex-shrink-0 md:ml-auto">
                     <button type="submit" class="h-[34px] bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-0 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer">
                         <i class="fas fa-filter text-[10px]"></i>
-                        <span>Filter</span>
+                        <span>{{ __('Filter') }}</span>
                     </button>
-                    <a href="{{ route('tenant.settings.backup') }}" class="h-[34px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-0 px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer" title="Reset All Filters">
+                    <a href="{{ route('tenant.settings.backup') }}" class="h-[34px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-0 px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer" title="{{ __('Reset All Filters') }}">
                         <i class="fas fa-rotate-left text-[10px]"></i>
-                        <span>Reset</span>
+                        <span>{{ __('Reset') }}</span>
                     </a>
                 </div>
             </div>
@@ -233,11 +233,11 @@
                 
                 {{-- Trigger Source Filter --}}
                 <div class="w-full sm:w-auto">
-                    <label class="block text-[9.5px] uppercase font-bold text-slate-400 mb-0.5">Trigger Source</label>
+                    <label class="block text-[9.5px] uppercase font-bold text-slate-400 mb-0.5">{{ __('Trigger Source') }}</label>
                     <select name="trigger" class="h-[34px] w-full sm:w-48 bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 focus:bg-white focus:border-cyan-500 focus:outline-hidden font-medium cursor-pointer transition">
-                        <option value="all" {{ $triggerFilter === 'all' || !$triggerFilter ? 'selected' : '' }}>All Sources</option>
-                        <option value="manual_admin" {{ $triggerFilter === 'manual_admin' ? 'selected' : '' }}>Manual Admin Snapshot</option>
-                        <option value="scheduled_cron" {{ $triggerFilter === 'scheduled_cron' ? 'selected' : '' }}>Automated System Cron</option>
+                        <option value="all" {{ $triggerFilter === 'all' || !$triggerFilter ? 'selected' : '' }}>{{ __('All Sources') }}</option>
+                        <option value="manual_admin" {{ $triggerFilter === 'manual_admin' ? 'selected' : '' }}>{{ __('Manual Admin Snapshot') }}</option>
+                        <option value="scheduled_cron" {{ $triggerFilter === 'scheduled_cron' ? 'selected' : '' }}>{{ __('Automated System Cron') }}</option>
                     </select>
                 </div>
             </div>
@@ -251,13 +251,13 @@
                 <thead>
                     <tr>
                         <th class="w-10 text-center font-semibold">#</th>
-                        <th class="text-center font-semibold">Backup File</th>
-                        <th class="text-center font-semibold">Backup Type</th>
-                        <th class="text-center font-semibold">File Size</th>
-                        <th class="text-center font-semibold">Records</th>
-                        <th class="text-center font-semibold">Status</th>
-                        <th class="text-center font-semibold">Created At</th>
-                        <th class="w-12 text-center font-semibold no-sort">Action</th>
+                        <th class="text-center font-semibold">{{ __('Backup File') }}</th>
+                        <th class="text-center font-semibold">{{ __('Backup Type') }}</th>
+                        <th class="text-center font-semibold">{{ __('File Size') }}</th>
+                        <th class="text-center font-semibold">{{ __('Records') }}</th>
+                        <th class="text-center font-semibold">{{ __('Status') }}</th>
+                        <th class="text-center font-semibold">{{ __('Created At') }}</th>
+                        <th class="w-12 text-center font-semibold no-sort">{{ __('Action') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -288,7 +288,7 @@
                             <td class="text-left">
                                 <span class="px-2 py-0.5 rounded text-[10.5px] font-semibold border inline-flex items-center gap-1 whitespace-nowrap {{ $typeBadge['class'] }}">
                                     <i class="fas {{ $typeBadge['icon'] }} text-[9px]"></i>
-                                    <span>{{ $typeBadge['label'] }}</span>
+                                    <span>{{ __($typeBadge['label']) }}</span>
                                 </span>
                             </td>
 
@@ -299,20 +299,20 @@
 
                             {{-- 5. Total Records (text-right font-mono) --}}
                             <td class="text-right font-mono text-slate-700 text-xs whitespace-nowrap">
-                                {{ number_format($b->records_count) }} rows
+                                {{ __(':count rows', ['count' => number_format($b->records_count)]) }}
                             </td>
 
                             {{-- 6. Status (text-center badge) --}}
                             <td class="text-center">
                                 <span class="px-2 py-0.5 rounded text-[10.5px] font-semibold border inline-flex items-center gap-1 whitespace-nowrap {{ $statusBadge['class'] }}">
                                     <i class="fas {{ $statusBadge['icon'] }} text-[9px]"></i>
-                                    <span>{{ $statusBadge['label'] }}</span>
+                                    <span>{{ __($statusBadge['label']) }}</span>
                                 </span>
                             </td>
 
                             {{-- 7. Created At (text-center font-mono) --}}
                             <td class="text-center font-mono text-slate-500 text-[11px] whitespace-nowrap">
-                                {{ $b->created_at ? $b->created_at->format('d-M-Y h:i A') : 'N/A' }}
+                                {{ $b->created_at ? $b->created_at->translatedFormat('d-M-Y h:i A') : __('N/A') }}
                             </td>
 
                             {{-- 8. Action 3-Dot Menu (AGENTS.md Rule 2.E) --}}
@@ -320,7 +320,7 @@
                                 <button type="button" 
                                         @click="toggleMenu({{ json_encode($b) }}, $event)"
                                         class="w-7 h-7 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition flex items-center justify-center mx-auto cursor-pointer"
-                                        title="Actions">
+                                        title="{{ __('Actions') }}">
                                     <i class="fas fa-ellipsis-v text-[10px]"></i>
                                 </button>
                             </td>
@@ -332,11 +332,11 @@
                                     <div class="w-10 h-10 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto text-sm">
                                         <i class="fas fa-database"></i>
                                     </div>
-                                    <p class="text-xs font-semibold text-slate-700">No Backup Snapshots Found</p>
-                                    <p class="text-[11px] text-slate-400 leading-tight">Create your first database snapshot to ensure data protection and disaster recovery readiness.</p>
+                                    <p class="text-xs font-semibold text-slate-700">{{ __('No Backup Snapshots Found') }}</p>
+                                    <p class="text-[11px] text-slate-400 leading-tight">{{ __('Create your first database snapshot to ensure data protection and disaster recovery readiness.') }}</p>
                                     <button type="button" @click="openSnapshotModal()" class="mt-2 h-[30px] px-3 bg-cyan-50 hover:bg-cyan-100 text-cyan-700 rounded-lg text-xs font-semibold border border-cyan-200 transition inline-flex items-center gap-1.5 cursor-pointer">
                                         <i class="fas fa-plus text-[10px]"></i>
-                                        <span>Create Backup Now</span>
+                                        <span>{{ __('Create Backup Now') }}</span>
                                     </button>
                                 </div>
                             </td>
@@ -350,7 +350,7 @@
         @if($backups->hasPages())
             <div class="px-4 py-2.5 border-t border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-2">
                 <span class="text-xs text-slate-500 font-medium">
-                    Showing {{ $backups->firstItem() }} to {{ $backups->lastItem() }} of {{ $backups->total() }} backup snapshots
+                    {{ __('Showing :from to :to of :total backup snapshots', ['from' => $backups->firstItem(), 'to' => $backups->lastItem(), 'total' => $backups->total()]) }}
                 </span>
                 <div>
                     {{ $backups->links() }}
@@ -370,15 +370,15 @@
         <div class="py-1">
             <button type="button" @click="viewSnapshotDetails(activeMenu); activeMenu = null" class="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition cursor-pointer">
                 <i class="fas fa-circle-info text-slate-400 w-3.5"></i>
-                <span>View Details</span>
+                <span>{{ __('View Details') }}</span>
             </button>
             <button type="button" @click="verifyChecksum(activeMenu); activeMenu = null" class="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition cursor-pointer">
                 <i class="fas fa-shield-check text-emerald-600 w-3.5"></i>
-                <span>Check File Health</span>
+                <span>{{ __('Check File Health') }}</span>
             </button>
             <a :href="`/admin/settings/backup/${activeMenu ? activeMenu.id : ''}/download`" @click="activeMenu = null" class="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition cursor-pointer">
                 <i class="fas fa-download text-blue-600 w-3.5"></i>
-                <span>Download Backup</span>
+                <span>{{ __('Download Backup') }}</span>
             </a>
         </div>
 
@@ -386,11 +386,11 @@
         <div class="py-1">
             <button type="button" @click="restoreSnapshotAction(activeMenu); activeMenu = null" class="w-full text-left px-3 py-1.5 hover:bg-amber-50 text-amber-700 flex items-center gap-2 transition cursor-pointer">
                 <i class="fas fa-rotate-left text-amber-600 w-3.5"></i>
-                <span>Restore Backup</span>
+                <span>{{ __('Restore Backup') }}</span>
             </button>
             <button type="button" @click="deleteSnapshotAction(activeMenu); activeMenu = null" class="w-full text-left px-3 py-1.5 hover:bg-rose-50 text-rose-600 flex items-center gap-2 transition cursor-pointer">
                 <i class="fas fa-trash-can text-rose-500 w-3.5"></i>
-                <span>Delete Backup</span>
+                <span>{{ __('Delete Backup') }}</span>
             </button>
         </div>
     </div>
@@ -410,7 +410,7 @@
                     <div class="w-7 h-7 rounded-lg bg-cyan-50 text-cyan-600 border border-cyan-100 flex items-center justify-center text-xs flex-shrink-0">
                         <i class="fas fa-plus"></i>
                     </div>
-                    <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Create Database Snapshot</h3>
+                    <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">{{ __('Create Database Snapshot') }}</h3>
                 </div>
                 <button type="button" @click="showSnapshotModal = false" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center cursor-pointer">
                     <i class="fas fa-times text-xs"></i>
@@ -422,35 +422,35 @@
                 @csrf
 
                 <div>
-                    <label class="block text-[10.5px] font-bold uppercase text-slate-600 mb-1">Backup Type <span class="text-rose-500">*</span></label>
+                    <label class="block text-[10.5px] font-bold uppercase text-slate-600 mb-1">{{ __('Backup Type') }} <span class="text-rose-500">*</span></label>
                     <select name="backup_type" required class="h-[34px] w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 focus:bg-white focus:border-cyan-500 focus:outline-hidden font-medium cursor-pointer transition">
-                        <option value="full_database">1. Full Backup (All Database &amp; Settings) - Recommended</option>
-                        <option value="subscribers_only">2. Customers &amp; PPPoE Accounts Only</option>
-                        <option value="mikrotik_rsc">3. Router Configuration &amp; NAS Scripts</option>
-                        <option value="billing_ledger">4. Billing Ledger, Invoices &amp; Payments</option>
-                        <option value="system_config">5. System Settings, Roles &amp; Permissions</option>
+                        <option value="full_database">{{ __('1. Full Backup (All Database & Settings) - Recommended') }}</option>
+                        <option value="subscribers_only">{{ __('2. Customers & PPPoE Accounts Only') }}</option>
+                        <option value="mikrotik_rsc">{{ __('3. Router Configuration & NAS Scripts') }}</option>
+                        <option value="billing_ledger">{{ __('4. Billing Ledger, Invoices & Payments') }}</option>
+                        <option value="system_config">{{ __('5. System Settings, Roles & Permissions') }}</option>
                     </select>
                 </div>
 
                 <div>
-                    <label class="block text-[10.5px] font-bold uppercase text-slate-600 mb-1">Notes / Snapshot Label (Optional)</label>
-                    <input type="text" name="notes" placeholder="e.g. Before month-end maintenance, Routine backup" class="h-[34px] w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
+                    <label class="block text-[10.5px] font-bold uppercase text-slate-600 mb-1">{{ __('Notes / Snapshot Label (Optional)') }}</label>
+                    <input type="text" name="notes" placeholder="{{ __('e.g. Before month-end maintenance, Routine backup') }}" class="h-[34px] w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                 </div>
 
                 <div class="p-3 bg-cyan-50/60 rounded-lg border border-cyan-100 flex items-start gap-2 text-cyan-900 text-[11px] leading-relaxed">
                     <i class="fas fa-shield-check text-cyan-600 mt-0.5"></i>
-                    <span>Database snapshot will be securely dumped, compressed via gzip, MD5 checksum verified, and saved to your protected server storage.</span>
+                    <span>{{ __('Database snapshot will be securely dumped, compressed via gzip, MD5 checksum verified, and saved to your protected server storage.') }}</span>
                 </div>
             </form>
 
             {{-- Modal Footer --}}
             <div class="px-4 py-2.5 bg-slate-50/80 border-t border-slate-200 flex items-center justify-between flex-shrink-0">
                 <button type="button" @click="showSnapshotModal = false" class="h-[34px] border border-slate-300 hover:bg-slate-100 text-slate-700 font-semibold text-xs px-3.5 rounded-lg transition cursor-pointer">
-                    Cancel
+                    {{ __('Cancel') }}
                 </button>
                 <button type="submit" form="createSnapshotForm" class="h-[34px] bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs px-4 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                     <i class="fas fa-check text-xs"></i>
-                    <span>Create Snapshot Now</span>
+                    <span>{{ __('Create Snapshot Now') }}</span>
                 </button>
             </div>
         </div>
@@ -469,7 +469,7 @@
                     <div class="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center justify-center text-xs flex-shrink-0">
                         <i class="fas fa-circle-info"></i>
                     </div>
-                    <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Backup Snapshot Details</h3>
+                    <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">{{ __('Backup Snapshot Details') }}</h3>
                 </div>
                 <button type="button" @click="showDetailsModal = false" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center cursor-pointer">
                     <i class="fas fa-times text-xs"></i>
@@ -480,36 +480,36 @@
             <div class="p-5 space-y-3 text-xs" x-show="selectedSnapshot">
                 <div class="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-2">
                     <div class="flex items-center justify-between">
-                        <span class="text-[10px] uppercase font-bold text-slate-500">Filename</span>
+                        <span class="text-[10px] uppercase font-bold text-slate-500">{{ __('Filename') }}</span>
                         <span class="font-mono text-xs text-slate-800 font-bold truncate max-w-[260px]" x-text="selectedSnapshot?.filename"></span>
                     </div>
                     <div class="flex items-center justify-between">
-                        <span class="text-[10px] uppercase font-bold text-slate-500">File Size</span>
+                        <span class="text-[10px] uppercase font-bold text-slate-500">{{ __('File Size') }}</span>
                         <span class="font-mono text-xs text-slate-800 font-bold" x-text="selectedSnapshot?.formatted_size"></span>
                     </div>
                     <div class="flex items-center justify-between">
-                        <span class="text-[10px] uppercase font-bold text-slate-500">Total Tables</span>
-                        <span class="font-mono text-xs text-indigo-700 font-bold" x-text="`${selectedSnapshot?.tables_count} Tables`"></span>
+                        <span class="text-[10px] uppercase font-bold text-slate-500">{{ __('Total Tables') }}</span>
+                        <span class="font-mono text-xs text-indigo-700 font-bold" x-text="i18n.tablesCount.replace(':count', selectedSnapshot?.tables_count ?? 0)"></span>
                     </div>
                     <div class="flex items-center justify-between">
-                        <span class="text-[10px] uppercase font-bold text-slate-500">Total Records</span>
-                        <span class="font-mono text-xs text-emerald-700 font-bold" x-text="`${selectedSnapshot?.records_count} Rows`"></span>
+                        <span class="text-[10px] uppercase font-bold text-slate-500">{{ __('Total Records') }}</span>
+                        <span class="font-mono text-xs text-emerald-700 font-bold" x-text="i18n.rowsCount.replace(':count', selectedSnapshot?.records_count ?? 0)"></span>
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-[10px] uppercase font-bold text-slate-500 mb-1">File Checksum (MD5)</label>
+                    <label class="block text-[10px] uppercase font-bold text-slate-500 mb-1">{{ __('File Checksum (MD5)') }}</label>
                     <div class="p-2.5 bg-slate-900 text-cyan-300 font-mono text-[11px] rounded-lg border border-slate-800 flex items-center justify-between">
-                        <span class="truncate" x-text="selectedSnapshot?.checksum_md5 || 'N/A'"></span>
-                        <button type="button" @click="copyChecksum(selectedSnapshot?.checksum_md5)" class="text-slate-400 hover:text-cyan-300 transition ml-2 cursor-pointer" title="Copy Checksum">
+                        <span class="truncate" x-text="selectedSnapshot?.checksum_md5 || i18n.na"></span>
+                        <button type="button" @click="copyChecksum(selectedSnapshot?.checksum_md5)" class="text-slate-400 hover:text-cyan-300 transition ml-2 cursor-pointer" title="{{ __('Copy Checksum') }}">
                             <i class="fas fa-copy"></i>
                         </button>
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-[10px] uppercase font-bold text-slate-500 mb-1">Notes / Summary</label>
-                    <p class="text-slate-600 text-[11.5px] p-2.5 bg-slate-50 rounded-lg border border-slate-200/80 leading-relaxed" x-text="selectedSnapshot?.log_summary || 'Backup created successfully.'"></p>
+                    <label class="block text-[10px] uppercase font-bold text-slate-500 mb-1">{{ __('Notes / Summary') }}</label>
+                    <p class="text-slate-600 text-[11.5px] p-2.5 bg-slate-50 rounded-lg border border-slate-200/80 leading-relaxed" x-text="selectedSnapshot?.log_summary || i18n.defaultSummary"></p>
                 </div>
             </div>
 
@@ -517,10 +517,10 @@
             <div class="px-4 py-2.5 bg-slate-50/80 border-t border-slate-200 flex items-center justify-between flex-shrink-0">
                 <a :href="`/admin/settings/backup/${selectedSnapshot ? selectedSnapshot.id : ''}/download`" class="h-[34px] bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-semibold px-3.5 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                     <i class="fas fa-download text-xs"></i>
-                    <span>Download Archive</span>
+                    <span>{{ __('Download Archive') }}</span>
                 </a>
                 <button type="button" @click="showDetailsModal = false" class="h-[34px] border border-slate-300 hover:bg-slate-100 text-slate-700 font-semibold text-xs px-4 rounded-lg transition cursor-pointer">
-                    Close
+                    {{ __('Close') }}
                 </button>
             </div>
         </div>
@@ -532,7 +532,58 @@
 @push('scripts')
 <script>
 function backupManager() {
+    const i18n = {
+        tablesCount: @js(__(':count Tables')),
+        rowsCount: @js(__(':count Rows')),
+        na: @js(__('N/A')),
+        defaultSummary: @js(__('Backup created successfully.')),
+        checkingIntegrityTitle: @js(__('Checking File Integrity...')),
+        checkingIntegrityText: @js(__("Checking gzip archive and MD5 checksum for ':filename'...")),
+        fileHealthOk: @js(__('File Health OK')),
+        statusLabel: @js(__('Status')),
+        healthyIntact: @js(__('Healthy & Intact')),
+        tablesLabel: @js(__('Tables')),
+        recordsLabel: @js(__('Records')),
+        checksumLabel: @js(__('Checksum')),
+        checkFailed: @js(__('Check Failed')),
+        checkFailedDefault: @js(__('Backup file check failed.')),
+        errorTitle: @js(__('Error')),
+        unableCheck: @js(__('Unable to check backup file.')),
+        checksumCopied: @js(__('Checksum copied to clipboard!')),
+        restoreTitle: @js(__('Restore Database?')),
+        restoreHtml: @js(__("Are you sure you want to test and restore from backup ':filename'?")),
+        yesRestore: @js(__('Yes, Restore')),
+        deleteTitle: @js(__('Delete Backup?')),
+        deleteText: @js(__("Are you sure you want to delete ':filename'? This cannot be undone.")),
+        yesDelete: @js(__('Yes, Delete')),
+        cancelButton: @js(__('Cancel')),
+        yesRunNow: @js(__('Yes, Run Now')),
+        runningTask: @js(__('Running Task...')),
+        completedTitle: @js(__('Completed')),
+        failedTask: @js(__('Failed to complete task.')),
+    };
+
+    const maintenanceConfirmations = {
+        optimize_db: {
+            title: @js(__('Optimize Database')),
+            message: @js(__('Clean and optimize database tables for enhanced performance?')),
+        },
+        clear_cache: {
+            title: @js(__('Clear System Cache')),
+            message: @js(__('Clear all compiled application and blade template cache?')),
+        },
+        cleanup_logs: {
+            title: @js(__('Clean Old Logs')),
+            message: @js(__('Delete system activity audit logs older than 90 days to free storage?')),
+        },
+        sync_cloud: {
+            title: @js(__('Check Storage')),
+            message: @js(__('Check available backup filesystem space on the server?')),
+        },
+    };
+
     return {
+        i18n,
         activeMenu: null,
         menuPos: { top: '0px', bottom: 'auto', right: '0px', left: 'auto' },
 
@@ -578,8 +629,8 @@ function backupManager() {
 
         async verifyChecksum(snapshot) {
             Swal.fire({
-                title: 'Checking File Integrity...',
-                text: `Checking gzip archive and MD5 checksum for '${snapshot.filename}'...`,
+                title: i18n.checkingIntegrityTitle,
+                text: i18n.checkingIntegrityText.replace(':filename', snapshot.filename),
                 allowOutsideClick: false,
                 didOpen: () => {
                     Swal.showLoading();
@@ -598,12 +649,12 @@ function backupManager() {
                 if (data.success) {
                     Swal.fire({
                         icon: 'success',
-                        title: 'File Health OK',
+                        title: i18n.fileHealthOk,
                         html: `<div class="text-left text-xs space-y-1.5 p-2 bg-slate-50 rounded border border-slate-200">
-                                <p><strong>Status:</strong> <span class="text-emerald-700 font-bold">Healthy &amp; Intact</span></p>
-                                <p><strong>Tables:</strong> ${data.tables} Tables</p>
-                                <p><strong>Records:</strong> ${data.records} Rows</p>
-                                <p><strong>Checksum:</strong> <code class="bg-slate-200 px-1 py-0.5 rounded font-mono text-[10.5px]">${data.checksum}</code></p>
+                                <p><strong>${i18n.statusLabel}:</strong> <span class="text-emerald-700 font-bold">${i18n.healthyIntact}</span></p>
+                                <p><strong>${i18n.tablesLabel}:</strong> ${i18n.tablesCount.replace(':count', data.tables)}</p>
+                                <p><strong>${i18n.recordsLabel}:</strong> ${i18n.rowsCount.replace(':count', data.records)}</p>
+                                <p><strong>${i18n.checksumLabel}:</strong> <code class="bg-slate-200 px-1 py-0.5 rounded font-mono text-[10.5px]">${data.checksum}</code></p>
                                </div>`,
                         confirmButtonColor: '#0891b2'
                     }).then(() => {
@@ -612,16 +663,16 @@ function backupManager() {
                 } else {
                     Swal.fire({
                         icon: 'error',
-                        title: 'Check Failed',
-                        text: data.message || 'Backup file check failed.',
+                        title: i18n.checkFailed,
+                        text: data.message || i18n.checkFailedDefault,
                         confirmButtonColor: '#0891b2'
                     });
                 }
             } catch (err) {
                 Swal.fire({
                     icon: 'error',
-                    title: 'Error',
-                    text: 'Unable to check backup file.',
+                    title: i18n.errorTitle,
+                    text: i18n.unableCheck,
                     confirmButtonColor: '#0891b2'
                 });
             }
@@ -634,7 +685,7 @@ function backupManager() {
                     toast: true,
                     position: 'top-end',
                     icon: 'success',
-                    title: 'Checksum copied to clipboard!',
+                    title: i18n.checksumCopied,
                     showConfirmButton: false,
                     timer: 2000
                 });
@@ -643,13 +694,14 @@ function backupManager() {
 
         restoreSnapshotAction(snapshot) {
             Swal.fire({
-                title: 'Restore Database?',
-                html: `Are you sure you want to test and restore from backup <strong>'${snapshot.filename}'</strong>?`,
+                title: i18n.restoreTitle,
+                html: i18n.restoreHtml.replace(':filename', `<strong>${snapshot.filename}</strong>`),
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#f59e0b',
                 cancelButtonColor: '#64748b',
-                confirmButtonText: 'Yes, Restore'
+                confirmButtonText: i18n.yesRestore,
+                cancelButtonText: i18n.cancelButton
             }).then((result) => {
                 if (result.isConfirmed) {
                     const form = document.createElement('form');
@@ -664,13 +716,14 @@ function backupManager() {
 
         deleteSnapshotAction(snapshot) {
             Swal.fire({
-                title: 'Delete Backup?',
-                text: `Are you sure you want to delete '${snapshot.filename}'? This cannot be undone.`,
+                title: i18n.deleteTitle,
+                text: i18n.deleteText.replace(':filename', snapshot.filename),
                 icon: 'error',
                 showCancelButton: true,
                 confirmButtonColor: '#e11d48',
                 cancelButtonColor: '#64748b',
-                confirmButtonText: 'Yes, Delete'
+                confirmButtonText: i18n.yesDelete,
+                cancelButtonText: i18n.cancelButton
             }).then((result) => {
                 if (result.isConfirmed) {
                     const form = document.createElement('form');
@@ -683,19 +736,21 @@ function backupManager() {
             });
         },
 
-        runMaintenanceTool(action, title, message) {
+        runMaintenanceTool(action, title = null, message = null) {
+            const config = maintenanceConfirmations[action] || {};
             Swal.fire({
-                title: title,
-                text: message,
+                title: title || config.title || '',
+                text: message || config.message || '',
                 icon: 'question',
                 showCancelButton: true,
                 confirmButtonColor: '#0891b2',
                 cancelButtonColor: '#64748b',
-                confirmButtonText: 'Yes, Run Now'
+                confirmButtonText: i18n.yesRunNow,
+                cancelButtonText: i18n.cancelButton
             }).then(async (result) => {
                 if (result.isConfirmed) {
                     Swal.fire({
-                        title: 'Running Task...',
+                        title: i18n.runningTask,
                         allowOutsideClick: false,
                         didOpen: () => {
                             Swal.showLoading();
@@ -714,7 +769,7 @@ function backupManager() {
                         if (data.success) {
                             Swal.fire({
                                 icon: 'success',
-                                title: 'Completed',
+                                title: i18n.completedTitle,
                                 text: data.message,
                                 confirmButtonColor: '#0891b2'
                             });
@@ -722,8 +777,8 @@ function backupManager() {
                     } catch (e) {
                         Swal.fire({
                             icon: 'error',
-                            title: 'Error',
-                            text: 'Failed to complete task.',
+                            title: i18n.errorTitle,
+                            text: i18n.failedTask,
                             confirmButtonColor: '#0891b2'
                         });
                     }

@@ -23,7 +23,7 @@ class TenantSmsGatewayController extends Controller
         $tenant = $tenantId ? Tenant::find($tenantId) : (auth()->user()?->tenant ?? Tenant::first());
 
         if (!$tenant) {
-            abort(403, 'Tenant context not found. Please log in.');
+            abort(403, __('Tenant context not found. Please log in.'));
         }
 
         return $tenant;
@@ -36,6 +36,7 @@ class TenantSmsGatewayController extends Controller
     {
         $tenant = $this->getTenant();
         $tenantId = $tenant->id;
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
 
         $tab = $request->get('tab', 'templates'); // templates, gateways, logs
         $search = trim($request->get('search', ''));
@@ -77,7 +78,7 @@ class TenantSmsGatewayController extends Controller
         $deliveryRate = $totalSmsCount > 0 ? round(($deliveredCount / $totalSmsCount) * 100, 1) : 99.2;
         
         $defaultGateway = $gateways->where('is_default', true)->first();
-        $senderMasking = $defaultGateway?->sender_id ?: ($tenant->sms_sender_id ?: ($tenant->name ?: 'Non-Masking'));
+        $senderMasking = $defaultGateway?->sender_id ?: ($tenant->sms_sender_id ?: ($tenant->name ?: __('Non-Masking')));
         $totalGatewayBalance = (float) $gateways->where('channel_type', 'sms')->sum('balance');
         $smsBalance = $totalGatewayBalance > 0 ? $totalGatewayBalance : (float) ($tenant->sms_balance ?? 10090.50);
 
@@ -92,6 +93,7 @@ class TenantSmsGatewayController extends Controller
 
         return view('tenant.settings.sms_gateway', compact(
             'tenant',
+            'currencySymbol',
             'templates',
             'gateways',
             'logs',
@@ -150,7 +152,7 @@ class TenantSmsGatewayController extends Controller
             'last_test_status' => 'configured',
         ]);
 
-        return back()->with('success', "Gateway '{$request->name}' configured successfully.");
+        return back()->with('success', __("Gateway ':name' configured successfully.", ['name' => $request->name]));
     }
 
     /**
@@ -191,7 +193,7 @@ class TenantSmsGatewayController extends Controller
             'is_default' => $isDefault,
         ]);
 
-        return back()->with('success', "Gateway '{$gateway->name}' updated successfully.");
+        return back()->with('success', __("Gateway ':name' updated successfully.", ['name' => $gateway->name]));
     }
 
     /**
@@ -204,17 +206,23 @@ class TenantSmsGatewayController extends Controller
         $gateway->is_active = !$gateway->is_active;
         $gateway->save();
 
-        $stateText = $gateway->is_active ? 'enabled' : 'disabled';
+        $jsonMessage = $gateway->is_active
+            ? __("Gateway ':name' is now enabled.", ['name' => $gateway->name])
+            : __("Gateway ':name' is now disabled.", ['name' => $gateway->name]);
 
         if ($request->wantsJson() || $request->ajax() || str_contains($request->header('Accept', ''), 'json')) {
             return response()->json([
                 'success' => true,
                 'is_active' => $gateway->is_active,
-                'message' => "Gateway '{$gateway->name}' is now {$stateText}.",
+                'message' => $jsonMessage,
             ]);
         }
 
-        return back()->with('success', "Gateway '{$gateway->name}' has been {$stateText} successfully.");
+        $flashMessage = $gateway->is_active
+            ? __("Gateway ':name' has been enabled successfully.", ['name' => $gateway->name])
+            : __("Gateway ':name' has been disabled successfully.", ['name' => $gateway->name]);
+
+        return back()->with('success', $flashMessage);
     }
 
     /**
@@ -227,7 +235,7 @@ class TenantSmsGatewayController extends Controller
         $gatewayName = $gateway->name;
         $gateway->delete();
 
-        return back()->with('success', "Gateway '{$gatewayName}' deleted successfully.");
+        return back()->with('success', __("Gateway ':name' deleted successfully.", ['name' => $gatewayName]));
     }
 
     /**
@@ -251,7 +259,7 @@ class TenantSmsGatewayController extends Controller
             'is_active' => $request->boolean('is_active'),
         ]);
 
-        return back()->with('success', "Template '{$template->title}' updated successfully.");
+        return back()->with('success', __("Template ':title' updated successfully.", ['title' => $template->title]));
     }
 
     /**
@@ -264,17 +272,23 @@ class TenantSmsGatewayController extends Controller
         $template->is_active = !$template->is_active;
         $template->save();
 
-        $stateText = $template->is_active ? 'enabled' : 'disabled';
+        $jsonMessage = $template->is_active
+            ? __("Template ':title' is now enabled.", ['title' => $template->title])
+            : __("Template ':title' is now disabled.", ['title' => $template->title]);
 
         if ($request->wantsJson() || $request->ajax() || str_contains($request->header('Accept', ''), 'json')) {
             return response()->json([
                 'success' => true,
                 'is_active' => $template->is_active,
-                'message' => "Template '{$template->title}' is now {$stateText}.",
+                'message' => $jsonMessage,
             ]);
         }
 
-        return back()->with('success', "Template '{$template->title}' has been {$stateText} successfully.");
+        $flashMessage = $template->is_active
+            ? __("Template ':title' has been enabled successfully.", ['title' => $template->title])
+            : __("Template ':title' has been disabled successfully.", ['title' => $template->title]);
+
+        return back()->with('success', $flashMessage);
     }
 
     /**
@@ -293,12 +307,12 @@ class TenantSmsGatewayController extends Controller
         $channel = $request->get('channel', 'sms');
         $charCount = mb_strlen($request->test_message);
         $partsCount = ceil($charCount / 160) ?: 1;
-        $cost = $partsCount * 0.35; // Standard 0.35 BDT / part
+        $cost = $partsCount * 0.35; // Standard 0.35 / part
 
         // Log the test dispatch
         $smsLog = SmsLog::create([
             'tenant_id' => $tenant->id,
-            'gateway_name' => $tenant->sms_sender_id ?: 'Platform SMS Gateway',
+            'gateway_name' => $tenant->sms_sender_id ?: __('Platform SMS Gateway'),
             'recipient_phone' => $request->recipient_phone,
             'sms_type' => $channel === 'whatsapp' ? 'whatsapp' : 'test_sms',
             'message_body' => $request->test_message,
@@ -318,12 +332,12 @@ class TenantSmsGatewayController extends Controller
         if ($request->wantsJson() || $request->ajax() || str_contains($request->header('Accept', ''), 'json')) {
             return response()->json([
                 'success' => true,
-                'message' => "Test message sent to {$request->recipient_phone} successfully.",
+                'message' => __('Test message sent to :phone successfully.', ['phone' => $request->recipient_phone]),
                 'log' => $smsLog,
             ]);
         }
 
-        return back()->with('success', "Test message sent to {$request->recipient_phone} successfully.");
+        return back()->with('success', __('Test message sent to :phone successfully.', ['phone' => $request->recipient_phone]));
     }
 
     /**
@@ -338,11 +352,11 @@ class TenantSmsGatewayController extends Controller
         if ($request->wantsJson() || $request->ajax() || str_contains($request->header('Accept', ''), 'json')) {
             return response()->json([
                 'success' => true,
-                'message' => "All {$count} SMS delivery logs cleared successfully.",
+                'message' => __('All :count SMS delivery logs cleared successfully.', ['count' => $count]),
             ]);
         }
 
-        return redirect()->route('tenant.settings.sms-gateway', ['tab' => 'logs'])->with('success', "All {$count} SMS delivery logs cleared successfully.");
+        return redirect()->route('tenant.settings.sms-gateway', ['tab' => 'logs'])->with('success', __('All :count SMS delivery logs cleared successfully.', ['count' => $count]));
     }
 
     /**
@@ -358,11 +372,11 @@ class TenantSmsGatewayController extends Controller
         if ($request->wantsJson() || $request->ajax() || str_contains($request->header('Accept', ''), 'json')) {
             return response()->json([
                 'success' => true,
-                'message' => "Log for {$phone} deleted successfully.",
+                'message' => __('Log for :phone deleted successfully.', ['phone' => $phone]),
             ]);
         }
 
-        return redirect()->route('tenant.settings.sms-gateway', ['tab' => 'logs'])->with('success', "Log for {$phone} deleted successfully.");
+        return redirect()->route('tenant.settings.sms-gateway', ['tab' => 'logs'])->with('success', __('Log for :phone deleted successfully.', ['phone' => $phone]));
     }
 
     /**
@@ -371,10 +385,12 @@ class TenantSmsGatewayController extends Controller
     public function printReport(Request $request): View
     {
         $tenant = $this->getTenant();
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
+        $gateways = TenantSmsGateway::where('tenant_id', $tenant->id)->orderByDesc('is_default')->orderBy('id')->get();
         $templates = TenantNotificationTemplate::where('tenant_id', $tenant->id)->get();
         $recentLogs = SmsLog::where('tenant_id', $tenant->id)->latest('id')->take(25)->get();
 
-        return view('tenant.settings.sms_print', compact('tenant', 'templates', 'recentLogs'));
+        return view('tenant.settings.sms_print', compact('tenant', 'currencySymbol', 'gateways', 'templates', 'recentLogs'));
     }
 
     /**
@@ -383,6 +399,7 @@ class TenantSmsGatewayController extends Controller
     public function exportCsv(Request $request): StreamedResponse
     {
         $tenant = $this->getTenant();
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
         $filename = 'sms_notification_logs_' . date('Y_m_d_His') . '.csv';
 
         $logs = SmsLog::where('tenant_id', $tenant->id)->latest('id')->get();
@@ -395,40 +412,60 @@ class TenantSmsGatewayController extends Controller
             'Expires' => '0',
         ];
 
-        return response()->stream(function () use ($logs, $tenant) {
+        return response()->stream(function () use ($logs, $tenant, $currencySymbol) {
             $handle = fopen('php://output', 'w');
             fprintf($handle, chr(0xEF) . chr(0xBB) . chr(0xBF)); // UTF-8 BOM
 
             // Header Block
             fputcsv($handle, [$tenant->company_name ?? $tenant->name]);
-            fputcsv($handle, ['SMS NOTIFICATION OUTBOUND AUDIT LOG']);
-            fputcsv($handle, ['Generated At', date('d-M-Y h:i:s A')]);
+            fputcsv($handle, [__('SMS NOTIFICATION OUTBOUND AUDIT LOG')]);
+            fputcsv($handle, [__('Generated At'), now()->translatedFormat('d-M-Y h:i:s A')]);
             fputcsv($handle, []);
 
             // Column Headers
             fputcsv($handle, [
-                'SL',
-                'Recipient Mobile',
-                'Type',
-                'Message Body',
-                'Characters',
-                'Parts',
-                'Cost (BDT)',
-                'Delivery Status',
-                'Dispatched At',
+                __('SL'),
+                __('Recipient Mobile'),
+                __('Type'),
+                __('Message Body'),
+                __('Characters'),
+                __('Parts'),
+                __('Cost (:currency)', ['currency' => $currencySymbol]),
+                __('Delivery Status'),
+                __('Dispatched At'),
             ]);
 
+            $typeLabels = [
+                'payment_sms' => __('Payment Receipt'),
+                'due_reminder' => __('Due Reminder'),
+                'welcome' => __('Welcome SMS'),
+                'suspension' => __('Suspension Warning'),
+                'test_sms' => __('Test Dispatch'),
+                'whatsapp' => __('WhatsApp'),
+            ];
+
+            $statusLabels = [
+                'delivered' => __('DELIVERED'),
+                'success' => __('SUCCESS'),
+                'sent' => __('SENT'),
+                'failed' => __('FAILED'),
+                'pending' => __('PENDING'),
+            ];
+
             foreach ($logs as $idx => $l) {
+                $rawType = strtolower((string) ($l->sms_type ?? 'sms'));
+                $rawStatus = strtolower((string) ($l->status ?? ''));
+
                 fputcsv($handle, [
                     $idx + 1,
                     $l->recipient_phone,
-                    strtoupper($l->sms_type ?? 'SMS'),
+                    $typeLabels[$rawType] ?? strtoupper($l->sms_type ?? 'SMS'),
                     $l->message_body,
                     $l->character_count ?: strlen($l->message_body),
                     $l->parts_count ?: 1,
                     number_format($l->total_cost, 4),
-                    strtoupper($l->status),
-                    $l->created_at ? $l->created_at->format('d-M-Y h:i:s A') : 'N/A',
+                    $statusLabels[$rawStatus] ?? strtoupper($l->status),
+                    $l->created_at ? $l->created_at->translatedFormat('d-M-Y h:i:s A') : __('N/A'),
                 ]);
             }
 

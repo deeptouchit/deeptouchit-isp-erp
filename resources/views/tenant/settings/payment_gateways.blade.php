@@ -1,6 +1,6 @@
 @extends('tenant.layouts.app')
 
-@section('title', 'Payment Gateway Settings - ' . ($tenant->company_name ?? $tenant->name))
+@section('title', __('Payment Gateway Settings') . ' - ' . ($tenant->company_name ?? $tenant->name))
 
 @push('styles')
     {{-- Page-specific CSS --}}
@@ -15,18 +15,18 @@
             <div class="w-8 h-8 rounded-lg bg-pink-50 text-pink-600 border border-pink-100 flex items-center justify-center text-sm shadow-2xs flex-shrink-0">
                 <i class="fas fa-credit-card"></i>
             </div>
-            <h1 class="text-sm font-bold text-slate-800 tracking-tight">Payment Gateways &amp; Merchant API Settings</h1>
+            <h1 class="text-sm font-bold text-slate-800 tracking-tight">{{ __('Payment Gateways & Merchant API Settings') }}</h1>
         </div>
         <div class="flex items-center gap-1.5 flex-wrap">
             <button type="button" 
                     @click="activeTab === 'bkash' ? testBkashConnection() : (activeTab === 'nagad' ? testNagadConnection() : testBankQr())" 
                     class="h-[34px] py-0 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200/80 transition flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-plug text-slate-500 text-xs"></i>
-                <span>Test API Handshake</span>
+                <span>{{ __('Test API Handshake') }}</span>
             </button>
             <a href="{{ route('tenant.finance.gateway-transactions') }}" class="h-[34px] py-0 px-3.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-xs font-semibold shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-receipt text-xs"></i>
-                <span>View Transactions</span>
+                <span>{{ __('View Transactions') }}</span>
             </a>
         </div>
     </div>
@@ -36,9 +36,9 @@
         {{-- Card 1: Active Channels --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Active Channels</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Active Channels') }}</span>
                 <span class="text-[13px] font-bold font-mono text-slate-800 leading-tight block truncate">
-                    {{ $stats['active_channels'] }} Gateways
+                    {{ __(':count Gateways', ['count' => $stats['active_channels']]) }}
                 </span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border border-cyan-200 bg-cyan-50 text-cyan-600 flex items-center justify-center flex-shrink-0">
@@ -49,7 +49,7 @@
         {{-- Card 2: bKash Mode --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">bKash Status</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('bKash Status') }}</span>
                 <span class="text-[13px] font-bold font-mono text-pink-600 leading-tight block truncate">
                     {{ $stats['bkash_mode'] }}
                 </span>
@@ -62,7 +62,7 @@
         {{-- Card 3: Nagad Mode --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Nagad Status</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Nagad Status') }}</span>
                 <span class="text-[13px] font-bold font-mono text-orange-600 leading-tight block truncate">
                     {{ $stats['nagad_mode'] }}
                 </span>
@@ -75,7 +75,7 @@
         {{-- Card 4: Total Gateway Collections --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Online Collected</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Online Collected') }}</span>
                 <span class="text-[13px] font-bold font-mono text-emerald-600 leading-tight block truncate">
                     @currency($stats['total_collected'])
                 </span>
@@ -88,9 +88,9 @@
         {{-- Card 5: Successful Payments --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Successful</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Successful') }}</span>
                 <span class="text-[13px] font-bold font-mono text-blue-600 leading-tight block truncate">
-                    {{ number_format($stats['successful_tx']) }} TXNs
+                    {{ __(':count TXNs', ['count' => number_format($stats['successful_tx'])]) }}
                 </span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border border-blue-200 bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0">
@@ -101,9 +101,9 @@
         {{-- Card 6: Failed / Expired --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Failed / Dropped</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Failed / Dropped') }}</span>
                 <span class="text-[13px] font-bold font-mono text-amber-600 leading-tight block truncate">
-                    {{ number_format($stats['failed_tx']) }} TXNs
+                    {{ __(':count TXNs', ['count' => number_format($stats['failed_tx'])]) }}
                 </span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border border-amber-200 bg-amber-50 text-amber-600 flex items-center justify-center flex-shrink-0">
@@ -122,7 +122,7 @@
                     class="h-[36px] px-4 text-xs font-bold rounded-t-lg transition flex items-center gap-2 border-t-2 cursor-pointer whitespace-nowrap"
                     :class="activeTab === 'bkash' ? 'bg-white text-pink-700 border-pink-600 shadow-xs' : 'text-slate-600 hover:text-slate-900 border-transparent'">
                 <i class="fas fa-mobile-screen text-pink-600 text-xs"></i>
-                <span>bKash Merchant API</span>
+                <span>{{ __('bKash Merchant API') }}</span>
                 @if($bkashSettings['is_active'])
                     <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
                 @endif
@@ -133,7 +133,7 @@
                     class="h-[36px] px-4 text-xs font-bold rounded-t-lg transition flex items-center gap-2 border-t-2 cursor-pointer whitespace-nowrap"
                     :class="activeTab === 'nagad' ? 'bg-white text-orange-700 border-orange-600 shadow-xs' : 'text-slate-600 hover:text-slate-900 border-transparent'">
                 <i class="fas fa-mobile-screen text-orange-600 text-xs"></i>
-                <span>Nagad Merchant API</span>
+                <span>{{ __('Nagad Merchant API') }}</span>
                 @if($nagadSettings['is_active'])
                     <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
                 @endif
@@ -144,7 +144,7 @@
                     class="h-[36px] px-4 text-xs font-bold rounded-t-lg transition flex items-center gap-2 border-t-2 cursor-pointer whitespace-nowrap"
                     :class="activeTab === 'bank_qr' ? 'bg-white text-teal-700 border-teal-600 shadow-xs' : 'text-slate-600 hover:text-slate-900 border-transparent'">
                 <i class="fas fa-qrcode text-teal-600 text-xs"></i>
-                <span>Bangla QR &amp; Bank Info</span>
+                <span>{{ __('Bangla QR & Bank Info') }}</span>
                 @if($bankQrSettings['is_active'])
                     <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
                 @endif
@@ -155,7 +155,7 @@
                     class="h-[36px] px-4 text-xs font-bold rounded-t-lg transition flex items-center gap-2 border-t-2 cursor-pointer whitespace-nowrap"
                     :class="activeTab === 'logs' ? 'bg-white text-blue-700 border-blue-600 shadow-xs' : 'text-slate-600 hover:text-slate-900 border-transparent'">
                 <i class="fas fa-list-check text-blue-600 text-xs"></i>
-                <span>Gateway Logs &amp; Webhooks ({{ $logs->total() }})</span>
+                <span>{{ __('Gateway Logs & Webhooks (:count)', ['count' => $logs->total()]) }}</span>
             </button>
         </div>
 
@@ -172,8 +172,8 @@
                                 <i class="fas fa-mobile-screen"></i>
                             </div>
                             <div>
-                                <h3 class="text-xs font-bold text-pink-950">bKash Tokenized Checkout API</h3>
-                                <p class="text-[11px] text-pink-800">Automated 1-click customer invoice payment and reseller wallet recharge via bKash PGW</p>
+                                <h3 class="text-xs font-bold text-pink-950">{{ __('bKash Tokenized Checkout API') }}</h3>
+                                <p class="text-[11px] text-pink-800">{{ __('Automated 1-click customer invoice payment and reseller wallet recharge via bKash PGW') }}</p>
                             </div>
                         </div>
 
@@ -181,22 +181,22 @@
                         <div class="flex items-center gap-2">
                             <label class="inline-flex items-center gap-2 cursor-pointer bg-white px-3 py-1.5 rounded-lg border border-pink-200 transition">
                                 <input type="checkbox" name="is_active" value="1" {{ $bkashSettings['is_active'] ? 'checked' : '' }} class="w-4 h-4 rounded text-pink-600 focus:ring-pink-500 cursor-pointer">
-                                <span class="text-xs font-bold text-slate-800">{{ $bkashSettings['is_active'] ? 'Enabled' : 'Disabled' }}</span>
+                                <span class="text-xs font-bold text-slate-800">{{ $bkashSettings['is_active'] ? __('Enabled') : __('Disabled') }}</span>
                             </label>
                         </div>
                     </div>
 
                     <!-- Environment Mode Selector -->
                     <div class="p-3 rounded-lg bg-slate-50 border border-slate-200 mb-4">
-                        <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1.5">Environment Mode *</label>
+                        <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1.5">{{ __('Environment Mode *') }}</label>
                         <div class="grid grid-cols-2 gap-2 sm:w-80">
                             <label class="h-[34px] flex items-center gap-2 px-3 rounded-lg border cursor-pointer transition {{ $bkashSettings['mode'] === 'sandbox' ? 'bg-white border-pink-500 ring-1 ring-pink-400 font-bold text-pink-900' : 'bg-white border-slate-200 text-slate-700' }}">
                                 <input type="radio" name="mode" value="sandbox" {{ $bkashSettings['mode'] === 'sandbox' ? 'checked' : '' }} class="text-pink-600 focus:ring-pink-500 cursor-pointer">
-                                <span class="text-xs">Sandbox (Testing)</span>
+                                <span class="text-xs">{{ __('Sandbox (Testing)') }}</span>
                             </label>
                             <label class="h-[34px] flex items-center gap-2 px-3 rounded-lg border cursor-pointer transition {{ $bkashSettings['mode'] === 'live' ? 'bg-white border-emerald-500 ring-1 ring-emerald-400 font-bold text-emerald-900' : 'bg-white border-slate-200 text-slate-700' }}">
                                 <input type="radio" name="mode" value="live" {{ $bkashSettings['mode'] === 'live' ? 'checked' : '' }} class="text-emerald-600 focus:ring-emerald-500 cursor-pointer">
-                                <span class="text-xs">Live (Production)</span>
+                                <span class="text-xs">{{ __('Live (Production)') }}</span>
                             </label>
                         </div>
                     </div>
@@ -206,17 +206,17 @@
                         
                         <!-- App Key -->
                         <div>
-                            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">App Key *</label>
+                            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">{{ __('App Key *') }}</label>
                             <input type="text" 
                                    name="app_key" 
                                    value="{{ $bkashSettings['app_key'] }}" 
-                                   placeholder="e.g. 4fxxxxxxxxxxxxxxxxxxxxxx" 
+                                   placeholder="{{ __('e.g. 4fxxxxxxxxxxxxxxxxxxxxxx') }}" 
                                    class="h-[34px] w-full px-3 rounded-lg border border-slate-200 bg-slate-50 font-mono text-xs text-slate-800 focus:bg-white focus:outline-hidden focus:border-pink-500 shadow-2xs">
                         </div>
 
                         <!-- App Secret -->
                         <div>
-                            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">App Secret *</label>
+                            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">{{ __('App Secret *') }}</label>
                             <div class="relative">
                                 <input :type="showBkashSecret ? 'text' : 'password'" 
                                        name="app_secret" 
@@ -231,17 +231,17 @@
 
                         <!-- Username -->
                         <div>
-                            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">Username *</label>
+                            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">{{ __('Username *') }}</label>
                             <input type="text" 
                                    name="username" 
                                    value="{{ $bkashSettings['username'] }}" 
-                                   placeholder="e.g. sandboxTestUser" 
+                                   placeholder="{{ __('e.g. sandboxTestUser') }}" 
                                    class="h-[34px] w-full px-3 rounded-lg border border-slate-200 bg-slate-50 font-mono text-xs text-slate-800 focus:bg-white focus:outline-hidden focus:border-pink-500 shadow-2xs">
                         </div>
 
                         <!-- Password -->
                         <div>
-                            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">Password *</label>
+                            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">{{ __('Password *') }}</label>
                             <div class="relative">
                                 <input :type="showBkashPass ? 'text' : 'password'" 
                                        name="password" 
@@ -256,17 +256,17 @@
 
                         <!-- Merchant Phone / Number -->
                         <div>
-                            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">Merchant Account / Till Number</label>
+                            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">{{ __('Merchant Account / Till Number') }}</label>
                             <input type="text" 
                                    name="merchant_number" 
                                    value="{{ $bkashSettings['merchant_number'] }}" 
-                                   placeholder="e.g. 01819000000" 
+                                   placeholder="{{ __('e.g. 01819000000') }}" 
                                    class="h-[34px] w-full px-3 rounded-lg border border-slate-200 bg-slate-50 font-mono text-xs text-slate-800 focus:bg-white focus:outline-hidden focus:border-pink-500 shadow-2xs">
                         </div>
 
                         <!-- Transaction Fee Percentage -->
                         <div>
-                            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">Gateway Fee (%)</label>
+                            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">{{ __('Gateway Fee (%)') }}</label>
                             <input type="number" 
                                    step="0.01" 
                                    name="fee_value" 
@@ -279,25 +279,25 @@
 
                     <!-- Integration URLs / Webhook Box -->
                     <div class="mt-4 p-3 rounded-lg bg-slate-50 border border-slate-200 space-y-2">
-                        <div class="text-[11px] font-bold text-slate-700 uppercase tracking-wider">bKash Webhook &amp; Callback Endpoint URLs</div>
+                        <div class="text-[11px] font-bold text-slate-700 uppercase tracking-wider">{{ __('bKash Webhook & Callback Endpoint URLs') }}</div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                             <div class="p-2 rounded bg-white border border-slate-200 flex items-center justify-between">
                                 <div class="min-w-0 pr-2">
-                                    <span class="text-[9.5px] text-slate-400 block uppercase font-bold">IPN / Webhook URL</span>
+                                    <span class="text-[9.5px] text-slate-400 block uppercase font-bold">{{ __('IPN / Webhook URL') }}</span>
                                     <span class="font-mono text-[10.5px] text-slate-800 truncate block">{{ url('/api/payment/webhook/bkash') }}</span>
                                 </div>
-                                <button type="button" @click="copyText('{{ url('/api/payment/webhook/bkash') }}', 'Webhook URL')" class="h-[28px] px-2.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-semibold border border-slate-300 transition cursor-pointer">
-                                    Copy
+                                <button type="button" @click="copyText('{{ url('/api/payment/webhook/bkash') }}', i18n.webhookUrl)" class="h-[28px] px-2.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-semibold border border-slate-300 transition cursor-pointer">
+                                    {{ __('Copy') }}
                                 </button>
                             </div>
 
                             <div class="p-2 rounded bg-white border border-slate-200 flex items-center justify-between">
                                 <div class="min-w-0 pr-2">
-                                    <span class="text-[9.5px] text-slate-400 block uppercase font-bold">Callback Return URL</span>
+                                    <span class="text-[9.5px] text-slate-400 block uppercase font-bold">{{ __('Callback Return URL') }}</span>
                                     <span class="font-mono text-[10.5px] text-slate-800 truncate block">{{ url('/api/payment/callback/bkash') }}</span>
                                 </div>
-                                <button type="button" @click="copyText('{{ url('/api/payment/callback/bkash') }}', 'Callback URL')" class="h-[28px] px-2.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-semibold border border-slate-300 transition cursor-pointer">
-                                    Copy
+                                <button type="button" @click="copyText('{{ url('/api/payment/callback/bkash') }}', i18n.callbackUrl)" class="h-[28px] px-2.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-semibold border border-slate-300 transition cursor-pointer">
+                                    {{ __('Copy') }}
                                 </button>
                             </div>
                         </div>
@@ -315,12 +315,12 @@
                             <template x-if="!isTestingBkash">
                                 <i class="fas fa-bolt text-pink-600 text-xs"></i>
                             </template>
-                            <span>Test Live Token Grant</span>
+                            <span>{{ __('Test Live Token Grant') }}</span>
                         </button>
 
                         <button type="submit" class="h-[34px] py-0 px-5 bg-pink-600 hover:bg-pink-700 text-white font-semibold text-xs rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                             <i class="fas fa-floppy-disk text-xs"></i>
-                            <span>Save bKash Settings</span>
+                            <span>{{ __('Save bKash Settings') }}</span>
                         </button>
                     </div>
 
@@ -338,8 +338,8 @@
                                 <i class="fas fa-mobile-screen"></i>
                             </div>
                             <div>
-                                <h3 class="text-xs font-bold text-orange-950">Nagad Direct Payment Gateway</h3>
-                                <p class="text-[11px] text-orange-800">Secure automated merchant clearance via Nagad Public/Private RSA signature exchange</p>
+                                <h3 class="text-xs font-bold text-orange-950">{{ __('Nagad Direct Payment Gateway') }}</h3>
+                                <p class="text-[11px] text-orange-800">{{ __('Secure automated merchant clearance via Nagad Public/Private RSA signature exchange') }}</p>
                             </div>
                         </div>
 
@@ -347,22 +347,22 @@
                         <div class="flex items-center gap-2">
                             <label class="inline-flex items-center gap-2 cursor-pointer bg-white px-3 py-1.5 rounded-lg border border-orange-200 transition">
                                 <input type="checkbox" name="is_active" value="1" {{ $nagadSettings['is_active'] ? 'checked' : '' }} class="w-4 h-4 rounded text-orange-600 focus:ring-orange-500 cursor-pointer">
-                                <span class="text-xs font-bold text-slate-800">{{ $nagadSettings['is_active'] ? 'Enabled' : 'Disabled' }}</span>
+                                <span class="text-xs font-bold text-slate-800">{{ $nagadSettings['is_active'] ? __('Enabled') : __('Disabled') }}</span>
                             </label>
                         </div>
                     </div>
 
                     <!-- Environment Mode Selector -->
                     <div class="p-3 rounded-lg bg-slate-50 border border-slate-200 mb-4">
-                        <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1.5">Environment Mode *</label>
+                        <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1.5">{{ __('Environment Mode *') }}</label>
                         <div class="grid grid-cols-2 gap-2 sm:w-80">
                             <label class="h-[34px] flex items-center gap-2 px-3 rounded-lg border cursor-pointer transition {{ $nagadSettings['mode'] === 'sandbox' ? 'bg-white border-orange-500 ring-1 ring-orange-400 font-bold text-orange-900' : 'bg-white border-slate-200 text-slate-700' }}">
                                 <input type="radio" name="mode" value="sandbox" {{ $nagadSettings['mode'] === 'sandbox' ? 'checked' : '' }} class="text-orange-600 focus:ring-orange-500 cursor-pointer">
-                                <span class="text-xs">Sandbox (Testing)</span>
+                                <span class="text-xs">{{ __('Sandbox (Testing)') }}</span>
                             </label>
                             <label class="h-[34px] flex items-center gap-2 px-3 rounded-lg border cursor-pointer transition {{ $nagadSettings['mode'] === 'live' ? 'bg-white border-emerald-500 ring-1 ring-emerald-400 font-bold text-emerald-900' : 'bg-white border-slate-200 text-slate-700' }}">
                                 <input type="radio" name="mode" value="live" {{ $nagadSettings['mode'] === 'live' ? 'checked' : '' }} class="text-emerald-600 focus:ring-emerald-500 cursor-pointer">
-                                <span class="text-xs">Live (Production)</span>
+                                <span class="text-xs">{{ __('Live (Production)') }}</span>
                             </label>
                         </div>
                     </div>
@@ -370,20 +370,20 @@
                     <!-- Credentials (Strict Uniform h-[34px]) -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs mb-3">
                         <div>
-                            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">Merchant ID *</label>
+                            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">{{ __('Merchant ID *') }}</label>
                             <input type="text" 
                                    name="merchant_id" 
                                    value="{{ $nagadSettings['merchant_id'] }}" 
-                                   placeholder="e.g. 68xxxxxxxxxxxxx" 
+                                   placeholder="{{ __('e.g. 68xxxxxxxxxxxxx') }}" 
                                    class="h-[34px] w-full px-3 rounded-lg border border-slate-200 bg-slate-50 font-mono text-xs text-slate-800 focus:bg-white focus:outline-hidden focus:border-orange-500 shadow-2xs">
                         </div>
 
                         <div>
-                            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">Merchant Phone / A/C</label>
+                            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">{{ __('Merchant Phone / A/C') }}</label>
                             <input type="text" 
                                    name="merchant_phone" 
                                    value="{{ $nagadSettings['merchant_phone'] }}" 
-                                   placeholder="e.g. 01711000000" 
+                                   placeholder="{{ __('e.g. 01711000000') }}" 
                                    class="h-[34px] w-full px-3 rounded-lg border border-slate-200 bg-slate-50 font-mono text-xs text-slate-800 focus:bg-white focus:outline-hidden focus:border-orange-500 shadow-2xs">
                         </div>
                     </div>
@@ -391,7 +391,7 @@
                     <!-- Public & Private Keys -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                         <div>
-                            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">Nagad PGW Public Key</label>
+                            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">{{ __('Nagad PGW Public Key') }}</label>
                             <textarea name="public_key" 
                                       rows="5" 
                                       placeholder="-----BEGIN PUBLIC KEY-----&#10;MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA...&#10;-----END PUBLIC KEY-----" 
@@ -399,7 +399,7 @@
                         </div>
 
                         <div>
-                            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">Merchant Private Key</label>
+                            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">{{ __('Merchant Private Key') }}</label>
                             <textarea name="private_key" 
                                       rows="5" 
                                       placeholder="-----BEGIN RSA PRIVATE KEY-----&#10;MIIEowIBAAKCAQEA0wZk...&#10;-----END RSA PRIVATE KEY-----" 
@@ -413,12 +413,12 @@
                                 @click="testNagadConnection()" 
                                 class="h-[34px] py-0 px-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg border border-slate-300 transition flex items-center gap-1.5 cursor-pointer">
                             <i class="fas fa-shield-halved text-orange-600 text-xs"></i>
-                            <span>Verify RSA Keys</span>
+                            <span>{{ __('Verify RSA Keys') }}</span>
                         </button>
 
                         <button type="submit" class="h-[34px] py-0 px-5 bg-orange-600 hover:bg-orange-700 text-white font-semibold text-xs rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                             <i class="fas fa-floppy-disk text-xs"></i>
-                            <span>Save Nagad Settings</span>
+                            <span>{{ __('Save Nagad Settings') }}</span>
                         </button>
                     </div>
 
@@ -436,8 +436,8 @@
                                 <i class="fas fa-qrcode"></i>
                             </div>
                             <div>
-                                <h3 class="text-xs font-bold text-teal-950">Interoperable Bangla QR &amp; Official Bank Account</h3>
-                                <p class="text-[11px] text-teal-800">Display official company bank transfer info and Bangla QR on invoices and reseller recharge portal</p>
+                                <h3 class="text-xs font-bold text-teal-950">{{ __('Interoperable Bangla QR & Official Bank Account') }}</h3>
+                                <p class="text-[11px] text-teal-800">{{ __('Display official company bank transfer info and Bangla QR on invoices and reseller recharge portal') }}</p>
                             </div>
                         </div>
 
@@ -445,7 +445,7 @@
                         <div class="flex items-center gap-2">
                             <label class="inline-flex items-center gap-2 cursor-pointer bg-white px-3 py-1.5 rounded-lg border border-teal-200 transition">
                                 <input type="checkbox" name="is_active" value="1" {{ $bankQrSettings['is_active'] ? 'checked' : '' }} class="w-4 h-4 rounded text-teal-600 focus:ring-teal-500 cursor-pointer">
-                                <span class="text-xs font-bold text-slate-800">{{ $bankQrSettings['is_active'] ? 'Enabled' : 'Disabled' }}</span>
+                                <span class="text-xs font-bold text-slate-800">{{ $bankQrSettings['is_active'] ? __('Enabled') : __('Disabled') }}</span>
                             </label>
                         </div>
                     </div>
@@ -453,59 +453,59 @@
                     <!-- Bank Account Details Grid (Strict Uniform h-[34px]) -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs mb-3">
                         <div>
-                            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">Bank Name *</label>
+                            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">{{ __('Bank Name *') }}</label>
                             <input type="text" 
                                    name="bank_name" 
                                    value="{{ $bankQrSettings['bank_name'] }}" 
                                    required 
-                                   placeholder="e.g. The City Bank Ltd." 
+                                   placeholder="{{ __('e.g. The City Bank Ltd.') }}" 
                                    class="h-[34px] w-full px-3 rounded-lg border border-slate-200 bg-slate-50 text-xs text-slate-800 focus:bg-white focus:outline-hidden focus:border-teal-500 shadow-2xs">
                         </div>
 
                         <div>
-                            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">Account Holder Name *</label>
+                            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">{{ __('Account Holder Name *') }}</label>
                             <input type="text" 
                                    name="account_name" 
                                    value="{{ $bankQrSettings['account_name'] }}" 
                                    required 
-                                   placeholder="e.g. SpeedNet Online" 
+                                   placeholder="{{ __('e.g. SpeedNet Online') }}" 
                                    class="h-[34px] w-full px-3 rounded-lg border border-slate-200 bg-slate-50 text-xs text-slate-800 focus:bg-white focus:outline-hidden focus:border-teal-500 shadow-2xs">
                         </div>
 
                         <div>
-                            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">Account Number *</label>
+                            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">{{ __('Account Number *') }}</label>
                             <input type="text" 
                                    name="account_number" 
                                    value="{{ $bankQrSettings['account_number'] }}" 
                                    required 
-                                   placeholder="e.g. 1102983746001" 
+                                   placeholder="{{ __('e.g. 1102983746001') }}" 
                                    class="h-[34px] w-full px-3 rounded-lg border border-slate-200 bg-slate-50 font-mono text-xs text-slate-800 focus:bg-white focus:outline-hidden focus:border-teal-500 shadow-2xs">
                         </div>
 
                         <div>
-                            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">Branch Name</label>
+                            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">{{ __('Branch Name') }}</label>
                             <input type="text" 
                                    name="branch_name" 
                                    value="{{ $bankQrSettings['branch_name'] }}" 
-                                   placeholder="e.g. Principal Branch" 
+                                   placeholder="{{ __('e.g. Principal Branch') }}" 
                                    class="h-[34px] w-full px-3 rounded-lg border border-slate-200 bg-slate-50 text-xs text-slate-800 focus:bg-white focus:outline-hidden focus:border-teal-500 shadow-2xs">
                         </div>
 
                         <div>
-                            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">Routing Number</label>
+                            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">{{ __('Routing Number') }}</label>
                             <input type="text" 
                                    name="routing_number" 
                                    value="{{ $bankQrSettings['routing_number'] }}" 
-                                   placeholder="e.g. 225271890" 
+                                   placeholder="{{ __('e.g. 225271890') }}" 
                                    class="h-[34px] w-full px-3 rounded-lg border border-slate-200 bg-slate-50 font-mono text-xs text-slate-800 focus:bg-white focus:outline-hidden focus:border-teal-500 shadow-2xs">
                         </div>
 
                         <div>
-                            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">Bangla QR Merchant Number</label>
+                            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">{{ __('Bangla QR Merchant Number') }}</label>
                             <input type="text" 
                                    name="bangla_qr_number" 
                                    value="{{ $bankQrSettings['bangla_qr_number'] }}" 
-                                   placeholder="e.g. 01819000000" 
+                                   placeholder="{{ __('e.g. 01819000000') }}" 
                                    class="h-[34px] w-full px-3 rounded-lg border border-slate-200 bg-slate-50 font-mono text-xs text-slate-800 focus:bg-white focus:outline-hidden focus:border-teal-500 shadow-2xs">
                         </div>
                     </div>
@@ -514,7 +514,7 @@
                     <div class="mt-4 pt-3 border-t border-slate-200 flex items-center justify-end">
                         <button type="submit" class="h-[34px] py-0 px-5 bg-teal-600 hover:bg-teal-700 text-white font-semibold text-xs rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                             <i class="fas fa-floppy-disk text-xs"></i>
-                            <span>Save Bank &amp; QR Settings</span>
+                            <span>{{ __('Save Bank & QR Settings') }}</span>
                         </button>
                     </div>
 
@@ -536,7 +536,7 @@
                             <input type="text" 
                                    name="search" 
                                    x-model="searchQuery" 
-                                   placeholder="Search by Txn ID, customer name, mobile..." 
+                                   placeholder="{{ __('Search by Txn ID, customer name, mobile...') }}" 
                                    class="h-[34px] w-full pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                             <button type="button" 
                                     x-show="searchQuery && searchQuery.length > 0" 
@@ -549,20 +549,20 @@
                         {{-- Gateway Filter --}}
                         <div class="w-full md:w-44 flex-shrink-0">
                             <select name="gateway" class="h-[34px] w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition cursor-pointer">
-                                <option value="all">All Gateways</option>
-                                <option value="bkash" {{ $gatewayFilter === 'bkash' ? 'selected' : '' }}>bKash PGW</option>
-                                <option value="nagad" {{ $gatewayFilter === 'nagad' ? 'selected' : '' }}>Nagad PGW</option>
-                                <option value="bank" {{ $gatewayFilter === 'bank' ? 'selected' : '' }}>Bank / QR</option>
+                                <option value="all">{{ __('All Gateways') }}</option>
+                                <option value="bkash" {{ $gatewayFilter === 'bkash' ? 'selected' : '' }}>{{ __('bKash PGW') }}</option>
+                                <option value="nagad" {{ $gatewayFilter === 'nagad' ? 'selected' : '' }}>{{ __('Nagad PGW') }}</option>
+                                <option value="bank" {{ $gatewayFilter === 'bank' ? 'selected' : '' }}>{{ __('Bank / QR') }}</option>
                             </select>
                         </div>
 
                         {{-- Status Filter --}}
                         <div class="w-full md:w-40 flex-shrink-0">
                             <select name="status" class="h-[34px] w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition cursor-pointer">
-                                <option value="all">All Statuses</option>
-                                <option value="SUCCESS" {{ $statusFilter === 'SUCCESS' ? 'selected' : '' }}>Success</option>
-                                <option value="PENDING" {{ $statusFilter === 'PENDING' ? 'selected' : '' }}>Pending</option>
-                                <option value="FAILED" {{ $statusFilter === 'FAILED' ? 'selected' : '' }}>Failed</option>
+                                <option value="all">{{ __('All Statuses') }}</option>
+                                <option value="SUCCESS" {{ $statusFilter === 'SUCCESS' ? 'selected' : '' }}>{{ __('Success') }}</option>
+                                <option value="PENDING" {{ $statusFilter === 'PENDING' ? 'selected' : '' }}>{{ __('Pending') }}</option>
+                                <option value="FAILED" {{ $statusFilter === 'FAILED' ? 'selected' : '' }}>{{ __('Failed') }}</option>
                             </select>
                         </div>
 
@@ -570,11 +570,11 @@
                         <div class="flex items-center gap-1.5 flex-shrink-0 md:ml-auto">
                             <button type="submit" class="h-[34px] py-0 px-3 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer">
                                 <i class="fas fa-filter text-[10px]"></i>
-                                <span>Filter</span>
+                                <span>{{ __('Filter') }}</span>
                             </button>
                             <a href="{{ route('tenant.settings.payment-gateways', ['tab' => 'logs']) }}" class="h-[34px] py-0 px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer">
                                 <i class="fas fa-rotate-left text-[10px]"></i>
-                                <span>Reset</span>
+                                <span>{{ __('Reset') }}</span>
                             </a>
                         </div>
                     </form>
@@ -587,13 +587,13 @@
                             <thead>
                                 <tr>
                                     <th class="w-10 text-center font-semibold">#</th>
-                                    <th class="w-36 text-center font-semibold">Transaction #</th>
-                                    <th class="w-28 text-center font-semibold">Gateway</th>
-                                    <th class="text-center font-semibold">Customer / Reference</th>
-                                    <th class="w-32 text-center font-semibold">Amount</th>
-                                    <th class="w-28 text-center font-semibold">Status</th>
-                                    <th class="w-36 text-center font-semibold">Date &amp; Time</th>
-                                    <th class="w-16 text-center no-sort font-semibold">Action</th>
+                                    <th class="w-36 text-center font-semibold">{{ __('Transaction #') }}</th>
+                                    <th class="w-28 text-center font-semibold">{{ __('Gateway') }}</th>
+                                    <th class="text-center font-semibold">{{ __('Customer / Reference') }}</th>
+                                    <th class="w-32 text-center font-semibold">{{ __('Amount') }}</th>
+                                    <th class="w-28 text-center font-semibold">{{ __('Status') }}</th>
+                                    <th class="w-36 text-center font-semibold">{{ __('Date & Time') }}</th>
+                                    <th class="w-16 text-center no-sort font-semibold">{{ __('Action') }}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -607,29 +607,29 @@
                                         </td>
                                         <td class="text-center">
                                             <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold border {{ $log->gateway_badge['class'] ?? 'bg-slate-100 text-slate-700 border-slate-200' }} whitespace-nowrap">
-                                                <span>{{ ucfirst($log->gateway) }}</span>
+                                                <span>{{ $log->gateway_badge['label'] ?? ucfirst($log->gateway) }}</span>
                                             </span>
                                         </td>
                                         <td class="text-left text-slate-800 text-xs font-medium">
-                                            {{ $log->customer?->name ?? 'Online Subscriber' }}
+                                            {{ $log->customer?->name ?? __('Online Subscriber') }}
                                         </td>
                                         <td class="text-right font-mono font-bold text-emerald-600">
                                             @currency($log->amount)
                                         </td>
                                         <td class="text-center">
                                             <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border {{ $log->status_badge['class'] ?? 'bg-emerald-50 text-emerald-700 border-emerald-200' }} whitespace-nowrap">
-                                                <span>{{ $log->status }}</span>
+                                                <span>{{ $log->status_badge['label'] ?? __($log->status) }}</span>
                                             </span>
                                         </td>
                                         <td class="text-center font-mono text-slate-600 text-xs">
-                                            {{ $log->created_at ? $log->created_at->format('d M Y, h:i A') : '—' }}
+                                            {{ $log->created_at ? $log->created_at->translatedFormat('d M Y, h:i A') : '—' }}
                                         </td>
                                         <td class="text-center">
                                             <button type="button" 
                                                     @click="viewTransactionDetails({{ json_encode($log) }})"
                                                     class="h-[28px] px-2.5 bg-cyan-50 hover:bg-cyan-100 text-cyan-700 rounded-md text-xs font-semibold border border-cyan-200 transition inline-flex items-center justify-center gap-1 mx-auto cursor-pointer">
                                                 <i class="fas fa-eye text-[10px]"></i>
-                                                <span>View</span>
+                                                <span>{{ __('View') }}</span>
                                             </button>
                                         </td>
                                     </tr>
@@ -640,8 +640,8 @@
                                                 <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 mb-2">
                                                     <i class="fas fa-receipt text-base"></i>
                                                 </div>
-                                                <span class="text-xs font-semibold text-slate-600">No Gateway Transactions Found</span>
-                                                <p class="text-[11px] text-slate-400 mt-1">Online transactions processed via bKash, Nagad, and Bank QR will appear here.</p>
+                                                <span class="text-xs font-semibold text-slate-600">{{ __('No Gateway Transactions Found') }}</span>
+                                                <p class="text-[11px] text-slate-400 mt-1">{{ __('Online transactions processed via bKash, Nagad, and Bank QR will appear here.') }}</p>
                                             </div>
                                         </td>
                                     </tr>
@@ -653,7 +653,7 @@
                     @if($logs->hasPages())
                         <div class="p-3 border-t border-slate-200 bg-slate-50/50 flex items-center justify-between">
                             <span class="text-xs text-slate-500 font-mono">
-                                Showing {{ $logs->firstItem() }} to {{ $logs->lastItem() }} of {{ $logs->total() }} entries
+                                {{ __('Showing :from to :to of :total entries', ['from' => $logs->firstItem(), 'to' => $logs->lastItem(), 'total' => $logs->total()]) }}
                             </span>
                             <div>
                                 {{ $logs->links() }}
@@ -679,7 +679,7 @@
                         <i class="fas fa-receipt"></i>
                     </div>
                     <div>
-                        <h3 class="text-xs font-semibold text-slate-800">Gateway Transaction Details</h3>
+                        <h3 class="text-xs font-semibold text-slate-800">{{ __('Gateway Transaction Details') }}</h3>
                         <span class="text-[10.5px] text-slate-500 font-normal font-mono" x-text="activeTx?.transaction_id || activeTx?.gateway_trx_id"></span>
                     </div>
                 </div>
@@ -691,31 +691,31 @@
             <div class="p-4 space-y-3 text-xs">
                 <div class="grid grid-cols-2 gap-2 bg-slate-50 p-3 rounded-lg border border-slate-200/80">
                     <div>
-                        <span class="text-[10px] uppercase font-bold text-slate-400 block">Transaction ID</span>
-                        <span class="font-mono font-bold text-slate-800 text-xs" x-text="activeTx?.transaction_id || activeTx?.gateway_trx_id || 'N/A'"></span>
+                        <span class="text-[10px] uppercase font-bold text-slate-400 block">{{ __('Transaction ID') }}</span>
+                        <span class="font-mono font-bold text-slate-800 text-xs" x-text="activeTx?.transaction_id || activeTx?.gateway_trx_id || i18n.na"></span>
                     </div>
                     <div>
-                        <span class="text-[10px] uppercase font-bold text-slate-400 block">Gateway Status</span>
-                        <span class="font-bold uppercase text-xs" :class="activeTx?.status === 'SUCCESS' ? 'text-emerald-600' : 'text-rose-600'" x-text="activeTx?.status"></span>
+                        <span class="text-[10px] uppercase font-bold text-slate-400 block">{{ __('Gateway Status') }}</span>
+                        <span class="font-bold uppercase text-xs" :class="activeTx?.status === 'SUCCESS' ? 'text-emerald-600' : 'text-rose-600'" x-text="activeTx?.status_badge?.label || activeTx?.status"></span>
                     </div>
                     <div>
-                        <span class="text-[10px] uppercase font-bold text-slate-400 block">Amount</span>
-                        <span class="font-mono font-bold text-emerald-600 text-sm" x-text="`৳${activeTx?.amount || '0.00'}`"></span>
+                        <span class="text-[10px] uppercase font-bold text-slate-400 block">{{ __('Amount') }}</span>
+                        <span class="font-mono font-bold text-emerald-600 text-sm" x-text="`${currencySymbol}${activeTx?.amount || '0.00'}`"></span>
                     </div>
                     <div>
-                        <span class="text-[10px] uppercase font-bold text-slate-400 block">Gateway Method</span>
-                        <span class="font-bold uppercase text-slate-800 text-xs" x-text="activeTx?.gateway"></span>
+                        <span class="text-[10px] uppercase font-bold text-slate-400 block">{{ __('Gateway Method') }}</span>
+                        <span class="font-bold uppercase text-slate-800 text-xs" x-text="activeTx?.gateway_badge?.label || activeTx?.gateway"></span>
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Customer / Reference</label>
-                    <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200 text-slate-800 font-medium" x-text="activeTx?.customer?.name || 'Online Subscriber'"></div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">{{ __('Customer / Reference') }}</label>
+                    <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200 text-slate-800 font-medium" x-text="activeTx?.customer?.name || i18n.onlineSubscriber"></div>
                 </div>
 
                 <template x-if="activeTx?.payload || activeTx?.gateway_response">
                     <div>
-                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Raw Gateway Payload</label>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">{{ __('Raw Gateway Payload') }}</label>
                         <pre class="p-3 bg-slate-900 text-cyan-300 rounded-lg font-mono text-[10.5px] overflow-x-auto max-h-40 leading-relaxed" x-text="formatJson(activeTx?.payload || activeTx?.gateway_response)"></pre>
                     </div>
                 </template>
@@ -723,7 +723,7 @@
 
             <div class="px-4 py-2.5 bg-slate-50/80 border-t border-slate-200 flex items-center justify-end">
                 <button type="button" @click="txDetailsModalOpen = false" class="h-[34px] py-0 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-xs rounded-lg transition cursor-pointer">
-                    Close
+                    {{ __('Close') }}
                 </button>
             </div>
         </div>
@@ -743,6 +743,26 @@ function paymentGatewayManager() {
         isTestingBkash: false,
         txDetailsModalOpen: false,
         activeTx: null,
+        currencySymbol: @js($currencySymbol ?? '৳'),
+        i18n: {
+            webhookUrl: @js(__('Webhook URL')),
+            callbackUrl: @js(__('Callback URL')),
+            na: @js(__('N/A')),
+            onlineSubscriber: @js(__('Online Subscriber')),
+            noPayload: @js(__('No Payload')),
+            copiedToast: @js(__(':label copied to clipboard!')),
+            copiedTitle: @js(__('Copied!')),
+            copiedText: @js(__(':label copied to clipboard.')),
+            copiedAlert: @js(__(':label copied: :text')),
+            bankQrActiveTitle: @js(__('Bangla QR & Bank Info Active')),
+            bankQrActiveText: @js(__('Official company bank deposit credentials and Bangla QR details are configured and ready for customer invoice display.')),
+            bkashSuccessTitle: @js(__('bKash Handshake Successful!')),
+            bkashFailedTitle: @js(__('bKash Connection Failed')),
+            bkashNetworkError: @js(__('Network error while connecting to bKash API.')),
+            nagadSuccessTitle: @js(__('Nagad Handshake Valid!')),
+            nagadFailedTitle: @js(__('Nagad Verification Failed')),
+            nagadNetworkError: @js(__('Network error while testing Nagad connection.')),
+        },
 
         viewTransactionDetails(tx) {
             this.activeTx = tx;
@@ -750,7 +770,7 @@ function paymentGatewayManager() {
         },
 
         formatJson(str) {
-            if (!str) return 'No Payload';
+            if (!str) return this.i18n.noPayload;
             try {
                 const parsed = typeof str === 'string' ? JSON.parse(str) : str;
                 return JSON.stringify(parsed, null, 2);
@@ -764,18 +784,18 @@ function paymentGatewayManager() {
                 if (window.Toast) {
                     Toast.fire({
                         icon: 'success',
-                        title: `${label} copied to clipboard!`
+                        title: this.i18n.copiedToast.replace(':label', label)
                     });
                 } else if (window.Swal) {
                     Swal.fire({
                         icon: 'success',
-                        title: 'Copied!',
-                        text: `${label} copied to clipboard.`,
+                        title: this.i18n.copiedTitle,
+                        text: this.i18n.copiedText.replace(':label', label),
                         timer: 1500,
                         showConfirmButton: false
                     });
                 } else {
-                    alert(`${label} copied: ${text}`);
+                    alert(this.i18n.copiedAlert.replace(':label', label).replace(':text', text));
                 }
             }).catch(err => {
                 console.error("Copy failed", err);
@@ -785,8 +805,8 @@ function paymentGatewayManager() {
         testBankQr() {
             Swal.fire({
                 icon: 'info',
-                title: 'Bangla QR & Bank Info Active',
-                text: 'Official company bank deposit credentials and Bangla QR details are configured and ready for customer invoice display.',
+                title: this.i18n.bankQrActiveTitle,
+                text: this.i18n.bankQrActiveText,
                 confirmButtonColor: '#0d9488'
             });
         },
@@ -818,7 +838,7 @@ function paymentGatewayManager() {
                     if (window.Swal) {
                         Swal.fire({
                             icon: 'success',
-                            title: 'bKash Handshake Successful!',
+                            title: this.i18n.bkashSuccessTitle,
                             text: data.message,
                             confirmButtonColor: '#ec4899',
                         });
@@ -829,7 +849,7 @@ function paymentGatewayManager() {
                     if (window.Swal) {
                         Swal.fire({
                             icon: 'error',
-                            title: 'bKash Connection Failed',
+                            title: this.i18n.bkashFailedTitle,
                             text: data.message,
                             confirmButtonColor: '#e11d48',
                         });
@@ -839,7 +859,7 @@ function paymentGatewayManager() {
                 }
             } catch (err) {
                 console.error("bKash test error", err);
-                alert("Network error while connecting to bKash API.");
+                alert(this.i18n.bkashNetworkError);
             } finally {
                 this.isTestingBkash = false;
             }
@@ -870,7 +890,7 @@ function paymentGatewayManager() {
                     if (window.Swal) {
                         Swal.fire({
                             icon: 'success',
-                            title: 'Nagad Handshake Valid!',
+                            title: this.i18n.nagadSuccessTitle,
                             text: data.message,
                             confirmButtonColor: '#ea580c',
                         });
@@ -881,7 +901,7 @@ function paymentGatewayManager() {
                     if (window.Swal) {
                         Swal.fire({
                             icon: 'error',
-                            title: 'Nagad Verification Failed',
+                            title: this.i18n.nagadFailedTitle,
                             text: data.message,
                             confirmButtonColor: '#e11d48',
                         });
@@ -891,7 +911,7 @@ function paymentGatewayManager() {
                 }
             } catch (err) {
                 console.error("Nagad test error", err);
-                alert("Network error while testing Nagad connection.");
+                alert(this.i18n.nagadNetworkError);
             }
         }
     }

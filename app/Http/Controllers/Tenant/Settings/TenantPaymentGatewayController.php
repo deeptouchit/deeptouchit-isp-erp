@@ -26,7 +26,7 @@ class TenantPaymentGatewayController extends Controller
         $tenant = $tenantId ? Tenant::find($tenantId) : (auth()->user()?->tenant ?? Tenant::first());
 
         if (!$tenant) {
-            abort(403, 'Tenant context not found. Please log in.');
+            abort(403, __('Tenant context not found. Please log in.'));
         }
 
         return $tenant;
@@ -78,13 +78,13 @@ class TenantPaymentGatewayController extends Controller
         ];
 
         $bankQrSettings = [
-            'bank_name' => Setting::get('bank_name', $bankGateway?->credentials['bank_name'] ?? 'The City Bank Ltd.', $tenantId),
-            'account_name' => Setting::get('bank_account_name', $bankGateway?->credentials['account_name'] ?? ($tenant->company_name ?? 'ISP Limited'), $tenantId),
+            'bank_name' => Setting::get('bank_name', $bankGateway?->credentials['bank_name'] ?? __('The City Bank Ltd.'), $tenantId),
+            'account_name' => Setting::get('bank_account_name', $bankGateway?->credentials['account_name'] ?? ($tenant->company_name ?? __('ISP Limited')), $tenantId),
             'account_number' => Setting::get('bank_account_no', $bankGateway?->credentials['account_number'] ?? '1102983746001', $tenantId),
-            'branch_name' => Setting::get('bank_branch_name', $bankGateway?->credentials['branch_name'] ?? 'Principal Branch', $tenantId),
+            'branch_name' => Setting::get('bank_branch_name', $bankGateway?->credentials['branch_name'] ?? __('Principal Branch'), $tenantId),
             'routing_number' => Setting::get('bank_routing_no', $bankGateway?->credentials['routing_number'] ?? '225271890', $tenantId),
             'bangla_qr_number' => Setting::get('bangla_qr_number', $tenant->phone ?? '01819000000', $tenantId),
-            'bangla_qr_title' => Setting::get('bangla_qr_title', $tenant->company_name ?? 'ISP Online Payment', $tenantId),
+            'bangla_qr_title' => Setting::get('bangla_qr_title', $tenant->company_name ?? __('ISP Online Payment'), $tenantId),
             'is_active' => (bool) Setting::get('bank_qr_enabled', $bankGateway?->is_active ?? true, $tenantId),
         ];
 
@@ -101,8 +101,8 @@ class TenantPaymentGatewayController extends Controller
 
         $stats = [
             'active_channels' => $activeChannelsCount,
-            'bkash_mode' => $bkashSettings['is_active'] ? ($bkashSettings['mode'] === 'live' ? 'Live PGW' : 'Sandbox Test') : 'Disabled',
-            'nagad_mode' => $nagadSettings['is_active'] ? ($nagadSettings['mode'] === 'live' ? 'Live PGW' : 'Sandbox Test') : 'Disabled',
+            'bkash_mode' => $bkashSettings['is_active'] ? ($bkashSettings['mode'] === 'live' ? __('Live PGW') : __('Sandbox Test')) : __('Disabled'),
+            'nagad_mode' => $nagadSettings['is_active'] ? ($nagadSettings['mode'] === 'live' ? __('Live PGW') : __('Sandbox Test')) : __('Disabled'),
             'total_collected' => $totalCollected,
             'successful_tx' => $successfulTx,
             'failed_tx' => $failedTx,
@@ -135,7 +135,7 @@ class TenantPaymentGatewayController extends Controller
 
         $logs = $logsQuery->paginate(15)->withQueryString();
 
-        $currencySymbol = '৳';
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
 
         return view('tenant.settings.payment_gateways', compact(
             'tenant',
@@ -215,7 +215,7 @@ class TenantPaymentGatewayController extends Controller
         Cache::forget('bkash_token_' . md5(($validated['app_key'] ?? '') . 'https://tokenized.sandbox.bka.sh/v1.2.0-beta'));
 
         return redirect()->route('tenant.settings.payment-gateways', ['tab' => 'bkash'])
-            ->with('success', 'bKash Merchant API settings saved successfully!');
+            ->with('success', __('bKash Merchant API settings saved successfully!'));
     }
 
     /**
@@ -274,7 +274,7 @@ class TenantPaymentGatewayController extends Controller
         );
 
         return redirect()->route('tenant.settings.payment-gateways', ['tab' => 'nagad'])
-            ->with('success', 'Nagad Merchant API settings saved successfully!');
+            ->with('success', __('Nagad Merchant API settings saved successfully!'));
     }
 
     /**
@@ -330,7 +330,7 @@ class TenantPaymentGatewayController extends Controller
         );
 
         return redirect()->route('tenant.settings.payment-gateways', ['tab' => 'bank_qr'])
-            ->with('success', 'Bangla QR and Bank Transfer settings saved successfully!');
+            ->with('success', __('Bangla QR and Bank Transfer settings saved successfully!'));
     }
 
     /**
@@ -352,10 +352,14 @@ class TenantPaymentGatewayController extends Controller
 
         Setting::set("{$slug}_enabled", $state ? '1' : '0', 'payment', $tenantId);
 
+        $gatewayName = ucfirst($slug);
+
         return response()->json([
             'success' => true,
             'is_active' => $state,
-            'message' => ucfirst($slug) . ' gateway is now ' . ($state ? 'enabled' : 'disabled') . '.',
+            'message' => $state
+                ? __(':gateway gateway is now enabled.', ['gateway' => $gatewayName])
+                : __(':gateway gateway is now disabled.', ['gateway' => $gatewayName]),
         ]);
     }
 
@@ -373,7 +377,7 @@ class TenantPaymentGatewayController extends Controller
         if (empty($appKey) || empty($appSecret) || empty($username) || empty($password)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Please provide App Key, App Secret, Username, and Password to test connection.',
+                'message' => __('Please provide App Key, App Secret, Username, and Password to test connection.'),
             ], 422);
         }
 
@@ -399,24 +403,24 @@ class TenantPaymentGatewayController extends Controller
             if ($response->successful() && !empty($data['id_token'])) {
                 return response()->json([
                     'success' => true,
-                    'message' => 'bKash API Handshake Successful! Live token acquired.',
+                    'message' => __('bKash API Handshake Successful! Live token acquired.'),
                     'token_type' => $data['token_type'] ?? 'Bearer',
                     'expires_in' => $data['expires_in'] ?? 3600,
                     'mode' => strtoupper($mode),
                 ]);
             }
 
-            $errMsg = $data['statusMessage'] ?? $data['message'] ?? 'bKash API authentication failed (HTTP ' . $response->status() . ').';
+            $errMsg = $data['statusMessage'] ?? $data['message'] ?? __('bKash API authentication failed (HTTP :status).', ['status' => $response->status()]);
             return response()->json([
                 'success' => false,
-                'message' => "bKash Error: {$errMsg}",
+                'message' => __('bKash Error: :error', ['error' => $errMsg]),
                 'raw' => $data,
             ], 400);
 
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Network/Connection Error: ' . $e->getMessage(),
+                'message' => __('Network/Connection Error: :error', ['error' => $e->getMessage()]),
             ], 500);
         }
     }
@@ -434,7 +438,7 @@ class TenantPaymentGatewayController extends Controller
         if (empty($merchantId) || empty($privateKey)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Merchant ID and Private Key are required for Nagad API handshake.',
+                'message' => __('Merchant ID and Private Key are required for Nagad API handshake.'),
             ], 422);
         }
 
@@ -442,13 +446,16 @@ class TenantPaymentGatewayController extends Controller
         if (!str_contains($privateKey, 'BEGIN RSA PRIVATE KEY') && !str_contains($privateKey, 'BEGIN PRIVATE KEY')) {
             return response()->json([
                 'success' => false,
-                'message' => 'Invalid Private Key format. Key must contain -----BEGIN RSA PRIVATE KEY----- header.',
+                'message' => __('Invalid Private Key format. Key must contain -----BEGIN RSA PRIVATE KEY----- header.'),
             ], 422);
         }
 
         return response()->json([
             'success' => true,
-            'message' => 'Nagad RSA Key pair verified successfully for Merchant ID: ' . $merchantId . ' (' . strtoupper($mode) . ' mode).',
+            'message' => __('Nagad RSA Key pair verified successfully for Merchant ID: :merchant (:mode mode).', [
+                'merchant' => $merchantId,
+                'mode' => strtoupper($mode),
+            ]),
         ]);
     }
 }
