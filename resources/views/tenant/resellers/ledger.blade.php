@@ -1,6 +1,6 @@
 @extends('tenant.layouts.app')
 
-@section('title', 'Reseller Adjustment Ledger - ' . ($tenant->company_name ?? $tenant->name))
+@section('title', __('Reseller Adjustment Ledger') . ' - ' . ($tenant->company_name ?? $tenant->name))
 
 @push('styles')
     {{-- Page-specific CSS --}}
@@ -16,9 +16,9 @@
                 <i class="fas fa-receipt"></i>
             </div>
             <div class="flex items-center gap-2">
-                <h1 class="text-xs font-bold text-slate-800 tracking-tight">Reseller Adjustment Ledger</h1>
+                <h1 class="text-xs font-bold text-slate-800 tracking-tight">{{ __('Reseller Adjustment Ledger') }}</h1>
                 <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-cyan-100 text-cyan-800 border border-cyan-200">
-                    {{ number_format($transactions->total()) }} Transactions
+                    {{ __(':count Transactions', ['count' => number_format($transactions->total())]) }}
                 </span>
             </div>
         </div>
@@ -27,18 +27,18 @@
             <a href="{{ route('tenant.resellers.wallets') }}" 
                class="h-[34px] py-0 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200/80 transition flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-wallet text-slate-500 text-xs"></i>
-                <span>Wallets &amp; Credit</span>
+                <span>{{ __('Wallets & Credit') }}</span>
             </a>
             <a href="{{ route('tenant.resellers.recharge') }}" 
                class="h-[34px] py-0 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200/80 transition flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-clock-rotate-left text-slate-500 text-xs"></i>
-                <span>Recharge History</span>
+                <span>{{ __('Recharge History') }}</span>
             </a>
             <button type="button" 
                     @click="openTopupModal()"
                     class="h-[34px] py-0 px-3.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-xs font-semibold shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-circle-dollar-to-slot text-xs"></i>
-                <span>+ Adjust Balance</span>
+                <span>{{ __('+ Adjust Balance') }}</span>
             </button>
         </div>
     </div>
@@ -48,7 +48,7 @@
         <!-- Card 1: Total Recharges -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Total Recharges</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">{{ __('Total Recharges') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-emerald-700 truncate">@currency($totalCreditRecharges)</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-emerald-50 text-emerald-600 border-emerald-100 flex items-center justify-center">
@@ -59,7 +59,7 @@
         <!-- Card 2: Total Deductions -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Total Deductions</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">{{ __('Total Deductions') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-rose-600 truncate">@currency($totalDebits)</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-rose-50 text-rose-600 border-rose-100 flex items-center justify-center">
@@ -70,7 +70,7 @@
         <!-- Card 3: Month Volume -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Month Volume</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">{{ __('Month Volume') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-cyan-800 truncate">@currency($thisMonthVolume)</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-cyan-50 text-cyan-600 border-cyan-100 flex items-center justify-center">
@@ -81,7 +81,7 @@
         <!-- Card 4: Total Trx Count -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Total Trx Count</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">{{ __('Total Trx Count') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-slate-900 truncate">{{ number_format($totalTransactionsCount) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-slate-50 text-slate-600 border-slate-200 flex items-center justify-center">
@@ -92,7 +92,7 @@
         <!-- Card 5: Credit Transactions Count -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Credit Count</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">{{ __('Credit Count') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-emerald-700 truncate">{{ number_format($creditCount) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-emerald-50 text-emerald-600 border-emerald-100 flex items-center justify-center">
@@ -103,7 +103,7 @@
         <!-- Card 6: Debit Transactions Count -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Debit Count</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">{{ __('Debit Count') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-rose-600 truncate">{{ number_format($debitCount) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-rose-50 text-rose-600 border-rose-100 flex items-center justify-center">
@@ -126,7 +126,7 @@
                     <input type="text" 
                            name="search" 
                            x-model="searchQuery"
-                           placeholder="Search Trx ID, Reference, Reseller Partner, Notes..." 
+                           placeholder="{{ __('Search Trx ID, Reference, Reseller Partner, Notes...') }}" 
                            class="w-full h-[34px] pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                     <button type="button" 
                             x-show="searchQuery && searchQuery.length > 0" 
@@ -141,7 +141,7 @@
                     <select name="reseller_id" 
                             onchange="this.form.submit()" 
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 cursor-pointer">
-                        <option value="">All Resellers</option>
+                        <option value="">{{ __('All Resellers') }}</option>
                         @foreach($allResellers as $res)
                             <option value="{{ $res->id }}" {{ (string)request('reseller_id') === (string)$res->id ? 'selected' : '' }}>
                                 {{ $res->name }} ({{ $res->code }})
@@ -155,9 +155,9 @@
                     <select name="type" 
                             onchange="this.form.submit()" 
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 cursor-pointer">
-                        <option value="">All Types</option>
-                        <option value="CREDIT" {{ request('type') === 'CREDIT' ? 'selected' : '' }}>Credit (+Top-up)</option>
-                        <option value="DEBIT" {{ request('type') === 'DEBIT' ? 'selected' : '' }}>Debit (-Deduction)</option>
+                        <option value="">{{ __('All Types') }}</option>
+                        <option value="CREDIT" {{ request('type') === 'CREDIT' ? 'selected' : '' }}>{{ __('Credit (+Top-up)') }}</option>
+                        <option value="DEBIT" {{ request('type') === 'DEBIT' ? 'selected' : '' }}>{{ __('Debit (-Deduction)') }}</option>
                     </select>
                 </div>
 
@@ -168,7 +168,7 @@
                             class="w-full h-[34px] px-2 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 cursor-pointer">
                         @foreach([15, 20, 30, 50, 100, 250, 500] as $size)
                             <option value="{{ $size }}" {{ (int)request('per_page', $perPage) === $size ? 'selected' : '' }}>
-                                {{ $size }} / page
+                                {{ __(':size / page', ['size' => $size]) }}
                             </option>
                         @endforeach
                     </select>
@@ -180,7 +180,7 @@
                         class="h-[34px] py-0 px-2.5 rounded-lg border text-xs font-medium transition flex items-center justify-center gap-1.5 cursor-pointer flex-shrink-0"
                         :class="showMoreFilters ? 'bg-cyan-50 border-cyan-200 text-cyan-700' : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700'">
                     <i class="fas fa-sliders text-[10px]"></i>
-                    <span>More Filters</span>
+                    <span>{{ __('More Filters') }}</span>
                     @if($activeMoreCount > 0)
                         <span class="w-4 h-4 rounded-full bg-cyan-600 text-white text-[9px] font-bold flex items-center justify-center">
                             {{ $activeMoreCount }}
@@ -194,15 +194,15 @@
                 <div class="flex items-center gap-1.5 flex-shrink-0 md:ml-auto">
                     <button type="submit" 
                             class="h-[34px] py-0 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" 
-                            title="Apply Filters">
+                            title="{{ __('Apply Filters') }}">
                         <i class="fas fa-filter text-[10px]"></i>
-                        <span>Filter</span>
+                        <span>{{ __('Filter') }}</span>
                     </button>
                     <a href="{{ route('tenant.resellers.ledger') }}" 
                        class="h-[34px] py-0 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer" 
-                       title="Reset Filters">
+                       title="{{ __('Reset Filters') }}">
                         <i class="fas fa-rotate-left text-[10px]"></i>
-                        <span>Reset</span>
+                        <span>{{ __('Reset') }}</span>
                     </a>
                 </div>
             </div>
@@ -223,7 +223,7 @@
                     <select name="payment_method" 
                             onchange="this.form.submit()" 
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 cursor-pointer">
-                        <option value="">All Payment Methods</option>
+                        <option value="">{{ __('All Payment Methods') }}</option>
                         @foreach($availableMethods as $method)
                             <option value="{{ $method }}" {{ request('payment_method') === $method ? 'selected' : '' }}>
                                 {{ $method }}
@@ -234,7 +234,7 @@
 
                 {{-- Date From --}}
                 <div class="w-full sm:w-44 flex items-center gap-1">
-                    <span class="text-[11px] text-slate-500 whitespace-nowrap">From:</span>
+                    <span class="text-[11px] text-slate-500 whitespace-nowrap">{{ __('From:') }}</span>
                     <input type="date" 
                            name="date_from" 
                            value="{{ request('date_from') }}" 
@@ -244,7 +244,7 @@
 
                 {{-- Date To --}}
                 <div class="w-full sm:w-44 flex items-center gap-1">
-                    <span class="text-[11px] text-slate-500 whitespace-nowrap">To:</span>
+                    <span class="text-[11px] text-slate-500 whitespace-nowrap">{{ __('To:') }}</span>
                     <input type="date" 
                            name="date_to" 
                            value="{{ request('date_to') }}" 
@@ -256,7 +256,7 @@
                     <a href="{{ route('tenant.resellers.ledger', request()->except(['payment_method', 'date_from', 'date_to'])) }}" 
                        class="h-[34px] py-0 px-2 text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-lg text-xs transition inline-flex items-center gap-1 cursor-pointer">
                         <i class="fas fa-times text-[10px]"></i>
-                        <span>Clear Advanced</span>
+                        <span>{{ __('Clear Advanced') }}</span>
                     </a>
                 @endif
             </div>
@@ -270,14 +270,14 @@
                 <thead>
                     <tr>
                         <th class="w-10 text-center font-semibold">#</th>
-                        <th class="text-center font-semibold">Trx ID</th>
-                        <th class="text-center font-semibold">Date &amp; Time</th>
-                        <th class="text-center font-semibold">Reseller Partner</th>
-                        <th class="text-center font-semibold">Type</th>
-                        <th class="text-center font-semibold">Amount</th>
-                        <th class="text-center font-semibold">Balance After</th>
-                        <th class="text-center font-semibold">Method</th>
-                        <th class="w-10 text-center font-semibold no-sort">Action</th>
+                        <th class="text-center font-semibold">{{ __('Trx ID') }}</th>
+                        <th class="text-center font-semibold">{{ __('Date & Time') }}</th>
+                        <th class="text-center font-semibold">{{ __('Reseller Partner') }}</th>
+                        <th class="text-center font-semibold">{{ __('Type') }}</th>
+                        <th class="text-center font-semibold">{{ __('Amount') }}</th>
+                        <th class="text-center font-semibold">{{ __('Balance After') }}</th>
+                        <th class="text-center font-semibold">{{ __('Method') }}</th>
+                        <th class="w-10 text-center font-semibold no-sort">{{ __('Action') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -293,7 +293,7 @@
                                 <button type="button" 
                                         @click="viewVoucher({{ Js::from($trx) }})" 
                                         class="hover:underline cursor-pointer"
-                                        title="View Voucher">
+                                        title="{{ __('View Voucher') }}">
                                     {{ $trx->trx_id }}
                                 </button>
                             </td>
@@ -305,7 +305,7 @@
 
                             <!-- 4. Reseller Partner -->
                             <td class="text-left font-medium text-slate-900 whitespace-nowrap">
-                                {{ $trx->reseller?->name ?? 'N/A' }}
+                                {{ $trx->reseller?->name ?? __('N/A') }}
                             </td>
 
                             <!-- 5. Type -->
@@ -313,12 +313,12 @@
                                 @if($trx->type === 'CREDIT')
                                     <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                                         <i class="fas fa-arrow-down-left text-[8px]"></i>
-                                        <span>Credit</span>
+                                        <span>{{ __('Credit') }}</span>
                                     </span>
                                 @else
                                     <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-50 text-rose-700 border border-rose-200">
                                         <i class="fas fa-arrow-up-right text-[8px]"></i>
-                                        <span>Debit</span>
+                                        <span>{{ __('Debit') }}</span>
                                     </span>
                                 @endif
                             </td>
@@ -347,7 +347,7 @@
                                 <button type="button" 
                                         @click.stop="toggleMenu({{ Js::from($trx) }}, $event)" 
                                         class="w-6 h-6 rounded hover:bg-slate-100 text-slate-500 hover:text-cyan-600 transition cursor-pointer inline-flex items-center justify-center text-xs"
-                                        title="Actions">
+                                        title="{{ __('Actions') }}">
                                     <i class="fas fa-ellipsis-v text-[10px]"></i>
                                 </button>
                             </td>
@@ -359,14 +359,14 @@
                                     <div class="w-10 h-10 rounded-xl bg-cyan-50 text-cyan-600 mx-auto flex items-center justify-center text-base border border-cyan-100 shadow-2xs">
                                         <i class="fas fa-receipt"></i>
                                     </div>
-                                    <h3 class="text-xs font-semibold text-slate-800">No Ledger Transactions Found</h3>
-                                    <p class="text-[11px] text-slate-500">All top-ups, recharge requests, and balance adjustments will be recorded in this ledger.</p>
+                                    <h3 class="text-xs font-semibold text-slate-800">{{ __('No Ledger Transactions Found') }}</h3>
+                                    <p class="text-[11px] text-slate-500">{{ __('All top-ups, recharge requests, and balance adjustments will be recorded in this ledger.') }}</p>
                                     <div class="pt-1">
                                         <button type="button" 
                                                 @click="openTopupModal()" 
                                                 class="h-[34px] py-0 px-3.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-xs font-semibold shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer">
                                             <i class="fas fa-circle-dollar-to-slot text-xs"></i>
-                                            <span>+ Adjust Balance</span>
+                                            <span>{{ __('+ Adjust Balance') }}</span>
                                         </button>
                                     </div>
                                 </div>
@@ -381,7 +381,7 @@
         @if($transactions->hasPages())
             <div class="px-3.5 py-2.5 bg-slate-50/80 border-t border-slate-200 flex items-center justify-between text-xs text-slate-600">
                 <div>
-                    Showing {{ $transactions->firstItem() }} to {{ $transactions->lastItem() }} of {{ $transactions->total() }} entries
+                    {{ __('Showing :first to :last of :total entries', ['first' => $transactions->firstItem(), 'last' => $transactions->lastItem(), 'total' => $transactions->total()]) }}
                 </div>
                 <div>
                     {{ $transactions->links() }}
@@ -408,17 +408,17 @@
                     @click="const trx = activeMenu; activeMenu = null; viewVoucher(trx)" 
                     class="w-full px-3 py-1.5 text-left hover:bg-slate-50 flex items-center gap-2 text-slate-700 transition cursor-pointer">
                 <i class="fas fa-file-invoice text-cyan-600 w-3.5 text-[11px]"></i>
-                <span>View Trx Voucher</span>
+                <span>{{ __('View Trx Voucher') }}</span>
             </button>
             <a :href="`/admin/resellers/${activeMenu?.reseller_id}`" 
                class="w-full px-3 py-1.5 text-left hover:bg-slate-50 flex items-center gap-2 text-slate-700 transition cursor-pointer">
                 <i class="fas fa-user-gear text-slate-500 w-3.5 text-[11px]"></i>
-                <span>Reseller Profile</span>
+                <span>{{ __('Reseller Profile') }}</span>
             </a>
             <a href="{{ route('tenant.resellers.wallets') }}" 
                class="w-full px-3 py-1.5 text-left hover:bg-slate-50 flex items-center gap-2 text-slate-700 transition cursor-pointer">
                 <i class="fas fa-wallet text-cyan-600 w-3.5 text-[11px]"></i>
-                <span>Wallet Balance</span>
+                <span>{{ __('Wallet Balance') }}</span>
             </a>
         </div>
     </div>
@@ -445,7 +445,7 @@
                         <i class="fas fa-receipt"></i>
                     </div>
                     <div>
-                        <h3 class="text-xs font-semibold text-slate-800">Transaction Voucher</h3>
+                        <h3 class="text-xs font-semibold text-slate-800">{{ __('Transaction Voucher') }}</h3>
                         <p class="text-[10.5px] text-slate-500 font-mono" x-text="voucherModal.data?.trx_id"></p>
                     </div>
                 </div>
@@ -461,7 +461,7 @@
                      :class="voucherModal.data?.type === 'CREDIT' ? 'bg-emerald-50/70 border-emerald-200' : 'bg-rose-50/70 border-rose-200'">
                     <span class="text-[10px] uppercase font-semibold block tracking-wider"
                           :class="voucherModal.data?.type === 'CREDIT' ? 'text-emerald-700' : 'text-rose-700'"
-                          x-text="voucherModal.data?.type === 'CREDIT' ? 'Wallet Credit (+Topup)' : 'Wallet Debit (-Deduction)'"></span>
+                          x-text="voucherModal.data?.type === 'CREDIT' ? i18n.walletCreditTopup : i18n.walletDebitDeduction"></span>
                     <span class="text-xl font-bold font-mono block leading-tight"
                           :class="voucherModal.data?.type === 'CREDIT' ? 'text-emerald-800' : 'text-rose-800'"
                           x-text="(voucherModal.data?.type === 'CREDIT' ? '+' : '-') + formatCurrency(voucherModal.data?.amount)"></span>
@@ -470,36 +470,36 @@
                 <!-- Voucher Meta Details -->
                 <div class="p-3 bg-slate-50 rounded-lg border border-slate-200/80 space-y-2 text-[11px]">
                     <div class="flex items-center justify-between py-1 border-b border-slate-200">
-                        <span class="text-slate-500">Reseller Partner:</span>
-                        <span class="font-semibold text-slate-800" x-text="voucherModal.data?.reseller?.name || 'N/A'"></span>
+                        <span class="text-slate-500">{{ __('Reseller Partner:') }}</span>
+                        <span class="font-semibold text-slate-800" x-text="voucherModal.data?.reseller?.name || i18n.na"></span>
                     </div>
                     <div class="flex items-center justify-between py-1 border-b border-slate-200">
-                        <span class="text-slate-500">Reseller Code:</span>
-                        <span class="font-mono text-slate-800" x-text="voucherModal.data?.reseller?.code || 'N/A'"></span>
+                        <span class="text-slate-500">{{ __('Reseller Code:') }}</span>
+                        <span class="font-mono text-slate-800" x-text="voucherModal.data?.reseller?.code || i18n.na"></span>
                     </div>
                     <div class="flex items-center justify-between py-1 border-b border-slate-200">
-                        <span class="text-slate-500">Payment Method:</span>
-                        <span class="font-medium text-slate-800" x-text="voucherModal.data?.payment_method || 'Cash'"></span>
+                        <span class="text-slate-500">{{ __('Payment Method:') }}</span>
+                        <span class="font-medium text-slate-800" x-text="voucherModal.data?.payment_method || i18n.cash"></span>
                     </div>
                     <div class="flex items-center justify-between py-1 border-b border-slate-200">
-                        <span class="text-slate-500">Reference No:</span>
-                        <span class="font-mono text-slate-800" x-text="voucherModal.data?.reference_no || 'N/A'"></span>
+                        <span class="text-slate-500">{{ __('Reference No:') }}</span>
+                        <span class="font-mono text-slate-800" x-text="voucherModal.data?.reference_no || i18n.na"></span>
                     </div>
                     <div class="flex items-center justify-between py-1 border-b border-slate-200">
-                        <span class="text-slate-500">Balance Before:</span>
+                        <span class="text-slate-500">{{ __('Balance Before:') }}</span>
                         <span class="font-mono text-slate-600" x-text="formatCurrency(voucherModal.data?.balance_before)"></span>
                     </div>
                     <div class="flex items-center justify-between py-1 border-b border-slate-200">
-                        <span class="text-slate-500">Balance After:</span>
+                        <span class="text-slate-500">{{ __('Balance After:') }}</span>
                         <span class="font-mono font-bold text-slate-900" x-text="formatCurrency(voucherModal.data?.balance_after)"></span>
                     </div>
                     <div class="flex items-center justify-between py-1 border-b border-slate-200">
-                        <span class="text-slate-500">Transaction Date:</span>
+                        <span class="text-slate-500">{{ __('Transaction Date:') }}</span>
                         <span class="font-mono text-slate-700" x-text="formatDate(voucherModal.data?.created_at)"></span>
                     </div>
                     <div class="py-1">
-                        <span class="text-slate-500 block mb-0.5">Remarks:</span>
-                        <span class="text-slate-700 italic" x-text="voucherModal.data?.description || 'N/A'"></span>
+                        <span class="text-slate-500 block mb-0.5">{{ __('Remarks:') }}</span>
+                        <span class="text-slate-700 italic" x-text="voucherModal.data?.description || i18n.na"></span>
                     </div>
                 </div>
             </div>
@@ -507,11 +507,11 @@
             <!-- Footer -->
             <div class="px-4 py-2.5 bg-slate-50/80 border-t border-slate-200 flex items-center justify-between">
                 <button type="button" @click="voucherModal.open = false" class="h-[34px] py-0 px-3.5 border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs rounded-lg transition cursor-pointer">
-                    Close
+                    {{ __('Close') }}
                 </button>
                 <button type="button" @click="printVoucher()" class="h-[34px] py-0 px-4 bg-cyan-600 hover:bg-cyan-700 text-white font-medium text-xs rounded-lg shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer">
                     <i class="fas fa-print text-xs"></i>
-                    <span>Print Voucher</span>
+                    <span>{{ __('Print Voucher') }}</span>
                 </button>
             </div>
         </div>
@@ -538,8 +538,8 @@
                         <i class="fas fa-circle-dollar-to-slot"></i>
                     </div>
                     <div>
-                        <h3 class="text-xs font-semibold text-slate-800">Wallet Top-up &amp; Balance Adjustment</h3>
-                        <p class="text-[10.5px] text-slate-500 font-normal">Recharge or debit reseller balance</p>
+                        <h3 class="text-xs font-semibold text-slate-800">{{ __('Wallet Top-up & Balance Adjustment') }}</h3>
+                        <p class="text-[10.5px] text-slate-500 font-normal">{{ __('Recharge or debit reseller balance') }}</p>
                     </div>
                 </div>
                 <button type="button" @click="showTopupModal = false" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center cursor-pointer">
@@ -552,14 +552,14 @@
                 <!-- Reseller Picker -->
                 <div>
                     <label class="block text-[11px] font-semibold text-slate-700 mb-1">
-                        Select Reseller Partner <span class="text-rose-500">*</span>
+                        {{ __('Select Reseller Partner') }} <span class="text-rose-500">*</span>
                     </label>
                     <select x-model="topupForm.reseller_id" 
                             required 
                             class="w-full h-[34px] bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 focus:bg-white focus:border-cyan-500">
-                        <option value="">-- Choose Reseller --</option>
+                        <option value="">{{ __('-- Choose Reseller --') }}</option>
                         @foreach($allResellers as $r)
-                            <option value="{{ $r->id }}">{{ $r->name }} ({{ $r->code }}) — Balance: {{ $currencySymbol ?? '৳' }} {{ number_format($r->wallet_balance, 2) }}</option>
+                            <option value="{{ $r->id }}">{{ __(':name (:code) — Balance: :currency :balance', ['name' => $r->name, 'code' => $r->code, 'currency' => $currencySymbol ?? '৳', 'balance' => number_format($r->wallet_balance, 2)]) }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -567,7 +567,7 @@
                 <!-- Transaction Type Toggle -->
                 <div>
                     <label class="block text-[11px] font-semibold text-slate-700 mb-1">
-                        Adjustment Type <span class="text-rose-500">*</span>
+                        {{ __('Adjustment Type') }} <span class="text-rose-500">*</span>
                     </label>
                     <div class="grid grid-cols-2 gap-2">
                         <button type="button" 
@@ -575,14 +575,14 @@
                                 class="h-[34px] py-0 px-3 rounded-lg border text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer"
                                 :class="topupForm.type === 'CREDIT' ? 'bg-emerald-50 border-emerald-300 text-emerald-800 shadow-2xs' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-white'">
                             <i class="fas fa-arrow-down-left text-emerald-600 text-[10px]"></i>
-                            <span>Credit (Add / Top-up)</span>
+                            <span>{{ __('Credit (Add / Top-up)') }}</span>
                         </button>
                         <button type="button" 
                                 @click="topupForm.type = 'DEBIT'"
                                 class="h-[34px] py-0 px-3 rounded-lg border text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer"
                                 :class="topupForm.type === 'DEBIT' ? 'bg-rose-50 border-rose-300 text-rose-800 shadow-2xs' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-white'">
                             <i class="fas fa-arrow-up-right text-rose-600 text-[10px]"></i>
-                            <span>Debit (Deduct / Correction)</span>
+                            <span>{{ __('Debit (Deduct / Correction)') }}</span>
                         </button>
                     </div>
                 </div>
@@ -591,30 +591,30 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                         <label class="block text-[11px] font-semibold text-slate-700 mb-1">
-                            Amount ({{ $currencySymbol ?? '৳' }}) <span class="text-rose-500">*</span>
+                            {{ __('Amount (:currency)', ['currency' => $currencySymbol ?? '৳']) }} <span class="text-rose-500">*</span>
                         </label>
                         <input type="number" 
                                step="0.01" 
                                min="1" 
                                x-model="topupForm.amount" 
                                required 
-                               placeholder="e.g. 5000" 
+                               placeholder="{{ __('e.g. 5000') }}" 
                                class="w-full h-[34px] bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono px-3 focus:bg-white focus:border-cyan-500">
                     </div>
                     <div>
                         <label class="block text-[11px] font-semibold text-slate-700 mb-1">
-                            Payment Method <span class="text-rose-500">*</span>
+                            {{ __('Payment Method') }} <span class="text-rose-500">*</span>
                         </label>
                         <select x-model="topupForm.payment_method" 
                                 required 
                                 class="w-full h-[34px] bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 focus:bg-white focus:border-cyan-500">
-                            <option value="Cash">Cash Deposit</option>
-                            <option value="Bank Transfer">Bank Transfer / EFT</option>
-                            <option value="bKash">bKash Merchant</option>
-                            <option value="Nagad">Nagad Direct</option>
-                            <option value="Rocket">Rocket Direct</option>
-                            <option value="Cheque">Cheque</option>
-                            <option value="System Adjustment">System Adjustment</option>
+                            <option value="Cash">{{ __('Cash Deposit') }}</option>
+                            <option value="Bank Transfer">{{ __('Bank Transfer / EFT') }}</option>
+                            <option value="bKash">{{ __('bKash Merchant') }}</option>
+                            <option value="Nagad">{{ __('Nagad Direct') }}</option>
+                            <option value="Rocket">{{ __('Rocket Direct') }}</option>
+                            <option value="Cheque">{{ __('Cheque') }}</option>
+                            <option value="System Adjustment">{{ __('System Adjustment') }}</option>
                         </select>
                     </div>
                 </div>
@@ -623,20 +623,20 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                         <label class="block text-[11px] font-semibold text-slate-700 mb-1">
-                            Reference No / Trx Voucher
+                            {{ __('Reference No / Trx Voucher') }}
                         </label>
                         <input type="text" 
                                x-model="topupForm.reference_no" 
-                               placeholder="e.g. BK-987654 / Bank Slip" 
+                               placeholder="{{ __('e.g. BK-987654 / Bank Slip') }}" 
                                class="w-full h-[34px] bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono px-3 focus:bg-white focus:border-cyan-500">
                     </div>
                     <div>
                         <label class="block text-[11px] font-semibold text-slate-700 mb-1">
-                            Remarks / Description
+                            {{ __('Remarks / Description') }}
                         </label>
                         <input type="text" 
                                x-model="topupForm.description" 
-                               placeholder="e.g. Month initial top-up" 
+                               placeholder="{{ __('e.g. Month initial top-up') }}" 
                                class="w-full h-[34px] bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 focus:bg-white focus:border-cyan-500">
                     </div>
                 </div>
@@ -644,13 +644,13 @@
                 <!-- Footer Actions -->
                 <div class="pt-2 border-t border-slate-200 flex items-center justify-end gap-2">
                     <button type="button" @click="showTopupModal = false" class="h-[34px] py-0 px-3.5 border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs rounded-lg transition cursor-pointer">
-                        Cancel
+                        {{ __('Cancel') }}
                     </button>
                     <button type="submit" 
                             :disabled="submitting"
                             class="h-[34px] py-0 px-4 bg-cyan-600 hover:bg-cyan-700 text-white font-medium text-xs rounded-lg shadow-xs transition inline-flex items-center gap-1.5 disabled:opacity-50 cursor-pointer">
                         <i class="fas fa-check text-xs" :class="{ 'fa-spin fa-spinner': submitting }"></i>
-                        <span x-text="submitting ? 'Processing...' : 'Confirm Transaction'"></span>
+                        <span x-text="submitting ? i18n.processing : i18n.confirmTransaction"></span>
                     </button>
                 </div>
             </form>
@@ -667,6 +667,23 @@ function resellerLedgerManager() {
         activeMenu: null,
         menuPos: { top: '0px', right: '10px', left: 'auto', bottom: 'auto' },
         submitting: false,
+        currencySymbol: @json($currencySymbol ?? '৳'),
+        companyName: @json($tenant->company_name ?? $tenant->name),
+        i18n: {
+            walletCreditTopup: @json(__('Wallet Credit (+Topup)')),
+            walletDebitDeduction: @json(__('Wallet Debit (-Deduction)')),
+            na: @json(__('N/A')),
+            cash: @json(__('Cash')),
+            processing: @json(__('Processing...')),
+            confirmTransaction: @json(__('Confirm Transaction')),
+            transactionSuccessful: @json(__('Transaction Successful')),
+            transactionFailed: @json(__('Transaction Failed')),
+            errorExecutingAdjustment: @json(__('Error executing balance adjustment.')),
+            errorTitle: @json(__('Error')),
+            networkError: @json(__('Network error or server unreachable.')),
+            voucherPrintTitle: @json(__('Transaction Voucher - :trxId')),
+            voucherPrintSubtitle: @json(__('Reseller Wallet Transaction Voucher')),
+        },
 
         voucherModal: {
             open: false,
@@ -716,7 +733,7 @@ function resellerLedgerManager() {
         },
 
         openTopupModal() {
-            this.topupForm.reseller_id = '{{ $allResellers->first()?->id ?? "" }}';
+            this.topupForm.reseller_id = @json((string) ($allResellers->first()?->id ?? ''));
             this.topupForm.type = 'CREDIT';
             this.topupForm.amount = '';
             this.topupForm.reference_no = '';
@@ -742,7 +759,7 @@ function resellerLedgerManager() {
                     this.showTopupModal = false;
                     Swal.fire({
                         icon: 'success',
-                        title: 'Transaction Successful',
+                        title: this.i18n.transactionSuccessful,
                         text: data.message,
                         timer: 2000,
                         showConfirmButton: false
@@ -752,15 +769,15 @@ function resellerLedgerManager() {
                 } else {
                     Swal.fire({
                         icon: 'error',
-                        title: 'Transaction Failed',
-                        text: data.message || 'Error executing balance adjustment.'
+                        title: this.i18n.transactionFailed,
+                        text: data.message || this.i18n.errorExecutingAdjustment
                     });
                 }
             } catch (err) {
                 Swal.fire({
                     icon: 'error',
-                    title: 'Error',
-                    text: 'Network error or server unreachable.'
+                    title: this.i18n.errorTitle,
+                    text: this.i18n.networkError
                 });
             } finally {
                 this.submitting = false;
@@ -773,7 +790,7 @@ function resellerLedgerManager() {
             printWindow.document.write(`
                 <html>
                 <head>
-                    <title>Transaction Voucher - ${this.voucherModal.data?.trx_id || ''}</title>
+                    <title>${this.i18n.voucherPrintTitle.replace(':trxId', this.voucherModal.data?.trx_id || '')}</title>
                     <style>
                         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 24px; color: #1e293b; }
                         .text-center { text-align: center; }
@@ -784,8 +801,8 @@ function resellerLedgerManager() {
                     </style>
                 </head>
                 <body>
-                    <h2 class="text-center" style="margin-bottom: 4px;">{{ $tenant->company_name ?? $tenant->name }}</h2>
-                    <p class="text-center" style="font-size: 12px; color: #64748b; margin-top: 0;">Reseller Wallet Transaction Voucher</p>
+                    <h2 class="text-center" style="margin-bottom: 4px;">${this.companyName}</h2>
+                    <p class="text-center" style="font-size: 12px; color: #64748b; margin-top: 0;">${this.i18n.voucherPrintSubtitle}</p>
                     <div style="max-width: 400px; margin: 20px auto;">
                         ${printContent}
                     </div>
@@ -802,11 +819,11 @@ function resellerLedgerManager() {
 
         formatCurrency(val) {
             const n = Number(val || 0);
-            return '{{ $currencySymbol ?? "৳" }} ' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            return this.currencySymbol + ' ' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         },
 
         formatDate(val) {
-            if (!val) return 'N/A';
+            if (!val) return this.i18n.na;
             const d = new Date(val);
             return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true });
         }

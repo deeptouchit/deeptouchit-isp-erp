@@ -30,7 +30,7 @@ class ResellerWalletController extends Controller
             $tenant = Tenant::first();
         }
         if (!$tenant) {
-            abort(404, 'ISP Tenant record not found.');
+            abort(404, __('ISP Tenant record not found.'));
         }
         return $tenant;
     }
@@ -135,6 +135,7 @@ class ResellerWalletController extends Controller
     public function adjustBalance(Request $request): JsonResponse|RedirectResponse
     {
         $tenant = $this->getTenant();
+        $currency = $tenant->currency_symbol ?? '৳';
 
         $validated = $request->validate([
             'reseller_id' => 'required|exists:tenant_resellers,id',
@@ -175,6 +176,21 @@ class ResellerWalletController extends Controller
 
             $trx = null;
             if ($txnAmount > 0) {
+                $defaultDescription = match ($type) {
+                    'CREDIT' => __('Wallet Top-up of :currency:amount', [
+                        'currency' => $currency,
+                        'amount' => number_format($txnAmount, 2),
+                    ]),
+                    'DEBIT' => __('Wallet deduction of :currency:amount', [
+                        'currency' => $currency,
+                        'amount' => number_format($txnAmount, 2),
+                    ]),
+                    default => __('Manual balance set to :currency:amount', [
+                        'currency' => $currency,
+                        'amount' => number_format($balanceAfter, 2),
+                    ]),
+                };
+
                 $trx = TenantResellerWalletTransaction::create([
                     'tenant_id' => $tenant->id,
                     'reseller_id' => $reseller->id,
@@ -185,15 +201,38 @@ class ResellerWalletController extends Controller
                     'balance_after' => $balanceAfter,
                     'payment_method' => $paymentMethod,
                     'reference_no' => $validated['reference_no'] ?? null,
-                    'description' => $validated['description'] ?: ($type === 'CREDIT' ? "Wallet Top-up of ৳{$txnAmount}" : ($type === 'DEBIT' ? "Wallet deduction of ৳{$txnAmount}" : "Manual balance set to ৳{$balanceAfter}")),
+                    'description' => $validated['description'] ?: $defaultDescription,
                     'created_by' => Auth::id() ?: 1,
                 ]);
             }
 
             DB::commit();
 
-            $actionWord = ($type === 'CREDIT') ? 'recharged with' : (($type === 'DEBIT') ? 'deducted by' : 'adjusted to');
-            $msg = "Wallet for '{$reseller->name}' successfully {$actionWord} ৳" . number_format($inputAmount, 2) . ". New Balance: ৳" . number_format($balanceAfter, 2) . ".";
+            $formattedAmount = number_format($inputAmount, 2);
+            $formattedBalance = number_format($balanceAfter, 2);
+
+            if ($type === 'CREDIT') {
+                $msg = __("Wallet for ':name' successfully recharged with :currency:amount. New Balance: :currency:balance.", [
+                    'name' => $reseller->name,
+                    'currency' => $currency,
+                    'amount' => $formattedAmount,
+                    'balance' => $formattedBalance,
+                ]);
+            } elseif ($type === 'DEBIT') {
+                $msg = __("Wallet for ':name' successfully deducted by :currency:amount. New Balance: :currency:balance.", [
+                    'name' => $reseller->name,
+                    'currency' => $currency,
+                    'amount' => $formattedAmount,
+                    'balance' => $formattedBalance,
+                ]);
+            } else {
+                $msg = __("Wallet for ':name' successfully adjusted to :currency:amount. New Balance: :currency:balance.", [
+                    'name' => $reseller->name,
+                    'currency' => $currency,
+                    'amount' => $formattedAmount,
+                    'balance' => $formattedBalance,
+                ]);
+            }
 
             if ($request->wantsJson() || $request->ajax() || str_contains($request->header('Accept', ''), 'json')) {
                 return response()->json([
@@ -208,10 +247,11 @@ class ResellerWalletController extends Controller
             return redirect()->route('tenant.resellers.wallets')->with('success', $msg);
         } catch (\Throwable $e) {
             DB::rollBack();
+            $errorMsg = __('Transaction failed: :error', ['error' => $e->getMessage()]);
             if ($request->wantsJson() || $request->ajax() || str_contains($request->header('Accept', ''), 'json')) {
-                return response()->json(['success' => false, 'message' => 'Transaction failed: ' . $e->getMessage()], 500);
+                return response()->json(['success' => false, 'message' => $errorMsg], 500);
             }
-            return back()->with('error', 'Transaction failed: ' . $e->getMessage());
+            return back()->with('error', $errorMsg);
         }
     }
 
@@ -221,6 +261,7 @@ class ResellerWalletController extends Controller
     public function updateCreditLimit(Request $request): JsonResponse|RedirectResponse
     {
         $tenant = $this->getTenant();
+        $currency = $tenant->currency_symbol ?? '৳';
 
         $validated = $request->validate([
             'reseller_id' => 'required|exists:tenant_resellers,id',
@@ -231,7 +272,11 @@ class ResellerWalletController extends Controller
         $reseller->credit_limit = (float) $validated['credit_limit'];
         $reseller->save();
 
-        $msg = "Credit limit for '{$reseller->name}' updated to ৳" . number_format($validated['credit_limit'], 2) . "!";
+        $msg = __("Credit limit for ':name' updated to :currency:amount!", [
+            'name' => $reseller->name,
+            'currency' => $currency,
+            'amount' => number_format((float) $validated['credit_limit'], 2),
+        ]);
 
         if ($request->wantsJson() || $request->ajax() || str_contains($request->header('Accept', ''), 'json')) {
             return response()->json([

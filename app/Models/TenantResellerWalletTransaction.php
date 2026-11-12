@@ -58,12 +58,12 @@ class TenantResellerWalletTransaction extends Model
     {
         return match ($this->type) {
             'CREDIT' => [
-                'label' => 'Credit (+Topup)',
+                'label' => __('Credit (+Topup)'),
                 'class' => 'bg-emerald-50 text-emerald-700 border-emerald-200',
                 'icon' => 'fa-arrow-down-left',
             ],
             default => [
-                'label' => 'Debit (-Deduction)',
+                'label' => __('Debit (-Deduction)'),
                 'class' => 'bg-rose-50 text-rose-700 border-rose-200',
                 'icon' => 'fa-arrow-up-right',
             ],

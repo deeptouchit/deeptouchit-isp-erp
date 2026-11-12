@@ -19,7 +19,7 @@ class ResellerLedgerController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            abort(404, 'Tenant record not found.');
+            abort(404, __('Tenant record not found.'));
         }
 
         $search = $request->input('search');

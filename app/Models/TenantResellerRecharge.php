@@ -74,17 +74,17 @@ class TenantResellerRecharge extends Model
     {
         return match ($this->status) {
             'APPROVED' => [
-                'label' => 'Approved',
+                'label' => __('Approved'),
                 'class' => 'bg-emerald-50 text-emerald-700 border-emerald-200',
                 'icon' => 'fa-circle-check',
             ],
             'PENDING' => [
-                'label' => 'Pending Approval',
+                'label' => __('Pending Approval'),
                 'class' => 'bg-amber-50 text-amber-700 border-amber-200',
                 'icon' => 'fa-clock',
             ],
             'REJECTED' => [
-                'label' => 'Rejected',
+                'label' => __('Rejected'),
                 'class' => 'bg-rose-50 text-rose-700 border-rose-200',
                 'icon' => 'fa-circle-xmark',
             ],
@@ -103,37 +103,37 @@ class TenantResellerRecharge extends Model
     {
         return match ($this->payment_method) {
             'BKASH', 'BKASH_MERCHANT' => [
-                'label' => 'bKash Merchant',
+                'label' => __('bKash Merchant'),
                 'class' => 'bg-pink-50 text-pink-700 border-pink-200',
                 'icon' => 'fa-mobile-screen',
             ],
             'BANGLA_QR' => [
-                'label' => 'Bangla QR',
+                'label' => __('Bangla QR'),
                 'class' => 'bg-teal-50 text-teal-700 border-teal-200',
                 'icon' => 'fa-qrcode',
             ],
             'NAGAD' => [
-                'label' => 'Nagad',
+                'label' => __('Nagad'),
                 'class' => 'bg-orange-50 text-orange-700 border-orange-200',
                 'icon' => 'fa-mobile-screen',
             ],
             'ROCKET' => [
-                'label' => 'Rocket',
+                'label' => __('Rocket'),
                 'class' => 'bg-purple-50 text-purple-700 border-purple-200',
                 'icon' => 'fa-mobile-screen',
             ],
             'BANK_TRANSFER', 'BANK_GATEWAY' => [
-                'label' => 'Bank Gateway',
+                'label' => __('Bank Gateway'),
                 'class' => 'bg-blue-50 text-blue-700 border-blue-200',
                 'icon' => 'fa-building-columns',
             ],
             'CASH' => [
-                'label' => 'Cash',
+                'label' => __('Cash'),
                 'class' => 'bg-emerald-50 text-emerald-700 border-emerald-200',
                 'icon' => 'fa-money-bill-wave',
             ],
             'CARD', 'ONLINE_GATEWAY' => [
-                'label' => 'Online PGW',
+                'label' => __('Online PGW'),
                 'class' => 'bg-indigo-50 text-indigo-700 border-indigo-200',
                 'icon' => 'fa-credit-card',
             ],

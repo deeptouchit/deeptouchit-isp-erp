@@ -26,8 +26,10 @@ class ResellerRechargeController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            abort(404, 'Tenant record not found.');
+            abort(404, __('Tenant record not found.'));
         }
+
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
 
         $search = $request->input('search');
         $selectedResellerId = $request->input('reseller_id');
@@ -127,6 +129,7 @@ class ResellerRechargeController extends Controller
 
         return view('tenant.resellers.recharge', compact(
             'tenant',
+            'currencySymbol',
             'recharges',
             'allResellers',
             'totalRechargedEver',
@@ -156,8 +159,10 @@ class ResellerRechargeController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            abort(403, 'Unauthorized.');
+            abort(403, __('Unauthorized.'));
         }
+
+        $currency = $tenant->currency_symbol ?? '৳';
 
         $validated = $request->validate([
             'reseller_id' => 'required|exists:tenant_resellers,id',
@@ -210,6 +215,14 @@ class ResellerRechargeController extends Controller
                 $reseller->update(['wallet_balance' => $balanceAfter]);
 
                 $wtxId = TenantResellerWalletTransaction::generateTrxId($tenant->id);
+                $description = $bonusAmount > 0
+                    ? __('Recharge #:recharge_no (incl. :currency:bonus bonus)', [
+                        'recharge_no' => $rechargeNo,
+                        'currency' => $currency,
+                        'bonus' => number_format($bonusAmount, 2),
+                    ])
+                    : __('Recharge #:recharge_no', ['recharge_no' => $rechargeNo]);
+
                 TenantResellerWalletTransaction::create([
                     'tenant_id' => $tenant->id,
                     'reseller_id' => $reseller->id,
@@ -220,16 +233,25 @@ class ResellerRechargeController extends Controller
                     'balance_after' => $balanceAfter,
                     'payment_method' => $validated['payment_method'],
                     'reference_no' => $rechargeNo,
-                    'description' => "Recharge #{$rechargeNo}" . ($bonusAmount > 0 ? " (incl. ৳{$bonusAmount} bonus)" : ""),
+                    'description' => $description,
                     'created_by' => Auth::id(),
                 ]);
             }
 
             DB::commit();
 
-            $msg = $status === 'APPROVED' 
-                ? "Recharge #{$rechargeNo} of ৳" . number_format($totalCredited, 2) . " successfully credited to {$reseller->name}!"
-                : "Recharge request #{$rechargeNo} of ৳" . number_format($amount, 2) . " submitted for approval.";
+            $msg = $status === 'APPROVED'
+                ? __('Recharge #:recharge_no of :currency:amount successfully credited to :reseller!', [
+                    'recharge_no' => $rechargeNo,
+                    'currency' => $currency,
+                    'amount' => number_format($totalCredited, 2),
+                    'reseller' => $reseller->name,
+                ])
+                : __('Recharge request #:recharge_no of :currency:amount submitted for approval.', [
+                    'recharge_no' => $rechargeNo,
+                    'currency' => $currency,
+                    'amount' => number_format($amount, 2),
+                ]);
 
             if ($request->wantsJson()) {
                 return response()->json([
@@ -242,10 +264,11 @@ class ResellerRechargeController extends Controller
             return redirect()->route('tenant.resellers.recharge')->with('success', $msg);
         } catch (\Throwable $e) {
             DB::rollBack();
+            $errMsg = __('Failed to save recharge: :message', ['message' => $e->getMessage()]);
             if ($request->wantsJson()) {
-                return response()->json(['success' => false, 'message' => 'Failed to save recharge: ' . $e->getMessage()], 500);
+                return response()->json(['success' => false, 'message' => $errMsg], 500);
             }
-            return back()->with('error', 'Failed to save recharge: ' . $e->getMessage());
+            return back()->with('error', $errMsg);
         }
     }
 
@@ -256,13 +279,21 @@ class ResellerRechargeController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            abort(403, 'Unauthorized.');
+            abort(403, __('Unauthorized.'));
         }
+
+        $currency = $tenant->currency_symbol ?? '৳';
 
         $recharge = TenantResellerRecharge::where('tenant_id', $tenant->id)->findOrFail($id);
 
         if ($recharge->status !== 'PENDING') {
-            return response()->json(['success' => false, 'message' => 'This recharge is already ' . strtolower($recharge->status) . '.'], 422);
+            $statusMessage = match ($recharge->status) {
+                'APPROVED' => __('This recharge has already been approved.'),
+                'REJECTED' => __('This recharge has already been rejected.'),
+                default => __('This recharge has already been processed.'),
+            };
+
+            return response()->json(['success' => false, 'message' => $statusMessage], 422);
         }
 
         $reseller = $recharge->reseller;
@@ -280,6 +311,14 @@ class ResellerRechargeController extends Controller
             $reseller->update(['wallet_balance' => $balanceAfter]);
 
             $wtxId = TenantResellerWalletTransaction::generateTrxId($tenant->id);
+            $description = $recharge->bonus_amount > 0
+                ? __('Approved Recharge #:recharge_no (incl. :currency:bonus bonus)', [
+                    'recharge_no' => $recharge->recharge_no,
+                    'currency' => $currency,
+                    'bonus' => number_format((float) $recharge->bonus_amount, 2),
+                ])
+                : __('Approved Recharge #:recharge_no', ['recharge_no' => $recharge->recharge_no]);
+
             TenantResellerWalletTransaction::create([
                 'tenant_id' => $tenant->id,
                 'reseller_id' => $reseller->id,
@@ -290,7 +329,7 @@ class ResellerRechargeController extends Controller
                 'balance_after' => $balanceAfter,
                 'payment_method' => $recharge->payment_method,
                 'reference_no' => $recharge->recharge_no,
-                'description' => "Approved Recharge #{$recharge->recharge_no}" . ($recharge->bonus_amount > 0 ? " (incl. ৳{$recharge->bonus_amount} bonus)" : ""),
+                'description' => $description,
                 'created_by' => Auth::id(),
             ]);
 
@@ -321,12 +360,17 @@ class ResellerRechargeController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => "Recharge #{$recharge->recharge_no} approved! ৳" . number_format($totalCredited, 2) . " credited to {$reseller->name}.",
+                'message' => __('Recharge #:recharge_no approved! :currency:amount credited to :reseller.', [
+                    'recharge_no' => $recharge->recharge_no,
+                    'currency' => $currency,
+                    'amount' => number_format($totalCredited, 2),
+                    'reseller' => $reseller->name,
+                ]),
                 'new_balance' => $balanceAfter,
             ]);
         } catch (\Throwable $e) {
             DB::rollBack();
-            return response()->json(['success' => false, 'message' => 'Approval failed: ' . $e->getMessage()], 500);
+            return response()->json(['success' => false, 'message' => __('Approval failed: :message', ['message' => $e->getMessage()])], 500);
         }
     }
 
@@ -337,7 +381,7 @@ class ResellerRechargeController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            abort(403, 'Unauthorized.');
+            abort(403, __('Unauthorized.'));
         }
 
         $validated = $request->validate([
@@ -347,7 +391,13 @@ class ResellerRechargeController extends Controller
         $recharge = TenantResellerRecharge::where('tenant_id', $tenant->id)->findOrFail($id);
 
         if ($recharge->status !== 'PENDING') {
-            return response()->json(['success' => false, 'message' => 'This recharge is already ' . strtolower($recharge->status) . '.'], 422);
+            $statusMessage = match ($recharge->status) {
+                'APPROVED' => __('This recharge has already been approved.'),
+                'REJECTED' => __('This recharge has already been rejected.'),
+                default => __('This recharge has already been processed.'),
+            };
+
+            return response()->json(['success' => false, 'message' => $statusMessage], 422);
         }
 
         $recharge->update([
@@ -380,7 +430,7 @@ class ResellerRechargeController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => "Recharge #{$recharge->recharge_no} has been rejected.",
+            'message' => __('Recharge #:recharge_no has been rejected.', ['recharge_no' => $recharge->recharge_no]),
         ]);
     }
 
@@ -391,7 +441,7 @@ class ResellerRechargeController extends Controller
     {
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
-            abort(403, 'Unauthorized.');
+            abort(403, __('Unauthorized.'));
         }
 
         $recharge = TenantResellerRecharge::where('tenant_id', $tenant->id)
@@ -401,6 +451,7 @@ class ResellerRechargeController extends Controller
         return response()->json([
             'success' => true,
             'receipt' => [
+                'currency_symbol' => $tenant->currency_symbol ?? '৳',
                 'recharge_no' => $recharge->recharge_no,
                 'date' => $recharge->created_at->format('d M, Y h:i A'),
                 'reseller_name' => $recharge->reseller?->name,
