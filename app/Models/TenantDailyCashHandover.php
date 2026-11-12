@@ -85,11 +85,11 @@ class TenantDailyCashHandover extends Model
     public function getShiftLabelAttribute(): string
     {
         return match (strtolower($this->shift_type ?? 'daily')) {
-            'morning' => 'Morning Shift',
-            'evening' => 'Evening Shift',
-            'night' => 'Night Shift',
-            'full_day' => 'Full Day Closing',
-            default => 'Daily Closing',
+            'morning' => __('Morning Shift'),
+            'evening' => __('Evening Shift'),
+            'night' => __('Night Shift'),
+            'full_day' => __('Full Day Closing'),
+            default => __('Daily Closing'),
         };
     }
 
@@ -100,25 +100,25 @@ class TenantDailyCashHandover extends Model
     {
         return match (strtolower($this->status ?? 'pending')) {
             'approved' => [
-                'label' => 'Approved',
+                'label' => __('Approved'),
                 'class' => 'bg-emerald-50 text-emerald-700 border-emerald-200',
                 'icon' => 'fa-circle-check',
                 'dot' => 'bg-emerald-500'
             ],
             'pending' => [
-                'label' => 'Pending Verification',
+                'label' => __('Pending Verification'),
                 'class' => 'bg-amber-50 text-amber-700 border-amber-200',
                 'icon' => 'fa-clock',
                 'dot' => 'bg-amber-500'
             ],
             'rejected' => [
-                'label' => 'Rejected',
+                'label' => __('Rejected'),
                 'class' => 'bg-rose-50 text-rose-700 border-rose-200',
                 'icon' => 'fa-circle-xmark',
                 'dot' => 'bg-rose-500'
             ],
             default => [
-                'label' => ucfirst($this->status ?? 'Pending'),
+                'label' => __(ucfirst($this->status ?? 'Pending')),
                 'class' => 'bg-slate-50 text-slate-700 border-slate-200',
                 'icon' => 'fa-circle-info',
                 'dot' => 'bg-slate-400'
@@ -133,7 +133,7 @@ class TenantDailyCashHandover extends Model
     {
         if ($this->shortage_amount > 0) {
             return [
-                'label' => 'Shortage',
+                'label' => __('Shortage'),
                 'amount' => (float) $this->shortage_amount,
                 'class' => 'bg-rose-50 text-rose-700 border-rose-200',
                 'type' => 'shortage',
@@ -141,14 +141,14 @@ class TenantDailyCashHandover extends Model
         }
         if ($this->excess_amount > 0) {
             return [
-                'label' => 'Excess',
+                'label' => __('Excess'),
                 'amount' => (float) $this->excess_amount,
                 'class' => 'bg-indigo-50 text-indigo-700 border-indigo-200',
                 'type' => 'excess',
             ];
         }
         return [
-            'label' => 'Balanced (0.00)',
+            'label' => __('Balanced (0.00)'),
             'amount' => 0.00,
             'class' => 'bg-emerald-50 text-emerald-700 border-emerald-200',
             'type' => 'balanced',

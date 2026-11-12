@@ -1,6 +1,6 @@
 @extends('tenant.layouts.app')
 
-@section('title', 'Payment Collections & Receipts - ' . ($tenant->company_name ?? $tenant->name))
+@section('title', __('Payment Collections & Receipts') . ' - ' . ($tenant->company_name ?? $tenant->name))
 
 @push('styles')
 <style>
@@ -43,7 +43,7 @@
                 <i class="fas fa-file-invoice-dollar"></i>
             </div>
             <h1 class="text-xs sm:text-sm font-bold text-slate-900 tracking-tight">
-                Collection Report &amp; Money Receipts
+                {{ __('Collection Report & Money Receipts') }}
             </h1>
         </div>
 
@@ -52,7 +52,7 @@
             <a href="{{ route('tenant.finance.payments.export', request()->query()) }}" 
                class="h-[34px] border border-slate-200/90 hover:bg-slate-50 text-slate-700 font-medium text-xs px-3 rounded-lg transition inline-flex items-center gap-1.5 shadow-2xs cursor-pointer">
                 <i class="fas fa-file-csv text-emerald-600 text-xs"></i>
-                <span class="hidden sm:inline">Export</span> CSV
+                <span class="hidden sm:inline">{{ __('Export') }}</span> {{ __('CSV') }}
             </a>
 
             <!-- Collect Payment Button -->
@@ -60,7 +60,7 @@
                     @click="openCollectModal()" 
                     class="h-[34px] bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs px-3.5 rounded-lg transition inline-flex items-center gap-1.5 shadow-xs cursor-pointer">
                 <i class="fas fa-plus text-xs"></i>
-                <span>+ Collect Payment</span>
+                <span>{{ __('+ Collect Payment') }}</span>
             </button>
         </div>
     </div>
@@ -70,7 +70,7 @@
         <!-- Card 1: Total Collections -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between min-w-0">
             <div class="min-w-0">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Total Collected</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Total Collected') }}</span>
                 <span class="text-[13px] font-bold font-mono text-emerald-700 leading-tight block truncate">
                     @currency($totalCollections)
                 </span>
@@ -83,7 +83,7 @@
         <!-- Card 2: Today's Collection -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between min-w-0">
             <div class="min-w-0">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Today's Total</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __("Today's Total") }}</span>
                 <span class="text-[13px] font-bold font-mono text-cyan-700 leading-tight block truncate">
                     @currency($todayCollections)
                 </span>
@@ -96,7 +96,7 @@
         <!-- Card 3: This Month Total -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between min-w-0">
             <div class="min-w-0">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">This Month</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('This Month') }}</span>
                 <span class="text-[13px] font-bold font-mono text-blue-700 leading-tight block truncate">
                     @currency($thisMonthCollections)
                 </span>
@@ -109,7 +109,7 @@
         <!-- Card 4: Total Receipts Count -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between min-w-0">
             <div class="min-w-0">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Money Receipts</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Money Receipts') }}</span>
                 <span class="text-[13px] font-bold font-mono text-indigo-700 leading-tight block truncate">
                     {{ number_format($totalReceiptsCount) }}
                 </span>
@@ -122,7 +122,7 @@
         <!-- Card 5: Cash Collection -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between min-w-0">
             <div class="min-w-0">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Cash in Hand</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Cash in Hand') }}</span>
                 <span class="text-[13px] font-bold font-mono text-amber-700 leading-tight block truncate">
                     @currency($cashCollections)
                 </span>
@@ -135,7 +135,7 @@
         <!-- Card 6: Digital & Online Collection -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between min-w-0">
             <div class="min-w-0">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Digital &amp; Online</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Digital & Online') }}</span>
                 <span class="text-[13px] font-bold font-mono text-purple-700 leading-tight block truncate">
                     @currency($digitalCollections)
                 </span>
@@ -175,7 +175,7 @@
                     <input type="text" 
                            name="search" 
                            x-model="searchQuery"
-                           placeholder="Search Receipt No, Name, Username, Phone, Trx ID..." 
+                           placeholder="{{ __('Search Receipt No, Name, Username, Phone, Trx ID...') }}" 
                            class="w-full h-[34px] pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition placeholder:text-slate-400 font-medium"
                            autocomplete="off">
                     <button type="button" 
@@ -183,7 +183,7 @@
                             x-cloak
                             @click="searchQuery = ''; $nextTick(() => $el.closest('form').submit())"
                             class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500 p-0.5 text-xs transition cursor-pointer"
-                            title="Clear Search">
+                            title="{{ __('Clear Search') }}">
                         <i class="fas fa-times-circle"></i>
                     </button>
                 </div>
@@ -194,7 +194,7 @@
                     <select name="collector_id" 
                             onchange="this.form.submit()"
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-semibold text-slate-800 cursor-pointer">
-                        <option value="all">👤 All Collectors / Staff</option>
+                        <option value="all">👤 {{ __('All Collectors / Staff') }}</option>
                         @foreach($allCollectors ?? [] as $col)
                             <option value="{{ $col->id }}" {{ (string)$collectorFilter === (string)$col->id ? 'selected' : '' }}>
                                 {{ $col->name }}
@@ -210,13 +210,13 @@
                             x-model="filterPeriod"
                             @change="if (filterPeriod === 'custom') { showMoreFilters = true; } else { handlePeriodChange(filterPeriod); $nextTick(() => $el.closest('form').submit()); }"
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-semibold text-slate-800 cursor-pointer">
-                        <option value="today">📅 Today</option>
-                        <option value="yesterday">⏳ Yesterday</option>
-                        <option value="this_week">📆 This Week</option>
-                        <option value="this_month">🗓️ This Month</option>
-                        <option value="last_month">📊 Last Month</option>
-                        <option value="custom">📅 Custom Date...</option>
-                        <option value="all">🌐 All Time</option>
+                        <option value="today">📅 {{ __('Today') }}</option>
+                        <option value="yesterday">⏳ {{ __('Yesterday') }}</option>
+                        <option value="this_week">📆 {{ __('This Week') }}</option>
+                        <option value="this_month">🗓️ {{ __('This Month') }}</option>
+                        <option value="last_month">📊 {{ __('Last Month') }}</option>
+                        <option value="custom">📅 {{ __('Custom Date...') }}</option>
+                        <option value="all">🌐 {{ __('All Time') }}</option>
                     </select>
                 </div>
 
@@ -225,11 +225,9 @@
                     <select name="per_page" 
                             onchange="this.form.submit()"
                             class="w-full h-[34px] px-2 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700 cursor-pointer">
-                        <option value="15" {{ $perPage == 15 ? 'selected' : '' }}>15 / page</option>
-                        <option value="20" {{ $perPage == 20 ? 'selected' : '' }}>20 / page</option>
-                        <option value="30" {{ $perPage == 30 ? 'selected' : '' }}>30 / page</option>
-                        <option value="50" {{ $perPage == 50 ? 'selected' : '' }}>50 / page</option>
-                        <option value="100" {{ $perPage == 100 ? 'selected' : '' }}>100 / page</option>
+                        @foreach([15, 20, 30, 50, 100] as $pp)
+                            <option value="{{ $pp }}" {{ $perPage == $pp ? 'selected' : '' }}>{{ __(':count / page', ['count' => $pp]) }}</option>
+                        @endforeach
                     </select>
                 </div>
 
@@ -238,9 +236,9 @@
                         @click="showMoreFilters = !showMoreFilters" 
                         :class="showMoreFilters || {{ $activeMoreCount }} > 0 ? 'bg-cyan-50 text-cyan-700 border-cyan-300 ring-1 ring-cyan-200' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'"
                         class="h-[34px] py-0 px-2.5 rounded-lg border text-xs font-medium transition flex items-center justify-center gap-1.5 flex-shrink-0 cursor-pointer shadow-2xs"
-                        title="Toggle Date Range, Method, Partner & Status Filters">
+                        title="{{ __('Toggle Date Range, Method, Partner & Status Filters') }}">
                     <i class="fas fa-sliders-h text-[10px]"></i>
-                    <span>More Filters</span>
+                    <span>{{ __('More Filters') }}</span>
                     @if($activeMoreCount > 0)
                         <span class="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-cyan-600 text-white leading-none">
                             {{ $activeMoreCount }}
@@ -254,15 +252,15 @@
                 <div class="flex items-center gap-1.5 flex-shrink-0 md:ml-auto">
                     <button type="submit" 
                             class="h-[34px] bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-0 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" 
-                            title="Apply Filters">
+                            title="{{ __('Apply Filters') }}">
                         <i class="fas fa-filter text-[10px]"></i>
-                        <span>Filter</span>
+                        <span>{{ __('Filter') }}</span>
                     </button>
                     <a href="{{ route('tenant.finance.payments') }}" 
                        class="h-[34px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-0 px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer" 
-                       title="Reset Filters">
+                       title="{{ __('Reset Filters') }}">
                         <i class="fas fa-rotate-left text-[10px]"></i>
-                        <span>Reset</span>
+                        <span>{{ __('Reset') }}</span>
                     </a>
                 </div>
             </div>
@@ -277,7 +275,7 @@
                 
                 {{-- Date From (Custom Range) --}}
                 <div class="w-full sm:w-40 flex-shrink-0 relative">
-                    <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[9px] uppercase font-bold text-slate-400 pointer-events-none">From</span>
+                    <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[9px] uppercase font-bold text-slate-400 pointer-events-none">{{ __('From') }}</span>
                     <input type="date" 
                            name="date_from" 
                            x-model="filterDateFrom" 
@@ -287,7 +285,7 @@
 
                 {{-- Date To (Custom Range) --}}
                 <div class="w-full sm:w-40 flex-shrink-0 relative">
-                    <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[9px] uppercase font-bold text-slate-400 pointer-events-none">To</span>
+                    <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[9px] uppercase font-bold text-slate-400 pointer-events-none">{{ __('To') }}</span>
                     <input type="date" 
                            name="date_to" 
                            x-model="filterDateTo" 
@@ -300,15 +298,15 @@
                     <select name="method" 
                             onchange="this.form.submit()" 
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700 cursor-pointer">
-                        <option value="all">All Payment Methods</option>
-                        <option value="cash" {{ $methodFilter === 'cash' ? 'selected' : '' }}>💵 Cash in Hand</option>
-                        <option value="bkash" {{ $methodFilter === 'bkash' ? 'selected' : '' }}>📱 bKash</option>
-                        <option value="nagad" {{ $methodFilter === 'nagad' ? 'selected' : '' }}>📱 Nagad</option>
-                        <option value="rocket" {{ $methodFilter === 'rocket' ? 'selected' : '' }}>📱 Rocket</option>
-                        <option value="bangla_qr" {{ $methodFilter === 'bangla_qr' ? 'selected' : '' }}>🔲 Bangla QR</option>
-                        <option value="bank_transfer" {{ $methodFilter === 'bank_transfer' ? 'selected' : '' }}>🏦 Bank Transfer</option>
-                        <option value="pos" {{ $methodFilter === 'pos' ? 'selected' : '' }}>💳 Card / POS</option>
-                        <option value="online" {{ $methodFilter === 'online' ? 'selected' : '' }}>🌐 Online Gateway</option>
+                        <option value="all">{{ __('All Payment Methods') }}</option>
+                        <option value="cash" {{ $methodFilter === 'cash' ? 'selected' : '' }}>💵 {{ __('Cash in Hand') }}</option>
+                        <option value="bkash" {{ $methodFilter === 'bkash' ? 'selected' : '' }}>📱 {{ __('bKash') }}</option>
+                        <option value="nagad" {{ $methodFilter === 'nagad' ? 'selected' : '' }}>📱 {{ __('Nagad') }}</option>
+                        <option value="rocket" {{ $methodFilter === 'rocket' ? 'selected' : '' }}>📱 {{ __('Rocket') }}</option>
+                        <option value="bangla_qr" {{ $methodFilter === 'bangla_qr' ? 'selected' : '' }}>🔲 {{ __('Bangla QR') }}</option>
+                        <option value="bank_transfer" {{ $methodFilter === 'bank_transfer' ? 'selected' : '' }}>🏦 {{ __('Bank Transfer') }}</option>
+                        <option value="pos" {{ $methodFilter === 'pos' ? 'selected' : '' }}>💳 {{ __('Card / POS') }}</option>
+                        <option value="online" {{ $methodFilter === 'online' ? 'selected' : '' }}>🌐 {{ __('Online Gateway') }}</option>
                     </select>
                 </div>
 
@@ -317,10 +315,10 @@
                     <select name="month" 
                             onchange="this.form.submit()" 
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700 cursor-pointer">
-                        <option value="all">All Billing Months</option>
+                        <option value="all">{{ __('All Billing Months') }}</option>
                         @foreach($availableMonths as $m)
                             <option value="{{ $m }}" {{ (string)$selectedMonth === (string)$m ? 'selected' : '' }}>
-                                {{ \Carbon\Carbon::parse($m . '-01')->format('M Y') }}
+                                {{ \Carbon\Carbon::parse($m . '-01')->translatedFormat('M Y') }}
                             </option>
                         @endforeach
                     </select>
@@ -331,10 +329,10 @@
                     <select name="status" 
                             onchange="this.form.submit()" 
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700 cursor-pointer">
-                        <option value="all" {{ ($statusFilter ?? 'all') === 'all' ? 'selected' : '' }}>All Status</option>
-                        <option value="paid" {{ ($statusFilter ?? '') === 'paid' ? 'selected' : '' }}>Paid / Settled</option>
-                        <option value="pending" {{ ($statusFilter ?? '') === 'pending' ? 'selected' : '' }}>Pending Approval</option>
-                        <option value="void" {{ ($statusFilter ?? '') === 'void' ? 'selected' : '' }}>Voided</option>
+                        <option value="all" {{ ($statusFilter ?? 'all') === 'all' ? 'selected' : '' }}>{{ __('All Status') }}</option>
+                        <option value="paid" {{ ($statusFilter ?? '') === 'paid' ? 'selected' : '' }}>{{ __('Paid / Settled') }}</option>
+                        <option value="pending" {{ ($statusFilter ?? '') === 'pending' ? 'selected' : '' }}>{{ __('Pending Approval') }}</option>
+                        <option value="void" {{ ($statusFilter ?? '') === 'void' ? 'selected' : '' }}>{{ __('Voided') }}</option>
                     </select>
                 </div>
 
@@ -344,11 +342,11 @@
                     <select name="reseller_id" 
                             onchange="this.form.submit()" 
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700 cursor-pointer">
-                        <option value="all" {{ $selectedResellerId === 'all' ? 'selected' : '' }}>All Network Scope</option>
-                        <option value="isp" {{ $selectedResellerId === 'isp' ? 'selected' : '' }}>Direct HQ</option>
+                        <option value="all" {{ $selectedResellerId === 'all' ? 'selected' : '' }}>{{ __('All Network Scope') }}</option>
+                        <option value="isp" {{ $selectedResellerId === 'isp' ? 'selected' : '' }}>{{ __('Direct HQ') }}</option>
                         @foreach($allResellers ?? [] as $r)
                             <option value="{{ $r->id }}" {{ (string)$selectedResellerId === (string)$r->id ? 'selected' : '' }}>
-                                {{ $r->name }} ({{ $r->code ?: 'Partner' }})
+                                {{ $r->name }} ({{ $r->code ?: __('Partner') }})
                             </option>
                         @endforeach
                     </select>
@@ -365,15 +363,15 @@
             <table class="saas-table">
                 <thead>
                     <tr>
-                        <th class="w-8 text-center no-sort">#</th>
-                        <th class="w-36">Receipt / MR No</th>
-                        <th>Subscriber</th>
-                        <th class="w-36">Collected By</th>
-                        <th class="w-24 text-center">Billing Month</th>
-                        <th class="w-32">Payment Method</th>
-                        <th class="text-right w-28">Collected Amount</th>
-                        <th class="text-center w-24">Status</th>
-                        <th class="no-sort text-center w-8">Action</th>
+                        <th class="w-8 text-center no-sort">{{ __('#') }}</th>
+                        <th class="w-36">{{ __('Receipt / MR No') }}</th>
+                        <th>{{ __('Subscriber') }}</th>
+                        <th class="w-36">{{ __('Collected By') }}</th>
+                        <th class="w-24 text-center">{{ __('Billing Month') }}</th>
+                        <th class="w-32">{{ __('Payment Method') }}</th>
+                        <th class="text-right w-28">{{ __('Collected Amount') }}</th>
+                        <th class="text-center w-24">{{ __('Status') }}</th>
+                        <th class="no-sort text-center w-8">{{ __('Action') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -384,10 +382,11 @@
                                 'id' => $p->id,
                                 'invoice_no' => $p->invoice_no,
                                 'customer_id' => $p->customer_id,
-                                'customer_name' => $p->customer?->name ?? 'Unknown',
+                                'customer_name' => $p->customer?->name ?? __('Unknown'),
                                 'customer_username' => $p->customer?->username ?? '--',
                                 'customer_phone' => $p->customer?->phone ?? '--',
                                 'amount' => (float) $p->amount,
+                                'amount_formatted' => ($currencySymbol ?? '৳') . number_format((float) $p->amount, 2),
                                 'discount' => (float) $p->discount,
                                 'billing_month' => $p->billing_month,
                                 'payment_method' => $p->payment_method,
@@ -405,7 +404,7 @@
                                 <button type="button" 
                                         @click="openReceiptModal({{ $p->id }})" 
                                         class="hover:underline hover:text-cyan-600 cursor-pointer flex items-center gap-1.5"
-                                        title="Click to view & print Money Receipt">
+                                        title="{{ __('Click to view & print Money Receipt') }}">
                                     <i class="fas fa-file-invoice text-[10px] text-cyan-600"></i>
                                     <span>{{ $p->invoice_no }}</span>
                                 </button>
@@ -418,7 +417,7 @@
                                         {{ $p->customer->name }}
                                     </a>
                                 @else
-                                    <span class="text-slate-400">Deleted Subscriber</span>
+                                    <span class="text-slate-400">{{ __('Deleted Subscriber') }}</span>
                                 @endif
                             </td>
 
@@ -426,7 +425,7 @@
                             <td class="whitespace-nowrap text-slate-700">
                                 <div class="flex items-center gap-1.5">
                                     <i class="fas fa-user-check text-[10px] text-slate-400"></i>
-                                    <span class="font-medium text-xs">{{ $p->collector?->name ?? 'Direct / System' }}</span>
+                                    <span class="font-medium text-xs">{{ $p->collector?->name ?? __('Direct / System') }}</span>
                                 </div>
                             </td>
 
@@ -461,7 +460,7 @@
                                 <button type="button" 
                                         @click="toggleMenu(@js($paymentJson), $event)" 
                                         class="w-6 h-6 rounded-md hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition flex items-center justify-center mx-auto cursor-pointer"
-                                        title="Actions">
+                                        title="{{ __('Actions') }}">
                                     <i class="fas fa-ellipsis-v text-[10px]"></i>
                                 </button>
                             </td>
@@ -473,11 +472,11 @@
                                     <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 text-base">
                                         <i class="fas fa-receipt"></i>
                                     </div>
-                                    <p class="text-xs font-medium text-slate-600">No payment collections found matching your criteria.</p>
+                                    <p class="text-xs font-medium text-slate-600">{{ __('No payment collections found matching your criteria.') }}</p>
                                     <button type="button" 
                                             @click="openCollectModal()" 
                                             class="text-xs text-cyan-600 font-semibold hover:underline cursor-pointer">
-                                        + Collect New Payment
+                                        {{ __('+ Collect New Payment') }}
                                     </button>
                                 </div>
                             </td>
@@ -491,7 +490,11 @@
         @if($payments->hasPages())
             <div class="px-4 py-2.5 bg-slate-50/80 border-t border-slate-200/90 flex items-center justify-between text-xs text-slate-600">
                 <div>
-                    Showing <span class="font-semibold">{{ $payments->firstItem() ?? 0 }}</span> to <span class="font-semibold">{{ $payments->lastItem() ?? 0 }}</span> of <span class="font-semibold">{{ $payments->total() }}</span> payments
+                    {!! __('Showing :from to :to of :total payments', [
+                        'from' => '<span class="font-semibold">' . ($payments->firstItem() ?? 0) . '</span>',
+                        'to' => '<span class="font-semibold">' . ($payments->lastItem() ?? 0) . '</span>',
+                        'total' => '<span class="font-semibold">' . $payments->total() . '</span>',
+                    ]) !!}
                 </div>
                 <div>
                     {{ $payments->links() }}
@@ -515,13 +518,13 @@
                         @click="const item = activeMenu; activeMenu = null; approvePayment(item)" 
                         class="w-full text-left px-3 py-1.5 hover:bg-emerald-100 text-emerald-700 flex items-center gap-2 transition cursor-pointer font-bold">
                     <i class="fas fa-check-circle w-4 text-center text-emerald-600 text-[11px]"></i>
-                    <span>Approve &amp; Activate</span>
+                    <span>{{ __('Approve & Activate') }}</span>
                 </button>
                 <button type="button" 
                         @click="const item = activeMenu; activeMenu = null; rejectPayment(item)" 
                         class="w-full text-left px-3 py-1.5 hover:bg-rose-100 text-rose-700 flex items-center gap-2 transition cursor-pointer font-semibold">
                     <i class="fas fa-times-circle w-4 text-center text-rose-600 text-[11px]"></i>
-                    <span>Reject Payment</span>
+                    <span>{{ __('Reject Payment') }}</span>
                 </button>
             </div>
         </template>
@@ -532,14 +535,14 @@
                     @click="const item = activeMenu; activeMenu = null; openReceiptModal(item.id)" 
                     class="w-full text-left px-3 py-1.5 hover:bg-amber-50/80 hover:text-amber-800 text-slate-700 flex items-center gap-2 transition cursor-pointer">
                 <i class="fas fa-print w-4 text-center text-amber-600 text-[11px]"></i>
-                <span class="font-medium">View &amp; Print Receipt</span>
+                <span class="font-medium">{{ __('View & Print Receipt') }}</span>
             </button>
 
             <button type="button" 
                     @click="const item = activeMenu; activeMenu = null; openSmsModal(item)" 
                     class="w-full text-left px-3 py-1.5 hover:bg-cyan-50/80 hover:text-cyan-800 text-slate-700 flex items-center gap-2 transition cursor-pointer">
                 <i class="fas fa-comment-sms w-4 text-center text-cyan-600 text-[11px]"></i>
-                <span class="font-medium">Send / Resend SMS</span>
+                <span class="font-medium">{{ __('Send / Resend SMS') }}</span>
             </button>
         </div>
 
@@ -549,7 +552,7 @@
                 <a :href="`{{ url('/admin/customers') }}/${activeMenu.customer_id}`" 
                    class="w-full text-left px-3 py-1.5 hover:bg-slate-100 text-slate-700 flex items-center gap-2 transition">
                     <i class="fas fa-user-circle w-4 text-center text-slate-500 text-[11px]"></i>
-                    <span>Subscriber Profile</span>
+                    <span>{{ __('Subscriber Profile') }}</span>
                 </a>
             </template>
 
@@ -558,7 +561,7 @@
                         @click="const item = activeMenu; activeMenu = null; openVoidModal(item)" 
                         class="w-full text-left px-3 py-1.5 hover:bg-rose-50/80 text-rose-600 flex items-center gap-2 transition cursor-pointer">
                     <i class="fas fa-ban w-4 text-center text-rose-500 text-[11px]"></i>
-                    <span class="font-semibold">Void / Refund Payment</span>
+                    <span class="font-semibold">{{ __('Void / Refund Payment') }}</span>
                 </button>
             </template>
         </div>
@@ -592,8 +595,8 @@
                         <i class="fas fa-hand-holding-dollar"></i>
                     </div>
                     <div>
-                        <h3 class="text-xs font-semibold text-slate-800">Collect Customer Payment</h3>
-                        <p class="text-[10.5px] text-slate-500 font-normal">Record bill collection &amp; generate money receipt</p>
+                        <h3 class="text-xs font-semibold text-slate-800">{{ __('Collect Customer Payment') }}</h3>
+                        <p class="text-[10.5px] text-slate-500 font-normal">{{ __('Record bill collection & generate money receipt') }}</p>
                     </div>
                 </div>
                 <button type="button" 
@@ -612,10 +615,10 @@
                     <div class="space-y-1 relative" @click.away="collectModal.customerDropdownOpen = false">
                         <div class="flex items-center justify-between">
                             <label class="block text-slate-700 font-semibold text-[11px]">
-                                Subscriber / Customer <span class="text-rose-500">*</span>
+                                {{ __('Subscriber / Customer') }} <span class="text-rose-500">*</span>
                             </label>
                             <span class="text-[10px] text-slate-400 font-mono" x-show="collectModal.selectedCustomer">
-                                ID: <span class="text-amber-700 font-bold" x-text="collectModal.selectedCustomer?.customer_id"></span>
+                                {{ __('ID:') }} <span class="text-amber-700 font-bold" x-text="collectModal.selectedCustomer?.customer_id"></span>
                             </span>
                         </div>
 
@@ -632,16 +635,16 @@
                                             <span class="text-[10px] font-mono text-amber-800 font-bold" x-text="'(' + collectModal.selectedCustomer.username + ')'"></span>
                                         </div>
                                         <div class="text-[10px] text-slate-500 flex items-center gap-2">
-                                            <span class="font-mono text-slate-600" x-text="'Pkg: ' + collectModal.selectedCustomer.package_name"></span>
+                                            <span class="font-mono text-slate-600" x-text="i18n.pkgPrefix + ' ' + collectModal.selectedCustomer.package_name"></span>
                                             <span>•</span>
-                                            <span class="font-mono font-semibold text-rose-700" x-text="'Due: {{ $currencySymbol ?? '৳' }}' + parseFloat(collectModal.selectedCustomer.due_amount).toFixed(2)"></span>
+                                            <span class="font-mono font-semibold text-rose-700" x-text="i18n.duePrefix + ' ' + currencySymbol + parseFloat(collectModal.selectedCustomer.due_amount).toFixed(2)"></span>
                                         </div>
                                     </div>
                                 </div>
                                 <button type="button" 
                                         @click="clearCustomer()" 
                                         class="w-5 h-5 rounded hover:bg-amber-200/80 text-amber-800 flex items-center justify-center transition cursor-pointer"
-                                        title="Change Subscriber">
+                                        title="{{ __('Change Subscriber') }}">
                                     <i class="fas fa-times text-[10px]"></i>
                                 </button>
                             </div>
@@ -657,7 +660,7 @@
                                        x-model="collectModal.customerSearch" 
                                        @focus="collectModal.customerDropdownOpen = true"
                                        @input="collectModal.customerDropdownOpen = true"
-                                       placeholder="Type to search subscriber by Name, ID, Username or Phone..." 
+                                       placeholder="{{ __('Type to search subscriber by Name, ID, Username or Phone...') }}" 
                                        class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs pl-8 pr-8 py-1.5 text-slate-800 placeholder-slate-400 focus:bg-white focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition">
                                 <button type="button" 
                                         x-show="collectModal.customerSearch" 
@@ -691,8 +694,8 @@
                                             </div>
                                         </div>
                                         <div class="text-right flex-shrink-0">
-                                            <span class="font-mono font-bold text-slate-800 text-[11px]" x-text="'{{ $currencySymbol ?? '৳' }}' + parseFloat(c.monthly_bill).toFixed(2)"></span>
-                                            <span class="block text-[9px] text-rose-600 font-mono" x-show="c.due_amount > 0" x-text="'Due: {{ $currencySymbol ?? '৳' }}' + parseFloat(c.due_amount).toFixed(2)"></span>
+                                            <span class="font-mono font-bold text-slate-800 text-[11px]" x-text="currencySymbol + parseFloat(c.monthly_bill).toFixed(2)"></span>
+                                            <span class="block text-[9px] text-rose-600 font-mono" x-show="c.due_amount > 0" x-text="i18n.duePrefix + ' ' + currencySymbol + parseFloat(c.due_amount).toFixed(2)"></span>
                                         </div>
                                     </div>
                                 </template>
@@ -700,7 +703,7 @@
                                 <!-- No Results State -->
                                 <div x-show="filteredCustomers.length === 0" class="p-3 text-center text-slate-400 text-xs">
                                     <i class="fas fa-user-slash text-slate-300 text-base mb-1 block"></i>
-                                    <span>No subscribers matching "<span class="font-semibold text-slate-600" x-text="collectModal.customerSearch"></span>"</span>
+                                    <span>{!! __('No subscribers matching ":query"', ['query' => '<span class="font-semibold text-slate-600" x-text="collectModal.customerSearch"></span>']) !!}</span>
                                 </div>
                             </div>
                         </div>
@@ -713,7 +716,7 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div class="space-y-1">
                             <label class="block text-slate-700 font-semibold text-[11px]">
-                                Billing Month (YYYY-MM) <span class="text-rose-500">*</span>
+                                {{ __('Billing Month (YYYY-MM)') }} <span class="text-rose-500">*</span>
                             </label>
                             <input type="month" 
                                    x-model="collectModal.form.billing_month" 
@@ -723,19 +726,19 @@
 
                         <div class="space-y-1">
                             <label class="block text-slate-700 font-semibold text-[11px]">
-                                Payment Method <span class="text-rose-500">*</span>
+                                {{ __('Payment Method') }} <span class="text-rose-500">*</span>
                             </label>
                             <select x-model="collectModal.form.payment_method" 
                                     required 
                                     class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 text-slate-800 focus:bg-white focus:border-amber-500 transition">
-                                <option value="cash">Cash in Hand</option>
-                                <option value="bkash">bKash (MFS)</option>
-                                <option value="nagad">Nagad (MFS)</option>
-                                <option value="rocket">Rocket (MFS)</option>
-                                <option value="bank_transfer">Bank Transfer</option>
-                                <option value="pos">Card / POS Terminal</option>
-                                <option value="online">Online Payment Gateway</option>
-                                <option value="other">Other Method</option>
+                                <option value="cash">{{ __('Cash in Hand') }}</option>
+                                <option value="bkash">{{ __('bKash (MFS)') }}</option>
+                                <option value="nagad">{{ __('Nagad (MFS)') }}</option>
+                                <option value="rocket">{{ __('Rocket (MFS)') }}</option>
+                                <option value="bank_transfer">{{ __('Bank Transfer') }}</option>
+                                <option value="pos">{{ __('Card / POS Terminal') }}</option>
+                                <option value="online">{{ __('Online Payment Gateway') }}</option>
+                                <option value="other">{{ __('Other Method') }}</option>
                             </select>
                         </div>
                     </div>
@@ -744,7 +747,7 @@
                     <div class="grid grid-cols-2 gap-3">
                         <div class="space-y-1">
                             <label class="block text-slate-700 font-semibold text-[11px]">
-                                Collected Amount ({{ $currencySymbol ?? '৳' }}) <span class="text-rose-500">*</span>
+                                {{ __('Collected Amount (:currency)', ['currency' => $currencySymbol ?? '৳']) }} <span class="text-rose-500">*</span>
                             </label>
                             <input type="number" 
                                    step="0.01" 
@@ -757,7 +760,7 @@
 
                         <div class="space-y-1">
                             <label class="block text-slate-700 font-semibold text-[11px]">
-                                Discount / Concession ({{ $currencySymbol ?? '৳' }})
+                                {{ __('Discount / Concession (:currency)', ['currency' => $currencySymbol ?? '৳']) }}
                             </label>
                             <input type="number" 
                                    step="0.01" 
@@ -772,17 +775,17 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div class="space-y-1">
                             <label class="block text-slate-700 font-semibold text-[11px]">
-                                Transaction Reference / ID
+                                {{ __('Transaction Reference / ID') }}
                             </label>
                             <input type="text" 
                                    x-model="collectModal.form.transaction_id" 
-                                   placeholder="Auto-generated if blank" 
+                                   placeholder="{{ __('Auto-generated if blank') }}" 
                                    class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 text-slate-800 font-mono focus:bg-white focus:border-amber-500 transition">
                         </div>
 
                         <div class="space-y-1">
                             <label class="block text-slate-700 font-semibold text-[11px]">
-                                Collection Date &amp; Time
+                                {{ __('Collection Date & Time') }}
                             </label>
                             <input type="datetime-local" 
                                    x-model="collectModal.form.paid_at" 
@@ -793,11 +796,11 @@
                     <!-- Notes -->
                     <div class="space-y-1">
                         <label class="block text-slate-700 font-semibold text-[11px]">
-                            Remarks / Notes
+                            {{ __('Remarks / Notes') }}
                         </label>
                         <input type="text" 
                                x-model="collectModal.form.notes" 
-                               placeholder="e.g. Monthly bill clearance, Advance payment, Received by Collector..." 
+                               placeholder="{{ __('e.g. Monthly bill clearance, Advance payment, Received by Collector...') }}" 
                                class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 text-slate-800 focus:bg-white focus:border-amber-500 transition">
                     </div>
 
@@ -809,7 +812,7 @@
                                    x-model="collectModal.form.send_sms" 
                                    class="rounded border-slate-300 text-cyan-600 focus:ring-cyan-500 w-4 h-4 cursor-pointer">
                             <label for="collect_send_sms" class="text-xs font-semibold text-slate-700 cursor-pointer">
-                                Send SMS Confirmation to Subscriber
+                                {{ __('Send SMS Confirmation to Subscriber') }}
                             </label>
                         </div>
                         <i class="fas fa-comment-sms text-cyan-600 text-sm"></i>
@@ -823,14 +826,14 @@
                             @click="collectModal.open = false" 
                             :disabled="collectModal.loading"
                             class="border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs px-3.5 py-1.5 rounded-lg transition shadow-2xs cursor-pointer">
-                        Cancel
+                        {{ __('Cancel') }}
                     </button>
 
                     <button type="submit" 
                             :disabled="collectModal.loading"
                             class="bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white font-semibold text-xs px-4 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow-xs cursor-pointer">
                         <i class="fas" :class="collectModal.loading ? 'fa-spinner fa-spin' : 'fa-check'"></i>
-                        <span x-text="collectModal.loading ? 'Recording Payment...' : 'Confirm &amp; Issue Receipt'"></span>
+                        <span x-text="collectModal.loading ? i18n.recordingPayment : i18n.confirmIssueReceipt"></span>
                     </button>
                 </div>
             </form>
@@ -865,8 +868,8 @@
                         <i class="fas fa-receipt"></i>
                     </div>
                     <div>
-                        <h3 class="text-xs font-semibold text-slate-800">Money Receipt Voucher</h3>
-                        <p class="text-[10.5px] text-slate-500 font-normal">Official collection confirmation receipt</p>
+                        <h3 class="text-xs font-semibold text-slate-800">{{ __('Money Receipt Voucher') }}</h3>
+                        <p class="text-[10.5px] text-slate-500 font-normal">{{ __('Official collection confirmation receipt') }}</p>
                     </div>
                 </div>
 
@@ -875,7 +878,7 @@
                             @click="printReceipt()" 
                             class="bg-amber-600 hover:bg-amber-700 text-white font-medium text-xs px-3 py-1.5 rounded-lg transition flex items-center gap-1 shadow-xs cursor-pointer">
                         <i class="fas fa-print text-xs"></i>
-                        <span>Print</span>
+                        <span>{{ __('Print') }}</span>
                     </button>
 
                     <button type="button" 
@@ -896,21 +899,21 @@
                             <h2 class="text-base font-bold text-slate-900 tracking-tight" x-text="receiptModal.payment.company.name"></h2>
                             <p class="text-[10.5px] text-slate-500 mt-0.5" x-text="receiptModal.payment.company.address"></p>
                             <p class="text-[10.5px] text-slate-600 font-mono mt-0.5 flex items-center justify-center gap-2">
-                                <span x-text="'Helpline: ' + receiptModal.payment.company.phone"></span>
+                                <span x-text="i18n.helplinePrefix + ' ' + receiptModal.payment.company.phone"></span>
                             </p>
                             <div class="mt-2 inline-block px-2.5 py-0.5 bg-slate-900 text-amber-400 font-mono font-bold text-[11px] rounded tracking-wider uppercase">
-                                Money Receipt
+                                {{ __('Money Receipt') }}
                             </div>
                         </div>
 
                         <!-- Meta Info Grid -->
                         <div class="grid grid-cols-2 gap-2 text-[11px] font-mono border-b border-dashed border-slate-200 pb-2.5">
                             <div>
-                                <span class="text-slate-400 block text-[9px] uppercase">Receipt No</span>
+                                <span class="text-slate-400 block text-[9px] uppercase">{{ __('Receipt No') }}</span>
                                 <span class="font-bold text-slate-900" x-text="receiptModal.payment.receipt_no"></span>
                             </div>
                             <div class="text-right">
-                                <span class="text-slate-400 block text-[9px] uppercase">Date &amp; Time</span>
+                                <span class="text-slate-400 block text-[9px] uppercase">{{ __('Date & Time') }}</span>
                                 <span class="text-slate-800" x-text="receiptModal.payment.paid_at"></span>
                             </div>
                         </div>
@@ -922,39 +925,39 @@
                                 <span class="font-mono text-cyan-800 font-bold" x-text="receiptModal.payment.customer.customer_code"></span>
                             </div>
                             <div class="flex items-center justify-between text-slate-500 text-[10.5px] font-mono">
-                                <span x-text="'PPPoE: ' + receiptModal.payment.customer.username"></span>
-                                <span x-text="'Phone: ' + receiptModal.payment.customer.phone"></span>
+                                <span x-text="i18n.pppoePrefix + ' ' + receiptModal.payment.customer.username"></span>
+                                <span x-text="i18n.phonePrefix + ' ' + receiptModal.payment.customer.phone"></span>
                             </div>
                             <div class="flex items-center justify-between text-slate-600 text-[10.5px]">
-                                <span x-text="'Package: ' + receiptModal.payment.customer.package_name"></span>
-                                <span x-text="'Month: ' + receiptModal.payment.billing_month"></span>
+                                <span x-text="i18n.packagePrefix + ' ' + receiptModal.payment.customer.package_name"></span>
+                                <span x-text="i18n.monthPrefix + ' ' + receiptModal.payment.billing_month"></span>
                             </div>
                         </div>
 
                         <!-- Financial Breakdown -->
                         <div class="space-y-1.5 text-xs">
                             <div class="flex justify-between py-1 border-b border-slate-100">
-                                <span class="text-slate-600">Bill Fee Paid:</span>
+                                <span class="text-slate-600">{{ __('Bill Fee Paid:') }}</span>
                                 <span class="font-mono font-bold text-slate-900" x-text="receiptModal.payment.amount_formatted"></span>
                             </div>
                             <div class="flex justify-between py-1 border-b border-slate-100" x-show="receiptModal.payment.discount > 0">
-                                <span class="text-slate-600">Discount Concession:</span>
+                                <span class="text-slate-600">{{ __('Discount Concession:') }}</span>
                                 <span class="font-mono text-rose-600 font-semibold" x-text="receiptModal.payment.discount_formatted"></span>
                             </div>
                             <div class="flex justify-between py-1.5 border-b-2 border-slate-800 font-bold">
-                                <span class="text-slate-900">Total Received:</span>
+                                <span class="text-slate-900">{{ __('Total Received:') }}</span>
                                 <span class="font-mono text-emerald-700 text-sm" x-text="receiptModal.payment.total_received_formatted"></span>
                             </div>
                             <div class="flex justify-between py-1 text-slate-500 text-[11px] font-mono">
-                                <span>Payment Method:</span>
+                                <span>{{ __('Payment Method:') }}</span>
                                 <span class="font-semibold text-slate-800" x-text="receiptModal.payment.payment_method_name"></span>
                             </div>
-                            <div class="flex justify-between py-1 text-slate-500 text-[11px] font-mono" x-show="receiptModal.payment.transaction_id && receiptModal.payment.transaction_id !== 'N/A'">
-                                <span>Trx ID:</span>
+                            <div class="flex justify-between py-1 text-slate-500 text-[11px] font-mono" x-show="receiptModal.payment.transaction_id && receiptModal.payment.transaction_id !== 'N/A' && receiptModal.payment.transaction_id !== i18n.na">
+                                <span>{{ __('Trx ID:') }}</span>
                                 <span class="text-slate-700" x-text="receiptModal.payment.transaction_id"></span>
                             </div>
                             <div class="flex justify-between py-1 text-slate-500 text-[11px]">
-                                <span>Remaining Due:</span>
+                                <span>{{ __('Remaining Due:') }}</span>
                                 <span class="font-mono font-bold" :class="receiptModal.payment.customer.current_due > 0 ? 'text-rose-600' : 'text-emerald-600'" x-text="receiptModal.payment.customer.current_due_formatted"></span>
                             </div>
                         </div>
@@ -964,7 +967,7 @@
                             <div class="flex justify-between items-end text-[10px] text-slate-500 pt-3">
                                 <div>
                                     <div class="w-20 border-b border-slate-300 mb-1"></div>
-                                    <span>Subscriber Sign</span>
+                                    <span>{{ __('Subscriber Sign') }}</span>
                                 </div>
                                 <div>
                                     <div class="w-20 border-b border-slate-300 mb-1"></div>
@@ -973,7 +976,7 @@
                             </div>
 
                             <p class="text-[9.5px] text-slate-400 font-mono">
-                                Thank you for your payment! Please preserve this receipt for future reference.
+                                {{ __('Thank you for your payment! Please preserve this receipt for future reference.') }}
                             </p>
                         </div>
 
@@ -986,13 +989,13 @@
                 <button type="button" 
                         @click="receiptModal.open = false" 
                         class="border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs px-3.5 py-1.5 rounded-lg transition shadow-2xs cursor-pointer">
-                    Close
+                    {{ __('Close') }}
                 </button>
                 <button type="button" 
                         @click="printReceipt()" 
                         class="bg-amber-600 hover:bg-amber-700 text-white font-medium text-xs px-4 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow-xs cursor-pointer">
                     <i class="fas fa-print"></i>
-                    <span>Print Receipt</span>
+                    <span>{{ __('Print Receipt') }}</span>
                 </button>
             </div>
         </div>
@@ -1013,8 +1016,8 @@
                         <i class="fas fa-comment-sms"></i>
                     </div>
                     <div>
-                        <h3 class="text-xs font-semibold text-slate-800">Dispatch SMS Confirmation</h3>
-                        <p class="text-[10.5px] text-slate-500 font-normal">Send instant SMS receipt to customer</p>
+                        <h3 class="text-xs font-semibold text-slate-800">{{ __('Dispatch SMS Confirmation') }}</h3>
+                        <p class="text-[10.5px] text-slate-500 font-normal">{{ __('Send instant SMS receipt to customer') }}</p>
                     </div>
                 </div>
                 <button type="button" 
@@ -1027,23 +1030,27 @@
             <div class="p-4 space-y-3 text-xs">
                 <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200 space-y-1">
                     <div class="flex justify-between">
-                        <span class="text-slate-500">Recipient Phone:</span>
+                        <span class="text-slate-500">{{ __('Recipient Phone:') }}</span>
                         <span class="font-mono font-bold text-slate-800" x-text="smsModal.payment?.customer_phone"></span>
                     </div>
                     <div class="flex justify-between">
-                        <span class="text-slate-500">Receipt No:</span>
+                        <span class="text-slate-500">{{ __('Receipt No:') }}</span>
                         <span class="font-mono text-amber-800 font-bold" x-text="smsModal.payment?.invoice_no"></span>
                     </div>
                     <div class="flex justify-between">
-                        <span class="text-slate-500">Amount Paid:</span>
-                        <span class="font-mono text-emerald-700 font-bold" x-text="'{{ $currencySymbol ?? '৳' }}' + parseFloat(smsModal.payment?.amount || 0).toFixed(2)"></span>
+                        <span class="text-slate-500">{{ __('Amount Paid:') }}</span>
+                        <span class="font-mono text-emerald-700 font-bold" x-text="currencySymbol + parseFloat(smsModal.payment?.amount || 0).toFixed(2)"></span>
                     </div>
                 </div>
 
                 <div class="space-y-1">
-                    <label class="block text-slate-700 font-semibold text-[11px]">SMS Message Template</label>
+                    <label class="block text-slate-700 font-semibold text-[11px]">{{ __('SMS Message Template') }}</label>
                     <div class="bg-slate-900 text-cyan-300 font-mono text-[10.5px] p-2.5 rounded-lg border border-slate-800 leading-relaxed">
-                        Dear <span x-text="smsModal.payment?.customer_name"></span>, payment of {{ $currencySymbol ?? '৳' }}<span x-text="parseFloat(smsModal.payment?.amount || 0).toFixed(2)"></span> received successfully (Receipt: <span x-text="smsModal.payment?.invoice_no"></span>). Thank you for being with us!
+                        {!! __('Dear :name, payment of :amount received successfully (Receipt: :receipt). Thank you for being with us!', [
+                            'name' => '<span x-text="smsModal.payment?.customer_name"></span>',
+                            'amount' => e($currencySymbol ?? '৳') . '<span x-text="parseFloat(smsModal.payment?.amount || 0).toFixed(2)"></span>',
+                            'receipt' => '<span x-text="smsModal.payment?.invoice_no"></span>',
+                        ]) !!}
                     </div>
                 </div>
             </div>
@@ -1052,14 +1059,14 @@
                 <button type="button" 
                         @click="smsModal.open = false" 
                         class="border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs px-3 py-1.5 rounded-lg transition shadow-2xs cursor-pointer">
-                    Cancel
+                    {{ __('Cancel') }}
                 </button>
                 <button type="button" 
                         @click="submitSendSms()" 
                         :disabled="smsModal.loading" 
                         class="bg-cyan-600 hover:bg-cyan-700 text-white font-medium text-xs px-4 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow-xs cursor-pointer">
                     <i class="fas" :class="smsModal.loading ? 'fa-spinner fa-spin' : 'fa-paper-plane'"></i>
-                    <span x-text="smsModal.loading ? 'Sending SMS...' : 'Dispatch SMS'"></span>
+                    <span x-text="smsModal.loading ? i18n.sendingSms : i18n.dispatchSms"></span>
                 </button>
             </div>
         </div>
@@ -1080,8 +1087,8 @@
                         <i class="fas fa-ban"></i>
                     </div>
                     <div>
-                        <h3 class="text-xs font-semibold text-slate-800">Void / Reverse Payment</h3>
-                        <p class="text-[10.5px] text-slate-500 font-normal">Revert collection &amp; restore subscriber due</p>
+                        <h3 class="text-xs font-semibold text-slate-800">{{ __('Void / Reverse Payment') }}</h3>
+                        <p class="text-[10.5px] text-slate-500 font-normal">{{ __('Revert collection & restore subscriber due') }}</p>
                     </div>
                 </div>
                 <button type="button" 
@@ -1096,19 +1103,21 @@
                     <div class="p-2.5 bg-rose-50 border border-rose-200 rounded-lg text-rose-800 space-y-1">
                         <div class="font-bold flex items-center gap-1.5 text-xs">
                             <i class="fas fa-triangle-exclamation text-rose-600"></i>
-                            <span>Warning: Action cannot be undone</span>
+                            <span>{{ __('Warning: Action cannot be undone') }}</span>
                         </div>
                         <p class="text-[11px] leading-tight">
-                            Voiding this receipt will deduct <span class="font-bold font-mono">{{ $currencySymbol ?? '৳' }}<span x-text="parseFloat(voidModal.payment?.amount || 0).toFixed(2)"></span></span> from collections and re-add the due amount back to the subscriber's balance.
+                            {!! __("Voiding this receipt will deduct :amount from collections and re-add the due amount back to the subscriber's balance.", [
+                                'amount' => '<span class="font-bold font-mono">' . e($currencySymbol ?? '৳') . '<span x-text="parseFloat(voidModal.payment?.amount || 0).toFixed(2)"></span></span>',
+                            ]) !!}
                         </p>
                     </div>
 
                     <div class="space-y-1">
-                        <label class="block text-slate-700 font-semibold text-[11px]">Reason for Voiding <span class="text-rose-500">*</span></label>
+                        <label class="block text-slate-700 font-semibold text-[11px]">{{ __('Reason for Voiding') }} <span class="text-rose-500">*</span></label>
                         <textarea x-model="voidModal.reason" 
                                   required 
                                   rows="2" 
-                                  placeholder="e.g. Mistaken entry, Cheque bounced, Wrong subscriber selected..." 
+                                  placeholder="{{ __('e.g. Mistaken entry, Cheque bounced, Wrong subscriber selected...') }}" 
                                   class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs p-2 text-slate-800 focus:bg-white focus:border-rose-500 transition"></textarea>
                     </div>
                 </div>
@@ -1117,13 +1126,13 @@
                     <button type="button" 
                             @click="voidModal.open = false" 
                             class="border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs px-3.5 py-1.5 rounded-lg transition shadow-2xs cursor-pointer">
-                        Cancel
+                        {{ __('Cancel') }}
                     </button>
                     <button type="submit" 
                             :disabled="voidModal.loading" 
                             class="bg-rose-600 hover:bg-rose-700 text-white font-medium text-xs px-4 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow-xs cursor-pointer">
                         <i class="fas" :class="voidModal.loading ? 'fa-spinner fa-spin' : 'fa-ban'"></i>
-                        <span x-text="voidModal.loading ? 'Voiding...' : 'Confirm Void'"></span>
+                        <span x-text="voidModal.loading ? i18n.voiding : i18n.confirmVoid"></span>
                     </button>
                 </div>
             </form>
@@ -1147,6 +1156,56 @@
 <script>
 function paymentManager() {
     return {
+        currencySymbol: @json($currencySymbol ?? '৳'),
+        i18n: {
+            pkgPrefix: @json(__('Pkg:')),
+            duePrefix: @json(__('Due:')),
+            helplinePrefix: @json(__('Helpline:')),
+            pppoePrefix: @json(__('PPPoE:')),
+            phonePrefix: @json(__('Phone:')),
+            packagePrefix: @json(__('Package:')),
+            monthPrefix: @json(__('Month:')),
+            na: @json(__('N/A')),
+            recordingPayment: @json(__('Recording Payment...')),
+            confirmIssueReceipt: @json(__('Confirm & Issue Receipt')),
+            sendingSms: @json(__('Sending SMS...')),
+            dispatchSms: @json(__('Dispatch SMS')),
+            voiding: @json(__('Voiding...')),
+            confirmVoid: @json(__('Confirm Void')),
+            selectSubscriberFirst: @json(__('Please search and select a subscriber first.')),
+            failedRecordPayment: @json(__('Failed to record payment.')),
+            networkErrorRecording: @json(__('Network error recording payment.')),
+            failedLoadReceipt: @json(__('Failed to load receipt voucher details.')),
+            networkErrorReceipt: @json(__('Network error fetching money receipt.')),
+            smsDispatchFailed: @json(__('SMS dispatch failed.')),
+            networkErrorSms: @json(__('Network error sending SMS.')),
+            paymentVoided: @json(__('Payment Voided')),
+            failedVoidPayment: @json(__('Failed to void payment.')),
+            networkErrorVoid: @json(__('Network error voiding payment.')),
+            approveConfirmTitle: @json(__('Approve Payment & Activate Line?')),
+            approveConfirmHtml: @json(__('Are you sure you want to approve receipt :receipt (:amount)?', ['receipt' => '<b>:receipt_val</b>', 'amount' => ':amount_val'])),
+            approveConfirmSub: @json(__('Subscriber line will be activated immediately on MikroTik and validity extended.')),
+            approveConfirmBtn: @json(__('Yes, Approve & Activate')),
+            cancelBtn: @json(__('Cancel')),
+            approvePlainConfirm: @json(__("Are you sure you want to approve payment ':receipt' (:amount) and activate customer line in MikroTik & FreeRADIUS?")),
+            paymentApprovedTitle: @json(__('Payment Approved!')),
+            approvalFailedTitle: @json(__('Approval Failed')),
+            failedApprovePayment: @json(__('Failed to approve payment.')),
+            networkErrorTitle: @json(__('Network Error')),
+            networkErrorApproveMsg: @json(__('Could not communicate with the server to approve payment.')),
+            networkErrorApproveToast: @json(__('Network error approving payment.')),
+            defaultRejectReason: @json(__('Invalid TrxID / Unverified Payment')),
+            rejectModalTitle: @json(__('Reject Pending Payment')),
+            rejectInputLabel: @json(__('Rejection reason for receipt :receipt')),
+            rejectInputPlaceholder: @json(__('Type rejection reason here...')),
+            rejectConfirmBtn: @json(__('Confirm Rejection')),
+            rejectPrompt: @json(__("Please enter rejection reason for payment ':receipt':")),
+            paymentRejectedTitle: @json(__('Payment Rejected')),
+            rejectionFailedTitle: @json(__('Rejection Failed')),
+            failedRejectPayment: @json(__('Failed to reject payment.')),
+            networkErrorRejectMsg: @json(__('Could not communicate with the server to reject payment.')),
+            networkErrorRejectToast: @json(__('Network error rejecting payment.')),
+        },
         activeMenu: null,
         menuPos: { top: 'auto', bottom: 'auto', right: 'auto', left: 'auto' },
 
@@ -1353,7 +1412,7 @@ function paymentManager() {
 
         async submitCollectPayment() {
             if (!this.collectModal.form.customer_id) {
-                this.showToast('Please search and select a subscriber first.', 'error');
+                this.showToast(this.i18n.selectSubscriberFirst, 'error');
                 return;
             }
             this.collectModal.loading = true;
@@ -1373,10 +1432,10 @@ function paymentManager() {
                     this.collectModal.open = false;
                     setTimeout(() => window.location.reload(), 700);
                 } else {
-                    this.showToast(data.message || 'Failed to record payment.', 'error');
+                    this.showToast(data.message || this.i18n.failedRecordPayment, 'error');
                 }
             } catch (err) {
-                this.showToast('Network error recording payment.', 'error');
+                this.showToast(this.i18n.networkErrorRecording, 'error');
             } finally {
                 this.collectModal.loading = false;
             }
@@ -1398,11 +1457,11 @@ function paymentManager() {
                 if (res.ok && data.success) {
                     this.receiptModal.payment = data.payment;
                 } else {
-                    this.showToast('Failed to load receipt voucher details.', 'error');
+                    this.showToast(this.i18n.failedLoadReceipt, 'error');
                     this.receiptModal.open = false;
                 }
             } catch (err) {
-                this.showToast('Network error fetching money receipt.', 'error');
+                this.showToast(this.i18n.networkErrorReceipt, 'error');
                 this.receiptModal.open = false;
             } finally {
                 this.receiptModal.loading = false;
@@ -1435,10 +1494,10 @@ function paymentManager() {
                     this.showToast(data.message, 'success');
                     this.smsModal.open = false;
                 } else {
-                    this.showToast(data.message || 'SMS dispatch failed.', 'error');
+                    this.showToast(data.message || this.i18n.smsDispatchFailed, 'error');
                 }
             } catch (err) {
-                this.showToast('Network error sending SMS.', 'error');
+                this.showToast(this.i18n.networkErrorSms, 'error');
             } finally {
                 this.smsModal.loading = false;
             }
@@ -1468,31 +1527,35 @@ function paymentManager() {
                     this.voidModal.open = false;
                     Swal.fire({
                         icon: 'success',
-                        title: 'Payment Voided',
+                        title: this.i18n.paymentVoided,
                         text: data.message,
                         timer: 1500,
                         showConfirmButton: false
                     });
                     setTimeout(() => window.location.reload(), 1200);
                 } else {
-                    this.showToast(data.message || 'Failed to void payment.', 'error');
+                    this.showToast(data.message || this.i18n.failedVoidPayment, 'error');
                 }
             } catch (err) {
-                this.showToast('Network error voiding payment.', 'error');
+                this.showToast(this.i18n.networkErrorVoid, 'error');
             } finally {
                 this.voidModal.loading = false;
             }
         },
 
         async approvePayment(item) {
+            const amountText = item.amount_formatted || (this.currencySymbol + parseFloat(item.amount || 0).toFixed(2));
             if (typeof Swal !== 'undefined') {
+                const bodyText = this.i18n.approveConfirmHtml
+                    .replace(':receipt_val', item.invoice_no)
+                    .replace(':amount_val', amountText);
                 const result = await Swal.fire({
-                    title: 'Approve Payment & Activate Line?',
-                    html: `<div class="text-xs text-slate-600">Are you sure you want to approve receipt <b>${item.invoice_no}</b> (${item.amount_formatted})?<br><span class="text-slate-400 mt-1 block">Subscriber line will be activated immediately on MikroTik and validity extended.</span></div>`,
+                    title: this.i18n.approveConfirmTitle,
+                    html: `<div class="text-xs text-slate-600">${bodyText}<br><span class="text-slate-400 mt-1 block">${this.i18n.approveConfirmSub}</span></div>`,
                     icon: 'question',
                     showCancelButton: true,
-                    confirmButtonText: 'Yes, Approve & Activate',
-                    cancelButtonText: 'Cancel',
+                    confirmButtonText: this.i18n.approveConfirmBtn,
+                    cancelButtonText: this.i18n.cancelBtn,
                     customClass: {
                         confirmButton: 'bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs px-4 py-2 rounded-lg cursor-pointer mr-2',
                         cancelButton: 'bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold text-xs px-4 py-2 rounded-lg cursor-pointer'
@@ -1501,7 +1564,10 @@ function paymentManager() {
                 });
                 if (!result.isConfirmed) return;
             } else {
-                if (!confirm(`Are you sure you want to approve payment '${item.invoice_no}' (${item.amount_formatted}) and activate customer line in MikroTik & FreeRADIUS?`)) {
+                const msg = this.i18n.approvePlainConfirm
+                    .replace(':receipt', item.invoice_no)
+                    .replace(':amount', amountText);
+                if (!confirm(msg)) {
                     return;
                 }
             }
@@ -1520,7 +1586,7 @@ function paymentManager() {
                     if (typeof Swal !== 'undefined') {
                         await Swal.fire({
                             icon: 'success',
-                            title: 'Payment Approved!',
+                            title: this.i18n.paymentApprovedTitle,
                             text: data.message,
                             timer: 2000,
                             showConfirmButton: false
@@ -1531,49 +1597,49 @@ function paymentManager() {
                     if (typeof Swal !== 'undefined') {
                         Swal.fire({
                             icon: 'error',
-                            title: 'Approval Failed',
-                            text: data.message || 'Failed to approve payment.',
+                            title: this.i18n.approvalFailedTitle,
+                            text: data.message || this.i18n.failedApprovePayment,
                             customClass: {
                                 confirmButton: 'bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs px-4 py-2 rounded-lg cursor-pointer'
                             },
                             buttonsStyling: false
                         });
                     } else {
-                        this.showToast(data.message || 'Failed to approve payment.', 'error');
+                        this.showToast(data.message || this.i18n.failedApprovePayment, 'error');
                     }
                 }
             } catch (e) {
                 if (typeof Swal !== 'undefined') {
                     Swal.fire({
                         icon: 'error',
-                        title: 'Network Error',
-                        text: 'Could not communicate with the server to approve payment.',
+                        title: this.i18n.networkErrorTitle,
+                        text: this.i18n.networkErrorApproveMsg,
                         customClass: {
                             confirmButton: 'bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs px-4 py-2 rounded-lg cursor-pointer'
                         },
                         buttonsStyling: false
                     });
                 } else {
-                    this.showToast('Network error approving payment.', 'error');
+                    this.showToast(this.i18n.networkErrorApproveToast, 'error');
                 }
             }
         },
 
         async rejectPayment(item) {
-            let reason = 'Invalid TrxID / Unverified Payment';
+            let reason = this.i18n.defaultRejectReason;
             if (typeof Swal !== 'undefined') {
                 const { value: text, isConfirmed } = await Swal.fire({
-                    title: 'Reject Pending Payment',
+                    title: this.i18n.rejectModalTitle,
                     input: 'textarea',
-                    inputLabel: `Rejection reason for receipt ${item.invoice_no}`,
+                    inputLabel: this.i18n.rejectInputLabel.replace(':receipt', item.invoice_no),
                     inputValue: reason,
-                    inputPlaceholder: 'Type rejection reason here...',
+                    inputPlaceholder: this.i18n.rejectInputPlaceholder,
                     inputAttributes: {
-                        'aria-label': 'Type rejection reason here'
+                        'aria-label': this.i18n.rejectInputPlaceholder
                     },
                     showCancelButton: true,
-                    confirmButtonText: 'Confirm Rejection',
-                    cancelButtonText: 'Cancel',
+                    confirmButtonText: this.i18n.rejectConfirmBtn,
+                    cancelButtonText: this.i18n.cancelBtn,
                     customClass: {
                         confirmButton: 'bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs px-4 py-2 rounded-lg cursor-pointer mr-2',
                         cancelButton: 'bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold text-xs px-4 py-2 rounded-lg cursor-pointer',
@@ -1584,7 +1650,7 @@ function paymentManager() {
                 if (!isConfirmed) return;
                 reason = text || reason;
             } else {
-                let prompted = prompt(`Please enter rejection reason for payment '${item.invoice_no}':`, reason);
+                let prompted = prompt(this.i18n.rejectPrompt.replace(':receipt', item.invoice_no), reason);
                 if (prompted === null) return;
                 reason = prompted;
             }
@@ -1604,7 +1670,7 @@ function paymentManager() {
                     if (typeof Swal !== 'undefined') {
                         await Swal.fire({
                             icon: 'warning',
-                            title: 'Payment Rejected',
+                            title: this.i18n.paymentRejectedTitle,
                             text: data.message,
                             timer: 2000,
                             showConfirmButton: false
@@ -1615,30 +1681,30 @@ function paymentManager() {
                     if (typeof Swal !== 'undefined') {
                         Swal.fire({
                             icon: 'error',
-                            title: 'Rejection Failed',
-                            text: data.message || 'Failed to reject payment.',
+                            title: this.i18n.rejectionFailedTitle,
+                            text: data.message || this.i18n.failedRejectPayment,
                             customClass: {
                                 confirmButton: 'bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs px-4 py-2 rounded-lg cursor-pointer'
                             },
                             buttonsStyling: false
                         });
                     } else {
-                        this.showToast(data.message || 'Failed to reject payment.', 'error');
+                        this.showToast(data.message || this.i18n.failedRejectPayment, 'error');
                     }
                 }
             } catch (e) {
                 if (typeof Swal !== 'undefined') {
                     Swal.fire({
                         icon: 'error',
-                        title: 'Network Error',
-                        text: 'Could not communicate with the server to reject payment.',
+                        title: this.i18n.networkErrorTitle,
+                        text: this.i18n.networkErrorRejectMsg,
                         customClass: {
                             confirmButton: 'bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs px-4 py-2 rounded-lg cursor-pointer'
                         },
                         buttonsStyling: false
                     });
                 } else {
-                    this.showToast('Network error rejecting payment.', 'error');
+                    this.showToast(this.i18n.networkErrorRejectToast, 'error');
                 }
             }
         }

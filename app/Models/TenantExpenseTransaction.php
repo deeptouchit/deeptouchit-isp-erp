@@ -68,12 +68,12 @@ class TenantExpenseTransaction extends Model
     {
         return match ($this->type) {
             'INCOME' => [
-                'label' => 'Income',
+                'label' => __('Income'),
                 'class' => 'bg-emerald-50 text-emerald-700 border-emerald-200',
                 'icon' => 'fa-arrow-down-left',
             ],
             default => [
-                'label' => 'Expense',
+                'label' => __('Expense'),
                 'class' => 'bg-rose-50 text-rose-700 border-rose-200',
                 'icon' => 'fa-arrow-up-right',
             ],
@@ -87,17 +87,17 @@ class TenantExpenseTransaction extends Model
     {
         return match ($this->status) {
             'APPROVED' => [
-                'label' => 'Approved',
+                'label' => __('Approved'),
                 'class' => 'bg-emerald-50 text-emerald-700 border-emerald-200',
                 'icon' => 'fa-circle-check',
             ],
             'REJECTED' => [
-                'label' => 'Rejected',
+                'label' => __('Rejected'),
                 'class' => 'bg-rose-50 text-rose-700 border-rose-200',
                 'icon' => 'fa-circle-xmark',
             ],
             default => [
-                'label' => 'Pending Approval',
+                'label' => __('Pending Approval'),
                 'class' => 'bg-amber-50 text-amber-700 border-amber-200',
                 'icon' => 'fa-clock',
             ],

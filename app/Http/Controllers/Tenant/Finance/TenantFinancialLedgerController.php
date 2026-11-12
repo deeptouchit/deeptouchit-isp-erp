@@ -23,7 +23,7 @@ class TenantFinancialLedgerController extends Controller
         $tenant = $tenantId ? Tenant::find($tenantId) : Tenant::first();
 
         if (!$tenant) {
-            abort(403, 'Tenant context not found. Please log in.');
+            abort(403, __('Tenant context not found. Please log in.'));
         }
 
         return $tenant;
@@ -136,11 +136,11 @@ class TenantFinancialLedgerController extends Controller
 
         $callback = function () use ($entries, $openingBalance, $tenant, $periodLabel) {
             $file = fopen('php://output', 'w');
-            fputcsv($file, [$tenant->company_name ?? $tenant->name, 'FINANCIAL STATEMENT & GENERAL LEDGER']);
-            fputcsv($file, ['Reporting Period', $periodLabel]);
-            fputcsv($file, ['Opening Balance', number_format($openingBalance['net'], 2)]);
+            fputcsv($file, [$tenant->company_name ?? $tenant->name, __('FINANCIAL STATEMENT & GENERAL LEDGER')]);
+            fputcsv($file, [__('Reporting Period'), $periodLabel]);
+            fputcsv($file, [__('Opening Balance'), number_format($openingBalance['net'], 2)]);
             fputcsv($file, []);
-            fputcsv($file, ['#', 'Date & Time', 'Voucher / Ref No', 'Account Head', 'Particulars / Narrative', 'Channel', 'Debit (Expense)', 'Credit (Revenue)', 'Running Balance', 'Status']);
+            fputcsv($file, ['#', __('Date & Time'), __('Voucher / Ref No'), __('Account Head'), __('Particulars / Narrative'), __('Channel'), __('Debit (Expense)'), __('Credit (Revenue)'), __('Running Balance'), __('Status')]);
 
             $index = 1;
             $currentRun = $openingBalance['net'];
@@ -234,56 +234,56 @@ class TenantFinancialLedgerController extends Controller
             case 'today':
                 $start = $now->copy()->startOfDay();
                 $end = $now->copy()->endOfDay();
-                $label = 'Today (' . $now->format('d M, Y') . ')';
+                $label = __('Today (:date)', ['date' => $now->translatedFormat('d M, Y')]);
                 break;
 
             case 'yesterday':
                 $start = $now->copy()->subDay()->startOfDay();
                 $end = $now->copy()->subDay()->endOfDay();
-                $label = 'Yesterday (' . $start->format('d M, Y') . ')';
+                $label = __('Yesterday (:date)', ['date' => $start->translatedFormat('d M, Y')]);
                 break;
 
             case 'this_week':
                 $start = $now->copy()->startOfWeek()->startOfDay();
                 $end = $now->copy()->endOfWeek()->endOfDay();
-                $label = 'This Week (' . $start->format('d M') . ' - ' . $end->format('d M, Y') . ')';
+                $label = __('This Week (:start - :end)', ['start' => $start->translatedFormat('d M'), 'end' => $end->translatedFormat('d M, Y')]);
                 break;
 
             case 'last_month':
                 $start = $now->copy()->subMonth()->startOfMonth();
                 $end = $now->copy()->subMonth()->endOfMonth();
-                $label = 'Last Month (' . $start->format('F Y') . ')';
+                $label = __('Last Month (:month)', ['month' => $start->translatedFormat('F Y')]);
                 break;
 
             case 'this_quarter':
                 $start = $now->copy()->firstOfQuarter()->startOfDay();
                 $end = $now->copy()->lastOfQuarter()->endOfDay();
-                $label = 'This Quarter (' . $start->format('M Y') . ' - ' . $end->format('M Y') . ')';
+                $label = __('This Quarter (:start - :end)', ['start' => $start->translatedFormat('M Y'), 'end' => $end->translatedFormat('M Y')]);
                 break;
 
             case 'this_year':
                 $start = $now->copy()->startOfYear();
                 $end = $now->copy()->endOfYear();
-                $label = 'This Fiscal Year (' . $start->format('Y') . ')';
+                $label = __('This Fiscal Year (:year)', ['year' => $start->translatedFormat('Y')]);
                 break;
 
             case 'custom':
                 $start = $dateFrom ? Carbon::parse($dateFrom)->startOfDay() : $now->copy()->startOfMonth();
                 $end = $dateTo ? Carbon::parse($dateTo)->endOfDay() : $now->copy()->endOfDay();
-                $label = 'Custom Period (' . $start->format('d M Y') . ' to ' . $end->format('d M Y') . ')';
+                $label = __('Custom Period (:start to :end)', ['start' => $start->translatedFormat('d M Y'), 'end' => $end->translatedFormat('d M Y')]);
                 break;
 
             case 'all':
                 $start = Carbon::create(2020, 1, 1)->startOfDay();
                 $end = $now->copy()->addYear()->endOfDay();
-                $label = 'All Time History';
+                $label = __('All Time History');
                 break;
 
             case 'this_month':
             default:
                 $start = $now->copy()->startOfMonth();
                 $end = $now->copy()->endOfMonth();
-                $label = 'This Month (' . $now->format('F Y') . ')';
+                $label = __('This Month (:month)', ['month' => $now->translatedFormat('F Y')]);
                 break;
         }
 
@@ -370,8 +370,8 @@ class TenantFinancialLedgerController extends Controller
 
         $payments = $paymentQuery->get();
         foreach ($payments as $p) {
-            $custName = $p->customer->name ?? 'Customer';
-            $desc = 'Customer Bill Collection - ' . $custName . ($p->billing_month ? ' (' . $p->billing_month . ')' : '');
+            $custName = $p->customer->name ?? __('Customer');
+            $desc = __('Customer Bill Collection - :customer', ['customer' => $custName]) . ($p->billing_month ? ' (' . $p->billing_month . ')' : '');
             
             if ($search && !str_contains(strtolower($desc . ' ' . $p->invoice_no . ' ' . $p->transaction_id), strtolower($search))) {
                 continue;
@@ -387,7 +387,7 @@ class TenantFinancialLedgerController extends Controller
                 'date' => $dateObj ? $dateObj->format('Y-m-d H:i') : now()->format('Y-m-d H:i'),
                 'sort_timestamp' => $dateObj ? $dateObj->timestamp : now()->timestamp,
                 'ref_no' => $p->invoice_no ?? ('REC-' . str_pad($p->id, 5, '0', STR_PAD_LEFT)),
-                'category' => 'Customer Subscriptions',
+                'category' => __('Customer Subscriptions'),
                 'description' => $desc,
                 'party' => $custName,
                 'amount' => (float) $p->amount,
@@ -411,9 +411,9 @@ class TenantFinancialLedgerController extends Controller
 
         $wholesales = $wholesaleQuery->get();
         foreach ($wholesales as $w) {
-            $resellerName = $w->reseller->name ?? 'Sub-ISP Partner';
-            $monthStr = $w->billing_month ? (is_string($w->billing_month) ? $w->billing_month : $w->billing_month->format('M Y')) : 'Trunk';
-            $desc = 'Wholesale Reseller Revenue - ' . $resellerName . ' (' . $monthStr . ')';
+            $resellerName = $w->reseller->name ?? __('Sub-ISP Partner');
+            $monthStr = $w->billing_month ? (is_string($w->billing_month) ? $w->billing_month : $w->billing_month->translatedFormat('M Y')) : __('Trunk');
+            $desc = __('Wholesale Reseller Revenue - :reseller (:period)', ['reseller' => $resellerName, 'period' => $monthStr]);
 
             if ($search && !str_contains(strtolower($desc . ' ' . $w->invoice_no), strtolower($search))) {
                 continue;
@@ -429,7 +429,7 @@ class TenantFinancialLedgerController extends Controller
                 'date' => $dateObj ? $dateObj->format('Y-m-d H:i') : now()->format('Y-m-d H:i'),
                 'sort_timestamp' => $dateObj ? $dateObj->timestamp : now()->timestamp,
                 'ref_no' => $w->invoice_no ?? ('WS-' . str_pad($w->id, 5, '0', STR_PAD_LEFT)),
-                'category' => 'Reseller Wholesale',
+                'category' => __('Reseller Wholesale'),
                 'description' => $desc,
                 'party' => $resellerName,
                 'amount' => (float) $w->paid_amount,
@@ -450,8 +450,10 @@ class TenantFinancialLedgerController extends Controller
 
         $upstreamPayments = $upstreamQuery->get();
         foreach ($upstreamPayments as $up) {
-            $carrierName = $up->provider->name ?? 'Upstream Carrier';
-            $desc = 'Upstream Bandwidth & NTTN Disbursement - ' . $carrierName . ($up->cheque_no ? ' (Cheque: ' . $up->cheque_no . ')' : '');
+            $carrierName = $up->provider->name ?? __('Upstream Carrier');
+            $desc = $up->cheque_no
+                ? __('Upstream Bandwidth & NTTN Disbursement - :carrier (Cheque: :cheque)', ['carrier' => $carrierName, 'cheque' => $up->cheque_no])
+                : __('Upstream Bandwidth & NTTN Disbursement - :carrier', ['carrier' => $carrierName]);
 
             if ($search && !str_contains(strtolower($desc . ' ' . $up->voucher_no . ' ' . $carrierName), strtolower($search))) {
                 continue;
@@ -467,7 +469,7 @@ class TenantFinancialLedgerController extends Controller
                 'date' => $dateObj->format('Y-m-d H:i'),
                 'sort_timestamp' => $dateObj->timestamp,
                 'ref_no' => $up->voucher_no ?? ('UPV-' . str_pad($up->id, 5, '0', STR_PAD_LEFT)),
-                'category' => 'Upstream Bandwidth & NTTN (COGS)',
+                'category' => __('Upstream Bandwidth & NTTN (COGS)'),
                 'description' => $desc,
                 'party' => $carrierName,
                 'amount' => (float) $up->amount,
@@ -490,7 +492,7 @@ class TenantFinancialLedgerController extends Controller
         $expenses = $expenseQuery->get();
         foreach ($expenses as $e) {
             $isExpense = strtolower($e->type) === 'expense';
-            $catName = $e->category->name ?? ($isExpense ? 'Operational Expense' : 'Direct Income');
+            $catName = $e->category->name ?? ($isExpense ? __('Operational Expense') : __('Direct Income'));
             $desc = $e->title . ($e->payee_payer ? ' (' . $e->payee_payer . ')' : '');
 
             if ($search && !str_contains(strtolower($desc . ' ' . $e->voucher_no . ' ' . $catName), strtolower($search))) {
@@ -509,7 +511,7 @@ class TenantFinancialLedgerController extends Controller
                 'ref_no' => $e->voucher_no ?? ('VOU-' . str_pad($e->id, 5, '0', STR_PAD_LEFT)),
                 'category' => $catName,
                 'description' => $desc,
-                'party' => $e->payee_payer ?? 'Self/Company',
+                'party' => $e->payee_payer ?? __('Self/Company'),
                 'amount' => (float) $e->amount,
                 'payment_method' => strtolower($e->payment_method ?? 'cash'),
                 'status' => strtolower($e->status ?? 'approved'),
@@ -667,7 +669,7 @@ class TenantFinancialLedgerController extends Controller
         $directIncomeGroups = [];
         $totalDirectIncome = 0;
         foreach ($directIncomes as $inc) {
-            $name = $inc->category->name ?? 'Other Operating Revenue';
+            $name = $inc->category->name ?? __('Other Operating Revenue');
             $directIncomeGroups[$name] = ($directIncomeGroups[$name] ?? 0) + (float) $inc->amount;
             $totalDirectIncome += (float) $inc->amount;
         }
@@ -683,7 +685,7 @@ class TenantFinancialLedgerController extends Controller
         $cogsGroups = [];
         $totalCogs = 0;
         foreach ($upstreamPayments as $up) {
-            $cName = $up->provider->name ?? 'Upstream Bandwidth';
+            $cName = $up->provider->name ?? __('Upstream Bandwidth');
             $cogsGroups[$cName] = ($cogsGroups[$cName] ?? 0) + (float) $up->amount;
             $totalCogs += (float) $up->amount;
         }
@@ -702,7 +704,7 @@ class TenantFinancialLedgerController extends Controller
         $expenseGroups = [];
         $totalExpenses = 0;
         foreach ($expenses as $exp) {
-            $name = $exp->category->name ?? 'General & Admin Expense';
+            $name = $exp->category->name ?? __('General & Admin Expense');
             $expenseGroups[$name] = ($expenseGroups[$name] ?? 0) + (float) $exp->amount;
             $totalExpenses += (float) $exp->amount;
         }
@@ -844,7 +846,7 @@ class TenantFinancialLedgerController extends Controller
 
         $heads[] = [
             'code' => 'INC-RETAIL',
-            'name' => 'Customer Retail Subscriptions',
+            'name' => __('Customer Retail Subscriptions'),
             'type' => 'income',
             'debit' => 0,
             'credit' => $subSum,
@@ -865,7 +867,7 @@ class TenantFinancialLedgerController extends Controller
 
         $heads[] = [
             'code' => 'INC-WHOLESALE',
-            'name' => 'Reseller Wholesale Billing',
+            'name' => __('Reseller Wholesale Billing'),
             'type' => 'income',
             'debit' => 0,
             'credit' => $wsSum,
@@ -880,7 +882,7 @@ class TenantFinancialLedgerController extends Controller
         if ($upstreamSum > 0) {
             $heads[] = [
                 'code' => 'EXP-UPSTREAM-COGS',
-                'name' => 'Upstream Bandwidth & Transmission (COGS)',
+                'name' => __('Upstream Bandwidth & Transmission (COGS)'),
                 'type' => 'expense',
                 'debit' => $upstreamSum,
                 'credit' => 0,
@@ -925,15 +927,15 @@ class TenantFinancialLedgerController extends Controller
     protected function getChannelBadge($method)
     {
         $map = [
-            'cash' => ['label' => 'Cash', 'class' => 'bg-emerald-50 text-emerald-700 border-emerald-200', 'icon' => 'fas fa-money-bill-wave'],
-            'bank' => ['label' => 'Bank Trf', 'class' => 'bg-cyan-50 text-cyan-700 border-cyan-200', 'icon' => 'fas fa-building-columns'],
-            'bkash' => ['label' => 'bKash', 'class' => 'bg-pink-50 text-pink-700 border-pink-200', 'icon' => 'fas fa-mobile-screen'],
-            'nagad' => ['label' => 'Nagad', 'class' => 'bg-amber-50 text-amber-700 border-amber-200', 'icon' => 'fas fa-mobile-screen'],
-            'rocket' => ['label' => 'Rocket', 'class' => 'bg-purple-50 text-purple-700 border-purple-200', 'icon' => 'fas fa-mobile-screen'],
-            'cheque' => ['label' => 'Cheque', 'class' => 'bg-blue-50 text-blue-700 border-blue-200', 'icon' => 'fas fa-money-check'],
-            'online' => ['label' => 'Online PGW', 'class' => 'bg-violet-50 text-violet-700 border-violet-200', 'icon' => 'fas fa-globe'],
+            'cash' => ['label' => __('Cash'), 'class' => 'bg-emerald-50 text-emerald-700 border-emerald-200', 'icon' => 'fas fa-money-bill-wave'],
+            'bank' => ['label' => __('Bank Trf'), 'class' => 'bg-cyan-50 text-cyan-700 border-cyan-200', 'icon' => 'fas fa-building-columns'],
+            'bkash' => ['label' => __('bKash'), 'class' => 'bg-pink-50 text-pink-700 border-pink-200', 'icon' => 'fas fa-mobile-screen'],
+            'nagad' => ['label' => __('Nagad'), 'class' => 'bg-amber-50 text-amber-700 border-amber-200', 'icon' => 'fas fa-mobile-screen'],
+            'rocket' => ['label' => __('Rocket'), 'class' => 'bg-purple-50 text-purple-700 border-purple-200', 'icon' => 'fas fa-mobile-screen'],
+            'cheque' => ['label' => __('Cheque'), 'class' => 'bg-blue-50 text-blue-700 border-blue-200', 'icon' => 'fas fa-money-check'],
+            'online' => ['label' => __('Online PGW'), 'class' => 'bg-violet-50 text-violet-700 border-violet-200', 'icon' => 'fas fa-globe'],
         ];
 
-        return $map[strtolower($method ?? 'cash')] ?? ['label' => ucfirst($method ?? 'Cash'), 'class' => 'bg-slate-100 text-slate-700 border-slate-200', 'icon' => 'fas fa-wallet'];
+        return $map[strtolower($method ?? 'cash')] ?? ['label' => __(ucfirst($method ?? 'Cash')), 'class' => 'bg-slate-100 text-slate-700 border-slate-200', 'icon' => 'fas fa-wallet'];
     }
 }

@@ -122,7 +122,7 @@ class TenantCustomerInvoice extends Model
     {
         if (empty($this->billing_month)) return '--';
         try {
-            return Carbon::createFromFormat('Y-m', $this->billing_month)->format('F Y');
+            return Carbon::createFromFormat('Y-m', $this->billing_month)->translatedFormat('F Y');
         } catch (\Exception $e) {
             return $this->billing_month;
         }
@@ -135,37 +135,37 @@ class TenantCustomerInvoice extends Model
     {
         return match ($this->status) {
             'paid' => [
-                'label' => 'Paid',
+                'label' => __('Paid'),
                 'class' => 'bg-emerald-50 text-emerald-700 border-emerald-200',
                 'icon' => 'fa-check-circle',
                 'dot' => 'bg-emerald-500'
             ],
             'partially_paid' => [
-                'label' => 'Partial',
+                'label' => __('Partial'),
                 'class' => 'bg-amber-50 text-amber-700 border-amber-200',
                 'icon' => 'fa-circle-half-stroke',
                 'dot' => 'bg-amber-500'
             ],
             'unpaid' => [
-                'label' => 'Unpaid',
+                'label' => __('Unpaid'),
                 'class' => 'bg-rose-50 text-rose-700 border-rose-200',
                 'icon' => 'fa-clock',
                 'dot' => 'bg-rose-500'
             ],
             'overdue' => [
-                'label' => 'Overdue',
+                'label' => __('Overdue'),
                 'class' => 'bg-red-50 text-red-800 border-red-200',
                 'icon' => 'fa-triangle-exclamation',
                 'dot' => 'bg-red-600'
             ],
             'cancelled' => [
-                'label' => 'Cancelled',
+                'label' => __('Cancelled'),
                 'class' => 'bg-slate-100 text-slate-600 border-slate-200',
                 'icon' => 'fa-ban',
                 'dot' => 'bg-slate-400'
             ],
             default => [
-                'label' => ucfirst($this->status),
+                'label' => __(ucfirst($this->status)),
                 'class' => 'bg-slate-100 text-slate-700 border-slate-200',
                 'icon' => 'fa-circle-info',
                 'dot' => 'bg-slate-500'
@@ -179,15 +179,15 @@ class TenantCustomerInvoice extends Model
     public function getPaymentMethodNameAttribute(): string
     {
         return match (strtolower($this->payment_method ?? '')) {
-            'cash' => 'Cash in Hand',
-            'bkash' => 'bKash (MFS)',
-            'nagad' => 'Nagad (MFS)',
-            'rocket' => 'Rocket (MFS)',
-            'pos' => 'POS / Handheld Terminal',
-            'online' => 'Online Gateway',
-            'bank' => 'Bank Transfer / Cheque',
-            'wallet' => 'Customer Wallet Balance',
-            default => $this->payment_method ? ucfirst($this->payment_method) : '--',
+            'cash' => __('Cash in Hand'),
+            'bkash' => __('bKash (MFS)'),
+            'nagad' => __('Nagad (MFS)'),
+            'rocket' => __('Rocket (MFS)'),
+            'pos' => __('POS / Handheld Terminal'),
+            'online' => __('Online Gateway'),
+            'bank' => __('Bank Transfer / Cheque'),
+            'wallet' => __('Customer Wallet Balance'),
+            default => $this->payment_method ? __(ucfirst($this->payment_method)) : '--',
         };
     }
 }

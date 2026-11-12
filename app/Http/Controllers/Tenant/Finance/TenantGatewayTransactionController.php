@@ -41,7 +41,7 @@ class TenantGatewayTransactionController extends Controller
             $tenant = Tenant::first();
         }
 
-        return $tenant ?? abort(404, 'No active tenant found.');
+        return $tenant ?? abort(404, __('No active tenant found.'));
     }
 
     /**
@@ -257,9 +257,9 @@ class TenantGatewayTransactionController extends Controller
                 'status_message' => $trx->status_message ?: '--',
                 'ip_address' => $trx->ip_address ?: '--',
                 'gateway_payload' => $trx->gateway_payload ?: [],
-                'initiated_at' => $trx->initiated_at ? Carbon::parse($trx->initiated_at)->format('d M, Y h:i:s A') : '--',
-                'completed_at' => $trx->completed_at ? Carbon::parse($trx->completed_at)->format('d M, Y h:i:s A') : '--',
-                'created_at' => $trx->created_at->format('d M, Y h:i:s A'),
+                'initiated_at' => $trx->initiated_at ? Carbon::parse($trx->initiated_at)->translatedFormat('d M, Y h:i:s A') : '--',
+                'completed_at' => $trx->completed_at ? Carbon::parse($trx->completed_at)->translatedFormat('d M, Y h:i:s A') : '--',
+                'created_at' => $trx->created_at->translatedFormat('d M, Y h:i:s A'),
                 'customer' => $trx->customer ? [
                     'id' => $trx->customer->id,
                     'customer_id' => $trx->customer->customer_id ?: 'SO' . (1000 + $trx->customer->id),
@@ -297,7 +297,7 @@ class TenantGatewayTransactionController extends Controller
         if ($trx->status === 'SUCCESS') {
             return response()->json([
                 'success' => true,
-                'message' => "Transaction {$trx->transaction_id} is already verified and cleared as SUCCESS.",
+                'message' => __('Transaction :trx_id is already verified and cleared as SUCCESS.', ['trx_id' => $trx->transaction_id]),
                 'transaction' => $trx,
             ]);
         }
@@ -325,7 +325,7 @@ class TenantGatewayTransactionController extends Controller
                 'gateway_trx_id' => $gatewayTrxId,
                 'fee_amount' => $fee,
                 'net_amount' => $net,
-                'status_message' => 'Successfully verified via Gateway Query API',
+                'status_message' => __('Successfully verified via Gateway Query API'),
                 'completed_at' => now(),
             ]);
 
@@ -353,7 +353,10 @@ class TenantGatewayTransactionController extends Controller
                         'status' => 'paid',
                         'paid_at' => now(),
                         'transaction_id' => $trx->transaction_id,
-                        'notes' => "Online PGW clearance ({$trx->gateway}) TrxID: {$gatewayTrxId}",
+                        'notes' => __('Online PGW clearance (:gateway) TrxID: :gateway_trx_id', [
+                            'gateway' => $trx->gateway,
+                            'gateway_trx_id' => $gatewayTrxId,
+                        ]),
                     ]);
                 }
             } elseif ($trx->purpose === 'RESELLER_TOPUP' && $trx->reseller_id) {
@@ -374,7 +377,10 @@ class TenantGatewayTransactionController extends Controller
                         'balance_after' => $balAfter,
                         'payment_method' => $trx->gateway,
                         'reference_no' => $trx->transaction_id,
-                        'description' => "Online Wallet Top-up via {$trx->gateway} ({$gatewayTrxId})",
+                        'description' => __('Online Wallet Top-up via :gateway (:gateway_trx_id)', [
+                            'gateway' => $trx->gateway,
+                            'gateway_trx_id' => $gatewayTrxId,
+                        ]),
                         'created_by' => Auth::id(),
                     ]);
                 }
@@ -384,14 +390,17 @@ class TenantGatewayTransactionController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => "Transaction {$trx->transaction_id} verified as SUCCESS! Gateway TrxID: {$gatewayTrxId}.",
+                'message' => __('Transaction :trx_id verified as SUCCESS! Gateway TrxID: :gateway_trx_id.', [
+                    'trx_id' => $trx->transaction_id,
+                    'gateway_trx_id' => $gatewayTrxId,
+                ]),
                 'transaction' => $trx,
             ]);
         } catch (\Throwable $e) {
             DB::rollBack();
             return response()->json([
                 'success' => false,
-                'message' => 'Status verification failed: ' . $e->getMessage(),
+                'message' => __('Status verification failed: :error', ['error' => $e->getMessage()]),
             ], 500);
         }
     }
@@ -407,7 +416,7 @@ class TenantGatewayTransactionController extends Controller
         if ($trx->status !== 'SUCCESS') {
             return response()->json([
                 'success' => false,
-                'message' => 'Only successful transactions can be refunded.',
+                'message' => __('Only successful transactions can be refunded.'),
             ], 422);
         }
 
@@ -419,20 +428,23 @@ class TenantGatewayTransactionController extends Controller
         try {
             $trx->update([
                 'status' => 'REFUNDED',
-                'status_message' => "Refunded: " . $validated['reason'] . " (by " . (Auth::user()?->name ?: 'Admin') . ")",
+                'status_message' => __('Refunded: :reason (by :user)', [
+                    'reason' => $validated['reason'],
+                    'user' => Auth::user()?->name ?: __('Admin'),
+                ]),
             ]);
 
             DB::commit();
 
             return response()->json([
                 'success' => true,
-                'message' => "Transaction {$trx->transaction_id} marked as REFUNDED.",
+                'message' => __('Transaction :trx_id marked as REFUNDED.', ['trx_id' => $trx->transaction_id]),
             ]);
         } catch (\Throwable $e) {
             DB::rollBack();
             return response()->json([
                 'success' => false,
-                'message' => 'Refund processing failed: ' . $e->getMessage(),
+                'message' => __('Refund processing failed: :error', ['error' => $e->getMessage()]),
             ], 500);
         }
     }
@@ -534,33 +546,33 @@ class TenantGatewayTransactionController extends Controller
         return response()->streamDownload(function () use ($transactions) {
             $handle = fopen('php://output', 'w');
             fputcsv($handle, [
-                'Internal Trx ID',
-                'Gateway Trx ID',
-                'Payment Gateway',
-                'Purpose / Category',
-                'Party (Subscriber / Reseller)',
-                'Payer Account / Phone',
-                'Gross Amount',
-                'Gateway Fee',
-                'Net Amount',
-                'Currency',
-                'Status',
-                'Status Message',
-                'Reference ID',
-                'IP Address',
-                'Date & Time',
+                __('Internal Trx ID'),
+                __('Gateway Trx ID'),
+                __('Payment Gateway'),
+                __('Purpose / Category'),
+                __('Party (Subscriber / Reseller)'),
+                __('Payer Account / Phone'),
+                __('Gross Amount'),
+                __('Gateway Fee'),
+                __('Net Amount'),
+                __('Currency'),
+                __('Status'),
+                __('Status Message'),
+                __('Reference ID'),
+                __('IP Address'),
+                __('Date & Time'),
             ]);
 
             foreach ($transactions as $t) {
-                $party = $t->customer ? $t->customer->name . ' (' . ($t->customer->customer_id ?? '') . ')' : ($t->reseller ? $t->reseller->name . ' (' . $t->reseller->code . ')' : 'Direct User');
+                $party = $t->customer ? $t->customer->name . ' (' . ($t->customer->customer_id ?? '') . ')' : ($t->reseller ? $t->reseller->name . ' (' . $t->reseller->code . ')' : __('Direct User'));
 
                 fputcsv($handle, [
                     $t->transaction_id,
-                    $t->gateway_trx_id ?? 'N/A',
+                    $t->gateway_trx_id ?? __('N/A'),
                     strtoupper($t->gateway),
                     $t->purpose_label,
                     $party,
-                    $t->payer_account ?? 'N/A',
+                    $t->payer_account ?? __('N/A'),
                     $t->amount,
                     $t->fee_amount,
                     $t->net_amount,
@@ -589,6 +601,7 @@ class TenantGatewayTransactionController extends Controller
     protected function syncFromAllSections(int $tenantId): void
     {
         try {
+            $currencyCode = Tenant::find($tenantId)?->currency_code ?? 'BDT';
             $gatewayMethods = ['bkash', 'nagad', 'rocket', 'sslcommerz', 'shurjopay', 'upay', 'aamarpay', 'stripe', 'online', 'pos', 'bkash_merchant', 'nagad_merchant', 'online_pgw'];
 
             // 1. Sync Customer Retail Payments with Gateway Methods
@@ -620,11 +633,11 @@ class TenantGatewayTransactionController extends Controller
                         'amount' => (float) $p->amount,
                         'fee_amount' => 0.00,
                         'net_amount' => (float) $p->amount,
-                        'currency' => 'BDT',
+                        'currency' => $currencyCode,
                         'payer_account' => $p->customer?->phone,
                         'payer_name' => $p->customer?->name,
                         'status' => 'SUCCESS',
-                        'status_message' => 'Cleared from Customer Collections',
+                        'status_message' => __('Cleared from Customer Collections'),
                         'initiated_at' => $p->paid_at ?: $p->created_at,
                         'completed_at' => $p->paid_at ?: $p->created_at,
                     ]
@@ -662,11 +675,11 @@ class TenantGatewayTransactionController extends Controller
                         'amount' => (float) $r->amount,
                         'fee_amount' => 0.00,
                         'net_amount' => (float) $r->amount,
-                        'currency' => 'BDT',
+                        'currency' => $currencyCode,
                         'payer_account' => $r->reseller?->phone,
                         'payer_name' => $r->reseller?->name,
                         'status' => $status,
-                        'status_message' => 'Cleared from Reseller Wallet Recharge',
+                        'status_message' => __('Cleared from Reseller Wallet Recharge'),
                         'initiated_at' => $r->created_at,
                         'completed_at' => $r->approved_at ?: $r->created_at,
                     ]
@@ -698,11 +711,11 @@ class TenantGatewayTransactionController extends Controller
                         'amount' => (float) $inv->paid_amount,
                         'fee_amount' => 0.00,
                         'net_amount' => (float) $inv->paid_amount,
-                        'currency' => 'BDT',
+                        'currency' => $currencyCode,
                         'payer_account' => $inv->reseller?->phone,
                         'payer_name' => $inv->reseller?->name,
                         'status' => 'SUCCESS',
-                        'status_message' => 'Cleared from Reseller Wholesale Invoice',
+                        'status_message' => __('Cleared from Reseller Wholesale Invoice'),
                         'initiated_at' => $inv->paid_at ?: $inv->created_at,
                         'completed_at' => $inv->paid_at ?: $inv->created_at,
                     ]

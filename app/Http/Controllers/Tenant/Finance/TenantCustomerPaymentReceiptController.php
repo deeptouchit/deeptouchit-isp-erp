@@ -41,7 +41,7 @@ class TenantCustomerPaymentReceiptController extends Controller
             $tenant = Tenant::first();
         }
 
-        return $tenant ?? abort(404, 'No active tenant found.');
+        return $tenant ?? abort(404, __('No active tenant found.'));
     }
 
     /**
@@ -329,7 +329,7 @@ class TenantCustomerPaymentReceiptController extends Controller
         $paidAt = !empty($validated['paid_at']) ? Carbon::parse($validated['paid_at']) : Carbon::now();
         $method = $validated['payment_method'];
         $trxId = $validated['transaction_id'] ?: ('TRX-' . strtoupper(substr(md5(uniqid() . $customer->id), 0, 10)));
-        $notes = $validated['notes'] ?? "Payment for {$validated['billing_month']}";
+        $notes = $validated['notes'] ?? __('Payment for :month', ['month' => $validated['billing_month']]);
 
         // 1. Generate Money Receipt Number
         $receiptNo = TenantCustomerPayment::generateInvoiceNo($tenant->id);
@@ -395,12 +395,12 @@ class TenantCustomerPaymentReceiptController extends Controller
         ]);
 
         // 5. Unblock / Sync MikroTik & FreeRADIUS
-        $syncMsg = '';
+        $syncParts = [];
         try {
             $mikrotikApi = new MikrotikApiService();
             $syncRes = $mikrotikApi->syncCustomerToMikrotik($customer);
             if (!empty($syncRes['success'])) {
-                $syncMsg .= ' & MikroTik unblocked';
+                $syncParts[] = __('MikroTik unblocked');
             }
         } catch (\Exception $e) {
             // Non-blocking
@@ -410,7 +410,7 @@ class TenantCustomerPaymentReceiptController extends Controller
             $radiusService = new RadiusService();
             $radiusRes = $radiusService->syncCustomerSubscriber($customer);
             if (!empty($radiusRes['success'])) {
-                $syncMsg .= ' & FreeRADIUS active';
+                $syncParts[] = __('FreeRADIUS active');
             }
         } catch (\Exception $e) {
             // Non-blocking
@@ -424,14 +424,22 @@ class TenantCustomerPaymentReceiptController extends Controller
             $payment->save();
         }
 
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
+
         // 7. Audit Log
         TenantActivityLog::create([
             'tenant_id' => $tenant->id,
             'actor_type' => 'App\Models\User',
             'actor_id' => Auth::id() ?: 1,
-            'actor_name' => Auth::user()?->name ?: 'Admin',
+            'actor_name' => Auth::user()?->name ?: __('Admin'),
             'event_type' => 'PAYMENT_COLLECTED',
-            'description' => "Collected ৳" . number_format($amount, 2) . " from subscriber '{$customer->name}' ({$customer->username}) via {$payment->payment_method_name}. Receipt: {$receiptNo}.",
+            'description' => __("Collected :amount from subscriber ':name' (:username) via :method. Receipt: :receipt.", [
+                'amount' => $currencySymbol . number_format($amount, 2),
+                'name' => $customer->name,
+                'username' => $customer->username,
+                'method' => $payment->payment_method_name,
+                'receipt' => $receiptNo,
+            ]),
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
             'metadata' => [
@@ -443,8 +451,17 @@ class TenantCustomerPaymentReceiptController extends Controller
             ],
         ]);
 
-        $currencySymbol = $tenant->currency_symbol ?? '৳';
-        $msg = "Payment of {$currencySymbol}" . number_format($amount, 2) . " recorded successfully! (Money Receipt: {$receiptNo}){$syncMsg}";
+        $syncNotes = count($syncParts) > 0 ? implode(' & ', $syncParts) : null;
+        $msg = $syncNotes
+            ? __('Payment of :amount recorded successfully! (Money Receipt: :receipt) — :sync', [
+                'amount' => $currencySymbol . number_format($amount, 2),
+                'receipt' => $receiptNo,
+                'sync' => $syncNotes,
+            ])
+            : __('Payment of :amount recorded successfully! (Money Receipt: :receipt)', [
+                'amount' => $currencySymbol . number_format($amount, 2),
+                'receipt' => $receiptNo,
+            ]);
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
@@ -509,30 +526,30 @@ class TenantCustomerPaymentReceiptController extends Controller
             'payment_method' => $payment->payment_method,
             'payment_method_name' => $payment->payment_method_name,
             'method_icon' => $payment->method_icon,
-            'transaction_id' => $payment->transaction_id ?: 'N/A',
-            'paid_at' => $payment->paid_at ? $payment->paid_at->format('d M Y, h:i A') : $payment->created_at->format('d M Y, h:i A'),
-            'paid_date' => $payment->paid_at ? $payment->paid_at->format('d M Y') : $payment->created_at->format('d M Y'),
-            'paid_time' => $payment->paid_at ? $payment->paid_at->format('h:i A') : $payment->created_at->format('h:i A'),
-            'notes' => $payment->notes ?: 'Customer bill payment clearance',
+            'transaction_id' => $payment->transaction_id ?: __('N/A'),
+            'paid_at' => $payment->paid_at ? $payment->paid_at->translatedFormat('d M Y, h:i A') : $payment->created_at->translatedFormat('d M Y, h:i A'),
+            'paid_date' => $payment->paid_at ? $payment->paid_at->translatedFormat('d M Y') : $payment->created_at->translatedFormat('d M Y'),
+            'paid_time' => $payment->paid_at ? $payment->paid_at->translatedFormat('h:i A') : $payment->created_at->translatedFormat('h:i A'),
+            'notes' => $payment->notes ?: __('Customer bill payment clearance'),
             'status' => $payment->status,
             'status_badge' => $payment->status_badge,
             'sms_sent' => (bool) $payment->sms_sent,
-            'sms_sent_at' => $payment->sms_sent_at ? Carbon::parse($payment->sms_sent_at)->format('d M Y, h:i A') : null,
-            'collector_name' => $payment->collector?->name ?? 'System Admin',
+            'sms_sent_at' => $payment->sms_sent_at ? Carbon::parse($payment->sms_sent_at)->translatedFormat('d M Y, h:i A') : null,
+            'collector_name' => $payment->collector?->name ?? __('System Admin'),
             'company' => [
-                'name' => $tenant->company_name ?: ($tenant->name ?? 'ISP Management Portal'),
+                'name' => $tenant->company_name ?: ($tenant->name ?? __('ISP Management Portal')),
                 'phone' => $tenant->phone ?: ($tenant->support_phone ?? '01700-000000'),
                 'email' => $tenant->email ?: 'support@somitysoft.com',
-                'address' => $tenant->address ?: 'Head Office, Internet Service Provider',
+                'address' => $tenant->address ?: __('Head Office, Internet Service Provider'),
             ],
             'customer' => [
                 'id' => $customer?->id,
                 'customer_code' => $customer?->customer_id ?: 'SO' . (1000 + ($customer?->id ?? 0)),
-                'name' => $customer?->name ?? 'Unknown Subscriber',
+                'name' => $customer?->name ?? __('Unknown Subscriber'),
                 'username' => $customer?->username ?? '--',
                 'phone' => $customer?->phone ?? '--',
-                'address' => $customer?->address ?? 'N/A',
-                'zone' => $customer?->zone ?? 'Default Zone',
+                'address' => $customer?->address ?? __('N/A'),
+                'zone' => $customer?->zone ?? __('Default Zone'),
                 'current_due' => (float) ($customer?->due_amount ?? 0),
                 'current_due_formatted' => $currencySymbol . number_format($customer?->due_amount ?? 0, 2),
                 'package_name' => $customer?->mikrotik_profile_name ?: ($customer?->package?->name ?? ($customer?->package_name ?? '10Mbps')),
@@ -574,7 +591,7 @@ class TenantCustomerPaymentReceiptController extends Controller
         if (!$customer || empty($customer->phone)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Subscriber has no valid phone number for SMS dispatch.',
+                'message' => __('Subscriber has no valid phone number for SMS dispatch.'),
             ], 422);
         }
 
@@ -586,16 +603,21 @@ class TenantCustomerPaymentReceiptController extends Controller
             'tenant_id' => $tenant->id,
             'actor_type' => 'App\Models\User',
             'actor_id' => Auth::id() ?: 1,
-            'actor_name' => Auth::user()?->name ?: 'Admin',
+            'actor_name' => Auth::user()?->name ?: __('Admin'),
             'event_type' => 'PAYMENT_SMS_DISPATCHED',
-            'description' => "Sent payment confirmation SMS for Receipt: {$payment->invoice_no} to {$customer->phone}.",
+            'description' => __('Sent payment confirmation SMS for Receipt: :receipt to :phone.', [
+                'receipt' => $payment->invoice_no,
+                'phone' => $customer->phone,
+            ]),
             'ip_address' => $request->ip(),
         ]);
 
         return response()->json([
             'success' => true,
-            'message' => "Payment confirmation SMS dispatched successfully to {$customer->phone}.",
-            'sms_sent_at' => Carbon::now()->format('d M Y, h:i A'),
+            'message' => __('Payment confirmation SMS dispatched successfully to :phone.', [
+                'phone' => $customer->phone,
+            ]),
+            'sms_sent_at' => Carbon::now()->translatedFormat('d M Y, h:i A'),
         ]);
     }
 
@@ -621,13 +643,14 @@ class TenantCustomerPaymentReceiptController extends Controller
         if ($payment->status === 'void' || $payment->status === 'refunded') {
             return response()->json([
                 'success' => false,
-                'message' => 'This payment receipt is already voided.',
+                'message' => __('This payment receipt is already voided.'),
             ], 422);
         }
 
-        $reason = $request->input('reason', 'Payment voided / reversed by admin');
+        $reason = $request->input('reason') ?: __('Payment voided / reversed by admin');
         $customer = $payment->customer;
         $reversalAmount = (float) $payment->amount + (float) $payment->discount;
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
 
         // 1. Re-adjust Customer Due
         if ($customer) {
@@ -646,7 +669,7 @@ class TenantCustomerPaymentReceiptController extends Controller
 
         // 3. Mark Payment Status
         $payment->status = 'void';
-        $payment->notes = ($payment->notes ? $payment->notes . " | " : "") . "VOIDED: {$reason}";
+        $payment->notes = ($payment->notes ? $payment->notes . ' | ' : '') . __('VOIDED: :reason', ['reason' => $reason]);
         $payment->save();
 
         // 4. Audit Log
@@ -654,13 +677,17 @@ class TenantCustomerPaymentReceiptController extends Controller
             'tenant_id' => $tenant->id,
             'actor_type' => 'App\Models\User',
             'actor_id' => Auth::id() ?: 1,
-            'actor_name' => Auth::user()?->name ?: 'Admin',
+            'actor_name' => Auth::user()?->name ?: __('Admin'),
             'event_type' => 'PAYMENT_VOIDED',
-            'description' => "Voided payment receipt {$payment->invoice_no} (৳" . number_format($payment->amount, 2) . "). Reason: {$reason}",
+            'description' => __('Voided payment receipt :receipt (:amount). Reason: :reason', [
+                'receipt' => $payment->invoice_no,
+                'amount' => $currencySymbol . number_format($payment->amount, 2),
+                'reason' => $reason,
+            ]),
             'ip_address' => $request->ip(),
         ]);
 
-        $msg = "Payment receipt {$payment->invoice_no} has been voided successfully.";
+        $msg = __('Payment receipt :receipt has been voided successfully.', ['receipt' => $payment->invoice_no]);
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
@@ -792,43 +819,45 @@ class TenantCustomerPaymentReceiptController extends Controller
         }
 
         $payments = $query->get();
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
         $filename = 'payment_collections_' . ($dateFrom ? $dateFrom . '_to_' . ($dateTo ?: $dateFrom) : date('Ymd_His')) . '.csv';
 
-        return response()->streamDownload(function () use ($payments) {
+        return response()->streamDownload(function () use ($payments, $currencySymbol) {
             $handle = fopen('php://output', 'w');
+            fprintf($handle, chr(0xEF) . chr(0xBB) . chr(0xBF)); // UTF-8 BOM
             fputcsv($handle, [
-                'Receipt No',
-                'Date & Time',
-                'Subscriber Name',
-                'Customer ID',
-                'PPPoE Username',
-                'Phone',
-                'Billing Month',
-                'Payment Method',
-                'Amount (BDT)',
-                'Discount (BDT)',
-                'Transaction ID',
-                'Collected By',
-                'Reseller / Scope',
-                'Status',
-                'Notes',
+                __('Receipt No'),
+                __('Date & Time'),
+                __('Subscriber Name'),
+                __('Customer ID'),
+                __('PPPoE Username'),
+                __('Phone'),
+                __('Billing Month'),
+                __('Payment Method'),
+                __('Amount (:currency)', ['currency' => $currencySymbol]),
+                __('Discount (:currency)', ['currency' => $currencySymbol]),
+                __('Transaction ID'),
+                __('Collected By'),
+                __('Reseller / Scope'),
+                __('Status'),
+                __('Notes'),
             ]);
 
             foreach ($payments as $p) {
                 fputcsv($handle, [
                     $p->invoice_no,
                     $p->paid_at ? $p->paid_at->format('Y-m-d H:i:s') : $p->created_at->format('Y-m-d H:i:s'),
-                    $p->customer?->name ?? 'N/A',
-                    $p->customer?->customer_id ?? 'N/A',
-                    $p->customer?->username ?? 'N/A',
-                    $p->customer?->phone ?? 'N/A',
+                    $p->customer?->name ?? __('N/A'),
+                    $p->customer?->customer_id ?? __('N/A'),
+                    $p->customer?->username ?? __('N/A'),
+                    $p->customer?->phone ?? __('N/A'),
                     $p->billing_month,
                     $p->payment_method_name,
                     number_format($p->amount, 2, '.', ''),
                     number_format($p->discount, 2, '.', ''),
                     $p->transaction_id,
-                    $p->collector?->name ?? 'Admin',
-                    $p->reseller?->name ?? 'ISP HQ',
+                    $p->collector?->name ?? __('Admin'),
+                    $p->reseller?->name ?? __('ISP HQ'),
                     $p->status,
                     $p->notes,
                 ]);
@@ -836,7 +865,7 @@ class TenantCustomerPaymentReceiptController extends Controller
 
             fclose($handle);
         }, $filename, [
-            'Content-Type' => 'text/csv',
+            'Content-Type' => 'text/csv; charset=UTF-8',
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
         ]);
     }
@@ -854,7 +883,7 @@ class TenantCustomerPaymentReceiptController extends Controller
             ->findOrFail($id);
 
         if (in_array(strtolower($payment->status), ['paid', 'completed', 'approved'])) {
-            $msg = "Payment receipt #{$payment->invoice_no} has already been approved and settled.";
+            $msg = __('Payment receipt #:receipt has already been approved and settled.', ['receipt' => $payment->invoice_no]);
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json(['success' => false, 'message' => $msg], 422);
             }
@@ -866,8 +895,9 @@ class TenantCustomerPaymentReceiptController extends Controller
         $discount = (float) ($payment->discount ?? 0);
         $totalCredited = $amount + $discount;
         $reseller = $payment->reseller;
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
 
-        DB::transaction(function () use ($tenant, $payment, $customer, $amount, $discount, $totalCredited, $reseller, $authUser) {
+        DB::transaction(function () use ($tenant, $payment, $customer, $amount, $discount, $totalCredited, $reseller, $authUser, $currencySymbol) {
             // 1. Mark Payment as Paid / Approved
             $payment->status = 'paid';
             $payment->paid_at = Carbon::now();
@@ -909,7 +939,14 @@ class TenantCustomerPaymentReceiptController extends Controller
                         'balance_before' => $balanceBefore,
                         'balance_after' => $reseller->wallet_balance,
                         'payment_method' => 'BANGLA_QR',
-                        'description' => "Commission earned on approved Bangla QR payment '{$payment->invoice_no}' for '{$customer?->username}' ({$customer?->name}). Bill: ৳" . number_format($amount, 2) . ", Commission ({$commissionRate}%): ৳" . number_format($resellerCommission, 2) . ".",
+                        'description' => __("Commission earned on approved Bangla QR payment ':receipt' for ':username' (:name). Bill: :bill, Commission (:rate%): :commission.", [
+                            'receipt' => $payment->invoice_no,
+                            'username' => $customer?->username,
+                            'name' => $customer?->name,
+                            'bill' => $currencySymbol . number_format($amount, 2),
+                            'rate' => $commissionRate,
+                            'commission' => $currencySymbol . number_format($resellerCommission, 2),
+                        ]),
                         'created_by' => $authUser->id,
                     ]);
                 }
@@ -950,7 +987,12 @@ class TenantCustomerPaymentReceiptController extends Controller
                 'actor_id' => $authUser->id,
                 'actor_name' => $authUser->name,
                 'event_type' => 'PAYMENT_APPROVED',
-                'description' => "Approved payment '{$payment->invoice_no}' of ৳" . number_format($amount, 2) . " for customer '{$customer?->name}' ({$customer?->username}). Line activated.",
+                'description' => __("Approved payment ':receipt' of :amount for customer ':name' (:username). Line activated.", [
+                    'receipt' => $payment->invoice_no,
+                    'amount' => $currencySymbol . number_format($amount, 2),
+                    'name' => $customer?->name,
+                    'username' => $customer?->username,
+                ]),
                 'ip_address' => request()->ip(),
                 'user_agent' => request()->userAgent(),
                 'metadata' => [
@@ -962,23 +1004,32 @@ class TenantCustomerPaymentReceiptController extends Controller
         });
 
         // 6. Synchronize to MikroTik & FreeRADIUS
-        $syncNotes = '';
+        $syncParts = [];
         if ($customer) {
             try {
                 $mikrotikApi = new MikrotikApiService();
                 $mikrotikApi->syncCustomerToMikrotik($customer);
-                $syncNotes .= ' & MikroTik Synced';
+                $syncParts[] = __('MikroTik Synced');
             } catch (\Exception $e) {}
 
             try {
                 $radiusService = new RadiusService();
                 $radiusService->syncCustomerSubscriber($customer);
-                $syncNotes .= ' & FreeRADIUS Active';
+                $syncParts[] = __('FreeRADIUS Active');
             } catch (\Exception $e) {}
         }
 
-        $currencySymbol = $tenant->currency_symbol ?? '৳';
-        $successMsg = "Payment #{$payment->invoice_no} ({$currencySymbol}" . number_format($amount, 2) . ") approved successfully! Customer line is now active{$syncNotes}.";
+        $syncNotes = count($syncParts) > 0 ? implode(' & ', $syncParts) : null;
+        $successMsg = $syncNotes
+            ? __('Payment #:receipt (:amount) approved successfully! Customer line is now active — :sync.', [
+                'receipt' => $payment->invoice_no,
+                'amount' => $currencySymbol . number_format($amount, 2),
+                'sync' => $syncNotes,
+            ])
+            : __('Payment #:receipt (:amount) approved successfully! Customer line is now active.', [
+                'receipt' => $payment->invoice_no,
+                'amount' => $currencySymbol . number_format($amount, 2),
+            ]);
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
@@ -1004,10 +1055,11 @@ class TenantCustomerPaymentReceiptController extends Controller
             ->with(['customer', 'reseller'])
             ->findOrFail($id);
 
-        $reason = $request->input('reason', 'Payment verification failed or TrxID invalid.');
+        $reason = $request->input('reason') ?: __('Payment verification failed or TrxID invalid.');
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
 
         $payment->status = 'void';
-        $payment->notes = trim(($payment->notes ? $payment->notes . ' | ' : '') . "Rejected: " . $reason);
+        $payment->notes = trim(($payment->notes ? $payment->notes . ' | ' : '') . __('Rejected: :reason', ['reason' => $reason]));
         $payment->save();
 
         TenantActivityLog::create([
@@ -1016,12 +1068,16 @@ class TenantCustomerPaymentReceiptController extends Controller
             'actor_id' => $authUser->id,
             'actor_name' => $authUser->name,
             'event_type' => 'PAYMENT_REJECTED',
-            'description' => "Rejected pending payment '{$payment->invoice_no}' of ৳" . number_format($payment->amount, 2) . ". Reason: {$reason}",
+            'description' => __("Rejected pending payment ':receipt' of :amount. Reason: :reason", [
+                'receipt' => $payment->invoice_no,
+                'amount' => $currencySymbol . number_format($payment->amount, 2),
+                'reason' => $reason,
+            ]),
             'ip_address' => request()->ip(),
             'user_agent' => request()->userAgent(),
         ]);
 
-        $msg = "Payment '{$payment->invoice_no}' has been rejected.";
+        $msg = __("Payment ':receipt' has been rejected.", ['receipt' => $payment->invoice_no]);
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json(['success' => true, 'message' => $msg]);

@@ -1,6 +1,6 @@
 @extends('tenant.layouts.app')
 
-@section('title', 'Collector Collections - ' . ($tenant->company_name ?? $tenant->name))
+@section('title', __('Collector Collections') . ' - ' . ($tenant->company_name ?? $tenant->name))
 
 @push('styles')
 <style>
@@ -37,7 +37,7 @@
                 <i class="fas fa-user-check"></i>
             </div>
             <h1 class="text-xs sm:text-sm font-bold text-slate-900 tracking-tight">
-                Collector Collection Summary
+                {{ __('Collector Collection Summary') }}
             </h1>
             <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-slate-100 text-slate-700 border border-slate-200">
                 <i class="fas fa-calendar-alt text-cyan-600 text-[9px]"></i>
@@ -50,17 +50,17 @@
             <button type="button" 
                     @click="window.print()" 
                     class="h-[34px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-0 px-3 rounded-lg border border-slate-200/80 transition inline-flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer"
-                    title="Print Summary Statement">
+                    title="{{ __('Print Summary Statement') }}">
                 <i class="fas fa-print text-cyan-600 text-xs"></i>
-                <span class="hidden sm:inline">Print</span>
+                <span class="hidden sm:inline">{{ __('Print') }}</span>
             </button>
 
             {{-- Export CSV Stream --}}
             <a href="{{ route('tenant.finance.collector-collections.export', request()->query()) }}" 
                class="h-[34px] bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-0 px-3.5 rounded-lg shadow-xs transition inline-flex items-center justify-center gap-1.5 cursor-pointer"
-               title="Export Summary CSV">
+               title="{{ __('Export Summary CSV') }}">
                 <i class="fas fa-file-csv text-xs"></i>
-                <span class="hidden sm:inline">Export</span> CSV
+                <span class="hidden sm:inline">{{ __('Export') }}</span> {{ __('CSV') }}
             </a>
         </div>
     </div>
@@ -70,7 +70,7 @@
         {{-- Card 1: Total Collected in Scope --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Total Collected</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Total Collected') }}</span>
                 <span class="text-[13px] font-bold font-mono text-emerald-600 leading-tight block truncate">@currency($filteredTotalAmount)</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border border-emerald-200 bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0">
@@ -81,7 +81,7 @@
         {{-- Card 2: Today's Collection --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Today's Total</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __("Today's Total") }}</span>
                 <span class="text-[13px] font-bold font-mono text-cyan-700 leading-tight block truncate">@currency($todayCollections)</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border border-cyan-200 bg-cyan-50 text-cyan-600 flex items-center justify-center flex-shrink-0">
@@ -92,7 +92,7 @@
         {{-- Card 3: This Month Total --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">This Month</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('This Month') }}</span>
                 <span class="text-[13px] font-bold font-mono text-slate-900 leading-tight block truncate">@currency($thisMonthCollections)</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border border-slate-200 bg-slate-50 text-slate-600 flex items-center justify-center flex-shrink-0">
@@ -103,7 +103,7 @@
         {{-- Card 4: Total Receipts Count --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Total Receipts</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Total Receipts') }}</span>
                 <span class="text-[13px] font-bold font-mono text-blue-600 leading-tight block truncate">{{ number_format($filteredTotalCount) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border border-blue-200 bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0">
@@ -114,7 +114,7 @@
         {{-- Card 5: Active Collectors --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Active Collectors</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Active Collectors') }}</span>
                 <span class="text-[13px] font-bold font-mono text-indigo-600 leading-tight block truncate">{{ number_format($activeCollectorsCount) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border border-indigo-200 bg-indigo-50 text-indigo-600 flex items-center justify-center flex-shrink-0">
@@ -125,7 +125,7 @@
         {{-- Card 6: Cash Collected --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Cash Collection</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Cash Collection') }}</span>
                 <span class="text-[13px] font-bold font-mono text-amber-600 leading-tight block truncate">@currency($filteredCashAmount)</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border border-amber-200 bg-amber-50 text-amber-600 flex items-center justify-center flex-shrink-0">
@@ -164,7 +164,7 @@
                            x-model="searchQuery"
                            @input="handleLiveSearch($event.target.value)"
                            @keydown.enter.prevent="submitSearchNow()"
-                           placeholder="Search Collector, Partner, Phone..." 
+                           placeholder="{{ __('Search Collector, Partner, Phone...') }}" 
                            class="w-full h-[34px] pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition placeholder:text-slate-400 font-medium"
                            autocomplete="off">
                     <button type="button" 
@@ -172,7 +172,7 @@
                             x-cloak
                             @click="clearLiveSearch()"
                             class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500 p-0.5 text-xs transition cursor-pointer"
-                            title="Clear Search">
+                            title="{{ __('Clear Search') }}">
                         <i class="fas fa-times-circle"></i>
                     </button>
                 </div>
@@ -190,11 +190,11 @@
                                 } 
                             })"
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-semibold text-slate-800 cursor-pointer">
-                        <option value="daily" {{ $period === 'daily' ? 'selected' : '' }}>Daily (Today)</option>
-                        <option value="monthly" {{ $period === 'monthly' ? 'selected' : '' }}>Monthly (This Month)</option>
-                        <option value="yearly" {{ $period === 'yearly' ? 'selected' : '' }}>Yearly (This Year)</option>
-                        <option value="all" {{ $period === 'all' ? 'selected' : '' }}>All Time</option>
-                        <option value="custom" {{ $period === 'custom' ? 'selected' : '' }}>Custom Date Range...</option>
+                        <option value="daily" {{ $period === 'daily' ? 'selected' : '' }}>{{ __('Daily (Today)') }}</option>
+                        <option value="monthly" {{ $period === 'monthly' ? 'selected' : '' }}>{{ __('Monthly (This Month)') }}</option>
+                        <option value="yearly" {{ $period === 'yearly' ? 'selected' : '' }}>{{ __('Yearly (This Year)') }}</option>
+                        <option value="all" {{ $period === 'all' ? 'selected' : '' }}>{{ __('All Time') }}</option>
+                        <option value="custom" {{ $period === 'custom' ? 'selected' : '' }}>{{ __('Custom Date Range...') }}</option>
                     </select>
                 </div>
 
@@ -204,11 +204,11 @@
                             id="partnerFilterSelect"
                             onchange="this.form.submit()"
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700 cursor-pointer">
-                        <option value="all">All Partners / Scope</option>
-                        <option value="direct" {{ $partnerFilter === 'direct' ? 'selected' : '' }}>🏢 Direct HQ</option>
+                        <option value="all">{{ __('All Partners / Scope') }}</option>
+                        <option value="direct" {{ $partnerFilter === 'direct' ? 'selected' : '' }}>🏢 {{ __('Direct HQ') }}</option>
                         @foreach($resellers as $reseller)
                             <option value="{{ $reseller->id }}" {{ (string)$partnerFilter === (string)$reseller->id ? 'selected' : '' }}>
-                                🤝 {{ $reseller->name }} ({{ $reseller->code ?: 'Partner' }})
+                                🤝 {{ $reseller->name }} ({{ $reseller->code ?: __('Partner') }})
                             </option>
                         @endforeach
                     </select>
@@ -219,11 +219,9 @@
                     <select name="per_page" 
                             onchange="this.form.submit()"
                             class="w-full h-[34px] px-2 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700 cursor-pointer">
-                        <option value="15" {{ request('per_page', $perPage) == 15 ? 'selected' : '' }}>15 / page</option>
-                        <option value="20" {{ request('per_page', $perPage) == 20 ? 'selected' : '' }}>20 / page</option>
-                        <option value="30" {{ request('per_page', $perPage) == 30 ? 'selected' : '' }}>30 / page</option>
-                        <option value="50" {{ request('per_page', $perPage) == 50 ? 'selected' : '' }}>50 / page</option>
-                        <option value="100" {{ request('per_page', $perPage) == 100 ? 'selected' : '' }}>100 / page</option>
+                        @foreach([15, 20, 30, 50, 100] as $pp)
+                            <option value="{{ $pp }}" {{ request('per_page', $perPage) == $pp ? 'selected' : '' }}>{{ __(':count / page', ['count' => $pp]) }}</option>
+                        @endforeach
                     </select>
                 </div>
 
@@ -232,9 +230,9 @@
                         @click="showMoreFilters = !showMoreFilters" 
                         :class="showMoreFilters || {{ $activeMoreCount }} > 0 ? 'bg-cyan-50 text-cyan-700 border-cyan-300 ring-1 ring-cyan-200' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'"
                         class="h-[34px] py-0 px-2.5 rounded-lg border text-xs font-medium transition flex items-center justify-center gap-1.5 flex-shrink-0 cursor-pointer shadow-2xs"
-                        title="Toggle Specific Dates, Month & Collector Filters">
+                        title="{{ __('Toggle Specific Dates, Month & Collector Filters') }}">
                     <i class="fas fa-sliders-h text-[10px]"></i>
-                    <span>More Filters</span>
+                    <span>{{ __('More Filters') }}</span>
                     @if($activeMoreCount > 0)
                         <span class="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-cyan-600 text-white leading-none">
                             {{ $activeMoreCount }}
@@ -248,15 +246,15 @@
                 <div class="flex items-center gap-1.5 flex-shrink-0 md:ml-auto">
                     <button type="submit" 
                             class="h-[34px] bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-0 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" 
-                            title="Apply Filters">
+                            title="{{ __('Apply Filters') }}">
                         <i class="fas fa-filter text-[10px]"></i>
-                        <span>Filter</span>
+                        <span>{{ __('Filter') }}</span>
                     </button>
                     <a href="{{ route('tenant.finance.collector-collections') }}" 
                        class="h-[34px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-0 px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer" 
-                       title="Reset Filters">
+                       title="{{ __('Reset Filters') }}">
                         <i class="fas fa-rotate-left text-[10px]"></i>
-                        <span>Reset</span>
+                        <span>{{ __('Reset') }}</span>
                     </a>
                 </div>
             </div>
@@ -276,7 +274,7 @@
                            value="{{ $dateFrom }}"
                            onchange="this.form.submit()"
                            class="w-full h-[34px] px-2.5 bg-white border border-slate-200 rounded-lg text-xs font-mono text-slate-800 focus:outline-hidden focus:border-cyan-500"
-                           title="Date From">
+                           title="{{ __('Date From') }}">
                 </div>
 
                 {{-- Date To Picker (For Custom Range) --}}
@@ -286,7 +284,7 @@
                            value="{{ $dateTo }}"
                            onchange="this.form.submit()"
                            class="w-full h-[34px] px-2.5 bg-white border border-slate-200 rounded-lg text-xs font-mono text-slate-800 focus:outline-hidden focus:border-cyan-500"
-                           title="Date To">
+                           title="{{ __('Date To') }}">
                 </div>
 
                 {{-- Month Selector (For Monthly) --}}
@@ -296,7 +294,7 @@
                            value="{{ $selectedMonth }}"
                            onchange="this.form.submit()"
                            class="w-full h-[34px] px-2.5 bg-white border border-slate-200 rounded-lg text-xs font-mono text-slate-800 focus:outline-hidden focus:border-cyan-500"
-                           title="Select Billing Month">
+                           title="{{ __('Select Billing Month') }}">
                 </div>
 
                 {{-- Year Selector (For Yearly) --}}
@@ -305,7 +303,7 @@
                             onchange="this.form.submit()" 
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700 cursor-pointer">
                         @for($y = (int)date('Y'); $y >= 2020; $y--)
-                            <option value="{{ $y }}" {{ (string)$selectedYear === (string)$y ? 'selected' : '' }}>Year {{ $y }}</option>
+                            <option value="{{ $y }}" {{ (string)$selectedYear === (string)$y ? 'selected' : '' }}>{{ __('Year :year', ['year' => $y]) }}</option>
                         @endfor
                     </select>
                 </div>
@@ -315,11 +313,11 @@
                     <select name="collector_id" 
                             onchange="this.form.submit()" 
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700 cursor-pointer">
-                        <option value="all">All Collectors</option>
-                        <option value="direct" {{ $collectorFilter === 'direct' ? 'selected' : '' }}>Direct / System</option>
+                        <option value="all">{{ __('All Collectors') }}</option>
+                        <option value="direct" {{ $collectorFilter === 'direct' ? 'selected' : '' }}>{{ __('Direct / System') }}</option>
                         @foreach($allCollectors as $collector)
                             <option value="{{ $collector->id }}" {{ (string)$collectorFilter === (string)$collector->id ? 'selected' : '' }}>
-                                {{ $collector->name }} ({{ $collector->phone ?: 'Staff' }})
+                                {{ $collector->name }} ({{ $collector->phone ?: __('Staff') }})
                             </option>
                         @endforeach
                     </select>
@@ -334,16 +332,16 @@
             <table class="saas-table">
                 <thead>
                     <tr>
-                        <th class="w-10 text-center no-sort">#</th>
-                        <th class="text-center font-semibold">Month</th>
-                        <th class="text-center font-semibold">Code</th>
-                        <th class="text-center font-semibold">Collector Name</th>
-                        <th class="text-center font-semibold">Mobile</th>
-                        <th class="text-center font-semibold">Assigned Areas</th>
-                        <th class="text-center font-semibold">Partner</th>
-                        <th class="text-center font-semibold">Total</th>
-                        <th class="text-center font-semibold">Total Collected</th>
-                        <th class="w-24 text-center no-sort">Action</th>
+                        <th class="w-10 text-center no-sort">{{ __('#') }}</th>
+                        <th class="text-center font-semibold">{{ __('Month') }}</th>
+                        <th class="text-center font-semibold">{{ __('Code') }}</th>
+                        <th class="text-center font-semibold">{{ __('Collector Name') }}</th>
+                        <th class="text-center font-semibold">{{ __('Mobile') }}</th>
+                        <th class="text-center font-semibold">{{ __('Assigned Areas') }}</th>
+                        <th class="text-center font-semibold">{{ __('Partner') }}</th>
+                        <th class="text-center font-semibold">{{ __('Total') }}</th>
+                        <th class="text-center font-semibold">{{ __('Total Collected') }}</th>
+                        <th class="w-24 text-center no-sort">{{ __('Action') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -351,14 +349,14 @@
                         <td colspan="10" class="text-center py-6 text-slate-500 bg-slate-50/50">
                             <i class="fas fa-spinner fa-spin text-cyan-600 mr-1.5" x-show="isSearching"></i>
                             <i class="fas fa-search text-slate-400 mr-1.5" x-show="!isSearching"></i>
-                            <span class="text-xs font-medium">No matching collectors found for this filter scope.</span>
+                            <span class="text-xs font-medium">{{ __('No matching collectors found for this filter scope.') }}</span>
                         </td>
                     </tr>
                     @forelse($rows as $index => $row)
                         @php
                             $rowNum = $rows->firstItem() ? ($rows->firstItem() + $index) : ($index + 1);
                             $monthName = $row->collection_month 
-                                ? \Carbon\Carbon::parse($row->collection_month . '-01')->format('F Y') 
+                                ? \Carbon\Carbon::parse($row->collection_month . '-01')->translatedFormat('F Y') 
                                 : $periodLabel;
                         @endphp
                         <tr class="hover:bg-slate-50/70 transition-colors" data-search-text="{{ strtolower($row->collector_name . ' ' . ($row->collector_code ?? '') . ' ' . $row->collector_phone . ' ' . $row->partner_name . ' ' . $monthName) }}">
@@ -389,7 +387,7 @@
 
                             {{-- 6. Assigned Areas (এসাইকৃত এরিয়া সংখ্যা) --}}
                             <td class="text-center whitespace-nowrap font-mono text-xs">
-                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full {{ ($row->assigned_areas_count ?? 0) > 0 ? 'bg-cyan-50 text-cyan-800 border border-cyan-200/90 font-bold' : 'bg-slate-100 text-slate-500' }}" title="Total Assigned Coverage Zones / Areas">
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full {{ ($row->assigned_areas_count ?? 0) > 0 ? 'bg-cyan-50 text-cyan-800 border border-cyan-200/90 font-bold' : 'bg-slate-100 text-slate-500' }}" title="{{ __('Total Assigned Coverage Zones / Areas') }}">
                                     <i class="fas fa-map-marker-alt text-[9px] text-cyan-600"></i>
                                     <span>{{ number_format($row->assigned_areas_count ?? 0) }}</span>
                                 </span>
@@ -402,7 +400,7 @@
                                         {{ $row->partner_code ?: $row->partner_name }}
                                     </span>
                                 @else
-                                    <span class="text-slate-600">Direct HQ</span>
+                                    <span class="text-slate-600">{{ __('Direct HQ') }}</span>
                                 @endif
                             </td>
 
@@ -420,9 +418,9 @@
                             <td class="text-center whitespace-nowrap">
                                 <a href="{{ route('tenant.finance.collector-collections.show', array_merge(['collector' => $row->collector_id], request()->query(), ['reseller_id' => $row->reseller_id ?: 0, 'month' => $row->collection_month ?? request('month')])) }}" 
                                    class="h-[28px] px-2.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-xs font-semibold shadow-xs transition inline-flex items-center justify-center gap-1.5 cursor-pointer"
-                                   title="View Itemized Receipts List for this Collector">
+                                   title="{{ __('View Itemized Receipts List for this Collector') }}">
                                     <i class="fas fa-list-check text-[10px]"></i>
-                                    <span>View Details</span>
+                                    <span>{{ __('View Details') }}</span>
                                 </a>
                             </td>
                         </tr>
@@ -430,8 +428,8 @@
                         <tr class="no-record-row">
                             <td colspan="10" class="text-center py-8 text-slate-400">
                                 <i class="fas fa-inbox text-2xl mb-1.5 block text-slate-300"></i>
-                                <span class="font-medium text-slate-600 text-xs">No collections found for this selected period and filters.</span>
-                                <p class="text-[11px] text-slate-400 mt-0.5">Try changing the period or clearing search filters to see all historical records.</p>
+                                <span class="font-medium text-slate-600 text-xs">{{ __('No collections found for this selected period and filters.') }}</span>
+                                <p class="text-[11px] text-slate-400 mt-0.5">{{ __('Try changing the period or clearing search filters to see all historical records.') }}</p>
                             </td>
                         </tr>
                     @endforelse

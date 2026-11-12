@@ -41,7 +41,7 @@ class TenantCustomerInvoiceController extends Controller
             $tenant = Tenant::first();
         }
 
-        return $tenant ?? abort(404, 'No active tenant found.');
+        return $tenant ?? abort(404, __('No active tenant found.'));
     }
 
     /**
@@ -376,7 +376,7 @@ class TenantCustomerInvoiceController extends Controller
                 'due_date' => $dueDate,
                 'status' => 'unpaid',
                 'auto_generated' => true,
-                'notes' => "Automated monthly recurring bill for " . Carbon::createFromFormat('Y-m', $billingMonth)->format('F Y'),
+                'notes' => __('Automated monthly recurring bill for :month', ['month' => Carbon::createFromFormat('Y-m', $billingMonth)->translatedFormat('F Y')]),
                 'created_by' => Auth::id() ?: 1,
             ]);
 
@@ -388,9 +388,13 @@ class TenantCustomerInvoiceController extends Controller
             'tenant_id' => $tenant->id,
             'actor_type' => 'App\Models\User',
             'actor_id' => Auth::id() ?: 1,
-            'actor_name' => Auth::user()?->name ?: 'Admin',
+            'actor_name' => Auth::user()?->name ?: __('Admin'),
             'event_type' => 'BATCH_INVOICE_GENERATED',
-            'description' => "Generated {$generatedCount} invoices for billing month {$billingMonth} (Skipped: {$skippedCount}).",
+            'description' => __('Generated :generated invoices for billing month :month (Skipped: :skipped).', [
+                'generated' => $generatedCount,
+                'month' => $billingMonth,
+                'skipped' => $skippedCount,
+            ]),
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
             'metadata' => [
@@ -400,7 +404,11 @@ class TenantCustomerInvoiceController extends Controller
             ],
         ]);
 
-        $msg = "Successfully generated {$generatedCount} monthly invoices for {$billingMonth} ({$skippedCount} already existed).";
+        $msg = __('Successfully generated :generated monthly invoices for :month (:skipped already existed).', [
+            'generated' => $generatedCount,
+            'month' => $billingMonth,
+            'skipped' => $skippedCount,
+        ]);
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
@@ -454,7 +462,7 @@ class TenantCustomerInvoiceController extends Controller
             'invoice_no' => $invoiceNo,
             'billing_month' => $validated['billing_month'],
             'package_id' => $customer->package_id,
-            'package_name' => $customer->package?->name ?: ($customer->mikrotik_profile_name ?: ($customer->package_name ?: 'Custom Invoice')),
+            'package_name' => $customer->package?->name ?: ($customer->mikrotik_profile_name ?: ($customer->package_name ?: __('Custom Invoice'))),
             'amount' => $amount,
             'discount' => $discount,
             'vat_tax' => $vatTax,
@@ -472,12 +480,12 @@ class TenantCustomerInvoiceController extends Controller
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
                 'success' => true,
-                'message' => "Invoice '{$invoice->invoice_no}' created successfully for {$customer->name}.",
+                'message' => __("Invoice ':invoice' created successfully for :customer.", ['invoice' => $invoice->invoice_no, 'customer' => $customer->name]),
                 'invoice' => $invoice
             ]);
         }
 
-        return redirect()->route('tenant.finance.invoices', ['month' => $invoice->billing_month])->with('success', "Invoice '{$invoice->invoice_no}' created successfully.");
+        return redirect()->route('tenant.finance.invoices', ['month' => $invoice->billing_month])->with('success', __("Invoice ':invoice' created successfully.", ['invoice' => $invoice->invoice_no]));
     }
 
     /**
@@ -508,22 +516,22 @@ class TenantCustomerInvoiceController extends Controller
                 'formatted_month' => $inv->formatted_month,
                 'customer_id' => $inv->customer_id,
                 'customer_code' => $inv->customer?->customer_id ?? '--',
-                'customer_name' => $inv->customer?->name ?? 'Unknown Customer',
+                'customer_name' => $inv->customer?->name ?? __('Unknown Customer'),
                 'customer_username' => $inv->customer?->username ?? '--',
                 'customer_phone' => $inv->customer?->phone ?? '--',
                 'customer_address' => $inv->customer?->address ?? '--',
                 'customer_zone' => $inv->customer?->zone ?? '--',
-                'reseller_name' => $inv->reseller?->name ?? 'ISP HQ Direct',
-                'package_name' => $inv->package_name ?: ($inv->package?->name ?? 'Internet Service'),
+                'reseller_name' => $inv->reseller?->name ?? __('ISP HQ Direct'),
+                'package_name' => $inv->package_name ?: ($inv->package?->name ?? __('Internet Service')),
                 'amount' => (float) $inv->amount,
                 'discount' => (float) $inv->discount,
                 'vat_tax' => (float) $inv->vat_tax,
                 'total_payable' => (float) $inv->total_payable,
                 'paid_amount' => (float) $inv->paid_amount,
                 'due_amount' => (float) $inv->due_amount,
-                'issue_date' => $inv->issue_date?->format('d M Y') ?? '--',
-                'due_date' => $inv->due_date?->format('d M Y') ?? '--',
-                'paid_at' => $inv->paid_at?->format('d M Y, h:i A') ?? '--',
+                'issue_date' => $inv->issue_date?->translatedFormat('d M Y') ?? '--',
+                'due_date' => $inv->due_date?->translatedFormat('d M Y') ?? '--',
+                'paid_at' => $inv->paid_at?->translatedFormat('d M Y, h:i A') ?? '--',
                 'payment_method' => $inv->payment_method_name,
                 'status' => $inv->status,
                 'status_badge' => $inv->status_badge,
@@ -579,6 +587,8 @@ class TenantCustomerInvoiceController extends Controller
         $invoice->status = ($newDueAmount <= 0.00) ? 'paid' : 'partially_paid';
         $invoice->save();
 
+        $currency = $tenant->currency_symbol ?? '৳';
+
         // Generate Money Receipt in TenantCustomerPayment
         $receiptNo = TenantCustomerPayment::generateInvoiceNo($tenant->id);
         TenantCustomerPayment::create([
@@ -592,7 +602,7 @@ class TenantCustomerInvoiceController extends Controller
             'transaction_id' => $validated['transaction_id'] ?? null,
             'collected_by' => Auth::id() ?: 1,
             'status' => 'approved',
-            'notes' => "Payment for Invoice #{$invoice->invoice_no}. " . ($validated['notes'] ?? ''),
+            'notes' => __('Payment for Invoice #:invoice.', ['invoice' => $invoice->invoice_no]) . (!empty($validated['notes']) ? ' ' . $validated['notes'] : ''),
             'paid_at' => Carbon::now(),
         ]);
 
@@ -605,13 +615,13 @@ class TenantCustomerInvoiceController extends Controller
         $customer->save();
 
         // If reactivated to active, sync to MikroTik RouterOS & RADIUS
-        $mikrotikMsg = '';
+        $mikrotikReactivated = false;
         if ($customer->status === 'active') {
             try {
                 $mikrotikApi = new MikrotikApiService();
                 $syncRes = $mikrotikApi->syncCustomerToMikrotik($customer);
                 if ($syncRes['success']) {
-                    $mikrotikMsg = ' & MikroTik Line Reactivated';
+                    $mikrotikReactivated = true;
                 }
             } catch (\Exception $e) {
                 // Non-blocking
@@ -630,9 +640,14 @@ class TenantCustomerInvoiceController extends Controller
             'tenant_id' => $tenant->id,
             'actor_type' => 'App\Models\User',
             'actor_id' => Auth::id() ?: 1,
-            'actor_name' => Auth::user()?->name ?: 'Admin',
+            'actor_name' => Auth::user()?->name ?: __('Admin'),
             'event_type' => 'INVOICE_PAYMENT_COLLECTED',
-            'description' => "Collected payment of ৳{$payingAmount} for invoice '{$invoice->invoice_no}' from {$customer->name}.",
+            'description' => __("Collected payment of :currency:amount for invoice ':invoice' from :customer.", [
+                'currency' => $currency,
+                'amount' => $payingAmount,
+                'invoice' => $invoice->invoice_no,
+                'customer' => $customer->name,
+            ]),
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
             'metadata' => [
@@ -645,7 +660,17 @@ class TenantCustomerInvoiceController extends Controller
             ],
         ]);
 
-        $msg = "Payment of ৳" . number_format($payingAmount, 2) . " received successfully for Invoice {$invoice->invoice_no}!{$mikrotikMsg}";
+        $msg = $mikrotikReactivated
+            ? __('Payment of :currency:amount received successfully for Invoice :invoice & MikroTik Line Reactivated!', [
+                'currency' => $currency,
+                'amount' => number_format($payingAmount, 2),
+                'invoice' => $invoice->invoice_no,
+            ])
+            : __('Payment of :currency:amount received successfully for Invoice :invoice!', [
+                'currency' => $currency,
+                'amount' => number_format($payingAmount, 2),
+                'invoice' => $invoice->invoice_no,
+            ]);
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
@@ -682,15 +707,15 @@ class TenantCustomerInvoiceController extends Controller
             'tenant_id' => $tenant->id,
             'actor_type' => 'App\Models\User',
             'actor_id' => Auth::id() ?: 1,
-            'actor_name' => Auth::user()?->name ?: 'Admin',
+            'actor_name' => Auth::user()?->name ?: __('Admin'),
             'event_type' => 'INVOICE_CANCELLED',
-            'description' => "Cancelled invoice '{$invoice->invoice_no}'.",
+            'description' => __("Cancelled invoice ':invoice'.", ['invoice' => $invoice->invoice_no]),
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
             'metadata' => ['invoice_id' => $invoice->id, 'invoice_no' => $invoice->invoice_no],
         ]);
 
-        $msg = "Invoice '{$invoice->invoice_no}' has been cancelled.";
+        $msg = __("Invoice ':invoice' has been cancelled.", ['invoice' => $invoice->invoice_no]);
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json(['success' => true, 'message' => $msg]);
@@ -716,7 +741,7 @@ class TenantCustomerInvoiceController extends Controller
         $invoice = $query->findOrFail($id);
 
         if ($invoice->paid_amount > 0) {
-            $errMsg = "Cannot delete invoice '{$invoice->invoice_no}' because payments have already been collected against it.";
+            $errMsg = __("Cannot delete invoice ':invoice' because payments have already been collected against it.", ['invoice' => $invoice->invoice_no]);
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json(['success' => false, 'message' => $errMsg], 422);
             }
@@ -726,11 +751,13 @@ class TenantCustomerInvoiceController extends Controller
         $invNo = $invoice->invoice_no;
         $invoice->delete();
 
+        $deletedMsg = __("Invoice ':invoice' deleted successfully.", ['invoice' => $invNo]);
+
         if ($request->wantsJson() || $request->ajax()) {
-            return response()->json(['success' => true, 'message' => "Invoice '{$invNo}' deleted successfully."]);
+            return response()->json(['success' => true, 'message' => $deletedMsg]);
         }
 
-        return back()->with('success', "Invoice '{$invNo}' deleted successfully.");
+        return back()->with('success', $deletedMsg);
     }
 
     /**
@@ -789,7 +816,7 @@ class TenantCustomerInvoiceController extends Controller
 
         // Automation Cron Engine Health & Last Run
         $lastCronLog = AutomationLog::where('tenant_id', $tenant->id)->latest('id')->first();
-        $lastCronRunText = $lastCronLog?->created_at ? $lastCronLog->created_at->diffForHumans() : 'No Cron Log';
+        $lastCronRunText = $lastCronLog?->created_at ? $lastCronLog->created_at->diffForHumans() : __('No Cron Log');
         $isCronHealthy = $lastCronLog && $lastCronLog->created_at->diffInHours(now()) <= 26;
 
         // 4. Partner-Wise Breakdown Grouping
@@ -872,21 +899,26 @@ class TenantCustomerInvoiceController extends Controller
         $currencySymbol = $tenant->currency_symbol ?? '৳';
 
         $generateBtnText = match($targetDateType) {
-            'today' => "Generate Today's Bills (" . number_format($filteredTargetCount) . ")",
-            'tomorrow' => "Generate Tomorrow's Bills (" . number_format($filteredTargetCount) . ")",
-            'next_3_days' => "Generate Next 3 Days (" . number_format($filteredTargetCount) . ")",
-            'overdue' => "Generate Overdue Catch-Up (" . number_format($filteredTargetCount) . ")",
-            'custom' => "Generate for " . (!empty($customDate) ? Carbon::parse($customDate)->format('d M') : 'Date') . " (" . number_format($filteredTargetCount) . ")",
-            default => "Generate All Catch-Up Invoices (" . number_format($filteredTargetCount) . ")",
+            'today' => __("Generate Today's Bills (:count)", ['count' => number_format($filteredTargetCount)]),
+            'tomorrow' => __("Generate Tomorrow's Bills (:count)", ['count' => number_format($filteredTargetCount)]),
+            'next_3_days' => __('Generate Next 3 Days (:count)', ['count' => number_format($filteredTargetCount)]),
+            'overdue' => __('Generate Overdue Catch-Up (:count)', ['count' => number_format($filteredTargetCount)]),
+            'custom' => __('Generate for :date (:count)', [
+                'date' => !empty($customDate) ? Carbon::parse($customDate)->translatedFormat('d M') : __('Date'),
+                'count' => number_format($filteredTargetCount),
+            ]),
+            default => __('Generate All Catch-Up Invoices (:count)', ['count' => number_format($filteredTargetCount)]),
         };
 
         $targetDateLabel = match($targetDateType) {
-            'today' => "Today's Expiring Subscribers (" . Carbon::today()->format('d M Y') . ")",
-            'tomorrow' => "Tomorrow's Expiring Subscribers (" . Carbon::tomorrow()->format('d M Y') . ")",
-            'next_3_days' => "Next 3 Days Subscribers",
-            'overdue' => "Past Overdue Subscribers",
-            'custom' => "Subscribers Expiring on " . (!empty($customDate) ? Carbon::parse($customDate)->format('d M Y') : 'Selected Date'),
-            default => "All Uninvoiced Queue",
+            'today' => __("Today's Expiring Subscribers (:date)", ['date' => Carbon::today()->translatedFormat('d M Y')]),
+            'tomorrow' => __("Tomorrow's Expiring Subscribers (:date)", ['date' => Carbon::tomorrow()->translatedFormat('d M Y')]),
+            'next_3_days' => __('Next 3 Days Subscribers'),
+            'overdue' => __('Past Overdue Subscribers'),
+            'custom' => __('Subscribers Expiring on :date', [
+                'date' => !empty($customDate) ? Carbon::parse($customDate)->translatedFormat('d M Y') : __('Selected Date'),
+            ]),
+            default => __('All Uninvoiced Queue'),
         };
 
         return view('tenant.finance.billing_catchup', compact(
@@ -1026,7 +1058,7 @@ class TenantCustomerInvoiceController extends Controller
                 'invoice_no' => $invoiceNo,
                 'billing_month' => $billingMonth,
                 'package_id' => $customer->package_id,
-                'package_name' => $customer->package_display_name ?: ($customer->package?->name ?? 'Internet Package'),
+                'package_name' => $customer->package_display_name ?: ($customer->package?->name ?? __('Internet Package')),
                 'amount' => $monthlyBill,
                 'discount' => 0.00,
                 'vat_tax' => 0.00,
@@ -1038,7 +1070,7 @@ class TenantCustomerInvoiceController extends Controller
                 'due_date' => $targetExpiryDate->toDateString(),
                 'status' => 'unpaid',
                 'auto_generated' => true,
-                'notes' => 'Catch-up cycle subscription invoice.',
+                'notes' => __('Catch-up cycle subscription invoice.'),
                 'created_by' => Auth::id() ?: null,
             ]);
 
@@ -1056,13 +1088,15 @@ class TenantCustomerInvoiceController extends Controller
             }
         }
 
+        $currency = $tenant->currency_symbol ?? '৳';
+
         $targetLabel = match($targetDateType) {
-            'today' => 'Today (' . Carbon::today()->format('d M') . ')',
-            'tomorrow' => 'Tomorrow (' . Carbon::tomorrow()->format('d M') . ')',
-            'next_3_days' => 'Next 3 Days',
-            'overdue' => 'Already Overdue',
-            'custom' => !empty($customDate) ? Carbon::parse($customDate)->format('d M Y') : 'Custom Date',
-            default => 'All Catch-Up Queue',
+            'today' => __('Today (:date)', ['date' => Carbon::today()->translatedFormat('d M')]),
+            'tomorrow' => __('Tomorrow (:date)', ['date' => Carbon::tomorrow()->translatedFormat('d M')]),
+            'next_3_days' => __('Next 3 Days'),
+            'overdue' => __('Already Overdue'),
+            'custom' => !empty($customDate) ? Carbon::parse($customDate)->translatedFormat('d M Y') : __('Custom Date'),
+            default => __('All Catch-Up Queue'),
         };
 
         // Activity Trail
@@ -1071,9 +1105,14 @@ class TenantCustomerInvoiceController extends Controller
                 'tenant_id' => $tenant->id,
                 'actor_type' => 'App\Models\User',
                 'actor_id' => Auth::id() ?: 1,
-                'actor_name' => Auth::user()?->name ?: 'System',
+                'actor_name' => Auth::user()?->name ?: __('System'),
                 'event_type' => 'CATCHUP_BILLING_EXECUTED',
-                'description' => "Executed Catch-Up Billing for [{$targetLabel}]: {$generatedCount} invoices created totaling ৳" . number_format($totalBilled, 2),
+                'description' => __('Executed Catch-Up Billing for [:target]: :count invoices created totaling :currency:amount', [
+                    'target' => $targetLabel,
+                    'count' => $generatedCount,
+                    'currency' => $currency,
+                    'amount' => number_format($totalBilled, 2),
+                ]),
                 'ip_address' => $request->ip(),
                 'user_agent' => $request->userAgent(),
                 'metadata' => [
@@ -1085,13 +1124,28 @@ class TenantCustomerInvoiceController extends Controller
             ]);
         }
 
+        $message = $skippedCount > 0
+            ? __('Successfully generated :count catch-up invoices for [:target] totaling :currency:amount. (:skipped skipped as already invoiced/zero bill)', [
+                'count' => $generatedCount,
+                'target' => $targetLabel,
+                'currency' => $currency,
+                'amount' => number_format($totalBilled, 2),
+                'skipped' => $skippedCount,
+            ])
+            : __('Successfully generated :count catch-up invoices for [:target] totaling :currency:amount.', [
+                'count' => $generatedCount,
+                'target' => $targetLabel,
+                'currency' => $currency,
+                'amount' => number_format($totalBilled, 2),
+            ]);
+
         return response()->json([
             'success' => true,
             'generated_count' => $generatedCount,
             'skipped_count' => $skippedCount,
             'total_billed' => $totalBilled,
             'target_label' => $targetLabel,
-            'message' => "Successfully generated {$generatedCount} catch-up invoices for [{$targetLabel}] totaling ৳" . number_format($totalBilled, 2) . "." . ($skippedCount > 0 ? " ({$skippedCount} skipped as already invoiced/zero bill)" : ""),
+            'message' => $message,
         ]);
     }
 }

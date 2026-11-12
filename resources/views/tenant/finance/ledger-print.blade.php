@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Financial Statement - {{ $tenant->company_name ?? $tenant->name }}</title>
+    <title>{{ __('Financial Statement') }} - {{ $tenant->company_name ?? $tenant->name }}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
@@ -300,18 +300,18 @@
     <div class="top-action-bar no-print">
         <div style="display: flex; align-items: center; gap: 10px;">
             <i class="fas fa-file-invoice text-cyan-400"></i>
-            <span style="font-weight: 700; font-size: 13px;">Official Financial Statement &amp; General Ledger</span>
+            <span style="font-weight: 700; font-size: 13px;">{{ __('Official Financial Statement & General Ledger') }}</span>
             <span style="color: #94a3b8; font-size: 11px;">({{ $periodLabel }})</span>
         </div>
         <div style="display: flex; align-items: center; gap: 8px;">
             <a href="{{ route('tenant.finance.ledger.export', request()->query()) }}" class="btn btn-secondary">
-                <i class="fas fa-file-csv"></i> Export CSV
+                <i class="fas fa-file-csv"></i> {{ __('Export CSV') }}
             </a>
             <button type="button" onclick="window.print()" class="btn btn-primary">
-                <i class="fas fa-print"></i> Print Document
+                <i class="fas fa-print"></i> {{ __('Print Document') }}
             </button>
-            <button type="button" onclick="window.close()" class="btn btn-secondary" title="Close Tab">
-                <i class="fas fa-times"></i> Close
+            <button type="button" onclick="window.close()" class="btn btn-secondary" title="{{ __('Close Tab') }}">
+                <i class="fas fa-times"></i> {{ __('Close') }}
             </button>
         </div>
     </div>
@@ -322,46 +322,46 @@
         {{-- 1. Document Header --}}
         <div class="doc-header">
             <h1 class="company-title">{{ $tenant->company_name ?? $tenant->name }}</h1>
-            <p class="company-sub">{{ $tenant->address ?? 'Central NOC & Financial Accounting Operations' }}</p>
+            <p class="company-sub">{{ $tenant->address ?? __('Central NOC & Financial Accounting Operations') }}</p>
             <div class="doc-badge">
                 @if($tab === 'pnl')
-                    Statement of Profit &amp; Loss
+                    {{ __('Statement of Profit & Loss') }}
                 @elseif($tab === 'cashbook')
-                    Cash &amp; Bank Summary
+                    {{ __('Cash & Bank Summary') }}
                 @elseif($tab === 'heads')
-                    Chart of Accounts Head Summary
+                    {{ __('Chart of Accounts Head Summary') }}
                 @else
-                    Official Financial Statement &amp; General Ledger
+                    {{ __('Official Financial Statement & General Ledger') }}
                 @endif
             </div>
             <div class="doc-meta font-mono">
-                Period: <strong>{{ $periodLabel }}</strong> | Generated On: {{ date('d M, Y h:i A') }}
+                {{ __('Period:') }} <strong>{{ $periodLabel }}</strong> | {{ __('Generated On:') }} {{ now()->translatedFormat('d M, Y h:i A') }}
             </div>
         </div>
 
         {{-- 2. Financial Summary KPI Grid --}}
         <div class="summary-grid" style="grid-template-columns: repeat(4, 1fr);">
             <div class="summary-box">
-                <span class="summary-label">Gross Revenue</span>
+                <span class="summary-label">{{ __('Gross Revenue') }}</span>
                 <span class="summary-val font-mono text-green">
                     @currency($kpi['gross_revenue'])
                 </span>
             </div>
             <div class="summary-box">
-                <span class="summary-label">Upstream COGS</span>
+                <span class="summary-label">{{ __('Upstream COGS') }}</span>
                 <span class="summary-val font-mono text-rose">
                     @currency($kpi['cogs_upstream'])
                 </span>
             </div>
             <div class="summary-box">
-                <span class="summary-label">Gross Margin</span>
+                <span class="summary-label">{{ __('Gross Margin') }}</span>
                 <span class="summary-val font-mono text-cyan">
                     @currency($kpi['gross_margin'])
                     <span style="font-size: 10px; font-weight: normal; color: #64748b;">({{ $kpi['gross_margin_pct'] }}%)</span>
                 </span>
             </div>
             <div class="summary-box">
-                <span class="summary-label">Net Operating Profit</span>
+                <span class="summary-label">{{ __('Net Operating Profit') }}</span>
                 <span class="summary-val font-mono {{ $kpi['net_profit'] >= 0 ? 'text-cyan' : 'text-rose' }}">
                     @currency($kpi['net_profit'])
                     <span style="font-size: 10px; font-weight: normal; color: #64748b;">({{ $kpi['profit_margin'] }}%)</span>
@@ -376,16 +376,16 @@
                 {{-- A. Gross Revenues --}}
                 <div class="pnl-card">
                     <div class="pnl-card-head pnl-green-head">
-                        <span>A. Revenue &amp; Incomes</span>
+                        <span>{{ __('A. Revenue & Incomes') }}</span>
                         <span class="font-mono">@currency($pnl['total_gross_revenue'])</span>
                     </div>
                     <div class="pnl-card-body">
                         <div class="pnl-row">
-                            <span>1. Customer Retail</span>
+                            <span>{{ __('1. Customer Retail') }}</span>
                             <span class="font-mono" style="font-weight: 600;">@currency($pnl['retail_revenue'])</span>
                         </div>
                         <div class="pnl-row">
-                            <span>2. Reseller Wholesale</span>
+                            <span>{{ __('2. Reseller Wholesale') }}</span>
                             <span class="font-mono" style="font-weight: 600;">@currency($pnl['wholesale_revenue'])</span>
                         </div>
                         @foreach($pnl['direct_income_groups'] as $headName => $amount)
@@ -395,7 +395,7 @@
                             </div>
                         @endforeach
                         <div class="pnl-total-row" style="background: #dcfce7; color: #166534;">
-                            <span>Gross Revenue (A):</span>
+                            <span>{{ __('Gross Revenue (A):') }}</span>
                             <span class="font-mono">@currency($pnl['total_gross_revenue'])</span>
                         </div>
                     </div>
@@ -404,7 +404,7 @@
                 {{-- B. Cost of Goods Sold (COGS - Upstream Bandwidth) --}}
                 <div class="pnl-card">
                     <div class="pnl-card-head" style="background: #ffedd5; color: #9a3412; border-bottom: 1px solid #fed7aa;">
-                        <span>B. Upstream COGS</span>
+                        <span>{{ __('B. Upstream COGS') }}</span>
                         <span class="font-mono">@currency($pnl['total_upstream_cogs'])</span>
                     </div>
                     <div class="pnl-card-body">
@@ -414,10 +414,10 @@
                                 <span class="font-mono text-rose" style="font-weight: 600;">@currency($amount)</span>
                             </div>
                         @empty
-                            <div style="padding: 12px; text-align: center; color: #94a3b8;">No upstream carrier payments.</div>
+                            <div style="padding: 12px; text-align: center; color: #94a3b8;">{{ __('No upstream carrier payments.') }}</div>
                         @endforelse
                         <div class="pnl-total-row" style="background: #ffedd5; color: #9a3412;">
-                            <span>Total Upstream (B):</span>
+                            <span>{{ __('Total Upstream (B):') }}</span>
                             <span class="font-mono">@currency($pnl['total_upstream_cogs'])</span>
                         </div>
                     </div>
@@ -426,7 +426,7 @@
                 {{-- C. Operating Expenses (OPEX) --}}
                 <div class="pnl-card">
                     <div class="pnl-card-head pnl-rose-head">
-                        <span>C. Operating OPEX</span>
+                        <span>{{ __('C. Operating OPEX') }}</span>
                         <span class="font-mono">@currency($pnl['total_expenses'])</span>
                     </div>
                     <div class="pnl-card-body">
@@ -436,10 +436,10 @@
                                 <span class="font-mono text-rose" style="font-weight: 600;">@currency($amount)</span>
                             </div>
                         @empty
-                            <div style="padding: 12px; text-align: center; color: #94a3b8;">No OPEX transactions.</div>
+                            <div style="padding: 12px; text-align: center; color: #94a3b8;">{{ __('No OPEX transactions.') }}</div>
                         @endforelse
                         <div class="pnl-total-row" style="background: #ffe4e6; color: #9f1239;">
-                            <span>Total OPEX (C):</span>
+                            <span>{{ __('Total OPEX (C):') }}</span>
                             <span class="font-mono">@currency($pnl['total_expenses'])</span>
                         </div>
                     </div>
@@ -449,18 +449,18 @@
             {{-- P&L Bottom Total & Gross Profit Overview --}}
             <div style="background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 6px; padding: 14px 18px; margin-bottom: 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
                 <div style="border-right: 1px solid #e2e8f0; padding-right: 16px;">
-                    <span style="font-size: 10.5px; font-weight: 700; text-transform: uppercase; color: #64748b;">Gross Operating Profit (A - B)</span>
+                    <span style="font-size: 10.5px; font-weight: 700; text-transform: uppercase; color: #64748b;">{{ __('Gross Operating Profit (A - B)') }}</span>
                     <div class="font-mono text-cyan" style="font-size: 17px; font-weight: 800; margin-top: 2px;">
                         @currency($pnl['gross_operating_margin'])
                     </div>
-                    <span style="font-size: 11px; color: #475569;">Gross Margin: <strong class="text-green">{{ $pnl['gross_margin_pct'] }}%</strong></span>
+                    <span style="font-size: 11px; color: #475569;">{{ __('Gross Margin:') }} <strong class="text-green">{{ $pnl['gross_margin_pct'] }}%</strong></span>
                 </div>
                 <div>
-                    <span style="font-size: 10.5px; font-weight: 700; text-transform: uppercase; color: #64748b;">Net Operating Profit (Gross Profit - OPEX)</span>
+                    <span style="font-size: 10.5px; font-weight: 700; text-transform: uppercase; color: #64748b;">{{ __('Net Operating Profit (Gross Profit - OPEX)') }}</span>
                     <div class="font-mono {{ $pnl['net_profit'] >= 0 ? 'text-cyan' : 'text-rose' }}" style="font-size: 17px; font-weight: 800; margin-top: 2px;">
                         @currency($pnl['net_profit'])
                     </div>
-                    <span style="font-size: 11px; color: #475569;">Net Operating Margin: <strong class="text-green">{{ $pnl['profit_margin'] }}%</strong></span>
+                    <span style="font-size: 11px; color: #475569;">{{ __('Net Operating Margin:') }} <strong class="text-green">{{ $pnl['profit_margin'] }}%</strong></span>
                 </div>
             </div>
 
@@ -469,20 +469,20 @@
             <div class="pnl-container">
                 <div class="pnl-card">
                     <div class="pnl-card-head" style="background: #fef3c7; color: #92400e; border-bottom: 1px solid #fde68a;">
-                        <span>Physical Cash In Hand Book</span>
+                        <span>{{ __('Physical Cash In Hand Book') }}</span>
                         <span class="font-mono">@currency($cashbook['cash_net'])</span>
                     </div>
                     <div class="pnl-card-body">
                         <div class="pnl-row">
-                            <span>Total Cash Inflows</span>
+                            <span>{{ __('Total Cash Inflows') }}</span>
                             <span class="font-mono text-green">+@currency($cashbook['cash_in'])</span>
                         </div>
                         <div class="pnl-row">
-                            <span>Total Cash Outflows (Disbursed)</span>
+                            <span>{{ __('Total Cash Outflows (Disbursed)') }}</span>
                             <span class="font-mono text-rose">-@currency($cashbook['cash_out'])</span>
                         </div>
                         <div class="pnl-total-row" style="background: #fef3c7; color: #92400e;">
-                            <span>Net Cash in Hand:</span>
+                            <span>{{ __('Net Cash in Hand:') }}</span>
                             <span class="font-mono">@currency($cashbook['cash_net'])</span>
                         </div>
                     </div>
@@ -490,20 +490,20 @@
 
                 <div class="pnl-card">
                     <div class="pnl-card-head" style="background: #e0f2fe; color: #0369a1; border-bottom: 1px solid #bae6fd;">
-                        <span>Bank &amp; Digital MFS Accounts Book</span>
+                        <span>{{ __('Bank & Digital MFS Accounts Book') }}</span>
                         <span class="font-mono">@currency($cashbook['bank_net'])</span>
                     </div>
                     <div class="pnl-card-body">
                         <div class="pnl-row">
-                            <span>Total Bank &amp; MFS Deposits</span>
+                            <span>{{ __('Total Bank & MFS Deposits') }}</span>
                             <span class="font-mono text-green">+@currency($cashbook['bank_in'])</span>
                         </div>
                         <div class="pnl-row">
-                            <span>Total Bank Disbursements</span>
+                            <span>{{ __('Total Bank Disbursements') }}</span>
                             <span class="font-mono text-rose">-@currency($cashbook['bank_out'])</span>
                         </div>
                         <div class="pnl-total-row" style="background: #e0f2fe; color: #0369a1;">
-                            <span>Net Bank &amp; MFS Position:</span>
+                            <span>{{ __('Net Bank & MFS Position:') }}</span>
                             <span class="font-mono">@currency($cashbook['bank_net'])</span>
                         </div>
                     </div>
@@ -516,12 +516,12 @@
                 <thead>
                     <tr>
                         <th class="text-center" style="width: 35px;">#</th>
-                        <th style="width: 100px;">Head Code</th>
-                        <th>Account Head Title</th>
-                        <th class="text-center" style="width: 80px;">Type</th>
-                        <th class="text-right" style="width: 120px;">Debit (Expense)</th>
-                        <th class="text-right" style="width: 120px;">Credit (Revenue)</th>
-                        <th class="text-right" style="width: 130px;">Net Balance</th>
+                        <th style="width: 100px;">{{ __('Head Code') }}</th>
+                        <th>{{ __('Account Head Title') }}</th>
+                        <th class="text-center" style="width: 80px;">{{ __('Type') }}</th>
+                        <th class="text-right" style="width: 120px;">{{ __('Debit (Expense)') }}</th>
+                        <th class="text-right" style="width: 120px;">{{ __('Credit (Revenue)') }}</th>
+                        <th class="text-right" style="width: 130px;">{{ __('Net Balance') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -531,7 +531,7 @@
                             <td class="font-mono" style="font-weight: 700;">{{ $h['code'] }}</td>
                             <td style="font-weight: 600;">{{ $h['name'] }}</td>
                             <td class="text-center">
-                                <span style="font-size: 9.5px; font-weight: 700; text-transform: uppercase;">{{ $h['type'] }}</span>
+                                <span style="font-size: 9.5px; font-weight: 700; text-transform: uppercase;">{{ $h['type'] === 'income' ? __('income') : __('expense') }}</span>
                             </td>
                             <td class="text-right font-mono text-rose">
                                 {{ $h['debit'] > 0 ? number_format($h['debit'], 2) : '-' }}
@@ -550,21 +550,21 @@
         @else
             {{-- General Ledger (Default) --}}
             <div style="font-size: 11px; margin-bottom: 8px; display: flex; justify-content: space-between; color: #475569;">
-                <span><strong>Opening Balance:</strong> @currency($openingBalance['net'])</span>
-                <span><strong>Total Transactions:</strong> {{ count($entries) }}</span>
+                <span><strong>{{ __('Opening Balance:') }}</strong> @currency($openingBalance['net'])</span>
+                <span><strong>{{ __('Total Transactions:') }}</strong> {{ count($entries) }}</span>
             </div>
 
             <table class="print-table">
                 <thead>
                     <tr>
                         <th class="text-center" style="width: 35px;">#</th>
-                        <th style="width: 110px;">Date &amp; Time</th>
-                        <th style="width: 115px;">Voucher / Ref</th>
-                        <th style="width: 140px;">Account Head</th>
-                        <th>Narrative / Particulars</th>
-                        <th class="text-right" style="width: 95px;">Debit (-)</th>
-                        <th class="text-right" style="width: 95px;">Credit (+)</th>
-                        <th class="text-right" style="width: 110px;">Balance</th>
+                        <th style="width: 110px;">{{ __('Date & Time') }}</th>
+                        <th style="width: 115px;">{{ __('Voucher / Ref') }}</th>
+                        <th style="width: 140px;">{{ __('Account Head') }}</th>
+                        <th>{{ __('Narrative / Particulars') }}</th>
+                        <th class="text-right" style="width: 95px;">{{ __('Debit (-)') }}</th>
+                        <th class="text-right" style="width: 95px;">{{ __('Credit (+)') }}</th>
+                        <th class="text-right" style="width: 110px;">{{ __('Balance') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -596,7 +596,7 @@
                     @empty
                         <tr>
                             <td colspan="8" class="text-center" style="padding: 24px; color: #94a3b8;">
-                                No financial ledger records found for this period.
+                                {{ __('No financial ledger records found for this period.') }}
                             </td>
                         </tr>
                     @endforelse
@@ -608,23 +608,23 @@
         <div class="signatures-grid">
             <div class="sign-box">
                 <div class="sign-line"></div>
-                <div class="sign-title">Prepared By</div>
-                <div class="sign-role">Accounts Officer</div>
+                <div class="sign-title">{{ __('Prepared By') }}</div>
+                <div class="sign-role">{{ __('Accounts Officer') }}</div>
             </div>
             <div class="sign-box">
                 <div class="sign-line"></div>
-                <div class="sign-title">Verified By</div>
-                <div class="sign-role">Finance Manager</div>
+                <div class="sign-title">{{ __('Verified By') }}</div>
+                <div class="sign-role">{{ __('Finance Manager') }}</div>
             </div>
             <div class="sign-box">
                 <div class="sign-line"></div>
-                <div class="sign-title">Internal Auditor</div>
-                <div class="sign-role">Audit &amp; Compliance</div>
+                <div class="sign-title">{{ __('Internal Auditor') }}</div>
+                <div class="sign-role">{{ __('Audit & Compliance') }}</div>
             </div>
             <div class="sign-box">
                 <div class="sign-line"></div>
-                <div class="sign-title">Approved By</div>
-                <div class="sign-role">Managing Director / CEO</div>
+                <div class="sign-title">{{ __('Approved By') }}</div>
+                <div class="sign-role">{{ __('Managing Director / CEO') }}</div>
             </div>
         </div>
 

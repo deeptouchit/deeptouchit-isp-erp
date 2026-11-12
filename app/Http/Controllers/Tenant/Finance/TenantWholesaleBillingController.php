@@ -36,7 +36,7 @@ class TenantWholesaleBillingController extends Controller
             $tenant = Tenant::first();
         }
 
-        return $tenant ?? abort(404, 'No active tenant found.');
+        return $tenant ?? abort(404, __('No active tenant found.'));
     }
 
     /**
@@ -234,6 +234,8 @@ class TenantWholesaleBillingController extends Controller
         $subtotal = 0.0;
         $formattedItems = [];
 
+        $currency = $tenant->currency_symbol ?? '৳';
+
         foreach ($validated['items'] as $item) {
             $qty = (float) $item['qty'];
             $unitPrice = (float) $item['unit_price'];
@@ -243,7 +245,7 @@ class TenantWholesaleBillingController extends Controller
             $formattedItems[] = [
                 'description' => trim($item['description']),
                 'qty' => $qty,
-                'unit' => $item['unit'] ?? 'Unit',
+                'unit' => $item['unit'] ?? __('Unit'),
                 'unit_price' => $unitPrice,
                 'total' => $lineTotal,
             ];
@@ -263,10 +265,13 @@ class TenantWholesaleBillingController extends Controller
                 if ($request->wantsJson()) {
                     return response()->json([
                         'success' => false,
-                        'message' => "Insufficient Sub-ISP balance. Available: " . number_format($availableBalance, 2) . ", Required: " . number_format($totalAmount, 2),
+                        'message' => __('Insufficient Sub-ISP balance. Available: :available, Required: :required', [
+                            'available' => $currency . number_format($availableBalance, 2),
+                            'required' => $currency . number_format($totalAmount, 2),
+                        ]),
                     ], 422);
                 }
-                return back()->with('error', "Insufficient Sub-ISP wallet balance ({$reseller->name}).");
+                return back()->with('error', __('Insufficient Sub-ISP wallet balance (:name).', ['name' => $reseller->name]));
             }
         }
 
@@ -294,7 +299,10 @@ class TenantWholesaleBillingController extends Controller
                     'balance_after' => $balAfter,
                     'payment_method' => 'WALLET_DEDUCT',
                     'reference_no' => $invoiceNo,
-                    'description' => "Auto debit for wholesale invoice {$invoiceNo} ({$validated['type']})",
+                    'description' => __('Auto debit for wholesale invoice :invoice_no (:type)', [
+                        'invoice_no' => $invoiceNo,
+                        'type' => $validated['type'],
+                    ]),
                     'created_by' => $user?->id,
                 ]);
             }
@@ -324,7 +332,10 @@ class TenantWholesaleBillingController extends Controller
 
             DB::commit();
 
-            $msg = "Wholesale invoice {$invoiceNo} created successfully for {$reseller->name}.";
+            $msg = __('Wholesale invoice :invoice_no created successfully for :reseller.', [
+                'invoice_no' => $invoiceNo,
+                'reseller' => $reseller->name,
+            ]);
 
             if ($request->wantsJson()) {
                 return response()->json([
@@ -338,9 +349,9 @@ class TenantWholesaleBillingController extends Controller
         } catch (\Throwable $e) {
             DB::rollBack();
             if ($request->wantsJson()) {
-                return response()->json(['success' => false, 'message' => 'Failed to create invoice: ' . $e->getMessage()], 500);
+                return response()->json(['success' => false, 'message' => __('Failed to create invoice: :error', ['error' => $e->getMessage()])], 500);
             }
-            return back()->with('error', 'Failed to create invoice: ' . $e->getMessage());
+            return back()->with('error', __('Failed to create invoice: :error', ['error' => $e->getMessage()]));
         }
     }
 
@@ -398,7 +409,7 @@ class TenantWholesaleBillingController extends Controller
             'invoice' => [
                 'id' => $invoice->id,
                 'invoice_no' => $invoice->invoice_no,
-                'billing_month' => $invoice->billing_month ? Carbon::parse($invoice->billing_month)->format('F Y') : '--',
+                'billing_month' => $invoice->billing_month ? Carbon::parse($invoice->billing_month)->translatedFormat('F Y') : '--',
                 'type' => $invoice->type,
                 'type_label' => $invoice->type_label,
                 'subtotal' => (float) ($invoice->subtotal ?: $invoice->amount),
@@ -409,11 +420,11 @@ class TenantWholesaleBillingController extends Controller
                 'due_amount' => (float) $invoice->due_amount,
                 'payment_status' => $invoice->payment_status,
                 'payment_method' => $invoice->payment_method ?: '--',
-                'paid_at' => $invoice->paid_at ? Carbon::parse($invoice->paid_at)->format('d M, Y h:i A') : '--',
-                'period_start' => $invoice->period_start ? Carbon::parse($invoice->period_start)->format('d M, Y') : '--',
-                'period_end' => $invoice->period_end ? Carbon::parse($invoice->period_end)->format('d M, Y') : '--',
-                'due_date' => $invoice->due_date ? Carbon::parse($invoice->due_date)->format('d M, Y') : '--',
-                'created_at' => $invoice->created_at->format('d M, Y h:i A'),
+                'paid_at' => $invoice->paid_at ? Carbon::parse($invoice->paid_at)->translatedFormat('d M, Y h:i A') : '--',
+                'period_start' => $invoice->period_start ? Carbon::parse($invoice->period_start)->translatedFormat('d M, Y') : '--',
+                'period_end' => $invoice->period_end ? Carbon::parse($invoice->period_end)->translatedFormat('d M, Y') : '--',
+                'due_date' => $invoice->due_date ? Carbon::parse($invoice->due_date)->translatedFormat('d M, Y') : '--',
+                'created_at' => $invoice->created_at->translatedFormat('d M, Y h:i A'),
                 'notes' => $invoice->notes ?: '--',
                 'item_details' => $invoice->item_details ?: [],
                 'status_badge' => $invoice->status_badge,
@@ -429,7 +440,7 @@ class TenantWholesaleBillingController extends Controller
                     'wallet_balance' => (float) ($invoice->reseller?->wallet_balance ?: 0),
                     'credit_limit' => (float) ($invoice->reseller?->credit_limit ?: 0),
                 ],
-                'creator' => $invoice->creator?->name ?: 'System Administrator',
+                'creator' => $invoice->creator?->name ?: __('System Administrator'),
             ],
             'tenant' => [
                 'name' => $tenant->company_name ?? $tenant->name,
@@ -447,6 +458,7 @@ class TenantWholesaleBillingController extends Controller
     public function recordPayment(Request $request, int $id): JsonResponse|RedirectResponse
     {
         $tenant = $this->getTenant();
+        $currency = $tenant->currency_symbol ?? '৳';
         $user = Auth::user();
 
         $invoice = TenantResellerInvoice::where('tenant_id', $tenant->id)->findOrFail($id);
@@ -464,16 +476,19 @@ class TenantWholesaleBillingController extends Controller
 
         if ($invoice->payment_status === 'PAID') {
             if ($request->wantsJson()) {
-                return response()->json(['success' => false, 'message' => 'This invoice is already fully paid.'], 422);
+                return response()->json(['success' => false, 'message' => __('This invoice is already fully paid.')], 422);
             }
-            return back()->with('error', 'Invoice is already paid.');
+            return back()->with('error', __('Invoice is already paid.'));
         }
 
         // Wallet Balance Check
         if ($method === 'WALLET_DEDUCT') {
             $available = (float) $reseller->wallet_balance + (float) $reseller->credit_limit;
             if ($available < $amount) {
-                $msg = "Insufficient Sub-ISP wallet balance. Available: " . number_format($available, 2) . ", Required: " . number_format($amount, 2) . ". Please select Cash, Bank, or MFS payment method, or pay up to available balance.";
+                $msg = __('Insufficient Sub-ISP wallet balance. Available: :available, Required: :required. Please select Cash, Bank, or MFS payment method, or pay up to available balance.', [
+                    'available' => $currency . number_format($available, 2),
+                    'required' => $currency . number_format($amount, 2),
+                ]);
                 if ($request->wantsJson()) {
                     return response()->json([
                         'success' => false,
@@ -502,7 +517,10 @@ class TenantWholesaleBillingController extends Controller
                     'balance_after' => $balAfter,
                     'payment_method' => 'WALLET_DEDUCT',
                     'reference_no' => $invoice->invoice_no,
-                    'description' => "Payment for invoice {$invoice->invoice_no} (" . ($validated['transaction_ref'] ?? '') . ")",
+                    'description' => __('Payment for invoice :invoice_no (:ref)', [
+                        'invoice_no' => $invoice->invoice_no,
+                        'ref' => $validated['transaction_ref'] ?? '',
+                    ]),
                     'created_by' => $user?->id,
                 ]);
             }
@@ -522,7 +540,11 @@ class TenantWholesaleBillingController extends Controller
 
             DB::commit();
 
-            $msg = "Payment of ৳" . number_format($amount, 2) . " received for invoice {$invoice->invoice_no}. Status: {$newStatus}.";
+            $msg = __('Payment of :amount received for invoice :invoice_no. Status: :status.', [
+                'amount' => $currency . number_format($amount, 2),
+                'invoice_no' => $invoice->invoice_no,
+                'status' => $newStatus,
+            ]);
 
             if ($request->wantsJson()) {
                 return response()->json([
@@ -536,9 +558,9 @@ class TenantWholesaleBillingController extends Controller
         } catch (\Throwable $e) {
             DB::rollBack();
             if ($request->wantsJson()) {
-                return response()->json(['success' => false, 'message' => 'Payment recording failed: ' . $e->getMessage()], 500);
+                return response()->json(['success' => false, 'message' => __('Payment recording failed: :error', ['error' => $e->getMessage()])], 500);
             }
-            return back()->with('error', 'Payment recording failed: ' . $e->getMessage());
+            return back()->with('error', __('Payment recording failed: :error', ['error' => $e->getMessage()]));
         }
     }
 
@@ -552,17 +574,20 @@ class TenantWholesaleBillingController extends Controller
 
         if ($invoice->paid_amount > 0) {
             if ($request->wantsJson()) {
-                return response()->json(['success' => false, 'message' => 'Cannot cancel invoice with paid amounts. Please refund/reverse first.'], 422);
+                return response()->json(['success' => false, 'message' => __('Cannot cancel invoice with paid amounts. Please refund/reverse first.')], 422);
             }
-            return back()->with('error', 'Cannot cancel invoice with existing payments.');
+            return back()->with('error', __('Cannot cancel invoice with existing payments.'));
         }
 
         $invoice->update([
             'payment_status' => 'CANCELLED',
-            'notes' => ($invoice->notes ? $invoice->notes . " | " : '') . "Cancelled by " . (Auth::user()?->name ?: 'Admin') . " at " . now()->toDateTimeString(),
+            'notes' => ($invoice->notes ? $invoice->notes . " | " : '') . __('Cancelled by :user at :time', [
+                'user' => Auth::user()?->name ?: __('Admin'),
+                'time' => now()->translatedFormat('Y-m-d H:i:s'),
+            ]),
         ]);
 
-        $msg = "Wholesale invoice {$invoice->invoice_no} has been cancelled.";
+        $msg = __('Wholesale invoice :invoice_no has been cancelled.', ['invoice_no' => $invoice->invoice_no]);
 
         if ($request->wantsJson()) {
             return response()->json(['success' => true, 'message' => $msg]);
@@ -580,13 +605,13 @@ class TenantWholesaleBillingController extends Controller
         $invoice = TenantResellerInvoice::where('tenant_id', $tenant->id)->findOrFail($id);
 
         if ($invoice->payment_status === 'PAID') {
-            return back()->with('error', 'Paid invoices cannot be deleted.');
+            return back()->with('error', __('Paid invoices cannot be deleted.'));
         }
 
         $invoiceNo = $invoice->invoice_no;
         $invoice->delete();
 
-        $msg = "Wholesale invoice {$invoiceNo} deleted successfully.";
+        $msg = __('Wholesale invoice :invoice_no deleted successfully.', ['invoice_no' => $invoiceNo]);
 
         if (request()->wantsJson()) {
             return response()->json(['success' => true, 'message' => $msg]);
@@ -682,31 +707,31 @@ class TenantWholesaleBillingController extends Controller
         return response()->streamDownload(function () use ($invoices) {
             $handle = fopen('php://output', 'w');
             fputcsv($handle, [
-                'Invoice No',
-                'Sub-ISP Name',
-                'Sub-ISP Code',
-                'Billing Month',
-                'Invoice Type',
-                'Subtotal',
-                'Discount',
-                'VAT/Tax',
-                'Total Amount',
-                'Paid Amount',
-                'Due Amount',
-                'Payment Status',
-                'Payment Method',
-                'Due Date',
-                'Paid At',
-                'Created By',
-                'Notes',
+                __('Invoice No'),
+                __('Sub-ISP Name'),
+                __('Sub-ISP Code'),
+                __('Billing Month'),
+                __('Invoice Type'),
+                __('Subtotal'),
+                __('Discount'),
+                __('VAT/Tax'),
+                __('Total Amount'),
+                __('Paid Amount'),
+                __('Due Amount'),
+                __('Payment Status'),
+                __('Payment Method'),
+                __('Due Date'),
+                __('Paid At'),
+                __('Created By'),
+                __('Notes'),
             ]);
 
             foreach ($invoices as $inv) {
                 fputcsv($handle, [
                     $inv->invoice_no,
-                    $inv->reseller?->name ?? 'N/A',
-                    $inv->reseller?->code ?? 'N/A',
-                    $inv->billing_month ? Carbon::parse($inv->billing_month)->format('M Y') : 'N/A',
+                    $inv->reseller?->name ?? __('N/A'),
+                    $inv->reseller?->code ?? __('N/A'),
+                    $inv->billing_month ? Carbon::parse($inv->billing_month)->translatedFormat('M Y') : __('N/A'),
                     $inv->type_label,
                     $inv->subtotal,
                     $inv->discount,
@@ -715,10 +740,10 @@ class TenantWholesaleBillingController extends Controller
                     $inv->paid_amount,
                     $inv->due_amount,
                     $inv->payment_status,
-                    $inv->payment_method ?? 'N/A',
-                    $inv->due_date ? Carbon::parse($inv->due_date)->format('Y-m-d') : 'N/A',
-                    $inv->paid_at ? Carbon::parse($inv->paid_at)->format('Y-m-d H:i:s') : 'N/A',
-                    $inv->creator?->name ?? 'System',
+                    $inv->payment_method ?? __('N/A'),
+                    $inv->due_date ? Carbon::parse($inv->due_date)->format('Y-m-d') : __('N/A'),
+                    $inv->paid_at ? Carbon::parse($inv->paid_at)->format('Y-m-d H:i:s') : __('N/A'),
+                    $inv->creator?->name ?? __('System'),
                     $inv->notes ?? '',
                 ]);
             }

@@ -1,6 +1,6 @@
 @extends('tenant.layouts.app')
 
-@section('title', 'Financial Statements & General Ledger - ' . ($tenant->company_name ?? $tenant->name))
+@section('title', __('Financial Statements & General Ledger') . ' - ' . ($tenant->company_name ?? $tenant->name))
 
 @push('styles')
     {{-- Page specific CSS if needed --}}
@@ -15,20 +15,20 @@
             <div class="w-8 h-8 rounded-lg bg-cyan-50 border border-cyan-200 text-cyan-700 flex items-center justify-center font-bold text-sm shadow-2xs flex-shrink-0">
                 <i class="fas fa-book-open"></i>
             </div>
-            <h1 class="text-xs sm:text-sm font-bold text-slate-800 tracking-tight">Financial Statements &amp; General Ledger</h1>
+            <h1 class="text-xs sm:text-sm font-bold text-slate-800 tracking-tight">{{ __('Financial Statements & General Ledger') }}</h1>
         </div>
         
         <div class="flex items-center gap-1.5">
             <a href="{{ route('tenant.finance.ledger.export', request()->query()) }}" 
                class="h-[34px] py-0 px-3 inline-flex items-center gap-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-lg text-xs font-semibold shadow-2xs transition">
                 <i class="fas fa-file-csv text-emerald-600 text-[11px]"></i>
-                <span>Export CSV</span>
+                <span>{{ __('Export CSV') }}</span>
             </a>
             <a href="{{ route('tenant.finance.ledger.print', request()->query()) }}" 
                target="_blank" 
                class="h-[34px] py-0 px-3.5 inline-flex items-center gap-1.5 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs rounded-lg shadow-xs transition">
                 <i class="fas fa-print text-[11px]"></i>
-                <span>Print Statement</span>
+                <span>{{ __('Print Statement') }}</span>
             </a>
         </div>
     </div>
@@ -38,7 +38,7 @@
         {{-- Card 1: Gross Revenue / Inflow --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between gap-1.5">
             <div class="min-w-0">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Gross Revenue</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">{{ __('Gross Revenue') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-emerald-600 truncate">
                     @currency($kpi['gross_revenue'])
                 </span>
@@ -51,7 +51,7 @@
         {{-- Card 2: Upstream Bandwidth COGS --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between gap-1.5">
             <div class="min-w-0">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Upstream COGS</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">{{ __('Upstream COGS') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-indigo-700 truncate">
                     @currency($kpi['upstream_cogs'])
                 </span>
@@ -64,7 +64,7 @@
         {{-- Card 3: Gross Profit Margin % --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between gap-1.5">
             <div class="min-w-0">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Gross Margin</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">{{ __('Gross Margin') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-cyan-700 truncate">
                     {{ $kpi['gross_margin'] }}%
                 </span>
@@ -77,7 +77,7 @@
         {{-- Card 4: Operating Expenses (OPEX) --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between gap-1.5">
             <div class="min-w-0">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Operating OPEX</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">{{ __('Operating OPEX') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-rose-600 truncate">
                     @currency($kpi['operating_expenses'])
                 </span>
@@ -90,7 +90,7 @@
         {{-- Card 5: Net Profit (P&L) --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between gap-1.5">
             <div class="min-w-0">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Net Profit</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">{{ __('Net Profit') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block {{ $kpi['net_profit'] >= 0 ? 'text-emerald-700' : 'text-rose-700' }} truncate">
                     @currency($kpi['net_profit'])
                 </span>
@@ -103,7 +103,7 @@
         {{-- Card 6: Liquid Cash & Bank Position --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between gap-1.5">
             <div class="min-w-0">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Cash &amp; Bank Net</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">{{ __('Cash & Bank Net') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-slate-800 truncate">
                     @currency($kpi['cash_net'] + $kpi['bank_net'])
                 </span>
@@ -130,22 +130,22 @@
             <a href="{{ route('tenant.finance.ledger', array_merge(request()->query(), ['tab' => 'ledger'])) }}" 
                class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap {{ $tab === 'ledger' ? 'bg-cyan-50 text-cyan-800 border border-cyan-200' : 'text-slate-600 hover:bg-slate-50 border border-transparent' }}">
                 <i class="fas fa-list-ol text-[11px]"></i>
-                <span>General Ledger</span>
+                <span>{{ __('General Ledger') }}</span>
             </a>
             <a href="{{ route('tenant.finance.ledger', array_merge(request()->query(), ['tab' => 'pnl'])) }}" 
                class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap {{ $tab === 'pnl' ? 'bg-cyan-50 text-cyan-800 border border-cyan-200' : 'text-slate-600 hover:bg-slate-50 border border-transparent' }}">
                 <i class="fas fa-file-invoice-dollar text-[11px]"></i>
-                <span>Profit &amp; Loss Statement</span>
+                <span>{{ __('Profit & Loss Statement') }}</span>
             </a>
             <a href="{{ route('tenant.finance.ledger', array_merge(request()->query(), ['tab' => 'cashbook'])) }}" 
                class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap {{ $tab === 'cashbook' ? 'bg-cyan-50 text-cyan-800 border border-cyan-200' : 'text-slate-600 hover:bg-slate-50 border border-transparent' }}">
                 <i class="fas fa-vault text-[11px]"></i>
-                <span>Cash &amp; Bank Summary</span>
+                <span>{{ __('Cash & Bank Summary') }}</span>
             </a>
             <a href="{{ route('tenant.finance.ledger', array_merge(request()->query(), ['tab' => 'heads'])) }}" 
                class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap {{ $tab === 'heads' ? 'bg-cyan-50 text-cyan-800 border border-cyan-200' : 'text-slate-600 hover:bg-slate-50 border border-transparent' }}">
                 <i class="fas fa-tags text-[11px]"></i>
-                <span>Account Heads Summary</span>
+                <span>{{ __('Account Heads Summary') }}</span>
             </a>
         </div>
 
@@ -164,7 +164,7 @@
                     <input type="text" 
                            name="search" 
                            x-model="searchQuery" 
-                           placeholder="Search voucher, receipt, client, narrative..." 
+                           placeholder="{{ __('Search voucher, receipt, client, narrative...') }}" 
                            class="w-full h-[34px] pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs placeholder-slate-400 text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs">
                     <button type="button" 
                             x-show="searchQuery && searchQuery.length > 0" 
@@ -181,15 +181,15 @@
                             id="periodSelect"
                             onchange="handlePeriodChange(this.value); this.form.submit();"
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs cursor-pointer">
-                        <option value="today" {{ $period === 'today' ? 'selected' : '' }}>Today</option>
-                        <option value="yesterday" {{ $period === 'yesterday' ? 'selected' : '' }}>Yesterday</option>
-                        <option value="this_week" {{ $period === 'this_week' ? 'selected' : '' }}>This Week</option>
-                        <option value="this_month" {{ $period === 'this_month' ? 'selected' : '' }}>This Month</option>
-                        <option value="last_month" {{ $period === 'last_month' ? 'selected' : '' }}>Last Month</option>
-                        <option value="this_quarter" {{ $period === 'this_quarter' ? 'selected' : '' }}>This Quarter</option>
-                        <option value="this_year" {{ $period === 'this_year' ? 'selected' : '' }}>This Fiscal Year</option>
-                        <option value="custom" {{ $period === 'custom' ? 'selected' : '' }}>Custom Range</option>
-                        <option value="all" {{ $period === 'all' ? 'selected' : '' }}>All Time</option>
+                        <option value="today" {{ $period === 'today' ? 'selected' : '' }}>{{ __('Today') }}</option>
+                        <option value="yesterday" {{ $period === 'yesterday' ? 'selected' : '' }}>{{ __('Yesterday') }}</option>
+                        <option value="this_week" {{ $period === 'this_week' ? 'selected' : '' }}>{{ __('This Week') }}</option>
+                        <option value="this_month" {{ $period === 'this_month' ? 'selected' : '' }}>{{ __('This Month') }}</option>
+                        <option value="last_month" {{ $period === 'last_month' ? 'selected' : '' }}>{{ __('Last Month') }}</option>
+                        <option value="this_quarter" {{ $period === 'this_quarter' ? 'selected' : '' }}>{{ __('This Quarter') }}</option>
+                        <option value="this_year" {{ $period === 'this_year' ? 'selected' : '' }}>{{ __('This Fiscal Year') }}</option>
+                        <option value="custom" {{ $period === 'custom' ? 'selected' : '' }}>{{ __('Custom Range') }}</option>
+                        <option value="all" {{ $period === 'all' ? 'selected' : '' }}>{{ __('All Time') }}</option>
                     </select>
                 </div>
 
@@ -198,11 +198,11 @@
                     <select name="per_page" 
                             onchange="this.form.submit()"
                             class="w-full h-[34px] px-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs cursor-pointer">
-                        <option value="15" {{ request('per_page', '20') == '15' ? 'selected' : '' }}>15 / page</option>
-                        <option value="20" {{ request('per_page', '20') == '20' ? 'selected' : '' }}>20 / page</option>
-                        <option value="30" {{ request('per_page', '20') == '30' ? 'selected' : '' }}>30 / page</option>
-                        <option value="50" {{ request('per_page') == '50' ? 'selected' : '' }}>50 / page</option>
-                        <option value="100" {{ request('per_page') == '100' ? 'selected' : '' }}>100 / page</option>
+                        <option value="15" {{ request('per_page', '20') == '15' ? 'selected' : '' }}>{{ __(':count / page', ['count' => 15]) }}</option>
+                        <option value="20" {{ request('per_page', '20') == '20' ? 'selected' : '' }}>{{ __(':count / page', ['count' => 20]) }}</option>
+                        <option value="30" {{ request('per_page', '20') == '30' ? 'selected' : '' }}>{{ __(':count / page', ['count' => 30]) }}</option>
+                        <option value="50" {{ request('per_page') == '50' ? 'selected' : '' }}>{{ __(':count / page', ['count' => 50]) }}</option>
+                        <option value="100" {{ request('per_page') == '100' ? 'selected' : '' }}>{{ __(':count / page', ['count' => 100]) }}</option>
                     </select>
                 </div>
 
@@ -212,7 +212,7 @@
                         class="h-[34px] py-0 px-3 rounded-lg border text-xs font-semibold flex items-center justify-center gap-1.5 transition shadow-2xs cursor-pointer flex-shrink-0"
                         :class="showMoreFilters || {{ $isMoreOpen ? 'true' : 'false' }} ? 'bg-cyan-50/80 border-cyan-300 text-cyan-700' : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700'">
                     <i class="fas fa-sliders text-[11px]"></i>
-                    <span>More Filters</span>
+                    <span>{{ __('More Filters') }}</span>
                     @if($activeMoreCount > 0)
                         <span class="w-4 h-4 rounded-full bg-cyan-600 text-white text-[9px] font-bold flex items-center justify-center ml-0.5">
                             {{ $activeMoreCount }}
@@ -226,15 +226,15 @@
                 <div class="flex items-center gap-1.5 flex-shrink-0 md:ml-auto">
                     <button type="submit" 
                             class="h-[34px] py-0 px-3 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" 
-                            title="Apply Filters">
+                            title="{{ __('Apply Filters') }}">
                         <i class="fas fa-filter text-[10px]"></i>
-                        <span>Filter</span>
+                        <span>{{ __('Filter') }}</span>
                     </button>
                     <a href="{{ route('tenant.finance.ledger', ['tab' => $tab]) }}" 
                        class="h-[34px] py-0 px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer flex-shrink-0" 
-                       title="Reset All Filters">
+                       title="{{ __('Reset All Filters') }}">
                         <i class="fas fa-rotate-left text-[10px]"></i>
-                        <span>Reset</span>
+                        <span>{{ __('Reset') }}</span>
                     </a>
                 </div>
             </div>
@@ -255,13 +255,13 @@
                     <select name="method" 
                             onchange="this.form.submit()"
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs cursor-pointer">
-                        <option value="all">All Channels / Methods</option>
-                        <option value="cash" {{ request('method') === 'cash' ? 'selected' : '' }}>Cash</option>
-                        <option value="bank" {{ request('method') === 'bank' ? 'selected' : '' }}>Bank Wire / Transfer</option>
-                        <option value="bkash" {{ request('method') === 'bkash' ? 'selected' : '' }}>bKash</option>
-                        <option value="nagad" {{ request('method') === 'nagad' ? 'selected' : '' }}>Nagad</option>
-                        <option value="rocket" {{ request('method') === 'rocket' ? 'selected' : '' }}>Rocket</option>
-                        <option value="cheque" {{ request('method') === 'cheque' ? 'selected' : '' }}>Bank Cheque</option>
+                        <option value="all">{{ __('All Channels / Methods') }}</option>
+                        <option value="cash" {{ request('method') === 'cash' ? 'selected' : '' }}>{{ __('Cash') }}</option>
+                        <option value="bank" {{ request('method') === 'bank' ? 'selected' : '' }}>{{ __('Bank Wire / Transfer') }}</option>
+                        <option value="bkash" {{ request('method') === 'bkash' ? 'selected' : '' }}>{{ __('bKash') }}</option>
+                        <option value="nagad" {{ request('method') === 'nagad' ? 'selected' : '' }}>{{ __('Nagad') }}</option>
+                        <option value="rocket" {{ request('method') === 'rocket' ? 'selected' : '' }}>{{ __('Rocket') }}</option>
+                        <option value="cheque" {{ request('method') === 'cheque' ? 'selected' : '' }}>{{ __('Bank Cheque') }}</option>
                     </select>
                 </div>
 
@@ -271,7 +271,7 @@
                            name="date_from" 
                            id="dateFromInput"
                            value="{{ $dateFrom ?? ($startDate ? \Carbon\Carbon::parse($startDate)->format('Y-m-d') : '') }}" 
-                           title="From Date"
+                           title="{{ __('From Date') }}"
                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs">
                 </div>
 
@@ -281,7 +281,7 @@
                            name="date_to" 
                            id="dateToInput"
                            value="{{ $dateTo ?? ($endDate ? \Carbon\Carbon::parse($endDate)->format('Y-m-d') : '') }}" 
-                           title="To Date"
+                           title="{{ __('To Date') }}"
                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs">
                 </div>
             </div>
@@ -294,10 +294,10 @@
         <div class="bg-cyan-50/70 border border-cyan-200 rounded-lg px-3 py-2 flex items-center justify-between text-xs text-cyan-900">
             <div class="flex items-center gap-2">
                 <i class="fas fa-info-circle text-cyan-600"></i>
-                <span><strong>Reporting Period:</strong> {{ $periodLabel }}</span>
+                <span><strong>{{ __('Reporting Period:') }}</strong> {{ $periodLabel }}</span>
             </div>
             <div class="font-mono">
-                Opening Balance: <strong class="text-cyan-800">@currency($openingBalance['net'])</strong>
+                {{ __('Opening Balance:') }} <strong class="text-cyan-800">@currency($openingBalance['net'])</strong>
             </div>
         </div>
 
@@ -308,14 +308,14 @@
                     <thead>
                         <tr>
                             <th class="w-10 text-center font-semibold">#</th>
-                            <th class="w-32 text-center font-semibold">DATE &amp; TIME</th>
-                            <th class="w-32 text-center font-semibold">VOUCHER / REF</th>
-                            <th class="w-44 text-center font-semibold">ACCOUNT HEAD</th>
-                            <th class="text-center font-semibold">PARTICULARS / DESCRIPTION</th>
-                            <th class="w-28 text-center font-semibold">DEBIT (OUT -)</th>
-                            <th class="w-28 text-center font-semibold">CREDIT (IN +)</th>
-                            <th class="w-32 text-center font-semibold">BALANCE</th>
-                            <th class="w-12 text-center font-semibold no-sort">ACTION</th>
+                            <th class="w-32 text-center font-semibold">{{ __('DATE & TIME') }}</th>
+                            <th class="w-32 text-center font-semibold">{{ __('VOUCHER / REF') }}</th>
+                            <th class="w-44 text-center font-semibold">{{ __('ACCOUNT HEAD') }}</th>
+                            <th class="text-center font-semibold">{{ __('PARTICULARS / DESCRIPTION') }}</th>
+                            <th class="w-28 text-center font-semibold">{{ __('DEBIT (OUT -)') }}</th>
+                            <th class="w-28 text-center font-semibold">{{ __('CREDIT (IN +)') }}</th>
+                            <th class="w-32 text-center font-semibold">{{ __('BALANCE') }}</th>
+                            <th class="w-12 text-center font-semibold no-sort">{{ __('ACTION') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -390,8 +390,8 @@
                                             <i class="fas fa-receipt text-slate-400"></i>
                                         </div>
                                         <div class="space-y-0.5">
-                                            <h3 class="text-xs font-semibold text-slate-700">No Ledger Transactions Found</h3>
-                                            <p class="text-[11px] text-slate-400 font-normal">No financial ledger entries recorded matching the selected criteria.</p>
+                                            <h3 class="text-xs font-semibold text-slate-700">{{ __('No Ledger Transactions Found') }}</h3>
+                                            <p class="text-[11px] text-slate-400 font-normal">{{ __('No financial ledger entries recorded matching the selected criteria.') }}</p>
                                         </div>
                                     </div>
                                 </td>
@@ -418,17 +418,17 @@
                 <div class="bg-emerald-50/70 border-b border-emerald-100 px-4 py-2.5 flex items-center justify-between">
                     <div class="flex items-center gap-2">
                         <i class="fas fa-circle-arrow-down text-emerald-600 text-xs"></i>
-                        <span class="text-xs font-bold text-slate-800 uppercase tracking-wider">A. Revenue &amp; Incomes</span>
+                        <span class="text-xs font-bold text-slate-800 uppercase tracking-wider">{{ __('A. Revenue & Incomes') }}</span>
                     </div>
                     <span class="text-xs font-bold font-mono text-emerald-700">@currency($pnl['total_gross_revenue'])</span>
                 </div>
                 <div class="p-4 space-y-3 text-xs">
                     <div class="flex items-center justify-between py-1.5 border-b border-slate-100">
-                        <span class="text-slate-600">1. Customer Subscriptions</span>
+                        <span class="text-slate-600">{{ __('1. Customer Subscriptions') }}</span>
                         <span class="font-mono font-bold text-slate-800">@currency($pnl['retail_revenue'])</span>
                     </div>
                     <div class="flex items-center justify-between py-1.5 border-b border-slate-100">
-                        <span class="text-slate-600">2. Reseller Wholesale</span>
+                        <span class="text-slate-600">{{ __('2. Reseller Wholesale') }}</span>
                         <span class="font-mono font-bold text-slate-800">@currency($pnl['wholesale_revenue'])</span>
                     </div>
                     @foreach($pnl['direct_income_groups'] as $headName => $amount)
@@ -438,7 +438,7 @@
                         </div>
                     @endforeach
                     <div class="pt-2 flex items-center justify-between font-bold text-xs bg-emerald-50/50 p-2.5 rounded-lg border border-emerald-200/60">
-                        <span class="text-emerald-900 uppercase">Gross Revenue (A)</span>
+                        <span class="text-emerald-900 uppercase">{{ __('Gross Revenue (A)') }}</span>
                         <span class="font-mono text-emerald-700 text-sm">@currency($pnl['total_gross_revenue'])</span>
                     </div>
                 </div>
@@ -449,7 +449,7 @@
                 <div class="bg-indigo-50/70 border-b border-indigo-100 px-4 py-2.5 flex items-center justify-between">
                     <div class="flex items-center gap-2">
                         <i class="fas fa-tower-broadcast text-indigo-600 text-xs"></i>
-                        <span class="text-xs font-bold text-slate-800 uppercase tracking-wider">B. Upstream COGS</span>
+                        <span class="text-xs font-bold text-slate-800 uppercase tracking-wider">{{ __('B. Upstream COGS') }}</span>
                     </div>
                     <span class="text-xs font-bold font-mono text-indigo-700">@currency($pnl['total_cogs'])</span>
                 </div>
@@ -460,10 +460,10 @@
                             <span class="font-mono font-bold text-indigo-700">@currency($amount)</span>
                         </div>
                     @empty
-                        <div class="py-4 text-center text-slate-400">No upstream carrier disbursements in this period.</div>
+                        <div class="py-4 text-center text-slate-400">{{ __('No upstream carrier disbursements in this period.') }}</div>
                     @endforelse
                     <div class="pt-2 flex items-center justify-between font-bold text-xs bg-indigo-50/50 p-2.5 rounded-lg border border-indigo-200/60">
-                        <span class="text-indigo-900 uppercase">Total COGS (B)</span>
+                        <span class="text-indigo-900 uppercase">{{ __('Total COGS (B)') }}</span>
                         <span class="font-mono text-indigo-700 text-sm">@currency($pnl['total_cogs'])</span>
                     </div>
                 </div>
@@ -474,7 +474,7 @@
                 <div class="bg-rose-50/70 border-b border-rose-100 px-4 py-2.5 flex items-center justify-between">
                     <div class="flex items-center gap-2">
                         <i class="fas fa-circle-arrow-up text-rose-600 text-xs"></i>
-                        <span class="text-xs font-bold text-slate-800 uppercase tracking-wider">C. Operating OPEX</span>
+                        <span class="text-xs font-bold text-slate-800 uppercase tracking-wider">{{ __('C. Operating OPEX') }}</span>
                     </div>
                     <span class="text-xs font-bold font-mono text-rose-700">@currency($pnl['total_expenses'])</span>
                 </div>
@@ -485,10 +485,10 @@
                             <span class="font-mono font-bold text-rose-600">@currency($amount)</span>
                         </div>
                     @empty
-                        <div class="py-4 text-center text-slate-400">No operational expenses recorded in this period.</div>
+                        <div class="py-4 text-center text-slate-400">{{ __('No operational expenses recorded in this period.') }}</div>
                     @endforelse
                     <div class="pt-2 flex items-center justify-between font-bold text-xs bg-rose-50/50 p-2.5 rounded-lg border border-rose-200/60">
-                        <span class="text-rose-900 uppercase">Total OPEX (C)</span>
+                        <span class="text-rose-900 uppercase">{{ __('Total OPEX (C)') }}</span>
                         <span class="font-mono text-rose-700 text-sm">@currency($pnl['total_expenses'])</span>
                     </div>
                 </div>
@@ -499,13 +499,13 @@
         <div class="bg-white rounded-xl border border-slate-200 shadow-xs p-4 flex flex-wrap items-center justify-between gap-3">
             <div class="flex items-center gap-6">
                 <div>
-                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">Gross Profit (A - B)</span>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">{{ __('Gross Profit (A - B)') }}</span>
                     <span class="text-base font-bold font-mono text-cyan-700">
                         @currency($pnl['gross_profit']) <span class="text-xs font-normal text-slate-500">({{ $pnl['gross_margin'] }}%)</span>
                     </span>
                 </div>
                 <div class="border-l border-slate-200 pl-6">
-                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">Net Operating Profit (A - B - C)</span>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">{{ __('Net Operating Profit (A - B - C)') }}</span>
                     <span class="text-lg font-bold font-mono {{ $pnl['net_profit'] >= 0 ? 'text-emerald-700' : 'text-rose-700' }}">
                         @currency($pnl['net_profit']) <span class="text-xs font-normal text-slate-500">({{ $pnl['profit_margin'] }}%)</span>
                     </span>
@@ -515,7 +515,7 @@
                 <a href="{{ route('tenant.finance.ledger.print', array_merge(request()->query(), ['tab' => 'pnl'])) }}" 
                    target="_blank" 
                    class="px-3.5 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs transition shadow-2xs">
-                    <i class="fas fa-print mr-1"></i> Print P&amp;L Statement
+                    <i class="fas fa-print mr-1"></i> {{ __('Print P&L Statement') }}
                 </a>
             </div>
         </div>
@@ -531,7 +531,7 @@
                         <div class="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center text-xs">
                             <i class="fas fa-money-bill-wave"></i>
                         </div>
-                        <h3 class="text-xs font-bold text-slate-800">Physical Cash Book</h3>
+                        <h3 class="text-xs font-bold text-slate-800">{{ __('Physical Cash Book') }}</h3>
                     </div>
                     <span class="font-mono font-bold text-xs {{ $cashbook['cash_net'] >= 0 ? 'text-emerald-700' : 'text-rose-700' }}">
                         @currency($cashbook['cash_net'])
@@ -539,15 +539,15 @@
                 </div>
                 <div class="space-y-2 text-xs">
                     <div class="flex items-center justify-between py-1 border-b border-slate-50">
-                        <span class="text-slate-600">Total Cash Inflow (Payments + OTC)</span>
+                        <span class="text-slate-600">{{ __('Total Cash Inflow (Payments + OTC)') }}</span>
                         <span class="font-mono font-bold text-emerald-600">+@currency($cashbook['cash_in'])</span>
                     </div>
                     <div class="flex items-center justify-between py-1 border-b border-slate-50">
-                        <span class="text-slate-600">Total Cash Outflow (Disbursements)</span>
+                        <span class="text-slate-600">{{ __('Total Cash Outflow (Disbursements)') }}</span>
                         <span class="font-mono font-bold text-rose-600">-@currency($cashbook['cash_out'])</span>
                     </div>
                     <div class="p-2.5 rounded-lg bg-amber-50/60 border border-amber-200 flex items-center justify-between font-bold">
-                        <span class="text-amber-900">Net Physical Cash in Hand:</span>
+                        <span class="text-amber-900">{{ __('Net Physical Cash in Hand:') }}</span>
                         <span class="font-mono text-amber-800 text-sm">@currency($cashbook['cash_net'])</span>
                     </div>
                 </div>
@@ -560,7 +560,7 @@
                         <div class="w-7 h-7 rounded-lg bg-cyan-50 text-cyan-600 border border-cyan-200 flex items-center justify-center text-xs">
                             <i class="fas fa-building-columns"></i>
                         </div>
-                        <h3 class="text-xs font-bold text-slate-800">Bank &amp; MFS Book</h3>
+                        <h3 class="text-xs font-bold text-slate-800">{{ __('Bank & MFS Book') }}</h3>
                     </div>
                     <span class="font-mono font-bold text-xs {{ $cashbook['bank_net'] >= 0 ? 'text-blue-700' : 'text-rose-700' }}">
                         @currency($cashbook['bank_net'])
@@ -568,15 +568,15 @@
                 </div>
                 <div class="space-y-2 text-xs">
                     <div class="flex items-center justify-between py-1 border-b border-slate-50">
-                        <span class="text-slate-600">Total Bank &amp; MFS Deposits (Wholesale + Online)</span>
+                        <span class="text-slate-600">{{ __('Total Bank & MFS Deposits (Wholesale + Online)') }}</span>
                         <span class="font-mono font-bold text-emerald-600">+@currency($cashbook['bank_in'])</span>
                     </div>
                     <div class="flex items-center justify-between py-1 border-b border-slate-50">
-                        <span class="text-slate-600">Total Bank Disbursements (Bandwidth, Rent)</span>
+                        <span class="text-slate-600">{{ __('Total Bank Disbursements (Bandwidth, Rent)') }}</span>
                         <span class="font-mono font-bold text-rose-600">-@currency($cashbook['bank_out'])</span>
                     </div>
                     <div class="p-2.5 rounded-lg bg-cyan-50/60 border border-cyan-200 flex items-center justify-between font-bold">
-                        <span class="text-cyan-900">Net Bank &amp; MFS Position:</span>
+                        <span class="text-cyan-900">{{ __('Net Bank & MFS Position:') }}</span>
                         <span class="font-mono text-cyan-800 text-sm">@currency($cashbook['bank_net'])</span>
                     </div>
                 </div>
@@ -592,12 +592,12 @@
                     <thead>
                         <tr>
                             <th class="w-10 text-center font-semibold">#</th>
-                            <th class="w-28 text-center font-semibold">HEAD CODE</th>
-                            <th class="text-center font-semibold">ACCOUNT HEAD TITLE</th>
-                            <th class="w-24 text-center font-semibold">TYPE</th>
-                            <th class="w-32 text-center font-semibold">DEBIT (EXPENSE)</th>
-                            <th class="w-32 text-center font-semibold">CREDIT (REVENUE)</th>
-                            <th class="w-32 text-center font-semibold">NET TOTAL</th>
+                            <th class="w-28 text-center font-semibold">{{ __('HEAD CODE') }}</th>
+                            <th class="text-center font-semibold">{{ __('ACCOUNT HEAD TITLE') }}</th>
+                            <th class="w-24 text-center font-semibold">{{ __('TYPE') }}</th>
+                            <th class="w-32 text-center font-semibold">{{ __('DEBIT (EXPENSE)') }}</th>
+                            <th class="w-32 text-center font-semibold">{{ __('CREDIT (REVENUE)') }}</th>
+                            <th class="w-32 text-center font-semibold">{{ __('NET TOTAL') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -608,7 +608,7 @@
                                 <td class="font-medium text-slate-800">{{ $h['name'] }}</td>
                                 <td>
                                     <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase {{ $h['type'] === 'income' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200' }}">
-                                        {{ $h['type'] }}
+                                        {{ $h['type'] === 'income' ? __('Income') : __('Expense') }}
                                     </span>
                                 </td>
                                 <td class="text-right font-mono font-semibold text-rose-600">
@@ -623,7 +623,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="text-center py-6 text-slate-400">No account heads registered.</td>
+                                <td colspan="7" class="text-center py-6 text-slate-400">{{ __('No account heads registered.') }}</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -643,14 +643,14 @@
                 @click="viewEntry(activeMenu); activeMenu = null" 
                 class="w-full text-left px-3 py-1.5 text-slate-700 hover:bg-slate-50 flex items-center gap-2">
             <i class="fas fa-eye text-cyan-600 w-3.5"></i>
-            <span>View Details</span>
+            <span>{{ __('View Details') }}</span>
         </button>
 
         <button type="button" 
                 @click="copyRef(activeMenu); activeMenu = null" 
                 class="w-full text-left px-3 py-1.5 text-slate-700 hover:bg-slate-50 flex items-center gap-2">
             <i class="fas fa-copy text-slate-500 w-3.5"></i>
-            <span>Copy Reference</span>
+            <span>{{ __('Copy Reference') }}</span>
         </button>
 
         <a :href="'{{ route('tenant.finance.ledger.print') }}?search=' + encodeURIComponent(activeMenu?.ref_no || '')" 
@@ -658,7 +658,7 @@
            @click="activeMenu = null"
            class="w-full text-left px-3 py-1.5 text-slate-700 hover:bg-slate-50 flex items-center gap-2">
             <i class="fas fa-print text-blue-600 w-3.5"></i>
-            <span>Print Entry</span>
+            <span>{{ __('Print Entry') }}</span>
         </a>
     </div>
 
@@ -676,7 +676,7 @@
                         <i class="fas fa-file-invoice"></i>
                     </div>
                     <div>
-                        <h3 class="text-xs font-semibold text-slate-800">Ledger Entry Details</h3>
+                        <h3 class="text-xs font-semibold text-slate-800">{{ __('Ledger Entry Details') }}</h3>
                         <p class="text-[10.5px] text-slate-500 font-normal font-mono" x-text="selectedEntry?.ref_no"></p>
                     </div>
                 </div>
@@ -689,38 +689,38 @@
             <div class="p-4 space-y-3 text-xs" x-show="selectedEntry">
                 <div class="grid grid-cols-2 gap-2">
                     <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200/80">
-                        <span class="text-[10px] uppercase font-bold text-slate-400 block">Ledger Classification</span>
+                        <span class="text-[10px] uppercase font-bold text-slate-400 block">{{ __('Ledger Classification') }}</span>
                         <span class="font-bold text-slate-800 text-xs mt-0.5 block" x-text="selectedEntry?.category"></span>
                     </div>
                     <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200/80">
-                        <span class="text-[10px] uppercase font-bold text-slate-400 block">Amount</span>
+                        <span class="text-[10px] uppercase font-bold text-slate-400 block">{{ __('Amount') }}</span>
                         <span class="font-bold font-mono text-sm mt-0.5 block" 
                               :class="selectedEntry?.type === 'credit' ? 'text-emerald-600' : 'text-rose-600'" 
-                              x-text="(selectedEntry?.type === 'credit' ? '+' : '-') + '{{ $currencySymbol }} ' + Number(selectedEntry?.amount || 0).toLocaleString('en-US', {minimumFractionDigits: 2})"></span>
+                              x-text="(selectedEntry?.type === 'credit' ? '+' : '-') + @js($currencySymbol ?? '৳') + ' ' + Number(selectedEntry?.amount || 0).toLocaleString('en-US', {minimumFractionDigits: 2})"></span>
                     </div>
                 </div>
 
                 <div class="space-y-1.5 p-3 bg-slate-50 rounded-lg border border-slate-200/80">
                     <div class="flex items-center justify-between text-xs py-0.5">
-                        <span class="text-slate-500">Party / Subscriber / Payee:</span>
+                        <span class="text-slate-500">{{ __('Party / Subscriber / Payee:') }}</span>
                         <span class="font-semibold text-slate-800" x-text="selectedEntry?.party"></span>
                     </div>
                     <div class="flex items-center justify-between text-xs py-0.5">
-                        <span class="text-slate-500">Payment Channel:</span>
+                        <span class="text-slate-500">{{ __('Payment Channel:') }}</span>
                         <span class="font-mono uppercase font-bold text-slate-700" x-text="selectedEntry?.payment_method"></span>
                     </div>
                     <div class="flex items-center justify-between text-xs py-0.5">
-                        <span class="text-slate-500">Posting Date &amp; Time:</span>
+                        <span class="text-slate-500">{{ __('Posting Date & Time:') }}</span>
                         <span class="font-mono text-slate-700" x-text="selectedEntry?.date"></span>
                     </div>
                     <div class="flex items-center justify-between text-xs py-0.5">
-                        <span class="text-slate-500">Transaction Status:</span>
+                        <span class="text-slate-500">{{ __('Transaction Status:') }}</span>
                         <span class="font-bold uppercase text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800" x-text="selectedEntry?.status"></span>
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Particulars / Narrative Note</label>
+                    <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">{{ __('Particulars / Narrative Note') }}</label>
                     <p class="p-2.5 bg-slate-50 rounded-lg border border-slate-200 text-slate-700 text-xs font-normal" x-text="selectedEntry?.description"></p>
                 </div>
             </div>
@@ -731,10 +731,10 @@
                    target="_blank" 
                    class="bg-cyan-600 hover:bg-cyan-700 text-white font-medium text-xs px-3.5 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow-2xs">
                     <i class="fas fa-print"></i>
-                    <span>Print This Entry</span>
+                    <span>{{ __('Print This Entry') }}</span>
                 </a>
                 <button type="button" @click="showEntryModal = false" class="border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs px-3.5 py-1.5 rounded-lg transition">
-                    Close
+                    {{ __('Close') }}
                 </button>
             </div>
         </div>
@@ -848,7 +848,7 @@ function financialLedgerManager() {
                     toast: true,
                     position: 'top-end',
                     icon: 'success',
-                    title: `Reference ${entry.ref_no} copied to clipboard!`,
+                    title: @json(__('Reference :ref copied to clipboard!')).replace(':ref', entry.ref_no),
                     showConfirmButton: false,
                     timer: 2500,
                     timerProgressBar: true,

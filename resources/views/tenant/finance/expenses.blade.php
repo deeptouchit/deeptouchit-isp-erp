@@ -1,6 +1,6 @@
 @extends('tenant.layouts.app')
 
-@section('title', 'Income & Expense Accounts - ' . ($tenant->company_name ?? $tenant->name))
+@section('title', __('Income & Expense Accounts') . ' - ' . ($tenant->company_name ?? $tenant->name))
 
 @push('styles')
 <style>
@@ -38,28 +38,28 @@
             <div class="w-8 h-8 rounded-lg bg-cyan-50 border border-cyan-200 text-cyan-700 flex items-center justify-center font-bold text-sm shadow-2xs flex-shrink-0">
                 <i class="fas fa-money-bill-transfer"></i>
             </div>
-            <h1 class="text-xs sm:text-sm font-bold text-slate-800 tracking-tight">Income &amp; Expense Accounts</h1>
+            <h1 class="text-xs sm:text-sm font-bold text-slate-800 tracking-tight">{{ __('Income & Expense Accounts') }}</h1>
         </div>
 
         <div class="flex items-center gap-1.5 flex-wrap">
             <button type="button" @click="openVoucherModal('EXPENSE')" class="h-[34px] py-0 px-3 inline-flex items-center gap-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-semibold shadow-xs transition cursor-pointer">
                 <i class="fas fa-minus-circle text-[11px]"></i>
-                <span>Record Expense</span>
+                <span>{{ __('Record Expense') }}</span>
             </button>
 
             <button type="button" @click="openVoucherModal('INCOME')" class="h-[34px] py-0 px-3 inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-xs transition cursor-pointer">
                 <i class="fas fa-plus-circle text-[11px]"></i>
-                <span>Record Income</span>
+                <span>{{ __('Record Income') }}</span>
             </button>
 
             <button type="button" @click="showCategoryModal = true" class="h-[34px] py-0 px-3 inline-flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 rounded-lg text-xs font-semibold shadow-2xs transition cursor-pointer">
                 <i class="fas fa-folder-tree text-indigo-600 text-[11px]"></i>
-                <span>Chart of Accounts</span>
+                <span>{{ __('Chart of Accounts') }}</span>
             </button>
 
             <a href="{{ route('tenant.finance.expenses.export', request()->all()) }}" class="h-[34px] py-0 px-3 inline-flex items-center gap-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-lg text-xs font-semibold shadow-2xs transition">
                 <i class="fas fa-file-excel text-emerald-600 text-[11px]"></i>
-                <span>Export CSV</span>
+                <span>{{ __('Export CSV') }}</span>
             </a>
         </div>
     </div>
@@ -69,7 +69,7 @@
         {{-- Card 1: Total Expenses --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between gap-2">
             <div class="min-w-0">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Total Expenses</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Total Expenses') }}</span>
                 <span class="text-[13px] font-bold font-mono text-rose-700 leading-tight block truncate">@currency($totalExpenses)</span>
             </div>
             <div class="w-6 h-6 rounded-md bg-rose-50 border border-rose-100 text-rose-600 flex items-center justify-center text-[10px] flex-shrink-0">
@@ -80,7 +80,7 @@
         {{-- Card 2: Customer Collections --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between gap-2">
             <div class="min-w-0">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Customer Collections</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Customer Collections') }}</span>
                 <span class="text-[13px] font-bold font-mono text-emerald-700 leading-tight block truncate">@currency($customerCollections)</span>
             </div>
             <div class="w-6 h-6 rounded-md bg-emerald-50 border border-emerald-100 text-emerald-600 flex items-center justify-center text-[10px] flex-shrink-0">
@@ -91,7 +91,7 @@
         {{-- Card 3: Wholesale & Direct --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between gap-2">
             <div class="min-w-0">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Wholesale &amp; Direct</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Wholesale & Direct') }}</span>
                 <span class="text-[13px] font-bold font-mono text-cyan-800 leading-tight block truncate">@currency($wholesaleAndDirect)</span>
             </div>
             <div class="w-6 h-6 rounded-md bg-cyan-50 border border-cyan-100 text-cyan-700 flex items-center justify-center text-[10px] flex-shrink-0">
@@ -102,7 +102,7 @@
         {{-- Card 4: Gross Total Income --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between gap-2">
             <div class="min-w-0">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Gross Total Income</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Gross Total Income') }}</span>
                 <span class="text-[13px] font-bold font-mono text-emerald-700 leading-tight block truncate">@currency($grossTotalIncome)</span>
             </div>
             <div class="w-6 h-6 rounded-md bg-emerald-50 border border-emerald-100 text-emerald-600 flex items-center justify-center text-[10px] flex-shrink-0">
@@ -113,7 +113,7 @@
         {{-- Card 5: Real Net Cash Flow --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between gap-2">
             <div class="min-w-0">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Real Net Cash Flow</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Real Net Cash Flow') }}</span>
                 <span class="text-[13px] font-bold font-mono {{ $realNetCashFlow >= 0 ? 'text-teal-700' : 'text-rose-700' }} leading-tight block truncate">
                     @currency($realNetCashFlow)
                 </span>
@@ -126,7 +126,7 @@
         {{-- Card 6: Chart Categories --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between gap-2">
             <div class="min-w-0">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Account Heads</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Account Heads') }}</span>
                 <span class="text-[13px] font-bold font-mono text-purple-700 leading-tight block truncate">{{ number_format($categoriesCount) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md bg-purple-50 border border-purple-100 text-purple-600 flex items-center justify-center text-[10px] flex-shrink-0">
@@ -161,7 +161,7 @@
                     <input type="text" 
                            name="search" 
                            x-model="searchQuery" 
-                           placeholder="Voucher #, Title, Payee, Ref..." 
+                           placeholder="{{ __('Voucher #, Title, Payee, Ref...') }}" 
                            class="w-full h-[34px] pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs placeholder-slate-400 text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs">
                     <button type="button" 
                             x-show="searchQuery && searchQuery.length > 0" 
@@ -177,12 +177,12 @@
                     <select name="type" 
                             onchange="this.form.submit()"
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs cursor-pointer">
-                        <option value="all" {{ $selectedType === 'all' ? 'selected' : '' }}>All Transactions</option>
-                        <option value="EXPENSE" {{ $selectedType === 'EXPENSE' ? 'selected' : '' }}>Expenses &amp; Upstream (Debit)</option>
-                        <option value="INCOME" {{ $selectedType === 'INCOME' ? 'selected' : '' }}>All Revenues &amp; Incomes (Credit)</option>
-                        <option value="CUSTOMER_COLLECTION" {{ $selectedType === 'CUSTOMER_COLLECTION' ? 'selected' : '' }}>Retail Customer Billing</option>
-                        <option value="WHOLESALE" {{ $selectedType === 'WHOLESALE' ? 'selected' : '' }}>Reseller Wholesale Billing</option>
-                        <option value="DIRECT_INCOME" {{ $selectedType === 'DIRECT_INCOME' ? 'selected' : '' }}>Direct Other Incomes</option>
+                        <option value="all" {{ $selectedType === 'all' ? 'selected' : '' }}>{{ __('All Transactions') }}</option>
+                        <option value="EXPENSE" {{ $selectedType === 'EXPENSE' ? 'selected' : '' }}>{{ __('Expenses & Upstream (Debit)') }}</option>
+                        <option value="INCOME" {{ $selectedType === 'INCOME' ? 'selected' : '' }}>{{ __('All Revenues & Incomes (Credit)') }}</option>
+                        <option value="CUSTOMER_COLLECTION" {{ $selectedType === 'CUSTOMER_COLLECTION' ? 'selected' : '' }}>{{ __('Retail Customer Billing') }}</option>
+                        <option value="WHOLESALE" {{ $selectedType === 'WHOLESALE' ? 'selected' : '' }}>{{ __('Reseller Wholesale Billing') }}</option>
+                        <option value="DIRECT_INCOME" {{ $selectedType === 'DIRECT_INCOME' ? 'selected' : '' }}>{{ __('Direct Other Incomes') }}</option>
                     </select>
                 </div>
 
@@ -192,13 +192,13 @@
                             id="periodSelect"
                             onchange="handlePeriodChange(this.value); this.form.submit();"
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs cursor-pointer">
-                        <option value="all" {{ ($period ?? '') === 'all' || empty($period) ? 'selected' : '' }}>All Dates</option>
-                        <option value="today" {{ ($period ?? '') === 'today' ? 'selected' : '' }}>Today</option>
-                        <option value="yesterday" {{ ($period ?? '') === 'yesterday' ? 'selected' : '' }}>Yesterday</option>
-                        <option value="this_week" {{ ($period ?? '') === 'this_week' ? 'selected' : '' }}>This Week</option>
-                        <option value="this_month" {{ ($period ?? '') === 'this_month' ? 'selected' : '' }}>This Month</option>
-                        <option value="last_month" {{ ($period ?? '') === 'last_month' ? 'selected' : '' }}>Last Month</option>
-                        <option value="custom" {{ ($period ?? '') === 'custom' ? 'selected' : '' }}>Custom Range</option>
+                        <option value="all" {{ ($period ?? '') === 'all' || empty($period) ? 'selected' : '' }}>{{ __('All Dates') }}</option>
+                        <option value="today" {{ ($period ?? '') === 'today' ? 'selected' : '' }}>{{ __('Today') }}</option>
+                        <option value="yesterday" {{ ($period ?? '') === 'yesterday' ? 'selected' : '' }}>{{ __('Yesterday') }}</option>
+                        <option value="this_week" {{ ($period ?? '') === 'this_week' ? 'selected' : '' }}>{{ __('This Week') }}</option>
+                        <option value="this_month" {{ ($period ?? '') === 'this_month' ? 'selected' : '' }}>{{ __('This Month') }}</option>
+                        <option value="last_month" {{ ($period ?? '') === 'last_month' ? 'selected' : '' }}>{{ __('Last Month') }}</option>
+                        <option value="custom" {{ ($period ?? '') === 'custom' ? 'selected' : '' }}>{{ __('Custom Range') }}</option>
                     </select>
                 </div>
 
@@ -207,11 +207,11 @@
                     <select name="per_page" 
                             onchange="this.form.submit()"
                             class="w-full h-[34px] px-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs cursor-pointer">
-                        <option value="15" {{ $perPage == 15 ? 'selected' : '' }}>15 / page</option>
-                        <option value="20" {{ $perPage == 20 ? 'selected' : '' }}>20 / page</option>
-                        <option value="30" {{ $perPage == 30 ? 'selected' : '' }}>30 / page</option>
-                        <option value="50" {{ $perPage == 50 ? 'selected' : '' }}>50 / page</option>
-                        <option value="100" {{ $perPage == 100 ? 'selected' : '' }}>100 / page</option>
+                        <option value="15" {{ $perPage == 15 ? 'selected' : '' }}>{{ __(':count / page', ['count' => 15]) }}</option>
+                        <option value="20" {{ $perPage == 20 ? 'selected' : '' }}>{{ __(':count / page', ['count' => 20]) }}</option>
+                        <option value="30" {{ $perPage == 30 ? 'selected' : '' }}>{{ __(':count / page', ['count' => 30]) }}</option>
+                        <option value="50" {{ $perPage == 50 ? 'selected' : '' }}>{{ __(':count / page', ['count' => 50]) }}</option>
+                        <option value="100" {{ $perPage == 100 ? 'selected' : '' }}>{{ __(':count / page', ['count' => 100]) }}</option>
                     </select>
                 </div>
 
@@ -221,7 +221,7 @@
                         class="h-[34px] py-0 px-3 rounded-lg border text-xs font-semibold flex items-center justify-center gap-1.5 transition shadow-2xs cursor-pointer flex-shrink-0"
                         :class="showMoreFilters || {{ $isMoreOpen ? 'true' : 'false' }} ? 'bg-cyan-50/80 border-cyan-300 text-cyan-700' : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700'">
                     <i class="fas fa-sliders text-[11px]"></i>
-                    <span>More Filters</span>
+                    <span>{{ __('More Filters') }}</span>
                     @if($activeMoreCount > 0)
                         <span class="w-4 h-4 rounded-full bg-cyan-600 text-white text-[9px] font-bold flex items-center justify-center ml-0.5">
                             {{ $activeMoreCount }}
@@ -235,15 +235,15 @@
                 <div class="flex items-center gap-1.5 flex-shrink-0 md:ml-auto">
                     <button type="submit" 
                             class="h-[34px] py-0 px-3 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" 
-                            title="Apply Filters">
+                            title="{{ __('Apply Filters') }}">
                         <i class="fas fa-filter text-[10px]"></i>
-                        <span>Filter</span>
+                        <span>{{ __('Filter') }}</span>
                     </button>
                     <a href="{{ route('tenant.finance.expenses') }}" 
                        class="h-[34px] py-0 px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer flex-shrink-0" 
-                       title="Reset All Filters">
+                       title="{{ __('Reset All Filters') }}">
                         <i class="fas fa-rotate-left text-[10px]"></i>
-                        <span>Reset</span>
+                        <span>{{ __('Reset') }}</span>
                     </a>
                 </div>
             </div>
@@ -264,15 +264,15 @@
                     <select name="category_id" 
                             onchange="this.form.submit()"
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs cursor-pointer">
-                        <option value="all">All Account Heads</option>
-                        <optgroup label="Expense Heads">
+                        <option value="all">{{ __('All Account Heads') }}</option>
+                        <optgroup label="{{ __('Expense Heads') }}">
                             @foreach($allCategories->where('type', 'EXPENSE') as $c)
                                 <option value="{{ $c->id }}" {{ $selectedCategory == (string)$c->id ? 'selected' : '' }}>
                                     {{ $c->name }}
                                 </option>
                             @endforeach
                         </optgroup>
-                        <optgroup label="Income Heads">
+                        <optgroup label="{{ __('Income Heads') }}">
                             @foreach($allCategories->where('type', 'INCOME') as $c)
                                 <option value="{{ $c->id }}" {{ $selectedCategory == (string)$c->id ? 'selected' : '' }}>
                                     {{ $c->name }}
@@ -287,13 +287,13 @@
                     <select name="method" 
                             onchange="this.form.submit()"
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs cursor-pointer">
-                        <option value="all" {{ $selectedMethod === 'all' ? 'selected' : '' }}>All Methods</option>
-                        <option value="CASH" {{ $selectedMethod === 'CASH' ? 'selected' : '' }}>Cash</option>
-                        <option value="BANK" {{ $selectedMethod === 'BANK' ? 'selected' : '' }}>Bank Wire</option>
-                        <option value="BKASH" {{ $selectedMethod === 'BKASH' ? 'selected' : '' }}>bKash</option>
-                        <option value="NAGAD" {{ $selectedMethod === 'NAGAD' ? 'selected' : '' }}>Nagad</option>
-                        <option value="CHEQUE" {{ $selectedMethod === 'CHEQUE' ? 'selected' : '' }}>Cheque</option>
-                        <option value="PETTY_CASH" {{ $selectedMethod === 'PETTY_CASH' ? 'selected' : '' }}>Petty Cash</option>
+                        <option value="all" {{ $selectedMethod === 'all' ? 'selected' : '' }}>{{ __('All Methods') }}</option>
+                        <option value="CASH" {{ $selectedMethod === 'CASH' ? 'selected' : '' }}>{{ __('Cash') }}</option>
+                        <option value="BANK" {{ $selectedMethod === 'BANK' ? 'selected' : '' }}>{{ __('Bank Wire') }}</option>
+                        <option value="BKASH" {{ $selectedMethod === 'BKASH' ? 'selected' : '' }}>{{ __('bKash') }}</option>
+                        <option value="NAGAD" {{ $selectedMethod === 'NAGAD' ? 'selected' : '' }}>{{ __('Nagad') }}</option>
+                        <option value="CHEQUE" {{ $selectedMethod === 'CHEQUE' ? 'selected' : '' }}>{{ __('Cheque') }}</option>
+                        <option value="PETTY_CASH" {{ $selectedMethod === 'PETTY_CASH' ? 'selected' : '' }}>{{ __('Petty Cash') }}</option>
                     </select>
                 </div>
 
@@ -302,10 +302,10 @@
                     <select name="status" 
                             onchange="this.form.submit()"
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs cursor-pointer">
-                        <option value="all" {{ $selectedStatus === 'all' ? 'selected' : '' }}>All Status</option>
-                        <option value="APPROVED" {{ $selectedStatus === 'APPROVED' ? 'selected' : '' }}>Approved</option>
-                        <option value="PENDING" {{ $selectedStatus === 'PENDING' ? 'selected' : '' }}>Pending</option>
-                        <option value="REJECTED" {{ $selectedStatus === 'REJECTED' ? 'selected' : '' }}>Rejected</option>
+                        <option value="all" {{ $selectedStatus === 'all' ? 'selected' : '' }}>{{ __('All Status') }}</option>
+                        <option value="APPROVED" {{ $selectedStatus === 'APPROVED' ? 'selected' : '' }}>{{ __('Approved') }}</option>
+                        <option value="PENDING" {{ $selectedStatus === 'PENDING' ? 'selected' : '' }}>{{ __('Pending') }}</option>
+                        <option value="REJECTED" {{ $selectedStatus === 'REJECTED' ? 'selected' : '' }}>{{ __('Rejected') }}</option>
                     </select>
                 </div>
 
@@ -315,7 +315,7 @@
                            name="date_from" 
                            id="dateFromInput"
                            value="{{ $dateFrom }}" 
-                           title="From Date"
+                           title="{{ __('From Date') }}"
                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs">
                 </div>
 
@@ -325,7 +325,7 @@
                            name="date_to" 
                            id="dateToInput"
                            value="{{ $dateTo }}" 
-                           title="To Date"
+                           title="{{ __('To Date') }}"
                            class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs">
                 </div>
             </div>
@@ -339,13 +339,13 @@
                 <thead>
                     <tr>
                         <th class="w-10 text-center font-semibold">#</th>
-                        <th class="w-32 text-center font-semibold">VOUCHER #</th>
-                        <th class="w-44 text-center font-semibold">ACCOUNT HEAD</th>
-                        <th class="text-center font-semibold">DESCRIPTION / PARTICULARS</th>
-                        <th class="w-32 text-center font-semibold">AMOUNT</th>
-                        <th class="w-24 text-center font-semibold">STATUS</th>
-                        <th class="w-28 text-center font-semibold">DATE</th>
-                        <th class="no-sort w-12 text-center font-semibold">ACTION</th>
+                        <th class="w-32 text-center font-semibold">{{ __('VOUCHER #') }}</th>
+                        <th class="w-44 text-center font-semibold">{{ __('ACCOUNT HEAD') }}</th>
+                        <th class="text-center font-semibold">{{ __('DESCRIPTION / PARTICULARS') }}</th>
+                        <th class="w-32 text-center font-semibold">{{ __('AMOUNT') }}</th>
+                        <th class="w-24 text-center font-semibold">{{ __('STATUS') }}</th>
+                        <th class="w-28 text-center font-semibold">{{ __('DATE') }}</th>
+                        <th class="no-sort w-12 text-center font-semibold">{{ __('ACTION') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -363,7 +363,7 @@
 
                             {{-- Account Head / Category --}}
                             <td class="text-left whitespace-nowrap">
-                                <span class="font-medium text-slate-800">{{ $v->category_name ?? ($v->category?->name ?? 'General Head') }}</span>
+                                <span class="font-medium text-slate-800">{{ $v->category_name ?? ($v->category?->name ?? __('General Head')) }}</span>
                             </td>
 
                             {{-- Description / Title --}}
@@ -386,7 +386,7 @@
 
                             {{-- Date --}}
                             <td class="text-center font-mono text-slate-600 text-xs whitespace-nowrap">
-                                {{ $v->transaction_date ? \Carbon\Carbon::parse($v->transaction_date)->format('d M Y') : '--' }}
+                                {{ $v->transaction_date ? \Carbon\Carbon::parse($v->transaction_date)->translatedFormat('d M Y') : '--' }}
                             </td>
 
                             {{-- Action 3-Dot Button --}}
@@ -405,17 +405,17 @@
                                         <i class="fas fa-money-bill-transfer text-slate-400"></i>
                                     </div>
                                     <div class="space-y-0.5">
-                                        <h3 class="text-xs font-semibold text-slate-700">No Vouchers Found</h3>
-                                        <p class="text-[11px] text-slate-400 font-normal">No income or expense vouchers found for the selected criteria.</p>
+                                        <h3 class="text-xs font-semibold text-slate-700">{{ __('No Vouchers Found') }}</h3>
+                                        <p class="text-[11px] text-slate-400 font-normal">{{ __('No income or expense vouchers found for the selected criteria.') }}</p>
                                     </div>
                                     <div class="pt-1 flex items-center justify-center gap-2">
                                         <button type="button" @click="openVoucherModal('EXPENSE')" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-semibold shadow-xs transition cursor-pointer">
                                             <i class="fas fa-minus-circle text-[10px]"></i>
-                                            <span>Record Expense</span>
+                                            <span>{{ __('Record Expense') }}</span>
                                         </button>
                                         <button type="button" @click="openVoucherModal('INCOME')" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-xs transition cursor-pointer">
                                             <i class="fas fa-plus-circle text-[10px]"></i>
-                                            <span>Record Income</span>
+                                            <span>{{ __('Record Income') }}</span>
                                         </button>
                                     </div>
                                 </div>
@@ -430,7 +430,7 @@
         @if($vouchers->hasPages())
             <div class="px-3 py-2 border-t border-slate-200 bg-slate-50/60 flex items-center justify-between">
                 <div class="text-[11px] text-slate-500">
-                    Showing {{ $vouchers->firstItem() ?? 0 }} to {{ $vouchers->lastItem() ?? 0 }} of {{ $vouchers->total() }} vouchers
+                    {{ __('Showing :from to :to of :total vouchers', ['from' => $vouchers->firstItem() ?? 0, 'to' => $vouchers->lastItem() ?? 0, 'total' => $vouchers->total()]) }}
                 </div>
                 <div>
                     {{ $vouchers->links() }}
@@ -450,11 +450,11 @@
         <div class="py-1">
             <button type="button" @click="viewVoucher(activeMenu.raw_id || activeMenu.id, activeMenu.source || 'voucher'); activeMenu = null;" class="w-full px-3 py-1.5 text-left hover:bg-slate-50 flex items-center gap-2 text-slate-700 transition cursor-pointer">
                 <i class="fas fa-print w-3.5 text-cyan-600 text-[11px]"></i>
-                <span x-text="activeMenu.source === 'customer_payment' ? 'View & Print Money Receipt' : (activeMenu.source === 'wholesale' ? 'View & Print Wholesale Invoice' : 'View & Print Voucher')"></span>
+                <span x-text="activeMenu.source === 'customer_payment' ? i18n.view_print_money_receipt : (activeMenu.source === 'wholesale' ? i18n.view_print_wholesale_invoice : i18n.view_print_voucher)"></span>
             </button>
             <button type="button" @click="copyVoucherNo(activeMenu.voucher_no); activeMenu = null;" class="w-full px-3 py-1.5 text-left hover:bg-slate-50 flex items-center gap-2 text-slate-700 transition cursor-pointer">
                 <i class="fas fa-copy w-3.5 text-slate-500 text-[11px]"></i>
-                <span>Copy Ref / Voucher #</span>
+                <span>{{ __('Copy Ref / Voucher #') }}</span>
             </button>
         </div>
 
@@ -465,18 +465,18 @@
                     <div>
                         <button type="button" @click="approveVoucher(activeMenu.raw_id || activeMenu.id); activeMenu = null;" class="w-full px-3 py-1.5 text-left hover:bg-emerald-50 flex items-center gap-2 text-emerald-700 font-semibold transition cursor-pointer">
                             <i class="fas fa-check w-3.5 text-emerald-600 text-[11px]"></i>
-                            <span>Approve Voucher</span>
+                            <span>{{ __('Approve Voucher') }}</span>
                         </button>
                         <button type="button" @click="rejectVoucher(activeMenu.raw_id || activeMenu.id); activeMenu = null;" class="w-full px-3 py-1.5 text-left hover:bg-rose-50 flex items-center gap-2 text-rose-600 transition cursor-pointer">
                             <i class="fas fa-ban w-3.5 text-rose-500 text-[11px]"></i>
-                            <span>Reject Voucher</span>
+                            <span>{{ __('Reject Voucher') }}</span>
                         </button>
                     </div>
                 </template>
 
                 <button type="button" @click="deleteVoucher(activeMenu.raw_id || activeMenu.id); activeMenu = null;" class="w-full px-3 py-1.5 text-left hover:bg-rose-50 flex items-center gap-2 text-rose-600 transition cursor-pointer">
                     <i class="fas fa-trash-can w-3.5 text-rose-500 text-[11px]"></i>
-                    <span>Delete Voucher</span>
+                    <span>{{ __('Delete Voucher') }}</span>
                 </button>
             </div>
         </template>
@@ -493,8 +493,8 @@
                         <i :class="voucherForm.type === 'INCOME' ? 'fas fa-arrow-down-left' : 'fas fa-arrow-up-right'"></i>
                     </div>
                     <div>
-                        <h3 class="text-xs font-semibold text-slate-800" x-text="voucherForm.type === 'INCOME' ? 'Record Direct Income / Credit Voucher' : 'Record Operating Expense / Debit Voucher'"></h3>
-                        <p class="text-[10.5px] text-slate-500 font-normal">Post verified cash/bank transaction into company accounts</p>
+                        <h3 class="text-xs font-semibold text-slate-800" x-text="voucherForm.type === 'INCOME' ? i18n.record_income_voucher : i18n.record_expense_voucher"></h3>
+                        <p class="text-[10.5px] text-slate-500 font-normal">{{ __('Post verified cash/bank transaction into company accounts') }}</p>
                     </div>
                 </div>
                 <button type="button" @click="showVoucherModal = false" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center cursor-pointer">
@@ -509,21 +509,21 @@
                         <button type="button" @click="voucherForm.type = 'EXPENSE'" 
                                 class="py-1 text-center rounded-md font-bold text-xs transition cursor-pointer"
                                 :class="voucherForm.type === 'EXPENSE' ? 'bg-white text-rose-700 shadow-2xs' : 'text-slate-600 hover:text-slate-800'">
-                            <i class="fas fa-minus-circle mr-1"></i> Expense (Debit)
+                            <i class="fas fa-minus-circle mr-1"></i> {{ __('Expense (Debit)') }}
                         </button>
                         <button type="button" @click="voucherForm.type = 'INCOME'" 
                                 class="py-1 text-center rounded-md font-bold text-xs transition cursor-pointer"
                                 :class="voucherForm.type === 'INCOME' ? 'bg-white text-emerald-700 shadow-2xs' : 'text-slate-600 hover:text-slate-800'">
-                            <i class="fas fa-plus-circle mr-1"></i> Direct Income (Credit)
+                            <i class="fas fa-plus-circle mr-1"></i> {{ __('Direct Income (Credit)') }}
                         </button>
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {{-- Category / Account Head --}}
                         <div>
-                            <label class="block text-[11px] font-semibold text-slate-700 mb-1">Account Head <span class="text-rose-500">*</span></label>
+                            <label class="block text-[11px] font-semibold text-slate-700 mb-1">{{ __('Account Head') }} <span class="text-rose-500">*</span></label>
                             <select x-model="voucherForm.category_id" required class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-cyan-500 focus:outline-none transition">
-                                <option value="">Select Account Head</option>
+                                <option value="">{{ __('Select Account Head') }}</option>
                                 <template x-for="cat in filteredCategories" :key="cat.id">
                                     <option :value="cat.id" x-text="cat.name"></option>
                                 </template>
@@ -532,40 +532,40 @@
 
                         {{-- Amount --}}
                         <div>
-                            <label class="block text-[11px] font-semibold text-slate-700 mb-1">Amount ({{ $currencySymbol ?? '৳' }}) <span class="text-rose-500">*</span></label>
+                            <label class="block text-[11px] font-semibold text-slate-700 mb-1">{{ __('Amount (:currency)', ['currency' => $currencySymbol ?? '৳']) }} <span class="text-rose-500">*</span></label>
                             <input type="number" step="0.01" min="1" x-model="voucherForm.amount" required class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 font-mono font-bold text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-none transition">
                         </div>
                     </div>
 
                     {{-- Title / Particulars --}}
                     <div>
-                        <label class="block text-[11px] font-semibold text-slate-700 mb-1">Description / Particulars <span class="text-rose-500">*</span></label>
-                        <input type="text" x-model="voucherForm.title" required placeholder="e.g. Monthly IIG bandwidth trunk payment to Summit" class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-cyan-500 focus:outline-none transition">
+                        <label class="block text-[11px] font-semibold text-slate-700 mb-1">{{ __('Description / Particulars') }} <span class="text-rose-500">*</span></label>
+                        <input type="text" x-model="voucherForm.title" required placeholder="{{ __('e.g. Monthly IIG bandwidth trunk payment to Summit') }}" class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-cyan-500 focus:outline-none transition">
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         {{-- Payment Method --}}
                         <div>
-                            <label class="block text-[11px] font-semibold text-slate-700 mb-1">Payment Method <span class="text-rose-500">*</span></label>
+                            <label class="block text-[11px] font-semibold text-slate-700 mb-1">{{ __('Payment Method') }} <span class="text-rose-500">*</span></label>
                             <select x-model="voucherForm.payment_method" required class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 py-1.5 focus:bg-white focus:border-cyan-500 focus:outline-none transition">
-                                <option value="CASH">Cash in Hand</option>
-                                <option value="BANK">Bank Wire / Transfer</option>
-                                <option value="BKASH">bKash</option>
-                                <option value="NAGAD">Nagad</option>
-                                <option value="CHEQUE">Bank Cheque</option>
-                                <option value="PETTY_CASH">Petty Cash</option>
+                                <option value="CASH">{{ __('Cash in Hand') }}</option>
+                                <option value="BANK">{{ __('Bank Wire / Transfer') }}</option>
+                                <option value="BKASH">{{ __('bKash') }}</option>
+                                <option value="NAGAD">{{ __('Nagad') }}</option>
+                                <option value="CHEQUE">{{ __('Bank Cheque') }}</option>
+                                <option value="PETTY_CASH">{{ __('Petty Cash') }}</option>
                             </select>
                         </div>
 
                         {{-- Payee / Payer --}}
                         <div>
-                            <label class="block text-[11px] font-semibold text-slate-700 mb-1" x-text="voucherForm.type === 'INCOME' ? 'Payer / Received From' : 'Payee / Paid To'"></label>
-                            <input type="text" x-model="voucherForm.payee_payer" placeholder="e.g. Summit Comms / Landlord" class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 py-1.5 focus:bg-white focus:border-cyan-500 focus:outline-none transition">
+                            <label class="block text-[11px] font-semibold text-slate-700 mb-1" x-text="voucherForm.type === 'INCOME' ? i18n.payer_received_from : i18n.payee_paid_to"></label>
+                            <input type="text" x-model="voucherForm.payee_payer" placeholder="{{ __('e.g. Summit Comms / Landlord') }}" class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 py-1.5 focus:bg-white focus:border-cyan-500 focus:outline-none transition">
                         </div>
 
                         {{-- Transaction Date --}}
                         <div>
-                            <label class="block text-[11px] font-semibold text-slate-700 mb-1">Date <span class="text-rose-500">*</span></label>
+                            <label class="block text-[11px] font-semibold text-slate-700 mb-1">{{ __('Date') }} <span class="text-rose-500">*</span></label>
                             <input type="date" x-model="voucherForm.transaction_date" required class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 py-1.5 focus:bg-white focus:border-cyan-500 focus:outline-none transition">
                         </div>
                     </div>
@@ -573,34 +573,34 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {{-- Account / Bank Name --}}
                         <div>
-                            <label class="block text-[11px] font-semibold text-slate-700 mb-1">Account / Vault Name</label>
-                            <input type="text" x-model="voucherForm.account_name" placeholder="e.g. Main Cash Vault or City Bank A/C" class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-cyan-500 focus:outline-none transition">
+                            <label class="block text-[11px] font-semibold text-slate-700 mb-1">{{ __('Account / Vault Name') }}</label>
+                            <input type="text" x-model="voucherForm.account_name" placeholder="{{ __('e.g. Main Cash Vault or City Bank A/C') }}" class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-cyan-500 focus:outline-none transition">
                         </div>
 
                         {{-- Reference / Bill No --}}
                         <div>
-                            <label class="block text-[11px] font-semibold text-slate-700 mb-1">Reference / Cheque / Bill #</label>
-                            <input type="text" x-model="voucherForm.reference_no" placeholder="e.g. MR-8942 or Cheque #004" class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-cyan-500 focus:outline-none transition">
+                            <label class="block text-[11px] font-semibold text-slate-700 mb-1">{{ __('Reference / Cheque / Bill #') }}</label>
+                            <input type="text" x-model="voucherForm.reference_no" placeholder="{{ __('e.g. MR-8942 or Cheque #004') }}" class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-cyan-500 focus:outline-none transition">
                         </div>
                     </div>
 
                     {{-- Notes --}}
                     <div>
-                        <label class="block text-[11px] font-semibold text-slate-700 mb-1">Voucher Remarks / Notes</label>
-                        <textarea x-model="voucherForm.notes" rows="2" placeholder="Optional audit explanation..." class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-cyan-500 focus:outline-none transition"></textarea>
+                        <label class="block text-[11px] font-semibold text-slate-700 mb-1">{{ __('Voucher Remarks / Notes') }}</label>
+                        <textarea x-model="voucherForm.notes" rows="2" placeholder="{{ __('Optional audit explanation...') }}" class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-cyan-500 focus:outline-none transition"></textarea>
                     </div>
                 </div>
 
                 {{-- Modal Footer --}}
                 <div class="px-4 py-2.5 bg-slate-50/80 border-t border-slate-200 flex items-center justify-end gap-2">
                     <button type="button" @click="showVoucherModal = false" class="border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs px-3.5 py-1.5 rounded-lg transition cursor-pointer">
-                        Cancel
+                        {{ __('Cancel') }}
                     </button>
                     <button type="submit" :disabled="isSubmitting" 
                             class="text-white font-medium text-xs px-4 py-1.5 rounded-lg shadow-xs transition cursor-pointer inline-flex items-center gap-1.5"
                             :class="voucherForm.type === 'INCOME' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-rose-600 hover:bg-rose-700'">
                         <i class="fas fa-circle-notch fa-spin" x-show="isSubmitting" style="display: none;"></i>
-                        <span x-text="voucherForm.type === 'INCOME' ? 'Post Income Voucher' : 'Post Expense Voucher'"></span>
+                        <span x-text="voucherForm.type === 'INCOME' ? i18n.post_income_voucher : i18n.post_expense_voucher"></span>
                     </button>
                 </div>
             </form>
@@ -617,8 +617,8 @@
                         <i class="fas fa-folder-tree"></i>
                     </div>
                     <div>
-                        <h3 class="text-xs font-semibold text-slate-800">Chart of Accounts Heads</h3>
-                        <p class="text-[10.5px] text-slate-500 font-normal">Manage structured ISP income &amp; operating expense categories</p>
+                        <h3 class="text-xs font-semibold text-slate-800">{{ __('Chart of Accounts Heads') }}</h3>
+                        <p class="text-[10.5px] text-slate-500 font-normal">{{ __('Manage structured ISP income & operating expense categories') }}</p>
                     </div>
                 </div>
                 <button type="button" @click="showCategoryModal = false" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center cursor-pointer">
@@ -629,28 +629,28 @@
             <div class="p-4 space-y-4 text-xs overflow-y-auto flex-1">
                 {{-- Quick Add Category Form --}}
                 <form @submit.prevent="submitNewCategory()" class="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-2.5">
-                    <span class="text-[11px] font-bold text-slate-800 block">Create New Account Head</span>
+                    <span class="text-[11px] font-bold text-slate-800 block">{{ __('Create New Account Head') }}</span>
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
                         <div class="sm:col-span-2">
-                            <input type="text" x-model="newCategoryForm.name" required placeholder="Category Name (e.g. Office Generator Diesel)" class="w-full bg-white border border-slate-200 rounded-lg text-xs px-2.5 py-1.5 focus:border-cyan-500 focus:outline-none">
+                            <input type="text" x-model="newCategoryForm.name" required placeholder="{{ __('Category Name (e.g. Office Generator Diesel)') }}" class="w-full bg-white border border-slate-200 rounded-lg text-xs px-2.5 py-1.5 focus:border-cyan-500 focus:outline-none">
                         </div>
                         <div>
                             <select x-model="newCategoryForm.type" required class="w-full bg-white border border-slate-200 rounded-lg text-xs px-2 py-1.5 focus:border-cyan-500 focus:outline-none">
-                                <option value="EXPENSE">Expense Head</option>
-                                <option value="INCOME">Income Head</option>
+                                <option value="EXPENSE">{{ __('Expense Head') }}</option>
+                                <option value="INCOME">{{ __('Income Head') }}</option>
                             </select>
                         </div>
                     </div>
                     <div class="flex justify-end">
                         <button type="submit" :disabled="isSubmitting" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-[11px] px-3 py-1 rounded-md transition cursor-pointer">
-                            + Add Account Head
+                            + {{ __('Add Account Head') }}
                         </button>
                     </div>
                 </form>
 
                 {{-- List Existing Categories --}}
                 <div class="space-y-1.5">
-                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">Active Chart of Accounts:</span>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">{{ __('Active Chart of Accounts:') }}</span>
                     <div class="border border-slate-200 rounded-lg divide-y divide-slate-100 max-h-60 overflow-y-auto bg-white">
                         @foreach($allCategories as $cat)
                             <div class="p-2.5 flex items-center justify-between hover:bg-slate-50">
@@ -660,7 +660,7 @@
                                     <span class="text-[10px] font-mono text-slate-400">({{ $cat->code }})</span>
                                 </div>
                                 <span class="px-2 py-0.5 rounded text-[10px] font-bold {{ $cat->type === 'INCOME' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200' }}">
-                                    {{ $cat->type }}
+                                    {{ $cat->type === 'INCOME' ? __('INCOME') : __('EXPENSE') }}
                                 </span>
                             </div>
                         @endforeach
@@ -671,7 +671,7 @@
             {{-- Modal Footer --}}
             <div class="px-4 py-2.5 bg-slate-50/80 border-t border-slate-200 flex items-center justify-end">
                 <button type="button" @click="showCategoryModal = false" class="border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs px-3.5 py-1.5 rounded-lg transition cursor-pointer">
-                    Close
+                    {{ __('Close') }}
                 </button>
             </div>
         </div>
@@ -687,14 +687,14 @@
                         <i class="fas fa-print"></i>
                     </div>
                     <div>
-                        <h3 class="text-xs font-semibold text-slate-800">Official Financial Voucher</h3>
-                        <p class="text-[10.5px] text-slate-500 font-normal">Official signed debit / credit voucher document</p>
+                        <h3 class="text-xs font-semibold text-slate-800">{{ __('Official Financial Voucher') }}</h3>
+                        <p class="text-[10.5px] text-slate-500 font-normal">{{ __('Official signed debit / credit voucher document') }}</p>
                     </div>
                 </div>
                 <div class="flex items-center gap-2">
                     <button type="button" @click="window.print()" class="bg-cyan-600 hover:bg-cyan-700 text-white font-medium text-xs px-3.5 py-1.5 rounded-lg shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer">
                         <i class="fas fa-print text-[11px]"></i>
-                        <span>Print Voucher</span>
+                        <span>{{ __('Print Voucher') }}</span>
                     </button>
                     <button type="button" @click="showPrintModal = false" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center cursor-pointer">
                         <i class="fas fa-times text-xs"></i>
@@ -711,10 +711,10 @@
                             <div>
                                 <h2 class="text-lg font-black text-cyan-900 tracking-tight" x-text="viewData.tenant.name"></h2>
                                 <p class="text-xs text-slate-600" x-text="viewData.tenant.address"></p>
-                                <p class="text-xs text-slate-600">Phone: <span x-text="viewData.tenant.phone"></span></p>
+                                <p class="text-xs text-slate-600">{{ __('Phone:') }} <span x-text="viewData.tenant.phone"></span></p>
                             </div>
                             <div class="text-right">
-                                <span class="text-xs font-bold uppercase tracking-widest text-slate-400 block" x-text="viewData.voucher.type === 'INCOME' ? 'CREDIT / RECEIPT VOUCHER' : 'DEBIT / PAYMENT VOUCHER'"></span>
+                                <span class="text-xs font-bold uppercase tracking-widest text-slate-400 block" x-text="viewData.voucher.type === 'INCOME' ? i18n.credit_receipt_voucher : i18n.debit_payment_voucher"></span>
                                 <span class="text-base font-black font-mono text-cyan-800 block" x-text="viewData.voucher.voucher_no"></span>
                                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold border mt-1" :class="viewData.voucher.status_badge.class">
                                     <span x-text="viewData.voucher.status_badge.label"></span>
@@ -726,30 +726,30 @@
                         <div class="grid grid-cols-2 gap-4 text-xs">
                             <div class="p-3 bg-slate-50 rounded-lg border border-slate-200/80 space-y-1.5">
                                 <div class="flex justify-between">
-                                    <span class="text-slate-500">Account Head:</span>
+                                    <span class="text-slate-500">{{ __('Account Head:') }}</span>
                                     <span class="font-bold text-slate-800" x-text="viewData.voucher.category_name"></span>
                                 </div>
                                 <div class="flex justify-between">
-                                    <span class="text-slate-500" x-text="viewData.voucher.type === 'INCOME' ? 'Received From:' : 'Paid To / Payee:'"></span>
+                                    <span class="text-slate-500" x-text="viewData.voucher.type === 'INCOME' ? i18n.received_from_colon : i18n.paid_to_payee_colon"></span>
                                     <span class="font-semibold text-slate-800" x-text="viewData.voucher.payee_payer"></span>
                                 </div>
                                 <div class="flex justify-between">
-                                    <span class="text-slate-500">Payment Method:</span>
+                                    <span class="text-slate-500">{{ __('Payment Method:') }}</span>
                                     <span class="font-mono text-slate-800 uppercase" x-text="viewData.voucher.payment_method"></span>
                                 </div>
                             </div>
 
                             <div class="p-3 bg-slate-50 rounded-lg border border-slate-200/80 space-y-1.5">
                                 <div class="flex justify-between">
-                                    <span class="text-slate-500">Transaction Date:</span>
+                                    <span class="text-slate-500">{{ __('Transaction Date:') }}</span>
                                     <span class="font-mono font-bold text-slate-800" x-text="viewData.voucher.transaction_date"></span>
                                 </div>
                                 <div class="flex justify-between">
-                                    <span class="text-slate-500">Reference / Cheque #:</span>
+                                    <span class="text-slate-500">{{ __('Reference / Cheque #:') }}</span>
                                     <span class="font-mono text-slate-700" x-text="viewData.voucher.reference_no"></span>
                                 </div>
                                 <div class="flex justify-between">
-                                    <span class="text-slate-500">Bank / Account:</span>
+                                    <span class="text-slate-500">{{ __('Bank / Account:') }}</span>
                                     <span class="text-slate-700" x-text="viewData.voucher.account_name"></span>
                                 </div>
                             </div>
@@ -757,17 +757,17 @@
 
                         {{-- Particulars & Amount Banner --}}
                         <div class="p-4 rounded-xl border" :class="viewData.voucher.type === 'INCOME' ? 'bg-emerald-50/60 border-emerald-200' : 'bg-rose-50/60 border-rose-200'">
-                            <span class="text-[10px] font-bold uppercase tracking-wider block mb-1" :class="viewData.voucher.type === 'INCOME' ? 'text-emerald-800' : 'text-rose-800'">Voucher Particulars:</span>
+                            <span class="text-[10px] font-bold uppercase tracking-wider block mb-1" :class="viewData.voucher.type === 'INCOME' ? 'text-emerald-800' : 'text-rose-800'">{{ __('Voucher Particulars:') }}</span>
                             <p class="font-semibold text-sm text-slate-900 mb-3" x-text="viewData.voucher.title"></p>
                             <div class="flex justify-between items-center border-t pt-2" :class="viewData.voucher.type === 'INCOME' ? 'border-emerald-200' : 'border-rose-200'">
-                                <span class="font-bold text-xs" :class="viewData.voucher.type === 'INCOME' ? 'text-emerald-900' : 'text-rose-900'">Total Net Amount:</span>
+                                <span class="font-bold text-xs" :class="viewData.voucher.type === 'INCOME' ? 'text-emerald-900' : 'text-rose-900'">{{ __('Total Net Amount:') }}</span>
                                 <span class="font-mono font-black text-base" :class="viewData.voucher.type === 'INCOME' ? 'text-emerald-800' : 'text-rose-800'" x-text="formatCurrency(viewData.voucher.amount)"></span>
                             </div>
                         </div>
 
                         {{-- Remarks --}}
                         <div class="text-xs text-slate-600">
-                            <span class="font-semibold text-slate-700">Remarks / Notes: </span>
+                            <span class="font-semibold text-slate-700">{{ __('Remarks / Notes:') }} </span>
                             <span x-text="viewData.voucher.notes"></span>
                         </div>
 
@@ -775,15 +775,15 @@
                         <div class="pt-10 border-t border-slate-200 grid grid-cols-3 gap-6 text-center text-xs text-slate-500">
                             <div>
                                 <div class="border-b border-slate-300 w-28 mx-auto mb-1"></div>
-                                <span>Prepared By (<span x-text="viewData.voucher.creator_name"></span>)</span>
+                                <span>{{ __('Prepared By') }} (<span x-text="viewData.voucher.creator_name"></span>)</span>
                             </div>
                             <div>
                                 <div class="border-b border-slate-300 w-28 mx-auto mb-1"></div>
-                                <span>Receiver / Payee</span>
+                                <span>{{ __('Receiver / Payee') }}</span>
                             </div>
                             <div>
                                 <div class="border-b border-slate-300 w-28 mx-auto mb-1"></div>
-                                <span>Authorized Manager</span>
+                                <span>{{ __('Authorized Manager') }}</span>
                             </div>
                         </div>
                     </div>
@@ -845,6 +845,53 @@
 
     function expenseAccountsManager() {
         return {
+            i18n: {
+                view_print_money_receipt: @json(__('View & Print Money Receipt')),
+                view_print_wholesale_invoice: @json(__('View & Print Wholesale Invoice')),
+                view_print_voucher: @json(__('View & Print Voucher')),
+                record_income_voucher: @json(__('Record Direct Income / Credit Voucher')),
+                record_expense_voucher: @json(__('Record Operating Expense / Debit Voucher')),
+                payer_received_from: @json(__('Payer / Received From')),
+                payee_paid_to: @json(__('Payee / Paid To')),
+                post_income_voucher: @json(__('Post Income Voucher')),
+                post_expense_voucher: @json(__('Post Expense Voucher')),
+                credit_receipt_voucher: @json(__('CREDIT / RECEIPT VOUCHER')),
+                debit_payment_voucher: @json(__('DEBIT / PAYMENT VOUCHER')),
+                received_from_colon: @json(__('Received From:')),
+                paid_to_payee_colon: @json(__('Paid To / Payee:')),
+                main_cash_vault: @json(__('Main Cash Vault')),
+                voucher_saved: @json(__('Voucher Saved')),
+                failed: @json(__('Failed')),
+                failed_to_post_voucher: @json(__('Failed to post voucher.')),
+                error: @json(__('Error')),
+                error_saving_voucher: @json(__('Error saving voucher: :error')),
+                category_added: @json(__('Category Added')),
+                failed_to_create_category: @json(__('Failed to create category.')),
+                error_generic: @json(__('Error: :error')),
+                could_not_load_voucher: @json(__('Could not load voucher data.')),
+                error_fetching_voucher: @json(__('Error fetching voucher: :error')),
+                approve_voucher_title: @json(__('Approve Voucher?')),
+                approve_voucher_text: @json(__('Confirm approval and posting for this transaction voucher?')),
+                yes_approve_voucher: @json(__('Yes, Approve Voucher')),
+                cancel: @json(__('Cancel')),
+                voucher_approved: @json(__('Voucher Approved')),
+                approval_failed: @json(__('Approval Failed')),
+                error_approving_voucher: @json(__('Error approving voucher: :error')),
+                reject_voucher_title: @json(__('Reject Voucher?')),
+                reject_voucher_text: @json(__('Are you sure you want to reject this voucher transaction?')),
+                yes_reject: @json(__('Yes, Reject')),
+                voucher_rejected: @json(__('Voucher Rejected')),
+                rejection_failed: @json(__('Rejection Failed')),
+                error_rejecting_voucher: @json(__('Error rejecting voucher: :error')),
+                delete_voucher_title: @json(__('Delete Voucher?')),
+                delete_voucher_text: @json(__('Are you sure you want to permanently delete this voucher? This action cannot be undone.')),
+                yes_delete_permanently: @json(__('Yes, Delete Permanently')),
+                voucher_deleted: @json(__('Voucher Deleted')),
+                delete_failed: @json(__('Delete Failed')),
+                error_deleting_voucher: @json(__('Error deleting voucher: :error')),
+                voucher_number_copied: @json(__('Voucher number copied: :no'))
+            },
+
             activeMenu: null,
             menuPos: { top: '0px', bottom: 'auto', right: '0px', left: 'auto' },
             showVoucherModal: false,
@@ -861,7 +908,7 @@
                 title: '',
                 amount: '',
                 payment_method: 'CASH',
-                account_name: 'Main Cash Vault',
+                account_name: @json(__('Main Cash Vault')),
                 payee_payer: '',
                 reference_no: '',
                 transaction_date: '{{ date("Y-m-d") }}',
@@ -912,7 +959,7 @@
                     title: '',
                     amount: '',
                     payment_method: 'CASH',
-                    account_name: 'Main Cash Vault',
+                    account_name: this.i18n.main_cash_vault,
                     payee_payer: '',
                     reference_no: '',
                     transaction_date: '{{ date("Y-m-d") }}',
@@ -938,7 +985,7 @@
                         this.showVoucherModal = false;
                         await Swal.fire({
                             icon: 'success',
-                            title: 'Voucher Saved',
+                            title: this.i18n.voucher_saved,
                             text: data.message,
                             timer: 1500,
                             showConfirmButton: false
@@ -947,15 +994,15 @@
                     } else {
                         Swal.fire({
                             icon: 'error',
-                            title: 'Failed',
-                            text: data.message || 'Failed to post voucher.'
+                            title: this.i18n.failed,
+                            text: data.message || this.i18n.failed_to_post_voucher
                         });
                     }
                 } catch (e) {
                     Swal.fire({
                         icon: 'error',
-                        title: 'Error',
-                        text: 'Error saving voucher: ' + e.message
+                        title: this.i18n.error,
+                        text: this.i18n.error_saving_voucher.replace(':error', e.message)
                     });
                 } finally {
                     this.isSubmitting = false;
@@ -981,7 +1028,7 @@
                         this.showCategoryModal = false;
                         await Swal.fire({
                             icon: 'success',
-                            title: 'Category Added',
+                            title: this.i18n.category_added,
                             text: data.message,
                             timer: 1500,
                             showConfirmButton: false
@@ -990,15 +1037,15 @@
                     } else {
                         Swal.fire({
                             icon: 'error',
-                            title: 'Failed',
-                            text: data.message || 'Failed to create category.'
+                            title: this.i18n.failed,
+                            text: data.message || this.i18n.failed_to_create_category
                         });
                     }
                 } catch (e) {
                     Swal.fire({
                         icon: 'error',
-                        title: 'Error',
-                        text: 'Error: ' + e.message
+                        title: this.i18n.error,
+                        text: this.i18n.error_generic.replace(':error', e.message)
                     });
                 } finally {
                     this.isSubmitting = false;
@@ -1018,29 +1065,29 @@
                     } else {
                         Swal.fire({
                             icon: 'error',
-                            title: 'Error',
-                            text: 'Could not load voucher data.'
+                            title: this.i18n.error,
+                            text: this.i18n.could_not_load_voucher
                         });
                     }
                 } catch (e) {
                     Swal.fire({
                         icon: 'error',
-                        title: 'Error',
-                        text: 'Error fetching voucher: ' + e.message
+                        title: this.i18n.error,
+                        text: this.i18n.error_fetching_voucher.replace(':error', e.message)
                     });
                 }
             },
 
             async approveVoucher(id) {
                 const result = await Swal.fire({
-                    title: 'Approve Voucher?',
-                    text: 'Confirm approval and posting for this transaction voucher?',
+                    title: this.i18n.approve_voucher_title,
+                    text: this.i18n.approve_voucher_text,
                     icon: 'question',
                     showCancelButton: true,
                     confirmButtonColor: '#0891b2',
                     cancelButtonColor: '#64748b',
-                    confirmButtonText: 'Yes, Approve Voucher',
-                    cancelButtonText: 'Cancel',
+                    confirmButtonText: this.i18n.yes_approve_voucher,
+                    cancelButtonText: this.i18n.cancel,
                     reverseButtons: true,
                     customClass: {
                         popup: 'rounded-2xl text-xs font-sans shadow-2xl border border-slate-200',
@@ -1066,7 +1113,7 @@
                     if (data.success) {
                         await Swal.fire({
                             icon: 'success',
-                            title: 'Voucher Approved',
+                            title: this.i18n.voucher_approved,
                             text: data.message,
                             timer: 1500,
                             showConfirmButton: false
@@ -1075,29 +1122,29 @@
                     } else {
                         Swal.fire({
                             icon: 'error',
-                            title: 'Approval Failed',
+                            title: this.i18n.approval_failed,
                             text: data.message
                         });
                     }
                 } catch (e) {
                     Swal.fire({
                         icon: 'error',
-                        title: 'Error',
-                        text: 'Error approving voucher: ' + e.message
+                        title: this.i18n.error,
+                        text: this.i18n.error_approving_voucher.replace(':error', e.message)
                     });
                 }
             },
 
             async rejectVoucher(id) {
                 const result = await Swal.fire({
-                    title: 'Reject Voucher?',
-                    text: 'Are you sure you want to reject this voucher transaction?',
+                    title: this.i18n.reject_voucher_title,
+                    text: this.i18n.reject_voucher_text,
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonColor: '#e11d48',
                     cancelButtonColor: '#64748b',
-                    confirmButtonText: 'Yes, Reject',
-                    cancelButtonText: 'Cancel',
+                    confirmButtonText: this.i18n.yes_reject,
+                    cancelButtonText: this.i18n.cancel,
                     reverseButtons: true,
                     customClass: {
                         popup: 'rounded-2xl text-xs font-sans shadow-2xl border border-slate-200',
@@ -1123,7 +1170,7 @@
                     if (data.success) {
                         await Swal.fire({
                             icon: 'success',
-                            title: 'Voucher Rejected',
+                            title: this.i18n.voucher_rejected,
                             text: data.message,
                             timer: 1500,
                             showConfirmButton: false
@@ -1132,29 +1179,29 @@
                     } else {
                         Swal.fire({
                             icon: 'error',
-                            title: 'Rejection Failed',
+                            title: this.i18n.rejection_failed,
                             text: data.message
                         });
                     }
                 } catch (e) {
                     Swal.fire({
                         icon: 'error',
-                        title: 'Error',
-                        text: 'Error rejecting voucher: ' + e.message
+                        title: this.i18n.error,
+                        text: this.i18n.error_rejecting_voucher.replace(':error', e.message)
                     });
                 }
             },
 
             async deleteVoucher(id) {
                 const result = await Swal.fire({
-                    title: 'Delete Voucher?',
-                    text: 'Are you sure you want to permanently delete this voucher? This action cannot be undone.',
+                    title: this.i18n.delete_voucher_title,
+                    text: this.i18n.delete_voucher_text,
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonColor: '#e11d48',
                     cancelButtonColor: '#64748b',
-                    confirmButtonText: 'Yes, Delete Permanently',
-                    cancelButtonText: 'Cancel',
+                    confirmButtonText: this.i18n.yes_delete_permanently,
+                    cancelButtonText: this.i18n.cancel,
                     reverseButtons: true,
                     customClass: {
                         popup: 'rounded-2xl text-xs font-sans shadow-2xl border border-slate-200',
@@ -1180,7 +1227,7 @@
                     if (data.success) {
                         await Swal.fire({
                             icon: 'success',
-                            title: 'Voucher Deleted',
+                            title: this.i18n.voucher_deleted,
                             text: data.message,
                             timer: 1500,
                             showConfirmButton: false
@@ -1189,15 +1236,15 @@
                     } else {
                         Swal.fire({
                             icon: 'error',
-                            title: 'Delete Failed',
+                            title: this.i18n.delete_failed,
                             text: data.message
                         });
                     }
                 } catch (e) {
                     Swal.fire({
                         icon: 'error',
-                        title: 'Error',
-                        text: 'Error deleting voucher: ' + e.message
+                        title: this.i18n.error,
+                        text: this.i18n.error_deleting_voucher.replace(':error', e.message)
                     });
                 }
             },
@@ -1208,7 +1255,7 @@
                     toast: true,
                     position: 'top-end',
                     icon: 'success',
-                    title: 'Voucher number copied: ' + no,
+                    title: this.i18n.voucher_number_copied.replace(':no', no),
                     showConfirmButton: false,
                     timer: 2500,
                     timerProgressBar: true,
@@ -1223,7 +1270,7 @@
             },
 
             formatCurrency(amount) {
-                const sym = '{{ $currencySymbol ?? "৳" }}';
+                const sym = @json($currencySymbol ?? '৳');
                 return sym + ' ' + this.formatNumber(amount);
             }
         };

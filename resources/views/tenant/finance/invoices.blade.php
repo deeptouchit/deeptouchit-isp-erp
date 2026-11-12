@@ -1,6 +1,6 @@
 @extends('tenant.layouts.app')
 
-@section('title', 'Customer Invoices & Bills - ' . ($tenant->company_name ?? $tenant->name))
+@section('title', __('Customer Invoices & Bills') . ' - ' . ($tenant->company_name ?? $tenant->name))
 
 @push('styles')
 <style>
@@ -65,11 +65,11 @@
             </div>
             <h1 class="text-xs sm:text-sm font-bold text-slate-900 tracking-tight">
                 @if(($statusFilter ?? '') === 'due')
-                    Due Invoices &amp; Unpaid Bills
+                    {{ __('Due Invoices & Unpaid Bills') }}
                 @elseif(($statusFilter ?? '') === 'paid')
-                    Paid Invoices &amp; Billing Ledger
+                    {{ __('Paid Invoices & Billing Ledger') }}
                 @else
-                    Customer Invoices &amp; Billing Ledger
+                    {{ __('Customer Invoices & Billing Ledger') }}
                 @endif
             </h1>
         </div>
@@ -79,9 +79,9 @@
             <!-- Billing Catch-Up Queue Quick Link -->
             <a href="{{ route('tenant.finance.billing-catchup') }}" 
                class="h-[34px] py-0 px-3 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 font-semibold text-xs shadow-2xs transition inline-flex items-center gap-1.5 cursor-pointer"
-               title="{{ $uninvoicedQueueCount }} uninvoiced subscribers in catch-up queue">
+               title="{{ __(':count uninvoiced subscribers in catch-up queue', ['count' => $uninvoicedQueueCount]) }}">
                 <i class="fas fa-bolt text-amber-600 text-[11px]"></i>
-                <span>Catch-Up Queue</span>
+                <span>{{ __('Catch-Up Queue') }}</span>
                 <span class="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-amber-600 text-white font-mono leading-none">{{ $uninvoicedQueueCount }}</span>
             </a>
             @endif
@@ -91,7 +91,7 @@
                     @click="openCreateModal()" 
                     class="h-[34px] py-0 px-3.5 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-plus text-[11px]"></i>
-                <span>+ Custom Invoice</span>
+                <span>{{ __('+ Custom Invoice') }}</span>
             </button>
         </div>
     </div>
@@ -101,7 +101,7 @@
         <!-- Metric 1: Total Invoices -->
         <div class="px-2.5 py-1.5 rounded-md bg-white border border-slate-200 shadow-2xs flex items-center justify-between">
             <div class="min-w-0">
-                <span class="text-[9px] font-medium text-slate-500 uppercase tracking-wider block truncate">Total Invoices</span>
+                <span class="text-[9px] font-medium text-slate-500 uppercase tracking-wider block truncate">{{ __('Total Invoices') }}</span>
                 <span class="text-[13px] font-bold text-slate-900 font-mono leading-tight block">{{ number_format($totalInvoicesCount) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md bg-slate-50 text-slate-600 flex items-center justify-center text-[10px] border border-slate-200 flex-shrink-0">
@@ -112,7 +112,7 @@
         <!-- Metric 2: Total Billed Amount -->
         <div class="px-2.5 py-1.5 rounded-md bg-white border border-slate-200 shadow-2xs flex items-center justify-between">
             <div class="min-w-0">
-                <span class="text-[9px] font-medium text-slate-500 uppercase tracking-wider block truncate">Billed Amount</span>
+                <span class="text-[9px] font-medium text-slate-500 uppercase tracking-wider block truncate">{{ __('Billed Amount') }}</span>
                 <span class="text-[13px] font-bold text-slate-900 font-mono leading-tight block truncate">@currency($totalBilledAmount)</span>
             </div>
             <div class="w-6 h-6 rounded-md bg-cyan-50 text-cyan-600 flex items-center justify-center text-[10px] border border-cyan-100 flex-shrink-0">
@@ -123,7 +123,7 @@
         <!-- Metric 3: Total Collected Amount -->
         <div class="px-2.5 py-1.5 rounded-md bg-white border border-slate-200 shadow-2xs flex items-center justify-between">
             <div class="min-w-0">
-                <span class="text-[9px] font-medium text-slate-500 uppercase tracking-wider block truncate">Collected Paid</span>
+                <span class="text-[9px] font-medium text-slate-500 uppercase tracking-wider block truncate">{{ __('Collected Paid') }}</span>
                 <span class="text-[13px] font-bold text-emerald-600 font-mono leading-tight block truncate">@currency($totalPaidAmount)</span>
             </div>
             <div class="w-6 h-6 rounded-md bg-emerald-50 text-emerald-600 flex items-center justify-center text-[10px] border border-emerald-100 flex-shrink-0">
@@ -134,7 +134,7 @@
         <!-- Metric 4: Outstanding Due -->
         <div class="px-2.5 py-1.5 rounded-md bg-white border border-slate-200 shadow-2xs flex items-center justify-between">
             <div class="min-w-0">
-                <span class="text-[9px] font-medium text-slate-500 uppercase tracking-wider block truncate">Outstanding Due</span>
+                <span class="text-[9px] font-medium text-slate-500 uppercase tracking-wider block truncate">{{ __('Outstanding Due') }}</span>
                 <span class="text-[13px] font-bold text-amber-600 font-mono leading-tight block truncate">@currency($totalDueAmount)</span>
             </div>
             <div class="w-6 h-6 rounded-md bg-amber-50 text-amber-600 flex items-center justify-center text-[10px] border border-amber-100 flex-shrink-0">
@@ -145,7 +145,7 @@
         <!-- Metric 5: Unpaid & Overdue Count -->
         <div class="px-2.5 py-1.5 rounded-md bg-white border border-slate-200 shadow-2xs flex items-center justify-between">
             <div class="min-w-0">
-                <span class="text-[9px] font-medium text-slate-500 uppercase tracking-wider block truncate">Unpaid Invoices</span>
+                <span class="text-[9px] font-medium text-slate-500 uppercase tracking-wider block truncate">{{ __('Unpaid Invoices') }}</span>
                 <span class="text-[13px] font-bold text-rose-600 font-mono leading-tight block">{{ number_format($unpaidOverdueCount) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md bg-rose-50 text-rose-600 flex items-center justify-center text-[10px] border border-rose-100 flex-shrink-0">
@@ -156,7 +156,7 @@
         <!-- Metric 6: Collection Efficiency -->
         <div class="px-2.5 py-1.5 rounded-md bg-white border border-slate-200 shadow-2xs flex items-center justify-between">
             <div class="min-w-0">
-                <span class="text-[9px] font-medium text-slate-500 uppercase tracking-wider block truncate">Collection Rate</span>
+                <span class="text-[9px] font-medium text-slate-500 uppercase tracking-wider block truncate">{{ __('Collection Rate') }}</span>
                 <span class="text-[13px] font-bold text-purple-600 font-mono leading-tight block">{{ $collectionRate }}%</span>
             </div>
             <div class="w-6 h-6 rounded-md bg-purple-50 text-purple-600 flex items-center justify-center text-[10px] border border-purple-100 flex-shrink-0">
@@ -197,7 +197,7 @@
                            x-model="searchQuery"
                            @input="handleLiveSearch($event.target.value)"
                            @keydown.enter.prevent="submitSearchNow()"
-                           placeholder="Search Invoice #, Customer ID, Name, Phone, Address..." 
+                           placeholder="{{ __('Search Invoice #, Customer ID, Name, Phone, Address...') }}" 
                            class="w-full h-[34px] pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition placeholder:text-slate-400 font-medium"
                            autocomplete="off">
                     <button type="button" 
@@ -205,7 +205,7 @@
                             x-cloak
                             @click="clearLiveSearch()"
                             class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500 p-0.5 text-xs transition cursor-pointer"
-                            title="Clear Search">
+                            title="{{ __('Clear Search') }}">
                         <i class="fas fa-times-circle"></i>
                     </button>
                 </div>
@@ -215,13 +215,13 @@
                     <select name="period" 
                             onchange="this.form.submit()"
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700">
-                        <option value="all" {{ ($period ?? '') === 'all' ? 'selected' : '' }}>All Time</option>
-                        <option value="today" {{ ($period ?? '') === 'today' ? 'selected' : '' }}>Today</option>
-                        <option value="yesterday" {{ ($period ?? '') === 'yesterday' ? 'selected' : '' }}>Yesterday</option>
-                        <option value="this_week" {{ ($period ?? '') === 'this_week' ? 'selected' : '' }}>This Week</option>
-                        <option value="this_month" {{ ($period ?? '') === 'this_month' ? 'selected' : '' }}>This Month</option>
-                        <option value="last_month" {{ ($period ?? '') === 'last_month' ? 'selected' : '' }}>Last Month</option>
-                        <option value="custom" {{ ($period ?? '') === 'custom' ? 'selected' : '' }}>Custom Range</option>
+                        <option value="all" {{ ($period ?? '') === 'all' ? 'selected' : '' }}>{{ __('All Time') }}</option>
+                        <option value="today" {{ ($period ?? '') === 'today' ? 'selected' : '' }}>{{ __('Today') }}</option>
+                        <option value="yesterday" {{ ($period ?? '') === 'yesterday' ? 'selected' : '' }}>{{ __('Yesterday') }}</option>
+                        <option value="this_week" {{ ($period ?? '') === 'this_week' ? 'selected' : '' }}>{{ __('This Week') }}</option>
+                        <option value="this_month" {{ ($period ?? '') === 'this_month' ? 'selected' : '' }}>{{ __('This Month') }}</option>
+                        <option value="last_month" {{ ($period ?? '') === 'last_month' ? 'selected' : '' }}>{{ __('Last Month') }}</option>
+                        <option value="custom" {{ ($period ?? '') === 'custom' ? 'selected' : '' }}>{{ __('Custom Range') }}</option>
                     </select>
                 </div>
 
@@ -230,13 +230,13 @@
                     <select name="status" 
                             onchange="this.form.submit()"
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700 cursor-pointer">
-                        <option value="all" {{ ($statusFilter ?? 'all') === 'all' ? 'selected' : '' }}>All Status</option>
-                        <option value="due" {{ ($statusFilter ?? '') === 'due' ? 'selected' : '' }}>Due (Unpaid & Partial)</option>
-                        <option value="paid" {{ ($statusFilter ?? '') === 'paid' ? 'selected' : '' }}>Paid Only</option>
-                        <option value="unpaid" {{ ($statusFilter ?? '') === 'unpaid' ? 'selected' : '' }}>Unpaid Only</option>
-                        <option value="partially_paid" {{ ($statusFilter ?? '') === 'partially_paid' ? 'selected' : '' }}>Partially Paid</option>
-                        <option value="overdue" {{ ($statusFilter ?? '') === 'overdue' ? 'selected' : '' }}>Overdue</option>
-                        <option value="cancelled" {{ ($statusFilter ?? '') === 'cancelled' ? 'selected' : '' }}>Cancelled</option>
+                        <option value="all" {{ ($statusFilter ?? 'all') === 'all' ? 'selected' : '' }}>{{ __('All Status') }}</option>
+                        <option value="due" {{ ($statusFilter ?? '') === 'due' ? 'selected' : '' }}>{{ __('Due (Unpaid & Partial)') }}</option>
+                        <option value="paid" {{ ($statusFilter ?? '') === 'paid' ? 'selected' : '' }}>{{ __('Paid Only') }}</option>
+                        <option value="unpaid" {{ ($statusFilter ?? '') === 'unpaid' ? 'selected' : '' }}>{{ __('Unpaid Only') }}</option>
+                        <option value="partially_paid" {{ ($statusFilter ?? '') === 'partially_paid' ? 'selected' : '' }}>{{ __('Partially Paid') }}</option>
+                        <option value="overdue" {{ ($statusFilter ?? '') === 'overdue' ? 'selected' : '' }}>{{ __('Overdue') }}</option>
+                        <option value="cancelled" {{ ($statusFilter ?? '') === 'cancelled' ? 'selected' : '' }}>{{ __('Cancelled') }}</option>
                     </select>
                 </div>
 
@@ -245,7 +245,7 @@
                     <select name="collector_id" 
                             onchange="this.form.submit()"
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700">
-                        <option value="all">All Collectors</option>
+                        <option value="all">{{ __('All Collectors') }}</option>
                         @foreach($allCollectors ?? [] as $col)
                             <option value="{{ $col->id }}" {{ (string)($collectorFilter ?? 'all') === (string)$col->id ? 'selected' : '' }}>
                                 {{ $col->name }}
@@ -259,13 +259,13 @@
                     <select name="per_page" 
                             onchange="this.form.submit()"
                             class="w-full h-[34px] px-2 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700">
-                        <option value="15" {{ ($perPage ?? 20) == 15 ? 'selected' : '' }}>15 / page</option>
-                        <option value="20" {{ ($perPage ?? 20) == 20 ? 'selected' : '' }}>20 / page</option>
-                        <option value="30" {{ ($perPage ?? 20) == 30 ? 'selected' : '' }}>30 / page</option>
-                        <option value="50" {{ ($perPage ?? 20) == 50 ? 'selected' : '' }}>50 / page</option>
-                        <option value="100" {{ ($perPage ?? 20) == 100 ? 'selected' : '' }}>100 / page</option>
-                        <option value="250" {{ ($perPage ?? 20) == 250 ? 'selected' : '' }}>250 / page</option>
-                        <option value="500" {{ ($perPage ?? 20) == 500 ? 'selected' : '' }}>500 / page</option>
+                        <option value="15" {{ ($perPage ?? 20) == 15 ? 'selected' : '' }}>{{ __(':count / page', ['count' => 15]) }}</option>
+                        <option value="20" {{ ($perPage ?? 20) == 20 ? 'selected' : '' }}>{{ __(':count / page', ['count' => 20]) }}</option>
+                        <option value="30" {{ ($perPage ?? 20) == 30 ? 'selected' : '' }}>{{ __(':count / page', ['count' => 30]) }}</option>
+                        <option value="50" {{ ($perPage ?? 20) == 50 ? 'selected' : '' }}>{{ __(':count / page', ['count' => 50]) }}</option>
+                        <option value="100" {{ ($perPage ?? 20) == 100 ? 'selected' : '' }}>{{ __(':count / page', ['count' => 100]) }}</option>
+                        <option value="250" {{ ($perPage ?? 20) == 250 ? 'selected' : '' }}>{{ __(':count / page', ['count' => 250]) }}</option>
+                        <option value="500" {{ ($perPage ?? 20) == 500 ? 'selected' : '' }}>{{ __(':count / page', ['count' => 500]) }}</option>
                     </select>
                 </div>
 
@@ -274,9 +274,9 @@
                         @click="showMoreFilters = !showMoreFilters" 
                         :class="showMoreFilters || {{ $activeMoreCount }} > 0 ? 'bg-cyan-50 text-cyan-700 border-cyan-300 ring-1 ring-cyan-200' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'"
                         class="h-[34px] py-0 px-2.5 rounded-lg border text-xs font-medium transition flex items-center justify-center gap-1.5 flex-shrink-0 cursor-pointer shadow-2xs"
-                        title="Toggle Date Range, Month, Partner & Package Filters">
+                        title="{{ __('Toggle Date Range, Month, Partner & Package Filters') }}">
                     <i class="fas fa-sliders-h text-[10px]"></i>
-                    <span>More Filters</span>
+                    <span>{{ __('More Filters') }}</span>
                     @if($activeMoreCount > 0)
                         <span class="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-cyan-600 text-white leading-none">
                             {{ $activeMoreCount }}
@@ -290,15 +290,15 @@
                 <div class="flex items-center gap-1.5 flex-shrink-0 sm:ml-auto">
                     <button type="submit" 
                             class="h-[34px] bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-0 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" 
-                            title="Apply Filters">
+                            title="{{ __('Apply Filters') }}">
                         <i class="fas fa-filter text-[10px]"></i>
-                        <span>Filter</span>
+                        <span>{{ __('Filter') }}</span>
                     </button>
                     <a href="{{ ($statusFilter ?? '') === 'due' ? route('tenant.finance.invoices', ['status' => 'due']) : (($statusFilter ?? '') === 'paid' ? route('tenant.finance.invoices', ['status' => 'paid']) : route('tenant.finance.invoices')) }}" 
                        class="h-[34px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-0 px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer" 
-                       title="Reset Filters">
+                       title="{{ __('Reset Filters') }}">
                         <i class="fas fa-rotate-left text-[10px]"></i>
-                        <span>Reset</span>
+                        <span>{{ __('Reset') }}</span>
                     </a>
                 </div>
             </div>
@@ -313,7 +313,7 @@
                 
                 {{-- Date From --}}
                 <div class="relative w-full sm:w-36 flex-shrink-0">
-                    <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[9.5px] uppercase font-bold text-slate-400 pointer-events-none">From</span>
+                    <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[9.5px] uppercase font-bold text-slate-400 pointer-events-none">{{ __('From') }}</span>
                     <input type="date" 
                            name="date_from" 
                            value="{{ $dateFrom ?? '' }}" 
@@ -322,7 +322,7 @@
 
                 {{-- Date To --}}
                 <div class="relative w-full sm:w-36 flex-shrink-0">
-                    <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[9.5px] uppercase font-bold text-slate-400 pointer-events-none">To</span>
+                    <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[9.5px] uppercase font-bold text-slate-400 pointer-events-none">{{ __('To') }}</span>
                     <input type="date" 
                            name="date_to" 
                            value="{{ $dateTo ?? '' }}" 
@@ -334,10 +334,10 @@
                     <select name="month" 
                             onchange="this.form.submit()"
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700">
-                        <option value="all" {{ ($selectedMonth ?? '') === 'all' ? 'selected' : '' }}>All Months</option>
+                        <option value="all" {{ ($selectedMonth ?? '') === 'all' ? 'selected' : '' }}>{{ __('All Months') }}</option>
                         @foreach($availableMonths as $m)
                             <option value="{{ $m }}" {{ ($selectedMonth ?? '') === $m ? 'selected' : '' }}>
-                                {{ \Carbon\Carbon::createFromFormat('Y-m', $m)->format('F Y') }}
+                                {{ \Carbon\Carbon::createFromFormat('Y-m', $m)->translatedFormat('F Y') }}
                             </option>
                         @endforeach
                     </select>
@@ -349,8 +349,8 @@
                     <select name="reseller_id" 
                             onchange="this.form.submit()"
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700">
-                        <option value="all" {{ ($selectedResellerId ?? 'all') === 'all' ? 'selected' : '' }}>All Partners</option>
-                        <option value="isp" {{ ($selectedResellerId ?? '') === 'isp' ? 'selected' : '' }}>Direct Retail (HQ)</option>
+                        <option value="all" {{ ($selectedResellerId ?? 'all') === 'all' ? 'selected' : '' }}>{{ __('All Partners') }}</option>
+                        <option value="isp" {{ ($selectedResellerId ?? '') === 'isp' ? 'selected' : '' }}>{{ __('Direct Retail (HQ)') }}</option>
                         @foreach($allResellers ?? [] as $r)
                             <option value="{{ $r->id }}" {{ ($selectedResellerId ?? '') == $r->id ? 'selected' : '' }}>
                                 {{ $r->code ?: $r->name }}
@@ -365,7 +365,7 @@
                     <select name="package_id" 
                             onchange="this.form.submit()"
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700">
-                        <option value="all">All Packages</option>
+                        <option value="all">{{ __('All Packages') }}</option>
                         @foreach($allPackages ?? [] as $pkg)
                             <option value="{{ $pkg->id }}" {{ ($selectedPackageId ?? '') == $pkg->id ? 'selected' : '' }}>
                                 {{ $pkg->name }}
@@ -387,23 +387,23 @@
                 <thead>
                     <tr>
                         <th class="w-10 text-center no-sort">#</th>
-                        <th class="text-center font-semibold">Invoice #</th>
-                        <th class="text-center font-semibold">Cust ID</th>
-                        <th class="text-center font-semibold">Customer</th>
-                        <th class="text-center font-semibold">Guardian</th>
-                        <th class="text-center font-semibold">Area</th>
-                        <th class="text-center font-semibold">Partner</th>
-                        <th class="text-center font-semibold">Package</th>
-                        <th class="text-center font-semibold">Bill ({{ $currencySymbol ?? '৳' }})</th>
-                        <th class="text-center font-semibold">Paid ({{ $currencySymbol ?? '৳' }})</th>
+                        <th class="text-center font-semibold">{{ __('Invoice #') }}</th>
+                        <th class="text-center font-semibold">{{ __('Cust ID') }}</th>
+                        <th class="text-center font-semibold">{{ __('Customer') }}</th>
+                        <th class="text-center font-semibold">{{ __('Guardian') }}</th>
+                        <th class="text-center font-semibold">{{ __('Area') }}</th>
+                        <th class="text-center font-semibold">{{ __('Partner') }}</th>
+                        <th class="text-center font-semibold">{{ __('Package') }}</th>
+                        <th class="text-center font-semibold">{{ __('Bill (:currency)', ['currency' => $currencySymbol ?? '৳']) }}</th>
+                        <th class="text-center font-semibold">{{ __('Paid (:currency)', ['currency' => $currencySymbol ?? '৳']) }}</th>
                         @if(!$isDueOnly)
-                            <th class="text-center font-semibold">Collector</th>
+                            <th class="text-center font-semibold">{{ __('Collector') }}</th>
                         @endif
-                        <th class="text-center font-semibold">Status</th>
+                        <th class="text-center font-semibold">{{ __('Status') }}</th>
                         @if(!$isDueOnly)
-                            <th class="text-center font-semibold">Paid At</th>
+                            <th class="text-center font-semibold">{{ __('Paid At') }}</th>
                         @endif
-                        <th class="w-14 text-center no-sort">Action</th>
+                        <th class="w-14 text-center no-sort">{{ __('Action') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -411,7 +411,7 @@
                         <td colspan="{{ $isDueOnly ? 12 : 14 }}" class="text-center py-6 text-slate-500 bg-slate-50/50">
                             <i class="fas fa-spinner fa-spin text-cyan-600 mr-1.5" x-show="isSearching"></i>
                             <i class="fas fa-search text-slate-400 mr-1.5" x-show="!isSearching"></i>
-                            <span class="text-xs font-medium">No matching invoices found on this page. Searching entire database...</span>
+                            <span class="text-xs font-medium">{{ __('No matching invoices found on this page. Searching entire database...') }}</span>
                         </td>
                     </tr>
                     @forelse($invoices as $inv)
@@ -423,7 +423,7 @@
                                 'billing_month' => $inv->billing_month,
                                 'formatted_month' => $inv->formatted_month,
                                 'customer_id' => $inv->customer_id,
-                                'customer_name' => $inv->customer?->name ?? 'Unknown',
+                                'customer_name' => $inv->customer?->name ?? __('Unknown'),
                                 'customer_username' => $inv->customer?->username ?? '--',
                                 'customer_phone' => $inv->customer?->phone ?? '--',
                                 'package_name' => $inv->mikrotik_package_name,
@@ -446,7 +446,7 @@
                                 <button type="button" 
                                         @click="openViewModal({{ $inv->id }})" 
                                         class="hover:underline hover:text-cyan-600 cursor-pointer inline-flex items-center gap-1"
-                                        title="Click to view & print invoice">
+                                        title="{{ __('Click to view & print invoice') }}">
                                     <i class="fas fa-file-invoice text-[10px] text-cyan-600"></i>
                                     <span>{{ $inv->invoice_no }}</span>
                                 </button>
@@ -464,7 +464,7 @@
                                         {{ $inv->customer->name ?: $inv->customer->username }}
                                     </a>
                                 @else
-                                    <span class="text-slate-400 font-sans">Deleted Subscriber</span>
+                                    <span class="text-slate-400 font-sans">{{ __('Deleted Subscriber') }}</span>
                                 @endif
                             </td>
 
@@ -486,9 +486,9 @@
                                         <span>{{ $inv->reseller->code ?: $inv->reseller->name }}</span>
                                     </span>
                                 @else
-                                    <span class="inline-flex items-center gap-1 text-slate-600 font-medium" title="HQ Direct Retail">
+                                    <span class="inline-flex items-center gap-1 text-slate-600 font-medium" title="{{ __('HQ Direct Retail') }}">
                                         <i class="fas fa-building text-slate-400 text-[10px]"></i>
-                                        <span>Direct</span>
+                                        <span>{{ __('Direct') }}</span>
                                     </span>
                                 @endif
                             </td>
@@ -498,12 +498,12 @@
                                 {{ $inv->mikrotik_package_name ?: ($inv->package?->name ?: ($inv->package_name ?: '—')) }}
                             </td>
 
-                            <!-- 9. Bill (Tk) -->
+                            <!-- 9. Bill -->
                             <td class="text-right font-mono font-semibold text-slate-800 whitespace-nowrap text-xs">
                                 @currency($inv->total_payable)
                             </td>
 
-                            <!-- 10. Paid (Tk) -->
+                            <!-- 10. Paid -->
                             <td class="text-right font-mono font-semibold text-emerald-600 whitespace-nowrap text-xs">
                                 @currency($inv->paid_amount)
                             </td>
@@ -513,7 +513,7 @@
                             <td class="text-center whitespace-nowrap text-xs">
                                 @php
                                     $collectedBy = $inv->payments->first()?->collector?->name 
-                                        ?: ($inv->creator?->name ?: 'Direct / System');
+                                        ?: ($inv->creator?->name ?: __('Direct / System'));
                                 @endphp
                                 <span class="inline-flex items-center gap-1 font-medium text-slate-800">
                                     <i class="fas fa-user-check text-[10px] text-cyan-600"></i>
@@ -536,7 +536,7 @@
                                 @if($inv->paid_at)
                                     <span class="inline-flex items-center gap-1 text-slate-700">
                                         <i class="fas fa-clock text-emerald-600 text-[10px]"></i>
-                                        <span>{{ \Carbon\Carbon::parse($inv->paid_at)->format('d M Y, h:i A') }}</span>
+                                        <span>{{ \Carbon\Carbon::parse($inv->paid_at)->translatedFormat('d M Y, h:i A') }}</span>
                                     </span>
                                 @else
                                     <span class="text-slate-400 font-sans">—</span>
@@ -560,12 +560,12 @@
                                     <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 mx-auto flex items-center justify-center text-base border border-amber-100 shadow-2xs">
                                         <i class="fas fa-file-invoice"></i>
                                     </div>
-                                    <h3 class="text-xs font-semibold text-slate-800">No Invoices Found</h3>
-                                    <p class="text-[11px] text-slate-500">No customer invoices matched your selected filters.</p>
+                                    <h3 class="text-xs font-semibold text-slate-800">{{ __('No Invoices Found') }}</h3>
+                                    <p class="text-[11px] text-slate-500">{{ __('No customer invoices matched your selected filters.') }}</p>
                                     <div class="pt-1">
                                         <button type="button" @click="openCreateModal()" class="h-[34px] py-0 px-3.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-xs font-semibold shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer">
                                             <i class="fas fa-plus text-[10px]"></i>
-                                            <span>+ Custom Invoice</span>
+                                            <span>{{ __('+ Custom Invoice') }}</span>
                                         </button>
                                     </div>
                                 </div>
@@ -598,7 +598,7 @@
                     @click="const item = activeMenu; activeMenu = null; openViewModal(item.id)" 
                     class="w-full px-3 py-1.5 hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition text-left cursor-pointer">
                 <i class="fas fa-print text-cyan-600 w-3.5 text-center text-[11px]"></i>
-                <span>View &amp; Print Bill</span>
+                <span>{{ __('View & Print Bill') }}</span>
             </button>
 
             <!-- Receive Payment (if due exists) -->
@@ -607,7 +607,7 @@
                         @click="const item = activeMenu; activeMenu = null; openPayModal(item)" 
                         class="w-full px-3 py-1.5 hover:bg-slate-50 text-emerald-700 font-semibold flex items-center gap-2 transition text-left cursor-pointer">
                     <i class="fas fa-hand-holding-dollar text-emerald-600 w-3.5 text-center text-[11px]"></i>
-                    <span>Receive Payment</span>
+                    <span>{{ __('Receive Payment') }}</span>
                 </button>
             </template>
         </div>
@@ -619,7 +619,7 @@
                         @click="const item = activeMenu; activeMenu = null; cancelInvoice(item.id, item.invoice_no)" 
                         class="w-full px-3 py-1.5 hover:bg-slate-50 text-amber-700 flex items-center gap-2 transition text-left cursor-pointer">
                     <i class="fas fa-ban text-amber-500 w-3.5 text-center text-[11px]"></i>
-                    <span>Cancel Invoice</span>
+                    <span>{{ __('Cancel Invoice') }}</span>
                 </button>
             </template>
 
@@ -629,7 +629,7 @@
                         @click="const item = activeMenu; activeMenu = null; deleteInvoice(item.id, item.invoice_no)" 
                         class="w-full px-3 py-1.5 hover:bg-rose-50 text-rose-600 flex items-center gap-2 transition text-left cursor-pointer">
                     <i class="fas fa-trash-can text-rose-500 w-3.5 text-center text-[11px]"></i>
-                    <span>Delete Invoice</span>
+                    <span>{{ __('Delete Invoice') }}</span>
                 </button>
             </template>
         </div>
@@ -663,8 +663,8 @@
                         <i class="fas fa-file-invoice-dollar"></i>
                     </div>
                     <div>
-                        <h3 class="text-xs font-semibold text-slate-800">Create Custom Invoice</h3>
-                        <p class="text-[10.5px] text-slate-500 font-normal">Generate one-off or custom bill for a subscriber</p>
+                        <h3 class="text-xs font-semibold text-slate-800">{{ __('Create Custom Invoice') }}</h3>
+                        <p class="text-[10.5px] text-slate-500 font-normal">{{ __('Generate one-off or custom bill for a subscriber') }}</p>
                     </div>
                 </div>
                 <button type="button" 
@@ -683,10 +683,10 @@
                     <div class="space-y-1 relative" @click.away="createModal.customerDropdownOpen = false">
                         <div class="flex items-center justify-between">
                             <label class="block text-slate-700 font-semibold text-[11px]">
-                                Subscriber / Customer <span class="text-rose-500">*</span>
+                                {{ __('Subscriber / Customer') }} <span class="text-rose-500">*</span>
                             </label>
                             <span class="text-[10px] text-slate-400 font-mono" x-show="createModal.selectedCustomer">
-                                ID: <span class="text-cyan-700 font-bold" x-text="createModal.selectedCustomer?.customer_id"></span>
+                                {{ __('ID:') }} <span class="text-cyan-700 font-bold" x-text="createModal.selectedCustomer?.customer_id"></span>
                             </span>
                         </div>
 
@@ -703,16 +703,16 @@
                                             <span class="text-[10px] font-mono text-cyan-800 font-bold" x-text="'(' + createModal.selectedCustomer.username + ')'"></span>
                                         </div>
                                         <div class="text-[10px] text-slate-500 flex items-center gap-2">
-                                            <span class="font-mono text-slate-600" x-text="'Pkg: ' + createModal.selectedCustomer.package_name"></span>
+                                            <span class="font-mono text-slate-600" x-text="i18n.pkgLabel.replace(':pkg', createModal.selectedCustomer.package_name)"></span>
                                             <span>•</span>
-                                            <span class="font-mono font-semibold text-cyan-700" x-text="'Bill: {{ $currencySymbol ?? '৳' }}' + parseFloat(createModal.selectedCustomer.monthly_bill).toFixed(2)"></span>
+                                            <span class="font-mono font-semibold text-cyan-700" x-text="i18n.billLabel.replace(':currency', currencySymbol).replace(':amount', parseFloat(createModal.selectedCustomer.monthly_bill).toFixed(2))"></span>
                                         </div>
                                     </div>
                                 </div>
                                 <button type="button" 
                                         @click="clearCustomer()" 
                                         class="w-5 h-5 rounded hover:bg-cyan-200/80 text-cyan-700 flex items-center justify-center transition cursor-pointer"
-                                        title="Change Subscriber">
+                                        title="{{ __('Change Subscriber') }}">
                                     <i class="fas fa-times text-[10px]"></i>
                                 </button>
                             </div>
@@ -728,7 +728,7 @@
                                        x-model="createModal.customerSearch" 
                                        @focus="createModal.customerDropdownOpen = true"
                                        @input="createModal.customerDropdownOpen = true"
-                                       placeholder="Type to search subscriber by Name, ID (SO..), Username or Phone..." 
+                                       placeholder="{{ __('Type to search subscriber by Name, ID (SO..), Username or Phone...') }}" 
                                        class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs pl-8 pr-8 py-1.5 text-slate-800 placeholder-slate-400 focus:bg-white focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition">
                                 <button type="button" 
                                         x-show="createModal.customerSearch" 
@@ -762,8 +762,8 @@
                                             </div>
                                         </div>
                                         <div class="text-right flex-shrink-0">
-                                            <span class="font-mono font-bold text-slate-800 text-[11px]" x-text="'{{ $currencySymbol ?? '৳' }}' + parseFloat(c.monthly_bill).toFixed(2)"></span>
-                                            <span class="block text-[9px] text-slate-400 uppercase">Monthly</span>
+                                            <span class="font-mono font-bold text-slate-800 text-[11px]" x-text="currencySymbol + parseFloat(c.monthly_bill).toFixed(2)"></span>
+                                            <span class="block text-[9px] text-slate-400 uppercase">{{ __('Monthly') }}</span>
                                         </div>
                                     </div>
                                 </template>
@@ -771,7 +771,7 @@
                                 <!-- No Results State -->
                                 <div x-show="filteredCustomers.length === 0" class="p-3 text-center text-slate-400 text-xs">
                                     <i class="fas fa-user-slash text-slate-300 text-base mb-1 block"></i>
-                                    <span>No subscribers matching "<span class="font-semibold text-slate-600" x-text="createModal.customerSearch"></span>"</span>
+                                    <span>{{ __('No subscribers matching') }} "<span class="font-semibold text-slate-600" x-text="createModal.customerSearch"></span>"</span>
                                 </div>
                             </div>
                         </div>
@@ -784,7 +784,7 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div class="space-y-1">
                             <label class="block text-slate-700 font-semibold text-[11px]">
-                                Billing Month (YYYY-MM) <span class="text-rose-500">*</span>
+                                {{ __('Billing Month (YYYY-MM)') }} <span class="text-rose-500">*</span>
                             </label>
                             <input type="month" 
                                    x-model="createModal.form.billing_month" 
@@ -794,7 +794,7 @@
 
                         <div class="space-y-1">
                             <label class="block text-slate-700 font-semibold text-[11px]">
-                                Payment Due Date <span class="text-rose-500">*</span>
+                                {{ __('Payment Due Date') }} <span class="text-rose-500">*</span>
                             </label>
                             <input type="date" 
                                    x-model="createModal.form.due_date" 
@@ -807,7 +807,7 @@
                     <div class="grid grid-cols-3 gap-2.5">
                         <div class="space-y-1">
                             <label class="block text-slate-700 font-semibold text-[11px]">
-                                Bill Fee ({{ $currencySymbol ?? '৳' }}) <span class="text-rose-500">*</span>
+                                {{ __('Bill Fee (:currency)', ['currency' => $currencySymbol ?? '৳']) }} <span class="text-rose-500">*</span>
                             </label>
                             <input type="number" 
                                    step="0.01" 
@@ -819,7 +819,7 @@
 
                         <div class="space-y-1">
                             <label class="block text-slate-700 font-semibold text-[11px]">
-                                Discount ({{ $currencySymbol ?? '৳' }})
+                                {{ __('Discount (:currency)', ['currency' => $currencySymbol ?? '৳']) }}
                             </label>
                             <input type="number" 
                                    step="0.01" 
@@ -830,7 +830,7 @@
 
                         <div class="space-y-1">
                             <label class="block text-slate-700 font-semibold text-[11px]">
-                                VAT / Tax ({{ $currencySymbol ?? '৳' }})
+                                {{ __('VAT / Tax (:currency)', ['currency' => $currencySymbol ?? '৳']) }}
                             </label>
                             <input type="number" 
                                    step="0.01" 
@@ -842,20 +842,20 @@
 
                     <!-- Calculated Total Payable Display -->
                     <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200/80 flex items-center justify-between">
-                        <span class="text-[11px] font-semibold text-slate-600">Total Net Payable:</span>
+                        <span class="text-[11px] font-semibold text-slate-600">{{ __('Total Net Payable:') }}</span>
                         <span class="text-xs font-bold font-mono text-cyan-800" 
-                              x-text="'{{ $currencySymbol ?? '৳' }} ' + Math.max(0, (Number(createModal.form.amount || 0) + Number(createModal.form.vat_tax || 0)) - Number(createModal.form.discount || 0)).toFixed(2)">
+                              x-text="currencySymbol + ' ' + Math.max(0, (Number(createModal.form.amount || 0) + Number(createModal.form.vat_tax || 0)) - Number(createModal.form.discount || 0)).toFixed(2)">
                         </span>
                     </div>
 
                     <!-- Notes -->
                     <div class="space-y-1">
                         <label class="block text-slate-700 font-semibold text-[11px]">
-                            Remarks / Notes <span class="text-slate-400 font-normal">(Optional)</span>
+                            {{ __('Remarks / Notes') }} <span class="text-slate-400 font-normal">({{ __('Optional') }})</span>
                         </label>
                         <textarea x-model="createModal.form.notes" 
                                   rows="2" 
-                                  placeholder="e.g. Fiber shifting bill, Static IP fee, Advance payment note" 
+                                  placeholder="{{ __('e.g. Fiber shifting bill, Static IP fee, Advance payment note') }}" 
                                   class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 text-slate-800 focus:bg-white focus:border-cyan-500 transition"></textarea>
                     </div>
 
@@ -867,14 +867,14 @@
                             @click="createModal.open = false" 
                             :disabled="createModal.loading"
                             class="border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs px-3.5 py-1.5 rounded-lg transition shadow-2xs cursor-pointer">
-                        Cancel
+                        {{ __('Cancel') }}
                     </button>
 
                     <button type="submit" 
                             :disabled="createModal.loading || !createModal.form.customer_id || !createModal.form.amount"
                             class="bg-cyan-600 hover:bg-cyan-700 disabled:opacity-50 text-white font-medium text-xs px-4 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow-xs cursor-pointer">
                         <i class="fas" :class="createModal.loading ? 'fa-spinner fa-spin' : 'fa-plus'"></i>
-                        <span x-text="createModal.loading ? 'Creating...' : 'Create Invoice'"></span>
+                        <span x-text="createModal.loading ? i18n.creating : i18n.createInvoice"></span>
                     </button>
                 </div>
             </form>
@@ -909,8 +909,8 @@
                         <i class="fas fa-hand-holding-dollar"></i>
                     </div>
                     <div>
-                        <h3 class="text-xs font-semibold text-slate-800">Receive Bill Payment</h3>
-                        <p class="text-[10.5px] text-slate-500 font-normal" x-text="'Invoice: #' + (payModal.invoice?.invoice_no || '')"></p>
+                        <h3 class="text-xs font-semibold text-slate-800">{{ __('Receive Bill Payment') }}</h3>
+                        <p class="text-[10.5px] text-slate-500 font-normal" x-text="i18n.invoiceLabel.replace(':invoice', payModal.invoice?.invoice_no || '')"></p>
                     </div>
                 </div>
                 <button type="button" 
@@ -928,12 +928,12 @@
                     <!-- Summary Strip -->
                     <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200/80 grid grid-cols-2 gap-2 text-slate-800">
                         <div>
-                            <span class="text-[9.5px] uppercase font-semibold text-slate-400 block">Subscriber</span>
+                            <span class="text-[9.5px] uppercase font-semibold text-slate-400 block">{{ __('Subscriber') }}</span>
                             <span class="text-xs font-semibold block truncate" x-text="payModal.invoice?.customer_name"></span>
                         </div>
                         <div class="text-right">
-                            <span class="text-[9.5px] uppercase font-semibold text-slate-400 block">Current Due</span>
-                            <span class="text-xs font-bold font-mono text-amber-600 block" x-text="'{{ $currencySymbol ?? '৳' }} ' + Number(payModal.invoice?.due_amount || 0).toFixed(2)"></span>
+                            <span class="text-[9.5px] uppercase font-semibold text-slate-400 block">{{ __('Current Due') }}</span>
+                            <span class="text-xs font-bold font-mono text-amber-600 block" x-text="currencySymbol + ' ' + Number(payModal.invoice?.due_amount || 0).toFixed(2)"></span>
                         </div>
                     </div>
 
@@ -941,7 +941,7 @@
                     <div class="grid grid-cols-2 gap-3">
                         <div class="space-y-1">
                             <label class="block text-slate-700 font-semibold text-[11px]">
-                                Amount Paying ({{ $currencySymbol ?? '৳' }}) <span class="text-rose-500">*</span>
+                                {{ __('Amount Paying (:currency)', ['currency' => $currencySymbol ?? '৳']) }} <span class="text-rose-500">*</span>
                             </label>
                             <input type="number" 
                                    step="0.01" 
@@ -953,7 +953,7 @@
 
                         <div class="space-y-1">
                             <label class="block text-slate-700 font-semibold text-[11px]">
-                                Waiver / Discount ({{ $currencySymbol ?? '৳' }})
+                                {{ __('Waiver / Discount (:currency)', ['currency' => $currencySymbol ?? '৳']) }}
                             </label>
                             <input type="number" 
                                    step="0.01" 
@@ -966,40 +966,40 @@
                     <!-- Payment Method -->
                     <div class="space-y-1">
                         <label class="block text-slate-700 font-semibold text-[11px]">
-                            Payment Channel / Method <span class="text-rose-500">*</span>
+                            {{ __('Payment Channel / Method') }} <span class="text-rose-500">*</span>
                         </label>
                         <select x-model="payModal.form.payment_method" 
                                 required 
                                 class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 text-slate-800 focus:bg-white focus:border-cyan-500 transition">
-                            <option value="cash">Cash in Hand</option>
-                            <option value="bkash">bKash (MFS Merchant/Personal)</option>
-                            <option value="nagad">Nagad (MFS)</option>
-                            <option value="rocket">Rocket (DBBL MFS)</option>
-                            <option value="pos">POS Terminal / Card</option>
-                            <option value="bank">Bank Transfer / Cheque</option>
-                            <option value="online">Online Gateway</option>
+                            <option value="cash">{{ __('Cash in Hand') }}</option>
+                            <option value="bkash">{{ __('bKash (MFS Merchant/Personal)') }}</option>
+                            <option value="nagad">{{ __('Nagad (MFS)') }}</option>
+                            <option value="rocket">{{ __('Rocket (DBBL MFS)') }}</option>
+                            <option value="pos">{{ __('POS Terminal / Card') }}</option>
+                            <option value="bank">{{ __('Bank Transfer / Cheque') }}</option>
+                            <option value="online">{{ __('Online Gateway') }}</option>
                         </select>
                     </div>
 
                     <!-- Transaction ID / Ref -->
                     <div class="space-y-1" x-show="payModal.form.payment_method !== 'cash'">
                         <label class="block text-slate-700 font-semibold text-[11px]">
-                            Transaction ID / MFS TrxID <span class="text-slate-400 font-normal">(Optional)</span>
+                            {{ __('Transaction ID / MFS TrxID') }} <span class="text-slate-400 font-normal">({{ __('Optional') }})</span>
                         </label>
                         <input type="text" 
                                x-model="payModal.form.transaction_id" 
-                               placeholder="e.g. 9K28X91LKQ" 
+                               placeholder="{{ __('e.g. 9K28X91LKQ') }}" 
                                class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 text-slate-800 font-mono focus:bg-white focus:border-cyan-500 transition">
                     </div>
 
                     <!-- Notes -->
                     <div class="space-y-1">
                         <label class="block text-slate-700 font-semibold text-[11px]">
-                            Collection Remarks <span class="text-slate-400 font-normal">(Optional)</span>
+                            {{ __('Collection Remarks') }} <span class="text-slate-400 font-normal">({{ __('Optional') }})</span>
                         </label>
                         <input type="text" 
                                x-model="payModal.form.notes" 
-                               placeholder="e.g. Paid in full via bKash by subscriber" 
+                               placeholder="{{ __('e.g. Paid in full via bKash by subscriber') }}" 
                                class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 text-slate-800 focus:bg-white focus:border-cyan-500 transition">
                     </div>
 
@@ -1011,14 +1011,14 @@
                             @click="payModal.open = false" 
                             :disabled="payModal.loading"
                             class="border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs px-3.5 py-1.5 rounded-lg transition shadow-2xs cursor-pointer">
-                        Cancel
+                        {{ __('Cancel') }}
                     </button>
 
                     <button type="submit" 
                             :disabled="payModal.loading || !payModal.form.amount_paying"
                             class="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-medium text-xs px-4 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow-xs cursor-pointer">
                         <i class="fas" :class="payModal.loading ? 'fa-spinner fa-spin' : 'fa-check'"></i>
-                        <span x-text="payModal.loading ? 'Recording...' : 'Confirm Payment'"></span>
+                        <span x-text="payModal.loading ? i18n.recording : i18n.confirmPayment"></span>
                     </button>
                 </div>
             </form>
@@ -1053,7 +1053,7 @@
                         <i class="fas fa-file-invoice"></i>
                     </div>
                     <div>
-                        <h3 class="text-xs font-semibold text-slate-800" x-text="'Invoice: #' + (viewModal.invoice?.invoice_no || '')"></h3>
+                        <h3 class="text-xs font-semibold text-slate-800" x-text="i18n.invoiceLabel.replace(':invoice', viewModal.invoice?.invoice_no || '')"></h3>
                         <p class="text-[10.5px] text-slate-500 font-normal" x-text="viewModal.invoice?.formatted_month || ''"></p>
                     </div>
                 </div>
@@ -1062,7 +1062,7 @@
                             @click="window.print()" 
                             class="px-2.5 py-1 rounded-md bg-cyan-600 hover:bg-cyan-700 text-white text-[11px] font-medium shadow-2xs transition inline-flex items-center gap-1 cursor-pointer">
                         <i class="fas fa-print text-[10px]"></i>
-                        <span>Print Invoice</span>
+                        <span>{{ __('Print Invoice') }}</span>
                     </button>
                     <button type="button" 
                             @click="viewModal.open = false" 
@@ -1079,33 +1079,33 @@
                 <div class="flex justify-between items-start border-b border-slate-200 pb-4">
                     <div>
                         <h2 class="text-base font-bold text-slate-900 tracking-tight" x-text="viewModal.invoice?.company_name"></h2>
-                        <p class="text-[11px] text-slate-500" x-text="viewModal.invoice?.company_address || 'Internet Service Provider'"></p>
-                        <p class="text-[11px] text-slate-500" x-text="'Hotline: ' + (viewModal.invoice?.company_phone || '--')"></p>
+                        <p class="text-[11px] text-slate-500" x-text="viewModal.invoice?.company_address || i18n.ispFallback"></p>
+                        <p class="text-[11px] text-slate-500" x-text="i18n.hotlineLabel.replace(':phone', viewModal.invoice?.company_phone || '--')"></p>
                     </div>
                     <div class="text-right space-y-0.5">
                         <span class="inline-block px-2.5 py-0.5 rounded text-[10.5px] font-bold uppercase tracking-wider mb-1 border"
                               :class="viewModal.invoice?.status_badge?.class" 
                               x-text="viewModal.invoice?.status_badge?.label">
                         </span>
-                        <p class="font-mono text-xs font-bold text-slate-900" x-text="'INV: ' + (viewModal.invoice?.invoice_no || '')"></p>
-                        <p class="text-[11px] text-slate-500" x-text="'Issue Date: ' + (viewModal.invoice?.issue_date || '--')"></p>
-                        <p class="text-[11px] text-slate-500" x-text="'Due Date: ' + (viewModal.invoice?.due_date || '--')"></p>
+                        <p class="font-mono text-xs font-bold text-slate-900" x-text="i18n.invLabel.replace(':invoice', viewModal.invoice?.invoice_no || '')"></p>
+                        <p class="text-[11px] text-slate-500" x-text="i18n.issueDateLabel.replace(':date', viewModal.invoice?.issue_date || '--')"></p>
+                        <p class="text-[11px] text-slate-500" x-text="i18n.dueDateLabel.replace(':date', viewModal.invoice?.due_date || '--')"></p>
                     </div>
                 </div>
 
                 <!-- Billed To Grid -->
                 <div class="grid grid-cols-2 gap-4 p-3 bg-slate-50 rounded-lg border border-slate-200/80">
                     <div class="space-y-0.5">
-                        <span class="text-[9.5px] uppercase font-bold text-slate-400 block tracking-wider">Billed To (Subscriber)</span>
+                        <span class="text-[9.5px] uppercase font-bold text-slate-400 block tracking-wider">{{ __('Billed To (Subscriber)') }}</span>
                         <p class="text-xs font-bold text-slate-900" x-text="viewModal.invoice?.customer_name"></p>
-                        <p class="font-mono text-[11px] text-slate-700" x-text="'User ID: ' + (viewModal.invoice?.customer_code || '') + ' (' + (viewModal.invoice?.customer_username || '') + ')'"></p>
-                        <p class="font-mono text-[11px] text-slate-600" x-text="'Mobile: ' + (viewModal.invoice?.customer_phone || '--')"></p>
+                        <p class="font-mono text-[11px] text-slate-700" x-text="i18n.userIdLabel.replace(':code', viewModal.invoice?.customer_code || '').replace(':username', viewModal.invoice?.customer_username || '')"></p>
+                        <p class="font-mono text-[11px] text-slate-600" x-text="i18n.mobileLabel.replace(':phone', viewModal.invoice?.customer_phone || '--')"></p>
                     </div>
 
                     <div class="space-y-0.5 text-right">
-                        <span class="text-[9.5px] uppercase font-bold text-slate-400 block tracking-wider">Service Scope &amp; Area</span>
+                        <span class="text-[9.5px] uppercase font-bold text-slate-400 block tracking-wider">{{ __('Service Scope & Area') }}</span>
                         <p class="text-xs font-semibold text-slate-800" x-text="viewModal.invoice?.reseller_name"></p>
-                        <p class="text-[11px] text-slate-600" x-text="'Zone: ' + (viewModal.invoice?.customer_zone || '--')"></p>
+                        <p class="text-[11px] text-slate-600" x-text="i18n.zoneLabel.replace(':zone', viewModal.invoice?.customer_zone || '--')"></p>
                         <p class="text-[11px] text-slate-500" x-text="viewModal.invoice?.customer_address || ''"></p>
                     </div>
                 </div>
@@ -1115,45 +1115,45 @@
                     <table class="w-full text-left border-collapse text-xs">
                         <thead class="bg-slate-50 border-b border-slate-200 text-slate-700">
                             <tr>
-                                <th class="p-2.5 font-semibold">Service Description</th>
-                                <th class="p-2.5 font-semibold text-center">Billing Period</th>
-                                <th class="p-2.5 font-semibold text-right">Amount ({{ $currencySymbol ?? '৳' }})</th>
+                                <th class="p-2.5 font-semibold">{{ __('Service Description') }}</th>
+                                <th class="p-2.5 font-semibold text-center">{{ __('Billing Period') }}</th>
+                                <th class="p-2.5 font-semibold text-right">{{ __('Amount (:currency)', ['currency' => $currencySymbol ?? '৳']) }}</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100 text-slate-800">
                             <tr>
                                 <td class="p-2.5">
                                     <span class="font-semibold text-slate-900 block" x-text="viewModal.invoice?.package_name"></span>
-                                    <span class="text-[10.5px] text-slate-500 block">Monthly Broadband Internet Subscription Fee</span>
+                                    <span class="text-[10.5px] text-slate-500 block">{{ __('Monthly Broadband Internet Subscription Fee') }}</span>
                                 </td>
                                 <td class="p-2.5 text-center font-mono" x-text="viewModal.invoice?.formatted_month"></td>
                                 <td class="p-2.5 text-right font-mono font-semibold" x-text="Number(viewModal.invoice?.amount || 0).toFixed(2)"></td>
                             </tr>
                             <template x-if="Number(viewModal.invoice?.vat_tax || 0) > 0">
                                 <tr>
-                                    <td colspan="2" class="p-2 text-right text-slate-600">VAT / Tax:</td>
+                                    <td colspan="2" class="p-2 text-right text-slate-600">{{ __('VAT / Tax:') }}</td>
                                     <td class="p-2 text-right font-mono text-slate-700" x-text="'+ ' + Number(viewModal.invoice?.vat_tax || 0).toFixed(2)"></td>
                                 </tr>
                             </template>
                             <template x-if="Number(viewModal.invoice?.discount || 0) > 0">
                                 <tr>
-                                    <td colspan="2" class="p-2 text-right text-slate-600">Special Discount / Waiver:</td>
+                                    <td colspan="2" class="p-2 text-right text-slate-600">{{ __('Special Discount / Waiver:') }}</td>
                                     <td class="p-2 text-right font-mono text-emerald-600" x-text="'- ' + Number(viewModal.invoice?.discount || 0).toFixed(2)"></td>
                                 </tr>
                             </template>
                         </tbody>
                         <tfoot class="border-t-2 border-slate-200 bg-slate-50/70 font-semibold text-slate-900">
                             <tr>
-                                <td colspan="2" class="p-2.5 text-right uppercase tracking-wider text-[10.5px]">Total Net Payable:</td>
-                                <td class="p-2.5 text-right font-mono text-sm font-bold text-cyan-900" x-text="'{{ $currencySymbol ?? '৳' }} ' + Number(viewModal.invoice?.total_payable || 0).toFixed(2)"></td>
+                                <td colspan="2" class="p-2.5 text-right uppercase tracking-wider text-[10.5px]">{{ __('Total Net Payable:') }}</td>
+                                <td class="p-2.5 text-right font-mono text-sm font-bold text-cyan-900" x-text="currencySymbol + ' ' + Number(viewModal.invoice?.total_payable || 0).toFixed(2)"></td>
                             </tr>
                             <tr>
-                                <td colspan="2" class="p-2 text-right text-emerald-700">Total Paid:</td>
-                                <td class="p-2 text-right font-mono text-emerald-700" x-text="'{{ $currencySymbol ?? '৳' }} ' + Number(viewModal.invoice?.paid_amount || 0).toFixed(2)"></td>
+                                <td colspan="2" class="p-2 text-right text-emerald-700">{{ __('Total Paid:') }}</td>
+                                <td class="p-2 text-right font-mono text-emerald-700" x-text="currencySymbol + ' ' + Number(viewModal.invoice?.paid_amount || 0).toFixed(2)"></td>
                             </tr>
                             <tr class="bg-amber-50/50">
-                                <td colspan="2" class="p-2.5 text-right text-amber-900 font-bold uppercase tracking-wider text-[10.5px]">Remaining Due Balance:</td>
-                                <td class="p-2.5 text-right font-mono text-sm font-bold text-amber-700" x-text="'{{ $currencySymbol ?? '৳' }} ' + Number(viewModal.invoice?.due_amount || 0).toFixed(2)"></td>
+                                <td colspan="2" class="p-2.5 text-right text-amber-900 font-bold uppercase tracking-wider text-[10.5px]">{{ __('Remaining Due Balance:') }}</td>
+                                <td class="p-2.5 text-right font-mono text-sm font-bold text-amber-700" x-text="currencySymbol + ' ' + Number(viewModal.invoice?.due_amount || 0).toFixed(2)"></td>
                             </tr>
                         </tfoot>
                     </table>
@@ -1161,19 +1161,19 @@
 
                 <!-- Payment Details (if paid) -->
                 <div class="p-3 bg-slate-50 rounded-lg border border-slate-200/80 text-[11px] text-slate-600 space-y-1" x-show="viewModal.invoice?.paid_amount > 0">
-                    <p><span class="font-semibold text-slate-800">Payment Channel:</span> <span x-text="viewModal.invoice?.payment_method || 'Cash'"></span></p>
-                    <p><span class="font-semibold text-slate-800">Payment Recorded:</span> <span x-text="viewModal.invoice?.paid_at || '--'"></span></p>
+                    <p><span class="font-semibold text-slate-800">{{ __('Payment Channel:') }}</span> <span x-text="viewModal.invoice?.payment_method || i18n.cashFallback"></span></p>
+                    <p><span class="font-semibold text-slate-800">{{ __('Payment Recorded:') }}</span> <span x-text="viewModal.invoice?.paid_at || '--'"></span></p>
                 </div>
 
                 <!-- Footer Signatures -->
                 <div class="pt-6 flex justify-between items-end text-slate-400 text-[10.5px]">
                     <div>
                         <div class="w-32 border-b border-slate-300 mb-1"></div>
-                        <p>Customer Signature</p>
+                        <p>{{ __('Customer Signature') }}</p>
                     </div>
                     <div class="text-right">
                         <div class="w-36 border-b border-slate-300 mb-1"></div>
-                        <p>Authorized Officer Signature</p>
+                        <p>{{ __('Authorized Officer Signature') }}</p>
                     </div>
                 </div>
 
@@ -1184,7 +1184,7 @@
                 <button type="button" 
                         @click="viewModal.open = false" 
                         class="border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs px-3.5 py-1.5 rounded-lg transition shadow-2xs cursor-pointer">
-                    Close
+                    {{ __('Close') }}
                 </button>
 
                 <div class="flex items-center gap-2">
@@ -1192,7 +1192,7 @@
                             @click="window.print()" 
                             class="bg-cyan-600 hover:bg-cyan-700 text-white font-medium text-xs px-4 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow-xs cursor-pointer">
                         <i class="fas fa-print text-[11px]"></i>
-                        <span>Print Bill</span>
+                        <span>{{ __('Print Bill') }}</span>
                     </button>
                 </div>
             </div>
@@ -1208,6 +1208,46 @@ function invoiceManager() {
     return {
         activeMenu: null,
         menuPos: { top: 'auto', bottom: 'auto', right: '10px', left: 'auto' },
+        currencySymbol: @json($currencySymbol ?? '৳'),
+        i18n: {
+            pkgLabel: @json(__('Pkg: :pkg')),
+            billLabel: @json(__('Bill: :currency:amount')),
+            creating: @json(__('Creating...')),
+            createInvoice: @json(__('Create Invoice')),
+            invoiceLabel: @json(__('Invoice: #:invoice')),
+            recording: @json(__('Recording...')),
+            confirmPayment: @json(__('Confirm Payment')),
+            ispFallback: @json(__('Internet Service Provider')),
+            hotlineLabel: @json(__('Hotline: :phone')),
+            invLabel: @json(__('INV: :invoice')),
+            issueDateLabel: @json(__('Issue Date: :date')),
+            dueDateLabel: @json(__('Due Date: :date')),
+            userIdLabel: @json(__('User ID: :code (:username)')),
+            mobileLabel: @json(__('Mobile: :phone')),
+            zoneLabel: @json(__('Zone: :zone')),
+            cashFallback: @json(__('Cash')),
+            selectSubscriberFirst: @json(__('Please search and select a subscriber first.')),
+            failedCreateInvoice: @json(__('Failed to create invoice.')),
+            networkErrorCreating: @json(__('Network error creating invoice.')),
+            paymentCollectionFailed: @json(__('Payment collection failed.')),
+            networkErrorRecording: @json(__('Network error recording payment.')),
+            failedLoadDetails: @json(__('Failed to load invoice details.')),
+            networkErrorLoading: @json(__('Network error loading invoice.')),
+            cancelInvoiceTitle: @json(__('Cancel Invoice?')),
+            cancelInvoiceText: @json(__('Are you sure you want to cancel invoice #:invoice?')),
+            yesCancelInvoice: @json(__('Yes, Cancel Invoice')),
+            noKeep: @json(__('No, Keep')),
+            invoiceCancelledTitle: @json(__('Invoice Cancelled')),
+            failedCancelInvoice: @json(__('Failed to cancel invoice.')),
+            networkErrorCancelling: @json(__('Network error cancelling invoice.')),
+            deleteInvoiceTitle: @json(__('Delete Invoice?')),
+            deleteInvoiceText: @json(__('Are you sure you want to permanently delete invoice #:invoice? This action cannot be undone.')),
+            yesDeletePermanently: @json(__('Yes, Delete Permanently')),
+            cancelBtn: @json(__('Cancel')),
+            invoiceDeletedTitle: @json(__('Invoice Deleted')),
+            failedDeleteInvoice: @json(__('Failed to delete invoice.')),
+            networkErrorDeleting: @json(__('Network error deleting invoice.'))
+        },
 
         showMoreFilters: {{ $isMoreOpen ? 'true' : 'false' }},
         searchQuery: @json($search ?? ''),
@@ -1429,7 +1469,7 @@ function invoiceManager() {
 
         async submitCreateInvoice() {
             if (!this.createModal.form.customer_id) {
-                this.showToast('Please search and select a subscriber first.', 'error');
+                this.showToast(this.i18n.selectSubscriberFirst, 'error');
                 return;
             }
             this.createModal.loading = true;
@@ -1449,10 +1489,10 @@ function invoiceManager() {
                     this.createModal.open = false;
                     setTimeout(() => window.location.reload(), 700);
                 } else {
-                    this.showToast(data.message || 'Failed to create invoice.', 'error');
+                    this.showToast(data.message || this.i18n.failedCreateInvoice, 'error');
                 }
             } catch (err) {
-                this.showToast('Network error creating invoice.', 'error');
+                this.showToast(this.i18n.networkErrorCreating, 'error');
             } finally {
                 this.createModal.loading = false;
             }
@@ -1489,10 +1529,10 @@ function invoiceManager() {
                     this.payModal.open = false;
                     setTimeout(() => window.location.reload(), 700);
                 } else {
-                    this.showToast(data.message || 'Payment collection failed.', 'error');
+                    this.showToast(data.message || this.i18n.paymentCollectionFailed, 'error');
                 }
             } catch (err) {
-                this.showToast('Network error recording payment.', 'error');
+                this.showToast(this.i18n.networkErrorRecording, 'error');
             } finally {
                 this.payModal.loading = false;
             }
@@ -1509,10 +1549,10 @@ function invoiceManager() {
                     this.viewModal.invoice = data.invoice;
                     this.viewModal.open = true;
                 } else {
-                    this.showToast('Failed to load invoice details.', 'error');
+                    this.showToast(this.i18n.failedLoadDetails, 'error');
                 }
             } catch (err) {
-                this.showToast('Network error loading invoice.', 'error');
+                this.showToast(this.i18n.networkErrorLoading, 'error');
             } finally {
                 this.viewModal.loading = false;
             }
@@ -1520,14 +1560,14 @@ function invoiceManager() {
 
         async cancelInvoice(id, invNo) {
             const result = await Swal.fire({
-                title: 'Cancel Invoice?',
-                text: `Are you sure you want to cancel invoice #${invNo}?`,
+                title: this.i18n.cancelInvoiceTitle,
+                text: this.i18n.cancelInvoiceText.replace(':invoice', invNo),
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#e11d48',
                 cancelButtonColor: '#64748b',
-                confirmButtonText: 'Yes, Cancel Invoice',
-                cancelButtonText: 'No, Keep',
+                confirmButtonText: this.i18n.yesCancelInvoice,
+                cancelButtonText: this.i18n.noKeep,
                 reverseButtons: true,
                 customClass: {
                     popup: 'rounded-2xl text-xs font-sans shadow-2xl border border-slate-200',
@@ -1552,30 +1592,30 @@ function invoiceManager() {
                 if (res.ok && data.success) {
                     Swal.fire({
                         icon: 'success',
-                        title: 'Invoice Cancelled',
+                        title: this.i18n.invoiceCancelledTitle,
                         text: data.message,
                         timer: 1500,
                         showConfirmButton: false
                     });
                     setTimeout(() => window.location.reload(), 1200);
                 } else {
-                    this.showToast(data.message || 'Failed to cancel invoice.', 'error');
+                    this.showToast(data.message || this.i18n.failedCancelInvoice, 'error');
                 }
             } catch (err) {
-                this.showToast('Network error cancelling invoice.', 'error');
+                this.showToast(this.i18n.networkErrorCancelling, 'error');
             }
         },
 
         async deleteInvoice(id, invNo) {
             const result = await Swal.fire({
-                title: 'Delete Invoice?',
-                text: `Are you sure you want to permanently delete invoice #${invNo}? This action cannot be undone.`,
+                title: this.i18n.deleteInvoiceTitle,
+                text: this.i18n.deleteInvoiceText.replace(':invoice', invNo),
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#e11d48',
                 cancelButtonColor: '#64748b',
-                confirmButtonText: 'Yes, Delete Permanently',
-                cancelButtonText: 'Cancel',
+                confirmButtonText: this.i18n.yesDeletePermanently,
+                cancelButtonText: this.i18n.cancelBtn,
                 reverseButtons: true,
                 customClass: {
                     popup: 'rounded-2xl text-xs font-sans shadow-2xl border border-slate-200',
@@ -1600,17 +1640,17 @@ function invoiceManager() {
                 if (res.ok && data.success) {
                     Swal.fire({
                         icon: 'success',
-                        title: 'Invoice Deleted',
+                        title: this.i18n.invoiceDeletedTitle,
                         text: data.message,
                         timer: 1500,
                         showConfirmButton: false
                     });
                     setTimeout(() => window.location.reload(), 1200);
                 } else {
-                    this.showToast(data.message || 'Failed to delete invoice.', 'error');
+                    this.showToast(data.message || this.i18n.failedDeleteInvoice, 'error');
                 }
             } catch (err) {
-                this.showToast('Network error deleting invoice.', 'error');
+                this.showToast(this.i18n.networkErrorDeleting, 'error');
             }
         },
 

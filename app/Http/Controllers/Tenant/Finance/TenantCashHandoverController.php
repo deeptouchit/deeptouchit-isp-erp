@@ -34,7 +34,7 @@ class TenantCashHandoverController extends Controller
             $tenant = Tenant::first();
         }
 
-        return $tenant ?? abort(404, 'No active tenant found.');
+        return $tenant ?? abort(404, __('No active tenant found.'));
     }
 
     /**
@@ -225,14 +225,14 @@ class TenantCashHandoverController extends Controller
                 return [
                     'id' => $p->id,
                     'invoice_no' => $p->invoice_no,
-                    'customer_name' => $p->customer?->name ?? 'N/A',
+                    'customer_name' => $p->customer?->name ?? __('N/A'),
                     'customer_username' => $p->customer?->username ?? '--',
                     'customer_code' => $p->customer?->customer_id ?? 'SO1000',
                     'amount' => (float) $p->amount,
                     'amount_formatted' => $currencySymbol . number_format($p->amount, 2),
                     'payment_method' => $p->payment_method,
                     'payment_method_name' => $p->payment_method_name,
-                    'paid_time' => $p->paid_at ? $p->paid_at->format('h:i A') : '--',
+                    'paid_time' => $p->paid_at ? $p->paid_at->translatedFormat('h:i A') : '--',
                 ];
             })->values(),
         ]);
@@ -292,6 +292,10 @@ class TenantCashHandoverController extends Controller
 
             // 4. Generate Handover Number
             $handoverNo = TenantDailyCashHandover::generateHandoverNo($tenant->id, $handoverDate);
+            $currencySymbol = $tenant->currency_symbol ?? '৳';
+            $formattedHanded = $currencySymbol . number_format($handedOverAmount, 2);
+            $formattedSystem = $currencySymbol . number_format($systemCash, 2);
+            $collectorName = $collector?->name ?? __('Staff Collector');
 
             // 5. Create Handover Record
             $handover = TenantDailyCashHandover::create([
@@ -310,8 +314,10 @@ class TenantCashHandoverController extends Controller
                 'status' => $status,
                 'verified_by' => $isCollectorAdmin ? (Auth::id() ?: 1) : null,
                 'verified_at' => $isCollectorAdmin ? Carbon::now() : null,
-                'manager_remarks' => $isCollectorAdmin ? 'Auto-approved Admin direct office vault collection' : null,
-                'notes' => $validated['notes'] ?? ($isCollectorAdmin ? "Admin direct office vault cash closing for {$handoverDate}" : "Daily cash handover for {$handoverDate}"),
+                'manager_remarks' => $isCollectorAdmin ? __('Auto-approved Admin direct office vault collection') : null,
+                'notes' => $validated['notes'] ?? ($isCollectorAdmin
+                    ? __('Admin direct office vault cash closing for :date', ['date' => $handoverDate])
+                    : __('Daily cash handover for :date', ['date' => $handoverDate])),
             ]);
 
             // 6. Lock constituent cash payments to prevent double-counting or re-submission
@@ -325,11 +331,22 @@ class TenantCashHandoverController extends Controller
                 'tenant_id' => $tenant->id,
                 'actor_type' => 'App\Models\User',
                 'actor_id' => Auth::id() ?: 1,
-                'actor_name' => Auth::user()?->name ?: 'Admin',
+                'actor_name' => Auth::user()?->name ?: __('Admin'),
                 'event_type' => $isCollectorAdmin ? 'CASH_HANDOVER_APPROVED' : 'CASH_HANDOVER_SUBMITTED',
                 'description' => $isCollectorAdmin
-                    ? "Admin '{$collector?->name}' closed and auto-approved cash handover {$handoverNo} (৳" . number_format($handedOverAmount, 2) . ") directly into vault. Locked {$receiptsCount} receipt(s)."
-                    : "Submitted cash handover voucher {$handoverNo} for collector '{$collector?->name}'. Handed: ৳" . number_format($handedOverAmount, 2) . " (System Cash: ৳" . number_format($systemCash, 2) . "). Locked {$receiptsCount} receipt(s).",
+                    ? __("Admin ':name' closed and auto-approved cash handover :no (:amount) directly into vault. Locked :count receipt(s).", [
+                        'name' => $collectorName,
+                        'no' => $handoverNo,
+                        'amount' => $formattedHanded,
+                        'count' => $receiptsCount,
+                    ])
+                    : __("Submitted cash handover voucher :no for collector ':name'. Handed: :handed (System Cash: :system). Locked :count receipt(s).", [
+                        'no' => $handoverNo,
+                        'name' => $collectorName,
+                        'handed' => $formattedHanded,
+                        'system' => $formattedSystem,
+                        'count' => $receiptsCount,
+                    ]),
                 'ip_address' => $request->ip(),
                 'user_agent' => $request->userAgent(),
                 'metadata' => [
@@ -352,9 +369,16 @@ class TenantCashHandoverController extends Controller
         }
 
         $currencySymbol = $tenant->currency_symbol ?? '৳';
+        $formattedHanded = $currencySymbol . number_format($handedOverAmount, 2);
         $msg = $isCollectorAdmin
-            ? "অ্যাডমিন ক্যাশ ভাউচার {$handoverNo} ({$currencySymbol}" . number_format($handedOverAmount, 2) . ") সরাসরি ভোল্টে জমা এবং সফলভাবে অ্যাপ্রুভ করা হয়েছে।"
-            : "Cash handover voucher {$handoverNo} ({$currencySymbol}" . number_format($handedOverAmount, 2) . ") submitted successfully and awaiting manager verification.";
+            ? __('Admin cash handover voucher :no (:amount) has been approved and transferred directly into the vault.', [
+                'no' => $handoverNo,
+                'amount' => $formattedHanded,
+            ])
+            : __('Cash handover voucher :no (:amount) submitted successfully and awaiting manager verification.', [
+                'no' => $handoverNo,
+                'amount' => $formattedHanded,
+            ]);
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
@@ -405,7 +429,7 @@ class TenantCashHandoverController extends Controller
         $voucherData = [
             'id' => $handover->id,
             'handover_no' => $handover->handover_no,
-            'handover_date' => $handover->handover_date->format('d M Y'),
+            'handover_date' => $handover->handover_date->translatedFormat('d M Y'),
             'shift_type' => $handover->shift_type,
             'shift_label' => $handover->shift_label,
             'system_collected_amount' => (float) $handover->system_collected_amount,
@@ -423,13 +447,13 @@ class TenantCashHandoverController extends Controller
             'status' => $handover->status,
             'status_badge' => $handover->status_badge,
             'discrepancy_badge' => $handover->discrepancy_badge,
-            'notes' => $handover->notes ?: 'Daily collection closing handover',
+            'notes' => $handover->notes ?: __('Daily collection closing handover'),
             'manager_remarks' => $handover->manager_remarks,
-            'created_at' => $handover->created_at->format('d M Y, h:i A'),
-            'verified_at' => $handover->verified_at ? $handover->verified_at->format('d M Y, h:i A') : null,
+            'created_at' => $handover->created_at->translatedFormat('d M Y, h:i A'),
+            'verified_at' => $handover->verified_at ? $handover->verified_at->translatedFormat('d M Y, h:i A') : null,
             'collector' => [
                 'id' => $handover->collector?->id,
-                'name' => $handover->collector?->name ?? 'Staff Collector',
+                'name' => $handover->collector?->name ?? __('Staff Collector'),
                 'email' => $handover->collector?->email ?? '--',
                 'phone' => $handover->collector?->phone ?? '--',
             ],
@@ -439,23 +463,23 @@ class TenantCashHandoverController extends Controller
                 'email' => $handover->verifier->email,
             ] : null,
             'company' => [
-                'name' => $tenant->company_name ?: ($tenant->name ?? 'ISP Management Portal'),
+                'name' => $tenant->company_name ?: ($tenant->name ?? __('ISP Management Portal')),
                 'phone' => $tenant->phone ?: ($tenant->support_phone ?? '01700-000000'),
                 'email' => $tenant->email ?: 'support@somitysoft.com',
-                'address' => $tenant->address ?: 'Head Office, Internet Service Provider',
+                'address' => $tenant->address ?: __('Head Office, Internet Service Provider'),
             ],
             'receipts' => $payments->map(function ($p) use ($currencySymbol) {
                 return [
                     'id' => $p->id,
                     'invoice_no' => $p->invoice_no,
-                    'customer_name' => $p->customer?->name ?? 'N/A',
+                    'customer_name' => $p->customer?->name ?? __('N/A'),
                     'customer_username' => $p->customer?->username ?? '--',
                     'customer_code' => $p->customer?->customer_id ?? 'SO1000',
                     'amount' => (float) $p->amount,
                     'amount_formatted' => $currencySymbol . number_format($p->amount, 2),
                     'payment_method' => $p->payment_method,
                     'payment_method_name' => $p->payment_method_name,
-                    'paid_time' => $p->paid_at ? $p->paid_at->format('h:i A') : '--',
+                    'paid_time' => $p->paid_at ? $p->paid_at->translatedFormat('h:i A') : '--',
                 ];
             })->values(),
         ];
@@ -477,11 +501,13 @@ class TenantCashHandoverController extends Controller
         if ($handover->status === 'approved') {
             return response()->json([
                 'success' => false,
-                'message' => 'This cash handover voucher is already approved.',
+                'message' => __('This cash handover voucher is already approved.'),
             ], 422);
         }
 
-        $remarks = $request->input('manager_remarks', 'Verified physical cash and approved into ISP vault.');
+        $remarks = $request->input('manager_remarks', __('Verified physical cash and approved into ISP vault.'));
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
+        $formattedAmount = $currencySymbol . number_format($handover->handed_over_amount, 2);
 
         $hasHandoverCol = Schema::hasColumn('tenant_customer_payments', 'handover_id');
 
@@ -509,9 +535,13 @@ class TenantCashHandoverController extends Controller
                 'tenant_id' => $tenant->id,
                 'actor_type' => 'App\Models\User',
                 'actor_id' => Auth::id() ?: 1,
-                'actor_name' => Auth::user()?->name ?: 'Admin',
+                'actor_name' => Auth::user()?->name ?: __('Admin'),
                 'event_type' => 'CASH_HANDOVER_APPROVED',
-                'description' => "Approved cash handover voucher {$handover->handover_no} (৳" . number_format($handover->handed_over_amount, 2) . ") for collector '{$handover->collector?->name}'.",
+                'description' => __("Approved cash handover voucher :no (:amount) for collector ':name'.", [
+                    'no' => $handover->handover_no,
+                    'amount' => $formattedAmount,
+                    'name' => $handover->collector?->name ?? __('Staff Collector'),
+                ]),
                 'ip_address' => $request->ip(),
                 'user_agent' => $request->userAgent(),
                 'metadata' => [
@@ -529,8 +559,10 @@ class TenantCashHandoverController extends Controller
             throw $e;
         }
 
-        $currencySymbol = $tenant->currency_symbol ?? '৳';
-        $msg = "Cash handover voucher {$handover->handover_no} ({$currencySymbol}" . number_format($handover->handed_over_amount, 2) . ") has been approved successfully and transferred into the vault.";
+        $msg = __('Cash handover voucher :no (:amount) has been approved successfully and transferred into the vault.', [
+            'no' => $handover->handover_no,
+            'amount' => $formattedAmount,
+        ]);
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
@@ -550,7 +582,7 @@ class TenantCashHandoverController extends Controller
         $tenant = $this->getTenant();
         $handover = TenantDailyCashHandover::where('tenant_id', $tenant->id)->findOrFail($id);
 
-        $remarks = $request->input('manager_remarks', 'Cash discrepancy not resolved / rejected by accounts manager.');
+        $remarks = $request->input('manager_remarks', __('Cash discrepancy not resolved / rejected by accounts manager.'));
 
         $hasHandoverCol = Schema::hasColumn('tenant_customer_payments', 'handover_id');
 
@@ -572,9 +604,12 @@ class TenantCashHandoverController extends Controller
                 'tenant_id' => $tenant->id,
                 'actor_type' => 'App\Models\User',
                 'actor_id' => Auth::id() ?: 1,
-                'actor_name' => Auth::user()?->name ?: 'Admin',
+                'actor_name' => Auth::user()?->name ?: __('Admin'),
                 'event_type' => 'CASH_HANDOVER_REJECTED',
-                'description' => "Rejected cash handover voucher {$handover->handover_no}. Reason: {$remarks}. Unlocked constituent cash payments.",
+                'description' => __('Rejected cash handover voucher :no. Reason: :reason. Unlocked constituent cash payments.', [
+                    'no' => $handover->handover_no,
+                    'reason' => $remarks,
+                ]),
                 'ip_address' => $request->ip(),
                 'user_agent' => $request->userAgent(),
                 'metadata' => [
@@ -590,7 +625,7 @@ class TenantCashHandoverController extends Controller
             throw $e;
         }
 
-        $msg = "Cash handover voucher {$handover->handover_no} has been rejected.";
+        $msg = __('Cash handover voucher :no has been rejected.', ['no' => $handover->handover_no]);
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
@@ -614,34 +649,35 @@ class TenantCashHandoverController extends Controller
             ->get();
 
         $filename = 'cash_handovers_' . date('Ymd_His') . '.csv';
+        $currency = $tenant->currency_symbol ?? '৳';
 
-        return response()->streamDownload(function () use ($handovers) {
+        return response()->streamDownload(function () use ($handovers, $currency) {
             $handle = fopen('php://output', 'w');
             fputcsv($handle, [
-                'Handover No',
-                'Date',
-                'Collector Name',
-                'Collector Email',
-                'Shift',
-                'System Cash (BDT)',
-                'Handed Cash (BDT)',
-                'Shortage (BDT)',
-                'Excess (BDT)',
-                'Digital Amount (BDT)',
-                'Receipts Count',
-                'Status',
-                'Verified By',
-                'Verified At',
-                'Collector Notes',
-                'Manager Remarks',
+                __('Handover No'),
+                __('Date'),
+                __('Collector Name'),
+                __('Collector Email'),
+                __('Shift'),
+                __('System Cash (:currency)', ['currency' => $currency]),
+                __('Handed Cash (:currency)', ['currency' => $currency]),
+                __('Shortage (:currency)', ['currency' => $currency]),
+                __('Excess (:currency)', ['currency' => $currency]),
+                __('Digital Amount (:currency)', ['currency' => $currency]),
+                __('Receipts Count'),
+                __('Status'),
+                __('Verified By'),
+                __('Verified At'),
+                __('Collector Notes'),
+                __('Manager Remarks'),
             ]);
 
             foreach ($handovers as $h) {
                 fputcsv($handle, [
                     $h->handover_no,
                     $h->handover_date->format('Y-m-d'),
-                    $h->collector?->name ?? 'N/A',
-                    $h->collector?->email ?? 'N/A',
+                    $h->collector?->name ?? __('N/A'),
+                    $h->collector?->email ?? __('N/A'),
                     $h->shift_label,
                     number_format($h->system_collected_amount, 2, '.', ''),
                     number_format($h->handed_over_amount, 2, '.', ''),
@@ -649,7 +685,7 @@ class TenantCashHandoverController extends Controller
                     number_format($h->excess_amount, 2, '.', ''),
                     number_format($h->digital_collected_amount, 2, '.', ''),
                     $h->total_receipts_count,
-                    $h->status,
+                    $h->status_badge['label'] ?? __(ucfirst($h->status ?? 'Pending')),
                     $h->verifier?->name ?? '--',
                     $h->verified_at ? $h->verified_at->format('Y-m-d H:i:s') : '--',
                     $h->notes,

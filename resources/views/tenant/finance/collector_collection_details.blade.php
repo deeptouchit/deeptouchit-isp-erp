@@ -1,6 +1,6 @@
 @extends('tenant.layouts.app')
 
-@section('title', 'Collector Receipts: ' . $collectorName . ' - ' . ($tenant->company_name ?? $tenant->name))
+@section('title', __('Collector Receipts: :name', ['name' => $collectorName]) . ' - ' . ($tenant->company_name ?? $tenant->name))
 
 @push('styles')
 <style>
@@ -36,7 +36,7 @@
             {{-- Back to Collector Collections Summary --}}
             <a href="{{ route('tenant.finance.collector-collections', ['period' => $period, 'month' => $selectedMonth, 'year' => $selectedYear, 'date_from' => $dateFrom, 'date_to' => $dateTo, 'partner_id' => $resellerId]) }}" 
                class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-xs transition shadow-2xs cursor-pointer"
-               title="Back to Collector Collections Summary">
+               title="{{ __('Back to Collector Collections Summary') }}">
                 <i class="fas fa-arrow-left"></i>
             </a>
 
@@ -45,7 +45,7 @@
             </div>
             
             <h1 class="text-xs sm:text-sm font-bold text-slate-900 tracking-tight flex items-center gap-2">
-                <span>Collector Receipts: {{ $collectorName }}</span>
+                <span>{{ __('Collector Receipts: :name', ['name' => $collectorName]) }}</span>
             </h1>
 
             <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-cyan-50 text-cyan-800 border border-cyan-200">
@@ -64,17 +64,17 @@
             <button type="button" 
                     @click="window.print()" 
                     class="h-[34px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-0 px-3 rounded-lg border border-slate-200/80 transition inline-flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer"
-                    title="Print Itemized Collection Sheet">
+                    title="{{ __('Print Itemized Collection Sheet') }}">
                 <i class="fas fa-print text-cyan-600 text-xs"></i>
-                <span class="hidden sm:inline">Print</span>
+                <span class="hidden sm:inline">{{ __('Print') }}</span>
             </button>
 
             {{-- Export CSV --}}
             <a href="{{ route('tenant.finance.payments.export', array_merge(request()->query(), ['collected_by' => $collectorId, 'reseller_id' => $resellerId])) }}" 
                class="h-[34px] bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-0 px-3.5 rounded-lg shadow-xs transition inline-flex items-center justify-center gap-1.5 cursor-pointer"
-               title="Export Receipts as CSV">
+               title="{{ __('Export Receipts as CSV') }}">
                 <i class="fas fa-file-csv text-xs"></i>
-                <span class="hidden sm:inline">Export</span> CSV
+                <span class="hidden sm:inline">{{ __('Export') }}</span> {{ __('CSV') }}
             </a>
         </div>
     </div>
@@ -84,7 +84,7 @@
         {{-- Card 1: Total Collected --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Total Collected</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Total Collected') }}</span>
                 <span class="text-[13px] font-bold font-mono text-emerald-600 leading-tight block truncate">@currency($totalAmount)</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border border-emerald-200 bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0">
@@ -95,7 +95,7 @@
         {{-- Card 2: Cash Collected --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-amber-700 block truncate">Cash Collection</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-amber-700 block truncate">{{ __('Cash Collection') }}</span>
                 <span class="text-[13px] font-bold font-mono text-amber-600 leading-tight block truncate">@currency($cashAmount)</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border border-amber-200 bg-amber-50 text-amber-600 flex items-center justify-center flex-shrink-0">
@@ -106,7 +106,7 @@
         {{-- Card 3: Digital / Online --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-cyan-700 block truncate">Digital &amp; Online</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-cyan-700 block truncate">{{ __('Digital & Online') }}</span>
                 <span class="text-[13px] font-bold font-mono text-cyan-700 leading-tight block truncate">@currency($digitalAmount)</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border border-cyan-200 bg-cyan-50 text-cyan-600 flex items-center justify-center flex-shrink-0">
@@ -117,7 +117,7 @@
         {{-- Card 4: Total Receipts Count --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Total Receipts</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Total Receipts') }}</span>
                 <span class="text-[13px] font-bold font-mono text-blue-600 leading-tight block truncate">{{ number_format($totalCount) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border border-blue-200 bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0">
@@ -128,7 +128,7 @@
         {{-- Card 5: Unique Customers --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Total Customers</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Total Customers') }}</span>
                 <span class="text-[13px] font-bold font-mono text-indigo-600 leading-tight block truncate">{{ number_format($uniqueCustomersCount) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border border-indigo-200 bg-indigo-50 text-indigo-600 flex items-center justify-center flex-shrink-0">
@@ -139,7 +139,7 @@
         {{-- Card 6: Average Collection --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Average Bill</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Average Bill') }}</span>
                 <span class="text-[13px] font-bold font-mono text-slate-900 leading-tight block truncate">@currency($avgAmount)</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border border-slate-200 bg-slate-50 text-slate-600 flex items-center justify-center flex-shrink-0">
@@ -175,7 +175,7 @@
                            x-model="searchQuery"
                            @input="handleLiveSearch($event.target.value)"
                            @keydown.enter.prevent="submitSearchNow()"
-                           placeholder="Search Receipt No, Customer ID, Name, Phone..." 
+                           placeholder="{{ __('Search Receipt No, Customer ID, Name, Phone...') }}" 
                            class="w-full h-[34px] pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition placeholder:text-slate-400 font-medium"
                            autocomplete="off">
                     <button type="button" 
@@ -183,7 +183,7 @@
                             x-cloak
                             @click="clearLiveSearch()"
                             class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500 p-0.5 text-xs transition cursor-pointer"
-                            title="Clear Search">
+                            title="{{ __('Clear Search') }}">
                         <i class="fas fa-times-circle"></i>
                     </button>
                 </div>
@@ -193,12 +193,12 @@
                     <select name="payment_method" 
                             onchange="this.form.submit()"
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700 cursor-pointer">
-                        <option value="all">All Payment Methods</option>
-                        <option value="cash" {{ $paymentMethod === 'cash' ? 'selected' : '' }}>💵 Cash Only</option>
-                        <option value="bkash" {{ $paymentMethod === 'bkash' ? 'selected' : '' }}>📱 bKash</option>
-                        <option value="nagad" {{ $paymentMethod === 'nagad' ? 'selected' : '' }}>📱 Nagad</option>
-                        <option value="rocket" {{ $paymentMethod === 'rocket' ? 'selected' : '' }}>📱 Rocket</option>
-                        <option value="bank" {{ $paymentMethod === 'bank' ? 'selected' : '' }}>🏦 Bank Transfer</option>
+                        <option value="all">{{ __('All Payment Methods') }}</option>
+                        <option value="cash" {{ $paymentMethod === 'cash' ? 'selected' : '' }}>💵 {{ __('Cash Only') }}</option>
+                        <option value="bkash" {{ $paymentMethod === 'bkash' ? 'selected' : '' }}>📱 {{ __('bKash') }}</option>
+                        <option value="nagad" {{ $paymentMethod === 'nagad' ? 'selected' : '' }}>📱 {{ __('Nagad') }}</option>
+                        <option value="rocket" {{ $paymentMethod === 'rocket' ? 'selected' : '' }}>📱 {{ __('Rocket') }}</option>
+                        <option value="bank" {{ $paymentMethod === 'bank' ? 'selected' : '' }}>🏦 {{ __('Bank Transfer') }}</option>
                     </select>
                 </div>
 
@@ -207,11 +207,9 @@
                     <select name="per_page" 
                             onchange="this.form.submit()"
                             class="w-full h-[34px] px-2 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700 cursor-pointer">
-                        <option value="15" {{ request('per_page', $perPage) == 15 ? 'selected' : '' }}>15 / page</option>
-                        <option value="20" {{ request('per_page', $perPage) == 20 ? 'selected' : '' }}>20 / page</option>
-                        <option value="30" {{ request('per_page', $perPage) == 30 ? 'selected' : '' }}>30 / page</option>
-                        <option value="50" {{ request('per_page', $perPage) == 50 ? 'selected' : '' }}>50 / page</option>
-                        <option value="100" {{ request('per_page', $perPage) == 100 ? 'selected' : '' }}>100 / page</option>
+                        @foreach([15, 20, 30, 50, 100] as $pp)
+                            <option value="{{ $pp }}" {{ request('per_page', $perPage) == $pp ? 'selected' : '' }}>{{ __(':count / page', ['count' => $pp]) }}</option>
+                        @endforeach
                     </select>
                 </div>
 
@@ -219,15 +217,15 @@
                 <div class="flex items-center gap-1.5 flex-shrink-0 md:ml-auto">
                     <button type="submit" 
                             class="h-[34px] bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-0 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" 
-                            title="Apply Filters">
+                            title="{{ __('Apply Filters') }}">
                         <i class="fas fa-filter text-[10px]"></i>
-                        <span>Filter</span>
+                        <span>{{ __('Filter') }}</span>
                     </button>
                     <a href="{{ route('tenant.finance.collector-collections.show', array_merge(['collector' => $collectorId], request()->only(['reseller_id', 'period', 'month', 'year', 'date_from', 'date_to']))) }}" 
                        class="h-[34px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-0 px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer" 
-                       title="Reset Filters">
+                       title="{{ __('Reset Filters') }}">
                         <i class="fas fa-rotate-left text-[10px]"></i>
-                        <span>Reset</span>
+                        <span>{{ __('Reset') }}</span>
                     </a>
                 </div>
             </div>
@@ -240,20 +238,20 @@
             <table class="saas-table">
                 <thead>
                     <tr>
-                        <th class="w-10 text-center no-sort">#</th>
-                        <th class="text-center font-semibold">Invoice #</th>
-                        <th class="text-center font-semibold">Cust ID</th>
-                        <th class="text-center font-semibold">Customer</th>
-                        <th class="text-center font-semibold">Guardian</th>
-                        <th class="text-center font-semibold">Area</th>
-                        <th class="text-center font-semibold">Partner</th>
-                        <th class="text-center font-semibold">Package</th>
-                        <th class="text-center font-semibold">Bill (Tk)</th>
-                        <th class="text-center font-semibold">Paid (Tk)</th>
-                        <th class="text-center font-semibold">Collector</th>
-                        <th class="text-center font-semibold">Status</th>
-                        <th class="text-center font-semibold">Paid At</th>
-                        <th class="w-14 text-center no-sort">Action</th>
+                        <th class="w-10 text-center no-sort">{{ __('#') }}</th>
+                        <th class="text-center font-semibold">{{ __('Invoice #') }}</th>
+                        <th class="text-center font-semibold">{{ __('Cust ID') }}</th>
+                        <th class="text-center font-semibold">{{ __('Customer') }}</th>
+                        <th class="text-center font-semibold">{{ __('Guardian') }}</th>
+                        <th class="text-center font-semibold">{{ __('Area') }}</th>
+                        <th class="text-center font-semibold">{{ __('Partner') }}</th>
+                        <th class="text-center font-semibold">{{ __('Package') }}</th>
+                        <th class="text-center font-semibold">{{ __('Bill (:currency)', ['currency' => $currencySymbol ?? '৳']) }}</th>
+                        <th class="text-center font-semibold">{{ __('Paid (:currency)', ['currency' => $currencySymbol ?? '৳']) }}</th>
+                        <th class="text-center font-semibold">{{ __('Collector') }}</th>
+                        <th class="text-center font-semibold">{{ __('Status') }}</th>
+                        <th class="text-center font-semibold">{{ __('Paid At') }}</th>
+                        <th class="w-14 text-center no-sort">{{ __('Action') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -261,22 +259,22 @@
                         <td colspan="14" class="text-center py-6 text-slate-500 bg-slate-50/50">
                             <i class="fas fa-spinner fa-spin text-cyan-600 mr-1.5" x-show="isSearching"></i>
                             <i class="fas fa-search text-slate-400 mr-1.5" x-show="!isSearching"></i>
-                            <span class="text-xs font-medium">No matching receipts found for this search.</span>
+                            <span class="text-xs font-medium">{{ __('No matching receipts found for this search.') }}</span>
                         </td>
                     </tr>
                     @forelse($payments as $index => $p)
                         @php
                             $rowNum = $payments->firstItem() ? ($payments->firstItem() + $index) : ($index + 1);
                             $cleanInvoiceNo = $p->invoice?->invoice_no ?: ($p->receipt_no ?: ($p->invoice_no ?: 'REC-' . str_pad($p->id, 5, '0', STR_PAD_LEFT)));
-                            $custName = $p->customer?->name ?: ($p->customer?->username ?? 'Unknown');
+                            $custName = $p->customer?->name ?: ($p->customer?->username ?? __('Unknown'));
                             $custId = $p->customer?->customer_id ?: ($p->customer?->username ?? '—');
                             $guardian = $p->customer?->father_name ?: '—';
                             $area = $p->customer?->zone?->name ?: ($p->customer?->address ?: '—');
-                            $partnerCode = $p->reseller ? ($p->reseller->code ?: $p->reseller->name) : 'Direct HQ';
+                            $partnerCode = $p->reseller ? ($p->reseller->code ?: $p->reseller->name) : __('Direct HQ');
                             $pkgName = $p->customer?->package_display_name ?: ($p->customer?->package?->name ?: '—');
                             $billAmount = $p->invoice ? (float) $p->invoice->total_payable : (float) $p->amount;
                             $paidAmount = (float) $p->amount;
-                            $collectorDisplay = $p->collector?->name ?: ($collectorName ?? 'Direct / System');
+                            $collectorDisplay = $p->collector?->name ?: ($collectorName ?? __('Direct / System'));
                             $searchPayload = strtolower($cleanInvoiceNo . ' ' . $custId . ' ' . $custName . ' ' . $guardian . ' ' . $area . ' ' . $partnerCode . ' ' . $pkgName . ' ' . ($p->customer?->phone ?? ''));
                         @endphp
                         <tr class="hover:bg-slate-50/70 transition-colors" data-search-text="{{ $searchPayload }}">
@@ -287,7 +285,7 @@
 
                             {{-- 2. Invoice # --}}
                             <td class="text-center font-mono text-cyan-800 font-bold whitespace-nowrap">
-                                <a href="{{ route('tenant.finance.payments.show', $p->id) }}" target="_blank" class="hover:underline hover:text-cyan-600 inline-flex items-center gap-1" title="View / Print Receipt">
+                                <a href="{{ route('tenant.finance.payments.show', $p->id) }}" target="_blank" class="hover:underline hover:text-cyan-600 inline-flex items-center gap-1" title="{{ __('View / Print Receipt') }}">
                                     <i class="fas fa-file-invoice text-[10px] text-cyan-600"></i>
                                     <span>{{ $cleanInvoiceNo }}</span>
                                 </a>
@@ -305,7 +303,7 @@
                                         {{ $custName }}
                                     </a>
                                 @else
-                                    <span class="text-slate-400 font-sans">Deleted Subscriber</span>
+                                    <span class="text-slate-400 font-sans">{{ __('Deleted Subscriber') }}</span>
                                 @endif
                             </td>
 
@@ -327,9 +325,9 @@
                                         <span>{{ $p->reseller->code ?: $p->reseller->name }}</span>
                                     </span>
                                 @else
-                                    <span class="inline-flex items-center gap-1 text-slate-600 font-medium" title="Direct Retail HQ">
+                                    <span class="inline-flex items-center gap-1 text-slate-600 font-medium" title="{{ __('Direct Retail HQ') }}">
                                         <i class="fas fa-building text-slate-400 text-[10px]"></i>
-                                        <span>Direct</span>
+                                        <span>{{ __('Direct') }}</span>
                                     </span>
                                 @endif
                             </td>
@@ -339,12 +337,12 @@
                                 {{ $pkgName }}
                             </td>
 
-                            {{-- 9. Bill (Tk) --}}
+                            {{-- 9. Bill --}}
                             <td class="text-right font-mono font-semibold text-slate-800 whitespace-nowrap text-xs">
                                 @currency($billAmount)
                             </td>
 
-                            {{-- 10. Paid (Tk) --}}
+                            {{-- 10. Paid --}}
                             <td class="text-right font-mono font-semibold text-emerald-600 whitespace-nowrap text-xs">
                                 @currency($paidAmount)
                             </td>
@@ -361,7 +359,7 @@
                             <td class="text-center whitespace-nowrap">
                                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold border bg-emerald-50 text-emerald-700 border-emerald-200 shadow-2xs">
                                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                    <span>Paid</span>
+                                    <span>{{ __('Paid') }}</span>
                                 </span>
                             </td>
 
@@ -370,7 +368,7 @@
                                 @if($p->paid_at)
                                     <span class="inline-flex items-center gap-1 text-slate-700">
                                         <i class="fas fa-clock text-emerald-600 text-[10px]"></i>
-                                        <span>{{ \Carbon\Carbon::parse($p->paid_at)->format('d M Y, h:i A') }}</span>
+                                        <span>{{ \Carbon\Carbon::parse($p->paid_at)->translatedFormat('d M Y, h:i A') }}</span>
                                     </span>
                                 @else
                                     <span class="text-slate-400 font-sans">—</span>
@@ -382,7 +380,7 @@
                                 <a href="{{ route('tenant.finance.payments.show', $p->id) }}" 
                                    target="_blank"
                                    class="w-6 h-6 rounded-md hover:bg-slate-100 text-slate-500 hover:text-cyan-700 transition inline-flex items-center justify-center cursor-pointer"
-                                   title="View / Print Receipt">
+                                   title="{{ __('View / Print Receipt') }}">
                                     <i class="fas fa-print text-[11px]"></i>
                                 </a>
                             </td>
@@ -391,7 +389,7 @@
                         <tr class="no-record-row">
                             <td colspan="14" class="text-center py-8 text-slate-400">
                                 <i class="fas fa-inbox text-2xl mb-1.5 block text-slate-300"></i>
-                                <span class="font-medium text-slate-600 text-xs">No payment receipts found for this collector in this period.</span>
+                                <span class="font-medium text-slate-600 text-xs">{{ __('No payment receipts found for this collector in this period.') }}</span>
                             </td>
                         </tr>
                     @endforelse

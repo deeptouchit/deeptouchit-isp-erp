@@ -1,6 +1,6 @@
 @extends('tenant.layouts.app')
 
-@section('title', 'Collector Daily Cash Handover - ' . ($tenant->company_name ?? $tenant->name))
+@section('title', __('Collector Daily Cash Handover') . ' - ' . ($tenant->company_name ?? $tenant->name))
 
 @push('styles')
 <style>
@@ -34,14 +34,14 @@
     <!-- 1. Top Header Bar (AGENTS.md Rule 2.A: Icon + Title + Action buttons ONLY - Strictly No Subtitles) -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-white p-3 sm:px-4 sm:py-3 rounded-xl border border-slate-200/90 shadow-2xs">
         <div class="flex items-center gap-2.5">
-            <a href="{{ route('tenant.dashboard') }}" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-xs transition shadow-2xs">
+            <a href="{{ route('tenant.dashboard') }}" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-xs transition shadow-2xs" title="{{ __('Back to Dashboard') }}">
                 <i class="fas fa-arrow-left"></i>
             </a>
             <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center text-sm shadow-2xs">
                 <i class="fas fa-vault"></i>
             </div>
             <h1 class="text-sm sm:text-base font-bold text-slate-800 tracking-tight">
-                Collector Daily Cash Handover
+                {{ __('Collector Daily Cash Handover') }}
             </h1>
         </div>
 
@@ -51,7 +51,7 @@
                     @click="openSubmitModal()" 
                     class="bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs px-3.5 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow-xs cursor-pointer">
                 <i class="fas fa-paper-plane text-xs"></i>
-                <span>Submit Cash Handover</span>
+                <span>{{ __('Submit Cash Handover') }}</span>
             </button>
         </div>
     </div>
@@ -61,7 +61,7 @@
         <!-- Card 1: Cash in Hand -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between min-w-0">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Cash in Hand</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Cash in Hand') }}</span>
                 <span class="text-[13px] font-bold font-mono text-amber-700 leading-tight block truncate">
                     @currency($stats['available_cash_in_hand'])
                 </span>
@@ -74,7 +74,7 @@
         <!-- Card 2: Pending Approval -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between min-w-0">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Pending Approval</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Pending Approval') }}</span>
                 <span class="text-[13px] font-bold font-mono text-cyan-700 leading-tight block truncate">
                     @currency($stats['pending_approval'])
                 </span>
@@ -87,7 +87,7 @@
         <!-- Card 3: Approved in Vault -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between min-w-0">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Approved in Vault</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Approved in Vault') }}</span>
                 <span class="text-[13px] font-bold font-mono text-emerald-700 leading-tight block truncate">
                     @currency($stats['total_approved_handed'])
                 </span>
@@ -100,7 +100,7 @@
         <!-- Card 4: Total Cash Closed -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between min-w-0">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Total Cash</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Total Cash') }}</span>
                 <span class="text-[13px] font-bold font-mono text-slate-800 leading-tight block truncate">
                     @currency($stats['total_cash_collected'])
                 </span>
@@ -113,7 +113,7 @@
         <!-- Card 5: Total Handovers Count -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between min-w-0">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Handover Count</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Handover Count') }}</span>
                 <span class="text-[13px] font-bold font-mono text-purple-700 leading-tight block truncate">
                     {{ number_format($stats['total_handovers_count']) }}
                 </span>
@@ -126,7 +126,7 @@
         <!-- Card 6: Today Collected -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between min-w-0">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Today Collected</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Today Collected') }}</span>
                 <span class="text-[13px] font-bold font-mono text-emerald-700 leading-tight block truncate">
                     @currency($stats['today_collected'])
                 </span>
@@ -154,12 +154,13 @@
                     <input type="text" 
                            name="search" 
                            x-model="searchQuery" 
-                           placeholder="Search voucher #, notes, or collector name..." 
+                           placeholder="{{ __('Search voucher #, notes, or collector name...') }}" 
                            class="w-full h-[34px] pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 placeholder-slate-400 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs">
                     <button type="button" 
                             x-show="searchQuery && searchQuery.length > 0" 
                             @click="searchQuery = ''; $nextTick(() => $el.closest('form').submit())" 
-                            class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer p-0.5">
+                            class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer p-0.5"
+                            title="{{ __('Clear Search') }}">
                         <i class="fas fa-times-circle text-xs"></i>
                     </button>
                 </div>
@@ -170,14 +171,14 @@
                             onchange="this.form.submit()"
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition cursor-pointer">
                         @if($isAdmin)
-                            <option value="all" {{ ($collectorFilter ?? 'all') === 'all' ? 'selected' : '' }}>All Collector Staff</option>
+                            <option value="all" {{ ($collectorFilter ?? 'all') === 'all' ? 'selected' : '' }}>{{ __('All Collector Staff') }}</option>
                             @foreach($allCollectors ?? [] as $c)
                                 <option value="{{ $c->id }}" {{ (string) ($collectorFilter ?? '') === (string) $c->id ? 'selected' : '' }}>
-                                    {{ $c->name }} ({{ $c->isCollector() ? 'Collector' : ($c->isIspAdmin() || $c->isOwner() ? 'Admin' : ucfirst($c->role ?? 'Staff')) }})
+                                    {{ $c->name }} ({{ $c->isCollector() ? __('Collector') : ($c->isIspAdmin() || $c->isOwner() ? __('Admin') : __(ucfirst($c->role ?? 'Staff'))) }})
                                 </option>
                             @endforeach
                         @else
-                            <option value="{{ $authUser->id }}" selected>{{ $authUser->name }} (My Collections)</option>
+                            <option value="{{ $authUser->id }}" selected>{{ $authUser->name }} ({{ __('My Collections') }})</option>
                         @endif
                     </select>
                 </div>
@@ -187,10 +188,10 @@
                     <select name="status" 
                             onchange="this.form.submit()"
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition cursor-pointer">
-                        <option value="all" {{ ($statusFilter ?? 'all') === 'all' ? 'selected' : '' }}>All Status</option>
-                        <option value="pending" {{ ($statusFilter ?? '') === 'pending' ? 'selected' : '' }}>Pending Verification</option>
-                        <option value="approved" {{ ($statusFilter ?? '') === 'approved' ? 'selected' : '' }}>Approved in Vault</option>
-                        <option value="rejected" {{ ($statusFilter ?? '') === 'rejected' ? 'selected' : '' }}>Rejected</option>
+                        <option value="all" {{ ($statusFilter ?? 'all') === 'all' ? 'selected' : '' }}>{{ __('All Status') }}</option>
+                        <option value="pending" {{ ($statusFilter ?? '') === 'pending' ? 'selected' : '' }}>{{ __('Pending Verification') }}</option>
+                        <option value="approved" {{ ($statusFilter ?? '') === 'approved' ? 'selected' : '' }}>{{ __('Approved in Vault') }}</option>
+                        <option value="rejected" {{ ($statusFilter ?? '') === 'rejected' ? 'selected' : '' }}>{{ __('Rejected') }}</option>
                     </select>
                 </div>
 
@@ -199,10 +200,10 @@
                     <select name="per_page" 
                             onchange="this.form.submit()"
                             class="w-full h-[34px] px-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition cursor-pointer">
-                        <option value="10" {{ $perPage == 10 ? 'selected' : '' }}>10 / page</option>
-                        <option value="20" {{ $perPage == 20 ? 'selected' : '' }}>20 / page</option>
-                        <option value="50" {{ $perPage == 50 ? 'selected' : '' }}>50 / page</option>
-                        <option value="100" {{ $perPage == 100 ? 'selected' : '' }}>100 / page</option>
+                        <option value="10" {{ $perPage == 10 ? 'selected' : '' }}>{{ __(':count / page', ['count' => 10]) }}</option>
+                        <option value="20" {{ $perPage == 20 ? 'selected' : '' }}>{{ __(':count / page', ['count' => 20]) }}</option>
+                        <option value="50" {{ $perPage == 50 ? 'selected' : '' }}>{{ __(':count / page', ['count' => 50]) }}</option>
+                        <option value="100" {{ $perPage == 100 ? 'selected' : '' }}>{{ __(':count / page', ['count' => 100]) }}</option>
                     </select>
                 </div>
 
@@ -211,9 +212,9 @@
                         @click="showMoreFilters = !showMoreFilters" 
                         :class="showMoreFilters || {{ $activeMoreCount }} > 0 ? 'bg-cyan-50 text-cyan-700 border-cyan-300 ring-1 ring-cyan-200' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'"
                         class="h-[34px] py-0 px-2.5 rounded-lg border text-xs font-medium transition flex items-center justify-center gap-1.5 flex-shrink-0 cursor-pointer shadow-2xs"
-                        title="Toggle Period, Shift & Specific Date Filters">
+                        title="{{ __('Toggle Period, Shift & Specific Date Filters') }}">
                     <i class="fas fa-sliders-h text-[10px]"></i>
-                    <span>More Filters</span>
+                    <span>{{ __('More Filters') }}</span>
                     @if($activeMoreCount > 0)
                         <span class="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-cyan-600 text-white leading-none">
                             {{ $activeMoreCount }}
@@ -227,15 +228,15 @@
                 <div class="flex items-center gap-1.5 flex-shrink-0 md:ml-auto">
                     <button type="submit" 
                             class="h-[34px] bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-0 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" 
-                            title="Apply Filters">
+                            title="{{ __('Apply Filters') }}">
                         <i class="fas fa-filter text-[10px]"></i>
-                        <span>Filter</span>
+                        <span>{{ __('Filter') }}</span>
                     </button>
                     <a href="{{ url()->current() }}" 
                        class="h-[34px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-0 px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer" 
-                       title="Reset Filters">
+                       title="{{ __('Reset Filters') }}">
                         <i class="fas fa-rotate-left text-[10px]"></i>
-                        <span>Reset</span>
+                        <span>{{ __('Reset') }}</span>
                     </a>
                 </div>
             </div>
@@ -253,13 +254,13 @@
                             id="collectorPeriodSelect"
                             onchange="handleCollectorPeriodChange(this.value)"
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition cursor-pointer">
-                        <option value="all" {{ ($period ?? '') === 'all' || empty($period) ? 'selected' : '' }}>All Time Range</option>
-                        <option value="today" {{ ($period ?? '') === 'today' ? 'selected' : '' }}>Today</option>
-                        <option value="yesterday" {{ ($period ?? '') === 'yesterday' ? 'selected' : '' }}>Yesterday</option>
-                        <option value="this_week" {{ ($period ?? '') === 'this_week' ? 'selected' : '' }}>This Week</option>
-                        <option value="this_month" {{ ($period ?? '') === 'this_month' ? 'selected' : '' }}>This Month</option>
-                        <option value="last_month" {{ ($period ?? '') === 'last_month' ? 'selected' : '' }}>Last Month</option>
-                        <option value="custom" {{ ($period ?? '') === 'custom' ? 'selected' : '' }}>Custom Date Range</option>
+                        <option value="all" {{ ($period ?? '') === 'all' || empty($period) ? 'selected' : '' }}>{{ __('All Time Range') }}</option>
+                        <option value="today" {{ ($period ?? '') === 'today' ? 'selected' : '' }}>{{ __('Today') }}</option>
+                        <option value="yesterday" {{ ($period ?? '') === 'yesterday' ? 'selected' : '' }}>{{ __('Yesterday') }}</option>
+                        <option value="this_week" {{ ($period ?? '') === 'this_week' ? 'selected' : '' }}>{{ __('This Week') }}</option>
+                        <option value="this_month" {{ ($period ?? '') === 'this_month' ? 'selected' : '' }}>{{ __('This Month') }}</option>
+                        <option value="last_month" {{ ($period ?? '') === 'last_month' ? 'selected' : '' }}>{{ __('Last Month') }}</option>
+                        <option value="custom" {{ ($period ?? '') === 'custom' ? 'selected' : '' }}>{{ __('Custom Date Range') }}</option>
                     </select>
                 </div>
 
@@ -270,7 +271,7 @@
                            id="collectorDateFromInput"
                            value="{{ $dateFrom }}" 
                            onchange="this.form.submit()"
-                           title="Date From"
+                           title="{{ __('Date From') }}"
                            class="w-full h-[34px] px-2.5 bg-white border border-slate-200 rounded-lg text-xs font-mono text-slate-800 focus:outline-hidden focus:border-cyan-500">
                 </div>
 
@@ -281,7 +282,7 @@
                            id="collectorDateToInput"
                            value="{{ $dateTo }}" 
                            onchange="this.form.submit()"
-                           title="Date To"
+                           title="{{ __('Date To') }}"
                            class="w-full h-[34px] px-2.5 bg-white border border-slate-200 rounded-lg text-xs font-mono text-slate-800 focus:outline-hidden focus:border-cyan-500">
                 </div>
 
@@ -290,8 +291,8 @@
                     <select name="partner_id" 
                             onchange="this.form.submit()"
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition cursor-pointer">
-                        <option value="all" {{ ($partnerFilter ?? 'all') === 'all' ? 'selected' : '' }}>All Partners / HQ</option>
-                        <option value="hq" {{ ($partnerFilter ?? '') === 'hq' ? 'selected' : '' }}>ISP Core (HQ)</option>
+                        <option value="all" {{ ($partnerFilter ?? 'all') === 'all' ? 'selected' : '' }}>{{ __('All Partners / HQ') }}</option>
+                        <option value="hq" {{ ($partnerFilter ?? '') === 'hq' ? 'selected' : '' }}>{{ __('ISP Core (HQ)') }}</option>
                         @foreach($allResellers ?? [] as $reseller)
                             <option value="{{ $reseller->id }}" {{ (string)($partnerFilter ?? '') === (string)$reseller->id ? 'selected' : '' }}>
                                 {{ $reseller->name }}
@@ -305,12 +306,12 @@
                     <select name="shift" 
                             onchange="this.form.submit()"
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition cursor-pointer">
-                        <option value="all" {{ ($shiftFilter ?? 'all') === 'all' ? 'selected' : '' }}>All Shifts</option>
-                        <option value="daily" {{ ($shiftFilter ?? '') === 'daily' ? 'selected' : '' }}>Daily Closing</option>
-                        <option value="morning" {{ ($shiftFilter ?? '') === 'morning' ? 'selected' : '' }}>Morning Shift</option>
-                        <option value="evening" {{ ($shiftFilter ?? '') === 'evening' ? 'selected' : '' }}>Evening Shift</option>
-                        <option value="night" {{ ($shiftFilter ?? '') === 'night' ? 'selected' : '' }}>Night Shift</option>
-                        <option value="full_day" {{ ($shiftFilter ?? '') === 'full_day' ? 'selected' : '' }}>Full Day Closing</option>
+                        <option value="all" {{ ($shiftFilter ?? 'all') === 'all' ? 'selected' : '' }}>{{ __('All Shifts') }}</option>
+                        <option value="daily" {{ ($shiftFilter ?? '') === 'daily' ? 'selected' : '' }}>{{ __('Daily Closing') }}</option>
+                        <option value="morning" {{ ($shiftFilter ?? '') === 'morning' ? 'selected' : '' }}>{{ __('Morning Shift') }}</option>
+                        <option value="evening" {{ ($shiftFilter ?? '') === 'evening' ? 'selected' : '' }}>{{ __('Evening Shift') }}</option>
+                        <option value="night" {{ ($shiftFilter ?? '') === 'night' ? 'selected' : '' }}>{{ __('Night Shift') }}</option>
+                        <option value="full_day" {{ ($shiftFilter ?? '') === 'full_day' ? 'selected' : '' }}>{{ __('Full Day Closing') }}</option>
                     </select>
                 </div>
             </div>
@@ -324,16 +325,16 @@
                 <thead>
                     <tr>
                         <th class="w-10 text-center no-sort">#</th>
-                        <th class="text-center font-semibold">Voucher #</th>
-                        <th class="text-center font-semibold">Partner</th>
-                        <th class="text-center font-semibold">Collector Staff</th>
-                        <th class="text-center font-semibold">Collected</th>
-                        <th class="text-center font-semibold">Handed Over</th>
-                        <th class="text-center font-semibold">Remaining in Hand</th>
-                        <th class="text-center font-semibold">Received By</th>
-                        <th class="text-center font-semibold">Status</th>
-                        <th class="text-center font-semibold">Date &amp; Time</th>
-                        <th class="w-14 text-center no-sort">Action</th>
+                        <th class="text-center font-semibold">{{ __('Voucher #') }}</th>
+                        <th class="text-center font-semibold">{{ __('Partner') }}</th>
+                        <th class="text-center font-semibold">{{ __('Collector Staff') }}</th>
+                        <th class="text-center font-semibold">{{ __('Collected') }}</th>
+                        <th class="text-center font-semibold">{{ __('Handed Over') }}</th>
+                        <th class="text-center font-semibold">{{ __('Remaining in Hand') }}</th>
+                        <th class="text-center font-semibold">{{ __('Received By') }}</th>
+                        <th class="text-center font-semibold">{{ __('Status') }}</th>
+                        <th class="text-center font-semibold">{{ __('Date & Time') }}</th>
+                        <th class="w-14 text-center no-sort">{{ __('Action') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -341,7 +342,7 @@
                         @php
                             $badge = $item->status_badge;
                             $disc = $item->discrepancy_badge;
-                            $partnerName = $item->collector?->reseller?->name ?? 'ISP Core (HQ)';
+                            $partnerName = $item->collector?->reseller?->name ?? __('ISP Core (HQ)');
                             $systemCollected = (float) ($item->system_collected_amount > 0 ? $item->system_collected_amount : $item->handed_over_amount);
                             $handedOver = (float) $item->handed_over_amount;
                             $remainingInHand = max(0, $systemCollected - $handedOver);
@@ -351,7 +352,7 @@
                                 'handover_no' => $item->handover_no,
                                 'partner_name' => $partnerName,
                                 'collector_id' => $item->collector_id,
-                                'collector_name' => $item->collector?->name ?? 'Staff Collector',
+                                'collector_name' => $item->collector?->name ?? __('Staff Collector'),
                                 'system_collected_amount' => $systemCollected,
                                 'handed_over_amount' => $handedOver,
                                 'remaining_amount' => $remainingInHand,
@@ -373,7 +374,7 @@
                                 <button type="button" 
                                         @click="openVoucherModal({{ $item->id }})" 
                                         class="hover:underline hover:text-amber-600 cursor-pointer inline-flex items-center gap-1"
-                                        title="View & Print Voucher Details">
+                                        title="{{ __('View & Print Voucher Details') }}">
                                     <i class="fas fa-file-invoice-dollar text-[10px] text-amber-500"></i>
                                     <span>{{ $item->handover_no }}</span>
                                 </button>
@@ -389,33 +390,33 @@
                                 @else
                                     <span class="inline-flex items-center gap-1 text-slate-600">
                                         <i class="fas fa-building text-[10px] text-slate-400"></i>
-                                        <span>ISP Core (HQ)</span>
+                                        <span>{{ __('ISP Core (HQ)') }}</span>
                                     </span>
                                 @endif
                             </td>
 
-                            <!-- 3. Collector Staff (কোন কালেক্টর এর টাকা) -->
+                            <!-- 3. Collector Staff -->
                             <td class="text-left font-semibold text-slate-800 whitespace-nowrap text-xs">
                                 <div class="flex items-center gap-1.5">
                                     <i class="fas fa-user text-[10px] text-slate-400"></i>
-                                    <span>{{ $item->collector?->name ?? 'Unknown Collector' }}</span>
+                                    <span>{{ $item->collector?->name ?? __('Unknown Collector') }}</span>
                                 </div>
                             </td>
 
-                            <!-- 4. Collected Amount (আদায়কৃত টাকা - Right Align Accounting Standard) -->
+                            <!-- 4. Collected Amount -->
                             <td class="text-right font-mono font-medium text-slate-800 whitespace-nowrap text-xs">
                                 @currency($systemCollected)
                             </td>
 
-                            <!-- 5. Handed Over Amount (জমা দেওয়া টাকা - Right Align Accounting Standard) -->
+                            <!-- 5. Handed Over Amount -->
                             <td class="text-right font-mono font-bold text-emerald-700 whitespace-nowrap text-xs">
                                 @currency($handedOver)
                             </td>
 
-                            <!-- 6. Remaining in Hand (অবশিষ্ট ক্যাশ - Right Align Accounting Standard) -->
+                            <!-- 6. Remaining in Hand -->
                             <td class="text-right font-mono whitespace-nowrap text-xs">
                                 @if($remainingInHand > 0)
-                                    <span class="inline-flex items-center gap-1 text-amber-700 font-bold bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200" title="Cash still in collector custody">
+                                    <span class="inline-flex items-center gap-1 text-amber-700 font-bold bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200" title="{{ __('Cash still in collector custody') }}">
                                         <i class="fas fa-wallet text-[9px] text-amber-500"></i>
                                         <span>@currency($remainingInHand)</span>
                                     </span>
@@ -426,7 +427,7 @@
                                 @endif
                             </td>
 
-                            <!-- 7. Received / Verified By (কে গ্রহণ করলো) -->
+                            <!-- 7. Received / Verified By -->
                             <td class="text-left font-medium text-slate-700 whitespace-nowrap text-xs">
                                 @if($item->verifier)
                                     <span class="inline-flex items-center gap-1 text-slate-800">
@@ -434,7 +435,7 @@
                                         <span>{{ $item->verifier->name }}</span>
                                     </span>
                                 @else
-                                    <span class="text-slate-400 italic">Pending Reception</span>
+                                    <span class="text-slate-400 italic">{{ __('Pending Reception') }}</span>
                                 @endif
                             </td>
 
@@ -446,9 +447,9 @@
                                 </span>
                             </td>
 
-                            <!-- 9. Date & Time (তারিখ কলামে সময় সহ) -->
+                            <!-- 9. Date & Time -->
                             <td class="text-center font-mono text-slate-700 text-xs whitespace-nowrap">
-                                {{ $item->created_at ? $item->created_at->format('d M Y, h:i A') : ($item->handover_date ? $item->handover_date->format('d M Y') : '—') }}
+                                {{ $item->created_at ? $item->created_at->translatedFormat('d M Y, h:i A') : ($item->handover_date ? $item->handover_date->translatedFormat('d M Y') : '—') }}
                             </td>
 
                             <!-- 10. Action Column (Rule 2.E 3-Dot Floating Action Menu) -->
@@ -456,7 +457,7 @@
                                 <button type="button" 
                                         @click="toggleMenu({{ json_encode($rowItemJson) }}, $event)" 
                                         class="w-7 h-7 rounded-lg hover:bg-slate-100 text-slate-600 hover:text-slate-900 flex items-center justify-center transition cursor-pointer mx-auto"
-                                        title="Handover Actions">
+                                        title="{{ __('Handover Actions') }}">
                                     <i class="fas fa-ellipsis-v text-[11px]"></i>
                                 </button>
                             </td>
@@ -465,7 +466,7 @@
                         <tr>
                             <td colspan="11" class="text-center py-8 text-slate-400">
                                 <i class="fas fa-vault text-2xl mb-1.5 block text-slate-300"></i>
-                                <span class="text-xs font-medium">No cash handover records found.</span>
+                                <span class="text-xs font-medium">{{ __('No cash handover records found.') }}</span>
                             </td>
                         </tr>
                     @endforelse
@@ -497,7 +498,7 @@
                 @click="openVoucherModal(activeMenu.id); activeMenu = null" 
                 class="w-full px-3 py-1.5 text-left text-slate-700 hover:bg-amber-50 hover:text-amber-800 transition flex items-center gap-2 cursor-pointer">
             <i class="fas fa-file-invoice-dollar text-[11px] text-amber-500 w-4"></i>
-            <span>View &amp; Print Details</span>
+            <span>{{ __('View & Print Details') }}</span>
         </button>
 
         <!-- 2. Approve (Admin Only & Pending Only) -->
@@ -506,7 +507,7 @@
                     @click="openApproveModal(activeMenu); activeMenu = null" 
                     class="w-full px-3 py-1.5 text-left text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 transition flex items-center gap-2 cursor-pointer">
                 <i class="fas fa-check-circle text-[11px] text-emerald-500 w-4"></i>
-                <span>Approve to Vault</span>
+                <span>{{ __('Approve to Vault') }}</span>
             </button>
         </template>
 
@@ -516,7 +517,7 @@
                     @click="openEditModal(activeMenu); activeMenu = null" 
                     class="w-full px-3 py-1.5 text-left text-slate-700 hover:bg-cyan-50 hover:text-cyan-700 transition flex items-center gap-2 cursor-pointer">
                 <i class="fas fa-pen-to-square text-[11px] text-cyan-500 w-4"></i>
-                <span>Edit Handover</span>
+                <span>{{ __('Edit Handover') }}</span>
             </button>
         </template>
 
@@ -527,7 +528,7 @@
                     @click="confirmDelete(activeMenu); activeMenu = null" 
                     class="w-full px-3 py-1.5 text-left text-rose-600 hover:bg-rose-50 transition flex items-center gap-2 cursor-pointer">
                 <i class="fas fa-trash-can text-[11px] text-rose-500 w-4"></i>
-                <span>Delete Handover</span>
+                <span>{{ __('Delete Handover') }}</span>
             </button>
         </template>
     </div>
@@ -554,8 +555,8 @@
                         <i class="fas fa-vault"></i>
                     </div>
                     <div>
-                        <h3 class="text-xs font-semibold text-slate-800">Submit Daily Cash Handover</h3>
-                        <p class="text-[10.5px] text-slate-500 font-normal">Close shift and submit physical cash to accounts</p>
+                        <h3 class="text-xs font-semibold text-slate-800">{{ __('Submit Daily Cash Handover') }}</h3>
+                        <p class="text-[10.5px] text-slate-500 font-normal">{{ __('Close shift and submit physical cash to accounts') }}</p>
                     </div>
                 </div>
                 <button type="button" @click="submitModal.open = false" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center cursor-pointer">
@@ -567,13 +568,13 @@
             <form action="{{ url()->current() }}" method="POST" class="p-4 space-y-3.5 text-xs">
                 @csrf
                 <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200/80 flex items-center justify-between text-xs">
-                    <span class="text-slate-600 font-medium">Un-handed Cash in Hand:</span>
+                    <span class="text-slate-600 font-medium">{{ __('Un-handed Cash in Hand:') }}</span>
                     <span class="font-bold font-mono text-amber-700">@currency($availableCashInHand)</span>
                 </div>
 
                 <div>
                     <label class="block text-[11px] font-semibold text-slate-700 mb-1">
-                        Handover Amount ({{ $currencySymbol ?? '৳' }}) <span class="text-rose-500">*</span>
+                        {{ __('Handover Amount (:currency)', ['currency' => $currencySymbol ?? '৳']) }} <span class="text-rose-500">*</span>
                     </label>
                     <input type="number" 
                            name="amount" 
@@ -586,11 +587,11 @@
 
                 <div>
                     <label class="block text-[11px] font-semibold text-slate-700 mb-1">
-                        Notes / Remarks
+                        {{ __('Notes / Remarks') }}
                     </label>
                     <input type="text" 
                            name="notes" 
-                           placeholder="e.g. Daily shift collection handover" 
+                           placeholder="{{ __('e.g. Daily shift collection handover') }}" 
                            class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-amber-500 shadow-2xs">
                 </div>
 
@@ -598,11 +599,11 @@
                     <button type="button" 
                             @click="submitModal.open = false" 
                             class="border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs px-3.5 py-1.5 rounded-lg transition cursor-pointer">
-                        Cancel
+                        {{ __('Cancel') }}
                     </button>
                     <button type="submit" 
                             class="bg-amber-600 hover:bg-amber-700 text-white font-medium text-xs px-4 py-1.5 rounded-lg shadow-xs transition cursor-pointer">
-                        {{ ($authUser->isOwner() || $authUser->isIspAdmin()) ? 'Approve & Transfer to Vault' : 'Submit Handover' }}
+                        {{ ($authUser->isOwner() || $authUser->isIspAdmin()) ? __('Approve & Transfer to Vault') : __('Submit Handover') }}
                     </button>
                 </div>
             </form>
@@ -624,8 +625,8 @@
                         <i class="fas fa-pen-to-square"></i>
                     </div>
                     <div>
-                        <h3 class="text-xs font-semibold text-slate-800">Edit Handover Voucher</h3>
-                        <p class="text-[10.5px] text-slate-500 font-normal">Adjust handover amount and closing notes</p>
+                        <h3 class="text-xs font-semibold text-slate-800">{{ __('Edit Handover Voucher') }}</h3>
+                        <p class="text-[10.5px] text-slate-500 font-normal">{{ __('Adjust handover amount and closing notes') }}</p>
                     </div>
                 </div>
                 <button type="button" @click="editModal.open = false" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center cursor-pointer">
@@ -637,18 +638,18 @@
                 <div class="p-4 space-y-3.5 text-xs">
                     <div class="p-2.5 rounded-lg bg-cyan-50 border border-cyan-200/80 space-y-1">
                         <div class="flex justify-between font-bold text-slate-800">
-                            <span>Voucher No:</span>
+                            <span>{{ __('Voucher No:') }}</span>
                             <span class="font-mono text-cyan-800" x-text="editModal.handover?.handover_no"></span>
                         </div>
                         <div class="flex justify-between text-slate-600">
-                            <span>System Cash:</span>
-                            <span class="font-mono font-bold" x-text="'{{ $currencySymbol ?? '৳' }}' + parseFloat(editModal.handover?.system_collected_amount || 0).toFixed(2)"></span>
+                            <span>{{ __('System Cash:') }}</span>
+                            <span class="font-mono font-bold" x-text="currencySymbol + parseFloat(editModal.handover?.system_collected_amount || 0).toFixed(2)"></span>
                         </div>
                     </div>
 
                     <div>
                         <label class="block text-[11px] font-semibold text-slate-700 mb-1">
-                            Handed Amount ({{ $currencySymbol ?? '৳' }}) <span class="text-rose-500">*</span>
+                            {{ __('Handed Amount (:currency)', ['currency' => $currencySymbol ?? '৳']) }} <span class="text-rose-500">*</span>
                         </label>
                         <input type="number" 
                                step="0.01" 
@@ -660,21 +661,21 @@
 
                     <div>
                         <label class="block text-[11px] font-semibold text-slate-700 mb-1">
-                            Shift Type
+                            {{ __('Shift Type') }}
                         </label>
                         <select x-model="editModal.form.shift_type" 
                                 class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-cyan-500">
-                            <option value="daily">Daily Closing</option>
-                            <option value="morning">Morning Shift</option>
-                            <option value="evening">Evening Shift</option>
-                            <option value="night">Night Shift</option>
-                            <option value="full_day">Full Day Closing</option>
+                            <option value="daily">{{ __('Daily Closing') }}</option>
+                            <option value="morning">{{ __('Morning Shift') }}</option>
+                            <option value="evening">{{ __('Evening Shift') }}</option>
+                            <option value="night">{{ __('Night Shift') }}</option>
+                            <option value="full_day">{{ __('Full Day Closing') }}</option>
                         </select>
                     </div>
 
                     <div>
                         <label class="block text-[11px] font-semibold text-slate-700 mb-1">
-                            Notes / Remarks
+                            {{ __('Notes / Remarks') }}
                         </label>
                         <input type="text" 
                                x-model="editModal.form.notes" 
@@ -686,13 +687,13 @@
                     <button type="button" 
                             @click="editModal.open = false" 
                             class="border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs px-3.5 py-1.5 rounded-lg transition cursor-pointer">
-                        Cancel
+                        {{ __('Cancel') }}
                     </button>
                     <button type="submit" 
                             :disabled="editModal.loading" 
                             class="bg-cyan-600 hover:bg-cyan-700 text-white font-medium text-xs px-4 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                         <i class="fas" :class="editModal.loading ? 'fa-spinner fa-spin' : 'fa-check'"></i>
-                        <span x-text="editModal.loading ? 'Saving...' : 'Save Changes'"></span>
+                        <span x-text="editModal.loading ? i18n.saving : i18n.saveChanges"></span>
                     </button>
                 </div>
             </form>
@@ -714,8 +715,8 @@
                         <i class="fas fa-check-circle"></i>
                     </div>
                     <div>
-                        <h3 class="text-xs font-semibold text-slate-800">Verify &amp; Approve to Vault</h3>
-                        <p class="text-[10.5px] text-slate-500 font-normal">Transfer physical cash into ISP main vault</p>
+                        <h3 class="text-xs font-semibold text-slate-800">{{ __('Verify & Approve to Vault') }}</h3>
+                        <p class="text-[10.5px] text-slate-500 font-normal">{{ __('Transfer physical cash into ISP main vault') }}</p>
                     </div>
                 </div>
                 <button type="button" @click="approveModal.open = false" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center cursor-pointer">
@@ -727,35 +728,35 @@
                 <div class="p-4 space-y-3 text-xs">
                     <div class="p-2.5 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-900 space-y-1">
                         <div class="flex justify-between font-bold">
-                            <span>Voucher No:</span>
+                            <span>{{ __('Voucher No:') }}</span>
                             <span class="font-mono text-emerald-800" x-text="approveModal.handover?.handover_no"></span>
                         </div>
                         <div class="flex justify-between font-bold">
-                            <span>Partner:</span>
-                            <span class="text-slate-800" x-text="approveModal.handover?.partner_name || 'ISP Core (HQ)'"></span>
+                            <span>{{ __('Partner:') }}</span>
+                            <span class="text-slate-800" x-text="approveModal.handover?.partner_name || i18n.ispCoreHq"></span>
                         </div>
                         <div class="flex justify-between font-bold">
-                            <span>Collector:</span>
+                            <span>{{ __('Collector:') }}</span>
                             <span x-text="approveModal.handover?.collector_name"></span>
                         </div>
                         <div class="flex justify-between font-bold">
-                            <span>Collected Amount:</span>
-                            <span class="font-mono text-slate-800" x-text="'{{ $currencySymbol ?? '৳' }}' + parseFloat(approveModal.handover?.system_collected_amount || 0).toFixed(2)"></span>
+                            <span>{{ __('Collected Amount:') }}</span>
+                            <span class="font-mono text-slate-800" x-text="currencySymbol + parseFloat(approveModal.handover?.system_collected_amount || 0).toFixed(2)"></span>
                         </div>
                         <div class="flex justify-between font-bold">
-                            <span>Handed Over Cash:</span>
-                            <span class="font-mono text-emerald-700" x-text="'{{ $currencySymbol ?? '৳' }}' + parseFloat(approveModal.handover?.handed_over_amount || 0).toFixed(2)"></span>
+                            <span>{{ __('Handed Over Cash:') }}</span>
+                            <span class="font-mono text-emerald-700" x-text="currencySymbol + parseFloat(approveModal.handover?.handed_over_amount || 0).toFixed(2)"></span>
                         </div>
                         <template x-if="parseFloat(approveModal.handover?.remaining_amount || 0) > 0">
                             <div class="flex justify-between font-bold text-amber-700">
-                                <span>Remaining in Hand:</span>
-                                <span class="font-mono" x-text="'{{ $currencySymbol ?? '৳' }}' + parseFloat(approveModal.handover?.remaining_amount || 0).toFixed(2)"></span>
+                                <span>{{ __('Remaining in Hand:') }}</span>
+                                <span class="font-mono" x-text="currencySymbol + parseFloat(approveModal.handover?.remaining_amount || 0).toFixed(2)"></span>
                             </div>
                         </template>
                     </div>
 
                     <div>
-                        <label class="block text-slate-700 font-semibold text-[11px] mb-1">Verification Remarks</label>
+                        <label class="block text-slate-700 font-semibold text-[11px] mb-1">{{ __('Verification Remarks') }}</label>
                         <input type="text" 
                                x-model="approveModal.manager_remarks" 
                                class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs p-2 text-slate-800 focus:bg-white focus:border-emerald-500">
@@ -766,13 +767,13 @@
                     <button type="button" 
                             @click="approveModal.open = false" 
                             class="border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs px-3.5 py-1.5 rounded-lg transition cursor-pointer">
-                        Cancel
+                        {{ __('Cancel') }}
                     </button>
                     <button type="submit" 
                             :disabled="approveModal.loading" 
                             class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs px-4 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow-xs cursor-pointer">
                         <i class="fas" :class="approveModal.loading ? 'fa-spinner fa-spin' : 'fa-check'"></i>
-                        <span x-text="approveModal.loading ? 'Approving...' : 'Approve &amp; Receive Cash'"></span>
+                        <span x-text="approveModal.loading ? i18n.approving : i18n.approveAndReceiveCash"></span>
                     </button>
                 </div>
             </form>
@@ -795,8 +796,8 @@
                         <i class="fas fa-file-invoice-dollar"></i>
                     </div>
                     <div>
-                        <h3 class="text-xs font-semibold text-slate-800">Cash Handover Voucher</h3>
-                        <p class="text-[10.5px] text-slate-500 font-normal">Official shift closing &amp; vault transfer slip</p>
+                        <h3 class="text-xs font-semibold text-slate-800">{{ __('Cash Handover Voucher') }}</h3>
+                        <p class="text-[10.5px] text-slate-500 font-normal">{{ __('Official shift closing & vault transfer slip') }}</p>
                     </div>
                 </div>
 
@@ -805,7 +806,7 @@
                             @click="printVoucher()" 
                             class="bg-amber-600 hover:bg-amber-700 text-white font-medium text-xs px-3 py-1.5 rounded-lg transition flex items-center gap-1 shadow-xs cursor-pointer">
                         <i class="fas fa-print text-xs"></i>
-                        <span>Print</span>
+                        <span>{{ __('Print') }}</span>
                     </button>
 
                     <button type="button" 
@@ -825,20 +826,20 @@
                         <div class="text-center border-b border-dashed border-slate-300 pb-3">
                             <h2 class="text-base font-bold text-slate-900 tracking-tight" x-text="voucherModal.handover.company.name"></h2>
                             <p class="text-[10.5px] text-slate-500 mt-0.5" x-text="voucherModal.handover.company.address"></p>
-                            <p class="text-[10.5px] text-slate-600 font-mono mt-0.5" x-text="'Helpline: ' + voucherModal.handover.company.phone"></p>
+                            <p class="text-[10.5px] text-slate-600 font-mono mt-0.5" x-text="i18n.helplinePrefix + voucherModal.handover.company.phone"></p>
                             <div class="mt-2 inline-block px-2.5 py-0.5 bg-slate-900 text-amber-400 font-mono font-bold text-[11px] rounded tracking-wider uppercase">
-                                Daily Cash Handover Voucher
+                                {{ __('Daily Cash Handover Voucher') }}
                             </div>
                         </div>
 
                         <!-- Meta Info Grid -->
                         <div class="grid grid-cols-2 gap-2 text-[11px] font-mono border-b border-dashed border-slate-200 pb-2.5">
                             <div>
-                                <span class="text-slate-400 block text-[9px] uppercase">Voucher No</span>
+                                <span class="text-slate-400 block text-[9px] uppercase">{{ __('Voucher No') }}</span>
                                 <span class="font-bold text-slate-900" x-text="voucherModal.handover.handover_no"></span>
                             </div>
                             <div class="text-right">
-                                <span class="text-slate-400 block text-[9px] uppercase">Handover Date &amp; Time</span>
+                                <span class="text-slate-400 block text-[9px] uppercase">{{ __('Handover Date & Time') }}</span>
                                 <span class="text-slate-800" x-text="voucherModal.handover.created_at_formatted"></span>
                             </div>
                         </div>
@@ -846,48 +847,48 @@
                         <!-- Collector & Shift Info -->
                         <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200/80 space-y-1 text-[11px]">
                             <div class="flex items-center justify-between">
-                                <span class="text-slate-500">Partner:</span>
-                                <span class="font-bold text-slate-900" x-text="voucherModal.handover.partner_name || 'ISP Core (HQ)'"></span>
+                                <span class="text-slate-500">{{ __('Partner:') }}</span>
+                                <span class="font-bold text-slate-900" x-text="voucherModal.handover.partner_name || i18n.ispCoreHq"></span>
                             </div>
                             <div class="flex items-center justify-between">
-                                <span class="text-slate-500">Collector Staff:</span>
+                                <span class="text-slate-500">{{ __('Collector Staff:') }}</span>
                                 <span class="font-bold text-slate-900" x-text="voucherModal.handover.collector.name"></span>
                             </div>
                             <div class="flex items-center justify-between text-slate-500 text-[10.5px]">
-                                <span>Shift Type:</span>
+                                <span>{{ __('Shift Type:') }}</span>
                                 <span class="font-medium text-slate-800" x-text="voucherModal.handover.shift_label"></span>
                             </div>
                             <div class="flex items-center justify-between text-slate-500 text-[10.5px]">
-                                <span>Received By:</span>
-                                <span class="font-medium text-slate-800" x-text="voucherModal.handover.verifier?.name || 'Pending Reception'"></span>
+                                <span>{{ __('Received By:') }}</span>
+                                <span class="font-medium text-slate-800" x-text="voucherModal.handover.verifier?.name || i18n.pendingReception"></span>
                             </div>
                         </div>
 
                         <!-- Amount Breakdown -->
                         <div class="space-y-1.5 border-b border-dashed border-slate-200 pb-3 text-xs font-mono">
                             <div class="flex items-center justify-between text-slate-600">
-                                <span>System Cash Collection:</span>
+                                <span>{{ __('System Cash Collection:') }}</span>
                                 <span class="font-bold text-slate-800" x-text="voucherModal.handover.system_collected_formatted"></span>
                             </div>
                             <div class="flex items-center justify-between text-slate-600">
-                                <span>Handed Over Physical Cash:</span>
+                                <span>{{ __('Handed Over Physical Cash:') }}</span>
                                 <span class="font-bold text-emerald-700" x-text="voucherModal.handover.handed_over_formatted"></span>
                             </div>
                             <template x-if="voucherModal.handover.remaining_amount > 0">
                                 <div class="flex items-center justify-between text-amber-700 font-bold">
-                                    <span>Remaining Cash in Hand:</span>
+                                    <span>{{ __('Remaining Cash in Hand:') }}</span>
                                     <span x-text="voucherModal.handover.remaining_formatted"></span>
                                 </div>
                             </template>
                             <template x-if="voucherModal.handover.shortage_amount > 0">
                                 <div class="flex items-center justify-between text-rose-700 font-bold">
-                                    <span>Shortage Amount:</span>
+                                    <span>{{ __('Shortage Amount:') }}</span>
                                     <span x-text="'-' + voucherModal.handover.shortage_formatted"></span>
                                 </div>
                             </template>
                             <template x-if="voucherModal.handover.excess_amount > 0">
                                 <div class="flex items-center justify-between text-indigo-700 font-bold">
-                                    <span>Excess Cash:</span>
+                                    <span>{{ __('Excess Cash:') }}</span>
                                     <span x-text="'+' + voucherModal.handover.excess_formatted"></span>
                                 </div>
                             </template>
@@ -897,8 +898,8 @@
                         <template x-if="voucherModal.handover.receipts && voucherModal.handover.receipts.length > 0">
                             <div class="space-y-1.5">
                                 <div class="flex items-center justify-between text-[11px] font-semibold text-slate-700">
-                                    <span>Locked Cash Receipts</span>
-                                    <span class="font-mono text-[10px]" x-text="voucherModal.handover.receipts.length + ' item(s)'"></span>
+                                    <span>{{ __('Locked Cash Receipts') }}</span>
+                                    <span class="font-mono text-[10px]" x-text="i18n.itemsCount.replace(':count', voucherModal.handover.receipts.length)"></span>
                                 </div>
                                 <div class="max-h-40 overflow-y-auto space-y-1 bg-slate-50 p-2 rounded-lg border border-slate-200/80">
                                     <template x-for="r in voucherModal.handover.receipts" :key="r.id">
@@ -923,12 +924,12 @@
                                 <div>
                                     <div class="w-24 border-b border-slate-300 mb-1 mx-auto"></div>
                                     <span x-text="voucherModal.handover.collector.name"></span>
-                                    <span class="block text-[8.5px] text-slate-400">Collector Signature</span>
+                                    <span class="block text-[8.5px] text-slate-400">{{ __('Collector Signature') }}</span>
                                 </div>
                                 <div>
                                     <div class="w-24 border-b border-slate-300 mb-1 mx-auto"></div>
-                                    <span x-text="voucherModal.handover.verifier?.name || 'Accounts Manager'"></span>
-                                    <span class="block text-[8.5px] text-slate-400">Received By / Vault Sign</span>
+                                    <span x-text="voucherModal.handover.verifier?.name || i18n.accountsManager"></span>
+                                    <span class="block text-[8.5px] text-slate-400">{{ __('Received By / Vault Sign') }}</span>
                                 </div>
                             </div>
                         </div>
@@ -942,13 +943,13 @@
                 <button type="button" 
                         @click="voucherModal.open = false" 
                         class="border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs px-3.5 py-1.5 rounded-lg transition cursor-pointer">
-                    Close
+                    {{ __('Close') }}
                 </button>
                 <button type="button" 
                         @click="printVoucher()" 
                         class="bg-amber-600 hover:bg-amber-700 text-white font-medium text-xs px-4 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow-xs cursor-pointer">
                     <i class="fas fa-print"></i>
-                    <span>Print Voucher</span>
+                    <span>{{ __('Print Voucher') }}</span>
                 </button>
             </div>
         </div>
@@ -1007,6 +1008,39 @@ function handleCollectorPeriodChange(val) {
 
 function collectorHandoverManager() {
     return {
+        currencySymbol: @json($currencySymbol ?? '৳'),
+        i18n: {
+            defaultApproveRemarks: @json(__('Verified physical cash and approved into vault.')),
+            saving: @json(__('Saving...')),
+            saveChanges: @json(__('Save Changes')),
+            ispCoreHq: @json(__('ISP Core (HQ)')),
+            approving: @json(__('Approving...')),
+            approveAndReceiveCash: @json(__('Approve & Receive Cash')),
+            helplinePrefix: @json(__('Helpline: ')),
+            pendingReception: @json(__('Pending Reception')),
+            itemsCount: @json(__(':count item(s)')),
+            accountsManager: @json(__('Accounts Manager')),
+            updatedTitle: @json(__('Updated!')),
+            updatedText: @json(__('Handover voucher updated successfully.')),
+            updateFailedTitle: @json(__('Update Failed')),
+            updateFailedText: @json(__('Failed to update handover voucher.')),
+            networkErrorTitle: @json(__('Network Error')),
+            networkErrorText: @json(__('Failed to communicate with the server.')),
+            approvedTitle: @json(__('Approved!')),
+            approvedText: @json(__('Cash handover approved successfully into vault.')),
+            approvalFailedTitle: @json(__('Approval Failed')),
+            approvalFailedText: @json(__('Failed to approve handover voucher.')),
+            deleteConfirmTitle: @json(__('Are you sure?')),
+            deleteConfirmText: @json(__('Do you want to delete handover voucher ":no"? All associated cash receipts will be unlocked and returned to collector cash.')),
+            yesDeleteVoucher: @json(__('Yes, Delete Voucher')),
+            cancel: @json(__('Cancel')),
+            deletedTitle: @json(__('Deleted!')),
+            deletedText: @json(__('Handover voucher deleted successfully.')),
+            deleteFailedTitle: @json(__('Delete Failed')),
+            deleteFailedText: @json(__('Failed to delete handover.')),
+            errorTitle: @json(__('Error')),
+            loadVoucherFailed: @json(__('Failed to load voucher details.')),
+        },
         activeMenu: null,
         menuPos: { top: 'auto', bottom: 'auto', right: 'auto', left: 'auto' },
 
@@ -1029,7 +1063,7 @@ function collectorHandoverManager() {
             open: false,
             loading: false,
             handover: null,
-            manager_remarks: 'Verified physical cash and approved into vault.'
+            manager_remarks: @json(__('Verified physical cash and approved into vault.'))
         },
 
         voucherModal: {
@@ -1102,8 +1136,8 @@ function collectorHandoverManager() {
                     this.editModal.open = false;
                     Swal.fire({
                         icon: 'success',
-                        title: 'Updated!',
-                        text: data.message || 'Handover voucher updated successfully.',
+                        title: this.i18n.updatedTitle,
+                        text: data.message || this.i18n.updatedText,
                         timer: 1800,
                         showConfirmButton: false,
                         customClass: { popup: 'rounded-xl text-xs font-sans shadow-2xl' }
@@ -1112,8 +1146,8 @@ function collectorHandoverManager() {
                 } else {
                     Swal.fire({
                         icon: 'error',
-                        title: 'Update Failed',
-                        text: data.message || 'Failed to update handover voucher.',
+                        title: this.i18n.updateFailedTitle,
+                        text: data.message || this.i18n.updateFailedText,
                         confirmButtonColor: '#0891b2',
                         customClass: { popup: 'rounded-xl text-xs font-sans' }
                     });
@@ -1121,8 +1155,8 @@ function collectorHandoverManager() {
             } catch (err) {
                 Swal.fire({
                     icon: 'error',
-                    title: 'Network Error',
-                    text: 'Failed to communicate with the server.',
+                    title: this.i18n.networkErrorTitle,
+                    text: this.i18n.networkErrorText,
                     confirmButtonColor: '#0891b2',
                     customClass: { popup: 'rounded-xl text-xs font-sans' }
                 });
@@ -1133,7 +1167,7 @@ function collectorHandoverManager() {
 
         openApproveModal(item) {
             this.approveModal.handover = item;
-            this.approveModal.manager_remarks = 'Verified physical cash and approved into vault.';
+            this.approveModal.manager_remarks = this.i18n.defaultApproveRemarks;
             this.approveModal.open = true;
         },
 
@@ -1156,8 +1190,8 @@ function collectorHandoverManager() {
                     this.approveModal.open = false;
                     Swal.fire({
                         icon: 'success',
-                        title: 'Approved!',
-                        text: data.message || 'Cash handover approved successfully into vault.',
+                        title: this.i18n.approvedTitle,
+                        text: data.message || this.i18n.approvedText,
                         timer: 1800,
                         showConfirmButton: false,
                         customClass: { popup: 'rounded-xl text-xs font-sans shadow-2xl' }
@@ -1166,8 +1200,8 @@ function collectorHandoverManager() {
                 } else {
                     Swal.fire({
                         icon: 'error',
-                        title: 'Approval Failed',
-                        text: data.message || 'Failed to approve handover voucher.',
+                        title: this.i18n.approvalFailedTitle,
+                        text: data.message || this.i18n.approvalFailedText,
                         confirmButtonColor: '#0891b2',
                         customClass: { popup: 'rounded-xl text-xs font-sans' }
                     });
@@ -1175,8 +1209,8 @@ function collectorHandoverManager() {
             } catch (err) {
                 Swal.fire({
                     icon: 'error',
-                    title: 'Network Error',
-                    text: 'Failed to communicate with the server.',
+                    title: this.i18n.networkErrorTitle,
+                    text: this.i18n.networkErrorText,
                     confirmButtonColor: '#0891b2',
                     customClass: { popup: 'rounded-xl text-xs font-sans' }
                 });
@@ -1187,14 +1221,14 @@ function collectorHandoverManager() {
 
         confirmDelete(item) {
             Swal.fire({
-                title: 'Are you sure?',
-                text: `Do you want to delete handover voucher "${item.handover_no}"? All associated cash receipts will be unlocked and returned to collector cash.`,
+                title: this.i18n.deleteConfirmTitle,
+                text: this.i18n.deleteConfirmText.replace(':no', item.handover_no),
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#e11d48',
                 cancelButtonColor: '#64748b',
-                confirmButtonText: 'Yes, Delete Voucher',
-                cancelButtonText: 'Cancel',
+                confirmButtonText: this.i18n.yesDeleteVoucher,
+                cancelButtonText: this.i18n.cancel,
                 customClass: {
                     popup: 'rounded-xl text-xs font-sans shadow-2xl'
                 }
@@ -1213,8 +1247,8 @@ function collectorHandoverManager() {
                         if (res.ok && data.success) {
                             Swal.fire({
                                 icon: 'success',
-                                title: 'Deleted!',
-                                text: data.message || 'Handover voucher deleted successfully.',
+                                title: this.i18n.deletedTitle,
+                                text: data.message || this.i18n.deletedText,
                                 timer: 1800,
                                 showConfirmButton: false,
                                 customClass: { popup: 'rounded-xl text-xs font-sans shadow-2xl' }
@@ -1223,8 +1257,8 @@ function collectorHandoverManager() {
                         } else {
                             Swal.fire({
                                 icon: 'error',
-                                title: 'Delete Failed',
-                                text: data.message || 'Failed to delete handover.',
+                                title: this.i18n.deleteFailedTitle,
+                                text: data.message || this.i18n.deleteFailedText,
                                 confirmButtonColor: '#0891b2',
                                 customClass: { popup: 'rounded-xl text-xs font-sans' }
                             });
@@ -1232,8 +1266,8 @@ function collectorHandoverManager() {
                     } catch (err) {
                         Swal.fire({
                             icon: 'error',
-                            title: 'Network Error',
-                            text: 'Failed to communicate with the server.',
+                            title: this.i18n.networkErrorTitle,
+                            text: this.i18n.networkErrorText,
                             confirmButtonColor: '#0891b2',
                             customClass: { popup: 'rounded-xl text-xs font-sans' }
                         });
@@ -1261,8 +1295,8 @@ function collectorHandoverManager() {
                     this.voucherModal.open = false;
                     Swal.fire({
                         icon: 'error',
-                        title: 'Error',
-                        text: data.message || 'Failed to load voucher details.',
+                        title: this.i18n.errorTitle,
+                        text: data.message || this.i18n.loadVoucherFailed,
                         confirmButtonColor: '#0891b2',
                         customClass: { popup: 'rounded-xl text-xs font-sans' }
                     });
@@ -1271,8 +1305,8 @@ function collectorHandoverManager() {
                 this.voucherModal.open = false;
                 Swal.fire({
                     icon: 'error',
-                    title: 'Network Error',
-                    text: 'Failed to load voucher details.',
+                    title: this.i18n.networkErrorTitle,
+                    text: this.i18n.loadVoucherFailed,
                     confirmButtonColor: '#0891b2',
                     customClass: { popup: 'rounded-xl text-xs font-sans' }
                 });

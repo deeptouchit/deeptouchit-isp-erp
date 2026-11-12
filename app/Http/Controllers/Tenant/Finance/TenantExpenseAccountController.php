@@ -37,7 +37,7 @@ class TenantExpenseAccountController extends Controller
             $tenant = Tenant::first();
         }
 
-        return $tenant ?? abort(404, 'No active tenant found.');
+        return $tenant ?? abort(404, __('No active tenant found.'));
     }
 
     /**
@@ -226,7 +226,7 @@ class TenantExpenseAccountController extends Controller
                     'source' => 'voucher',
                     'voucher_no' => $v->voucher_no,
                     'type' => $v->type,
-                    'category_name' => $v->category?->name ?? ($isExp ? 'Operational Expense' : 'Direct Income'),
+                    'category_name' => $v->category?->name ?? ($isExp ? __('Operational Expense') : __('Direct Income')),
                     'title' => $v->title . ($v->payee_payer ? ' (' . $v->payee_payer . ')' : ''),
                     'amount' => (float) $v->amount,
                     'payment_method' => $v->payment_method,
@@ -278,9 +278,9 @@ class TenantExpenseAccountController extends Controller
             }
 
             foreach ($pQ->get() as $p) {
-                $custName = $p->customer->name ?? 'Customer';
+                $custName = $p->customer->name ?? __('Customer');
                 $pkgName = $p->customer?->package?->name ?? '';
-                $desc = 'Monthly Subscription - ' . $custName . ($pkgName ? ' [' . $pkgName . ']' : '') . ($p->billing_month ? ' (' . $p->billing_month . ')' : '');
+                $desc = __('Monthly Subscription - :customer', ['customer' => $custName]) . ($pkgName ? ' [' . $pkgName . ']' : '') . ($p->billing_month ? ' (' . $p->billing_month . ')' : '');
                 $dateObj = $p->paid_at ?? $p->created_at;
 
                 $entries->push((object)[
@@ -289,13 +289,13 @@ class TenantExpenseAccountController extends Controller
                     'source' => 'customer_payment',
                     'voucher_no' => $p->invoice_no ?: ('REC-' . $p->id),
                     'type' => 'INCOME',
-                    'category_name' => 'Customer Subscription',
+                    'category_name' => __('Customer Subscription'),
                     'title' => $desc,
                     'amount' => (float) $p->amount,
                     'payment_method' => strtoupper($p->payment_method ?: 'CASH'),
                     'status' => strtoupper($p->status ?: 'PAID'),
                     'status_badge' => [
-                        'label' => 'Paid',
+                        'label' => __('Paid'),
                         'class' => 'bg-emerald-50 text-emerald-700 border-emerald-200',
                         'icon' => 'fa-check-circle',
                     ],
@@ -341,8 +341,8 @@ class TenantExpenseAccountController extends Controller
             }
 
             foreach ($wQ->get() as $w) {
-                $resName = $w->reseller->name ?? 'Sub-ISP Partner';
-                $monthStr = $w->billing_month ? (is_string($w->billing_month) ? $w->billing_month : $w->billing_month->format('M Y')) : 'Trunk';
+                $resName = $w->reseller->name ?? __('Sub-ISP Partner');
+                $monthStr = $w->billing_month ? (is_string($w->billing_month) ? $w->billing_month : $w->billing_month->translatedFormat('M Y')) : __('Trunk');
                 $dateObj = $w->paid_at ?? $w->created_at;
 
                 $entries->push((object)[
@@ -351,13 +351,13 @@ class TenantExpenseAccountController extends Controller
                     'source' => 'wholesale',
                     'voucher_no' => $w->invoice_no ?: ('WS-' . $w->id),
                     'type' => 'INCOME',
-                    'category_name' => 'Reseller Wholesale',
-                    'title' => 'Wholesale Bandwidth - ' . $resName . ' (' . $monthStr . ')',
+                    'category_name' => __('Reseller Wholesale'),
+                    'title' => __('Wholesale Bandwidth - :reseller (:period)', ['reseller' => $resName, 'period' => $monthStr]),
                     'amount' => (float) $w->paid_amount,
                     'payment_method' => strtoupper($w->payment_method ?: 'BANK'),
                     'status' => strtoupper($w->payment_status ?: 'PAID'),
                     'status_badge' => [
-                        'label' => 'Paid',
+                        'label' => __('Paid'),
                         'class' => 'bg-emerald-50 text-emerald-700 border-emerald-200',
                         'icon' => 'fa-check-circle',
                     ],
@@ -385,7 +385,7 @@ class TenantExpenseAccountController extends Controller
             }
 
             foreach ($uQ->get() as $u) {
-                $carrierName = $u->provider->name ?? 'Upstream Carrier';
+                $carrierName = $u->provider->name ?? __('Upstream Carrier');
                 $dateObj = $u->paid_at ? Carbon::parse($u->paid_at) : $u->created_at;
 
                 $entries->push((object)[
@@ -394,13 +394,15 @@ class TenantExpenseAccountController extends Controller
                     'source' => 'upstream_payment',
                     'voucher_no' => $u->voucher_no ?: ('UPV-' . $u->id),
                     'type' => 'EXPENSE',
-                    'category_name' => 'Upstream Bandwidth & NTTN',
-                    'title' => 'Upstream Carrier Payment - ' . $carrierName . ($u->cheque_no ? ' (Cheque: ' . $u->cheque_no . ')' : ''),
+                    'category_name' => __('Upstream Bandwidth & NTTN'),
+                    'title' => $u->cheque_no
+                        ? __('Upstream Carrier Payment - :carrier (Cheque: :cheque)', ['carrier' => $carrierName, 'cheque' => $u->cheque_no])
+                        : __('Upstream Carrier Payment - :carrier', ['carrier' => $carrierName]),
                     'amount' => (float) $u->amount,
                     'payment_method' => strtoupper($u->payment_method ?: 'BANK'),
                     'status' => 'PAID',
                     'status_badge' => [
-                        'label' => 'Paid',
+                        'label' => __('Paid'),
                         'class' => 'bg-emerald-50 text-emerald-700 border-emerald-200',
                         'icon' => 'fa-check-circle',
                     ],
@@ -497,8 +499,11 @@ class TenantExpenseAccountController extends Controller
 
             DB::commit();
 
-            $typeName = $validated['type'] === 'INCOME' ? 'Income Voucher' : 'Expense Voucher';
-            $msg = "{$typeName} {$voucherNo} (৳" . number_format($validated['amount'], 2) . ") posted successfully.";
+            $currency = $tenant->currency_symbol ?? '৳';
+            $amountStr = $currency . number_format($validated['amount'], 2);
+            $msg = $validated['type'] === 'INCOME'
+                ? __('Income Voucher :voucher (:amount) posted successfully.', ['voucher' => $voucherNo, 'amount' => $amountStr])
+                : __('Expense Voucher :voucher (:amount) posted successfully.', ['voucher' => $voucherNo, 'amount' => $amountStr]);
 
             if ($request->wantsJson()) {
                 return response()->json([
@@ -512,9 +517,9 @@ class TenantExpenseAccountController extends Controller
         } catch (\Throwable $e) {
             DB::rollBack();
             if ($request->wantsJson()) {
-                return response()->json(['success' => false, 'message' => 'Failed to save voucher: ' . $e->getMessage()], 500);
+                return response()->json(['success' => false, 'message' => __('Failed to save voucher: :error', ['error' => $e->getMessage()])], 500);
             }
-            return back()->with('error', 'Failed to save voucher: ' . $e->getMessage());
+            return back()->with('error', __('Failed to save voucher: :error', ['error' => $e->getMessage()]));
         }
     }
 
@@ -545,7 +550,7 @@ class TenantExpenseAccountController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => "Account category '{$category->name}' created successfully.",
+            'message' => __("Account category ':name' created successfully.", ['name' => $category->name]),
             'category' => $category,
         ]);
     }
@@ -571,22 +576,22 @@ class TenantExpenseAccountController extends Controller
                     'source' => 'customer_payment',
                     'voucher_no' => $payment->invoice_no ?: ('REC-' . $payment->id),
                     'type' => 'INCOME',
-                    'type_badge' => ['label' => 'Customer Bill', 'class' => 'bg-emerald-50 text-emerald-700 border-emerald-200', 'icon' => 'fa-users'],
-                    'category_name' => 'Retail Customer Subscription',
+                    'type_badge' => ['label' => __('Customer Bill'), 'class' => 'bg-emerald-50 text-emerald-700 border-emerald-200', 'icon' => 'fa-users'],
+                    'category_name' => __('Retail Customer Subscription'),
                     'category_code' => 'SUB-REV',
-                    'title' => 'Internet Bill Collection - ' . ($payment->customer?->name ?? 'Customer') . ($payment->billing_month ? ' (' . $payment->billing_month . ')' : ''),
+                    'title' => __('Internet Bill Collection - :customer', ['customer' => $payment->customer?->name ?? __('Customer')]) . ($payment->billing_month ? ' (' . $payment->billing_month . ')' : ''),
                     'amount' => (float) $payment->amount,
                     'payment_method' => strtoupper($payment->payment_method ?: 'CASH'),
-                    'account_name' => 'Customer Collection Counter',
-                    'payee_payer' => $payment->customer?->name ?? 'Customer',
+                    'account_name' => __('Customer Collection Counter'),
+                    'payee_payer' => $payment->customer?->name ?? __('Customer'),
                     'reference_no' => $payment->transaction_id ?: ($payment->customer?->username ?? '--'),
-                    'transaction_date' => $payment->paid_at ? $payment->paid_at->format('d M, Y') : ($payment->created_at ? $payment->created_at->format('d M, Y') : '--'),
+                    'transaction_date' => $payment->paid_at ? $payment->paid_at->translatedFormat('d M, Y') : ($payment->created_at ? $payment->created_at->translatedFormat('d M, Y') : '--'),
                     'status' => strtoupper($payment->status ?: 'PAID'),
-                    'status_badge' => ['label' => 'Paid', 'class' => 'bg-emerald-50 text-emerald-700 border-emerald-200', 'icon' => 'fa-check-circle'],
-                    'creator_name' => $payment->collector?->name ?: 'Billing Counter',
-                    'approver_name' => 'Auto-Verified',
-                    'notes' => 'Subscription Collection for Package: ' . ($payment->customer?->package?->name ?? 'Internet Service'),
-                    'created_at' => $payment->created_at ? $payment->created_at->format('d M, Y h:i A') : '--',
+                    'status_badge' => ['label' => __('Paid'), 'class' => 'bg-emerald-50 text-emerald-700 border-emerald-200', 'icon' => 'fa-check-circle'],
+                    'creator_name' => $payment->collector?->name ?: __('Billing Counter'),
+                    'approver_name' => __('Auto-Verified'),
+                    'notes' => __('Subscription Collection for Package: :package', ['package' => $payment->customer?->package?->name ?? __('Internet Service')]),
+                    'created_at' => $payment->created_at ? $payment->created_at->translatedFormat('d M, Y h:i A') : '--',
                 ],
                 'tenant' => [
                     'name' => $tenant->company_name ?? $tenant->name,
@@ -610,22 +615,22 @@ class TenantExpenseAccountController extends Controller
                     'source' => 'wholesale',
                     'voucher_no' => $invoice->invoice_no ?: ('WS-' . $invoice->id),
                     'type' => 'INCOME',
-                    'type_badge' => ['label' => 'Wholesale Billing', 'class' => 'bg-cyan-50 text-cyan-700 border-cyan-200', 'icon' => 'fa-network-wired'],
-                    'category_name' => 'Sub-ISP Wholesale Billing',
+                    'type_badge' => ['label' => __('Wholesale Billing'), 'class' => 'bg-cyan-50 text-cyan-700 border-cyan-200', 'icon' => 'fa-network-wired'],
+                    'category_name' => __('Sub-ISP Wholesale Billing'),
                     'category_code' => 'WS-REV',
-                    'title' => 'Wholesale Bandwidth Revenue - ' . ($invoice->reseller?->name ?? 'Reseller'),
+                    'title' => __('Wholesale Bandwidth Revenue - :reseller', ['reseller' => $invoice->reseller?->name ?? __('Reseller')]),
                     'amount' => (float) ($invoice->paid_amount ?: $invoice->total_amount),
                     'payment_method' => strtoupper($invoice->payment_method ?: 'BANK'),
-                    'account_name' => 'Corporate Bank Vault',
-                    'payee_payer' => $invoice->reseller?->name ?? 'Sub-ISP Partner',
+                    'account_name' => __('Corporate Bank Vault'),
+                    'payee_payer' => $invoice->reseller?->name ?? __('Sub-ISP Partner'),
                     'reference_no' => $invoice->invoice_no ?? '--',
-                    'transaction_date' => $invoice->paid_at ? Carbon::parse($invoice->paid_at)->format('d M, Y') : ($invoice->created_at ? $invoice->created_at->format('d M, Y') : '--'),
+                    'transaction_date' => $invoice->paid_at ? Carbon::parse($invoice->paid_at)->translatedFormat('d M, Y') : ($invoice->created_at ? $invoice->created_at->translatedFormat('d M, Y') : '--'),
                     'status' => strtoupper($invoice->payment_status ?: 'PAID'),
-                    'status_badge' => ['label' => 'Paid', 'class' => 'bg-emerald-50 text-emerald-700 border-emerald-200', 'icon' => 'fa-check-circle'],
-                    'creator_name' => 'Automated Billing Engine',
-                    'approver_name' => 'Finance Dept',
-                    'notes' => 'Wholesale monthly settlement invoice',
-                    'created_at' => $invoice->created_at ? $invoice->created_at->format('d M, Y h:i A') : '--',
+                    'status_badge' => ['label' => __('Paid'), 'class' => 'bg-emerald-50 text-emerald-700 border-emerald-200', 'icon' => 'fa-check-circle'],
+                    'creator_name' => __('Automated Billing Engine'),
+                    'approver_name' => __('Finance Dept'),
+                    'notes' => __('Wholesale monthly settlement invoice'),
+                    'created_at' => $invoice->created_at ? $invoice->created_at->translatedFormat('d M, Y h:i A') : '--',
                 ],
                 'tenant' => [
                     'name' => $tenant->company_name ?? $tenant->name,
@@ -649,22 +654,22 @@ class TenantExpenseAccountController extends Controller
                     'source' => 'upstream_payment',
                     'voucher_no' => $up->voucher_no ?: ('UPV-' . $up->id),
                     'type' => 'EXPENSE',
-                    'type_badge' => ['label' => 'Upstream COGS', 'class' => 'bg-rose-50 text-rose-700 border-rose-200', 'icon' => 'fa-network-wired'],
-                    'category_name' => 'Upstream Bandwidth & NTTN',
+                    'type_badge' => ['label' => __('Upstream COGS'), 'class' => 'bg-rose-50 text-rose-700 border-rose-200', 'icon' => 'fa-network-wired'],
+                    'category_name' => __('Upstream Bandwidth & NTTN'),
                     'category_code' => 'COGS-01',
-                    'title' => 'Upstream Carrier Payment - ' . ($up->provider?->name ?? 'Carrier'),
+                    'title' => __('Upstream Carrier Payment - :carrier', ['carrier' => $up->provider?->name ?? __('Carrier')]),
                     'amount' => (float) $up->amount,
                     'payment_method' => strtoupper($up->payment_method ?: 'BANK'),
-                    'account_name' => 'Corporate Bank Vault',
-                    'payee_payer' => $up->provider?->name ?? 'Carrier',
+                    'account_name' => __('Corporate Bank Vault'),
+                    'payee_payer' => $up->provider?->name ?? __('Carrier'),
                     'reference_no' => $up->cheque_no ?: '--',
-                    'transaction_date' => $up->paid_at ? Carbon::parse($up->paid_at)->format('d M, Y') : ($up->created_at ? $up->created_at->format('d M, Y') : '--'),
+                    'transaction_date' => $up->paid_at ? Carbon::parse($up->paid_at)->translatedFormat('d M, Y') : ($up->created_at ? $up->created_at->translatedFormat('d M, Y') : '--'),
                     'status' => 'PAID',
-                    'status_badge' => ['label' => 'Paid', 'class' => 'bg-emerald-50 text-emerald-700 border-emerald-200', 'icon' => 'fa-check-circle'],
-                    'creator_name' => 'Finance Dept',
-                    'approver_name' => 'Management',
-                    'notes' => 'Carrier bandwidth trunk settlement',
-                    'created_at' => $up->created_at ? $up->created_at->format('d M, Y h:i A') : '--',
+                    'status_badge' => ['label' => __('Paid'), 'class' => 'bg-emerald-50 text-emerald-700 border-emerald-200', 'icon' => 'fa-check-circle'],
+                    'creator_name' => __('Finance Dept'),
+                    'approver_name' => __('Management'),
+                    'notes' => __('Carrier bandwidth trunk settlement'),
+                    'created_at' => $up->created_at ? $up->created_at->translatedFormat('d M, Y h:i A') : '--',
                 ],
                 'tenant' => [
                     'name' => $tenant->company_name ?? $tenant->name,
@@ -688,7 +693,7 @@ class TenantExpenseAccountController extends Controller
                 'voucher_no' => $voucher->voucher_no,
                 'type' => $voucher->type,
                 'type_badge' => $voucher->type_badge,
-                'category_name' => $voucher->category?->name ?? 'General',
+                'category_name' => $voucher->category?->name ?? __('General'),
                 'category_code' => $voucher->category?->code ?? '--',
                 'title' => $voucher->title,
                 'amount' => (float) $voucher->amount,
@@ -696,13 +701,13 @@ class TenantExpenseAccountController extends Controller
                 'account_name' => $voucher->account_name ?: '--',
                 'payee_payer' => $voucher->payee_payer ?: '--',
                 'reference_no' => $voucher->reference_no ?: '--',
-                'transaction_date' => $voucher->transaction_date ? Carbon::parse($voucher->transaction_date)->format('d M, Y') : '--',
+                'transaction_date' => $voucher->transaction_date ? Carbon::parse($voucher->transaction_date)->translatedFormat('d M, Y') : '--',
                 'status' => $voucher->status,
                 'status_badge' => $voucher->status_badge,
-                'creator_name' => $voucher->creator?->name ?: 'Administrator',
-                'approver_name' => $voucher->approver?->name ?: ($voucher->status === 'APPROVED' ? 'Administrator' : '--'),
+                'creator_name' => $voucher->creator?->name ?: __('Administrator'),
+                'approver_name' => $voucher->approver?->name ?: ($voucher->status === 'APPROVED' ? __('Administrator') : '--'),
                 'notes' => $voucher->notes ?: '--',
-                'created_at' => $voucher->created_at ? $voucher->created_at->format('d M, Y h:i A') : '--',
+                'created_at' => $voucher->created_at ? $voucher->created_at->translatedFormat('d M, Y h:i A') : '--',
             ],
             'tenant' => [
                 'name' => $tenant->company_name ?? $tenant->name,
@@ -726,7 +731,7 @@ class TenantExpenseAccountController extends Controller
             'approved_by' => Auth::id(),
         ]);
 
-        $msg = "Voucher {$voucher->voucher_no} has been approved.";
+        $msg = __('Voucher :voucher has been approved.', ['voucher' => $voucher->voucher_no]);
 
         if ($request->wantsJson()) {
             return response()->json(['success' => true, 'message' => $msg]);
@@ -748,7 +753,7 @@ class TenantExpenseAccountController extends Controller
             'approved_by' => Auth::id(),
         ]);
 
-        $msg = "Voucher {$voucher->voucher_no} has been rejected.";
+        $msg = __('Voucher :voucher has been rejected.', ['voucher' => $voucher->voucher_no]);
 
         if ($request->wantsJson()) {
             return response()->json(['success' => true, 'message' => $msg]);
@@ -768,7 +773,7 @@ class TenantExpenseAccountController extends Controller
         $vNo = $voucher->voucher_no;
         $voucher->delete();
 
-        $msg = "Voucher {$vNo} deleted successfully.";
+        $msg = __('Voucher :voucher deleted successfully.', ['voucher' => $vNo]);
 
         if (request()->wantsJson()) {
             return response()->json(['success' => true, 'message' => $msg]);
@@ -836,33 +841,34 @@ class TenantExpenseAccountController extends Controller
 
         $vouchers = $query->orderBy('transaction_date', 'desc')->get();
         $fileName = 'income_expense_vouchers_' . date('Y_m_d_His') . '.csv';
+        $currency = $tenant->currency_symbol ?? '৳';
 
-        return response()->streamDownload(function () use ($vouchers) {
+        return response()->streamDownload(function () use ($vouchers, $currency) {
             $handle = fopen('php://output', 'w');
             fputcsv($handle, [
-                'Voucher No',
-                'Type',
-                'Date',
-                'Category',
-                'Account / Head',
-                'Description / Title',
-                'Payee / Payer',
-                'Amount (BDT)',
-                'Payment Method',
-                'Account Name',
-                'Reference No',
-                'Status',
-                'Created By',
-                'Approved By',
-                'Notes',
+                __('Voucher No'),
+                __('Type'),
+                __('Date'),
+                __('Category'),
+                __('Account / Head'),
+                __('Description / Title'),
+                __('Payee / Payer'),
+                __('Amount (:currency)', ['currency' => $currency]),
+                __('Payment Method'),
+                __('Account Name'),
+                __('Reference No'),
+                __('Status'),
+                __('Created By'),
+                __('Approved By'),
+                __('Notes'),
             ]);
 
             foreach ($vouchers as $v) {
                 fputcsv($handle, [
                     $v->voucher_no,
-                    $v->type,
+                    $v->type === 'INCOME' ? __('Income') : __('Expense'),
                     $v->transaction_date ? Carbon::parse($v->transaction_date)->format('Y-m-d') : '',
-                    $v->category?->name ?? 'General',
+                    $v->category?->name ?? __('General'),
                     $v->category?->code ?? '',
                     $v->title,
                     $v->payee_payer ?? '',
@@ -871,7 +877,7 @@ class TenantExpenseAccountController extends Controller
                     $v->account_name ?? '',
                     $v->reference_no ?? '',
                     $v->status,
-                    $v->creator?->name ?? 'System',
+                    $v->creator?->name ?? __('System'),
                     $v->approver?->name ?? '',
                     $v->notes ?? '',
                 ]);

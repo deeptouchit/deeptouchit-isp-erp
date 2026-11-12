@@ -1,6 +1,6 @@
 @extends('tenant.layouts.app')
 
-@section('title', 'Billing Catch-Up & Uninvoiced Queue - ' . ($tenant->company_name ?? $tenant->name ?? 'ISP Management'))
+@section('title', __('Billing Catch-Up & Uninvoiced Queue') . ' - ' . ($tenant->company_name ?? $tenant->name ?? __('ISP Management')))
 
 @section('content')
 <div class="space-y-3" x-data="billingCatchUpManager()" @scroll.window="activeMenu = null" @resize.window="activeMenu = null">
@@ -10,13 +10,13 @@
         <div class="flex items-center gap-2.5">
             <a href="{{ route('tenant.finance.invoices') }}" 
                class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-xs transition shadow-2xs cursor-pointer"
-               title="Back to Customer Invoices">
+               title="{{ __('Back to Customer Invoices') }}">
                 <i class="fas fa-arrow-left"></i>
             </a>
             <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 border border-amber-100 flex items-center justify-center text-sm shadow-2xs flex-shrink-0">
                 <i class="fas fa-bolt"></i>
             </div>
-            <h1 class="text-xs sm:text-sm font-bold text-slate-800 tracking-tight">Billing Catch-Up &amp; Uninvoiced Queue</h1>
+            <h1 class="text-xs sm:text-sm font-bold text-slate-800 tracking-tight">{{ __('Billing Catch-Up & Uninvoiced Queue') }}</h1>
         </div>
 
         <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap">
@@ -24,9 +24,9 @@
             <button type="button" 
                     @click="window.location.reload()" 
                     class="h-[34px] py-0 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200/80 transition inline-flex items-center gap-1.5 shadow-2xs cursor-pointer"
-                    title="Rescan & Refresh Subscriber Queue">
+                    title="{{ __('Rescan & Refresh Subscriber Queue') }}">
                 <i class="fas fa-arrows-rotate text-cyan-600 text-[11px]"></i>
-                <span>Refresh Scan</span>
+                <span>{{ __('Refresh Scan') }}</span>
             </button>
 
             {{-- Batch Generate Selected Invoices --}}
@@ -37,7 +37,7 @@
                     :disabled="isGenerating"
                     class="h-[34px] py-0 px-3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg text-xs font-semibold shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer">
                 <i class="fas" :class="isGenerating ? 'fa-spinner fa-spin' : 'fa-check-double'"></i>
-                <span x-text="isGenerating ? 'Generating...' : `Generate Selected (${selectedIds.length})`"></span>
+                <span x-text="isGenerating ? i18n.generating : i18n.generateSelected.replace(':count', selectedIds.length)"></span>
             </button>
 
             {{-- Batch Generate Targeted Scope Invoices --}}
@@ -46,9 +46,9 @@
                     @click="confirmBatchGenerate('filtered')"
                     :disabled="isGenerating"
                     class="h-[34px] py-0 px-3 bg-cyan-600 hover:bg-cyan-700 disabled:opacity-50 text-white rounded-lg text-xs font-semibold shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer"
-                    title="Generate Invoices for Current Target Scope: {{ $targetDateLabel }}">
+                    title="{{ __('Generate Invoices for Current Target Scope: :scope', ['scope' => $targetDateLabel]) }}">
                 <i class="fas" :class="isGenerating ? 'fa-spinner fa-spin' : 'fa-bolt'"></i>
-                <span x-text="isGenerating ? 'Processing...' : '{{ $generateBtnText }}'"></span>
+                <span x-text="isGenerating ? i18n.processing : targetGenerateBtnText"></span>
             </button>
             @endif
         </div>
@@ -59,9 +59,9 @@
         {{-- Card 1: Total Uninvoiced Queue --}}
         <div @click="filterByTargetDate('all')" 
              class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 hover:border-slate-300 shadow-xs flex items-center justify-between cursor-pointer transition {{ $targetDateType === 'all' ? 'ring-2 ring-cyan-500/20 bg-cyan-50/20' : '' }}"
-             title="Click to view all uninvoiced subscribers">
+             title="{{ __('Click to view all uninvoiced subscribers') }}">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Total Queue</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Total Queue') }}</span>
                 <span class="text-[13px] font-bold font-mono text-slate-900 leading-tight block truncate">{{ number_format($totalUninvoicedCount) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border border-slate-200 bg-slate-50 text-slate-600 flex items-center justify-center flex-shrink-0">
@@ -72,9 +72,9 @@
         {{-- Card 2: Expires Today (Direct Click Filter) --}}
         <div @click="filterByTargetDate('today')" 
              class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 hover:border-amber-400 shadow-xs flex items-center justify-between cursor-pointer transition {{ $targetDateType === 'today' ? 'ring-2 ring-amber-500 bg-amber-50/40' : '' }}"
-             title="Click to filter subscribers expiring today">
+             title="{{ __('Click to filter subscribers expiring today') }}">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-bold uppercase tracking-wider text-amber-700 block truncate">Expires Today</span>
+                <span class="text-[9px] font-bold uppercase tracking-wider text-amber-700 block truncate">{{ __('Expires Today') }}</span>
                 <span class="text-[13px] font-bold font-mono text-amber-600 leading-tight block truncate">{{ number_format($todayExpiringCount) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border border-amber-200 bg-amber-50 text-amber-600 flex items-center justify-center flex-shrink-0">
@@ -85,9 +85,9 @@
         {{-- Card 3: Already Overdue --}}
         <div @click="filterByTargetDate('overdue')" 
              class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 hover:border-rose-400 shadow-xs flex items-center justify-between cursor-pointer transition {{ $targetDateType === 'overdue' ? 'ring-2 ring-rose-500 bg-rose-50/40' : '' }}"
-             title="Click to filter past overdue subscribers">
+             title="{{ __('Click to filter past overdue subscribers') }}">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-bold uppercase tracking-wider text-rose-700 block truncate">Already Overdue</span>
+                <span class="text-[9px] font-bold uppercase tracking-wider text-rose-700 block truncate">{{ __('Already Overdue') }}</span>
                 <span class="text-[13px] font-bold font-mono text-rose-600 leading-tight block truncate">{{ number_format($alreadyOverdueCount) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border border-rose-200 bg-rose-50 text-rose-600 flex items-center justify-center flex-shrink-0">
@@ -98,9 +98,9 @@
         {{-- Card 4: Upcoming 1-3 Days --}}
         <div @click="filterByTargetDate('next_3_days')" 
              class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 hover:border-cyan-400 shadow-xs flex items-center justify-between cursor-pointer transition {{ $targetDateType === 'next_3_days' ? 'ring-2 ring-cyan-500 bg-cyan-50/40' : '' }}"
-             title="Click to filter subscribers expiring in next 1 to 3 days">
+             title="{{ __('Click to filter subscribers expiring in next 1 to 3 days') }}">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-cyan-800 block truncate">Upcoming (1-3d)</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-cyan-800 block truncate">{{ __('Upcoming (1-3d)') }}</span>
                 <span class="text-[13px] font-bold font-mono text-cyan-700 leading-tight block truncate">{{ number_format($upcoming3DaysCount) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border border-cyan-200 bg-cyan-50 text-cyan-600 flex items-center justify-center flex-shrink-0">
@@ -111,7 +111,7 @@
         {{-- Card 5: Unbilled Volume --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Unbilled Volume</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Unbilled Volume') }}</span>
                 <span class="text-[13px] font-bold font-mono text-emerald-700 leading-tight block truncate">@currency($totalUnbilledAmount)</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border border-emerald-200 bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0">
@@ -122,9 +122,9 @@
         {{-- Card 6: Engine Health Status --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Cron Health</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Cron Health') }}</span>
                 <span class="text-[12px] font-bold leading-tight block truncate {{ $isCronHealthy ? 'text-emerald-600' : 'text-amber-600' }}">
-                    {{ $isCronHealthy ? '🟢 Healthy' : '⚠️ Attention' }}
+                    {{ $isCronHealthy ? '🟢 ' . __('Healthy') : '⚠️ ' . __('Attention') }}
                 </span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border {{ $isCronHealthy ? 'border-emerald-200 bg-emerald-50 text-emerald-600' : 'border-amber-200 bg-amber-50 text-amber-600' }} flex items-center justify-center flex-shrink-0">
@@ -139,11 +139,11 @@
         <div class="flex items-center justify-between gap-2 mb-1.5">
             <span class="text-[11px] font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
                 <i class="fas fa-layer-group text-cyan-600"></i>
-                <span>Partner-Wise Uninvoiced Breakdown</span>
+                <span>{{ __('Partner-Wise Uninvoiced Breakdown') }}</span>
             </span>
             @if($partnerFilter !== 'all')
                 <button type="button" @click="filterByPartner('all')" class="text-[10px] text-cyan-600 hover:text-cyan-800 font-medium">
-                    Show All Partners
+                    {{ __('Show All Partners') }}
                 </button>
             @endif
         </div>
@@ -151,7 +151,7 @@
             @foreach($partnerBreakdownQuery as $pb)
                 @php
                     $isDirect = empty($pb->reseller_id);
-                    $partnerName = $isDirect ? 'Direct (HQ)' : ($pb->reseller?->name ?: 'Partner #' . $pb->reseller_id);
+                    $partnerName = $isDirect ? __('Direct (HQ)') : ($pb->reseller?->name ?: __('Partner #:id', ['id' => $pb->reseller_id]));
                     $partnerCode = $isDirect ? 'DIRECT' : ($pb->reseller?->code ?: 'RES');
                     $filterVal = $isDirect ? 'direct' : (string)$pb->reseller_id;
                     $isSelected = ((string)$partnerFilter === $filterVal);
@@ -168,8 +168,8 @@
                         <span class="font-mono text-cyan-800 font-bold text-[10.5px]">@currency($pb->amount)</span>
                     </button>
                     <button type="button" 
-                            @click="confirmBatchGenerate('partner', '{{ $filterVal }}', '{{ $partnerName }}', {{ $pb->count }})"
-                            title="Generate All Invoices for {{ $partnerName }}"
+                            @click="confirmBatchGenerate('partner', '{{ $filterVal }}', {{ Js::from($partnerName) }}, {{ $pb->count }})"
+                            title="{{ __('Generate All Invoices for :partner', ['partner' => $partnerName]) }}"
                             class="w-5 h-5 rounded bg-cyan-600 hover:bg-cyan-700 text-white flex items-center justify-center text-[9px] transition cursor-pointer">
                         <i class="fas fa-bolt"></i>
                     </button>
@@ -208,7 +208,7 @@
                            x-model="searchQuery"
                            @input="handleLiveSearch($event.target.value)"
                            @keydown.enter.prevent="submitSearchNow()"
-                           placeholder="Search Username, Name, Phone, ID..." 
+                           placeholder="{{ __('Search Username, Name, Phone, ID...') }}" 
                            class="w-full h-[34px] pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition placeholder:text-slate-400 font-medium"
                            autocomplete="off">
                     <button type="button" 
@@ -216,7 +216,7 @@
                             x-cloak
                             @click="clearLiveSearch()"
                             class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500 p-0.5 text-xs transition cursor-pointer"
-                            title="Clear Search">
+                            title="{{ __('Clear Search') }}">
                         <i class="fas fa-times-circle"></i>
                     </button>
                 </div>
@@ -234,12 +234,12 @@
                                 } 
                             })"
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-semibold text-slate-800 cursor-pointer">
-                        <option value="all" {{ $targetDateType === 'all' ? 'selected' : '' }}>🌐 All Queue ({{ number_format($totalUninvoicedCount) }})</option>
-                        <option value="today" {{ $targetDateType === 'today' ? 'selected' : '' }}>⚡ Expires Today ({{ number_format($todayExpiringCount) }})</option>
-                        <option value="tomorrow" {{ $targetDateType === 'tomorrow' ? 'selected' : '' }}>⏳ Expires Tomorrow</option>
-                        <option value="next_3_days" {{ $targetDateType === 'next_3_days' ? 'selected' : '' }}>📅 Next 3 Days ({{ number_format($upcoming3DaysCount) }})</option>
-                        <option value="overdue" {{ $targetDateType === 'overdue' ? 'selected' : '' }}>⚠️ Already Overdue ({{ number_format($alreadyOverdueCount) }})</option>
-                        <option value="custom" {{ $targetDateType === 'custom' ? 'selected' : '' }}>🗓️ Pick Specific Date...</option>
+                        <option value="all" {{ $targetDateType === 'all' ? 'selected' : '' }}>🌐 {{ __('All Queue (:count)', ['count' => number_format($totalUninvoicedCount)]) }}</option>
+                        <option value="today" {{ $targetDateType === 'today' ? 'selected' : '' }}>⚡ {{ __('Expires Today (:count)', ['count' => number_format($todayExpiringCount)]) }}</option>
+                        <option value="tomorrow" {{ $targetDateType === 'tomorrow' ? 'selected' : '' }}>⏳ {{ __('Expires Tomorrow') }}</option>
+                        <option value="next_3_days" {{ $targetDateType === 'next_3_days' ? 'selected' : '' }}>📅 {{ __('Next 3 Days (:count)', ['count' => number_format($upcoming3DaysCount)]) }}</option>
+                        <option value="overdue" {{ $targetDateType === 'overdue' ? 'selected' : '' }}>⚠️ {{ __('Already Overdue (:count)', ['count' => number_format($alreadyOverdueCount)]) }}</option>
+                        <option value="custom" {{ $targetDateType === 'custom' ? 'selected' : '' }}>🗓️ {{ __('Pick Specific Date...') }}</option>
                     </select>
                 </div>
 
@@ -250,11 +250,11 @@
                             id="partnerFilterSelect"
                             onchange="this.form.submit()"
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700 cursor-pointer">
-                        <option value="all">All Partners / Scope</option>
-                        <option value="direct" {{ $partnerFilter === 'direct' ? 'selected' : '' }}>🏢 Direct (No Partner)</option>
+                        <option value="all">{{ __('All Partners / Scope') }}</option>
+                        <option value="direct" {{ $partnerFilter === 'direct' ? 'selected' : '' }}>🏢 {{ __('Direct (No Partner)') }}</option>
                         @foreach($resellers as $reseller)
                             <option value="{{ $reseller->id }}" {{ (string)$partnerFilter === (string)$reseller->id ? 'selected' : '' }}>
-                                🤝 {{ $reseller->name }} ({{ $reseller->code ?: 'Reseller' }})
+                                🤝 {{ $reseller->name }} ({{ $reseller->code ?: __('Reseller') }})
                             </option>
                         @endforeach
                     </select>
@@ -266,12 +266,12 @@
                     <select name="per_page" 
                             onchange="this.form.submit()"
                             class="w-full h-[34px] px-2 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700 cursor-pointer">
-                        <option value="15" {{ request('per_page', $perPage) == 15 ? 'selected' : '' }}>15 / page</option>
-                        <option value="20" {{ request('per_page', $perPage) == 20 ? 'selected' : '' }}>20 / page</option>
-                        <option value="30" {{ request('per_page', $perPage) == 30 ? 'selected' : '' }}>30 / page</option>
-                        <option value="50" {{ request('per_page', $perPage) == 50 ? 'selected' : '' }}>50 / page</option>
-                        <option value="100" {{ request('per_page', $perPage) == 100 ? 'selected' : '' }}>100 / page</option>
-                        <option value="all" {{ request('per_page', $perPage) === 'all' ? 'selected' : '' }}>All Queue</option>
+                        <option value="15" {{ request('per_page', $perPage) == 15 ? 'selected' : '' }}>{{ __(':count / page', ['count' => 15]) }}</option>
+                        <option value="20" {{ request('per_page', $perPage) == 20 ? 'selected' : '' }}>{{ __(':count / page', ['count' => 20]) }}</option>
+                        <option value="30" {{ request('per_page', $perPage) == 30 ? 'selected' : '' }}>{{ __(':count / page', ['count' => 30]) }}</option>
+                        <option value="50" {{ request('per_page', $perPage) == 50 ? 'selected' : '' }}>{{ __(':count / page', ['count' => 50]) }}</option>
+                        <option value="100" {{ request('per_page', $perPage) == 100 ? 'selected' : '' }}>{{ __(':count / page', ['count' => 100]) }}</option>
+                        <option value="all" {{ request('per_page', $perPage) === 'all' ? 'selected' : '' }}>{{ __('All Queue') }}</option>
                     </select>
                 </div>
 
@@ -280,9 +280,9 @@
                         @click="showMoreFilters = !showMoreFilters" 
                         :class="showMoreFilters || {{ $activeMoreCount }} > 0 ? 'bg-cyan-50 text-cyan-700 border-cyan-300 ring-1 ring-cyan-200' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'"
                         class="h-[34px] py-0 px-2.5 rounded-lg border text-xs font-medium transition flex items-center justify-center gap-1.5 flex-shrink-0 cursor-pointer shadow-2xs"
-                        title="Toggle Zone, Package & Custom Date Filters">
+                        title="{{ __('Toggle Zone, Package & Custom Date Filters') }}">
                     <i class="fas fa-sliders-h text-[10px]"></i>
-                    <span>More Filters</span>
+                    <span>{{ __('More Filters') }}</span>
                     @if($activeMoreCount > 0)
                         <span class="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-cyan-600 text-white leading-none">
                             {{ $activeMoreCount }}
@@ -296,15 +296,15 @@
                 <div class="flex items-center gap-1.5 flex-shrink-0 md:ml-auto">
                     <button type="submit" 
                             class="h-[34px] bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-0 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" 
-                            title="Apply Filters">
+                            title="{{ __('Apply Filters') }}">
                         <i class="fas fa-filter text-[10px]"></i>
-                        <span>Filter</span>
+                        <span>{{ __('Filter') }}</span>
                     </button>
                     <a href="{{ route('tenant.finance.billing-catchup') }}" 
                        class="h-[34px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-0 px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer" 
-                       title="Reset Filters">
+                       title="{{ __('Reset Filters') }}">
                         <i class="fas fa-rotate-left text-[10px]"></i>
-                        <span>Reset</span>
+                        <span>{{ __('Reset') }}</span>
                     </a>
                 </div>
             </div>
@@ -324,7 +324,7 @@
                            value="{{ $customDate }}"
                            onchange="this.form.submit()"
                            class="w-full h-[34px] px-2.5 bg-white border border-cyan-400 rounded-lg text-xs font-mono text-slate-800 focus:outline-hidden"
-                           title="Select exact expiry date to target">
+                           title="{{ __('Select exact expiry date to target') }}">
                 </div>
 
                 {{-- Zone / Area Filter --}}
@@ -332,7 +332,7 @@
                     <select name="zone_id" 
                             onchange="this.form.submit()"
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700 cursor-pointer">
-                        <option value="all">All Zones / Areas</option>
+                        <option value="all">{{ __('All Zones / Areas') }}</option>
                         @foreach($zones as $z)
                             <option value="{{ $z->id }}" {{ (string)$zoneFilter === (string)$z->id ? 'selected' : '' }}>
                                 {{ $z->name }}
@@ -346,7 +346,7 @@
                     <select name="package_id" 
                             onchange="this.form.submit()" 
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700 cursor-pointer">
-                        <option value="all">All Internet Packages</option>
+                        <option value="all">{{ __('All Internet Packages') }}</option>
                         @foreach($packages as $p)
                             <option value="{{ $p->id }}" {{ (string)$packageFilter === (string)$p->id ? 'selected' : '' }}>
                                 {{ $p->name }} (@currency($p->price))
@@ -360,10 +360,10 @@
                     <select name="overdue_range" 
                             onchange="this.form.submit()" 
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700 cursor-pointer">
-                        <option value="all">All Overdue Ranges</option>
-                        <option value="upcoming" {{ $overdueFilter === 'upcoming' ? 'selected' : '' }}>⏳ Upcoming (Due in 1-3 Days)</option>
-                        <option value="overdue_1_7" {{ $overdueFilter === 'overdue_1_7' ? 'selected' : '' }}>⚠️ Overdue (1 to 7 Days)</option>
-                        <option value="overdue_8_plus" {{ $overdueFilter === 'overdue_8_plus' ? 'selected' : '' }}>🚨 Critical Overdue (8+ Days)</option>
+                        <option value="all">{{ __('All Overdue Ranges') }}</option>
+                        <option value="upcoming" {{ $overdueFilter === 'upcoming' ? 'selected' : '' }}>⏳ {{ __('Upcoming (Due in 1-3 Days)') }}</option>
+                        <option value="overdue_1_7" {{ $overdueFilter === 'overdue_1_7' ? 'selected' : '' }}>⚠️ {{ __('Overdue (1 to 7 Days)') }}</option>
+                        <option value="overdue_8_plus" {{ $overdueFilter === 'overdue_8_plus' ? 'selected' : '' }}>🚨 {{ __('Critical Overdue (8+ Days)') }}</option>
                     </select>
                 </div>
             </div>
@@ -383,16 +383,16 @@
                                    class="rounded text-cyan-600 focus:ring-cyan-500 cursor-pointer">
                         </th>
                         <th class="w-10 text-center no-sort">#</th>
-                        <th class="text-center font-semibold">Customer ID</th>
-                        <th class="text-center font-semibold">Customer Name</th>
-                        <th class="text-center font-semibold">Mobile Number</th>
-                        <th class="text-center font-semibold">Area</th>
-                        <th class="text-center font-semibold">Partner</th>
-                        <th class="text-center font-semibold">Package</th>
-                        <th class="text-center font-semibold">Monthly Bill</th>
-                        <th class="text-center font-semibold">Expiry Date</th>
-                        <th class="text-center font-semibold">Cycle Status</th>
-                        <th class="w-28 text-center no-sort">Action</th>
+                        <th class="text-center font-semibold">{{ __('Customer ID') }}</th>
+                        <th class="text-center font-semibold">{{ __('Customer Name') }}</th>
+                        <th class="text-center font-semibold">{{ __('Mobile Number') }}</th>
+                        <th class="text-center font-semibold">{{ __('Area') }}</th>
+                        <th class="text-center font-semibold">{{ __('Partner') }}</th>
+                        <th class="text-center font-semibold">{{ __('Package') }}</th>
+                        <th class="text-center font-semibold">{{ __('Monthly Bill') }}</th>
+                        <th class="text-center font-semibold">{{ __('Expiry Date') }}</th>
+                        <th class="text-center font-semibold">{{ __('Cycle Status') }}</th>
+                        <th class="w-28 text-center no-sort">{{ __('Action') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -400,7 +400,7 @@
                         <td colspan="12" class="text-center py-6 text-slate-500 bg-slate-50/50">
                             <i class="fas fa-spinner fa-spin text-cyan-600 mr-1.5" x-show="isSearching"></i>
                             <i class="fas fa-search text-slate-400 mr-1.5" x-show="!isSearching"></i>
-                            <span class="text-xs font-medium">No matching uninvoiced subscribers found on this page.</span>
+                            <span class="text-xs font-medium">{{ __('No matching uninvoiced subscribers found on this page.') }}</span>
                         </td>
                     </tr>
                     @forelse($subscribers as $index => $customer)
@@ -452,9 +452,9 @@
                                         <span>{{ $customer->reseller->code ?: $customer->reseller->name }}</span>
                                     </span>
                                 @else
-                                    <span class="inline-flex items-center gap-1 text-slate-600 font-medium" title="HQ Direct Retail">
+                                    <span class="inline-flex items-center gap-1 text-slate-600 font-medium" title="{{ __('HQ Direct Retail') }}">
                                         <i class="fas fa-building text-slate-400 text-[10px]"></i>
-                                        <span>Direct</span>
+                                        <span>{{ __('Direct') }}</span>
                                     </span>
                                 @endif
                             </td>
@@ -471,7 +471,7 @@
 
                             {{-- 9. Expiry Date --}}
                             <td class="text-center whitespace-nowrap font-mono text-xs text-slate-700">
-                                {{ $expiry ? $expiry->format('d M Y') : '—' }}
+                                {{ $expiry ? $expiry->translatedFormat('d M Y') : '—' }}
                             </td>
 
                             {{-- 10. Cycle Status / Overdue Days --}}
@@ -479,17 +479,17 @@
                                 @if($daysDiff < 0)
                                     <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 inline-flex items-center gap-1">
                                         <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
-                                        <span>Overdue ({{ abs($daysDiff) }}d)</span>
+                                        <span>{{ __('Overdue (:days d)', ['days' => abs($daysDiff)]) }}</span>
                                     </span>
                                 @elseif($daysDiff === 0)
                                     <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 inline-flex items-center gap-1">
                                         <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                                        <span>Expires Today</span>
+                                        <span>{{ __('Expires Today') }}</span>
                                     </span>
                                 @else
                                     <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-50 text-cyan-700 border border-cyan-200 inline-flex items-center gap-1">
                                         <span class="w-1.5 h-1.5 rounded-full bg-cyan-500"></span>
-                                        <span>Due in {{ $daysDiff }}d</span>
+                                        <span>{{ __('Due in :days d', ['days' => $daysDiff]) }}</span>
                                     </span>
                                 @endif
                             </td>
@@ -497,11 +497,11 @@
                             {{-- 11. Action: 1-Click Generate Bill --}}
                             <td class="text-center whitespace-nowrap">
                                 <button type="button" 
-                                        @click="generateSingle({{ $customer->id }}, '{{ addslashes($customer->name) }}', {{ $bill }})"
+                                        @click="generateSingle({{ $customer->id }}, {{ Js::from($customer->name ?: $customer->username) }}, {{ $bill }})"
                                         class="h-[28px] px-2.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-xs font-semibold shadow-xs transition inline-flex items-center justify-center gap-1.5 cursor-pointer"
-                                        title="Generate Invoice Now for this Customer">
+                                        title="{{ __('Generate Invoice Now for this Customer') }}">
                                     <i class="fas fa-file-invoice-dollar text-[10px]"></i>
-                                    <span>+ Bill</span>
+                                    <span>{{ __('+ Bill') }}</span>
                                 </button>
                             </td>
                         </tr>
@@ -509,8 +509,8 @@
                         <tr class="no-record-row">
                             <td colspan="12" class="text-center py-10 text-slate-400">
                                 <i class="fas fa-circle-check text-3xl mb-2 block text-emerald-500"></i>
-                                <span class="font-semibold text-slate-700 text-xs">All Subscribers Are 100% Invoiced!</span>
-                                <p class="text-[11px] text-slate-400 mt-0.5">There are no missing or uninvoiced subscribers in the selected scope. The automated billing engine is completely up to date.</p>
+                                <span class="font-semibold text-slate-700 text-xs">{{ __('All Subscribers Are 100% Invoiced!') }}</span>
+                                <p class="text-[11px] text-slate-400 mt-0.5">{{ __('There are no missing or uninvoiced subscribers in the selected scope. The automated billing engine is completely up to date.') }}</p>
                             </td>
                         </tr>
                     @endforelse
@@ -536,9 +536,38 @@ function billingCatchUpManager() {
         activeMenu: null,
         showMoreFilters: {{ $isMoreOpen ? 'true' : 'false' }},
         searchQuery: @json($search ?? ''),
-        targetDateType: '{{ $targetDateType }}',
-        customDate: '{{ $customDate }}',
-        targetDateLabel: '{{ $targetDateLabel }}',
+        targetDateType: @json($targetDateType),
+        customDate: @json($customDate),
+        targetDateLabel: @json($targetDateLabel),
+        targetGenerateBtnText: @json($generateBtnText),
+        currencySymbol: @json($currencySymbol ?? '৳'),
+        i18n: {
+            generating: @json(__('Generating...')),
+            processing: @json(__('Processing...')),
+            generateSelected: @json(__('Generate Selected (:count)')),
+            confirmSingleTitle: @json(__('Generate Subscription Invoice?')),
+            confirmSingleHtml: @json(__('Generate monthly subscription bill of :amount for :name?')),
+            confirmSingleBtn: @json(__('Yes, Generate Bill')),
+            cancelBtn: @json(__('Cancel')),
+            invoiceGeneratedTitle: @json(__('Invoice Generated!')),
+            failedTitle: @json(__('Failed')),
+            couldNotGenerate: @json(__('Could not generate invoice.')),
+            errorTitle: @json(__('Error')),
+            networkErrorGenerating: @json(__('Network error generating invoice.')),
+            batchTitle: @json(__('Execute Billing Catch-Up?')),
+            batchSelectedHtml: @json(__('Generate subscription invoices for :count selected subscribers?')),
+            batchPartnerHtml: @json(__('Generate subscription invoices for all :count uninvoiced subscribers of :partner?')),
+            targetDateScope: @json(__('Target Date Scope:')),
+            subscribersToBill: @json(__('Subscribers to Bill:')),
+            subscribersCount: @json(__(':count Subscribers')),
+            estimatedTotal: @json(__('Estimated Total:')),
+            batchConfirmText: @json(__('Are you sure you want to generate subscription invoices for these subscribers?')),
+            batchConfirmBtn: @json(__('Yes, Generate Invoices')),
+            catchupCompletedTitle: @json(__('Catch-Up Completed!')),
+            executionFailedTitle: @json(__('Execution Failed')),
+            batchFailedMsg: @json(__('Batch generation encountered an error.')),
+            networkErrorBatch: @json(__('Network error during batch invoicing.'))
+        },
         filteredCount: {{ $filteredTargetCount }},
         filteredAmount: {{ $filteredTargetAmount }},
         searchDebounceTimer: null,
@@ -674,15 +703,20 @@ function billingCatchUpManager() {
         },
 
         async generateSingle(customerId, customerName, billAmount) {
-            const sym = '{{ $currencySymbol ?? "৳" }}';
+            const sym = this.currencySymbol;
+            const amountHtml = `<b>${sym}${billAmount.toFixed(2)}</b>`;
+            const nameHtml = `<b>${customerName}</b>`;
             const result = await Swal.fire({
-                title: 'Generate Subscription Invoice?',
-                html: `Generate monthly subscription bill of <b>${sym}${billAmount.toFixed(2)}</b> for <b>${customerName}</b>?`,
+                title: this.i18n.confirmSingleTitle,
+                html: this.i18n.confirmSingleHtml
+                    .replace(':amount', amountHtml)
+                    .replace(':name', nameHtml),
                 icon: 'question',
                 showCancelButton: true,
                 confirmButtonColor: '#0891b2',
                 cancelButtonColor: '#64748b',
-                confirmButtonText: 'Yes, Generate Bill'
+                confirmButtonText: this.i18n.confirmSingleBtn,
+                cancelButtonText: this.i18n.cancelBtn
             });
 
             if (!result.isConfirmed) return;
@@ -706,24 +740,24 @@ function billingCatchUpManager() {
                 if (res.ok && data.success) {
                     Swal.fire({
                         icon: 'success',
-                        title: 'Invoice Generated!',
+                        title: this.i18n.invoiceGeneratedTitle,
                         text: data.message,
                         timer: 1600,
                         showConfirmButton: false
                     });
                     setTimeout(() => window.location.reload(), 1200);
                 } else {
-                    Swal.fire('Failed', data.message || 'Could not generate invoice.', 'error');
+                    Swal.fire(this.i18n.failedTitle, data.message || this.i18n.couldNotGenerate, 'error');
                 }
             } catch (err) {
-                Swal.fire('Error', 'Network error generating invoice.', 'error');
+                Swal.fire(this.i18n.errorTitle, this.i18n.networkErrorGenerating, 'error');
             } finally {
                 this.isGenerating = false;
             }
         },
 
         async confirmBatchGenerate(scope, partnerId = null, partnerName = '', partnerCount = 0) {
-            let title = 'Execute Billing Catch-Up?';
+            const title = this.i18n.batchTitle;
             let htmlText = '';
             let payload = {
                 scope: scope,
@@ -731,20 +765,23 @@ function billingCatchUpManager() {
                 custom_date: this.customDate
             };
 
-            const sym = '{{ $currencySymbol ?? "৳" }}';
+            const sym = this.currencySymbol;
             if (scope === 'selected') {
-                htmlText = `Generate subscription invoices for <b>${this.selectedIds.length}</b> selected subscribers?`;
+                htmlText = this.i18n.batchSelectedHtml.replace(':count', `<b>${this.selectedIds.length}</b>`);
                 payload.customer_ids = this.selectedIds;
             } else if (scope === 'partner') {
-                htmlText = `Generate subscription invoices for all <b>${partnerCount}</b> uninvoiced subscribers of <b>${partnerName}</b>?`;
+                htmlText = this.i18n.batchPartnerHtml
+                    .replace(':count', `<b>${partnerCount}</b>`)
+                    .replace(':partner', `<b>${partnerName}</b>`);
                 payload.partner_id = partnerId;
             } else {
+                const countLabel = this.i18n.subscribersCount.replace(':count', this.filteredCount);
                 htmlText = `<div class="text-left space-y-1.5 p-2 bg-slate-50 rounded-lg border border-slate-200">
-                    <div class="flex justify-between text-xs"><span class="text-slate-500">Target Date Scope:</span><b class="text-cyan-700 font-semibold">${this.targetDateLabel}</b></div>
-                    <div class="flex justify-between text-xs"><span class="text-slate-500">Subscribers to Bill:</span><b class="font-mono text-slate-800">${this.filteredCount} Subscribers</b></div>
-                    <div class="flex justify-between text-xs"><span class="text-slate-500">Estimated Total:</span><b class="font-mono text-emerald-600 font-bold">${sym}${this.filteredAmount.toLocaleString()}</b></div>
+                    <div class="flex justify-between text-xs"><span class="text-slate-500">${this.i18n.targetDateScope}</span><b class="text-cyan-700 font-semibold">${this.targetDateLabel}</b></div>
+                    <div class="flex justify-between text-xs"><span class="text-slate-500">${this.i18n.subscribersToBill}</span><b class="font-mono text-slate-800">${countLabel}</b></div>
+                    <div class="flex justify-between text-xs"><span class="text-slate-500">${this.i18n.estimatedTotal}</span><b class="font-mono text-emerald-600 font-bold">${sym}${this.filteredAmount.toLocaleString()}</b></div>
                 </div>
-                <p class="text-xs text-slate-600 mt-2">Are you sure you want to generate subscription invoices for these subscribers?</p>`;
+                <p class="text-xs text-slate-600 mt-2">${this.i18n.batchConfirmText}</p>`;
             }
 
             const result = await Swal.fire({
@@ -754,7 +791,8 @@ function billingCatchUpManager() {
                 showCancelButton: true,
                 confirmButtonColor: '#0891b2',
                 cancelButtonColor: '#64748b',
-                confirmButtonText: 'Yes, Generate Invoices'
+                confirmButtonText: this.i18n.batchConfirmBtn,
+                cancelButtonText: this.i18n.cancelBtn
             });
 
             if (!result.isConfirmed) return;
@@ -775,17 +813,17 @@ function billingCatchUpManager() {
                 if (res.ok && data.success) {
                     Swal.fire({
                         icon: 'success',
-                        title: 'Catch-Up Completed!',
+                        title: this.i18n.catchupCompletedTitle,
                         text: data.message,
                         confirmButtonColor: '#0891b2'
                     }).then(() => {
                         window.location.reload();
                     });
                 } else {
-                    Swal.fire('Execution Failed', data.message || 'Batch generation encountered an error.', 'error');
+                    Swal.fire(this.i18n.executionFailedTitle, data.message || this.i18n.batchFailedMsg, 'error');
                 }
             } catch (err) {
-                Swal.fire('Error', 'Network error during batch invoicing.', 'error');
+                Swal.fire(this.i18n.errorTitle, this.i18n.networkErrorBatch, 'error');
             } finally {
                 this.isGenerating = false;
             }

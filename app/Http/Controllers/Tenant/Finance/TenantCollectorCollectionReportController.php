@@ -25,7 +25,7 @@ class TenantCollectorCollectionReportController extends Controller
         $tenant = $tenantId ? Tenant::find($tenantId) : (auth()->user()?->tenant ?? Tenant::first());
 
         if (!$tenant) {
-            abort(403, 'Tenant context not found. Please log in.');
+            abort(403, __('Tenant context not found. Please log in.'));
         }
 
         return $tenant;
@@ -176,6 +176,12 @@ class TenantCollectorCollectionReportController extends Controller
 
         $rows->getCollection()->transform(function ($row) use ($assignedAreasMap) {
             $row->assigned_areas_count = $row->collector_id ? ($assignedAreasMap[$row->collector_id] ?? 0) : 0;
+            if ((int) $row->collector_id === 0) {
+                $row->collector_name = __('Direct / System');
+            }
+            if (empty($row->reseller_id)) {
+                $row->partner_name = __('Direct HQ');
+            }
             return $row;
         });
 
@@ -194,8 +200,11 @@ class TenantCollectorCollectionReportController extends Controller
             ->orderBy('name')
             ->get(['id', 'name', 'email', 'phone', 'role']);
 
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
+
         return view('tenant.finance.collector_collections', compact(
             'tenant',
+            'currencySymbol',
             'rows',
             'period',
             'periodLabel',
@@ -244,20 +253,20 @@ class TenantCollectorCollectionReportController extends Controller
 
         // 2. Resolve Collector & Partner Identity
         $collector = null;
-        $collectorName = 'Direct / System';
+        $collectorName = __('Direct / System');
         $collectorPhone = '';
-        $collectorRole = 'System';
+        $collectorRole = __('System');
         if ($collectorId !== '0' && $collectorId !== 'direct' && !empty($collectorId)) {
             $collector = User::where('tenant_id', $tenant->id)->find($collectorId);
             if ($collector) {
                 $collectorName = $collector->name;
                 $collectorPhone = $collector->phone ?? '';
-                $collectorRole = ucwords(str_replace('_', ' ', $collector->role ?? 'Collector'));
+                $collectorRole = __(ucwords(str_replace('_', ' ', $collector->role ?? 'Collector')));
             }
         }
 
         $partner = null;
-        $partnerName = 'Direct HQ';
+        $partnerName = __('Direct HQ');
         if ($resellerId !== '0' && $resellerId !== 'direct' && !empty($resellerId)) {
             $partner = TenantReseller::where('tenant_id', $tenant->id)->find($resellerId);
             if ($partner) {
@@ -322,9 +331,11 @@ class TenantCollectorCollectionReportController extends Controller
         }
 
         $payments = $paymentsQuery->orderByDesc('paid_at')->paginate($perPage)->withQueryString();
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
 
         return view('tenant.finance.collector_collection_details', compact(
             'tenant',
+            'currencySymbol',
             'collectorId',
             'collector',
             'collectorName',
@@ -391,7 +402,7 @@ class TenantCollectorCollectionReportController extends Controller
 
         $payments = $query->orderByDesc('paid_at')->limit(500)->get();
 
-        $collectorName = 'Direct / System';
+        $collectorName = __('Direct / System');
         if ($collectorId && $collectorId !== '0') {
             $user = User::where('tenant_id', $tenant->id)->find($collectorId);
             if ($user) {
@@ -399,7 +410,7 @@ class TenantCollectorCollectionReportController extends Controller
             }
         }
 
-        $partnerName = 'Direct HQ';
+        $partnerName = __('Direct HQ');
         if ($resellerId && $resellerId !== '0') {
             $partner = TenantReseller::where('tenant_id', $tenant->id)->find($resellerId);
             if ($partner) {
@@ -411,15 +422,15 @@ class TenantCollectorCollectionReportController extends Controller
             return [
                 'id' => $p->id,
                 'invoice_no' => $p->invoice_no ?: ('REC-' . str_pad($p->id, 5, '0', STR_PAD_LEFT)),
-                'customer_id' => $p->customer?->customer_id ?? 'N/A',
-                'customer_name' => $p->customer?->name ?? 'Unknown',
-                'customer_username' => $p->customer?->username ?? 'N/A',
+                'customer_id' => $p->customer?->customer_id ?? __('N/A'),
+                'customer_name' => $p->customer?->name ?? __('Unknown'),
+                'customer_username' => $p->customer?->username ?? __('N/A'),
                 'customer_phone' => $p->customer?->phone ?? '—',
                 'package_name' => $p->customer?->package?->name ?? '—',
                 'amount' => (float) $p->amount,
-                'payment_method' => strtoupper($p->payment_method ?: 'CASH'),
-                'paid_at' => $p->paid_at ? $p->paid_at->format('d M Y, h:i A') : '—',
-                'status' => ucfirst($p->status ?: 'completed'),
+                'payment_method' => $p->payment_method_name,
+                'paid_at' => $p->paid_at ? $p->paid_at->translatedFormat('d M Y, h:i A') : '—',
+                'status' => __(ucfirst($p->status ?: 'completed')),
                 'receipt_url' => route('tenant.finance.payments.show', $p->id),
             ];
         });
@@ -514,28 +525,41 @@ class TenantCollectorCollectionReportController extends Controller
         ->pluck(DB::raw('COUNT(DISTINCT zone_id)'), 'user_id')
         ->toArray();
 
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
         $filename = 'collector_collections_' . date('Y_m_d_His') . '.csv';
         $headers = [
             'Content-Type' => 'text/csv; charset=UTF-8',
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
         ];
 
-        return response()->stream(function () use ($rows, $periodLabel, $exportAreasMap) {
+        return response()->stream(function () use ($rows, $periodLabel, $exportAreasMap, $currencySymbol) {
             $handle = fopen('php://output', 'w');
             fprintf($handle, chr(0xEF) . chr(0xBB) . chr(0xBF)); // UTF-8 BOM
-            fputcsv($handle, ['#', 'Month', 'Collector Code', 'Collector Name', 'Mobile', 'Assigned Areas', 'Partner', 'Total Receipts', 'Total Collected (Tk)']);
+            fputcsv($handle, [
+                __('#'),
+                __('Month'),
+                __('Collector Code'),
+                __('Collector Name'),
+                __('Mobile'),
+                __('Assigned Areas'),
+                __('Partner'),
+                __('Total Receipts'),
+                __('Total Collected (:currency)', ['currency' => $currencySymbol]),
+            ]);
 
             foreach ($rows as $idx => $r) {
-                $monthStr = $r->collection_month ? Carbon::parse($r->collection_month . '-01')->format('F Y') : $periodLabel;
+                $monthStr = $r->collection_month ? Carbon::parse($r->collection_month . '-01')->translatedFormat('F Y') : $periodLabel;
                 $areasCount = $r->collector_id ? ($exportAreasMap[$r->collector_id] ?? 0) : 0;
+                $colName = ((int) $r->collector_id === 0) ? __('Direct / System') : $r->collector_name;
+                $partName = ($r->partner_name === 'Direct HQ') ? __('Direct HQ') : $r->partner_name;
                 fputcsv($handle, [
                     $idx + 1,
                     $monthStr,
                     $r->collector_code,
-                    $r->collector_name,
+                    $colName,
                     $r->collector_phone ?? '—',
                     $areasCount,
-                    $r->partner_name,
+                    $partName,
                     $r->total_count,
                     number_format($r->total_amount, 2, '.', ''),
                 ]);
@@ -558,31 +582,31 @@ class TenantCollectorCollectionReportController extends Controller
                 }
                 $startDate = $day->copy()->startOfDay();
                 $endDate = $day->copy()->endOfDay();
-                $label = $day->format('d M Y');
+                $label = $day->translatedFormat('d M Y');
                 break;
 
             case 'yearly':
                 $year = !empty($selectedYear) ? (int) $selectedYear : Carbon::now()->year;
                 $startDate = Carbon::createFromDate($year, 1, 1)->startOfDay();
                 $endDate = Carbon::createFromDate($year, 12, 31)->endOfDay();
-                $label = 'Year ' . $year;
+                $label = __('Year :year', ['year' => $year]);
                 break;
 
             case 'all':
                 $startDate = null;
                 $endDate = null;
-                $label = 'All Time';
+                $label = __('All Time');
                 break;
 
             case 'custom':
                 if (!empty($dateFrom) && !empty($dateTo)) {
                     $startDate = Carbon::parse($dateFrom)->startOfDay();
                     $endDate = Carbon::parse($dateTo)->endOfDay();
-                    $label = $startDate->format('d M Y') . ' - ' . $endDate->format('d M Y');
+                    $label = $startDate->translatedFormat('d M Y') . ' - ' . $endDate->translatedFormat('d M Y');
                 } else {
                     $startDate = Carbon::now()->startOfMonth();
                     $endDate = Carbon::now()->endOfMonth();
-                    $label = $startDate->format('F Y');
+                    $label = $startDate->translatedFormat('F Y');
                 }
                 break;
 
@@ -595,7 +619,7 @@ class TenantCollectorCollectionReportController extends Controller
                 }
                 $startDate = $m->copy()->startOfMonth();
                 $endDate = $m->copy()->endOfMonth();
-                $label = $m->format('F Y');
+                $label = $m->translatedFormat('F Y');
                 break;
         }
 

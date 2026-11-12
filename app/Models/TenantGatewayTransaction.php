@@ -78,27 +78,27 @@ class TenantGatewayTransaction extends Model
     {
         return match ($this->status) {
             'SUCCESS' => [
-                'label' => 'Success',
+                'label' => __('Success'),
                 'class' => 'bg-emerald-50 text-emerald-700 border-emerald-200',
                 'icon' => 'fa-check-circle',
             ],
             'PENDING' => [
-                'label' => 'Pending / Processing',
+                'label' => __('Pending / Processing'),
                 'class' => 'bg-amber-50 text-amber-700 border-amber-200',
                 'icon' => 'fa-clock',
             ],
             'FAILED' => [
-                'label' => 'Failed',
+                'label' => __('Failed'),
                 'class' => 'bg-rose-50 text-rose-700 border-rose-200',
                 'icon' => 'fa-circle-xmark',
             ],
             'REFUNDED' => [
-                'label' => 'Refunded',
+                'label' => __('Refunded'),
                 'class' => 'bg-purple-50 text-purple-700 border-purple-200',
                 'icon' => 'fa-rotate-left',
             ],
             default => [
-                'label' => 'Cancelled',
+                'label' => __('Cancelled'),
                 'class' => 'bg-slate-50 text-slate-600 border-slate-200',
                 'icon' => 'fa-ban',
             ],
@@ -113,37 +113,37 @@ class TenantGatewayTransaction extends Model
         $gw = strtolower($this->gateway ?? '');
         return match ($gw) {
             'bkash' => [
-                'label' => 'bKash PGW',
+                'label' => __('bKash PGW'),
                 'class' => 'bg-pink-50 text-pink-700 border-pink-200',
                 'icon' => 'fa-mobile-screen-button',
             ],
             'nagad' => [
-                'label' => 'Nagad Direct',
+                'label' => __('Nagad Direct'),
                 'class' => 'bg-orange-50 text-orange-700 border-orange-200',
                 'icon' => 'fa-wallet',
             ],
             'rocket' => [
-                'label' => 'Rocket (DBBL)',
+                'label' => __('Rocket (DBBL)'),
                 'class' => 'bg-purple-50 text-purple-700 border-purple-200',
                 'icon' => 'fa-building-columns',
             ],
             'sslcommerz' => [
-                'label' => 'SSLCommerz (Cards/NetBanking)',
+                'label' => __('SSLCommerz (Cards/NetBanking)'),
                 'class' => 'bg-blue-50 text-blue-700 border-blue-200',
                 'icon' => 'fa-credit-card',
             ],
             'shurjopay' => [
-                'label' => 'ShurjoPay',
+                'label' => __('ShurjoPay'),
                 'class' => 'bg-teal-50 text-teal-700 border-teal-200',
                 'icon' => 'fa-money-bill-transfer',
             ],
             'stripe' => [
-                'label' => 'Stripe International',
+                'label' => __('Stripe International'),
                 'class' => 'bg-indigo-50 text-indigo-700 border-indigo-200',
                 'icon' => 'fa-globe',
             ],
             default => [
-                'label' => strtoupper($this->gateway ?? 'ONLINE'),
+                'label' => $this->gateway ? strtoupper($this->gateway) : __('Online'),
                 'class' => 'bg-slate-50 text-slate-700 border-slate-200',
                 'icon' => 'fa-globe',
             ],
@@ -156,12 +156,12 @@ class TenantGatewayTransaction extends Model
     public function getPurposeLabelAttribute(): string
     {
         return match ($this->purpose) {
-            'CUSTOMER_BILL' => 'Subscriber Monthly Bill',
-            'CUSTOMER_RECHARGE' => 'Prepaid Customer Recharge',
-            'RESELLER_TOPUP' => 'Sub-ISP Wallet Recharge',
-            'RESELLER_INVOICE' => 'Wholesale Bandwidth Invoice',
-            'MANUAL' => 'Manual Web Payment',
-            default => 'Online Transaction',
+            'CUSTOMER_BILL' => __('Subscriber Monthly Bill'),
+            'CUSTOMER_RECHARGE' => __('Prepaid Customer Recharge'),
+            'RESELLER_TOPUP' => __('Sub-ISP Wallet Recharge'),
+            'RESELLER_INVOICE' => __('Wholesale Bandwidth Invoice'),
+            'MANUAL' => __('Manual Web Payment'),
+            default => __('Online Transaction'),
         };
     }
 
