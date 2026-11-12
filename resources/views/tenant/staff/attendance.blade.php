@@ -1,6 +1,6 @@
 @extends('tenant.layouts.app')
 
-@section('title', 'Daily Attendance Register - ' . ($tenant->company_name ?? $tenant->name))
+@section('title', __('Daily Attendance Register') . ' - ' . ($tenant->company_name ?? $tenant->name))
 
 @push('styles')
     {{-- Page specific CSS --}}
@@ -39,9 +39,9 @@
                 <i class="fas fa-clipboard-user"></i>
             </div>
             <div class="flex items-center gap-2">
-                <h1 class="text-xs sm:text-sm font-bold text-slate-900 tracking-tight">Daily Attendance Register</h1>
+                <h1 class="text-xs sm:text-sm font-bold text-slate-900 tracking-tight">{{ __('Daily Attendance Register') }}</h1>
                 <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-teal-50 text-teal-700 border border-teal-200">
-                    {{ number_format($attendances->total()) }} Records
+                    {{ __(':count Records', ['count' => number_format($attendances->total())]) }}
                 </span>
             </div>
         </div>
@@ -52,7 +52,7 @@
             <a href="{{ route('tenant.staff.attendance.export', ['date' => $selectedDate]) }}" 
                class="h-[34px] py-0 px-3 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-xs transition inline-flex items-center gap-1.5">
                 <i class="fas fa-file-csv text-emerald-600 text-[11px]"></i>
-                <span>Export CSV</span>
+                <span>{{ __('Export CSV') }}</span>
             </a>
 
             <!-- Quick Punch In/Out Modal Trigger -->
@@ -60,7 +60,7 @@
                     @click="openPunchModal()"
                     class="h-[34px] py-0 px-3 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-semibold text-xs shadow-2xs transition inline-flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-fingerprint text-emerald-600 text-[11px]"></i>
-                <span>Quick Punch</span>
+                <span>{{ __('Quick Punch') }}</span>
             </button>
 
             <!-- Manual Mark Attendance Modal Trigger -->
@@ -68,7 +68,7 @@
                     @click="openMarkModal()"
                     class="h-[34px] py-0 px-3.5 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-semibold text-xs shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-calendar-check text-[11px]"></i>
-                <span>+ Mark Attendance</span>
+                <span>{{ __('+ Mark Attendance') }}</span>
             </button>
         </div>
     </div>
@@ -78,7 +78,7 @@
         <!-- Metric 1: Total Active Staff -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0">
-                <span class="text-[9px] font-medium text-slate-500 uppercase tracking-wider block truncate">Active Staff</span>
+                <span class="text-[9px] font-medium text-slate-500 uppercase tracking-wider block truncate">{{ __('Active Staff') }}</span>
                 <span class="text-[13px] font-bold text-slate-900 font-mono leading-tight block">{{ number_format($totalActiveStaff) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md bg-slate-100 text-slate-600 flex items-center justify-center text-[10px] border border-slate-200 flex-shrink-0">
@@ -89,7 +89,7 @@
         <!-- Metric 2: Present Today -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0">
-                <span class="text-[9px] font-medium text-emerald-700 uppercase tracking-wider block truncate">Present Today</span>
+                <span class="text-[9px] font-medium text-emerald-700 uppercase tracking-wider block truncate">{{ __('Present Today') }}</span>
                 <span class="text-[13px] font-bold text-emerald-600 font-mono leading-tight block">{{ number_format($presentTodayCount) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md bg-emerald-50 text-emerald-600 flex items-center justify-center text-[10px] border border-emerald-100 flex-shrink-0">
@@ -100,7 +100,7 @@
         <!-- Metric 3: Field Duty -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0">
-                <span class="text-[9px] font-medium text-blue-700 uppercase tracking-wider block truncate">Field Duty</span>
+                <span class="text-[9px] font-medium text-blue-700 uppercase tracking-wider block truncate">{{ __('Field Duty') }}</span>
                 <span class="text-[13px] font-bold text-blue-600 font-mono leading-tight block">{{ number_format($fieldDutyCount) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md bg-blue-50 text-blue-600 flex items-center justify-center text-[10px] border border-blue-100 flex-shrink-0">
@@ -111,7 +111,7 @@
         <!-- Metric 4: Late Arrivals -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0">
-                <span class="text-[9px] font-medium text-amber-700 uppercase tracking-wider block truncate">Late Arrivals</span>
+                <span class="text-[9px] font-medium text-amber-700 uppercase tracking-wider block truncate">{{ __('Late Arrivals') }}</span>
                 <span class="text-[13px] font-bold text-amber-600 font-mono leading-tight block">{{ number_format($lateArrivalsCount) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md bg-amber-50 text-amber-600 flex items-center justify-center text-[10px] border border-amber-100 flex-shrink-0">
@@ -122,7 +122,7 @@
         <!-- Metric 5: Half Day -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0">
-                <span class="text-[9px] font-medium text-indigo-700 uppercase tracking-wider block truncate">Half Day</span>
+                <span class="text-[9px] font-medium text-indigo-700 uppercase tracking-wider block truncate">{{ __('Half Day') }}</span>
                 <span class="text-[13px] font-bold text-indigo-600 font-mono leading-tight block">{{ number_format($halfDayCount) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md bg-indigo-50 text-indigo-600 flex items-center justify-center text-[10px] border border-indigo-100 flex-shrink-0">
@@ -133,7 +133,7 @@
         <!-- Metric 6: Absent / Leave -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0">
-                <span class="text-[9px] font-medium text-rose-700 uppercase tracking-wider block truncate">Absent / Leave</span>
+                <span class="text-[9px] font-medium text-rose-700 uppercase tracking-wider block truncate">{{ __('Absent / Leave') }}</span>
                 <span class="text-[13px] font-bold text-rose-600 font-mono leading-tight block">{{ number_format($absentLeaveCount) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md bg-rose-50 text-rose-600 flex items-center justify-center text-[10px] border border-rose-100 flex-shrink-0">
@@ -164,7 +164,7 @@
                     <input type="text" 
                            name="search" 
                            x-model="searchQuery"
-                           placeholder="Search Name, ID, Mobile..." 
+                           placeholder="{{ __('Search Name, ID, Mobile...') }}" 
                            class="w-full h-[34px] pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                     <button type="button" 
                             x-show="searchQuery && searchQuery.length > 0" 
@@ -180,9 +180,9 @@
                     <select name="scope" 
                             onchange="this.form.submit()"
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition cursor-pointer">
-                        <option value="">All Scopes</option>
-                        <option value="isp" {{ $scopeFilter === 'isp' ? 'selected' : '' }}>ISP HQ</option>
-                        <option value="reseller" {{ $scopeFilter === 'reseller' ? 'selected' : '' }}>Sub-ISP Partners</option>
+                        <option value="">{{ __('All Scopes') }}</option>
+                        <option value="isp" {{ $scopeFilter === 'isp' ? 'selected' : '' }}>{{ __('ISP HQ') }}</option>
+                        <option value="reseller" {{ $scopeFilter === 'reseller' ? 'selected' : '' }}>{{ __('Sub-ISP Partners') }}</option>
                     </select>
                 </div>
 
@@ -192,7 +192,7 @@
                             onchange="this.form.submit()"
                             class="w-full h-[34px] px-2 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition cursor-pointer">
                         @foreach([15, 20, 30, 50, 100] as $size)
-                            <option value="{{ $size }}" {{ (int)$perPage === $size ? 'selected' : '' }}>{{ $size }} / page</option>
+                            <option value="{{ $size }}" {{ (int)$perPage === $size ? 'selected' : '' }}>{{ __(':size / page', ['size' => $size]) }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -203,7 +203,7 @@
                         class="h-[34px] py-0 px-2.5 rounded-lg border text-xs font-medium transition flex items-center justify-center gap-1.5 cursor-pointer flex-shrink-0"
                         :class="showMoreFilters ? 'bg-cyan-50 border-cyan-200 text-cyan-700' : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700'">
                     <i class="fas fa-sliders text-[10px]"></i>
-                    <span>More Filters</span>
+                    <span>{{ __('More Filters') }}</span>
                     @if($activeMoreCount > 0)
                         <span class="w-4 h-4 rounded-full bg-cyan-600 text-white text-[9px] font-bold flex items-center justify-center">
                             {{ $activeMoreCount }}
@@ -217,15 +217,15 @@
                 <div class="flex items-center gap-1.5 flex-shrink-0 md:ml-auto">
                     <button type="submit" 
                             class="h-[34px] py-0 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" 
-                            title="Apply Filters">
+                            title="{{ __('Apply Filters') }}">
                         <i class="fas fa-filter text-[10px]"></i>
-                        <span>Filter</span>
+                        <span>{{ __('Filter') }}</span>
                     </button>
                     <a href="{{ route('tenant.staff.attendance') }}" 
                        class="h-[34px] py-0 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer" 
-                       title="Reset Filters">
+                       title="{{ __('Reset Filters') }}">
                         <i class="fas fa-rotate-left text-[10px]"></i>
-                        <span>Reset</span>
+                        <span>{{ __('Reset') }}</span>
                     </a>
                 </div>
             </div>
@@ -242,7 +242,7 @@
                     <select name="reseller_id" 
                             onchange="this.form.submit()"
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition cursor-pointer">
-                        <option value="">All Partners</option>
+                        <option value="">{{ __('All Partners') }}</option>
                         @foreach($allResellers as $reseller)
                             <option value="{{ $reseller->id }}" {{ (string)$selectedResellerId === (string)$reseller->id ? 'selected' : '' }}>
                                 {{ $reseller->name }}
@@ -256,13 +256,13 @@
                     <select name="status" 
                             onchange="this.form.submit()"
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition cursor-pointer">
-                        <option value="">All Status</option>
-                        <option value="present" {{ $statusFilter === 'present' ? 'selected' : '' }}>Present</option>
-                        <option value="late" {{ $statusFilter === 'late' ? 'selected' : '' }}>Late Check-in</option>
-                        <option value="field_duty" {{ $statusFilter === 'field_duty' ? 'selected' : '' }}>Field Duty</option>
-                        <option value="on_leave" {{ $statusFilter === 'on_leave' ? 'selected' : '' }}>On Leave</option>
-                        <option value="half_day" {{ $statusFilter === 'half_day' ? 'selected' : '' }}>Half Day</option>
-                        <option value="absent" {{ $statusFilter === 'absent' ? 'selected' : '' }}>Absent</option>
+                        <option value="">{{ __('All Status') }}</option>
+                        <option value="present" {{ $statusFilter === 'present' ? 'selected' : '' }}>{{ __('Present') }}</option>
+                        <option value="late" {{ $statusFilter === 'late' ? 'selected' : '' }}>{{ __('Late Check-in') }}</option>
+                        <option value="field_duty" {{ $statusFilter === 'field_duty' ? 'selected' : '' }}>{{ __('Field Duty') }}</option>
+                        <option value="on_leave" {{ $statusFilter === 'on_leave' ? 'selected' : '' }}>{{ __('On Leave') }}</option>
+                        <option value="half_day" {{ $statusFilter === 'half_day' ? 'selected' : '' }}>{{ __('Half Day') }}</option>
+                        <option value="absent" {{ $statusFilter === 'absent' ? 'selected' : '' }}>{{ __('Absent') }}</option>
                     </select>
                 </div>
 
@@ -271,11 +271,11 @@
                     <select name="shift" 
                             onchange="this.form.submit()"
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition cursor-pointer">
-                        <option value="">All Shifts</option>
-                        <option value="Morning Shift (09:00 - 18:00)" {{ $shiftFilter === 'Morning Shift (09:00 - 18:00)' ? 'selected' : '' }}>Morning Shift</option>
-                        <option value="Evening Shift (14:00 - 22:00)" {{ $shiftFilter === 'Evening Shift (14:00 - 22:00)' ? 'selected' : '' }}>Evening Shift</option>
-                        <option value="Night NOC Shift (22:00 - 08:00)" {{ $shiftFilter === 'Night NOC Shift (22:00 - 08:00)' ? 'selected' : '' }}>Night NOC Shift</option>
-                        <option value="Full Day Field Duty" {{ $shiftFilter === 'Full Day Field Duty' ? 'selected' : '' }}>Full Day Duty</option>
+                        <option value="">{{ __('All Shifts') }}</option>
+                        <option value="Morning Shift (09:00 - 18:00)" {{ $shiftFilter === 'Morning Shift (09:00 - 18:00)' ? 'selected' : '' }}>{{ __('Morning Shift') }}</option>
+                        <option value="Evening Shift (14:00 - 22:00)" {{ $shiftFilter === 'Evening Shift (14:00 - 22:00)' ? 'selected' : '' }}>{{ __('Evening Shift') }}</option>
+                        <option value="Night NOC Shift (22:00 - 08:00)" {{ $shiftFilter === 'Night NOC Shift (22:00 - 08:00)' ? 'selected' : '' }}>{{ __('Night NOC Shift') }}</option>
+                        <option value="Full Day Field Duty" {{ $shiftFilter === 'Full Day Field Duty' ? 'selected' : '' }}>{{ __('Full Day Duty') }}</option>
                     </select>
                 </div>
             </div>
@@ -289,14 +289,14 @@
                 <thead>
                     <tr>
                         <th class="w-12 text-center font-semibold">#</th>
-                        <th class="text-center font-semibold">Staff ID</th>
-                        <th class="text-center font-semibold">Name</th>
-                        <th class="text-center font-semibold">Scope / Partner</th>
-                        <th class="text-center font-semibold">Punch In</th>
-                        <th class="text-center font-semibold">Punch Out</th>
-                        <th class="text-center font-semibold">Duration</th>
-                        <th class="text-center font-semibold">Status</th>
-                        <th class="w-14 text-center font-semibold no-sort">Action</th>
+                        <th class="text-center font-semibold">{{ __('Staff ID') }}</th>
+                        <th class="text-center font-semibold">{{ __('Name') }}</th>
+                        <th class="text-center font-semibold">{{ __('Scope / Partner') }}</th>
+                        <th class="text-center font-semibold">{{ __('Punch In') }}</th>
+                        <th class="text-center font-semibold">{{ __('Punch Out') }}</th>
+                        <th class="text-center font-semibold">{{ __('Duration') }}</th>
+                        <th class="text-center font-semibold">{{ __('Status') }}</th>
+                        <th class="w-14 text-center font-semibold no-sort">{{ __('Action') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -305,27 +305,28 @@
                             $staff = $att->user;
                             $statusBadge = $att->status_badge;
                             $staffCode = $staff?->staff_id ?? ('STF-' . str_pad($att->user_id, 4, '0', STR_PAD_LEFT));
+                            $durationDisplay = str_replace('(Running)', '(' . __('Running') . ')', $att->duration_formatted);
                             $rawAttData = [
                                 'id' => $att->id,
                                 'user_id' => $att->user_id,
-                                'staff_name' => $staff?->name ?? 'Unknown Staff',
+                                'staff_name' => $staff?->name ?? __('Unknown Staff'),
                                 'staff_code' => $staffCode,
-                                'designation' => $staff?->designation ?: 'Staff Officer',
+                                'designation' => $staff?->designation ?: __('Staff Officer'),
                                 'phone' => $staff?->phone ?: ($staff?->mobile ?: '--'),
                                 'email' => $staff?->email ?: '--',
-                                'scope' => $att->reseller ? $att->reseller->name : 'ISP HQ',
-                                'shift' => $att->shift ?: 'Morning Shift',
-                                'date' => $att->date?->format('d M Y') ?? $selectedDate,
+                                'scope' => $att->reseller ? $att->reseller->name : __('ISP HQ'),
+                                'shift' => $att->shift ? __($att->shift) : __('Morning Shift'),
+                                'date' => $att->date?->translatedFormat('d M Y') ?? $selectedDate,
                                 'date_raw' => $att->date?->format('Y-m-d') ?? $selectedDate,
                                 'status' => $att->status,
-                                'status_label' => $statusBadge['label'],
+                                'status_label' => __($statusBadge['label']),
                                 'punch_in' => $att->punch_in_at ? $att->punch_in_at->format('h:i A') : '--:--',
                                 'punch_in_raw' => $att->punch_in_at ? $att->punch_in_at->format('H:i') : '',
                                 'punch_in_ip' => $att->punch_in_ip ?: '--',
-                                'punch_out' => $att->punch_out_at ? $att->punch_out_at->format('h:i A') : ($att->punch_in_at ? 'Running' : '--:--'),
+                                'punch_out' => $att->punch_out_at ? $att->punch_out_at->format('h:i A') : ($att->punch_in_at ? __('Running') : '--:--'),
                                 'punch_out_raw' => $att->punch_out_at ? $att->punch_out_at->format('H:i') : '',
                                 'punch_out_ip' => $att->punch_out_ip ?: '--',
-                                'duration' => $att->duration_formatted,
+                                'duration' => $durationDisplay,
                                 'late_reason' => $att->late_reason ?: '--',
                                 'remarks' => $att->remarks ?: '--',
                             ];
@@ -343,7 +344,7 @@
 
                             <!-- 3. Name -->
                             <td class="text-left font-medium text-slate-900 whitespace-nowrap">
-                                {{ $staff?->name ?? 'Unknown Staff' }}
+                                {{ $staff?->name ?? __('Unknown Staff') }}
                             </td>
 
                             <!-- 4. Scope / Partner -->
@@ -356,7 +357,7 @@
                                 @else
                                     <span class="inline-flex items-center gap-1 text-slate-800">
                                         <i class="fas fa-building text-purple-500 text-[10px]"></i>
-                                        <span>ISP Core HQ</span>
+                                        <span>{{ __('ISP Core HQ') }}</span>
                                     </span>
                                 @endif
                             </td>
@@ -373,7 +374,7 @@
                                 @elseif($att->punch_in_at)
                                     <span class="inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[10px] bg-amber-50 text-amber-700 border border-amber-200">
                                         <i class="fas fa-spinner fa-spin text-[8px]"></i>
-                                        <span>Running</span>
+                                        <span>{{ __('Running') }}</span>
                                     </span>
                                 @else
                                     <span class="text-slate-400">--:--</span>
@@ -382,14 +383,14 @@
 
                             <!-- 7. Duration -->
                             <td class="text-center font-mono text-slate-700 whitespace-nowrap">
-                                {{ $att->duration_formatted }}
+                                {{ $durationDisplay }}
                             </td>
 
                             <!-- 8. Status -->
                             <td class="text-center whitespace-nowrap">
                                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border {{ $statusBadge['bg'] }}">
                                 <span class="w-1.5 h-1.5 rounded-full {{ $statusBadge['dot'] }}"></span>
-                                <span>{{ $statusBadge['label'] }}</span>
+                                <span>{{ __($statusBadge['label']) }}</span>
                             </span>
                             </td>
 
@@ -409,12 +410,12 @@
                                     <div class="w-10 h-10 rounded-xl bg-teal-50 text-teal-600 mx-auto flex items-center justify-center text-base border border-teal-100 shadow-2xs">
                                         <i class="fas fa-clipboard-list"></i>
                                     </div>
-                                    <h3 class="text-xs font-semibold text-slate-800">No Attendance Records Found</h3>
-                                    <p class="text-[11px] text-slate-500">No attendance entries found for {{ $selectedDate }}.</p>
+                                    <h3 class="text-xs font-semibold text-slate-800">{{ __('No Attendance Records Found') }}</h3>
+                                    <p class="text-[11px] text-slate-500">{{ __('No attendance entries found for :date.', ['date' => $selectedDate]) }}</p>
                                     <div class="pt-1">
                                         <button type="button" @click="openMarkModal()" class="h-[34px] py-0 px-3.5 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-xs font-semibold shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer">
                                             <i class="fas fa-calendar-check text-[10px]"></i>
-                                            <span>+ Mark Attendance</span>
+                                            <span>{{ __('+ Mark Attendance') }}</span>
                                         </button>
                                     </div>
                                 </div>
@@ -452,7 +453,7 @@
                     @click="const item = activeMenu; activeMenu = null; openDetailsModal(item)" 
                     class="w-full px-3 py-1.5 hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition text-left cursor-pointer">
                 <i class="fas fa-id-card text-teal-600 w-3.5 text-center text-[11px]"></i>
-                <span>View Full Details</span>
+                <span>{{ __('View Full Details') }}</span>
             </button>
 
             <!-- Edit Attendance Record -->
@@ -460,7 +461,7 @@
                     @click="const item = activeMenu; activeMenu = null; editAttendanceFromMenu(item)" 
                     class="w-full px-3 py-1.5 hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition text-left cursor-pointer">
                 <i class="fas fa-pen-to-square text-indigo-600 w-3.5 text-center text-[11px]"></i>
-                <span>Edit Record</span>
+                <span>{{ __('Edit Record') }}</span>
             </button>
         </div>
     </div>
@@ -490,7 +491,7 @@
                         <i class="fas fa-clipboard-user"></i>
                     </div>
                     <div>
-                        <h3 class="text-xs font-semibold text-slate-800" x-text="detailsModal.data?.staff_name || 'Attendance Details'"></h3>
+                        <h3 class="text-xs font-semibold text-slate-800" x-text="detailsModal.data?.staff_name || i18n.attendanceDetails"></h3>
                         <p class="text-[10.5px] text-slate-500 font-normal" x-text="(detailsModal.data?.staff_code || '') + ' • ' + (detailsModal.data?.designation || '')"></p>
                     </div>
                 </div>
@@ -503,50 +504,50 @@
             <div class="p-4 space-y-3.5 text-xs text-slate-800 max-h-[75vh] overflow-y-auto" x-if="detailsModal.data">
                 <div class="grid grid-cols-2 gap-2">
                     <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200/80">
-                        <span class="text-[10px] font-medium text-slate-400 uppercase block">Date</span>
+                        <span class="text-[10px] font-medium text-slate-400 uppercase block">{{ __('Date') }}</span>
                         <span class="font-semibold text-slate-800 block text-xs" x-text="detailsModal.data?.date"></span>
                     </div>
 
                     <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200/80">
-                        <span class="text-[10px] font-medium text-slate-400 uppercase block">Scope</span>
+                        <span class="text-[10px] font-medium text-slate-400 uppercase block">{{ __('Scope') }}</span>
                         <span class="font-semibold text-slate-800 block text-xs truncate" x-text="detailsModal.data?.scope"></span>
                     </div>
 
                     <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200/80">
-                        <span class="text-[10px] font-medium text-slate-400 uppercase block">Status</span>
+                        <span class="text-[10px] font-medium text-slate-400 uppercase block">{{ __('Status') }}</span>
                         <span class="font-semibold text-teal-700 uppercase block text-xs" x-text="detailsModal.data?.status_label"></span>
                     </div>
 
                     <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200/80">
-                        <span class="text-[10px] font-medium text-slate-400 uppercase block">Work Duration</span>
+                        <span class="text-[10px] font-medium text-slate-400 uppercase block">{{ __('Work Duration') }}</span>
                         <span class="font-mono font-semibold text-slate-800 block text-xs" x-text="detailsModal.data?.duration"></span>
                     </div>
 
                     <div class="p-2.5 rounded-lg bg-emerald-50/50 border border-emerald-100">
-                        <span class="text-emerald-600 text-[10px] font-medium uppercase block">Punch In</span>
+                        <span class="text-emerald-600 text-[10px] font-medium uppercase block">{{ __('Punch In') }}</span>
                         <span class="font-mono font-bold text-emerald-800 block text-xs" x-text="detailsModal.data?.punch_in"></span>
-                        <span class="text-[10px] text-slate-400 font-mono block mt-0.5" x-text="'IP: ' + detailsModal.data?.punch_in_ip"></span>
+                        <span class="text-[10px] text-slate-400 font-mono block mt-0.5" x-text="i18n.ipPrefix + ' ' + (detailsModal.data?.punch_in_ip || '--')"></span>
                     </div>
 
                     <div class="p-2.5 rounded-lg bg-blue-50/50 border border-blue-100">
-                        <span class="text-blue-600 text-[10px] font-medium uppercase block">Punch Out</span>
+                        <span class="text-blue-600 text-[10px] font-medium uppercase block">{{ __('Punch Out') }}</span>
                         <span class="font-mono font-bold text-blue-800 block text-xs" x-text="detailsModal.data?.punch_out"></span>
-                        <span class="text-[10px] text-slate-400 font-mono block mt-0.5" x-text="'IP: ' + detailsModal.data?.punch_out_ip"></span>
+                        <span class="text-[10px] text-slate-400 font-mono block mt-0.5" x-text="i18n.ipPrefix + ' ' + (detailsModal.data?.punch_out_ip || '--')"></span>
                     </div>
                 </div>
 
                 <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200/80">
-                    <span class="text-[10px] font-medium text-slate-400 uppercase block">Shift &amp; Schedule</span>
+                    <span class="text-[10px] font-medium text-slate-400 uppercase block">{{ __('Shift & Schedule') }}</span>
                     <span class="text-xs text-slate-700 block mt-0.5" x-text="detailsModal.data?.shift"></span>
                 </div>
 
                 <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200/80" x-show="detailsModal.data?.late_reason !== '--'">
-                    <span class="text-[10px] font-medium text-amber-700 uppercase block">Late Arrival Reason</span>
+                    <span class="text-[10px] font-medium text-amber-700 uppercase block">{{ __('Late Arrival Reason') }}</span>
                     <span class="text-xs text-slate-700 block mt-0.5" x-text="detailsModal.data?.late_reason"></span>
                 </div>
 
                 <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200/80" x-show="detailsModal.data?.remarks !== '--'">
-                    <span class="text-[10px] font-medium text-slate-400 uppercase block">Remarks &amp; Notes</span>
+                    <span class="text-[10px] font-medium text-slate-400 uppercase block">{{ __('Remarks & Notes') }}</span>
                     <span class="text-xs text-slate-700 block mt-0.5" x-text="detailsModal.data?.remarks"></span>
                 </div>
             </div>
@@ -554,7 +555,7 @@
             <!-- Modal Footer -->
             <div class="px-4 py-2.5 bg-slate-50/80 border-t border-slate-200 flex items-center justify-end">
                 <button type="button" @click="detailsModal.open = false" class="border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs px-3.5 py-1.5 rounded-lg cursor-pointer transition">
-                    Close Details
+                    {{ __('Close Details') }}
                 </button>
             </div>
         </div>
@@ -581,8 +582,8 @@
                         <i class="fas fa-calendar-check"></i>
                     </div>
                     <div>
-                        <h3 class="text-xs font-semibold text-slate-800" x-text="markModal.isEdit ? 'Edit Attendance Record' : 'Record Staff Attendance'"></h3>
-                        <p class="text-[10.5px] text-slate-500 font-normal">Daily duty log, punch timestamps &amp; remarks</p>
+                        <h3 class="text-xs font-semibold text-slate-800" x-text="markModal.isEdit ? i18n.editAttendanceRecord : i18n.recordStaffAttendance"></h3>
+                        <p class="text-[10.5px] text-slate-500 font-normal">{{ __('Daily duty log, punch timestamps & remarks') }}</p>
                     </div>
                 </div>
                 <button type="button" @click="markModal.open = false" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center cursor-pointer">
@@ -597,16 +598,16 @@
                     <!-- Select Staff -->
                     <div>
                         <label class="block text-[11px] font-medium text-slate-700 mb-1">
-                            Staff Member <span class="text-rose-500">*</span>
+                            {{ __('Staff Member') }} <span class="text-rose-500">*</span>
                         </label>
                         <select x-model="markModal.form.user_id" 
                                 required
                                 :disabled="markModal.isEdit"
                                 class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 focus:bg-white focus:border-teal-500 focus:outline-hidden transition">
-                            <option value="">-- Choose Employee --</option>
+                            <option value="">{{ __('-- Choose Employee --') }}</option>
                             @foreach($allStaff as $stf)
                                 <option value="{{ $stf->id }}">
-                                    {{ $stf->name }} ({{ $stf->staff_id ?? ('STF-' . str_pad($stf->id, 4, '0', STR_PAD_LEFT)) }}) - {{ $stf->role_badge['label'] }}
+                                    {{ $stf->name }} ({{ $stf->staff_id ?? ('STF-' . str_pad($stf->id, 4, '0', STR_PAD_LEFT)) }}) - {{ __($stf->role_badge['label']) }}
                                 </option>
                             @endforeach
                         </select>
@@ -616,7 +617,7 @@
                     <div class="grid grid-cols-2 gap-2.5">
                         <div>
                             <label class="block text-[11px] font-medium text-slate-700 mb-1">
-                                Date <span class="text-rose-500">*</span>
+                                {{ __('Date') }} <span class="text-rose-500">*</span>
                             </label>
                             <input type="date" 
                                    x-model="markModal.form.date" 
@@ -626,17 +627,17 @@
 
                         <div>
                             <label class="block text-[11px] font-medium text-slate-700 mb-1">
-                                Status <span class="text-rose-500">*</span>
+                                {{ __('Status') }} <span class="text-rose-500">*</span>
                             </label>
                             <select x-model="markModal.form.status" 
                                     required
                                     class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-teal-500 focus:outline-hidden transition font-medium">
-                                <option value="present">Present</option>
-                                <option value="late">Late Check-in</option>
-                                <option value="field_duty">Field Duty</option>
-                                <option value="on_leave">On Leave</option>
-                                <option value="half_day">Half Day</option>
-                                <option value="absent">Absent</option>
+                                <option value="present">{{ __('Present') }}</option>
+                                <option value="late">{{ __('Late Check-in') }}</option>
+                                <option value="field_duty">{{ __('Field Duty') }}</option>
+                                <option value="on_leave">{{ __('On Leave') }}</option>
+                                <option value="half_day">{{ __('Half Day') }}</option>
+                                <option value="absent">{{ __('Absent') }}</option>
                             </select>
                         </div>
                     </div>
@@ -645,7 +646,7 @@
                     <div class="grid grid-cols-2 gap-2.5" x-show="markModal.form.status !== 'absent' && markModal.form.status !== 'on_leave'">
                         <div>
                             <label class="block text-[11px] font-medium text-slate-700 mb-1">
-                                Punch In Time (24h)
+                                {{ __('Punch In Time (24h)') }}
                             </label>
                             <input type="time" 
                                    x-model="markModal.form.punch_in_time" 
@@ -654,7 +655,7 @@
 
                         <div>
                             <label class="block text-[11px] font-medium text-slate-700 mb-1">
-                                Punch Out Time (24h)
+                                {{ __('Punch Out Time (24h)') }}
                             </label>
                             <input type="time" 
                                    x-model="markModal.form.punch_out_time" 
@@ -665,22 +666,22 @@
                     <!-- Late Reason (conditional if Late selected) -->
                     <div x-show="markModal.form.status === 'late'">
                         <label class="block text-[11px] font-medium text-amber-800 mb-1">
-                            Late Arrival Reason
+                            {{ __('Late Arrival Reason') }}
                         </label>
                         <input type="text" 
                                x-model="markModal.form.late_reason" 
-                               placeholder="Traffic delay, weather, client emergency..." 
+                               placeholder="{{ __('Traffic delay, weather, client emergency...') }}" 
                                class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 focus:bg-white focus:border-amber-500 focus:outline-hidden transition font-medium">
                     </div>
 
                     <!-- Remarks / Notes -->
                     <div>
                         <label class="block text-[11px] font-medium text-slate-700 mb-1">
-                            Duty Remarks / Site Location Note
+                            {{ __('Duty Remarks / Site Location Note') }}
                         </label>
                         <textarea x-model="markModal.form.remarks" 
                                   rows="2" 
-                                  placeholder="Notes regarding shift, field work location, ticket reference..."
+                                  placeholder="{{ __('Notes regarding shift, field work location, ticket reference...') }}"
                                   class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-teal-500 focus:outline-hidden transition font-normal"></textarea>
                     </div>
 
@@ -691,13 +692,13 @@
                     <button type="button" 
                             @click="markModal.open = false" 
                             class="border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs px-3.5 py-1.5 rounded-lg cursor-pointer transition">
-                        Cancel
+                        {{ __('Cancel') }}
                     </button>
                     <button type="submit" 
                             :disabled="markModal.loading"
                             class="bg-teal-600 hover:bg-teal-700 text-white font-medium text-xs px-4 py-1.5 rounded-lg shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50">
                         <i class="fas fa-spinner fa-spin text-xs" x-show="markModal.loading" style="display: none;"></i>
-                        <span x-text="markModal.isEdit ? 'Update Attendance' : 'Save Attendance'"></span>
+                        <span x-text="markModal.isEdit ? i18n.updateAttendance : i18n.saveAttendance"></span>
                     </button>
                 </div>
             </form>
@@ -725,8 +726,8 @@
                         <i class="fas fa-fingerprint"></i>
                     </div>
                     <div>
-                        <h3 class="text-xs font-semibold text-slate-800">Instant Punch Clock</h3>
-                        <p class="text-[10.5px] text-slate-500 font-normal">Real-time attendance punch with telemetry</p>
+                        <h3 class="text-xs font-semibold text-slate-800">{{ __('Instant Punch Clock') }}</h3>
+                        <p class="text-[10.5px] text-slate-500 font-normal">{{ __('Real-time attendance punch with telemetry') }}</p>
                     </div>
                 </div>
                 <button type="button" @click="punchModal.open = false" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center cursor-pointer">
@@ -737,7 +738,7 @@
             <div class="p-4 space-y-3.5 text-xs text-center">
                 <!-- Select Employee for Quick Punch -->
                 <div class="text-left">
-                    <label class="block text-[11px] font-medium text-slate-700 mb-1">Select Employee <span class="text-rose-500">*</span></label>
+                    <label class="block text-[11px] font-medium text-slate-700 mb-1">{{ __('Select Employee') }} <span class="text-rose-500">*</span></label>
                     <select x-model="punchModal.user_id" 
                             class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 focus:bg-white focus:border-emerald-500 focus:outline-hidden transition">
                         @foreach($allStaff as $stf)
@@ -751,7 +752,7 @@
                 <!-- Digital Clock Display -->
                 <div class="p-3 bg-slate-900 rounded-xl text-white font-mono">
                     <span class="text-2xl font-bold tracking-wider text-emerald-400" x-text="currentTime"></span>
-                    <span class="block text-[10px] text-slate-400 mt-0.5">{{ date('l, d F Y') }}</span>
+                    <span class="block text-[10px] text-slate-400 mt-0.5">{{ now()->translatedFormat('l, d F Y') }}</span>
                 </div>
 
                 <!-- Action Button -->
@@ -761,13 +762,13 @@
                         class="w-full py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs shadow-xs transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50">
                     <i class="fas fa-spinner fa-spin text-xs" x-show="punchModal.loading" style="display: none;"></i>
                     <i class="fas fa-arrow-right-to-bracket text-xs" x-show="!punchModal.loading"></i>
-                    <span>Execute Punch In / Out Now</span>
+                    <span>{{ __('Execute Punch In / Out Now') }}</span>
                 </button>
             </div>
 
             <div class="px-4 py-2.5 bg-slate-50/80 border-t border-slate-200 flex items-center justify-end">
                 <button type="button" @click="punchModal.open = false" class="border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs px-3.5 py-1.5 rounded-lg cursor-pointer transition">
-                    Close Window
+                    {{ __('Close Window') }}
                 </button>
             </div>
         </div>
@@ -780,9 +781,21 @@
 <script>
 function attendanceManager() {
     return {
-        currentTime: '{{ now()->format("h:i:s A") }}',
+        currentTime: @json(now()->format('h:i:s A')),
         activeMenu: null,
         menuPos: { top: '0px', bottom: 'auto', right: '0px', left: 'auto' },
+        i18n: {
+            attendanceDetails: @json(__('Attendance Details')),
+            ipPrefix: @json(__('IP:')),
+            editAttendanceRecord: @json(__('Edit Attendance Record')),
+            recordStaffAttendance: @json(__('Record Staff Attendance')),
+            updateAttendance: @json(__('Update Attendance')),
+            saveAttendance: @json(__('Save Attendance')),
+            failedRecordAttendance: @json(__('Failed to record attendance')),
+            networkErrorSaving: @json(__('Network error while saving attendance record.')),
+            punchOperationFailed: @json(__('Punch operation failed')),
+            networkErrorPunch: @json(__('Network error while processing punch action.')),
+        },
 
         toast: {
             show: false,
@@ -803,7 +816,7 @@ function attendanceManager() {
             form: {
                 id: null,
                 user_id: '',
-                date: '{{ $selectedDate }}',
+                date: @json($selectedDate),
                 status: 'present',
                 punch_in_time: '09:00',
                 punch_out_time: '18:00',
@@ -815,7 +828,7 @@ function attendanceManager() {
         punchModal: {
             open: false,
             loading: false,
-            user_id: '{{ $allStaff->first()?->id ?? "" }}'
+            user_id: @json((string) ($allStaff->first()?->id ?? ''))
         },
 
         init() {
@@ -871,8 +884,8 @@ function attendanceManager() {
             this.markModal.isEdit = false;
             this.markModal.form = {
                 id: null,
-                user_id: '{{ $allStaff->first()?->id ?? "" }}',
-                date: '{{ $selectedDate }}',
+                user_id: @json((string) ($allStaff->first()?->id ?? '')),
+                date: @json($selectedDate),
                 status: 'present',
                 punch_in_time: '09:00',
                 punch_out_time: '18:00',
@@ -919,10 +932,10 @@ function attendanceManager() {
                     this.markModal.open = false;
                     setTimeout(() => window.location.reload(), 800);
                 } else {
-                    this.showToast(data.message || 'Failed to record attendance', 'error');
+                    this.showToast(data.message || this.i18n.failedRecordAttendance, 'error');
                 }
             } catch (err) {
-                this.showToast('Network error while saving attendance record.', 'error');
+                this.showToast(this.i18n.networkErrorSaving, 'error');
             } finally {
                 this.markModal.loading = false;
             }
@@ -946,10 +959,10 @@ function attendanceManager() {
                     this.punchModal.open = false;
                     setTimeout(() => window.location.reload(), 800);
                 } else {
-                    this.showToast(data.message || 'Punch operation failed', 'error');
+                    this.showToast(data.message || this.i18n.punchOperationFailed, 'error');
                 }
             } catch (err) {
-                this.showToast('Network error while processing punch action.', 'error');
+                this.showToast(this.i18n.networkErrorPunch, 'error');
             } finally {
                 this.punchModal.loading = false;
             }

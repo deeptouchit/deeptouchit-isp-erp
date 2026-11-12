@@ -48,37 +48,37 @@ class TenantStaffAttendance extends Model
             'present' => [
                 'bg' => 'bg-emerald-50 text-emerald-700 border-emerald-200',
                 'dot' => 'bg-emerald-500',
-                'label' => 'Present',
+                'label' => __('Present'),
             ],
             'late' => [
                 'bg' => 'bg-amber-50 text-amber-700 border-amber-200',
                 'dot' => 'bg-amber-500',
-                'label' => 'Late',
+                'label' => __('Late'),
             ],
             'field_duty' => [
                 'bg' => 'bg-blue-50 text-blue-700 border-blue-200',
                 'dot' => 'bg-blue-500',
-                'label' => 'Field Duty',
+                'label' => __('Field Duty'),
             ],
             'on_leave' => [
                 'bg' => 'bg-purple-50 text-purple-700 border-purple-200',
                 'dot' => 'bg-purple-500',
-                'label' => 'On Leave',
+                'label' => __('On Leave'),
             ],
             'half_day' => [
                 'bg' => 'bg-orange-50 text-orange-700 border-orange-200',
                 'dot' => 'bg-orange-500',
-                'label' => 'Half Day',
+                'label' => __('Half Day'),
             ],
             'absent' => [
                 'bg' => 'bg-rose-50 text-rose-700 border-rose-200',
                 'dot' => 'bg-rose-500',
-                'label' => 'Absent',
+                'label' => __('Absent'),
             ],
             default => [
                 'bg' => 'bg-slate-50 text-slate-700 border-slate-200',
                 'dot' => 'bg-slate-400',
-                'label' => ucfirst($this->status),
+                'label' => __(ucfirst(str_replace('_', ' ', (string) $this->status))),
             ],
         };
     }
@@ -91,14 +91,14 @@ class TenantStaffAttendance extends Model
         if ($this->work_duration_minutes > 0) {
             $hours = floor($this->work_duration_minutes / 60);
             $mins = $this->work_duration_minutes % 60;
-            return "{$hours}h {$mins}m";
+            return __(':hours h :mins m', ['hours' => $hours, 'mins' => $mins]);
         }
 
         if ($this->punch_in_at && !$this->punch_out_at) {
             $mins = $this->punch_in_at->diffInMinutes(now());
             $hours = floor($mins / 60);
             $remainingMins = $mins % 60;
-            return "{$hours}h {$remainingMins}m (Running)";
+            return __(':hours h :mins m (Running)', ['hours' => $hours, 'mins' => $remainingMins]);
         }
 
         return '--';

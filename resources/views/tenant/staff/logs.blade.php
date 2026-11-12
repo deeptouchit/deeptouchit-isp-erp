@@ -1,6 +1,6 @@
 @extends('tenant.layouts.app')
 
-@section('title', 'Activity Audit Trail - ' . ($tenant->company_name ?? $tenant->name))
+@section('title', __('Activity Audit Trail') . ' - ' . ($tenant->company_name ?? $tenant->name))
 
 @push('styles')
     {{-- Page specific CSS --}}
@@ -30,9 +30,9 @@
                 <i class="fas fa-shield-halved"></i>
             </div>
             <div class="flex items-center gap-2">
-                <h1 class="text-xs sm:text-sm font-bold text-slate-900 tracking-tight">Activity Audit Trail</h1>
+                <h1 class="text-xs sm:text-sm font-bold text-slate-900 tracking-tight">{{ __('Activity Audit Trail') }}</h1>
                 <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
-                    {{ number_format($activityLogs->total()) }} Events
+                    {{ __(':count Events', ['count' => number_format($activityLogs->total())]) }}
                 </span>
             </div>
         </div>
@@ -42,7 +42,7 @@
             <a href="{{ route('tenant.staff.logs') }}" 
                class="h-[34px] py-0 px-3 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-xs transition inline-flex items-center gap-1.5">
                 <i class="fas fa-rotate text-slate-400 text-[11px]"></i>
-                <span>Refresh Stream</span>
+                <span>{{ __('Refresh Stream') }}</span>
             </a>
         </div>
     </div>
@@ -52,7 +52,7 @@
         <!-- Metric 1: Logs Today -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0">
-                <span class="text-[9px] font-medium text-slate-500 uppercase tracking-wider block truncate">Logs Today</span>
+                <span class="text-[9px] font-medium text-slate-500 uppercase tracking-wider block truncate">{{ __('Logs Today') }}</span>
                 <span class="text-[13px] font-bold text-slate-900 font-mono leading-tight block">{{ number_format($todayLogsCount) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md bg-slate-100 text-slate-600 flex items-center justify-center text-[10px] border border-slate-200 flex-shrink-0">
@@ -63,7 +63,7 @@
         <!-- Metric 2: Authentication -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0">
-                <span class="text-[9px] font-medium text-emerald-700 uppercase tracking-wider block truncate">Auth Events</span>
+                <span class="text-[9px] font-medium text-emerald-700 uppercase tracking-wider block truncate">{{ __('Auth Events') }}</span>
                 <span class="text-[13px] font-bold text-emerald-600 font-mono leading-tight block">{{ number_format($authEventsCount) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md bg-emerald-50 text-emerald-600 flex items-center justify-center text-[10px] border border-emerald-100 flex-shrink-0">
@@ -74,7 +74,7 @@
         <!-- Metric 3: Network & ONUs -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0">
-                <span class="text-[9px] font-medium text-blue-700 uppercase tracking-wider block truncate">Network &amp; ONU</span>
+                <span class="text-[9px] font-medium text-blue-700 uppercase tracking-wider block truncate">{{ __('Network & ONU') }}</span>
                 <span class="text-[13px] font-bold text-blue-600 font-mono leading-tight block">{{ number_format($networkEventsCount) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md bg-blue-50 text-blue-600 flex items-center justify-center text-[10px] border border-blue-100 flex-shrink-0">
@@ -85,7 +85,7 @@
         <!-- Metric 4: Billing & Recharge -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0">
-                <span class="text-[9px] font-medium text-amber-700 uppercase tracking-wider block truncate">Billing / Wallet</span>
+                <span class="text-[9px] font-medium text-amber-700 uppercase tracking-wider block truncate">{{ __('Billing / Wallet') }}</span>
                 <span class="text-[13px] font-bold text-amber-600 font-mono leading-tight block">{{ number_format($billingEventsCount) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md bg-amber-50 text-amber-600 flex items-center justify-center text-[10px] border border-amber-100 flex-shrink-0">
@@ -96,7 +96,7 @@
         <!-- Metric 5: Support Tickets -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0">
-                <span class="text-[9px] font-medium text-purple-700 uppercase tracking-wider block truncate">Support Tickets</span>
+                <span class="text-[9px] font-medium text-purple-700 uppercase tracking-wider block truncate">{{ __('Support Tickets') }}</span>
                 <span class="text-[13px] font-bold text-purple-600 font-mono leading-tight block">{{ number_format($supportEventsCount) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md bg-purple-50 text-purple-600 flex items-center justify-center text-[10px] border border-purple-100 flex-shrink-0">
@@ -107,7 +107,7 @@
         <!-- Metric 6: HRM & Attendance -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0">
-                <span class="text-[9px] font-medium text-teal-700 uppercase tracking-wider block truncate">HR &amp; Attendance</span>
+                <span class="text-[9px] font-medium text-teal-700 uppercase tracking-wider block truncate">{{ __('HR & Attendance') }}</span>
                 <span class="text-[13px] font-bold text-teal-600 font-mono leading-tight block">{{ number_format($attendanceEventsCount) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md bg-teal-50 text-teal-600 flex items-center justify-center text-[10px] border border-teal-100 flex-shrink-0">
@@ -138,7 +138,7 @@
                     <input type="text" 
                            name="search" 
                            x-model="searchQuery"
-                           placeholder="Search Description, Actor, IP..." 
+                           placeholder="{{ __('Search Description, Actor, IP...') }}" 
                            class="w-full h-[34px] pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                     <button type="button" 
                             x-show="searchQuery && searchQuery.length > 0" 
@@ -155,7 +155,7 @@
                             onchange="this.form.submit()"
                             class="w-full h-[34px] px-2 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition cursor-pointer">
                         @foreach([15, 20, 30, 50, 100] as $size)
-                            <option value="{{ $size }}" {{ (int)$perPage === $size ? 'selected' : '' }}>{{ $size }} / page</option>
+                            <option value="{{ $size }}" {{ (int)$perPage === $size ? 'selected' : '' }}>{{ __(':size / page', ['size' => $size]) }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -166,7 +166,7 @@
                         class="h-[34px] py-0 px-2.5 rounded-lg border text-xs font-medium transition flex items-center justify-center gap-1.5 cursor-pointer flex-shrink-0"
                         :class="showMoreFilters ? 'bg-cyan-50 border-cyan-200 text-cyan-700' : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700'">
                     <i class="fas fa-sliders text-[10px]"></i>
-                    <span>More Filters</span>
+                    <span>{{ __('More Filters') }}</span>
                     @if($activeMoreCount > 0)
                         <span class="w-4 h-4 rounded-full bg-cyan-600 text-white text-[9px] font-bold flex items-center justify-center">
                             {{ $activeMoreCount }}
@@ -180,15 +180,15 @@
                 <div class="flex items-center gap-1.5 flex-shrink-0 md:ml-auto">
                     <button type="submit" 
                             class="h-[34px] py-0 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" 
-                            title="Apply Filters">
+                            title="{{ __('Apply Filters') }}">
                         <i class="fas fa-filter text-[10px]"></i>
-                        <span>Filter</span>
+                        <span>{{ __('Filter') }}</span>
                     </button>
                     <a href="{{ route('tenant.staff.logs') }}" 
                        class="h-[34px] py-0 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer" 
-                       title="Reset Filters">
+                       title="{{ __('Reset Filters') }}">
                         <i class="fas fa-rotate-left text-[10px]"></i>
-                        <span>Reset</span>
+                        <span>{{ __('Reset') }}</span>
                     </a>
                 </div>
             </div>
@@ -205,7 +205,7 @@
                     <select name="actor_id" 
                             onchange="this.form.submit()"
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition cursor-pointer">
-                        <option value="">All Staff</option>
+                        <option value="">{{ __('All Staff') }}</option>
                         @foreach($allStaff as $stf)
                             <option value="{{ $stf->id }}" {{ (string)$actorFilter === (string)$stf->id ? 'selected' : '' }}>
                                 {{ $stf->name }}
@@ -219,10 +219,10 @@
                     <select name="event_type" 
                             onchange="this.form.submit()"
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition cursor-pointer">
-                        <option value="">All Categories</option>
+                        <option value="">{{ __('All Categories') }}</option>
                         @foreach($distinctEvents as $evt)
                             <option value="{{ $evt }}" {{ (string)$eventTypeFilter === (string)$evt ? 'selected' : '' }}>
-                                {{ $evt }}
+                                {{ __($evt) }}
                             </option>
                         @endforeach
                     </select>
@@ -238,12 +238,12 @@
                 <thead>
                     <tr>
                         <th class="w-12 text-center font-semibold">#</th>
-                        <th class="text-center font-semibold">Timestamp</th>
-                        <th class="text-center font-semibold">Actor / Staff</th>
-                        <th class="text-center font-semibold">Category</th>
-                        <th class="text-center font-semibold">Action Description</th>
-                        <th class="text-center font-semibold">IP Address</th>
-                        <th class="w-14 text-center font-semibold no-sort">Action</th>
+                        <th class="text-center font-semibold">{{ __('Timestamp') }}</th>
+                        <th class="text-center font-semibold">{{ __('Actor / Staff') }}</th>
+                        <th class="text-center font-semibold">{{ __('Category') }}</th>
+                        <th class="text-center font-semibold">{{ __('Action Description') }}</th>
+                        <th class="text-center font-semibold">{{ __('IP Address') }}</th>
+                        <th class="w-14 text-center font-semibold no-sort">{{ __('Action') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -251,12 +251,12 @@
                         @php
                             $rawLogData = [
                                 'id' => $log->id,
-                                'actor_name' => $log->actor_name ?? 'System',
-                                'event_type' => $log->event_type ?? 'GENERAL',
+                                'actor_name' => $log->actor_name ?? __('System'),
+                                'event_type' => __($log->event_type ?? 'GENERAL'),
                                 'description' => $log->description,
                                 'ip_address' => $log->ip_address ?: '127.0.0.1',
                                 'user_agent' => $log->user_agent ?: '--',
-                                'created_at_formatted' => $log->created_at->format('d M Y, h:i:s A'),
+                                'created_at_formatted' => $log->created_at->translatedFormat('d M Y, h:i:s A'),
                                 'created_at_human' => $log->created_at->diffForHumans(),
                                 'metadata' => $log->metadata ?? []
                             ];
@@ -269,12 +269,12 @@
 
                             <!-- 2. Timestamp -->
                             <td class="text-center font-mono text-slate-700 whitespace-nowrap" title="{{ $log->created_at->format('Y-m-d H:i:s') }}">
-                                {{ $log->created_at->format('d M Y, h:i A') }}
+                                {{ $log->created_at->translatedFormat('d M Y, h:i A') }}
                             </td>
 
                             <!-- 3. Actor / Staff -->
                             <td class="text-left font-semibold text-slate-900 whitespace-nowrap">
-                                {{ $log->actor_name ?: 'System Engine' }}
+                                {{ $log->actor_name ?: __('System Engine') }}
                             </td>
 
                             <!-- 4. Category Badge -->
@@ -286,7 +286,7 @@
                                     @elseif(str_contains($log->event_type, 'TICKET') || str_contains($log->event_type, 'SUPPORT')) bg-purple-50 text-purple-700 border-purple-200
                                     @elseif(str_contains($log->event_type, 'ATTENDANCE') || str_contains($log->event_type, 'PUNCH')) bg-teal-50 text-teal-700 border-teal-200
                                     @else bg-slate-100 text-slate-700 border-slate-200 @endif">
-                                    {{ $log->event_type }}
+                                    {{ __($log->event_type) }}
                                 </span>
                             </td>
 
@@ -316,12 +316,12 @@
                                     <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 mx-auto flex items-center justify-center text-base border border-indigo-100 shadow-2xs">
                                         <i class="fas fa-shield-halved"></i>
                                     </div>
-                                    <h3 class="text-xs font-semibold text-slate-800">No Activity Logs Found</h3>
-                                    <p class="text-[11px] text-slate-500">No audit trail records match the selected filters.</p>
+                                    <h3 class="text-xs font-semibold text-slate-800">{{ __('No Activity Logs Found') }}</h3>
+                                    <p class="text-[11px] text-slate-500">{{ __('No audit trail records match the selected filters.') }}</p>
                                     <div class="pt-1">
                                         <a href="{{ route('tenant.staff.logs') }}" class="h-[34px] py-0 px-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-xs transition inline-flex items-center gap-1.5">
                                             <i class="fas fa-rotate-left text-[10px]"></i>
-                                            <span>Reset Filters</span>
+                                            <span>{{ __('Reset Filters') }}</span>
                                         </a>
                                     </div>
                                 </div>
@@ -359,7 +359,7 @@
                     @click="const item = activeMenu; activeMenu = null; openDetailsModal(item)" 
                     class="w-full px-3 py-1.5 hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition text-left cursor-pointer">
                 <i class="fas fa-file-lines text-indigo-600 w-3.5 text-center text-[11px]"></i>
-                <span>View Full Payload</span>
+                <span>{{ __('View Full Payload') }}</span>
             </button>
         </div>
     </div>
@@ -389,8 +389,8 @@
                         <i class="fas fa-shield-halved"></i>
                     </div>
                     <div>
-                        <h3 class="text-xs font-semibold text-slate-800">Activity Audit Event Details</h3>
-                        <p class="text-[10.5px] text-slate-500 font-normal" x-text="detailsModal.data?.event_type + ' • ID #' + detailsModal.data?.id"></p>
+                        <h3 class="text-xs font-semibold text-slate-800">{{ __('Activity Audit Event Details') }}</h3>
+                        <p class="text-[10.5px] text-slate-500 font-normal" x-text="i18n.eventMeta.replace(':type', detailsModal.data?.event_type || '').replace(':id', detailsModal.data?.id || '')"></p>
                     </div>
                 </div>
                 <button type="button" @click="detailsModal.open = false" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center cursor-pointer">
@@ -404,46 +404,46 @@
                 <!-- Key Summary Grid -->
                 <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
                     <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200/80">
-                        <span class="text-[10px] font-medium text-slate-400 uppercase block">Actor / Staff</span>
+                        <span class="text-[10px] font-medium text-slate-400 uppercase block">{{ __('Actor / Staff') }}</span>
                         <span class="font-semibold text-slate-900 block text-xs" x-text="detailsModal.data?.actor_name"></span>
                     </div>
 
                     <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200/80">
-                        <span class="text-[10px] font-medium text-slate-400 uppercase block">Category</span>
+                        <span class="text-[10px] font-medium text-slate-400 uppercase block">{{ __('Category') }}</span>
                         <span class="font-mono font-semibold text-indigo-700 block text-xs truncate" x-text="detailsModal.data?.event_type"></span>
                     </div>
 
                     <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200/80">
-                        <span class="text-[10px] font-medium text-slate-400 uppercase block">Timestamp</span>
+                        <span class="text-[10px] font-medium text-slate-400 uppercase block">{{ __('Timestamp') }}</span>
                         <span class="font-mono text-slate-700 block text-xs" x-text="detailsModal.data?.created_at_formatted"></span>
                     </div>
 
                     <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200/80">
-                        <span class="text-[10px] font-medium text-slate-400 uppercase block">Client IP</span>
+                        <span class="text-[10px] font-medium text-slate-400 uppercase block">{{ __('Client IP') }}</span>
                         <span class="font-mono font-semibold text-slate-800 block text-xs" x-text="detailsModal.data?.ip_address"></span>
                     </div>
 
                     <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200/80 sm:col-span-2">
-                        <span class="text-[10px] font-medium text-slate-400 uppercase block">User Agent</span>
+                        <span class="text-[10px] font-medium text-slate-400 uppercase block">{{ __('User Agent') }}</span>
                         <span class="font-mono text-[11px] text-slate-600 block truncate" x-text="detailsModal.data?.user_agent"></span>
                     </div>
                 </div>
 
                 <!-- Event Description -->
                 <div class="p-3 rounded-lg bg-slate-50 border border-slate-200/80 space-y-1">
-                    <span class="text-[10px] font-medium text-slate-400 uppercase block">Action Summary</span>
+                    <span class="text-[10px] font-medium text-slate-400 uppercase block">{{ __('Action Summary') }}</span>
                     <p class="text-xs text-slate-900 font-medium leading-relaxed" x-text="detailsModal.data?.description"></p>
                 </div>
 
                 <!-- Payload / Metadata Viewer -->
                 <div class="space-y-1.5">
                     <div class="flex items-center justify-between">
-                        <span class="text-[11px] font-semibold text-slate-700">Metadata Payload</span>
+                        <span class="text-[11px] font-semibold text-slate-700">{{ __('Metadata Payload') }}</span>
                         <button type="button" 
                                 @click="copyPayload()" 
                                 class="text-[10.5px] font-medium text-indigo-600 hover:text-indigo-800 flex items-center gap-1 cursor-pointer">
                             <i class="fas fa-copy"></i>
-                            <span>Copy JSON</span>
+                            <span>{{ __('Copy JSON') }}</span>
                         </button>
                     </div>
                     <pre class="p-3 bg-slate-900 text-cyan-300 font-mono text-[11px] rounded-lg border border-slate-800 overflow-x-auto max-h-48"
@@ -455,7 +455,7 @@
             <!-- Modal Footer -->
             <div class="px-4 py-2.5 bg-slate-50/80 border-t border-slate-200 flex items-center justify-end">
                 <button type="button" @click="detailsModal.open = false" class="border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs px-3.5 py-1.5 rounded-lg cursor-pointer transition">
-                    Close Details
+                    {{ __('Close Details') }}
                 </button>
             </div>
         </div>
@@ -470,6 +470,10 @@ function logsManager() {
     return {
         activeMenu: null,
         menuPos: { top: '0px', bottom: 'auto', right: '0px', left: 'auto' },
+        i18n: {
+            eventMeta: @json(__(':type • ID #:id')),
+            payloadCopied: @json(__('Metadata payload copied to clipboard!')),
+        },
 
         toast: {
             show: false,
@@ -526,7 +530,7 @@ function logsManager() {
         copyPayload() {
             const payload = JSON.stringify(this.detailsModal.data?.metadata || {}, null, 2);
             navigator.clipboard.writeText(payload).then(() => {
-                this.showToast('Metadata payload copied to clipboard!');
+                this.showToast(this.i18n.payloadCopied);
             });
         }
     };

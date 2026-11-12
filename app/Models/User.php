@@ -193,53 +193,55 @@ class User extends Authenticatable
                 $roleBadgeCache[$cacheKey] = $customRole ? $customRole->badge : null;
             }
             if ($roleBadgeCache[$cacheKey]) {
-                return $roleBadgeCache[$cacheKey];
+                $badge = $roleBadgeCache[$cacheKey];
+                $badge['label'] = __($badge['label']);
+                return $badge;
             }
         }
 
         return match ($this->role) {
             'isp_admin' => [
-                'label' => 'ISP Super Admin',
+                'label' => __('ISP Super Admin'),
                 'class' => 'bg-purple-50 text-purple-700 border-purple-200',
                 'icon' => 'fa-shield-halved',
             ],
             'isp_manager' => [
-                'label' => 'ISP Manager',
+                'label' => __('ISP Manager'),
                 'class' => 'bg-blue-50 text-blue-700 border-blue-200',
                 'icon' => 'fa-user-tie',
             ],
             'isp_technician', 'technician' => [
-                'label' => 'NOC / Field Tech',
+                'label' => __('NOC / Field Tech'),
                 'class' => 'bg-emerald-50 text-emerald-700 border-emerald-200',
                 'icon' => 'fa-screwdriver-wrench',
             ],
             'isp_collector', 'collector' => [
-                'label' => 'Bill Collector',
+                'label' => __('Bill Collector'),
                 'class' => 'bg-amber-50 text-amber-700 border-amber-200',
                 'icon' => 'fa-money-bill-wave',
             ],
             'reseller_admin' => [
-                'label' => 'Sub-ISP Admin',
+                'label' => __('Sub-ISP Admin'),
                 'class' => 'bg-indigo-50 text-indigo-700 border-indigo-200',
                 'icon' => 'fa-crown',
             ],
             'reseller_manager' => [
-                'label' => 'Sub-ISP Manager',
+                'label' => __('Sub-ISP Manager'),
                 'class' => 'bg-sky-50 text-sky-700 border-sky-200',
                 'icon' => 'fa-user-gear',
             ],
             'reseller_technician' => [
-                'label' => 'Sub-ISP Tech',
+                'label' => __('Sub-ISP Tech'),
                 'class' => 'bg-teal-50 text-teal-700 border-teal-200',
                 'icon' => 'fa-wrench',
             ],
             'reseller_collector' => [
-                'label' => 'Sub-ISP Collector',
+                'label' => __('Sub-ISP Collector'),
                 'class' => 'bg-orange-50 text-orange-700 border-orange-200',
                 'icon' => 'fa-hand-holding-dollar',
             ],
             default => [
-                'label' => ucfirst(str_replace('_', ' ', $this->role ?? 'Staff Member')),
+                'label' => $this->role ? __(ucfirst(str_replace('_', ' ', $this->role))) : __('Staff Member'),
                 'class' => 'bg-slate-100 text-slate-700 border-slate-200',
                 'icon' => 'fa-user',
             ],
@@ -255,7 +257,7 @@ class User extends Authenticatable
             return [
                 'scope' => 'RESELLER',
                 'label' => $this->reseller->name,
-                'sub_label' => 'Partner (' . $this->reseller->code . ')',
+                'sub_label' => __('Partner (:code)', ['code' => $this->reseller->code]),
                 'class' => 'bg-indigo-50 text-indigo-700 border-indigo-200',
                 'icon' => 'fa-handshake',
             ];
@@ -263,8 +265,8 @@ class User extends Authenticatable
 
         return [
             'scope' => 'ISP_CORE',
-            'label' => 'ISP Headquarters',
-            'sub_label' => 'Core Direct Operations',
+            'label' => __('ISP Headquarters'),
+            'sub_label' => __('Core Direct Operations'),
             'class' => 'bg-purple-50 text-purple-700 border-purple-200',
             'icon' => 'fa-building',
         ];
@@ -277,17 +279,17 @@ class User extends Authenticatable
     {
         return match ($this->status) {
             'active' => [
-                'label' => 'Active',
+                'label' => __('Active'),
                 'class' => 'bg-emerald-50 text-emerald-700 border-emerald-200',
                 'icon' => 'fa-circle-check',
             ],
             'suspended' => [
-                'label' => 'Suspended',
+                'label' => __('Suspended'),
                 'class' => 'bg-rose-50 text-rose-700 border-rose-200',
                 'icon' => 'fa-circle-xmark',
             ],
             default => [
-                'label' => 'Inactive',
+                'label' => __('Inactive'),
                 'class' => 'bg-slate-100 text-slate-600 border-slate-200',
                 'icon' => 'fa-circle-pause',
             ],

@@ -27,19 +27,19 @@ class TenantActivityLog extends Model
     }
 
     /**
-     * Clean English Relative Time
+     * Clean Localized Relative Time
      */
     public function getRelativeTimeAttribute(): string
     {
-        return $this->created_at ? $this->created_at->locale('en')->diffForHumans() : 'N/A';
+        return $this->created_at ? $this->created_at->locale(app()->getLocale() === 'bn' ? 'bn' : 'en')->diffForHumans() : __('N/A');
     }
 
     /**
-     * Standard Date Time in English
+     * Standard Date Time
      */
     public function getFormattedCreatedAtAttribute(): string
     {
-        return $this->created_at ? $this->created_at->format('d-M-Y h:i:s A') : 'N/A';
+        return $this->created_at ? $this->created_at->format('d-M-Y h:i:s A') : __('N/A');
     }
 
     /**
@@ -51,32 +51,32 @@ class TenantActivityLog extends Model
 
         return match ($actorType) {
             'owner', 'super_admin' => [
-                'label' => 'ISP Super Admin',
+                'label' => __('ISP Super Admin'),
                 'class' => 'bg-purple-50 text-purple-700 border-purple-200',
                 'icon' => 'fa-user-shield',
             ],
             'tenant', 'admin' => [
-                'label' => 'ISP Admin',
+                'label' => __('ISP Admin'),
                 'class' => 'bg-cyan-50 text-cyan-700 border-cyan-200',
                 'icon' => 'fa-user-tie',
             ],
             'staff', 'operator', 'technician' => [
-                'label' => 'Operations Staff',
+                'label' => __('Operations Staff'),
                 'class' => 'bg-blue-50 text-blue-700 border-blue-200',
                 'icon' => 'fa-user-gear',
             ],
             'reseller', 'sub_isp' => [
-                'label' => 'Wholesale Reseller',
+                'label' => __('Wholesale Reseller'),
                 'class' => 'bg-emerald-50 text-emerald-700 border-emerald-200',
                 'icon' => 'fa-handshake',
             ],
             'customer', 'subscriber' => [
-                'label' => 'Customer Portal',
+                'label' => __('Customer Portal'),
                 'class' => 'bg-amber-50 text-amber-700 border-amber-200',
                 'icon' => 'fa-user',
             ],
             default => [
-                'label' => 'System Daemon',
+                'label' => __('System Daemon'),
                 'class' => 'bg-slate-100 text-slate-700 border-slate-200',
                 'icon' => 'fa-robot',
             ],
@@ -95,7 +95,7 @@ class TenantActivityLog extends Model
                 'label' => str_replace('_', ' ', $event),
                 'class' => 'bg-blue-50 text-blue-700 border-blue-200',
                 'icon' => 'fa-key',
-                'category' => 'Security & Auth',
+                'category' => __('Security & Auth'),
             ];
         }
 
@@ -104,7 +104,7 @@ class TenantActivityLog extends Model
                 'label' => str_replace('_', ' ', $event),
                 'class' => 'bg-emerald-50 text-emerald-700 border-emerald-200',
                 'icon' => 'fa-file-invoice-dollar',
-                'category' => 'Billing & Finance',
+                'category' => __('Billing & Finance'),
             ];
         }
 
@@ -113,7 +113,7 @@ class TenantActivityLog extends Model
                 'label' => str_replace('_', ' ', $event),
                 'class' => 'bg-indigo-50 text-indigo-700 border-indigo-200',
                 'icon' => 'fa-network-wired',
-                'category' => 'Network & MikroTik',
+                'category' => __('Network & MikroTik'),
             ];
         }
 
@@ -122,7 +122,7 @@ class TenantActivityLog extends Model
                 'label' => str_replace('_', ' ', $event),
                 'class' => 'bg-amber-50 text-amber-700 border-amber-200',
                 'icon' => 'fa-box-archive',
-                'category' => 'Backup & System',
+                'category' => __('Backup & System'),
             ];
         }
 
@@ -131,7 +131,7 @@ class TenantActivityLog extends Model
                 'label' => str_replace('_', ' ', $event),
                 'class' => 'bg-purple-50 text-purple-700 border-purple-200',
                 'icon' => 'fa-sliders',
-                'category' => 'Administration',
+                'category' => __('Administration'),
             ];
         }
 
@@ -140,7 +140,7 @@ class TenantActivityLog extends Model
                 'label' => str_replace('_', ' ', $event),
                 'class' => 'bg-cyan-50 text-cyan-700 border-cyan-200',
                 'icon' => 'fa-users',
-                'category' => 'Subscribers',
+                'category' => __('Subscribers'),
             ];
         }
 
@@ -149,7 +149,7 @@ class TenantActivityLog extends Model
                 'label' => str_replace('_', ' ', $event),
                 'class' => 'bg-teal-50 text-teal-700 border-teal-200',
                 'icon' => 'fa-headset',
-                'category' => 'Support & NOC',
+                'category' => __('Support & NOC'),
             ];
         }
 
@@ -157,7 +157,7 @@ class TenantActivityLog extends Model
             'label' => str_replace('_', ' ', $event),
             'class' => 'bg-slate-100 text-slate-700 border-slate-200',
             'icon' => 'fa-shield-halved',
-            'category' => 'General Telemetry',
+            'category' => __('General Telemetry'),
         ];
     }
 

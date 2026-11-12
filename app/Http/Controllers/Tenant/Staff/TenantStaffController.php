@@ -30,7 +30,7 @@ class TenantStaffController extends Controller
             $tenant = \App\Models\Tenant::first();
         }
         if (!$tenant) {
-            abort(404, 'ISP Tenant record not found.');
+            abort(404, __('ISP Tenant record not found.'));
         }
         return $tenant;
     }
@@ -557,14 +557,28 @@ class TenantStaffController extends Controller
             ]
         );
 
+        $statusLabels = [
+            'present' => __('Present'),
+            'late' => __('Late'),
+            'field_duty' => __('Field Duty'),
+            'on_leave' => __('On Leave'),
+            'half_day' => __('Half Day'),
+            'absent' => __('Absent'),
+        ];
+        $statusLabel = $statusLabels[$validated['status']] ?? __(ucfirst(str_replace('_', ' ', $validated['status'])));
+
         // Audit Trail Log
         \App\Models\TenantActivityLog::create([
             'tenant_id' => $tenant->id,
             'actor_type' => 'App\Models\User',
             'actor_id' => Auth::id() ?: $user->id,
-            'actor_name' => Auth::user()?->name ?: 'System Admin',
+            'actor_name' => Auth::user()?->name ?: __('System Admin'),
             'event_type' => 'ATTENDANCE_MARK',
-            'description' => "Marked attendance for '{$user->name}' as " . ucfirst(str_replace('_', ' ', $validated['status'])) . " on {$dateStr}.",
+            'description' => __("Marked attendance for ':name' as :status on :date.", [
+                'name' => $user->name,
+                'status' => $statusLabel,
+                'date' => $dateStr,
+            ]),
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
             'metadata' => [
@@ -574,7 +588,10 @@ class TenantStaffController extends Controller
             ],
         ]);
 
-        $msg = "Attendance for '{$user->name}' on {$dateStr} saved successfully!";
+        $msg = __("Attendance for ':name' on :date saved successfully!", [
+            'name' => $user->name,
+            'date' => $dateStr,
+        ]);
 
         if ($request->wantsJson()) {
             return response()->json([
@@ -615,7 +632,10 @@ class TenantStaffController extends Controller
             $attendance->punch_in_device = substr($request->userAgent() ?? 'Web Browser', 0, 190);
             $attendance->save();
             $action = 'in';
-            $msg = "Punch-IN recorded for {$user->name} at " . now()->format('h:i A') . "!";
+            $msg = __('Punch-IN recorded for :name at :time!', [
+                'name' => $user->name,
+                'time' => now()->format('h:i A'),
+            ]);
         } else {
             // Punch OUT
             $attendance->punch_out_at = now();
@@ -625,7 +645,11 @@ class TenantStaffController extends Controller
             $attendance->punch_out_ip = $request->ip();
             $attendance->save();
             $action = 'out';
-            $msg = "Punch-OUT recorded for {$user->name} at " . now()->format('h:i A') . "! Total: " . $attendance->duration_formatted;
+            $msg = __('Punch-OUT recorded for :name at :time! Total: :duration', [
+                'name' => $user->name,
+                'time' => now()->format('h:i A'),
+                'duration' => $attendance->duration_formatted,
+            ]);
         }
 
         // Audit Trail Log
@@ -680,7 +704,20 @@ class TenantStaffController extends Controller
             "Expires" => "0"
         ];
 
-        $columns = ['Staff ID', 'Employee Name', 'Role', 'Affiliation / Sub-ISP', 'Date', 'Shift', 'Punch In', 'Punch Out', 'Duration', 'Status', 'IP Address', 'Remarks'];
+        $columns = [
+            __('Staff ID'),
+            __('Employee Name'),
+            __('Role'),
+            __('Affiliation / Sub-ISP'),
+            __('Date'),
+            __('Shift'),
+            __('Punch In'),
+            __('Punch Out'),
+            __('Duration'),
+            __('Status'),
+            __('IP Address'),
+            __('Remarks'),
+        ];
 
         $callback = function () use ($attendances, $columns) {
             $file = fopen('php://output', 'w');
@@ -690,15 +727,15 @@ class TenantStaffController extends Controller
             foreach ($attendances as $att) {
                 fputcsv($file, [
                     $att->user?->staff_id ?? ('STF-' . str_pad($att->user_id, 4, '0', STR_PAD_LEFT)),
-                    $att->user?->name ?? 'N/A',
-                    $att->user?->role_badge['label'] ?? ucfirst($att->user?->role ?? ''),
-                    $att->reseller ? $att->reseller->name . ' (' . $att->reseller->code . ')' : 'ISP Headquarters (Core)',
+                    $att->user?->name ?? __('N/A'),
+                    $att->user?->role_badge['label'] ?? __(ucfirst($att->user?->role ?? '')),
+                    $att->reseller ? $att->reseller->name . ' (' . $att->reseller->code . ')' : __('ISP Headquarters (Core)'),
                     $att->date?->format('Y-m-d') ?? '',
-                    $att->shift,
+                    $att->shift ? __($att->shift) : '',
                     $att->punch_in_at ? $att->punch_in_at->format('h:i A') : '--',
                     $att->punch_out_at ? $att->punch_out_at->format('h:i A') : '--',
                     $att->duration_formatted,
-                    ucfirst(str_replace('_', ' ', $att->status)),
+                    $att->status_badge['label'] ?? __(ucfirst(str_replace('_', ' ', (string) $att->status))),
                     $att->punch_in_ip ?? '--',
                     $att->remarks ?? $att->late_reason ?? '--',
                 ]);
@@ -739,7 +776,7 @@ class TenantStaffController extends Controller
         }
         $monthStart = (clone $monthCarbon)->startOfMonth();
         $monthEnd = (clone $monthCarbon)->endOfMonth();
-        $periodLabel = $monthCarbon->format('F Y');
+        $periodLabel = $monthCarbon->locale(app()->getLocale() === 'bn' ? 'bn' : 'en')->translatedFormat('F Y');
 
         $allResellers = TenantReseller::where('tenant_id', $tenant->id)->orderBy('name')->get();
 
@@ -885,7 +922,7 @@ class TenantStaffController extends Controller
 
         // If reseller role, ensure reseller_id is present
         if (str_starts_with($validated['role'], 'reseller_') && empty($validated['reseller_id'])) {
-            return back()->withErrors(['reseller_id' => 'Please select a Sub-ISP Partner for reseller staff role.'])->withInput();
+            return back()->withErrors(['reseller_id' => __('Please select a Sub-ISP Partner for reseller staff role.')])->withInput();
         }
 
         $staffId = User::generateNextStaffId($tenant->id);
@@ -900,7 +937,7 @@ class TenantStaffController extends Controller
             'role' => $validated['role'],
             'is_staff' => true,
             'staff_id' => $staffId,
-            'designation' => $validated['designation'] ?: ucfirst(str_replace('_', ' ', $validated['role'])),
+            'designation' => $validated['designation'] ?: __(ucfirst(str_replace('_', ' ', $validated['role']))),
             'department_id' => $validated['department_id'] ?? null,
             'shift' => $validated['shift'] ?? 'Morning Shift (09:00 - 18:00)',
             'address' => $validated['address'] ?? null,
@@ -908,7 +945,11 @@ class TenantStaffController extends Controller
             'password' => Hash::make($validated['password']),
         ]);
 
-        $msg = "Employee '{$user->name}' ({$user->role_badge['label']}) onboarded successfully with ID {$staffId}!";
+        $msg = __("Employee ':name' (:role) onboarded successfully with ID :staff_id!", [
+            'name' => $user->name,
+            'role' => $user->role_badge['label'],
+            'staff_id' => $staffId,
+        ]);
 
         if ($request->wantsJson()) {
             return response()->json([
@@ -943,9 +984,11 @@ class TenantStaffController extends Controller
                     'phone' => $user->phone,
                     'mobile' => $user->mobile,
                     'role' => $user->role,
+                    'role_label' => $user->role_badge['label'] ?? __(ucfirst(str_replace('_', ' ', (string) $user->role))),
                     'role_badge' => $user->role_badge,
                     'scope_badge' => $user->scope_badge,
                     'status' => $user->status,
+                    'status_label' => $user->status_badge['label'] ?? __(ucfirst($user->status ?? 'active')),
                     'status_badge' => $user->status_badge,
                     'reseller_id' => $user->reseller_id,
                     'reseller_name' => $user->reseller?->name,
@@ -953,7 +996,7 @@ class TenantStaffController extends Controller
                     'designation' => $user->designation,
                     'shift' => $user->shift,
                     'address' => $user->address,
-                    'created_at' => $user->created_at->format('d M Y, h:i A'),
+                    'created_at' => $user->created_at ? $user->created_at->format('d M Y, h:i A') : __('N/A'),
                 ]
             ]);
         }
@@ -967,14 +1010,16 @@ class TenantStaffController extends Controller
 
         $stats = [
             'staff_id' => $user->staff_id ?? ('STF-' . str_pad($user->id, 4, '0', STR_PAD_LEFT)),
-            'role' => $user->role_badge['label'] ?? ucfirst($user->role),
-            'scope' => $user->reseller_id ? ($user->reseller?->name ?? 'Reseller Partner') : 'ISP Core HQ',
-            'shift' => $user->shift ?: 'Regular Shift',
-            'status' => ucfirst($user->status ?? 'active'),
-            'joined_at' => $user->created_at ? $user->created_at->format('d M Y') : 'N/A',
+            'role' => $user->role_badge['label'] ?? __(ucfirst(str_replace('_', ' ', (string) $user->role))),
+            'scope' => $user->reseller_id ? ($user->reseller?->name ?? __('Reseller Partner')) : __('ISP Core HQ'),
+            'shift' => $user->shift ? __($user->shift) : __('Regular Shift'),
+            'status' => $user->status_badge['label'] ?? __(ucfirst($user->status ?? 'active')),
+            'joined_at' => $user->created_at ? $user->created_at->format('d M Y') : __('N/A'),
         ];
 
-        return view('tenant.staff.show', compact('tenant', 'employee', 'stats', 'recentAttendances'));
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
+
+        return view('tenant.staff.show', compact('tenant', 'employee', 'stats', 'recentAttendances', 'currencySymbol'));
     }
 
     /**
@@ -1010,7 +1055,7 @@ class TenantStaffController extends Controller
         $user->mobile = $validated['mobile'] ?? $validated['phone'] ?? $user->mobile;
         $user->role = $validated['role'];
         $user->reseller_id = $validated['reseller_id'] ?? null;
-        $user->designation = $validated['designation'] ?: ucfirst(str_replace('_', ' ', $validated['role']));
+        $user->designation = $validated['designation'] ?: __(ucfirst(str_replace('_', ' ', $validated['role'])));
         $user->shift = $validated['shift'] ?? $user->shift;
         $user->address = $validated['address'] ?? $user->address;
 
@@ -1020,7 +1065,7 @@ class TenantStaffController extends Controller
 
         $user->save();
 
-        $msg = "Employee '{$user->name}' updated successfully!";
+        $msg = __("Employee ':name' updated successfully!", ['name' => $user->name]);
 
         if ($request->wantsJson()) {
             return response()->json([
@@ -1043,15 +1088,19 @@ class TenantStaffController extends Controller
         $user = User::where('tenant_id', $tenant->id)->findOrFail($id);
 
         if ($user->id === Auth::id()) {
-            return response()->json(['success' => false, 'message' => 'You cannot suspend your own logged-in account.'], 422);
+            return response()->json(['success' => false, 'message' => __('You cannot suspend your own logged-in account.')], 422);
         }
 
         $newStatus = $user->status === 'active' ? 'inactive' : 'active';
         $user->update(['status' => $newStatus]);
 
+        $message = $newStatus === 'active'
+            ? __("Employee ':name' status updated to Active!", ['name' => $user->name])
+            : __("Employee ':name' status updated to Suspended!", ['name' => $user->name]);
+
         return response()->json([
             'success' => true,
-            'message' => "Employee '{$user->name}' status updated to " . ($newStatus === 'active' ? 'Active' : 'Suspended') . "!",
+            'message' => $message,
             'status' => $newStatus,
             'badge' => $user->status_badge,
         ]);
@@ -1073,7 +1122,7 @@ class TenantStaffController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => "Password for '{$user->name}' reset successfully!",
+            'message' => __("Password for ':name' reset successfully!", ['name' => $user->name]),
         ]);
     }
 
@@ -1087,22 +1136,25 @@ class TenantStaffController extends Controller
         $user = User::where('tenant_id', $tenant->id)->findOrFail($id);
 
         if ($user->id === Auth::id()) {
+            $selfDeleteMsg = __('You cannot delete your own logged-in account.');
             if ($request->wantsJson()) {
-                return response()->json(['success' => false, 'message' => 'You cannot delete your own logged-in account.'], 422);
+                return response()->json(['success' => false, 'message' => $selfDeleteMsg], 422);
             }
-            return back()->with('error', 'You cannot delete your own logged-in account.');
+            return back()->with('error', $selfDeleteMsg);
         }
 
         $name = $user->name;
         $user->delete();
 
+        $deletedMsg = __("Employee ':name' deleted successfully!", ['name' => $name]);
+
         if ($request->wantsJson()) {
             return response()->json([
                 'success' => true,
-                'message' => "Employee '{$name}' deleted successfully!",
+                'message' => $deletedMsg,
             ]);
         }
 
-        return redirect()->route('tenant.staff.index')->with('success', "Employee '{$name}' deleted successfully!");
+        return redirect()->route('tenant.staff.index')->with('success', $deletedMsg);
     }
 }

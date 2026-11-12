@@ -1,6 +1,6 @@
 @extends('tenant.layouts.app')
 
-@section('title', ($employee->name ?? 'Staff Profile') . ' - ' . ($tenant->company_name ?? $tenant->name))
+@section('title', ($employee->name ?? __('Staff Profile')) . ' - ' . ($tenant->company_name ?? $tenant->name))
 
 @push('styles')
     {{-- Page-specific CSS --}}
@@ -122,13 +122,13 @@
                     @endif
                     <div class="min-w-0 flex-1">
                         <h2 class="text-sm font-bold text-slate-900 truncate">{{ $employee->name }}</h2>
-                        <div class="text-[11px] text-slate-500 truncate">{{ $employee->designation ?: 'Staff Member' }}</div>
+                        <div class="text-[11px] text-slate-500 truncate">{{ $employee->designation ? __($employee->designation) : __('Staff Member') }}</div>
                         <div class="mt-1 flex items-center gap-1.5 flex-wrap">
                             <span class="px-1.5 py-0.5 rounded text-[9.5px] font-mono font-bold bg-purple-50 text-purple-700 border border-purple-200">
-                                {{ strtoupper($employee->role ?? 'STAFF') }}
+                                {{ __($employee->role_badge['label']) }}
                             </span>
                             <span class="px-1.5 py-0.5 rounded text-[9.5px] font-bold {{ $employee->status === 'active' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-600' }}">
-                                {{ ucfirst($employee->status ?? 'active') }}
+                                {{ __($employee->status_badge['label']) }}
                             </span>
                         </div>
                     </div>
@@ -149,7 +149,7 @@
                             <i class="fas fa-phone text-slate-400 w-3.5"></i>
                             <span>{{ __('Phone Number') }}</span>
                         </span>
-                        <span class="font-semibold text-slate-800 font-mono">{{ $employee->phone ?: ($employee->mobile ?: 'N/A') }}</span>
+                        <span class="font-semibold text-slate-800 font-mono">{{ $employee->phone ?: ($employee->mobile ?: __('N/A')) }}</span>
                     </div>
 
                     <div class="flex items-center justify-between py-1 border-b border-slate-50">
@@ -165,7 +165,7 @@
                             <i class="fas fa-map-marker-alt text-slate-400 w-3.5"></i>
                             <span>{{ __('Assigned Location') }}</span>
                         </span>
-                        <span class="font-medium text-slate-700 truncate max-w-[200px] text-right">{{ $employee->address ?: 'Dhaka, Bangladesh' }}</span>
+                        <span class="font-medium text-slate-700 truncate max-w-[200px] text-right">{{ $employee->address ?: __('Dhaka, Bangladesh') }}</span>
                     </div>
                 </div>
 
@@ -182,31 +182,31 @@
                         <i class="fas fa-briefcase text-purple-600 text-xs"></i>
                         <span>{{ __('Operational Scope & Duties') }}</span>
                     </h3>
-                    <span class="text-[10px] font-mono text-slate-400">Tenant #{{ $tenant->id }}</span>
+                    <span class="text-[10px] font-mono text-slate-400">{{ __('Tenant #:id', ['id' => $tenant->id]) }}</span>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200/70">
                         <span class="text-[10px] font-medium text-slate-500 block uppercase tracking-wider">{{ __('Primary Scope') }}</span>
                         <span class="text-xs font-bold text-slate-800 block mt-0.5">{{ $stats['scope'] }}</span>
-                        <span class="text-[10.5px] text-slate-400 block">{{ $employee->reseller_id ? 'Partner Operations' : 'Core Direct ISP' }}</span>
+                        <span class="text-[10.5px] text-slate-400 block">{{ $employee->reseller_id ? __('Partner Operations') : __('Core Direct ISP') }}</span>
                     </div>
 
                     <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200/70">
                         <span class="text-[10px] font-medium text-slate-500 block uppercase tracking-wider">{{ __('Duty Shift') }}</span>
-                        <span class="text-xs font-bold text-slate-800 block mt-0.5">{{ $employee->shift ?: 'Regular 8-Hour Duty' }}</span>
+                        <span class="text-xs font-bold text-slate-800 block mt-0.5">{{ $employee->shift ? __($employee->shift) : __('Regular 8-Hour Duty') }}</span>
                         <span class="text-[10.5px] text-slate-400 block">{{ __('Operational Field / Desk') }}</span>
                     </div>
 
                     <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200/70">
                         <span class="text-[10px] font-medium text-slate-500 block uppercase tracking-wider">{{ __('Official Designation') }}</span>
-                        <span class="text-xs font-bold text-slate-800 block mt-0.5">{{ $employee->designation ?: 'Field Officer' }}</span>
+                        <span class="text-xs font-bold text-slate-800 block mt-0.5">{{ $employee->designation ? __($employee->designation) : __('Field Officer') }}</span>
                         <span class="text-[10.5px] text-slate-400 block">{{ __('Assigned Designation') }}</span>
                     </div>
 
                     <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200/70">
                         <span class="text-[10px] font-medium text-slate-500 block uppercase tracking-wider">{{ __('Registered On') }}</span>
-                        <span class="text-xs font-bold font-mono text-slate-800 block mt-0.5">{{ $employee->created_at ? $employee->created_at->format('d M Y, h:i A') : 'N/A' }}</span>
+                        <span class="text-xs font-bold font-mono text-slate-800 block mt-0.5">{{ $employee->created_at ? $employee->created_at->format('d M Y, h:i A') : __('N/A') }}</span>
                         <span class="text-[10.5px] text-slate-400 block">{{ __('System Profile Creation') }}</span>
                     </div>
                 </div>
@@ -235,14 +235,15 @@
                         </thead>
                         <tbody>
                             @foreach($recentAttendances as $index => $att)
+                                @php($attBadge = $att->status_badge)
                                 <tr>
                                     <td class="text-center font-mono text-slate-500">{{ $index + 1 }}</td>
                                     <td class="font-semibold text-slate-800 font-mono">{{ \Carbon\Carbon::parse($att->date)->format('d M Y') }}</td>
                                     <td class="font-mono text-slate-700">{{ $att->punch_in_at ? \Carbon\Carbon::parse($att->punch_in_at)->format('h:i A') : '—' }}</td>
                                     <td class="font-mono text-slate-700">{{ $att->punch_out_at ? \Carbon\Carbon::parse($att->punch_out_at)->format('h:i A') : '—' }}</td>
                                     <td class="text-center">
-                                        <span class="px-2 py-0.5 rounded text-[10px] font-bold {{ in_array($att->status, ['present', 'field_duty']) ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : ($att->status === 'late' ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-rose-50 text-rose-700 border border-rose-200') }}">
-                                            {{ ucfirst(str_replace('_', ' ', $att->status)) }}
+                                        <span class="px-2 py-0.5 rounded text-[10px] font-bold border {{ $attBadge['bg'] }}">
+                                            {{ __($attBadge['label']) }}
                                         </span>
                                     </td>
                                 </tr>

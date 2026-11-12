@@ -1,6 +1,6 @@
 @extends('tenant.layouts.app')
 
-@section('title', 'Staff Targets & Commission - ' . ($tenant->company_name ?? $tenant->name))
+@section('title', __('Staff Targets & Commission') . ' - ' . ($tenant->company_name ?? $tenant->name))
 
 @push('styles')
     {{-- Page-specific CSS --}}
@@ -16,7 +16,7 @@
                 <i class="fas fa-bullseye"></i>
             </div>
             <div class="flex items-center gap-2">
-                <h1 class="text-xs sm:text-sm font-bold text-slate-900 tracking-tight">Staff Targets &amp; Commission</h1>
+                <h1 class="text-xs sm:text-sm font-bold text-slate-900 tracking-tight">{{ __('Staff Targets & Commission') }}</h1>
                 <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
                     {{ $periodLabel }}
                 </span>
@@ -27,12 +27,12 @@
             <a href="{{ route('tenant.staff.index') }}" 
                class="h-[34px] py-0 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200/80 transition inline-flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-users text-slate-500 text-xs"></i>
-                <span>Staff Directory</span>
+                <span>{{ __('Staff Directory') }}</span>
             </a>
             <a href="{{ route('tenant.finance.collector-collections', ['month' => $selectedMonth]) }}" 
                class="h-[34px] py-0 px-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-chart-line text-xs"></i>
-                <span>Collection Report</span>
+                <span>{{ __('Collection Report') }}</span>
             </a>
         </div>
     </div>
@@ -42,7 +42,7 @@
         {{-- Card 1: Active Staff --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Matched Staff</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">{{ __('Matched Staff') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-slate-900 truncate">{{ number_format($totalStaffCount) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-indigo-50 text-indigo-600 border-indigo-100 flex items-center justify-center">
@@ -53,7 +53,7 @@
         {{-- Card 2: Monthly Target --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-blue-700">Assigned Target</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-blue-700">{{ __('Assigned Target') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-blue-700 truncate">@currency($totalTargetAmount)</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-blue-50 text-blue-600 border-blue-100 flex items-center justify-center">
@@ -64,7 +64,7 @@
         {{-- Card 3: Collected Amount --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-emerald-700">Total Collected</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-emerald-700">{{ __('Total Collected') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-emerald-700 truncate">@currency($totalCollectedAmount)</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-emerald-50 text-emerald-600 border-emerald-100 flex items-center justify-center">
@@ -75,7 +75,7 @@
         {{-- Card 4: Achievement % --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-cyan-700">Achievement Rate</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-cyan-700">{{ __('Achievement Rate') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-cyan-800 truncate">{{ $avgAchievementRate }}%</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-cyan-50 text-cyan-600 border-cyan-100 flex items-center justify-center">
@@ -86,7 +86,7 @@
         {{-- Card 5: Est. Commission --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-purple-700">Est. Commission</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-purple-700">{{ __('Est. Commission') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-purple-700 truncate">@currency($totalCommissionAmount)</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-purple-50 text-purple-600 border-purple-100 flex items-center justify-center">
@@ -97,7 +97,7 @@
         {{-- Card 6: Total Receipts --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-amber-700">Total Receipts</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-amber-700">{{ __('Total Receipts') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-amber-700 truncate">{{ number_format($totalReceiptsCount) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 bg-amber-50 text-amber-600 border-amber-100 flex items-center justify-center">
@@ -119,7 +119,7 @@
                     <input type="text" 
                            name="search" 
                            x-model="searchQuery"
-                           placeholder="Search Staff Name, Staff ID, Mobile, Designation..." 
+                           placeholder="{{ __('Search Staff Name, Staff ID, Mobile, Designation...') }}" 
                            class="w-full h-[34px] pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                     <button type="button" 
                             x-show="searchQuery && searchQuery.length > 0" 
@@ -143,9 +143,9 @@
                     <select name="scope" 
                             onchange="this.form.submit()" 
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 cursor-pointer">
-                        <option value="">All Scopes</option>
-                        <option value="isp" {{ $scopeFilter === 'isp' ? 'selected' : '' }}>ISP Core HQ</option>
-                        <option value="reseller" {{ $scopeFilter === 'reseller' ? 'selected' : '' }}>Sub-ISP Franchise</option>
+                        <option value="">{{ __('All Scopes') }}</option>
+                        <option value="isp" {{ $scopeFilter === 'isp' ? 'selected' : '' }}>{{ __('ISP Core HQ') }}</option>
+                        <option value="reseller" {{ $scopeFilter === 'reseller' ? 'selected' : '' }}>{{ __('Sub-ISP Franchise') }}</option>
                     </select>
                 </div>
 
@@ -156,7 +156,7 @@
                             class="w-full h-[34px] px-2 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 cursor-pointer">
                         @foreach([15, 20, 30, 50, 100] as $size)
                             <option value="{{ $size }}" {{ (int)$perPage === $size ? 'selected' : '' }}>
-                                {{ $size }} / page
+                                {{ __(':size / page', ['size' => $size]) }}
                             </option>
                         @endforeach
                     </select>
@@ -168,7 +168,7 @@
                         class="h-[34px] py-0 px-2.5 rounded-lg border text-xs font-medium transition flex items-center justify-center gap-1.5 cursor-pointer flex-shrink-0"
                         :class="showMoreFilters ? 'bg-cyan-50 border-cyan-200 text-cyan-700' : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700'">
                     <i class="fas fa-sliders text-[10px]"></i>
-                    <span>More Filters</span>
+                    <span>{{ __('More Filters') }}</span>
                     @if($activeMoreCount > 0)
                         <span class="w-4 h-4 rounded-full bg-cyan-600 text-white text-[9px] font-bold flex items-center justify-center">
                             {{ $activeMoreCount }}
@@ -182,15 +182,15 @@
                 <div class="flex items-center gap-1.5 flex-shrink-0 md:ml-auto">
                     <button type="submit" 
                             class="h-[34px] py-0 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" 
-                            title="Apply Filters">
+                            title="{{ __('Apply Filters') }}">
                         <i class="fas fa-filter text-[10px]"></i>
-                        <span>Filter</span>
+                        <span>{{ __('Filter') }}</span>
                     </button>
                     <a href="{{ route('tenant.staff.commissions') }}" 
                        class="h-[34px] py-0 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer" 
-                       title="Reset Filters">
+                       title="{{ __('Reset Filters') }}">
                         <i class="fas fa-rotate-left text-[10px]"></i>
-                        <span>Reset</span>
+                        <span>{{ __('Reset') }}</span>
                     </a>
                 </div>
             </div>
@@ -208,7 +208,7 @@
                     <select name="reseller_id" 
                             onchange="this.form.submit()" 
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 cursor-pointer">
-                        <option value="">All Sub-ISP Partners</option>
+                        <option value="">{{ __('All Sub-ISP Partners') }}</option>
                         @foreach($allResellers as $res)
                             <option value="{{ $res->id }}" {{ (string)$selectedResellerId === (string)$res->id ? 'selected' : '' }}>
                                 {{ $res->name }} ({{ $res->code }})
@@ -222,17 +222,17 @@
                     <select name="role" 
                             onchange="this.form.submit()" 
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 cursor-pointer">
-                        <option value="">All Roles</option>
-                        <option value="isp_collector" {{ $roleFilter === 'isp_collector' ? 'selected' : '' }}>Bill Collector</option>
-                        <option value="reseller_collector" {{ $roleFilter === 'reseller_collector' ? 'selected' : '' }}>Reseller Collector</option>
-                        <option value="isp_technician" {{ $roleFilter === 'isp_technician' ? 'selected' : '' }}>Field Technician</option>
-                        <option value="isp_manager" {{ $roleFilter === 'isp_manager' ? 'selected' : '' }}>Operations Manager</option>
+                        <option value="">{{ __('All Roles') }}</option>
+                        <option value="isp_collector" {{ $roleFilter === 'isp_collector' ? 'selected' : '' }}>{{ __('Bill Collector') }}</option>
+                        <option value="reseller_collector" {{ $roleFilter === 'reseller_collector' ? 'selected' : '' }}>{{ __('Reseller Collector') }}</option>
+                        <option value="isp_technician" {{ $roleFilter === 'isp_technician' ? 'selected' : '' }}>{{ __('Field Technician') }}</option>
+                        <option value="isp_manager" {{ $roleFilter === 'isp_manager' ? 'selected' : '' }}>{{ __('Operations Manager') }}</option>
                     </select>
                 </div>
 
                 {{-- Commission Rate % Input --}}
                 <div class="w-full sm:w-44 flex items-center gap-1.5">
-                    <span class="text-[11px] font-semibold text-slate-600 whitespace-nowrap">Comm. Rate (%):</span>
+                    <span class="text-[11px] font-semibold text-slate-600 whitespace-nowrap">{{ __('Comm. Rate (%):') }}</span>
                     <input type="number" 
                            name="rate" 
                            step="0.1" 
@@ -252,14 +252,14 @@
                 <thead>
                     <tr>
                         <th class="w-10 text-center font-semibold no-sort">#</th>
-                        <th class="text-center font-semibold">Staff ID</th>
-                        <th class="text-center font-semibold">Staff Name</th>
-                        <th class="text-center font-semibold">Role</th>
-                        <th class="text-center font-semibold">Assigned Target</th>
-                        <th class="text-center font-semibold">Collected</th>
-                        <th class="text-center font-semibold">Achievement</th>
-                        <th class="text-center font-semibold">Commission ({{ $commissionRate }}%)</th>
-                        <th class="w-12 text-center font-semibold no-sort">Action</th>
+                        <th class="text-center font-semibold">{{ __('Staff ID') }}</th>
+                        <th class="text-center font-semibold">{{ __('Staff Name') }}</th>
+                        <th class="text-center font-semibold">{{ __('Role') }}</th>
+                        <th class="text-center font-semibold">{{ __('Assigned Target') }}</th>
+                        <th class="text-center font-semibold">{{ __('Collected') }}</th>
+                        <th class="text-center font-semibold">{{ __('Achievement') }}</th>
+                        <th class="text-center font-semibold">{{ __('Commission (:rate%)', ['rate' => $commissionRate]) }}</th>
+                        <th class="w-12 text-center font-semibold no-sort">{{ __('Action') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -271,8 +271,8 @@
                                 'id' => $emp->id,
                                 'staff_id' => $staffCode,
                                 'name' => $emp->name,
-                                'role' => $roleBadge['label'],
-                                'scope' => $emp->reseller?->name ?: 'ISP Core HQ',
+                                'role' => __($roleBadge['label']),
+                                'scope' => $emp->reseller?->name ?: __('ISP Core HQ'),
                                 'assigned_customers' => $emp->assigned_customers_count,
                                 'target_amount' => (float) $emp->target_amount,
                                 'collected_amount' => (float) $emp->collected_amount,
@@ -302,7 +302,7 @@
                             <td class="text-center whitespace-nowrap">
                                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] border {{ $roleBadge['class'] }}">
                                     <i class="fas {{ $roleBadge['icon'] }} text-[9px]"></i>
-                                    <span>{{ $roleBadge['label'] }}</span>
+                                    <span>{{ __($roleBadge['label']) }}</span>
                                 </span>
                             </td>
 
@@ -344,13 +344,13 @@
                                     <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 mx-auto flex items-center justify-center text-base border border-indigo-100 shadow-2xs">
                                         <i class="fas fa-bullseye"></i>
                                     </div>
-                                    <h3 class="text-xs font-semibold text-slate-800">No Staff Commission Records Found</h3>
-                                    <p class="text-[11px] text-slate-500">No staff targets or collection logs match the selected filters.</p>
+                                    <h3 class="text-xs font-semibold text-slate-800">{{ __('No Staff Commission Records Found') }}</h3>
+                                    <p class="text-[11px] text-slate-500">{{ __('No staff targets or collection logs match the selected filters.') }}</p>
                                     <div class="pt-1">
                                         <a href="{{ route('tenant.staff.commissions') }}" 
                                            class="h-[34px] py-0 px-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-xs transition inline-flex items-center gap-1.5">
                                             <i class="fas fa-rotate-left text-[10px]"></i>
-                                            <span>Reset Filters</span>
+                                            <span>{{ __('Reset Filters') }}</span>
                                         </a>
                                     </div>
                                 </div>
@@ -365,7 +365,7 @@
         @if($employees->hasPages())
             <div class="px-3.5 py-2.5 bg-slate-50/80 border-t border-slate-200 flex items-center justify-between text-xs text-slate-600">
                 <div>
-                    Showing {{ $employees->firstItem() }} to {{ $employees->lastItem() }} of {{ $employees->total() }} entries
+                    {{ __('Showing :first to :last of :total entries', ['first' => $employees->firstItem(), 'last' => $employees->lastItem(), 'total' => $employees->total()]) }}
                 </div>
                 <div>
                     {{ $employees->links() }}
@@ -389,17 +389,17 @@
                     @click="const row = activeMenu; activeMenu = null; viewSlip(row)" 
                     class="w-full px-3 py-1.5 text-left hover:bg-slate-50 flex items-center gap-2 text-slate-700 transition cursor-pointer">
                 <i class="fas fa-file-invoice-dollar text-indigo-600 w-3.5 text-[11px]"></i>
-                <span>View Commission Breakdown</span>
+                <span>{{ __('View Commission Breakdown') }}</span>
             </button>
             <a :href="`/admin/staff/${activeMenu?.id}`" 
                class="w-full px-3 py-1.5 text-left hover:bg-slate-50 flex items-center gap-2 text-slate-700 transition cursor-pointer">
                 <i class="fas fa-id-card text-slate-500 w-3.5 text-[11px]"></i>
-                <span>View Staff Profile</span>
+                <span>{{ __('View Staff Profile') }}</span>
             </a>
             <a :href="`/admin/finance/collector-collections?collector_id=${activeMenu?.id}&month={{ $selectedMonth }}`" 
                class="w-full px-3 py-1.5 text-left hover:bg-slate-50 flex items-center gap-2 text-slate-700 transition cursor-pointer">
                 <i class="fas fa-list-check text-emerald-600 w-3.5 text-[11px]"></i>
-                <span>Itemized Collection Logs</span>
+                <span>{{ __('Itemized Collection Logs') }}</span>
             </a>
         </div>
     </div>
@@ -422,8 +422,8 @@
                         <i class="fas fa-award"></i>
                     </div>
                     <div>
-                        <h3 class="text-xs font-semibold text-slate-800">Commission Payout Statement</h3>
-                        <p class="text-[10.5px] text-slate-500 font-mono" x-text="(slipModal.data?.staff_id || '') + ' • {{ $periodLabel }}'"></p>
+                        <h3 class="text-xs font-semibold text-slate-800">{{ __('Commission Payout Statement') }}</h3>
+                        <p class="text-[10.5px] text-slate-500 font-mono" x-text="(slipModal.data?.staff_id || '') + ' • ' + i18n.periodLabel"></p>
                     </div>
                 </div>
                 <button type="button" @click="slipModal.open = false" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center cursor-pointer">
@@ -433,37 +433,37 @@
 
             <div id="printableCommissionSlip" class="p-4 space-y-3.5 text-xs">
                 <div class="p-3.5 rounded-xl border border-purple-200 bg-purple-50/60 text-center space-y-1">
-                    <span class="text-[10px] uppercase font-semibold block tracking-wider text-purple-700">Earned Commission (@{{ $commissionRate }}%)</span>
+                    <span class="text-[10px] uppercase font-semibold block tracking-wider text-purple-700">{{ __('Earned Commission (:rate%)', ['rate' => $commissionRate]) }}</span>
                     <span class="text-xl font-bold font-mono block leading-tight text-purple-900" x-text="formatCurrency(slipModal.data?.earned_commission)"></span>
                 </div>
 
                 <div class="p-3 bg-slate-50 rounded-lg border border-slate-200/80 space-y-2 text-[11px]">
                     <div class="flex items-center justify-between py-1 border-b border-slate-200">
-                        <span class="text-slate-500">Staff Name:</span>
+                        <span class="text-slate-500">{{ __('Staff Name:') }}</span>
                         <span class="font-semibold text-slate-800" x-text="slipModal.data?.name"></span>
                     </div>
                     <div class="flex items-center justify-between py-1 border-b border-slate-200">
-                        <span class="text-slate-500">Designation / Role:</span>
+                        <span class="text-slate-500">{{ __('Designation / Role:') }}</span>
                         <span class="font-medium text-slate-800" x-text="slipModal.data?.role"></span>
                     </div>
                     <div class="flex items-center justify-between py-1 border-b border-slate-200">
-                        <span class="text-slate-500">Assigned Customers:</span>
-                        <span class="font-mono font-bold text-slate-800" x-text="slipModal.data?.assigned_customers + ' Subscribers'"></span>
+                        <span class="text-slate-500">{{ __('Assigned Customers:') }}</span>
+                        <span class="font-mono font-bold text-slate-800" x-text="i18n.subscribersCount.replace(':count', slipModal.data?.assigned_customers ?? 0)"></span>
                     </div>
                     <div class="flex items-center justify-between py-1 border-b border-slate-200">
-                        <span class="text-slate-500">Monthly Target:</span>
+                        <span class="text-slate-500">{{ __('Monthly Target:') }}</span>
                         <span class="font-mono font-medium text-slate-800" x-text="formatCurrency(slipModal.data?.target_amount)"></span>
                     </div>
                     <div class="flex items-center justify-between py-1 border-b border-slate-200">
-                        <span class="text-slate-500">Total Collected:</span>
+                        <span class="text-slate-500">{{ __('Total Collected:') }}</span>
                         <span class="font-mono font-bold text-emerald-700" x-text="formatCurrency(slipModal.data?.collected_amount)"></span>
                     </div>
                     <div class="flex items-center justify-between py-1 border-b border-slate-200">
-                        <span class="text-slate-500">Receipts Issued:</span>
-                        <span class="font-mono font-semibold text-slate-800" x-text="slipModal.data?.receipts_count + ' Receipts'"></span>
+                        <span class="text-slate-500">{{ __('Receipts Issued:') }}</span>
+                        <span class="font-mono font-semibold text-slate-800" x-text="i18n.receiptsCount.replace(':count', slipModal.data?.receipts_count ?? 0)"></span>
                     </div>
                     <div class="flex items-center justify-between py-1">
-                        <span class="text-slate-500">Target Achievement:</span>
+                        <span class="text-slate-500">{{ __('Target Achievement:') }}</span>
                         <span class="font-mono font-bold text-cyan-800" x-text="slipModal.data?.achievement_pct + '%'"></span>
                     </div>
                 </div>
@@ -471,11 +471,11 @@
 
             <div class="px-4 py-2.5 bg-slate-50/80 border-t border-slate-200 flex items-center justify-between">
                 <button type="button" @click="slipModal.open = false" class="h-[34px] py-0 px-3.5 border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs rounded-lg transition cursor-pointer">
-                    Close
+                    {{ __('Close') }}
                 </button>
                 <button type="button" @click="printSlip()" class="h-[34px] py-0 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-xs rounded-lg shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer">
                     <i class="fas fa-print text-xs"></i>
-                    <span>Print Statement</span>
+                    <span>{{ __('Print Statement') }}</span>
                 </button>
             </div>
         </div>
@@ -490,6 +490,15 @@ function staffCommissionManager() {
     return {
         activeMenu: null,
         menuPos: { top: '0px', right: '10px', left: 'auto', bottom: 'auto' },
+        currencySymbol: @json($currencySymbol ?? '৳'),
+        i18n: {
+            periodLabel: @json($periodLabel),
+            subscribersCount: @json(__(':count Subscribers')),
+            receiptsCount: @json(__(':count Receipts')),
+            printTitlePrefix: @json(__('Commission Statement')),
+            printSubtitle: @json(__('Staff Commission Statement (:period)', ['period' => $periodLabel])),
+            companyName: @json($tenant->company_name ?? $tenant->name),
+        },
         slipModal: {
             open: false,
             data: null
@@ -528,7 +537,7 @@ function staffCommissionManager() {
         },
 
         formatCurrency(val) {
-            const sym = '{{ $currencySymbol ?? "৳" }}';
+            const sym = this.currencySymbol;
             const n = Number(val || 0);
             return sym + ' ' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         },
@@ -539,7 +548,7 @@ function staffCommissionManager() {
             printWindow.document.write(`
                 <html>
                 <head>
-                    <title>Commission Statement - ${this.slipModal.data?.name || ''}</title>
+                    <title>${this.i18n.printTitlePrefix} - ${this.slipModal.data?.name || ''}</title>
                     <style>
                         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 24px; color: #1e293b; }
                         .text-center { text-align: center; }
@@ -549,8 +558,8 @@ function staffCommissionManager() {
                     </style>
                 </head>
                 <body>
-                    <h2 class="text-center" style="margin-bottom: 4px;">{{ $tenant->company_name ?? $tenant->name }}</h2>
-                    <p class="text-center" style="font-size: 12px; color: #64748b; margin-top: 0;">Staff Commission Statement ({{ $periodLabel }})</p>
+                    <h2 class="text-center" style="margin-bottom: 4px;">${this.i18n.companyName}</h2>
+                    <p class="text-center" style="font-size: 12px; color: #64748b; margin-top: 0;">${this.i18n.printSubtitle}</p>
                     <div style="max-width: 420px; margin: 20px auto;">
                         ${printContent}
                     </div>
@@ -568,3 +577,4 @@ function staffCommissionManager() {
 }
 </script>
 @endpush
+
