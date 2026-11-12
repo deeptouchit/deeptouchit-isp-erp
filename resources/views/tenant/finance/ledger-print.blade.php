@@ -356,8 +356,8 @@
             <div class="summary-box">
                 <span class="summary-label">{{ __('Gross Margin') }}</span>
                 <span class="summary-val font-mono text-cyan">
-                    @currency($pnl['gross_operating_margin'] ?? (($kpi['gross_revenue'] ?? 0) - ($kpi['upstream_cogs'] ?? 0)))
-                    <span style="font-size: 10px; font-weight: normal; color: #64748b;">({{ $kpi['gross_margin'] ?? $kpi['gross_margin_pct'] ?? 0 }}%)</span>
+                    @currency($pnl['gross_profit'] ?? $pnl['gross_operating_margin'] ?? (($kpi['gross_revenue'] ?? 0) - ($kpi['upstream_cogs'] ?? 0)))
+                    <span style="font-size: 10px; font-weight: normal; color: #64748b;">({{ $pnl['gross_margin'] ?? $kpi['gross_margin'] ?? 0 }}%)</span>
                 </span>
             </div>
             <div class="summary-box">
@@ -405,10 +405,10 @@
                 <div class="pnl-card">
                     <div class="pnl-card-head" style="background: #ffedd5; color: #9a3412; border-bottom: 1px solid #fed7aa;">
                         <span>{{ __('B. Upstream COGS') }}</span>
-                        <span class="font-mono">@currency($pnl['total_upstream_cogs'])</span>
+                        <span class="font-mono">@currency($pnl['total_cogs'] ?? $pnl['total_upstream_cogs'] ?? 0)</span>
                     </div>
                     <div class="pnl-card-body">
-                        @forelse($pnl['upstream_cogs_groups'] as $headName => $amount)
+                        @forelse(($pnl['cogs_groups'] ?? $pnl['upstream_cogs_groups'] ?? []) as $headName => $amount)
                             <div class="pnl-row">
                                 <span>{{ $headName }}</span>
                                 <span class="font-mono text-rose" style="font-weight: 600;">@currency($amount)</span>
@@ -418,7 +418,7 @@
                         @endforelse
                         <div class="pnl-total-row" style="background: #ffedd5; color: #9a3412;">
                             <span>{{ __('Total Upstream (B):') }}</span>
-                            <span class="font-mono">@currency($pnl['total_upstream_cogs'])</span>
+                            <span class="font-mono">@currency($pnl['total_cogs'] ?? $pnl['total_upstream_cogs'] ?? 0)</span>
                         </div>
                     </div>
                 </div>
@@ -451,9 +451,9 @@
                 <div style="border-right: 1px solid #e2e8f0; padding-right: 16px;">
                     <span style="font-size: 10.5px; font-weight: 700; text-transform: uppercase; color: #64748b;">{{ __('Gross Operating Profit (A - B)') }}</span>
                     <div class="font-mono text-cyan" style="font-size: 17px; font-weight: 800; margin-top: 2px;">
-                        @currency($pnl['gross_operating_margin'])
+                        @currency($pnl['gross_profit'] ?? $pnl['gross_operating_margin'] ?? 0)
                     </div>
-                    <span style="font-size: 11px; color: #475569;">{{ __('Gross Margin:') }} <strong class="text-green">{{ $pnl['gross_margin_pct'] }}%</strong></span>
+                    <span style="font-size: 11px; color: #475569;">{{ __('Gross Margin:') }} <strong class="text-green">{{ $pnl['gross_margin'] ?? $pnl['gross_margin_pct'] ?? 0 }}%</strong></span>
                 </div>
                 <div>
                     <span style="font-size: 10.5px; font-weight: 700; text-transform: uppercase; color: #64748b;">{{ __('Net Operating Profit (Gross Profit - OPEX)') }}</span>
