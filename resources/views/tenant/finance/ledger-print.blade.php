@@ -350,14 +350,14 @@
             <div class="summary-box">
                 <span class="summary-label">{{ __('Upstream COGS') }}</span>
                 <span class="summary-val font-mono text-rose">
-                    @currency($kpi['cogs_upstream'])
+                    @currency($kpi['upstream_cogs'] ?? $kpi['cogs_upstream'] ?? 0)
                 </span>
             </div>
             <div class="summary-box">
                 <span class="summary-label">{{ __('Gross Margin') }}</span>
                 <span class="summary-val font-mono text-cyan">
-                    @currency($kpi['gross_margin'])
-                    <span style="font-size: 10px; font-weight: normal; color: #64748b;">({{ $kpi['gross_margin_pct'] }}%)</span>
+                    @currency($pnl['gross_operating_margin'] ?? (($kpi['gross_revenue'] ?? 0) - ($kpi['upstream_cogs'] ?? 0)))
+                    <span style="font-size: 10px; font-weight: normal; color: #64748b;">({{ $kpi['gross_margin'] ?? $kpi['gross_margin_pct'] ?? 0 }}%)</span>
                 </span>
             </div>
             <div class="summary-box">
