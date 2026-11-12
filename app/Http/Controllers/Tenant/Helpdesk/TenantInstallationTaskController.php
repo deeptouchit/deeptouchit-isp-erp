@@ -25,10 +25,41 @@ class TenantInstallationTaskController extends Controller
         $tenant = $tenantId ? Tenant::find($tenantId) : (auth()->user()?->tenant ?? Tenant::first());
 
         if (!$tenant) {
-            abort(403, 'Tenant context not found. Please log in.');
+            abort(403, __('Tenant context not found. Please log in.'));
         }
 
         return $tenant;
+    }
+
+    /**
+     * Get localized pipeline stage display label
+     */
+    protected function localizedStageName(?string $stage, ?string $fallback = null): string
+    {
+        return match ($stage) {
+            'feasibility_check' => __('1. Feasibility & Port Check'),
+            'cable_pulling' => __('2. Drop Cable Pulling'),
+            'splicing_power_test' => __('3. Splicing & Power Test'),
+            'mikrotik_binding' => __('4. Router / PPPoE Binding'),
+            'active_completed' => __('5. Activated & Live'),
+            'cancelled' => __('Cancelled'),
+            default => __($fallback ?: ucwords(str_replace('_', ' ', (string) $stage))),
+        };
+    }
+
+    /**
+     * Get localized task status display label
+     */
+    protected function localizedStatusName(?string $status): string
+    {
+        return match ($status) {
+            'pending' => __('Pending'),
+            'scheduled' => __('Scheduled'),
+            'in_progress' => __('In Progress'),
+            'completed' => __('Completed'),
+            'cancelled' => __('Cancelled'),
+            default => __((string) $status),
+        };
     }
 
     /**
@@ -122,8 +153,11 @@ class TenantInstallationTaskController extends Controller
             'completed' => $completedCount,
         ];
 
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
+
         return view('tenant.tickets.installations', compact(
             'tenant',
+            'currencySymbol',
             'tasks',
             'stats',
             'technicians',
@@ -160,6 +194,30 @@ class TenantInstallationTaskController extends Controller
             'advance_payment' => 'nullable|numeric|min:0',
             'scheduled_at' => 'nullable|date',
             'remarks' => 'nullable|string',
+        ], [
+            'applicant_name.required' => __('Subscriber full name is required.'),
+            'applicant_phone.required' => __('Contact phone is required.'),
+            'installation_address.required' => __('Installation address is required.'),
+            'package_id.required' => __('Internet package is required.'),
+            'package_id.exists' => __('Selected internet package is invalid.'),
+            'zone_id.exists' => __('Selected coverage area is invalid.'),
+            'assigned_technician_id.exists' => __('Selected technician is invalid.'),
+            'connection_fee.numeric' => __('Connection fee must be a valid number.'),
+            'connection_fee.min' => __('Connection fee cannot be negative.'),
+            'advance_payment.numeric' => __('Advance payment must be a valid number.'),
+            'advance_payment.min' => __('Advance payment cannot be negative.'),
+            'scheduled_at.date' => __('Scheduled date and time must be a valid date.'),
+        ], [
+            'applicant_name' => __('Subscriber Full Name'),
+            'applicant_phone' => __('Contact Phone'),
+            'installation_address' => __('Installation Address'),
+            'package_id' => __('Internet Package'),
+            'zone_id' => __('Coverage Area'),
+            'assigned_technician_id' => __('Assign Technician'),
+            'connection_fee' => __('Connection Fee'),
+            'advance_payment' => __('Advance Payment'),
+            'scheduled_at' => __('Scheduled Date & Time'),
+            'remarks' => __('Installation Notes & Routing Remarks'),
         ]);
 
         $taskNumber = 'INST-' . date('y') . '-' . str_pad(rand(100, 9999), 4, '0', STR_PAD_LEFT);
@@ -188,7 +246,7 @@ class TenantInstallationTaskController extends Controller
             'created_by' => auth()->id() ?? 1,
         ]);
 
-        return back()->with('success', "New installation task {$taskNumber} has been created.");
+        return back()->with('success', __('New installation task :number has been created.', ['number' => $taskNumber]));
     }
 
     /**
@@ -203,7 +261,7 @@ class TenantInstallationTaskController extends Controller
         $validStages = ['feasibility_check', 'cable_pulling', 'splicing_power_test', 'mikrotik_binding', 'active_completed', 'cancelled'];
 
         if (!in_array($stage, $validStages)) {
-            return back()->with('error', 'Invalid installation pipeline stage.');
+            return back()->with('error', __('Invalid installation pipeline stage.'));
         }
 
         $task->installation_stage = $stage;
@@ -235,14 +293,20 @@ class TenantInstallationTaskController extends Controller
 
         $task->save();
 
+        $stageLabel = $this->localizedStageName($task->installation_stage, $task->stage_name);
+        $message = __('Installation :number progressed to :stage.', [
+            'number' => $task->task_number,
+            'stage' => $stageLabel,
+        ]);
+
         if ($request->wantsJson() || $request->ajax() || str_contains($request->header('Accept', ''), 'json')) {
             return response()->json([
                 'success' => true,
-                'message' => "Installation {$task->task_number} progressed to {$task->stage_name}.",
+                'message' => $message,
             ]);
         }
 
-        return back()->with('success', "Installation {$task->task_number} progressed to {$task->stage_name}.");
+        return back()->with('success', $message);
     }
 
     /**
@@ -254,27 +318,31 @@ class TenantInstallationTaskController extends Controller
         $authUser = auth()->user();
 
         if (!$authUser || !$authUser->canDeleteTickets()) {
+            $unauthorizedMessage = __('Unauthorized: Only Super Admin / ISP Admin can delete installation tasks.');
+
             if ($request->wantsJson() || $request->ajax() || str_contains($request->header('Accept', ''), 'json')) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Unauthorized: Only Super Admin / ISP Admin can delete installation tasks.',
+                    'message' => $unauthorizedMessage,
                 ], 403);
             }
-            abort(403, 'Unauthorized: Only Super Admin / ISP Admin can delete installation tasks.');
+            abort(403, $unauthorizedMessage);
         }
 
         $task = TenantInstallationTask::where('tenant_id', $tenant->id)->findOrFail($id);
         $taskNo = $task->task_number;
         $task->delete();
 
+        $deletedMessage = __('Installation Task #:number deleted successfully.', ['number' => $taskNo]);
+
         if ($request->wantsJson() || $request->ajax() || str_contains($request->header('Accept', ''), 'json')) {
             return response()->json([
                 'success' => true,
-                'message' => "Installation Task #{$taskNo} deleted successfully.",
+                'message' => $deletedMessage,
             ]);
         }
 
-        return back()->with('success', "Installation Task #{$taskNo} deleted successfully.");
+        return back()->with('success', $deletedMessage);
     }
 
     /**
@@ -283,11 +351,12 @@ class TenantInstallationTaskController extends Controller
     public function printActivationSlip(Request $request, $id): View
     {
         $tenant = $this->getTenant();
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
         $task = TenantInstallationTask::where('tenant_id', $tenant->id)
             ->with(['coverageZone', 'package', 'technician'])
             ->findOrFail($id);
 
-        return view('tenant.tickets.installation_print', compact('tenant', 'task'));
+        return view('tenant.tickets.installation_print', compact('tenant', 'currencySymbol', 'task'));
     }
 
     /**
@@ -296,6 +365,7 @@ class TenantInstallationTaskController extends Controller
     public function exportCsv(Request $request): StreamedResponse
     {
         $tenant = $this->getTenant();
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
         $filename = 'new_installation_pipeline_' . date('Y_m_d_His') . '.csv';
 
         $tasks = TenantInstallationTask::where('tenant_id', $tenant->id)
@@ -311,35 +381,35 @@ class TenantInstallationTaskController extends Controller
             'Expires' => '0',
         ];
 
-        return response()->stream(function () use ($tasks, $tenant) {
+        return response()->stream(function () use ($tasks, $tenant, $currencySymbol) {
             $handle = fopen('php://output', 'w');
             fprintf($handle, chr(0xEF) . chr(0xBB) . chr(0xBF)); // UTF-8 BOM
 
             // Header Block
             fputcsv($handle, [$tenant->company_name ?? $tenant->name]);
-            fputcsv($handle, ['NEW BROADBAND CONNECTION INSTALLATION & ACTIVATION ROSTER']);
-            fputcsv($handle, ['Generated At', date('d-M-Y h:i:s A')]);
+            fputcsv($handle, [__('NEW BROADBAND CONNECTION INSTALLATION & ACTIVATION ROSTER')]);
+            fputcsv($handle, [__('Generated At'), now()->translatedFormat('d-M-Y h:i:s A')]);
             fputcsv($handle, []);
 
             // Column Headers
             fputcsv($handle, [
-                'SL',
-                'Task Number',
-                'Subscriber Name',
-                'Contact Phone',
-                'Premise Address',
-                'Package Plan',
-                'Coverage Area',
-                'Assigned Technician',
-                'Installation Stage',
-                'Cable Length (m)',
-                'Splitter Location',
-                'Optical RX Power',
-                'Connection Fee (BDT)',
-                'Advance Paid (BDT)',
-                'Scheduled Date',
-                'Activation Date',
-                'Pipeline Status',
+                __('SL'),
+                __('Task Number'),
+                __('Subscriber Name'),
+                __('Contact Phone'),
+                __('Premise Address'),
+                __('Package Plan'),
+                __('Coverage Area'),
+                __('Assigned Technician'),
+                __('Installation Stage'),
+                __('Cable Length (m)'),
+                __('Splitter Location'),
+                __('Optical RX Power'),
+                __('Connection Fee (:currency)', ['currency' => $currencySymbol]),
+                __('Advance Paid (:currency)', ['currency' => $currencySymbol]),
+                __('Scheduled Date'),
+                __('Activation Date'),
+                __('Pipeline Status'),
             ]);
 
             foreach ($tasks as $idx => $t) {
@@ -349,18 +419,18 @@ class TenantInstallationTaskController extends Controller
                     $t->applicant_name,
                     $t->applicant_phone,
                     $t->installation_address,
-                    $t->package?->name ?? 'Standard Plan',
-                    $t->coverageZone?->name ?? 'Primary Zone',
-                    $t->assigned_technician_name ?: 'Unassigned',
-                    $t->stage_name,
-                    $t->cable_length_meters . ' m',
-                    $t->splitter_location ?: 'N/A',
-                    $t->optical_rx_power ?: 'Pending',
+                    $t->package?->name ?? __('Standard Plan'),
+                    $t->coverageZone?->name ?? __('Primary Zone'),
+                    $t->assigned_technician_name ?: __('Unassigned'),
+                    $this->localizedStageName($t->installation_stage, $t->stage_name),
+                    __(':length m', ['length' => $t->cable_length_meters]),
+                    $t->splitter_location ?: __('N/A'),
+                    $t->optical_rx_power ?: __('Pending'),
                     number_format($t->connection_fee, 2, '.', ''),
                     number_format($t->advance_payment, 2, '.', ''),
-                    $t->scheduled_at ? $t->scheduled_at->format('d-M-Y h:i A') : 'Immediate',
-                    $t->activated_at ? $t->activated_at->format('d-M-Y h:i A') : 'Pending',
-                    strtoupper($t->status),
+                    $t->scheduled_at ? $t->scheduled_at->translatedFormat('d-M-Y h:i A') : __('Immediate'),
+                    $t->activated_at ? $t->activated_at->translatedFormat('d-M-Y h:i A') : __('Pending'),
+                    mb_strtoupper($this->localizedStatusName($t->status), 'UTF-8'),
                 ]);
             }
 

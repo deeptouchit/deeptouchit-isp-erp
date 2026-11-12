@@ -24,7 +24,7 @@ class TenantResellerEscalationController extends Controller
         $tenant = $tenantId ? Tenant::find($tenantId) : (auth()->user()?->tenant ?? Tenant::first());
 
         if (!$tenant) {
-            abort(403, 'Tenant context not found. Please log in.');
+            abort(403, __('Tenant context not found. Please log in.'));
         }
 
         return $tenant;
@@ -118,8 +118,11 @@ class TenantResellerEscalationController extends Controller
             'resolved' => $resolvedCount,
         ];
 
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
+
         return view('tenant.tickets.escalations', compact(
             'tenant',
+            'currencySymbol',
             'escalations',
             'stats',
             'resellers',
@@ -152,6 +155,17 @@ class TenantResellerEscalationController extends Controller
             'affected_circuits' => 'nullable|string|max:255',
             'issue_description' => 'required|string',
             'assigned_engineer_id' => 'nullable|exists:users,id',
+        ], [
+            'reseller_id.required' => __('Please select a Sub-ISP or reseller.'),
+            'reseller_id.exists' => __('The selected Sub-ISP or reseller is invalid.'),
+            'category.required' => __('Please select a technical category.'),
+            'subject.required' => __('Please enter an incident subject.'),
+            'subject.max' => __('Incident subject may not be greater than 255 characters.'),
+            'impact_level.required' => __('Please select an impact severity level.'),
+            'impact_level.in' => __('The selected impact severity level is invalid.'),
+            'affected_circuits.max' => __('Affected trunk or circuit may not be greater than 255 characters.'),
+            'issue_description.required' => __('Please describe the technical symptoms and telemetry details.'),
+            'assigned_engineer_id.exists' => __('The selected NOC engineer is invalid.'),
         ]);
 
         $reseller = TenantReseller::where('tenant_id', $tenantId)->findOrFail($request->reseller_id);
@@ -181,7 +195,7 @@ class TenantResellerEscalationController extends Controller
             'created_by' => auth()->id() ?? 1,
         ]);
 
-        return back()->with('success', "Reseller technical escalation {$escNumber} logged successfully.");
+        return back()->with('success', __('Reseller technical escalation :number logged successfully.', ['number' => $escNumber]));
     }
 
     /**
@@ -196,7 +210,7 @@ class TenantResellerEscalationController extends Controller
         $validStatuses = ['open', 'tier2_investigating', 'tier3_noc_escalated', 'resolved', 'closed'];
 
         if (!in_array($status, $validStatuses)) {
-            return back()->with('error', 'Invalid escalation status.');
+            return back()->with('error', __('Invalid escalation status.'));
         }
 
         $escalation->status = $status;
@@ -211,14 +225,28 @@ class TenantResellerEscalationController extends Controller
 
         $escalation->save();
 
+        $statusLabel = match ($status) {
+            'open' => __('Open / Triage'),
+            'tier2_investigating' => __('Tier-2 Investigating'),
+            'tier3_noc_escalated' => __('Tier-3 NOC Escalated'),
+            'resolved' => __('Resolved'),
+            'closed' => __('Closed'),
+            default => strtoupper(str_replace('_', ' ', $status)),
+        };
+
+        $message = __('Escalation :number status changed to :status.', [
+            'number' => $escalation->escalation_number,
+            'status' => $statusLabel,
+        ]);
+
         if ($request->wantsJson() || $request->ajax() || str_contains($request->header('Accept', ''), 'json')) {
             return response()->json([
                 'success' => true,
-                'message' => "Escalation {$escalation->escalation_number} status changed to " . strtoupper(str_replace('_', ' ', $status)) . ".",
+                'message' => $message,
             ]);
         }
 
-        return back()->with('success', "Escalation {$escalation->escalation_number} status changed to " . strtoupper(str_replace('_', ' ', $status)) . ".");
+        return back()->with('success', $message);
     }
 
     /**
@@ -233,24 +261,26 @@ class TenantResellerEscalationController extends Controller
             if ($request->wantsJson() || $request->ajax() || str_contains($request->header('Accept', ''), 'json')) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Unauthorized: Only Super Admin / ISP Admin can delete technical escalations.',
+                    'message' => __('Unauthorized: Only Super Admin / ISP Admin can delete technical escalations.'),
                 ], 403);
             }
-            abort(403, 'Unauthorized: Only Super Admin / ISP Admin can delete technical escalations.');
+            abort(403, __('Unauthorized: Only Super Admin / ISP Admin can delete technical escalations.'));
         }
 
         $escalation = TenantResellerEscalation::where('tenant_id', $tenant->id)->findOrFail($id);
         $escNo = $escalation->escalation_number;
         $escalation->delete();
 
+        $message = __('Escalation #:number deleted successfully.', ['number' => $escNo]);
+
         if ($request->wantsJson() || $request->ajax() || str_contains($request->header('Accept', ''), 'json')) {
             return response()->json([
                 'success' => true,
-                'message' => "Escalation #{$escNo} deleted successfully.",
+                'message' => $message,
             ]);
         }
 
-        return back()->with('success', "Escalation #{$escNo} deleted successfully.");
+        return back()->with('success', $message);
     }
 
     /**
@@ -259,11 +289,12 @@ class TenantResellerEscalationController extends Controller
     public function printReport(Request $request, $id): View
     {
         $tenant = $this->getTenant();
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
         $escalation = TenantResellerEscalation::where('tenant_id', $tenant->id)
             ->with(['reseller', 'engineer'])
             ->findOrFail($id);
 
-        return view('tenant.tickets.escalation_print', compact('tenant', 'escalation'));
+        return view('tenant.tickets.escalation_print', compact('tenant', 'currencySymbol', 'escalation'));
     }
 
     /**
@@ -293,40 +324,67 @@ class TenantResellerEscalationController extends Controller
 
             // Header Block
             fputcsv($handle, [$tenant->company_name ?? $tenant->name]);
-            fputcsv($handle, ['SUB-ISP & RESELLER TECHNICAL ESCALATION LOG']);
-            fputcsv($handle, ['Generated At', date('d-M-Y h:i:s A')]);
+            fputcsv($handle, [__('SUB-ISP & RESELLER TECHNICAL ESCALATION LOG')]);
+            fputcsv($handle, [__('Generated At'), Carbon::now()->translatedFormat('d-M-Y h:i:s A')]);
             fputcsv($handle, []);
 
             // Column Headers
             fputcsv($handle, [
-                'SL',
-                'Escalation Number',
-                'Sub-ISP / Reseller Name',
-                'Technical Category',
-                'Issue Subject',
-                'Impact Severity',
-                'Affected Trunk / Circuit',
-                'Assigned NOC Engineer',
-                'Status',
-                'Logged Date',
-                'Resolved Date',
-                'RCA Resolution Summary',
+                __('SL'),
+                __('Escalation Number'),
+                __('Sub-ISP / Reseller Name'),
+                __('Technical Category'),
+                __('Issue Subject'),
+                __('Impact Severity'),
+                __('Affected Trunk / Circuit'),
+                __('Assigned NOC Engineer'),
+                __('Status'),
+                __('Logged Date'),
+                __('Resolved Date'),
+                __('RCA Resolution Summary'),
             ]);
 
             foreach ($escalations as $idx => $e) {
+                $categoryLabel = match ($e->category) {
+                    'trunk_congestion' => __('CIR Trunk Congestion & Latency'),
+                    'bgp_routing' => __('BGP Peering / BDIX Prefix Flap'),
+                    'radius_sync' => __('FreeRADIUS AAA Disconnect / CoA'),
+                    'vlan_allocation' => __('Sub-ISP VLAN & IP Pool Routing'),
+                    'wholesale_billing' => __('Wholesale Bandwidth Billing Dispute'),
+                    'olt_uplink_loss' => __('Distribution OLT 10G Uplink Loss'),
+                    default => __($e->category_name),
+                };
+
+                $impactLabel = match ($e->impact_level) {
+                    'critical_outage' => __('Critical Outage'),
+                    'high_degraded' => __('High Degraded'),
+                    'medium_packet_loss' => __('Medium Packet Loss'),
+                    'low_inquiry' => __('Low Inquiry'),
+                    default => strtoupper(str_replace('_', ' ', $e->impact_level)),
+                };
+
+                $statusLabel = match ($e->status) {
+                    'open' => __('Open / Triage'),
+                    'tier2_investigating' => __('Tier-2 Investigating'),
+                    'tier3_noc_escalated' => __('Tier-3 NOC Escalated'),
+                    'resolved' => __('Resolved'),
+                    'closed' => __('Closed'),
+                    default => strtoupper(str_replace('_', ' ', $e->status)),
+                };
+
                 fputcsv($handle, [
                     $idx + 1,
                     $e->escalation_number,
                     $e->reseller_name,
-                    $e->category_name,
+                    $categoryLabel,
                     $e->subject,
-                    strtoupper(str_replace('_', ' ', $e->impact_level)),
-                    $e->affected_circuits ?: 'N/A',
-                    $e->assigned_engineer_name ?: 'Unassigned',
-                    strtoupper(str_replace('_', ' ', $e->status)),
-                    $e->created_at ? $e->created_at->format('d-M-Y h:i A') : 'N/A',
-                    $e->resolved_at ? $e->resolved_at->format('d-M-Y h:i A') : 'Pending',
-                    $e->resolution_summary ?: 'Under active investigation',
+                    $impactLabel,
+                    $e->affected_circuits ?: __('N/A'),
+                    $e->assigned_engineer_name ?: __('Unassigned'),
+                    $statusLabel,
+                    $e->created_at ? $e->created_at->translatedFormat('d-M-Y h:i A') : __('N/A'),
+                    $e->resolved_at ? $e->resolved_at->translatedFormat('d-M-Y h:i A') : __('Pending'),
+                    $e->resolution_summary ?: __('Under active investigation'),
                 ]);
             }
 

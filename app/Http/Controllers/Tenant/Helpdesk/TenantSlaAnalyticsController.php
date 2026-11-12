@@ -26,7 +26,7 @@ class TenantSlaAnalyticsController extends Controller
         $tenant = $tenantId ? Tenant::find($tenantId) : (auth()->user()?->tenant ?? Tenant::first());
 
         if (!$tenant) {
-            abort(403, 'Tenant context not found. Please log in.');
+            abort(403, __('Tenant context not found. Please log in.'));
         }
 
         return $tenant;
@@ -39,6 +39,7 @@ class TenantSlaAnalyticsController extends Controller
     {
         $tenant = $this->getTenant();
         $tenantId = $tenant->id;
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
 
         $period = $request->get('period', '30_days'); // 7_days, 30_days, 90_days, this_month, all
         $channel = $request->get('channel', 'all'); // all, tickets, field_jobs, escalations, installations
@@ -203,7 +204,7 @@ class TenantSlaAnalyticsController extends Controller
                 'id' => $eng->id,
                 'name' => $eng->name,
                 'phone' => $eng->phone ?? '01819-0000' . $eng->id,
-                'role' => ucwords(str_replace('_', ' ', $eng->role ?? 'Field Engineer')),
+                'role' => $eng->role ? __(ucwords(str_replace('_', ' ', $eng->role))) : __('Field Engineer'),
                 'assigned_count' => $totalAssigned,
                 'resolved_count' => $totalDone,
                 'breached_count' => $totalDone - $onTime,
@@ -244,16 +245,17 @@ class TenantSlaAnalyticsController extends Controller
 
         // 5. Category SLA Matrix Breakdown
         $categoryBreakdown = [
-            ['name' => 'Fiber Line Break & Splicing', 'target' => '3.0 Hours', 'actual' => '2.4 Hours', 'sla_pct' => 97.2, 'status' => 'Good'],
-            ['name' => 'Router & ONU Hardware Issues', 'target' => '4.0 Hours', 'actual' => '3.1 Hours', 'sla_pct' => 95.8, 'status' => 'Good'],
-            ['name' => 'Main Bandwidth & Core Line Outage', 'target' => '2.0 Hours', 'actual' => '1.5 Hours', 'sla_pct' => 98.4, 'status' => 'Good'],
-            ['name' => 'PPPoE & Account Login Issues', 'target' => '2.0 Hours', 'actual' => '1.2 Hours', 'sla_pct' => 99.1, 'status' => 'Good'],
-            ['name' => 'Slow Internet & High Ping', 'target' => '6.0 Hours', 'actual' => '5.2 Hours', 'sla_pct' => 93.6, 'status' => 'Attention'],
-            ['name' => 'Billing & Payment Inquiries', 'target' => '12.0 Hours', 'actual' => '4.8 Hours', 'sla_pct' => 99.5, 'status' => 'Good'],
+            ['name' => __('Fiber Line Break & Splicing'), 'target' => __(':hours Hours', ['hours' => '3.0']), 'actual' => __(':hours Hours', ['hours' => '2.4']), 'sla_pct' => 97.2, 'status' => 'Good', 'status_label' => __('Good')],
+            ['name' => __('Router & ONU Hardware Issues'), 'target' => __(':hours Hours', ['hours' => '4.0']), 'actual' => __(':hours Hours', ['hours' => '3.1']), 'sla_pct' => 95.8, 'status' => 'Good', 'status_label' => __('Good')],
+            ['name' => __('Main Bandwidth & Core Line Outage'), 'target' => __(':hours Hours', ['hours' => '2.0']), 'actual' => __(':hours Hours', ['hours' => '1.5']), 'sla_pct' => 98.4, 'status' => 'Good', 'status_label' => __('Good')],
+            ['name' => __('PPPoE & Account Login Issues'), 'target' => __(':hours Hours', ['hours' => '2.0']), 'actual' => __(':hours Hours', ['hours' => '1.2']), 'sla_pct' => 99.1, 'status' => 'Good', 'status_label' => __('Good')],
+            ['name' => __('Slow Internet & High Ping'), 'target' => __(':hours Hours', ['hours' => '6.0']), 'actual' => __(':hours Hours', ['hours' => '5.2']), 'sla_pct' => 93.6, 'status' => 'Attention', 'status_label' => __('Attention')],
+            ['name' => __('Billing & Payment Inquiries'), 'target' => __(':hours Hours', ['hours' => '12.0']), 'actual' => __(':hours Hours', ['hours' => '4.8']), 'sla_pct' => 99.5, 'status' => 'Good', 'status_label' => __('Good')],
         ];
 
         return view('tenant.tickets.sla_analytics', compact(
             'tenant',
+            'currencySymbol',
             'stats',
             'paginatedScorecards',
             'engineers',
@@ -275,6 +277,7 @@ class TenantSlaAnalyticsController extends Controller
     public function printReport(Request $request): View
     {
         $tenant = $this->getTenant();
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
         $period = $request->get('period', '30_days');
 
         $engineers = User::where('tenant_id', $tenant->id)
@@ -294,26 +297,26 @@ class TenantSlaAnalyticsController extends Controller
             $compliance = round(($totalDone / $totalAssigned) * 100, 1);
             $scorecards[] = (object) [
                 'name' => $eng->name,
-                'role' => ucwords(str_replace('_', ' ', $eng->role ?? 'Field Engineer')),
+                'role' => $eng->role ? __(ucwords(str_replace('_', ' ', $eng->role))) : __('Field Engineer'),
                 'assigned' => $totalAssigned,
                 'resolved' => $totalDone,
                 'breached' => $totalAssigned - $totalDone,
-                'avg_time' => round(1.2 + ($idx * 0.3), 1) . 'h',
+                'avg_time' => __(':hours h', ['hours' => round(1.2 + ($idx * 0.3), 1)]),
                 'compliance' => $compliance . '%',
                 'grade' => $compliance >= 95 ? 'A+' : ($compliance >= 90 ? 'A' : 'B+'),
             ];
         }
 
         $categoryBreakdown = [
-            ['name' => 'Fiber Line Break & Splicing', 'target' => '3.0 Hours', 'actual' => '2.4 Hours', 'sla_pct' => '97.2%'],
-            ['name' => 'Router & ONU Hardware Issues', 'target' => '4.0 Hours', 'actual' => '3.1 Hours', 'sla_pct' => '95.8%'],
-            ['name' => 'Main Bandwidth & Core Line Outage', 'target' => '2.0 Hours', 'actual' => '1.5 Hours', 'sla_pct' => '98.4%'],
-            ['name' => 'PPPoE & Account Login Issues', 'target' => '2.0 Hours', 'actual' => '1.2 Hours', 'sla_pct' => '99.1%'],
-            ['name' => 'Slow Internet & High Ping', 'target' => '6.0 Hours', 'actual' => '5.2 Hours', 'sla_pct' => '93.6%'],
-            ['name' => 'Billing & Payment Inquiries', 'target' => '12.0 Hours', 'actual' => '4.8 Hours', 'sla_pct' => '99.5%'],
+            ['name' => __('Fiber Line Break & Splicing'), 'target' => __(':hours Hours', ['hours' => '3.0']), 'actual' => __(':hours Hours', ['hours' => '2.4']), 'sla_pct' => '97.2%'],
+            ['name' => __('Router & ONU Hardware Issues'), 'target' => __(':hours Hours', ['hours' => '4.0']), 'actual' => __(':hours Hours', ['hours' => '3.1']), 'sla_pct' => '95.8%'],
+            ['name' => __('Main Bandwidth & Core Line Outage'), 'target' => __(':hours Hours', ['hours' => '2.0']), 'actual' => __(':hours Hours', ['hours' => '1.5']), 'sla_pct' => '98.4%'],
+            ['name' => __('PPPoE & Account Login Issues'), 'target' => __(':hours Hours', ['hours' => '2.0']), 'actual' => __(':hours Hours', ['hours' => '1.2']), 'sla_pct' => '99.1%'],
+            ['name' => __('Slow Internet & High Ping'), 'target' => __(':hours Hours', ['hours' => '6.0']), 'actual' => __(':hours Hours', ['hours' => '5.2']), 'sla_pct' => '93.6%'],
+            ['name' => __('Billing & Payment Inquiries'), 'target' => __(':hours Hours', ['hours' => '12.0']), 'actual' => __(':hours Hours', ['hours' => '4.8']), 'sla_pct' => '99.5%'],
         ];
 
-        return view('tenant.tickets.sla_print', compact('tenant', 'scorecards', 'categoryBreakdown', 'period'));
+        return view('tenant.tickets.sla_print', compact('tenant', 'currencySymbol', 'scorecards', 'categoryBreakdown', 'period'));
     }
 
     /**
@@ -348,22 +351,22 @@ class TenantSlaAnalyticsController extends Controller
 
             // Header Block
             fputcsv($handle, [$tenant->company_name ?? $tenant->name]);
-            fputcsv($handle, ['SLA & ENGINEERING PERFORMANCE SCORECARD AUDIT']);
-            fputcsv($handle, ['Generated At', date('d-M-Y h:i:s A')]);
+            fputcsv($handle, [__('SLA & ENGINEERING PERFORMANCE SCORECARD AUDIT')]);
+            fputcsv($handle, [__('Generated At'), now()->translatedFormat('d-M-Y h:i:s A')]);
             fputcsv($handle, []);
 
             // Column Headers
             fputcsv($handle, [
-                'SL',
-                'Staff / Engineer Name',
-                'Role / Designation',
-                'Tasks Assigned',
-                'Tasks Resolved',
-                'SLA Breached',
-                'Avg Resolution Time (Hours)',
-                'SLA Compliance Rate (%)',
-                'CSAT Rating (/5.0)',
-                'Performance Grade',
+                __('SL'),
+                __('Staff / Engineer Name'),
+                __('Role / Designation'),
+                __('Tasks Assigned'),
+                __('Tasks Resolved'),
+                __('SLA Breached'),
+                __('Avg Resolution Time (Hours)'),
+                __('SLA Compliance Rate (%)'),
+                __('CSAT Rating (/5.0)'),
+                __('Performance Grade'),
             ]);
 
             foreach ($engineers as $idx => $eng) {
@@ -374,7 +377,7 @@ class TenantSlaAnalyticsController extends Controller
                 fputcsv($handle, [
                     $idx + 1,
                     $eng->name,
-                    ucwords(str_replace('_', ' ', $eng->role ?? 'Field Engineer')),
+                    $eng->role ? __(ucwords(str_replace('_', ' ', $eng->role))) : __('Field Engineer'),
                     $totalAssigned,
                     $totalDone,
                     $totalAssigned - $totalDone,

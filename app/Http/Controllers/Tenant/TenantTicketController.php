@@ -28,7 +28,7 @@ class TenantTicketController extends Controller
         $tenant = $tenantId ? Tenant::find($tenantId) : (auth()->user()?->tenant ?? Tenant::first());
 
         if (!$tenant) {
-            abort(403, 'Tenant context not found. Please log in.');
+            abort(403, __('Tenant context not found. Please log in.'));
         }
 
         return $tenant;
@@ -106,8 +106,11 @@ class TenantTicketController extends Controller
             'closed' => $closedTickets,
         ];
 
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
+
         return view('tenant.tickets.index', compact(
             'tenant',
+            'currencySymbol',
             'tickets',
             'stats',
             'department',
@@ -124,7 +127,8 @@ class TenantTicketController extends Controller
     public function create(): View
     {
         $tenant = $this->getTenant();
-        return view('tenant.tickets.create', compact('tenant'));
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
+        return view('tenant.tickets.create', compact('tenant', 'currencySymbol'));
     }
 
     /**
@@ -141,6 +145,16 @@ class TenantTicketController extends Controller
             'priority' => 'required|in:low,medium,high,urgent',
             'message' => 'required|string',
             'attachments.*' => 'nullable|file|max:10240', // 10MB max
+        ], [
+            'subject.required' => __('Please enter a ticket subject.'),
+            'subject.max' => __('Subject may not be greater than 255 characters.'),
+            'department.required' => __('Please select a department.'),
+            'department.in' => __('Selected department is invalid.'),
+            'priority.required' => __('Please select a priority level.'),
+            'priority.in' => __('Selected priority is invalid.'),
+            'message.required' => __('Please enter a detailed message.'),
+            'attachments.*.file' => __('Each attachment must be a valid file.'),
+            'attachments.*.max' => __('Each attachment may not be larger than 10MB.'),
         ]);
 
         DB::beginTransaction();
@@ -197,10 +211,10 @@ class TenantTicketController extends Controller
 
             DB::commit();
 
-            return redirect()->route('tenant.tickets.show', $ticket->id)->with('success', "Support ticket {$ticketNumber} has been created successfully. Our team will review and reply shortly.");
+            return redirect()->route('tenant.tickets.show', $ticket->id)->with('success', __('Support ticket :number has been created successfully. Our team will review and reply shortly.', ['number' => $ticketNumber]));
         } catch (\Throwable $e) {
             DB::rollBack();
-            return back()->withInput()->with('error', 'Failed to create ticket: ' . $e->getMessage());
+            return back()->withInput()->with('error', __('Failed to create ticket: :error', ['error' => $e->getMessage()]));
         }
     }
 
@@ -215,11 +229,11 @@ class TenantTicketController extends Controller
 
         // Security check
         if ($ticket->tenant_id != $tenantId && !$authUser?->isOwner()) {
-            abort(403, 'Unauthorized access to this ticket.');
+            abort(403, __('Unauthorized access to this ticket.'));
         }
 
         if ($authUser && ($authUser->isCollector() || $authUser->isTechnician()) && $ticket->user_id !== $authUser->id) {
-            abort(403, 'You can only access support tickets opened by you.');
+            abort(403, __('You can only access support tickets opened by you.'));
         }
 
         $ticket->load([
@@ -228,7 +242,9 @@ class TenantTicketController extends Controller
             'publicMessages.attachments'
         ]);
 
-        return view('tenant.tickets.show', compact('tenant', 'ticket'));
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
+
+        return view('tenant.tickets.show', compact('tenant', 'currencySymbol', 'ticket'));
     }
 
     /**
@@ -241,16 +257,20 @@ class TenantTicketController extends Controller
         $authUser = auth()->user();
 
         if ($ticket->tenant_id != $tenantId && !$authUser?->isOwner()) {
-            abort(403, 'Unauthorized access to this ticket.');
+            abort(403, __('Unauthorized access to this ticket.'));
         }
 
         if ($authUser && ($authUser->isCollector() || $authUser->isTechnician()) && $ticket->user_id !== $authUser->id) {
-            abort(403, 'You can only access support tickets opened by you.');
+            abort(403, __('You can only access support tickets opened by you.'));
         }
 
         $request->validate([
             'message' => 'required|string',
             'attachments.*' => 'nullable|file|max:10240',
+        ], [
+            'message.required' => __('Please enter your reply message.'),
+            'attachments.*.file' => __('Each attachment must be a valid file.'),
+            'attachments.*.max' => __('Each attachment may not be larger than 10MB.'),
         ]);
 
         DB::beginTransaction();
@@ -299,10 +319,10 @@ class TenantTicketController extends Controller
                     try {
                         Notification::send($resellerUsers, new TicketActivityNotification(
                             $ticket,
-                            "Reply on Ticket #{$ticket->ticket_number}",
-                            "Support Desk replied: " . Str::limit($request->message, 100),
+                            __('Reply on Ticket #:number', ['number' => $ticket->ticket_number]),
+                            __('Support Desk replied: :message', ['message' => Str::limit($request->message, 100)]),
                             'ticket_reply',
-                            auth()->user()?->name ?? 'Host ISP Support'
+                            auth()->user()?->name ?? __('Host ISP Support')
                         ));
                     } catch (\Throwable $ne) {
                         // Fail gracefully
@@ -322,10 +342,10 @@ class TenantTicketController extends Controller
 
             DB::commit();
 
-            return back()->with('success', 'Your reply has been submitted successfully.');
+            return back()->with('success', __('Your reply has been submitted successfully.'));
         } catch (\Throwable $e) {
             DB::rollBack();
-            return back()->with('error', 'Failed to send reply: ' . $e->getMessage());
+            return back()->with('error', __('Failed to send reply: :error', ['error' => $e->getMessage()]));
         }
     }
 
@@ -339,7 +359,7 @@ class TenantTicketController extends Controller
         $ticket = SupportTicket::where('tenant_id', $tenant->id)->findOrFail($id);
 
         if ($authUser && ($authUser->isCollector() || $authUser->isTechnician()) && $ticket->user_id !== $authUser->id) {
-            abort(403, 'You can only close support tickets opened by you.');
+            abort(403, __('You can only close support tickets opened by you.'));
         }
 
         $ticket->status = 'closed';
@@ -361,10 +381,10 @@ class TenantTicketController extends Controller
                 try {
                     Notification::send($resellerUsers, new TicketActivityNotification(
                         $ticket,
-                        "Ticket #{$ticket->ticket_number} Closed",
-                        "Support Desk marked ticket '{$ticket->subject}' as closed.",
+                        __('Ticket #:number Closed', ['number' => $ticket->ticket_number]),
+                        __('Support Desk marked ticket ":subject" as closed.', ['subject' => $ticket->subject]),
                         'ticket_closed',
-                        auth()->user()?->name ?? 'Host ISP Support'
+                        auth()->user()?->name ?? __('Host ISP Support')
                     ));
                 } catch (\Throwable $ne) {
                     // Fail gracefully
@@ -375,11 +395,11 @@ class TenantTicketController extends Controller
         if ($request->wantsJson() || $request->ajax() || str_contains($request->header('Accept', ''), 'json')) {
             return response()->json([
                 'success' => true,
-                'message' => "Ticket {$ticket->ticket_number} has been closed.",
+                'message' => __('Ticket :number has been closed.', ['number' => $ticket->ticket_number]),
             ]);
         }
 
-        return back()->with('success', "Ticket {$ticket->ticket_number} has been closed.");
+        return back()->with('success', __('Ticket :number has been closed.', ['number' => $ticket->ticket_number]));
     }
 
     /**
@@ -392,7 +412,7 @@ class TenantTicketController extends Controller
         $ticket = SupportTicket::where('tenant_id', $tenant->id)->findOrFail($id);
 
         if ($authUser && ($authUser->isCollector() || $authUser->isTechnician()) && $ticket->user_id !== $authUser->id) {
-            abort(403, 'You can only reopen support tickets opened by you.');
+            abort(403, __('You can only reopen support tickets opened by you.'));
         }
 
         $ticket->status = 'open';
@@ -414,10 +434,10 @@ class TenantTicketController extends Controller
                 try {
                     Notification::send($resellerUsers, new TicketActivityNotification(
                         $ticket,
-                        "Ticket #{$ticket->ticket_number} Reopened",
-                        "Support Desk reopened ticket '{$ticket->subject}'.",
+                        __('Ticket #:number Reopened', ['number' => $ticket->ticket_number]),
+                        __('Support Desk reopened ticket ":subject".', ['subject' => $ticket->subject]),
                         'ticket_reopened',
-                        auth()->user()?->name ?? 'Host ISP Support'
+                        auth()->user()?->name ?? __('Host ISP Support')
                     ));
                 } catch (\Throwable $ne) {
                     // Fail gracefully
@@ -428,11 +448,11 @@ class TenantTicketController extends Controller
         if ($request->wantsJson() || $request->ajax() || str_contains($request->header('Accept', ''), 'json')) {
             return response()->json([
                 'success' => true,
-                'message' => "Ticket {$ticket->ticket_number} has been reopened.",
+                'message' => __('Ticket :number has been reopened.', ['number' => $ticket->ticket_number]),
             ]);
         }
 
-        return back()->with('success', "Ticket {$ticket->ticket_number} has been reopened.");
+        return back()->with('success', __('Ticket :number has been reopened.', ['number' => $ticket->ticket_number]));
     }
 
     /**
@@ -448,10 +468,10 @@ class TenantTicketController extends Controller
             if ($request->wantsJson() || $request->ajax() || str_contains($request->header('Accept', ''), 'json')) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Unauthorized: Only Super Admin / ISP Admin can delete support tickets.',
+                    'message' => __('Unauthorized: Only Super Admin / ISP Admin can delete support tickets.'),
                 ], 403);
             }
-            abort(403, 'Unauthorized: Only Super Admin / ISP Admin can delete support tickets.');
+            abort(403, __('Unauthorized: Only Super Admin / ISP Admin can delete support tickets.'));
         }
 
         $ticket = SupportTicket::where('tenant_id', $tenant->id)->findOrFail($id);
@@ -476,20 +496,20 @@ class TenantTicketController extends Controller
             if ($request->wantsJson() || $request->ajax() || str_contains($request->header('Accept', ''), 'json')) {
                 return response()->json([
                     'success' => true,
-                    'message' => "Ticket #{$ticketNumber} deleted successfully.",
+                    'message' => __('Ticket #:number deleted successfully.', ['number' => $ticketNumber]),
                 ]);
             }
 
-            return redirect()->route('tenant.tickets.index')->with('success', "Ticket #{$ticketNumber} deleted successfully.");
+            return redirect()->route('tenant.tickets.index')->with('success', __('Ticket #:number deleted successfully.', ['number' => $ticketNumber]));
         } catch (\Throwable $e) {
             DB::rollBack();
             if ($request->wantsJson() || $request->ajax() || str_contains($request->header('Accept', ''), 'json')) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Failed to delete ticket: ' . $e->getMessage(),
+                    'message' => __('Failed to delete ticket: :error', ['error' => $e->getMessage()]),
                 ], 500);
             }
-            return back()->with('error', 'Failed to delete ticket: ' . $e->getMessage());
+            return back()->with('error', __('Failed to delete ticket: :error', ['error' => $e->getMessage()]));
         }
     }
 }

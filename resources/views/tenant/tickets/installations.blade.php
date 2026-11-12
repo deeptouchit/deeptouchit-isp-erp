@@ -1,6 +1,6 @@
 @extends('tenant.layouts.app')
 
-@section('title', 'New Installation Tasks & Provisioning - ' . ($tenant->company_name ?? $tenant->name))
+@section('title', __('New Installation Tasks & Provisioning') . ' - ' . ($tenant->company_name ?? $tenant->name))
 
 @push('styles')
 {{-- Page specific CSS --}}
@@ -15,7 +15,7 @@
             <div class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center text-xs flex-shrink-0">
                 <i class="fas fa-tower-broadcast"></i>
             </div>
-            <h1 class="text-sm font-bold text-slate-800 tracking-tight">New Installation Tasks &amp; Provisioning Pipeline</h1>
+            <h1 class="text-sm font-bold text-slate-800 tracking-tight">{{ __('New Installation Tasks & Provisioning Pipeline') }}</h1>
         </div>
 
         <div class="flex items-center gap-2 flex-wrap flex-shrink-0">
@@ -23,7 +23,7 @@
             <a href="{{ route('tenant.tickets.installations.export', request()->all()) }}" 
                class="h-[34px] bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs px-3 py-0 rounded-lg shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-file-csv text-[11px]"></i>
-                <span>Export CSV</span>
+                <span>{{ __('Export CSV') }}</span>
             </a>
 
             {{-- New Order Primary Button --}}
@@ -31,7 +31,7 @@
                     @click="newOrderModalOpen = true" 
                     class="h-[34px] bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs px-3.5 py-0 rounded-lg shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-plus text-[11px]"></i>
-                <span>New Installation Order</span>
+                <span>{{ __('New Installation Order') }}</span>
             </button>
         </div>
     </div>
@@ -41,7 +41,7 @@
         {{-- Card 1: Total Installation Orders --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Total Orders</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Total Orders') }}</span>
                 <span class="text-[13px] font-bold font-mono text-slate-800 leading-tight block">
                     {{ number_format($stats['total']) }}
                 </span>
@@ -54,7 +54,7 @@
         {{-- Card 2: Feasibility & Port Check --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">1. Feasibility</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('1. Feasibility') }}</span>
                 <span class="text-[13px] font-bold font-mono text-amber-700 leading-tight block">
                     {{ number_format($stats['feasibility']) }}
                 </span>
@@ -67,7 +67,7 @@
         {{-- Card 3: Drop Cable Pulling --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">2. Cable Pulling</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('2. Cable Pulling') }}</span>
                 <span class="text-[13px] font-bold font-mono text-cyan-700 leading-tight block">
                     {{ number_format($stats['cable_pulling']) }}
                 </span>
@@ -80,7 +80,7 @@
         {{-- Card 4: Splicing & Power Test --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">3. Splicing Test</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('3. Splicing Test') }}</span>
                 <span class="text-[13px] font-bold font-mono text-indigo-700 leading-tight block">
                     {{ number_format($stats['splicing']) }}
                 </span>
@@ -93,7 +93,7 @@
         {{-- Card 5: PPPoE / Router Setup --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">4. Router Setup</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('4. Router Setup') }}</span>
                 <span class="text-[13px] font-bold font-mono text-purple-700 leading-tight block">
                     {{ number_format($stats['binding']) }}
                 </span>
@@ -106,7 +106,7 @@
         {{-- Card 6: Activated & Live --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">5. Activated Live</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('5. Activated Live') }}</span>
                 <span class="text-[13px] font-bold font-mono text-emerald-700 leading-tight block">
                     {{ number_format($stats['completed']) }}
                 </span>
@@ -130,7 +130,7 @@
                     <input type="text" 
                            name="search" 
                            x-model="searchQuery" 
-                           placeholder="Search by Order #, applicant, phone, address, technician..." 
+                           placeholder="{{ __('Search by Order #, applicant, phone, address, technician...') }}" 
                            class="w-full h-[34px] pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                     <button type="button" 
                             x-show="searchQuery && searchQuery.length > 0" 
@@ -144,20 +144,20 @@
                 {{-- Pipeline Stage Filter --}}
                 <div class="w-full md:w-44 flex-shrink-0">
                     <select name="stage" class="w-full h-[34px] bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                        <option value="all">All Pipeline Stages</option>
-                        <option value="feasibility_check" {{ $stage === 'feasibility_check' ? 'selected' : '' }}>1. Feasibility Check</option>
-                        <option value="cable_pulling" {{ $stage === 'cable_pulling' ? 'selected' : '' }}>2. Drop Cable Pulling</option>
-                        <option value="splicing_power_test" {{ $stage === 'splicing_power_test' ? 'selected' : '' }}>3. Splicing &amp; Power</option>
-                        <option value="mikrotik_binding" {{ $stage === 'mikrotik_binding' ? 'selected' : '' }}>4. PPPoE / Router Setup</option>
-                        <option value="active_completed" {{ $stage === 'active_completed' ? 'selected' : '' }}>5. Activated &amp; Live</option>
-                        <option value="cancelled" {{ $stage === 'cancelled' ? 'selected' : '' }}>Cancelled Order</option>
+                        <option value="all">{{ __('All Pipeline Stages') }}</option>
+                        <option value="feasibility_check" {{ $stage === 'feasibility_check' ? 'selected' : '' }}>{{ __('1. Feasibility Check') }}</option>
+                        <option value="cable_pulling" {{ $stage === 'cable_pulling' ? 'selected' : '' }}>{{ __('2. Drop Cable Pulling') }}</option>
+                        <option value="splicing_power_test" {{ $stage === 'splicing_power_test' ? 'selected' : '' }}>{{ __('3. Splicing & Power') }}</option>
+                        <option value="mikrotik_binding" {{ $stage === 'mikrotik_binding' ? 'selected' : '' }}>{{ __('4. PPPoE / Router Setup') }}</option>
+                        <option value="active_completed" {{ $stage === 'active_completed' ? 'selected' : '' }}>{{ __('5. Activated & Live') }}</option>
+                        <option value="cancelled" {{ $stage === 'cancelled' ? 'selected' : '' }}>{{ __('Cancelled Order') }}</option>
                     </select>
                 </div>
 
                 {{-- Coverage Area Filter --}}
                 <div class="w-full md:w-36 flex-shrink-0">
                     <select name="zone_id" class="w-full h-[34px] bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                        <option value="all">All Coverage Areas</option>
+                        <option value="all">{{ __('All Coverage Areas') }}</option>
                         @foreach($zones as $z)
                             <option value="{{ $z->id }}" {{ (string)$zoneId === (string)$z->id ? 'selected' : '' }}>{{ $z->name }}</option>
                         @endforeach
@@ -167,13 +167,13 @@
                 {{-- Per Page Selector --}}
                 <div class="w-full md:w-28 flex-shrink-0">
                     <select name="per_page" class="w-full h-[34px] bg-slate-50 border border-slate-200 rounded-lg text-xs px-2 text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                        <option value="15" {{ $perPage == 15 ? 'selected' : '' }}>15 / page</option>
-                        <option value="20" {{ $perPage == 20 ? 'selected' : '' }}>20 / page</option>
-                        <option value="30" {{ $perPage == 30 ? 'selected' : '' }}>30 / page</option>
-                        <option value="50" {{ $perPage == 50 ? 'selected' : '' }}>50 / page</option>
-                        <option value="100" {{ $perPage == 100 ? 'selected' : '' }}>100 / page</option>
-                        <option value="250" {{ $perPage == 250 ? 'selected' : '' }}>250 / page</option>
-                        <option value="500" {{ $perPage == 500 ? 'selected' : '' }}>500 / page</option>
+                        <option value="15" {{ $perPage == 15 ? 'selected' : '' }}>{{ __(':count / page', ['count' => 15]) }}</option>
+                        <option value="20" {{ $perPage == 20 ? 'selected' : '' }}>{{ __(':count / page', ['count' => 20]) }}</option>
+                        <option value="30" {{ $perPage == 30 ? 'selected' : '' }}>{{ __(':count / page', ['count' => 30]) }}</option>
+                        <option value="50" {{ $perPage == 50 ? 'selected' : '' }}>{{ __(':count / page', ['count' => 50]) }}</option>
+                        <option value="100" {{ $perPage == 100 ? 'selected' : '' }}>{{ __(':count / page', ['count' => 100]) }}</option>
+                        <option value="250" {{ $perPage == 250 ? 'selected' : '' }}>{{ __(':count / page', ['count' => 250]) }}</option>
+                        <option value="500" {{ $perPage == 500 ? 'selected' : '' }}>{{ __(':count / page', ['count' => 500]) }}</option>
                     </select>
                 </div>
 
@@ -183,7 +183,7 @@
                         class="h-[34px] py-0 px-2.5 rounded-lg border border-slate-200/90 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold flex items-center justify-between gap-1.5 transition flex-shrink-0 cursor-pointer">
                     <span class="flex items-center gap-1.5">
                         <i class="fas fa-sliders-h text-[11px] text-slate-500"></i>
-                        <span>More Filters</span>
+                        <span>{{ __('More Filters') }}</span>
                         @if($activeMoreCount > 0)
                             <span class="px-1.5 py-0.2 bg-cyan-600 text-white rounded-full text-[10px] font-bold">{{ $activeMoreCount }}</span>
                         @endif
@@ -195,15 +195,15 @@
                 <div class="flex items-center gap-1.5 flex-shrink-0 md:ml-auto">
                     <button type="submit" 
                             class="h-[34px] bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-0 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" 
-                            title="Apply Filters">
+                            title="{{ __('Apply Filters') }}">
                         <i class="fas fa-filter text-[10px]"></i>
-                        <span>Filter</span>
+                        <span>{{ __('Filter') }}</span>
                     </button>
                     <a href="{{ route('tenant.tickets.installations') }}" 
                        class="h-[34px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-0 px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer" 
-                       title="Reset Filters">
+                       title="{{ __('Reset Filters') }}">
                         <i class="fas fa-rotate-left text-[10px]"></i>
-                        <span>Reset</span>
+                        <span>{{ __('Reset') }}</span>
                     </a>
                 </div>
             </div>
@@ -213,7 +213,7 @@
                 {{-- Technician Filter --}}
                 <div class="w-full sm:w-48">
                     <select name="technician_id" class="w-full h-[34px] bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                        <option value="all">All Technicians</option>
+                        <option value="all">{{ __('All Technicians') }}</option>
                         @foreach($technicians as $tech)
                             <option value="{{ $tech->id }}" {{ (string)$technicianId === (string)$tech->id ? 'selected' : '' }}>{{ $tech->name }}</option>
                         @endforeach
@@ -223,7 +223,7 @@
                 {{-- Package Plan Filter --}}
                 <div class="w-full sm:w-48">
                     <select name="package_id" class="w-full h-[34px] bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                        <option value="all">All Internet Packages</option>
+                        <option value="all">{{ __('All Internet Packages') }}</option>
                         @foreach($packages as $pkg)
                             <option value="{{ $pkg->id }}" {{ (string)$packageId === (string)$pkg->id ? 'selected' : '' }}>{{ $pkg->name }}</option>
                         @endforeach
@@ -233,12 +233,12 @@
                 {{-- Pipeline Status Filter --}}
                 <div class="w-full sm:w-40">
                     <select name="status" class="w-full h-[34px] bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                        <option value="all" {{ $status === 'all' ? 'selected' : '' }}>All Statuses</option>
-                        <option value="pending" {{ $status === 'pending' ? 'selected' : '' }}>Pending</option>
-                        <option value="scheduled" {{ $status === 'scheduled' ? 'selected' : '' }}>Scheduled</option>
-                        <option value="in_progress" {{ $status === 'in_progress' ? 'selected' : '' }}>In Progress</option>
-                        <option value="completed" {{ $status === 'completed' ? 'selected' : '' }}>Completed</option>
-                        <option value="cancelled" {{ $status === 'cancelled' ? 'selected' : '' }}>Cancelled</option>
+                        <option value="all" {{ $status === 'all' ? 'selected' : '' }}>{{ __('All Statuses') }}</option>
+                        <option value="pending" {{ $status === 'pending' ? 'selected' : '' }}>{{ __('Pending') }}</option>
+                        <option value="scheduled" {{ $status === 'scheduled' ? 'selected' : '' }}>{{ __('Scheduled') }}</option>
+                        <option value="in_progress" {{ $status === 'in_progress' ? 'selected' : '' }}>{{ __('In Progress') }}</option>
+                        <option value="completed" {{ $status === 'completed' ? 'selected' : '' }}>{{ __('Completed') }}</option>
+                        <option value="cancelled" {{ $status === 'cancelled' ? 'selected' : '' }}>{{ __('Cancelled') }}</option>
                     </select>
                 </div>
             </div>
@@ -251,18 +251,29 @@
             <table class="saas-table">
                 <thead>
                     <tr>
-                        <th class="w-10 text-center font-semibold">#</th>
-                        <th class="w-28 text-center font-semibold">Order ID</th>
-                        <th class="text-center font-semibold">Subscriber &amp; Location</th>
-                        <th class="text-center font-semibold">Package &amp; Zone</th>
-                        <th class="text-center font-semibold">Field Technician</th>
-                        <th class="text-center font-semibold">Pipeline Stage</th>
-                        <th class="text-center font-semibold">Fee / Advance</th>
-                        <th class="w-14 text-center font-semibold no-sort">Action</th>
+                        <th class="w-10 text-center font-semibold">{{ __('#') }}</th>
+                        <th class="w-28 text-center font-semibold">{{ __('Order ID') }}</th>
+                        <th class="text-center font-semibold">{{ __('Subscriber & Location') }}</th>
+                        <th class="text-center font-semibold">{{ __('Package & Zone') }}</th>
+                        <th class="text-center font-semibold">{{ __('Field Technician') }}</th>
+                        <th class="text-center font-semibold">{{ __('Pipeline Stage') }}</th>
+                        <th class="text-center font-semibold">{{ __('Fee / Advance') }}</th>
+                        <th class="w-14 text-center font-semibold no-sort">{{ __('Action') }}</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($tasks as $idx => $t)
+                        @php
+                            $stageLabel = match ($t->installation_stage) {
+                                'feasibility_check' => __('1. Feasibility & Port Check'),
+                                'cable_pulling' => __('2. Drop Cable Pulling'),
+                                'splicing_power_test' => __('3. Splicing & Power Test'),
+                                'mikrotik_binding' => __('4. Router / PPPoE Binding'),
+                                'active_completed' => __('5. Activated & Live'),
+                                'cancelled' => __('Cancelled'),
+                                default => __($t->stage_name),
+                            };
+                        @endphp
                         <tr>
                             {{-- # --}}
                             <td class="text-center text-slate-400 font-mono">{{ $tasks->firstItem() + $idx }}</td>
@@ -285,8 +296,8 @@
                             {{-- Package & Zone --}}
                             <td class="text-left text-slate-700 font-medium whitespace-nowrap">
                                 <div class="flex items-center gap-1.5">
-                                    <span class="font-semibold text-slate-800">{{ $t->package?->name ?? 'Standard Plan' }}</span>
-                                    <span class="text-slate-400 text-[11px]">| {{ $t->coverageZone?->name ?? 'Primary Zone' }}</span>
+                                    <span class="font-semibold text-slate-800">{{ $t->package?->name ?? __('Standard Plan') }}</span>
+                                    <span class="text-slate-400 text-[11px]">| {{ $t->coverageZone?->name ?? __('Primary Zone') }}</span>
                                 </div>
                             </td>
 
@@ -298,14 +309,14 @@
                                         <span>{{ $t->assigned_technician_name }}</span>
                                     </span>
                                 @else
-                                    <span class="text-slate-400 text-xs font-mono">Unassigned</span>
+                                    <span class="text-slate-400 text-xs font-mono">{{ __('Unassigned') }}</span>
                                 @endif
                             </td>
 
                             {{-- Pipeline Stage Badge --}}
                             <td class="text-center whitespace-nowrap">
                                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border {{ $t->stage_badge_color }}">
-                                    <span>{{ $t->stage_name }}</span>
+                                    <span>{{ $stageLabel }}</span>
                                 </span>
                             </td>
 
@@ -313,7 +324,7 @@
                             <td class="text-right font-mono text-xs whitespace-nowrap">
                                 <span class="text-slate-800 font-bold">@currency($t->connection_fee)</span>
                                 @if($t->advance_payment > 0)
-                                    <span class="text-[10px] text-emerald-600 block">(Adv: @currency($t->advance_payment))</span>
+                                    <span class="text-[10px] text-emerald-600 block">({{ __('Adv') }}: @currency($t->advance_payment))</span>
                                 @endif
                             </td>
 
@@ -322,7 +333,7 @@
                                 <button type="button" 
                                         @click="toggleMenu(@js($t), $event)"
                                         class="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
-                                        title="Actions">
+                                        title="{{ __('Actions') }}">
                                     <i class="fas fa-ellipsis-v text-[10px]"></i>
                                 </button>
                             </td>
@@ -335,14 +346,14 @@
                                         <i class="fas fa-tower-broadcast"></i>
                                     </div>
                                     <div class="space-y-0.5">
-                                        <span class="text-xs font-semibold text-slate-600 block">No installation orders found</span>
-                                        <span class="text-[11px] text-slate-400 block">Create a new installation order to schedule drop cable pulling, optical splicing, and router setup.</span>
+                                        <span class="text-xs font-semibold text-slate-600 block">{{ __('No installation orders found') }}</span>
+                                        <span class="text-[11px] text-slate-400 block">{{ __('Create a new installation order to schedule drop cable pulling, optical splicing, and router setup.') }}</span>
                                     </div>
                                     <button type="button" 
                                             @click="newOrderModalOpen = true" 
                                             class="h-[30px] bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs px-3 py-0 rounded-lg shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer mt-1">
                                         <i class="fas fa-plus text-[10px]"></i>
-                                        <span>New Installation Order</span>
+                                        <span>{{ __('New Installation Order') }}</span>
                                     </button>
                                 </div>
                             </td>
@@ -355,7 +366,7 @@
         @if($tasks->hasPages())
         <div class="px-3.5 py-2 border-t border-slate-200 bg-slate-50/50 flex items-center justify-between">
             <span class="text-[11px] text-slate-500">
-                Showing {{ $tasks->firstItem() }} to {{ $tasks->lastItem() }} of {{ $tasks->total() }} Installation Tasks
+                {{ __('Showing :from to :to of :total Installation Tasks', ['from' => $tasks->firstItem(), 'to' => $tasks->lastItem(), 'total' => $tasks->total()]) }}
             </span>
             <div>
                 {{ $tasks->links() }}
@@ -377,25 +388,25 @@
                     @click="openAdvanceModal(activeMenu); activeMenu = null" 
                     class="w-full flex items-center gap-2 px-3 py-1.5 text-slate-700 hover:bg-slate-50 hover:text-blue-600 font-medium transition cursor-pointer">
                 <i class="fas fa-forward text-blue-600 w-4 text-center text-xs"></i>
-                <span>Advance Pipeline Stage</span>
+                <span>{{ __('Advance Pipeline Stage') }}</span>
             </button>
             <button type="button" 
                     @click="showTaskDetails(activeMenu); activeMenu = null" 
                     class="w-full flex items-center gap-2 px-3 py-1.5 text-slate-700 hover:bg-slate-50 hover:text-cyan-600 font-medium transition cursor-pointer">
                 <i class="fas fa-eye text-cyan-600 w-4 text-center text-xs"></i>
-                <span>View Order Details</span>
+                <span>{{ __('View Order Details') }}</span>
             </button>
             <a :href="`/admin/support/installations/${activeMenu?.id}/print`" 
                target="_blank" 
                class="flex items-center gap-2 px-3 py-1.5 text-slate-700 hover:bg-slate-50 hover:text-indigo-600 font-medium transition cursor-pointer">
                 <i class="fas fa-print text-indigo-600 w-4 text-center text-xs"></i>
-                <span>Print Activation Slip (A4)</span>
+                <span>{{ __('Print Activation Slip (A4)') }}</span>
             </a>
             <button type="button" 
                     @click="copyTaskNumber(activeMenu?.task_number); activeMenu = null" 
                     class="w-full flex items-center gap-2 px-3 py-1.5 text-slate-700 hover:bg-slate-50 font-medium transition cursor-pointer">
                 <i class="fas fa-copy text-slate-500 w-4 text-center text-xs"></i>
-                <span>Copy Order #</span>
+                <span>{{ __('Copy Order #') }}</span>
             </button>
         </div>
 
@@ -406,7 +417,7 @@
                         @click="quickUpdateStageAction(activeMenu?.id, 'active_completed'); activeMenu = null" 
                         class="w-full flex items-center gap-2 px-3 py-1.5 text-slate-700 hover:bg-slate-50 hover:text-emerald-700 font-medium transition cursor-pointer">
                     <i class="fas fa-circle-check text-emerald-600 w-4 text-center text-xs"></i>
-                    <span>Mark Activated &amp; Live</span>
+                    <span>{{ __('Mark Activated & Live') }}</span>
                 </button>
             </template>
             <template x-if="activeMenu?.installation_stage !== 'cancelled' && activeMenu?.installation_stage !== 'active_completed'">
@@ -414,7 +425,7 @@
                         @click="quickUpdateStageAction(activeMenu?.id, 'cancelled'); activeMenu = null" 
                         class="w-full flex items-center gap-2 px-3 py-1.5 text-slate-700 hover:bg-slate-50 hover:text-rose-600 font-medium transition cursor-pointer">
                     <i class="fas fa-ban text-rose-500 w-4 text-center text-xs"></i>
-                    <span>Cancel Order</span>
+                    <span>{{ __('Cancel Order') }}</span>
                 </button>
             </template>
         </div>
@@ -426,7 +437,7 @@
                     @click="deleteTaskAction(activeMenu); activeMenu = null" 
                     class="w-full flex items-center gap-2 px-3 py-1.5 text-rose-600 hover:bg-rose-50 hover:text-rose-700 font-medium transition cursor-pointer">
                 <i class="fas fa-trash-alt text-rose-500 w-4 text-center text-xs"></i>
-                <span>Delete Order</span>
+                <span>{{ __('Delete Order') }}</span>
             </button>
         </div>
         @endif
@@ -447,7 +458,7 @@
                         <div class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center text-xs flex-shrink-0">
                             <i class="fas fa-tower-broadcast"></i>
                         </div>
-                        <h4 class="text-xs font-semibold text-slate-800">New Physical Line Installation Order</h4>
+                        <h4 class="text-xs font-semibold text-slate-800">{{ __('New Physical Line Installation Order') }}</h4>
                     </div>
                     <button type="button" @click="newOrderModalOpen = false" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center cursor-pointer">
                         <i class="fas fa-times text-xs"></i>
@@ -458,45 +469,45 @@
                 <div class="p-4 space-y-3 text-xs">
                     <div class="grid grid-cols-2 gap-2.5">
                         <div>
-                            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Subscriber Full Name *</label>
+                            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">{{ __('Subscriber Full Name *') }}</label>
                             <input type="text" 
                                    name="applicant_name" 
                                    required 
-                                   placeholder="e.g. Dr. Shamsul Huda" 
+                                   placeholder="{{ __('e.g. Dr. Shamsul Huda') }}" 
                                    class="w-full h-[34px] bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                         </div>
                         <div>
-                            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Contact Phone *</label>
+                            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">{{ __('Contact Phone *') }}</label>
                             <input type="text" 
                                    name="applicant_phone" 
                                    required 
-                                   placeholder="e.g. 01715889900" 
+                                   placeholder="{{ __('e.g. 01715889900') }}" 
                                    class="w-full h-[34px] bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                         </div>
                     </div>
 
                     <div>
-                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Installation Address *</label>
+                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">{{ __('Installation Address *') }}</label>
                         <input type="text" 
                                name="installation_address" 
                                required 
-                               placeholder="House 14, Road 7, Sector 3, Uttara, Dhaka" 
+                               placeholder="{{ __('House 14, Road 7, Sector 3, Uttara, Dhaka') }}" 
                                class="w-full h-[34px] bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                     </div>
 
                     <div class="grid grid-cols-2 gap-2.5">
                         <div>
-                            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Internet Package *</label>
+                            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">{{ __('Internet Package *') }}</label>
                             <select name="package_id" required class="w-full h-[34px] bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                                 @foreach($packages as $p)
-                                    <option value="{{ $p->id }}">{{ $p->name }} ({{ $p->download_speed }} Mbps - {{ $currencySymbol ?? '৳' }}{{ number_format($p->price) }})</option>
+                                    <option value="{{ $p->id }}">{{ $p->name }} ({{ __(':speed Mbps', ['speed' => $p->download_speed]) }} - @currency($p->price))</option>
                                 @endforeach
                             </select>
                         </div>
                         <div>
-                            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Coverage Area</label>
+                            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">{{ __('Coverage Area') }}</label>
                             <select name="zone_id" class="w-full h-[34px] bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                                <option value="">Select Zone</option>
+                                <option value="">{{ __('Select Zone') }}</option>
                                 @foreach($zones as $z)
                                     <option value="{{ $z->id }}">{{ $z->name }}</option>
                                 @endforeach
@@ -506,16 +517,16 @@
 
                     <div class="grid grid-cols-2 gap-2.5">
                         <div>
-                            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Assign Technician</label>
+                            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">{{ __('Assign Technician') }}</label>
                             <select name="assigned_technician_id" class="w-full h-[34px] bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                                <option value="">Select Technician</option>
+                                <option value="">{{ __('Select Technician') }}</option>
                                 @foreach($technicians as $tech)
                                     <option value="{{ $tech->id }}">{{ $tech->name }}</option>
                                 @endforeach
                             </select>
                         </div>
                         <div>
-                            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Scheduled Date &amp; Time</label>
+                            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">{{ __('Scheduled Date & Time') }}</label>
                             <input type="datetime-local" 
                                    name="scheduled_at" 
                                    value="{{ date('Y-m-d\TH:i', strtotime('+2 hours')) }}" 
@@ -525,7 +536,7 @@
 
                     <div class="grid grid-cols-2 gap-2.5">
                         <div>
-                            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Connection Fee ({{ $currencySymbol ?? '৳' }})</label>
+                            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">{{ __('Connection Fee (:currency)', ['currency' => $currencySymbol ?? '৳']) }}</label>
                             <input type="number" 
                                    step="0.01" 
                                    name="connection_fee" 
@@ -533,7 +544,7 @@
                                    class="w-full h-[34px] bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                         </div>
                         <div>
-                            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Advance Payment ({{ $currencySymbol ?? '৳' }})</label>
+                            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">{{ __('Advance Payment (:currency)', ['currency' => $currencySymbol ?? '৳']) }}</label>
                             <input type="number" 
                                    step="0.01" 
                                    name="advance_payment" 
@@ -543,10 +554,10 @@
                     </div>
 
                     <div>
-                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Installation Notes &amp; Routing Remarks</label>
+                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">{{ __('Installation Notes & Routing Remarks') }}</label>
                         <textarea name="remarks" 
                                   rows="2" 
-                                  placeholder="Splitter location, pole position, optical core assignment..." 
+                                  placeholder="{{ __('Splitter location, pole position, optical core assignment...') }}" 
                                   class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs p-2.5 text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition"></textarea>
                     </div>
                 </div>
@@ -554,10 +565,10 @@
                 {{-- Modal Footer --}}
                 <div class="px-4 py-2.5 bg-slate-50/80 border-t border-slate-200 flex items-center justify-end gap-2">
                     <button type="button" @click="newOrderModalOpen = false" class="h-[34px] border border-slate-300 hover:bg-slate-100 text-slate-700 font-semibold text-xs px-3.5 py-0 rounded-lg cursor-pointer transition">
-                        Cancel
+                        {{ __('Cancel') }}
                     </button>
                     <button type="submit" class="h-[34px] bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs px-4 py-0 rounded-lg shadow-xs cursor-pointer transition">
-                        Create Order
+                        {{ __('Create Order') }}
                     </button>
                 </div>
             </form>
@@ -580,7 +591,7 @@
                             <i class="fas fa-forward"></i>
                         </div>
                         <div class="flex items-center gap-2">
-                            <h4 class="text-xs font-semibold text-slate-800">Progress Installation Pipeline</h4>
+                            <h4 class="text-xs font-semibold text-slate-800">{{ __('Progress Installation Pipeline') }}</h4>
                             <span class="text-[10.5px] text-slate-500 font-mono" x-text="selectedTask?.task_number"></span>
                         </div>
                     </div>
@@ -592,64 +603,64 @@
                 {{-- Modal Body --}}
                 <div class="p-4 space-y-3 text-xs">
                     <div>
-                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Set Pipeline Stage *</label>
+                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">{{ __('Set Pipeline Stage *') }}</label>
                         <select name="installation_stage" 
                                 required 
                                 class="w-full h-[34px] bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 text-slate-700 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition" 
                                 :value="selectedTask?.installation_stage">
-                            <option value="feasibility_check">1. Feasibility &amp; Port Check</option>
-                            <option value="cable_pulling">2. Drop Cable Pulling</option>
-                            <option value="splicing_power_test">3. Optical Splicing &amp; Power Test</option>
-                            <option value="mikrotik_binding">4. PPPoE Binding &amp; Router Setup</option>
-                            <option value="active_completed">5. Activated &amp; Live Service</option>
-                            <option value="cancelled">Cancelled Order</option>
+                            <option value="feasibility_check">{{ __('1. Feasibility & Port Check') }}</option>
+                            <option value="cable_pulling">{{ __('2. Drop Cable Pulling') }}</option>
+                            <option value="splicing_power_test">{{ __('3. Optical Splicing & Power Test') }}</option>
+                            <option value="mikrotik_binding">{{ __('4. PPPoE Binding & Router Setup') }}</option>
+                            <option value="active_completed">{{ __('5. Activated & Live Service') }}</option>
+                            <option value="cancelled">{{ __('Cancelled Order') }}</option>
                         </select>
                     </div>
 
                     <div class="grid grid-cols-2 gap-2.5">
                         <div>
-                            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Drop Cable Used (Meters)</label>
+                            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">{{ __('Drop Cable Used (Meters)') }}</label>
                             <input type="number" 
                                    name="cable_length_meters" 
                                    :value="selectedTask?.cable_length_meters" 
-                                   placeholder="e.g. 85" 
+                                   placeholder="{{ __('e.g. 85') }}" 
                                    class="w-full h-[34px] bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                         </div>
                         <div>
-                            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Optical RX Power (dBm)</label>
+                            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">{{ __('Optical RX Power (dBm)') }}</label>
                             <input type="text" 
                                    name="optical_rx_power" 
                                    :value="selectedTask?.optical_rx_power" 
-                                   placeholder="e.g. -18.5 dBm" 
+                                   placeholder="{{ __('e.g. -18.5 dBm') }}" 
                                    class="w-full h-[34px] bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                         </div>
                     </div>
 
                     <div class="grid grid-cols-2 gap-2.5">
                         <div>
-                            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">ONU Model Deployed</label>
+                            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">{{ __('ONU Model Deployed') }}</label>
                             <input type="text" 
                                    name="onu_model" 
                                    :value="selectedTask?.onu_model" 
-                                   placeholder="VSOL V2801SG Gigabit" 
+                                   placeholder="{{ __('VSOL V2801SG Gigabit') }}" 
                                    class="w-full h-[34px] bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                         </div>
                         <div>
-                            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">ONU MAC / PON Serial</label>
+                            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">{{ __('ONU MAC / PON Serial') }}</label>
                             <input type="text" 
                                    name="onu_mac_serial" 
                                    :value="selectedTask?.onu_mac_serial" 
-                                   placeholder="VSOL:88:99:AA:BB:CC" 
+                                   placeholder="{{ __('VSOL:88:99:AA:BB:CC') }}" 
                                    class="w-full h-[34px] bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                         </div>
                     </div>
 
                     <div>
-                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Splitter Location / DP Box</label>
+                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">{{ __('Splitter Location / DP Box') }}</label>
                         <input type="text" 
                                name="splitter_location" 
                                :value="selectedTask?.splitter_location" 
-                               placeholder="DP-Box 4, Pole 12, Banani Road 11" 
+                               placeholder="{{ __('DP-Box 4, Pole 12, Banani Road 11') }}" 
                                class="w-full h-[34px] bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                     </div>
                 </div>
@@ -657,10 +668,10 @@
                 {{-- Modal Footer --}}
                 <div class="px-4 py-2.5 bg-slate-50/80 border-t border-slate-200 flex items-center justify-end gap-2">
                     <button type="button" @click="advanceModalOpen = false" class="h-[34px] border border-slate-300 hover:bg-slate-100 text-slate-700 font-semibold text-xs px-3.5 py-0 rounded-lg cursor-pointer transition">
-                        Cancel
+                        {{ __('Cancel') }}
                     </button>
                     <button type="submit" class="h-[34px] bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs px-4 py-0 rounded-lg shadow-xs cursor-pointer transition">
-                        Update Pipeline Stage
+                        {{ __('Update Pipeline Stage') }}
                     </button>
                 </div>
             </form>
@@ -683,7 +694,7 @@
                     <div class="flex items-center gap-2">
                         <span class="font-mono font-bold text-xs text-blue-700" x-text="selectedTask?.task_number"></span>
                         <span class="text-slate-300">|</span>
-                        <span class="text-xs font-semibold text-slate-800">Connection Summary</span>
+                        <span class="text-xs font-semibold text-slate-800">{{ __('Connection Summary') }}</span>
                     </div>
                 </div>
                 <button type="button" @click="detailsModalOpen = false" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center cursor-pointer">
@@ -694,42 +705,42 @@
             {{-- Modal Body --}}
             <div class="p-4 space-y-3 text-xs">
                 <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200/80">
-                    <span class="text-[10px] text-slate-500 font-semibold uppercase block mb-0.5">Subscriber &amp; Location</span>
+                    <span class="text-[10px] text-slate-500 font-semibold uppercase block mb-0.5">{{ __('Subscriber & Location') }}</span>
                     <p class="font-bold text-slate-900" x-text="selectedTask?.applicant_name"></p>
                     <p class="text-slate-600 text-[11px]" x-text="selectedTask?.installation_address"></p>
-                    <p class="text-indigo-700 font-mono text-[11px] mt-0.5" x-text="'Contact Phone: ' + selectedTask?.applicant_phone"></p>
+                    <p class="text-indigo-700 font-mono text-[11px] mt-0.5">{{ __('Contact Phone:') }} <span x-text="selectedTask?.applicant_phone"></span></p>
                 </div>
 
                 <div class="grid grid-cols-2 gap-2">
                     <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200/80">
-                        <span class="text-[10px] text-slate-500 font-semibold uppercase block">Package Plan</span>
-                        <span class="font-bold text-slate-800" x-text="selectedTask?.package?.name || 'Standard'"></span>
+                        <span class="text-[10px] text-slate-500 font-semibold uppercase block">{{ __('Package Plan') }}</span>
+                        <span class="font-bold text-slate-800" x-text="selectedTask?.package?.name || @js(__('Standard'))"></span>
                     </div>
                     <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200/80">
-                        <span class="text-[10px] text-slate-500 font-semibold uppercase block">Assigned Tech</span>
-                        <span class="font-bold text-slate-800" x-text="selectedTask?.assigned_technician_name || 'Unassigned'"></span>
+                        <span class="text-[10px] text-slate-500 font-semibold uppercase block">{{ __('Assigned Tech') }}</span>
+                        <span class="font-bold text-slate-800" x-text="selectedTask?.assigned_technician_name || @js(__('Unassigned'))"></span>
                     </div>
                     <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200/80">
-                        <span class="text-[10px] text-slate-500 font-semibold uppercase block">Optical RX Signal</span>
-                        <span class="font-mono font-bold text-emerald-700" x-text="selectedTask?.optical_rx_power || 'Pending'"></span>
+                        <span class="text-[10px] text-slate-500 font-semibold uppercase block">{{ __('Optical RX Signal') }}</span>
+                        <span class="font-mono font-bold text-emerald-700" x-text="selectedTask?.optical_rx_power || @js(__('Pending'))"></span>
                     </div>
                     <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200/80">
-                        <span class="text-[10px] text-slate-500 font-semibold uppercase block">Cable Deployed</span>
-                        <span class="font-mono font-bold text-slate-800" x-text="(selectedTask?.cable_length_meters || 0) + ' Meters'"></span>
+                        <span class="text-[10px] text-slate-500 font-semibold uppercase block">{{ __('Cable Deployed') }}</span>
+                        <span class="font-mono font-bold text-slate-800" x-text="@js(__(':length Meters', ['length' => '__LEN__'])).replace('__LEN__', selectedTask?.cable_length_meters || 0)"></span>
                     </div>
                     <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200/80">
-                        <span class="text-[10px] text-slate-500 font-semibold uppercase block">Splitter Location</span>
-                        <span class="font-mono text-slate-800" x-text="selectedTask?.splitter_location || 'N/A'"></span>
+                        <span class="text-[10px] text-slate-500 font-semibold uppercase block">{{ __('Splitter Location') }}</span>
+                        <span class="font-mono text-slate-800" x-text="selectedTask?.splitter_location || @js(__('N/A'))"></span>
                     </div>
                     <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200/80">
-                        <span class="text-[10px] text-slate-500 font-semibold uppercase block">ONU Model / MAC</span>
+                        <span class="text-[10px] text-slate-500 font-semibold uppercase block">{{ __('ONU Model / MAC') }}</span>
                         <span class="font-mono text-slate-800" x-text="(selectedTask?.onu_model || '') + ' ' + (selectedTask?.onu_mac_serial || '')"></span>
                     </div>
                 </div>
 
                 <template x-if="selectedTask?.remarks">
                     <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200/80">
-                        <span class="text-[10px] text-slate-500 font-semibold uppercase block mb-0.5">Routing Remarks</span>
+                        <span class="text-[10px] text-slate-500 font-semibold uppercase block mb-0.5">{{ __('Routing Remarks') }}</span>
                         <p class="text-slate-700" x-text="selectedTask?.remarks"></p>
                     </div>
                 </template>
@@ -738,11 +749,11 @@
             {{-- Modal Footer --}}
             <div class="px-4 py-2.5 bg-slate-50/80 border-t border-slate-200 flex items-center justify-between">
                 <button type="button" @click="detailsModalOpen = false" class="h-[34px] border border-slate-300 hover:bg-slate-100 text-slate-700 font-semibold text-xs px-3.5 py-0 rounded-lg cursor-pointer transition">
-                    Close
+                    {{ __('Close') }}
                 </button>
                 <a :href="`/admin/support/installations/${selectedTask?.id}/print`" target="_blank" class="h-[34px] bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs px-4 py-0 rounded-lg shadow-xs inline-flex items-center gap-1.5 cursor-pointer transition">
                     <i class="fas fa-print text-xs"></i>
-                    <span>Print Activation Slip (A4)</span>
+                    <span>{{ __('Print Activation Slip (A4)') }}</span>
                 </a>
             </div>
         </div>
@@ -805,8 +816,8 @@
                     if (window.Swal) {
                         Swal.fire({
                             icon: 'success',
-                            title: 'Order # Copied',
-                            text: taskNo + ' copied to clipboard',
+                            title: @js(__('Order # Copied')),
+                            text: @js(__(':number copied to clipboard', ['number' => '__NUM__'])).replace('__NUM__', taskNo),
                             toast: true,
                             position: 'top-end',
                             timer: 2000,
@@ -842,14 +853,14 @@
                 if (!task || !task.id) return;
                 if (window.Swal) {
                     Swal.fire({
-                        title: 'Delete Installation Task?',
-                        text: `Are you sure you want to permanently delete order #${task.task_number}? This action cannot be undone.`,
+                        title: @js(__('Delete Installation Task?')),
+                        text: @js(__('Are you sure you want to permanently delete order #:number? This action cannot be undone.', ['number' => '__NUM__'])).replace('__NUM__', task.task_number),
                         icon: 'warning',
                         showCancelButton: true,
                         confirmButtonColor: '#e11d48',
                         cancelButtonColor: '#64748b',
-                        confirmButtonText: 'Yes, Delete Order',
-                        cancelButtonText: 'Cancel'
+                        confirmButtonText: @js(__('Yes, Delete Order')),
+                        cancelButtonText: @js(__('Cancel'))
                     }).then(async (result) => {
                         if (result.isConfirmed) {
                             try {
@@ -865,21 +876,21 @@
                                 if (data.success) {
                                     Swal.fire({
                                         icon: 'success',
-                                        title: 'Deleted!',
+                                        title: @js(__('Deleted!')),
                                         text: data.message,
                                         timer: 1500,
                                         showConfirmButton: false
                                     }).then(() => location.reload());
                                 } else {
-                                    Swal.fire('Error', data.message || 'Could not delete installation order.', 'error');
+                                    Swal.fire(@js(__('Error')), data.message || @js(__('Could not delete installation order.')), 'error');
                                 }
                             } catch (err) {
                                 console.error('Delete error:', err);
-                                Swal.fire('Error', 'An unexpected error occurred while deleting the order.', 'error');
+                                Swal.fire(@js(__('Error')), @js(__('An unexpected error occurred while deleting the order.')), 'error');
                             }
                         }
                     });
-                } else if (confirm(`Are you sure you want to delete order #${task.task_number}?`)) {
+                } else if (confirm(@js(__('Are you sure you want to delete order #:number?', ['number' => '__NUM__'])).replace('__NUM__', task.task_number))) {
                     fetch(`/admin/support/installations/${task.id}`, {
                         method: 'DELETE',
                         headers: {

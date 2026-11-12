@@ -25,7 +25,7 @@ class TenantFieldJobController extends Controller
         $tenant = $tenantId ? Tenant::find($tenantId) : (auth()->user()?->tenant ?? Tenant::first());
 
         if (!$tenant) {
-            abort(403, 'Tenant context not found. Please log in.');
+            abort(403, __('Tenant context not found. Please log in.'));
         }
 
         return $tenant;
@@ -126,8 +126,11 @@ class TenantFieldJobController extends Controller
             'completed' => $completedJobs,
         ];
 
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
+
         return view('tenant.tickets.field_jobs', compact(
             'tenant',
+            'currencySymbol',
             'jobs',
             'stats',
             'technicians',
@@ -162,6 +165,16 @@ class TenantFieldJobController extends Controller
             'assigned_to' => 'nullable|exists:users,id',
             'issue_description' => 'required|string',
             'scheduled_at' => 'nullable|date',
+        ], [], [
+            'job_type' => __('Job Classification'),
+            'customer_id' => __('Subscriber'),
+            'customer_name' => __('Subscriber / Site Name'),
+            'customer_phone' => __('Contact Phone'),
+            'address' => __('Premise Address / Splicing Pole Location'),
+            'priority' => __('Priority Level'),
+            'assigned_to' => __('Assign Technician'),
+            'issue_description' => __('Issue Description & Technical Notes'),
+            'scheduled_at' => __('Scheduled Date & Time'),
         ]);
 
         $customerId = $request->customer_id ? (int)$request->customer_id : null;
@@ -204,7 +217,7 @@ class TenantFieldJobController extends Controller
             'created_by' => auth()->id() ?? 1,
         ]);
 
-        return back()->with('success', "Field job {$jobNumber} has been dispatched successfully.");
+        return back()->with('success', __('Field job :jobNumber has been dispatched successfully.', ['jobNumber' => $jobNumber]));
     }
 
     /**
@@ -216,27 +229,30 @@ class TenantFieldJobController extends Controller
         $authUser = auth()->user();
 
         if (!$authUser || !$authUser->canDeleteTickets()) {
+            $unauthorizedMessage = __('Unauthorized: Only Super Admin / ISP Admin can delete field jobs.');
             if ($request->wantsJson() || $request->ajax() || str_contains($request->header('Accept', ''), 'json')) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Unauthorized: Only Super Admin / ISP Admin can delete field jobs.',
+                    'message' => $unauthorizedMessage,
                 ], 403);
             }
-            abort(403, 'Unauthorized: Only Super Admin / ISP Admin can delete field jobs.');
+            abort(403, $unauthorizedMessage);
         }
 
         $job = TenantFieldJob::where('tenant_id', $tenant->id)->findOrFail($id);
         $jobNo = $job->job_number;
         $job->delete();
 
+        $deletedMessage = __('Field Job #:jobNumber deleted successfully.', ['jobNumber' => $jobNo]);
+
         if ($request->wantsJson() || $request->ajax() || str_contains($request->header('Accept', ''), 'json')) {
             return response()->json([
                 'success' => true,
-                'message' => "Field Job #{$jobNo} deleted successfully.",
+                'message' => $deletedMessage,
             ]);
         }
 
-        return back()->with('success', "Field Job #{$jobNo} deleted successfully.");
+        return back()->with('success', $deletedMessage);
     }
 
     /**
@@ -249,7 +265,13 @@ class TenantFieldJobController extends Controller
 
         $status = $request->input('status');
         if (!in_array($status, ['pending', 'dispatched', 'in_progress', 'completed', 'cancelled'])) {
-            return back()->with('error', 'Invalid job status.');
+            if ($request->wantsJson() || $request->ajax() || str_contains($request->header('Accept', ''), 'json')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => __('Invalid job status.'),
+                ], 422);
+            }
+            return back()->with('error', __('Invalid job status.'));
         }
 
         $job->status = $status;
@@ -264,14 +286,27 @@ class TenantFieldJobController extends Controller
         }
         $job->save();
 
+        $statusLabels = [
+            'pending' => __('Pending'),
+            'dispatched' => __('Dispatched'),
+            'in_progress' => __('In Progress'),
+            'completed' => __('Completed'),
+            'cancelled' => __('Cancelled'),
+        ];
+        $statusLabel = $statusLabels[$status] ?? strtoupper(str_replace('_', ' ', $status));
+        $statusMessage = __('Job :jobNumber status updated to :status.', [
+            'jobNumber' => $job->job_number,
+            'status' => $statusLabel,
+        ]);
+
         if ($request->wantsJson() || $request->ajax() || str_contains($request->header('Accept', ''), 'json')) {
             return response()->json([
                 'success' => true,
-                'message' => "Job {$job->job_number} status updated to " . strtoupper($status) . ".",
+                'message' => $statusMessage,
             ]);
         }
 
-        return back()->with('success', "Job {$job->job_number} status updated to " . strtoupper($status) . ".");
+        return back()->with('success', $statusMessage);
     }
 
     /**
@@ -280,11 +315,12 @@ class TenantFieldJobController extends Controller
     public function printJobSheet(Request $request, $id): View
     {
         $tenant = $this->getTenant();
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
         $job = TenantFieldJob::where('tenant_id', $tenant->id)
             ->with(['customer', 'coverageZone', 'technician'])
             ->findOrFail($id);
 
-        return view('tenant.tickets.field_job_print', compact('tenant', 'job'));
+        return view('tenant.tickets.field_job_print', compact('tenant', 'currencySymbol', 'job'));
     }
 
     /**
@@ -308,49 +344,73 @@ class TenantFieldJobController extends Controller
             'Expires' => '0',
         ];
 
-        return response()->stream(function () use ($jobs, $tenant) {
+        $jobTypeLabels = [
+            'fiber_splicing' => __('Fiber Splicing & Optical Link'),
+            'onu_replacement' => __('ONU Replacement / Upgrade'),
+            'home_visit' => __('Home Visit & Diagnostics'),
+            'cable_repair' => __('Drop Cable Re-pulling / Repair'),
+            'pop_maintenance' => __('POP Node & Splitter Maintenance'),
+            'new_connection' => __('New Physical Line Installation'),
+        ];
+
+        $priorityLabels = [
+            'urgent' => __('Urgent'),
+            'high' => __('High'),
+            'medium' => __('Medium'),
+            'low' => __('Low'),
+        ];
+
+        $statusLabels = [
+            'pending' => __('Pending'),
+            'dispatched' => __('Dispatched'),
+            'in_progress' => __('In Progress'),
+            'completed' => __('Completed'),
+            'cancelled' => __('Cancelled'),
+        ];
+
+        return response()->stream(function () use ($jobs, $tenant, $jobTypeLabels, $priorityLabels, $statusLabels) {
             $handle = fopen('php://output', 'w');
             fprintf($handle, chr(0xEF) . chr(0xBB) . chr(0xBF)); // UTF-8 BOM
 
             // Header Block
             fputcsv($handle, [$tenant->company_name ?? $tenant->name]);
-            fputcsv($handle, ['FIELD TECHNICIAN DISPATCH & JOB ROSTER REPORT']);
-            fputcsv($handle, ['Generated At', date('d-M-Y h:i:s A')]);
+            fputcsv($handle, [__('FIELD TECHNICIAN DISPATCH & JOB ROSTER REPORT')]);
+            fputcsv($handle, [__('Generated At'), now()->translatedFormat('d-M-Y h:i:s A')]);
             fputcsv($handle, []);
 
             // Column Headers
             fputcsv($handle, [
-                'SL',
-                'Job Number',
-                'Job Type',
-                'Customer Name',
-                'Customer Phone',
-                'Address / Location',
-                'Assigned Technician',
-                'Priority',
-                'Status',
-                'Scheduled Date',
-                'Completion Date',
-                'Optical RX Before',
-                'Optical RX After',
-                'Issue Description',
+                __('SL'),
+                __('Job Number'),
+                __('Job Type'),
+                __('Customer Name'),
+                __('Customer Phone'),
+                __('Address / Location'),
+                __('Assigned Technician'),
+                __('Priority'),
+                __('Status'),
+                __('Scheduled Date'),
+                __('Completion Date'),
+                __('Optical RX Before'),
+                __('Optical RX After'),
+                __('Issue Description'),
             ]);
 
             foreach ($jobs as $idx => $j) {
                 fputcsv($handle, [
                     $idx + 1,
                     $j->job_number,
-                    $j->job_type_name,
+                    $jobTypeLabels[$j->job_type] ?? __($j->job_type_name),
                     $j->customer_name,
                     $j->customer_phone,
                     $j->address,
-                    $j->assigned_technician_name ?: 'Unassigned',
-                    strtoupper($j->priority),
-                    strtoupper($j->status),
-                    $j->scheduled_at ? $j->scheduled_at->format('d-M-Y h:i A') : 'N/A',
-                    $j->completed_at ? $j->completed_at->format('d-M-Y h:i A') : 'N/A',
-                    $j->optical_rx_before ?: 'N/A',
-                    $j->optical_rx_after ?: 'N/A',
+                    $j->assigned_technician_name ?: __('Unassigned'),
+                    $priorityLabels[$j->priority] ?? strtoupper($j->priority),
+                    $statusLabels[$j->status] ?? strtoupper($j->status),
+                    $j->scheduled_at ? $j->scheduled_at->translatedFormat('d-M-Y h:i A') : __('N/A'),
+                    $j->completed_at ? $j->completed_at->translatedFormat('d-M-Y h:i A') : __('N/A'),
+                    $j->optical_rx_before ?: __('N/A'),
+                    $j->optical_rx_after ?: __('N/A'),
                     $j->issue_description,
                 ]);
             }

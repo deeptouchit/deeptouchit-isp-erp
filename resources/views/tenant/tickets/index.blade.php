@@ -1,6 +1,6 @@
 @extends('tenant.layouts.app')
 
-@section('title', 'Helpdesk & Support Inquiries - ' . ($tenant->company_name ?? $tenant->name))
+@section('title', __('Helpdesk & Support Inquiries') . ' - ' . ($tenant->company_name ?? $tenant->name))
 
 @push('styles')
 {{-- Page Specific Styles --}}
@@ -15,7 +15,7 @@
             <div class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center text-xs flex-shrink-0">
                 <i class="fas fa-headset"></i>
             </div>
-            <h1 class="text-sm font-bold text-slate-800 tracking-tight">Helpdesk &amp; Technical Support Tickets</h1>
+            <h1 class="text-sm font-bold text-slate-800 tracking-tight">{{ __('Helpdesk & Technical Support Tickets') }}</h1>
         </div>
 
         <div class="flex items-center gap-2 flex-wrap">
@@ -23,14 +23,14 @@
             <a href="{{ route('tenant.tickets.index') }}" 
                class="h-[34px] bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 font-medium text-xs px-3 py-0 rounded-lg shadow-2xs transition inline-flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-rotate text-slate-500 text-[11px]"></i>
-                <span>Refresh</span>
+                <span>{{ __('Refresh') }}</span>
             </a>
 
             {{-- Create Ticket Primary Button --}}
             <a href="{{ route('tenant.tickets.create') }}" 
                class="h-[34px] bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs px-3.5 py-0 rounded-lg shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-plus text-[11px]"></i>
-                <span>Open New Ticket</span>
+                <span>{{ __('Open New Ticket') }}</span>
             </a>
         </div>
     </div>
@@ -40,7 +40,7 @@
         {{-- Card 1: Total Support Tickets --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Total Tickets</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Total Tickets') }}</span>
                 <span class="text-[13px] font-bold font-mono text-slate-800 leading-tight block truncate">
                     {{ number_format($stats['total']) }}
                 </span>
@@ -53,7 +53,7 @@
         {{-- Card 2: Open / Unresolved --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Open / New</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Open / New') }}</span>
                 <span class="text-[13px] font-bold font-mono text-blue-700 leading-tight block truncate">
                     {{ number_format($stats['open']) }}
                 </span>
@@ -66,7 +66,7 @@
         {{-- Card 3: In Progress / NOC --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">In Progress</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('In Progress') }}</span>
                 <span class="text-[13px] font-bold font-mono text-indigo-700 leading-tight block truncate">
                     {{ number_format($stats['in_progress']) }}
                 </span>
@@ -79,7 +79,7 @@
         {{-- Card 4: Answered / Awaiting --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Answered</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Answered') }}</span>
                 <span class="text-[13px] font-bold font-mono text-purple-700 leading-tight block truncate">
                     {{ number_format($stats['answered']) }}
                 </span>
@@ -92,7 +92,7 @@
         {{-- Card 5: High & Urgent Escalations --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Urgent / High</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Urgent / High') }}</span>
                 <span class="text-[13px] font-bold font-mono {{ $stats['urgent'] > 0 ? 'text-rose-600' : 'text-slate-700' }} leading-tight block truncate">
                     {{ number_format($stats['urgent']) }}
                 </span>
@@ -105,7 +105,7 @@
         {{-- Card 6: Resolved & Closed --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Resolved / Closed</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Resolved / Closed') }}</span>
                 <span class="text-[13px] font-bold font-mono text-emerald-700 leading-tight block truncate">
                     {{ number_format($stats['closed']) }}
                 </span>
@@ -137,7 +137,7 @@
                     <input type="text" 
                            name="search" 
                            x-model="searchQuery" 
-                           placeholder="Search by ticket #, issue subject..." 
+                           placeholder="{{ __('Search by ticket #, issue subject...') }}" 
                            class="w-full h-[34px] pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-blue-500 focus:outline-hidden transition">
                     <button type="button" 
                             x-show="searchQuery && searchQuery.length > 0" 
@@ -150,18 +150,18 @@
 
                 {{-- Status Filter --}}
                 <select name="status" class="w-full md:w-44 h-[34px] bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 focus:bg-white focus:border-blue-500 focus:outline-hidden transition flex-shrink-0">
-                    <option value="all" {{ $status === 'all' ? 'selected' : '' }}>All Statuses</option>
-                    <option value="open" {{ $status === 'open' ? 'selected' : '' }}>Active / Open</option>
-                    <option value="in_progress" {{ $status === 'in_progress' ? 'selected' : '' }}>In Progress</option>
-                    <option value="answered" {{ $status === 'answered' ? 'selected' : '' }}>Answered</option>
-                    <option value="resolved" {{ $status === 'resolved' ? 'selected' : '' }}>Resolved</option>
-                    <option value="closed" {{ $status === 'closed' ? 'selected' : '' }}>Closed</option>
+                    <option value="all" {{ $status === 'all' ? 'selected' : '' }}>{{ __('All Statuses') }}</option>
+                    <option value="open" {{ $status === 'open' ? 'selected' : '' }}>{{ __('Active / Open') }}</option>
+                    <option value="in_progress" {{ $status === 'in_progress' ? 'selected' : '' }}>{{ __('In Progress') }}</option>
+                    <option value="answered" {{ $status === 'answered' ? 'selected' : '' }}>{{ __('Answered') }}</option>
+                    <option value="resolved" {{ $status === 'resolved' ? 'selected' : '' }}>{{ __('Resolved') }}</option>
+                    <option value="closed" {{ $status === 'closed' ? 'selected' : '' }}>{{ __('Closed') }}</option>
                 </select>
 
                 {{-- Pagination Selector (per_page) --}}
                 <select name="per_page" class="w-full md:w-28 h-[34px] bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 focus:bg-white focus:border-blue-500 focus:outline-hidden transition flex-shrink-0">
                     @foreach([15, 20, 30, 50, 100, 250] as $cnt)
-                        <option value="{{ $cnt }}" {{ (int)$perPage === $cnt ? 'selected' : '' }}>{{ $cnt }} / page</option>
+                        <option value="{{ $cnt }}" {{ (int)$perPage === $cnt ? 'selected' : '' }}>{{ __(':count / page', ['count' => $cnt]) }}</option>
                     @endforeach
                 </select>
 
@@ -170,7 +170,7 @@
                         @click="showMoreFilters = !showMoreFilters" 
                         class="h-[34px] py-0 px-2.5 bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold text-xs rounded-lg border border-slate-200 transition flex items-center justify-center gap-1.5 cursor-pointer flex-shrink-0">
                     <i class="fas fa-sliders text-[11px] text-slate-500"></i>
-                    <span>More</span>
+                    <span>{{ __('More') }}</span>
                     @if($activeMoreCount > 0)
                         <span class="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-blue-600 text-white leading-none">{{ $activeMoreCount }}</span>
                     @endif
@@ -179,13 +179,13 @@
 
                 {{-- Strict Sequence: [Filter] FIRST, [Reset] SECOND --}}
                 <div class="flex items-center gap-1.5 flex-shrink-0 md:ml-auto">
-                    <button type="submit" class="h-[34px] py-0 px-3.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" title="Apply Filters">
+                    <button type="submit" class="h-[34px] py-0 px-3.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" title="{{ __('Apply Filters') }}">
                         <i class="fas fa-filter text-[10px]"></i>
-                        <span>Filter</span>
+                        <span>{{ __('Filter') }}</span>
                     </button>
-                    <a href="{{ route('tenant.tickets.index') }}" class="h-[34px] py-0 px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer" title="Reset Filters">
+                    <a href="{{ route('tenant.tickets.index') }}" class="h-[34px] py-0 px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer" title="{{ __('Reset Filters') }}">
                         <i class="fas fa-rotate-left text-[10px]"></i>
-                        <span>Reset</span>
+                        <span>{{ __('Reset') }}</span>
                     </a>
                 </div>
             </div>
@@ -195,23 +195,23 @@
                 {{-- Department --}}
                 <div class="w-full sm:w-52">
                     <select name="department" class="w-full h-[34px] bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 focus:bg-white focus:border-blue-500 focus:outline-hidden transition">
-                        <option value="all">All Departments</option>
-                        <option value="technical" {{ $department === 'technical' ? 'selected' : '' }}>Technical &amp; NOC</option>
-                        <option value="billing" {{ $department === 'billing' ? 'selected' : '' }}>Billing &amp; Accounts</option>
-                        <option value="sms_gateway" {{ $department === 'sms_gateway' ? 'selected' : '' }}>SMS Gateway API</option>
-                        <option value="payment_gateway" {{ $department === 'payment_gateway' ? 'selected' : '' }}>Payment Gateway</option>
-                        <option value="general" {{ $department === 'general' ? 'selected' : '' }}>General Support</option>
+                        <option value="all">{{ __('All Departments') }}</option>
+                        <option value="technical" {{ $department === 'technical' ? 'selected' : '' }}>{{ __('Technical & NOC') }}</option>
+                        <option value="billing" {{ $department === 'billing' ? 'selected' : '' }}>{{ __('Billing & Accounts') }}</option>
+                        <option value="sms_gateway" {{ $department === 'sms_gateway' ? 'selected' : '' }}>{{ __('SMS Gateway API') }}</option>
+                        <option value="payment_gateway" {{ $department === 'payment_gateway' ? 'selected' : '' }}>{{ __('Payment Gateway') }}</option>
+                        <option value="general" {{ $department === 'general' ? 'selected' : '' }}>{{ __('General Support') }}</option>
                     </select>
                 </div>
 
                 {{-- Priority --}}
                 <div class="w-full sm:w-48">
                     <select name="priority" class="w-full h-[34px] bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 focus:bg-white focus:border-blue-500 focus:outline-hidden transition">
-                        <option value="all">All Priorities</option>
-                        <option value="urgent" {{ $priority === 'urgent' ? 'selected' : '' }}>🔥 Urgent Escalation</option>
-                        <option value="high" {{ $priority === 'high' ? 'selected' : '' }}>High Priority</option>
-                        <option value="medium" {{ $priority === 'medium' ? 'selected' : '' }}>Medium</option>
-                        <option value="low" {{ $priority === 'low' ? 'selected' : '' }}>Low</option>
+                        <option value="all">{{ __('All Priorities') }}</option>
+                        <option value="urgent" {{ $priority === 'urgent' ? 'selected' : '' }}>🔥 {{ __('Urgent Escalation') }}</option>
+                        <option value="high" {{ $priority === 'high' ? 'selected' : '' }}>{{ __('High Priority') }}</option>
+                        <option value="medium" {{ $priority === 'medium' ? 'selected' : '' }}>{{ __('Medium') }}</option>
+                        <option value="low" {{ $priority === 'low' ? 'selected' : '' }}>{{ __('Low') }}</option>
                     </select>
                 </div>
             </div>
@@ -219,19 +219,41 @@
     </div>
 
     {{-- 4. MASTER TABLE (<table class="saas-table"> Pure CSS System) --}}
+    @php
+        $departmentLabels = [
+            'technical' => __('Technical & Server'),
+            'billing' => __('Billing & Accounts'),
+            'sms_gateway' => __('SMS Gateway / API'),
+            'payment_gateway' => __('Payment Gateway (PGW)'),
+            'general' => __('General Support'),
+        ];
+        $priorityLabels = [
+            'low' => __('Low'),
+            'medium' => __('Medium'),
+            'high' => __('High'),
+            'urgent' => __('Urgent'),
+        ];
+        $statusLabels = [
+            'open' => __('Open'),
+            'in_progress' => __('In Progress'),
+            'answered' => __('Answered'),
+            'resolved' => __('Resolved'),
+            'closed' => __('Closed'),
+        ];
+    @endphp
     <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
         <div class="overflow-x-auto">
             <table class="saas-table">
                 <thead>
                     <tr>
-                        <th class="w-10 text-center font-semibold">#</th>
-                        <th class="w-28 text-center font-semibold">Ticket #</th>
-                        <th class="text-center font-semibold">Subject &amp; Issue Summary</th>
-                        <th class="text-center font-semibold">Department</th>
-                        <th class="w-24 text-center font-semibold">Priority</th>
-                        <th class="w-24 text-center font-semibold">Status</th>
-                        <th class="w-32 text-center font-semibold">Last Activity</th>
-                        <th class="w-14 text-center font-semibold no-sort">Action</th>
+                        <th class="w-10 text-center font-semibold">{{ __('#') }}</th>
+                        <th class="w-28 text-center font-semibold">{{ __('Ticket #') }}</th>
+                        <th class="text-center font-semibold">{{ __('Subject & Issue Summary') }}</th>
+                        <th class="text-center font-semibold">{{ __('Department') }}</th>
+                        <th class="w-24 text-center font-semibold">{{ __('Priority') }}</th>
+                        <th class="w-24 text-center font-semibold">{{ __('Status') }}</th>
+                        <th class="w-32 text-center font-semibold">{{ __('Last Activity') }}</th>
+                        <th class="w-14 text-center font-semibold no-sort">{{ __('Action') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -258,7 +280,7 @@
 
                             {{-- Department (Single data) --}}
                             <td class="text-left text-slate-600 text-[11px]">
-                                {{ $t->department_name }}
+                                {{ $departmentLabels[$t->department] ?? __($t->department_name) }}
                             </td>
 
                             {{-- Priority Badge --}}
@@ -267,20 +289,20 @@
                                     @if($t->priority === 'urgent')
                                         <i class="fas fa-fire text-rose-600 text-[9px]"></i>
                                     @endif
-                                    <span>{{ ucfirst($t->priority) }}</span>
+                                    <span>{{ $priorityLabels[$t->priority] ?? ucfirst($t->priority) }}</span>
                                 </span>
                             </td>
 
                             {{-- Status Badge --}}
                             <td class="text-center">
                                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border {{ $t->status_badge_color }}">
-                                    <span>{{ ucfirst(str_replace('_', ' ', $t->status)) }}</span>
+                                    <span>{{ $statusLabels[$t->status] ?? ucfirst(str_replace('_', ' ', $t->status)) }}</span>
                                 </span>
                             </td>
 
                             {{-- Last Activity --}}
                             <td class="text-center text-slate-500 font-mono text-[11px]">
-                                {{ ($t->last_reply_at ?? $t->updated_at)->locale('en')->diffForHumans() }}
+                                {{ ($t->last_reply_at ?? $t->updated_at)->locale(app()->getLocale())->diffForHumans() }}
                             </td>
 
                             {{-- 3-Dot Floating Action Menu Trigger --}}
@@ -288,7 +310,7 @@
                                 <button type="button" 
                                         @click="toggleMenu(@js($t), $event)"
                                         class="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
-                                        title="Actions">
+                                        title="{{ __('Actions') }}">
                                     <i class="fas fa-ellipsis-v text-[10px]"></i>
                                 </button>
                             </td>
@@ -300,18 +322,18 @@
                                     <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 mx-auto">
                                         <i class="fas fa-headset text-base"></i>
                                     </div>
-                                    <p class="text-xs font-semibold text-slate-700">No Support Tickets Found</p>
-                                    <p class="text-[11px] text-slate-500">No support inquiries match your current search or filter criteria.</p>
+                                    <p class="text-xs font-semibold text-slate-700">{{ __('No Support Tickets Found') }}</p>
+                                    <p class="text-[11px] text-slate-500">{{ __('No support inquiries match your current search or filter criteria.') }}</p>
                                     <div class="flex items-center justify-center gap-2 pt-1">
                                         @if(request()->anyFilled(['search', 'department', 'priority', 'status']))
                                             <a href="{{ route('tenant.tickets.index') }}" class="inline-flex items-center gap-1 text-xs text-blue-600 font-semibold hover:underline">
                                                 <i class="fas fa-rotate-left text-[10px]"></i>
-                                                <span>Clear Filters</span>
+                                                <span>{{ __('Clear Filters') }}</span>
                                             </a>
                                         @endif
                                         <a href="{{ route('tenant.tickets.create') }}" class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-xs transition inline-flex items-center gap-1">
                                             <i class="fas fa-plus text-[10px]"></i>
-                                            <span>Open New Ticket</span>
+                                            <span>{{ __('Open New Ticket') }}</span>
                                         </a>
                                     </div>
                                 </div>
@@ -325,7 +347,7 @@
         @if($tickets->hasPages())
         <div class="px-3.5 py-2.5 border-t border-slate-200 bg-slate-50/50 flex items-center justify-between">
             <span class="text-[11px] text-slate-500">
-                Showing {{ $tickets->firstItem() }} to {{ $tickets->lastItem() }} of {{ $tickets->total() }} Tickets
+                {{ __('Showing :from to :to of :total Tickets', ['from' => $tickets->firstItem(), 'to' => $tickets->lastItem(), 'total' => $tickets->total()]) }}
             </span>
             <div>
                 {{ $tickets->links() }}
@@ -345,15 +367,15 @@
         <div class="py-1">
             <a :href="`/admin/support/${activeMenu?.id}`" class="flex items-center gap-2 px-3 py-1.5 text-slate-700 hover:bg-slate-50 hover:text-blue-600 font-medium transition">
                 <i class="fas fa-comments text-blue-600 w-4 text-center text-xs"></i>
-                <span>View &amp; Reply Ticket</span>
+                <span>{{ __('View & Reply Ticket') }}</span>
             </a>
             <button type="button" @click="showQuickModal(activeMenu); activeMenu = null" class="w-full flex items-center gap-2 px-3 py-1.5 text-slate-700 hover:bg-slate-50 hover:text-cyan-600 font-medium transition cursor-pointer">
                 <i class="fas fa-eye text-cyan-600 w-4 text-center text-xs"></i>
-                <span>Quick Ticket Details</span>
+                <span>{{ __('Quick Ticket Details') }}</span>
             </button>
             <button type="button" @click="copyTicketNumber(activeMenu?.ticket_number); activeMenu = null" class="w-full flex items-center gap-2 px-3 py-1.5 text-slate-700 hover:bg-slate-50 font-medium transition cursor-pointer">
                 <i class="fas fa-copy text-slate-500 w-4 text-center text-xs"></i>
-                <span>Copy Ticket #</span>
+                <span>{{ __('Copy Ticket #') }}</span>
             </button>
         </div>
 
@@ -364,7 +386,7 @@
                         @click="closeTicketAction(activeMenu?.id); activeMenu = null" 
                         class="w-full flex items-center gap-2 px-3 py-1.5 text-slate-700 hover:bg-slate-50 hover:text-emerald-700 font-medium transition cursor-pointer">
                     <i class="fas fa-check-double text-emerald-600 w-4 text-center text-xs"></i>
-                    <span>Mark as Closed</span>
+                    <span>{{ __('Mark as Closed') }}</span>
                 </button>
             </template>
             <template x-if="activeMenu?.status === 'closed' || activeMenu?.status === 'resolved'">
@@ -372,7 +394,7 @@
                         @click="reopenTicketAction(activeMenu?.id); activeMenu = null" 
                         class="w-full flex items-center gap-2 px-3 py-1.5 text-slate-700 hover:bg-slate-50 hover:text-blue-600 font-medium transition cursor-pointer">
                     <i class="fas fa-rotate-left text-blue-600 w-4 text-center text-xs"></i>
-                    <span>Reopen Ticket</span>
+                    <span>{{ __('Reopen Ticket') }}</span>
                 </button>
             </template>
 
@@ -381,7 +403,7 @@
                         @click="deleteTicketAction(activeMenu); activeMenu = null" 
                         class="w-full flex items-center gap-2 px-3 py-1.5 text-rose-600 hover:bg-rose-50 hover:text-rose-700 font-medium transition cursor-pointer">
                     <i class="fas fa-trash-alt text-rose-500 w-4 text-center text-xs"></i>
-                    <span>Delete Ticket</span>
+                    <span>{{ __('Delete Ticket') }}</span>
                 </button>
             @endif
         </div>
@@ -402,7 +424,7 @@
                     </div>
                     <div>
                         <h4 class="text-xs font-semibold text-slate-800" x-text="selectedTicket?.ticket_number"></h4>
-                        <span class="text-[10.5px] text-slate-500 font-normal">Support Inquiry Overview</span>
+                        <span class="text-[10.5px] text-slate-500 font-normal">{{ __('Support Inquiry Overview') }}</span>
                     </div>
                 </div>
                 <button type="button" @click="quickModalOpen = false" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center cursor-pointer">
@@ -413,26 +435,26 @@
             {{-- Modal Body --}}
             <div class="p-4 space-y-3 text-xs">
                 <div>
-                    <span class="text-[10px] text-slate-500 font-semibold uppercase block mb-0.5">Subject</span>
+                    <span class="text-[10px] text-slate-500 font-semibold uppercase block mb-0.5">{{ __('Subject') }}</span>
                     <p class="font-bold text-slate-900 text-sm" x-text="selectedTicket?.subject"></p>
                 </div>
 
                 <div class="grid grid-cols-2 gap-2">
                     <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200/80">
-                        <span class="text-[10px] text-slate-500 font-semibold uppercase block">Department</span>
-                        <span class="font-medium text-slate-800" x-text="selectedTicket?.department_name || selectedTicket?.department"></span>
+                        <span class="text-[10px] text-slate-500 font-semibold uppercase block">{{ __('Department') }}</span>
+                        <span class="font-medium text-slate-800" x-text="departmentLabels[selectedTicket?.department] || selectedTicket?.department_name || selectedTicket?.department"></span>
                     </div>
                     <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200/80">
-                        <span class="text-[10px] text-slate-500 font-semibold uppercase block">Priority Level</span>
-                        <span class="font-bold text-slate-800 uppercase" x-text="selectedTicket?.priority"></span>
+                        <span class="text-[10px] text-slate-500 font-semibold uppercase block">{{ __('Priority Level') }}</span>
+                        <span class="font-bold text-slate-800 uppercase" x-text="priorityLabels[selectedTicket?.priority] || selectedTicket?.priority"></span>
                     </div>
                     <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200/80">
-                        <span class="text-[10px] text-slate-500 font-semibold uppercase block">Current Status</span>
-                        <span class="font-bold uppercase text-blue-700" x-text="selectedTicket?.status"></span>
+                        <span class="text-[10px] text-slate-500 font-semibold uppercase block">{{ __('Current Status') }}</span>
+                        <span class="font-bold uppercase text-blue-700" x-text="statusLabels[selectedTicket?.status] || selectedTicket?.status"></span>
                     </div>
                     <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200/80">
-                        <span class="text-[10px] text-slate-500 font-semibold uppercase block">Last Response</span>
-                        <span class="font-mono text-slate-700" x-text="selectedTicket?.last_reply_by === 'owner' ? 'Staff Replied' : 'Awaiting Reply'"></span>
+                        <span class="text-[10px] text-slate-500 font-semibold uppercase block">{{ __('Last Response') }}</span>
+                        <span class="font-mono text-slate-700" x-text="selectedTicket?.last_reply_by === 'owner' ? labels.staffReplied : labels.awaitingReply"></span>
                     </div>
                 </div>
             </div>
@@ -440,11 +462,11 @@
             {{-- Modal Footer --}}
             <div class="px-4 py-2.5 bg-slate-50/80 border-t border-slate-200 flex items-center justify-between">
                 <button type="button" @click="quickModalOpen = false" class="border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs px-3.5 py-1.5 rounded-lg cursor-pointer">
-                    Close
+                    {{ __('Close') }}
                 </button>
                 <a :href="`/admin/support/${selectedTicket?.id}`" class="bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs px-4 py-1.5 rounded-lg shadow-xs inline-flex items-center gap-1.5">
                     <i class="fas fa-comments text-xs"></i>
-                    <span>Open Full Conversation</span>
+                    <span>{{ __('Open Full Conversation') }}</span>
                 </a>
             </div>
         </div>
@@ -461,6 +483,36 @@
             menuPos: { top: '0px', bottom: 'auto', right: '0px', left: 'auto' },
             quickModalOpen: false,
             selectedTicket: null,
+            departmentLabels: @js($departmentLabels),
+            priorityLabels: @js($priorityLabels),
+            statusLabels: @js($statusLabels),
+            labels: {
+                staffReplied: @js(__('Staff Replied')),
+                awaitingReply: @js(__('Awaiting Reply')),
+                copiedTitle: @js(__('Ticket # Copied')),
+                copiedTextTemplate: @js(__(':number copied to clipboard')),
+                closeConfirmTitle: @js(__('Close Support Ticket?')),
+                closeConfirmText: @js(__('Are you sure you want to mark this support ticket as closed?')),
+                closeConfirmBtn: @js(__('Yes, Mark as Closed')),
+                cancelBtn: @js(__('Cancel')),
+                closeFallbackConfirm: @js(__('Are you sure you want to mark this ticket as closed?')),
+                ticketClosedTitle: @js(__('Ticket Closed')),
+                ticketClosedFallback: @js(__('Support ticket has been closed.')),
+                reopenConfirmTitle: @js(__('Reopen Support Ticket?')),
+                reopenConfirmText: @js(__('Are you sure you want to reopen this support ticket?')),
+                reopenConfirmBtn: @js(__('Yes, Reopen')),
+                ticketReopenedTitle: @js(__('Ticket Reopened')),
+                ticketReopenedFallback: @js(__('Support ticket has been reopened.')),
+                deleteConfirmTitle: @js(__('Delete Support Ticket?')),
+                deleteConfirmTemplate: @js(__('Are you sure you want to permanently delete ticket :number?', ['number' => ':number'])),
+                deleteConfirmSubtext: @js(__('All thread messages and attachments will be permanently removed.')),
+                deleteConfirmBtn: @js(__('Yes, Delete Permanently')),
+                deleteFallbackConfirm: @js(__('Are you sure you want to permanently delete ticket #:number?')),
+                ticketDeletedTitle: @js(__('Ticket Deleted')),
+                ticketDeletedFallback: @js(__('Support ticket deleted successfully.')),
+                deleteFailedTitle: @js(__('Delete Failed')),
+                deleteFailedFallback: @js(__('Failed to delete support ticket.'))
+            },
 
             toggleMenu(item, event) {
                 if (this.activeMenu?.id === item.id) {
@@ -500,8 +552,8 @@
                     if (window.Swal) {
                         Swal.fire({
                             icon: 'success',
-                            title: 'Ticket # Copied',
-                            text: ticketNo + ' copied to clipboard',
+                            title: this.labels.copiedTitle,
+                            text: this.labels.copiedTextTemplate.replace(':number', ticketNo),
                             toast: true,
                             position: 'top-end',
                             timer: 2000,
@@ -516,12 +568,12 @@
 
                 if (typeof Swal !== 'undefined') {
                     const result = await Swal.fire({
-                        title: 'Close Support Ticket?',
-                        text: 'Are you sure you want to mark this support ticket as closed?',
+                        title: this.labels.closeConfirmTitle,
+                        text: this.labels.closeConfirmText,
                         icon: 'warning',
                         showCancelButton: true,
-                        confirmButtonText: '<i class="fas fa-check-double mr-1.5"></i> Yes, Mark as Closed',
-                        cancelButtonText: 'Cancel',
+                        confirmButtonText: '<i class="fas fa-check-double mr-1.5"></i> ' + this.labels.closeConfirmBtn,
+                        cancelButtonText: this.labels.cancelBtn,
                         reverseButtons: true,
                         customClass: {
                             confirmButton: 'bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs px-4 py-2 rounded-lg shadow-xs cursor-pointer mr-2',
@@ -531,7 +583,7 @@
                     });
                     if (!result.isConfirmed) return;
                 } else {
-                    if (!confirm('Are you sure you want to mark this ticket as closed?')) return;
+                    if (!confirm(this.labels.closeFallbackConfirm)) return;
                 }
 
                 try {
@@ -547,8 +599,8 @@
                         if (typeof Swal !== 'undefined') {
                             await Swal.fire({
                                 icon: 'success',
-                                title: 'Ticket Closed',
-                                text: data.message || 'Support ticket has been closed.',
+                                title: this.labels.ticketClosedTitle,
+                                text: data.message || this.labels.ticketClosedFallback,
                                 timer: 1500,
                                 showConfirmButton: false,
                                 toast: true,
@@ -568,12 +620,12 @@
 
                 if (typeof Swal !== 'undefined') {
                     const result = await Swal.fire({
-                        title: 'Reopen Support Ticket?',
-                        text: 'Are you sure you want to reopen this support ticket?',
+                        title: this.labels.reopenConfirmTitle,
+                        text: this.labels.reopenConfirmText,
                         icon: 'question',
                         showCancelButton: true,
-                        confirmButtonText: '<i class="fas fa-rotate-left mr-1.5"></i> Yes, Reopen',
-                        cancelButtonText: 'Cancel',
+                        confirmButtonText: '<i class="fas fa-rotate-left mr-1.5"></i> ' + this.labels.reopenConfirmBtn,
+                        cancelButtonText: this.labels.cancelBtn,
                         reverseButtons: true,
                         customClass: {
                             confirmButton: 'bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs px-4 py-2 rounded-lg shadow-xs cursor-pointer mr-2',
@@ -597,8 +649,8 @@
                         if (typeof Swal !== 'undefined') {
                             await Swal.fire({
                                 icon: 'success',
-                                title: 'Ticket Reopened',
-                                text: data.message || 'Support ticket has been reopened.',
+                                title: this.labels.ticketReopenedTitle,
+                                text: data.message || this.labels.ticketReopenedFallback,
                                 timer: 1500,
                                 showConfirmButton: false,
                                 toast: true,
@@ -616,14 +668,23 @@
             async deleteTicketAction(ticket) {
                 if (!ticket || !ticket.id) return;
 
+                const safeNo = String(ticket.ticket_number || '').replace(/[&<>"']/g, m => ({
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#39;'
+                }[m]));
+
                 if (typeof Swal !== 'undefined') {
+                    const confirmText = this.labels.deleteConfirmTemplate.replace(':number', `<b>#${safeNo}</b>`);
                     const result = await Swal.fire({
-                        title: 'Delete Support Ticket?',
-                        html: `Are you sure you want to permanently delete ticket <b>#${ticket.ticket_number}</b>?<br><span class="text-xs text-rose-600 mt-1 block">All thread messages and attachments will be permanently removed.</span>`,
+                        title: this.labels.deleteConfirmTitle,
+                        html: `${confirmText}<br><span class="text-xs text-rose-600 mt-1 block">${this.labels.deleteConfirmSubtext}</span>`,
                         icon: 'warning',
                         showCancelButton: true,
-                        confirmButtonText: '<i class="fas fa-trash-alt mr-1.5"></i> Yes, Delete Permanently',
-                        cancelButtonText: 'Cancel',
+                        confirmButtonText: '<i class="fas fa-trash-alt mr-1.5"></i> ' + this.labels.deleteConfirmBtn,
+                        cancelButtonText: this.labels.cancelBtn,
                         reverseButtons: true,
                         customClass: {
                             confirmButton: 'bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs px-4 py-2 rounded-lg shadow-xs cursor-pointer mr-2',
@@ -633,7 +694,7 @@
                     });
                     if (!result.isConfirmed) return;
                 } else {
-                    if (!confirm(`Are you sure you want to permanently delete ticket #${ticket.ticket_number}?`)) return;
+                    if (!confirm(this.labels.deleteFallbackConfirm.replace(':number', ticket.ticket_number))) return;
                 }
 
                 try {
@@ -649,8 +710,8 @@
                         if (typeof Swal !== 'undefined') {
                             await Swal.fire({
                                 icon: 'success',
-                                title: 'Ticket Deleted',
-                                text: data.message || 'Support ticket deleted successfully.',
+                                title: this.labels.ticketDeletedTitle,
+                                text: data.message || this.labels.ticketDeletedFallback,
                                 timer: 1500,
                                 showConfirmButton: false,
                                 toast: true,
@@ -662,11 +723,11 @@
                         if (typeof Swal !== 'undefined') {
                             Swal.fire({
                                 icon: 'error',
-                                title: 'Delete Failed',
-                                text: data.message || 'Failed to delete support ticket.'
+                                title: this.labels.deleteFailedTitle,
+                                text: data.message || this.labels.deleteFailedFallback
                             });
                         } else {
-                            alert(data.message || 'Failed to delete support ticket.');
+                            alert(data.message || this.labels.deleteFailedFallback);
                         }
                     }
                 } catch (e) {
