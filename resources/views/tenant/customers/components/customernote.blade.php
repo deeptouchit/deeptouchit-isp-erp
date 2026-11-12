@@ -45,12 +45,19 @@
                     </div>
                     <div class="min-w-0">
                         <span class="font-semibold text-slate-800 block text-xs truncate">{{ $customer->name }}</span>
-                        <span class="text-[10px] text-slate-500 font-mono block truncate">{{ $customer->username }} &bull; {{ $customer->phone ?? 'N/A' }}</span>
+                        <span class="text-[10px] text-slate-500 font-mono block truncate">{{ $customer->username }} &bull; {{ $customer->phone ?? __('N/A') }}</span>
                     </div>
                 </div>
                 <div class="text-right flex-shrink-0">
                     <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium {{ $customer->status === 'active' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200' }}">
-                        {{ ucfirst($customer->status) }}
+                        {{ match($customer->status) {
+                            'active' => __('Active'),
+                            'suspended' => __('Suspended'),
+                            'expired' => __('Expired'),
+                            'due' => __('Due'),
+                            'disconnected' => __('Disconnected'),
+                            default => __(ucfirst($customer->status ?? 'Unknown')),
+                        } }}
                     </span>
                 </div>
             </div>
@@ -62,27 +69,27 @@
                 </label>
                 <div class="flex flex-wrap gap-1.5">
                     <button type="button" 
-                            @click="appendPresetNote('[VIP Client] ')" 
+                            @click="appendPresetNote({{ json_encode('[' . __('VIP Client') . '] ', JSON_UNESCAPED_UNICODE) }})" 
                             class="px-2 py-1 rounded bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200 border border-slate-200 text-[10.5px] font-medium text-slate-600 transition cursor-pointer">
                         + {{ __('VIP Client') }}
                     </button>
                     <button type="button" 
-                            @click="appendPresetNote('[Special Discount] ')" 
+                            @click="appendPresetNote({{ json_encode('[' . __('Special Discount') . '] ', JSON_UNESCAPED_UNICODE) }})" 
                             class="px-2 py-1 rounded bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200 border border-slate-200 text-[10.5px] font-medium text-slate-600 transition cursor-pointer">
                         + {{ __('Special Discount') }}
                     </button>
                     <button type="button" 
-                            @click="appendPresetNote('[Call Before Cut-off] ')" 
+                            @click="appendPresetNote({{ json_encode('[' . __('Call Before Cut-off') . '] ', JSON_UNESCAPED_UNICODE) }})" 
                             class="px-2 py-1 rounded bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200 border border-slate-200 text-[10.5px] font-medium text-slate-600 transition cursor-pointer">
                         + {{ __('Call Before Cut-off') }}
                     </button>
                     <button type="button" 
-                            @click="appendPresetNote('[ONU/Router: ] ')" 
+                            @click="appendPresetNote({{ json_encode('[' . __('ONU/Router') . ': ] ', JSON_UNESCAPED_UNICODE) }})" 
                             class="px-2 py-1 rounded bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200 border border-slate-200 text-[10.5px] font-medium text-slate-600 transition cursor-pointer">
                         + {{ __('Router Info') }}
                     </button>
                     <button type="button" 
-                            @click="appendPresetNote('[Promise Date: ] ')" 
+                            @click="appendPresetNote({{ json_encode('[' . __('Promise Date') . ': ] ', JSON_UNESCAPED_UNICODE) }})" 
                             class="px-2 py-1 rounded bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200 border border-slate-200 text-[10.5px] font-medium text-slate-600 transition cursor-pointer">
                         + {{ __('Payment Promise') }}
                     </button>
@@ -124,7 +131,7 @@
                             :disabled="isNoteLoading" 
                             class="px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-medium text-xs shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer">
                         <i class="fas" :class="isNoteLoading ? 'fa-spinner fa-spin' : 'fa-save'"></i>
-                        <span x-text="isNoteLoading ? '{{ __('Saving...') }}' : '{{ __('Save Note') }}'"></span>
+                        <span x-text="isNoteLoading ? {{ json_encode(__('Saving...'), JSON_UNESCAPED_UNICODE) }} : {{ json_encode(__('Save Note'), JSON_UNESCAPED_UNICODE) }}"></span>
                     </button>
                 </div>
             </div>

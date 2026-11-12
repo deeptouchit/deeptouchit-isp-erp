@@ -27,7 +27,7 @@
                 <div>
                     <h4 class="text-xs font-semibold text-slate-800">{{ __('Change Package') }}</h4>
                     <p class="text-[10.5px] text-slate-500 font-normal">
-                        {{ __('User') }}: <span class="font-mono font-bold text-slate-700">{{ $customer->username ?: 'PPPoE Client' }}</span> &bull; 
+                        {{ __('User') }}: <span class="font-mono font-bold text-slate-700">{{ $customer->username ?: __('PPPoE Client') }}</span> &bull; 
                         {{ __('ID') }}: <span class="font-mono text-slate-600">{{ $customer->customer_id ?: 'CUST-' . $customer->id }}</span>
                     </p>
                 </div>
@@ -50,7 +50,7 @@
                         <span class="text-[10px] uppercase font-semibold text-slate-400 tracking-wider">{{ __('Current Package') }}</span>
                         <div class="font-bold text-slate-800 flex items-center gap-1.5 flex-wrap">
                             <span class="w-2 h-2 rounded-full bg-fuchsia-500 flex-shrink-0"></span>
-                            <span x-text="packageData.currentPackageName || '{{ $customer->package_name ?: __('Custom Plan') }}'"></span>
+                            <span x-text="packageData.currentPackageName || {{ json_encode($customer->package_name ?: __('Custom Plan'), JSON_UNESCAPED_UNICODE) }}"></span>
                             <template x-if="packageData.currentSpeed">
                                 <span class="px-1.5 py-0.5 rounded bg-fuchsia-100 text-fuchsia-800 text-[10px] font-mono font-bold" x-text="packageData.currentSpeed"></span>
                             </template>
@@ -62,11 +62,11 @@
 
                     <div class="text-right space-y-0.5 font-mono flex-shrink-0">
                         <span class="text-[10px] uppercase font-sans font-semibold text-slate-400 tracking-wider">{{ __('Current Expiry') }}</span>
-                        <div class="font-bold text-slate-800" x-text="packageData.currentExpiryDate || '{{ __('No Expiry Set') }}'"></div>
+                        <div class="font-bold text-slate-800" x-text="packageData.currentExpiryDate || {{ json_encode(__('No Expiry Set'), JSON_UNESCAPED_UNICODE) }}"></div>
                         <div class="text-[10.5px]">
                             <span class="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-medium"
                                   :class="packageData.remainingDays > 0 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'">
-                                <span x-text="packageData.remainingDays > 0 ? packageData.remainingDays + ' {{ __('days left') }}' : '{{ __('Expired / Due') }}'"></span>
+                                <span x-text="packageData.remainingDays > 0 ? (packageData.remainingDays === 1 ? {{ json_encode(__(':days day left'), JSON_UNESCAPED_UNICODE) }} : {{ json_encode(__(':days days left'), JSON_UNESCAPED_UNICODE) }}).replace(':days', packageData.remainingDays) : {{ json_encode(__('Expired / Due'), JSON_UNESCAPED_UNICODE) }}"></span>
                             </span>
                         </div>
                     </div>
@@ -80,13 +80,13 @@
                                 <i class="fas fa-handshake"></i>
                             </div>
                             <div>
-                                <div class="font-semibold text-[11px]" x-text="'{{ __('Partner') }}: ' + packageData.resellerName + ' (' + packageData.resellerCode + ')'"></div>
+                                <div class="font-semibold text-[11px]" x-text="{{ json_encode(__('Partner: :name (:code)'), JSON_UNESCAPED_UNICODE) }}.replace(':name', packageData.resellerName).replace(':code', packageData.resellerCode)"></div>
                                 <div class="text-[10px] text-purple-700">{{ __('Commission') }}: <span class="font-bold" x-text="packageData.resellerCommissionRate + '%'"></span></div>
                             </div>
                         </div>
                         <div class="text-right font-mono">
                             <div class="text-[9.5px] uppercase font-sans text-purple-600 font-semibold">{{ __('Wallet Balance') }}</div>
-                            <div class="font-bold text-xs" :class="packageData.resellerBalance > 0 ? 'text-emerald-700' : 'text-rose-700'" x-text="'{{ $currencySymbol ?? '৳' }}' + Number(packageData.resellerBalance).toFixed(2)"></div>
+                            <div class="font-bold text-xs" :class="packageData.resellerBalance > 0 ? 'text-emerald-700' : 'text-rose-700'" x-text="{{ json_encode($currencySymbol ?? '৳', JSON_UNESCAPED_UNICODE) }} + Number(packageData.resellerBalance).toFixed(2)"></div>
                         </div>
                     </div>
                 </template>
@@ -129,7 +129,7 @@
                                 <option value="{{ $pkg->id }}" 
                                         data-name="{{ $pkg->package_name ?: $pkg->name }}" 
                                         data-price="{{ (float)$pkg->price }}"
-                                        data-speed="{{ $pkg->download_speed ?: 'Auto' }}/{{ $pkg->upload_speed ?: 'Auto' }} Mbps">
+                                        data-speed="{{ $pkg->download_speed ?: __('Auto') }}/{{ $pkg->upload_speed ?: __('Auto') }} Mbps">
                                     {{ $pkg->package_name ?: $pkg->name }} &mdash; @currency($pkg->price) ({{ $pkg->download_speed }}/{{ $pkg->upload_speed }} Mbps) {{ $isCurrent ? '★ [' . __('Current Package') . ']' : '' }}
                                 </option>
                             @endforeach
@@ -153,7 +153,7 @@
                                 <i class="fas" :class="upgradeImpact.isUpgrade ? 'fa-arrow-trend-up' : (upgradeImpact.isDowngrade ? 'fa-arrow-trend-down' : 'fa-check')"></i>
                                 <span x-text="upgradeImpact.typeLabel"></span>
                             </span>
-                            <span class="font-mono text-[11px] font-bold text-slate-800" x-text="'{{ __('New Rate') }}: {{ $currencySymbol ?? '৳' }}' + selectedPackageInfo.price + '/mo'"></span>
+                            <span class="font-mono text-[11px] font-bold text-slate-800" x-text="{{ json_encode(__('New Rate: :currency:amount/mo'), JSON_UNESCAPED_UNICODE) }}.replace(':currency', {{ json_encode($currencySymbol ?? '৳', JSON_UNESCAPED_UNICODE) }}).replace(':amount', selectedPackageInfo.price)"></span>
                         </div>
 
                         <!-- Reseller Proration & Validity Impact Alert -->
@@ -165,7 +165,10 @@
                                         <i class="fas fa-check-circle text-emerald-600 mt-0.5 text-xs flex-shrink-0"></i>
                                         <div class="text-[11px]">
                                             <span class="font-semibold">{{ __('Reseller Balance Sufficient:') }}</span>
-                                            {{ __('Prorated amount') }} <strong class="font-mono font-bold text-emerald-900">{{ $currencySymbol ?? '৳' }}<span x-text="upgradeImpact.proratedDiff"></span></strong> {{ __('will be deducted from Reseller wallet. Expiry remains') }} <span class="font-mono font-bold" x-text="packageData.currentExpiryDate"></span>.
+                                            {!! __('Prorated amount :amount will be deducted from Reseller wallet. Expiry remains :expiry.', [
+                                                'amount' => '<strong class="font-mono font-bold text-emerald-900">' . e($currencySymbol ?? '৳') . '<span x-text="upgradeImpact.proratedDiff"></span></strong>',
+                                                'expiry' => '<span class="font-mono font-bold" x-text="packageData.currentExpiryDate"></span>',
+                                            ]) !!}
                                         </div>
                                     </div>
                                 </template>
@@ -177,11 +180,16 @@
                                         <div class="text-[11px] space-y-1">
                                             <div>
                                                 <strong class="text-amber-950 font-bold">⚠️ {{ __('Insufficient Partner Balance:') }}</strong>
-                                                {{ __('Needed') }} <strong>{{ $currencySymbol ?? '৳' }}<span x-text="upgradeImpact.proratedDiff"></span></strong>, {{ __('available balance is') }} <strong>{{ $currencySymbol ?? '৳' }}<span x-text="Number(packageData.resellerBalance).toFixed(2)"></span></strong>.
+                                                {!! __('Needed :needed, available balance is :available.', [
+                                                    'needed' => '<strong>' . e($currencySymbol ?? '৳') . '<span x-text="upgradeImpact.proratedDiff"></span></strong>',
+                                                    'available' => '<strong>' . e($currencySymbol ?? '৳') . '<span x-text="Number(packageData.resellerBalance).toFixed(2)"></span></strong>',
+                                                ]) !!}
                                             </div>
                                             <div class="p-1.5 rounded bg-white/80 border border-amber-200 font-mono text-[10.5px] text-amber-900">
-                                                {{ __('Validity adjusted to') }} <strong class="text-rose-700" x-text="upgradeImpact.adjustedDays + ' {{ __('days') }}'"></strong> 
-                                                ({{ __('New Expiry') }}: <strong class="text-slate-800" x-text="upgradeImpact.adjustedExpiryDate"></strong>).
+                                                {!! __('Validity adjusted to :days (New Expiry: :expiry).', [
+                                                    'days' => '<strong class="text-rose-700" x-text="(upgradeImpact.adjustedDays === 1 ? ' . e(json_encode(__(':days day'), JSON_UNESCAPED_UNICODE)) . ' : ' . e(json_encode(__(':days days'), JSON_UNESCAPED_UNICODE)) . ').replace(\':days\', upgradeImpact.adjustedDays)"></strong>',
+                                                    'expiry' => '<strong class="text-slate-800" x-text="upgradeImpact.adjustedExpiryDate"></strong>',
+                                                ]) !!}
                                             </div>
                                         </div>
                                     </div>
@@ -193,7 +201,9 @@
                                         <i class="fas fa-info-circle text-blue-600 mt-0.5 text-xs flex-shrink-0"></i>
                                         <div class="text-[11px]">
                                             <span class="font-semibold">{{ __('Downgrade Proration:') }}</span>
-                                            {{ __('Prorated credit') }} <strong class="font-mono font-bold text-blue-900">{{ $currencySymbol ?? '৳' }}<span x-text="upgradeImpact.proratedRefund"></span></strong> {{ __('will be refunded to Partner wallet.') }}
+                                            {!! __('Prorated credit :amount will be refunded to Partner wallet.', [
+                                                'amount' => '<strong class="font-mono font-bold text-blue-900">' . e($currencySymbol ?? '৳') . '<span x-text="upgradeImpact.proratedRefund"></span></strong>',
+                                            ]) !!}
                                         </div>
                                     </div>
                                 </template>
@@ -206,13 +216,13 @@
                                 <div class="p-2 rounded-lg bg-white border border-slate-200 text-slate-700 text-[11px] space-y-1">
                                     <div class="flex items-center justify-between">
                                         <span class="font-semibold">{{ __('Remaining Active Cycle:') }}</span>
-                                        <span class="font-mono font-bold text-slate-800" x-text="packageData.remainingDays + ' {{ __('days left') }}'"></span>
+                                        <span class="font-mono font-bold text-slate-800" x-text="(packageData.remainingDays === 1 ? {{ json_encode(__(':days day left'), JSON_UNESCAPED_UNICODE) }} : {{ json_encode(__(':days days left'), JSON_UNESCAPED_UNICODE) }}).replace(':days', packageData.remainingDays)"></span>
                                     </div>
                                     <div class="flex items-center justify-between">
-                                        <span class="font-semibold" x-text="upgradeImpact.isUpgrade ? '{{ __('Prorated Upgrade Difference:') }}' : '{{ __('Prorated Downgrade Difference:') }}'"></span>
+                                        <span class="font-semibold" x-text="upgradeImpact.isUpgrade ? {{ json_encode(__('Prorated Upgrade Difference:'), JSON_UNESCAPED_UNICODE) }} : {{ json_encode(__('Prorated Downgrade Difference:'), JSON_UNESCAPED_UNICODE) }}"></span>
                                         <span class="font-mono font-bold" 
                                               :class="upgradeImpact.isUpgrade ? 'text-amber-800' : 'text-blue-800'"
-                                              x-text="'{{ $currencySymbol ?? '৳' }}' + (upgradeImpact.isUpgrade ? upgradeImpact.proratedDiff : upgradeImpact.proratedRefund)"></span>
+                                              x-text="{{ json_encode($currencySymbol ?? '৳', JSON_UNESCAPED_UNICODE) }} + (upgradeImpact.isUpgrade ? upgradeImpact.proratedDiff : upgradeImpact.proratedRefund)"></span>
                                     </div>
                                 </div>
 
@@ -235,10 +245,22 @@
                                             </div>
                                             <div class="text-[10px] text-slate-600 mt-0.5">
                                                 <template x-if="upgradeImpact.isUpgrade">
-                                                    <span>{{ __('Recalculates expiry from') }} <strong x-text="packageData.remainingDays + ' {{ __('days') }}'"></strong> {{ __('to') }} <strong class="text-rose-700" x-text="upgradeImpact.adjustedDays + ' {{ __('days') }}'"></strong> ({{ __('New Expiry') }}: <strong x-text="upgradeImpact.adjustedExpiryDate"></strong>).</span>
+                                                    <span>
+                                                        {!! __('Recalculates expiry from :fromDays to :toDays (New Expiry: :expiry).', [
+                                                            'fromDays' => '<strong x-text="(packageData.remainingDays === 1 ? ' . e(json_encode(__(':days day'), JSON_UNESCAPED_UNICODE)) . ' : ' . e(json_encode(__(':days days'), JSON_UNESCAPED_UNICODE)) . ').replace(\':days\', packageData.remainingDays)"></strong>',
+                                                            'toDays' => '<strong class="text-rose-700" x-text="(upgradeImpact.adjustedDays === 1 ? ' . e(json_encode(__(':days day'), JSON_UNESCAPED_UNICODE)) . ' : ' . e(json_encode(__(':days days'), JSON_UNESCAPED_UNICODE)) . ').replace(\':days\', upgradeImpact.adjustedDays)"></strong>',
+                                                            'expiry' => '<strong x-text="upgradeImpact.adjustedExpiryDate"></strong>',
+                                                        ]) !!}
+                                                    </span>
                                                 </template>
                                                 <template x-if="upgradeImpact.isDowngrade">
-                                                    <span>{{ __('Extends expiry from') }} <strong x-text="packageData.remainingDays + ' {{ __('days') }}'"></strong> {{ __('to') }} <strong class="text-emerald-700" x-text="upgradeImpact.adjustedDays + ' {{ __('days') }}'"></strong> ({{ __('New Expiry') }}: <strong x-text="upgradeImpact.adjustedExpiryDate"></strong>).</span>
+                                                    <span>
+                                                        {!! __('Extends expiry from :fromDays to :toDays (New Expiry: :expiry).', [
+                                                            'fromDays' => '<strong x-text="(packageData.remainingDays === 1 ? ' . e(json_encode(__(':days day'), JSON_UNESCAPED_UNICODE)) . ' : ' . e(json_encode(__(':days days'), JSON_UNESCAPED_UNICODE)) . ').replace(\':days\', packageData.remainingDays)"></strong>',
+                                                            'toDays' => '<strong class="text-emerald-700" x-text="(upgradeImpact.adjustedDays === 1 ? ' . e(json_encode(__(':days day'), JSON_UNESCAPED_UNICODE)) . ' : ' . e(json_encode(__(':days days'), JSON_UNESCAPED_UNICODE)) . ').replace(\':days\', upgradeImpact.adjustedDays)"></strong>',
+                                                            'expiry' => '<strong x-text="upgradeImpact.adjustedExpiryDate"></strong>',
+                                                        ]) !!}
+                                                    </span>
                                                 </template>
                                             </div>
                                         </div>
@@ -255,7 +277,10 @@
                                         <div class="text-[11px] leading-tight">
                                             <div class="font-bold">{{ __('Add Difference to Customer Due / Balance') }}</div>
                                             <div class="text-[10px] text-slate-600 mt-0.5">
-                                                {{ __('Expiry remains') }} <strong x-text="packageData.currentExpiryDate"></strong>. {{ __('Difference of') }} <strong x-text="'{{ $currencySymbol ?? '৳' }}' + (upgradeImpact.isUpgrade ? upgradeImpact.proratedDiff : upgradeImpact.proratedRefund)"></strong> {{ __('will be adjusted in due.') }}
+                                                {!! __('Expiry remains :expiry. Difference of :amount will be adjusted in due.', [
+                                                    'expiry' => '<strong x-text="packageData.currentExpiryDate"></strong>',
+                                                    'amount' => '<strong x-text="' . e(json_encode($currencySymbol ?? '৳', JSON_UNESCAPED_UNICODE)) . ' + (upgradeImpact.isUpgrade ? upgradeImpact.proratedDiff : upgradeImpact.proratedRefund)"></strong>',
+                                                ]) !!}
                                             </div>
                                         </div>
                                     </label>
@@ -314,7 +339,7 @@
                         :disabled="isPackageLoading || !packageForm.package_id"
                         class="bg-fuchsia-600 hover:bg-fuchsia-700 disabled:opacity-50 text-white font-medium text-xs px-4 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow-xs">
                     <i class="fas" :class="isPackageLoading ? 'fa-spinner fa-spin' : 'fa-check'"></i>
-                    <span x-text="isPackageLoading ? '{{ __('Applying Changes...') }}' : '{{ __('Confirm Package Change') }}'"></span>
+                    <span x-text="isPackageLoading ? {{ json_encode(__('Applying Changes...'), JSON_UNESCAPED_UNICODE) }} : {{ json_encode(__('Confirm Package Change'), JSON_UNESCAPED_UNICODE) }}"></span>
                 </button>
             </div>
         </form>

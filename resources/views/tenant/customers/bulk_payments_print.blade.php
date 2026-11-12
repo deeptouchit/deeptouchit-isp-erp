@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bulk Bill &amp; Due Statement - {{ $tenant->company_name ?? $tenant->name ?? 'ISP Management' }}</title>
+    <title>{{ __('Bulk Bill & Due Statement') }} - {{ $tenant->company_name ?? $tenant->name ?? __('ISP Management') }}</title>
     
     <!-- Typography: Baloo Da 2 (Project Standard Font) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -93,19 +93,19 @@
                 <i class="fas fa-print"></i>
             </div>
             <div>
-                <span class="font-bold text-slate-800 text-sm block leading-tight">Bulk Bill &amp; Due Demand Sheet</span>
+                <span class="font-bold text-slate-800 text-sm block leading-tight">{{ __('Bulk Bill & Due Demand Sheet') }}</span>
                 <span class="text-[11px] text-slate-500 font-mono">
-                    Scope: {{ $mode === 'reseller' ? ($reseller ? $reseller->name . ' (' . ($reseller->code ?: 'RES-' . $reseller->id) . ')' : 'Reseller Scope') : 'ISP Direct Retail' }} • Printing: {{ count($subscribers) }} Filtered Table Subscribers
+                    {{ __('Scope:') }} {{ $mode === 'reseller' ? ($reseller ? $reseller->name . ' (' . ($reseller->code ?: 'RES-' . $reseller->id) . ')' : __('Reseller Scope')) : __('ISP Direct Retail') }} • {{ __('Printing: :count Filtered Table Subscribers', ['count' => count($subscribers)]) }}
                 </span>
             </div>
         </div>
         <div class="flex items-center gap-2">
             <button onclick="window.print()" class="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-xs font-semibold shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-print text-[11px]"></i>
-                <span>Print Document</span>
+                <span>{{ __('Print Document') }}</span>
             </button>
             <button onclick="window.close()" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200 transition cursor-pointer">
-                Close
+                {{ __('Close') }}
             </button>
         </div>
     </div>
@@ -116,21 +116,21 @@
         <!-- Header -->
         <div class="flex items-start justify-between border-b border-slate-200 pb-3">
             <div>
-                <h1 class="text-xl font-bold text-slate-900 tracking-tight leading-none mb-1">{{ $tenant->company_name ?? $tenant->name ?? 'ISP Management System' }}</h1>
-                <p class="text-xs text-slate-600 font-medium">Bulk Bill Collection &amp; Subscription Due Clearance Sheet</p>
+                <h1 class="text-xl font-bold text-slate-900 tracking-tight leading-none mb-1">{{ $tenant->company_name ?? $tenant->name ?? __('ISP Management System') }}</h1>
+                <p class="text-xs text-slate-600 font-medium">{{ __('Bulk Bill Collection & Subscription Due Clearance Sheet') }}</p>
                 <div class="mt-1 text-[11px] text-slate-500 font-mono flex items-center gap-2.5">
-                    <span>Generated: {{ now()->format('d M Y, h:i A') }}</span>
+                    <span>{{ __('Generated:') }} {{ now()->translatedFormat('d M Y, h:i A') }}</span>
                     <span>•</span>
-                    <span>Scope: <strong>{{ $mode === 'reseller' ? ($reseller ? $reseller->name . ' (' . ($reseller->code ?: 'RES-' . $reseller->id) . ')' : 'Reseller Scope') : 'ISP Direct Retail' }}</strong></span>
+                    <span>{{ __('Scope:') }} <strong>{{ $mode === 'reseller' ? ($reseller ? $reseller->name . ' (' . ($reseller->code ?: 'RES-' . $reseller->id) . ')' : __('Reseller Scope')) : __('ISP Direct Retail') }}</strong></span>
                 </div>
             </div>
             <div class="text-right space-y-1">
                 <div class="inline-block px-3 py-1 rounded-lg bg-cyan-50 text-cyan-900 font-mono font-bold text-xs border border-cyan-200">
-                    TOTAL: {{ count($subscribers) }} SUBSCRIBERS
+                    {{ __('TOTAL: :count SUBSCRIBERS', ['count' => count($subscribers)]) }}
                 </div>
                 @if($mode === 'reseller' && $reseller)
                     <div class="text-[11px] text-slate-600 font-mono">
-                        Reseller Margin: <strong>{{ (float)$commissionRate }}%</strong>
+                        {{ __('Reseller Margin:') }} <strong>{{ (float)$commissionRate }}%</strong>
                     </div>
                 @endif
             </div>
@@ -140,22 +140,22 @@
         <div class="grid grid-cols-4 gap-2">
             <!-- 1. Total Subscribers -->
             <div class="p-2 rounded-lg bg-slate-50 border border-slate-200 text-center">
-                <span class="text-[9.5px] font-semibold text-slate-500 uppercase block">Total Listed</span>
+                <span class="text-[9.5px] font-semibold text-slate-500 uppercase block">{{ __('Total Listed') }}</span>
                 <span class="text-sm font-bold font-mono text-slate-800">{{ number_format(count($subscribers)) }}</span>
             </div>
             <!-- 2. Gross Total Bill -->
             <div class="p-2 rounded-lg bg-amber-50 border border-amber-200 text-center">
-                <span class="text-[9.5px] font-semibold text-amber-800 uppercase block">Gross Total Bill</span>
+                <span class="text-[9.5px] font-semibold text-amber-800 uppercase block">{{ __('Gross Total Bill') }}</span>
                 <span class="text-sm font-bold font-mono text-amber-900">@currency($totalGrossBill)</span>
             </div>
             <!-- 3. Reseller Profit -->
             <div class="p-2 rounded-lg bg-indigo-50 border border-indigo-200 text-center">
-                <span class="text-[9.5px] font-semibold text-indigo-800 uppercase block">Reseller Profit ({{ (float)$commissionRate }}%)</span>
+                <span class="text-[9.5px] font-semibold text-indigo-800 uppercase block">{{ __('Reseller Profit (:rate%)', ['rate' => (float)$commissionRate]) }}</span>
                 <span class="text-sm font-bold font-mono text-indigo-900">@currency($totalResellerCommission)</span>
             </div>
             <!-- 4. Admin Share Net -->
             <div class="p-2 rounded-lg bg-emerald-50 border border-emerald-200 text-center">
-                <span class="text-[9.5px] font-semibold text-emerald-800 uppercase block">Admin Share (Net Payable)</span>
+                <span class="text-[9.5px] font-semibold text-emerald-800 uppercase block">{{ __('Admin Share (Net Payable)') }}</span>
                 <span class="text-sm font-bold font-mono text-emerald-900">@currency($totalAdminShare)</span>
             </div>
         </div>
@@ -164,17 +164,17 @@
         <table class="w-full border-collapse border border-slate-300 text-left text-[11px] whitespace-nowrap">
             <thead>
                 <tr class="bg-slate-100 text-slate-700 border-b border-slate-300 font-bold whitespace-nowrap">
-                    <th class="px-2 py-1.5 border border-slate-300 w-8 text-center whitespace-nowrap">#</th>
-                    <th class="px-2 py-1.5 border border-slate-300 w-24 whitespace-nowrap">Customer ID</th>
-                    <th class="px-2 py-1.5 border border-slate-300 whitespace-nowrap">Subscriber Name</th>
-                    <th class="px-2 py-1.5 border border-slate-300 whitespace-nowrap">Mobile</th>
-                    <th class="px-2 py-1.5 border border-slate-300 whitespace-nowrap">Zone / Area</th>
-                    <th class="px-2 py-1.5 border border-slate-300 whitespace-nowrap">Package</th>
-                    <th class="px-2 py-1.5 border border-slate-300 text-center whitespace-nowrap">Expiry</th>
-                    <th class="px-2 py-1.5 border border-slate-300 text-right whitespace-nowrap">Bill ({{ $currencySymbol }})</th>
-                    <th class="px-2 py-1.5 border border-slate-300 text-right whitespace-nowrap">Due ({{ $currencySymbol }})</th>
-                    <th class="px-2 py-1.5 border border-slate-300 text-right font-bold bg-slate-200/60 whitespace-nowrap">Payable ({{ $currencySymbol }})</th>
-                    <th class="px-2 py-1.5 border border-slate-300 text-center whitespace-nowrap">Signature / Note</th>
+                    <th class="px-2 py-1.5 border border-slate-300 w-8 text-center whitespace-nowrap">{{ __('#') }}</th>
+                    <th class="px-2 py-1.5 border border-slate-300 w-24 whitespace-nowrap">{{ __('Customer ID') }}</th>
+                    <th class="px-2 py-1.5 border border-slate-300 whitespace-nowrap">{{ __('Subscriber Name') }}</th>
+                    <th class="px-2 py-1.5 border border-slate-300 whitespace-nowrap">{{ __('Mobile') }}</th>
+                    <th class="px-2 py-1.5 border border-slate-300 whitespace-nowrap">{{ __('Zone / Area') }}</th>
+                    <th class="px-2 py-1.5 border border-slate-300 whitespace-nowrap">{{ __('Package') }}</th>
+                    <th class="px-2 py-1.5 border border-slate-300 text-center whitespace-nowrap">{{ __('Expiry') }}</th>
+                    <th class="px-2 py-1.5 border border-slate-300 text-right whitespace-nowrap">{{ __('Bill (:currency)', ['currency' => $currencySymbol ?? '৳']) }}</th>
+                    <th class="px-2 py-1.5 border border-slate-300 text-right whitespace-nowrap">{{ __('Due (:currency)', ['currency' => $currencySymbol ?? '৳']) }}</th>
+                    <th class="px-2 py-1.5 border border-slate-300 text-right font-bold bg-slate-200/60 whitespace-nowrap">{{ __('Payable (:currency)', ['currency' => $currencySymbol ?? '৳']) }}</th>
+                    <th class="px-2 py-1.5 border border-slate-300 text-center whitespace-nowrap">{{ __('Signature / Note') }}</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-slate-200 font-mono whitespace-nowrap">
@@ -200,7 +200,7 @@
                         <td class="px-2 py-1.5 border border-slate-300 text-slate-700 whitespace-nowrap">{{ $c->phone ?: '--' }}</td>
                         <td class="px-2 py-1.5 border border-slate-300 font-sans text-slate-600 whitespace-nowrap">{{ $c->zone ?: '--' }}</td>
                         <td class="px-2 py-1.5 border border-slate-300 font-sans font-medium text-slate-700 whitespace-nowrap">{{ $packageName }}</td>
-                        <td class="px-2 py-1.5 border border-slate-300 text-center text-slate-600 whitespace-nowrap">{{ $c->expiry_date ? \Carbon\Carbon::parse($c->expiry_date)->format('d M Y') : '--' }}</td>
+                        <td class="px-2 py-1.5 border border-slate-300 text-center text-slate-600 whitespace-nowrap">{{ $c->expiry_date ? \Carbon\Carbon::parse($c->expiry_date)->translatedFormat('d M Y') : '--' }}</td>
                         <td class="px-2 py-1.5 border border-slate-300 text-right text-slate-700 whitespace-nowrap">{{ number_format($monthly, 2) }}</td>
                         <td class="px-2 py-1.5 border border-slate-300 text-right font-bold whitespace-nowrap {{ $due > 0 ? 'text-rose-600' : 'text-slate-400' }}">{{ number_format($due, 2) }}</td>
                         <td class="px-2 py-1.5 border border-slate-300 text-right font-bold text-slate-900 bg-emerald-50/50 whitespace-nowrap">{{ number_format($payable, 2) }}</td>
@@ -209,14 +209,14 @@
                 @empty
                     <tr>
                         <td colspan="11" class="p-6 text-center text-slate-400 font-sans text-xs italic whitespace-nowrap">
-                            No subscriber records found in this table batch.
+                            {{ __('No subscriber records found in this table batch.') }}
                         </td>
                     </tr>
                 @endforelse
             </tbody>
             <tfoot>
                 <tr class="bg-slate-100 font-bold font-mono border-t-2 border-slate-400 whitespace-nowrap">
-                    <td colspan="7" class="p-2 text-right border border-slate-300 font-sans text-xs whitespace-nowrap">Total Batch Sum ({{ count($subscribers) }} Subscribers):</td>
+                    <td colspan="7" class="p-2 text-right border border-slate-300 font-sans text-xs whitespace-nowrap">{{ __('Total Batch Sum (:count Subscribers):', ['count' => count($subscribers)]) }}</td>
                     <td class="p-2 text-right border border-slate-300 text-slate-800 whitespace-nowrap">{{ number_format($sumMonthly, 2) }}</td>
                     <td class="p-2 text-right border border-slate-300 text-rose-600 whitespace-nowrap">{{ number_format($sumDue, 2) }}</td>
                     <td class="p-2 text-right border border-slate-300 text-emerald-900 bg-emerald-100/60 whitespace-nowrap">{{ number_format($sumPayable, 2) }}</td>
@@ -229,18 +229,18 @@
         <div class="grid grid-cols-3 gap-6 pt-10 border-t border-slate-200 font-sans">
             <div class="text-center">
                 <div class="border-t border-slate-300 w-44 mx-auto mb-1"></div>
-                <p class="text-[11px] font-semibold text-slate-700">Billing Officer / Prepared By</p>
-                <p class="text-[10px] text-slate-400">{{ auth()->user()->name ?? 'System Operator' }}</p>
+                <p class="text-[11px] font-semibold text-slate-700">{{ __('Billing Officer / Prepared By') }}</p>
+                <p class="text-[10px] text-slate-400">{{ auth()->user()->name ?? __('System Operator') }}</p>
             </div>
             <div class="text-center">
                 <div class="border-t border-slate-300 w-44 mx-auto mb-1"></div>
-                <p class="text-[11px] font-semibold text-slate-700">{{ $mode === 'reseller' ? 'Reseller / Partner Sign' : 'Accounts Verified By' }}</p>
-                <p class="text-[10px] text-slate-400">{{ $reseller ? $reseller->name : 'Finance Dept' }}</p>
+                <p class="text-[11px] font-semibold text-slate-700">{{ $mode === 'reseller' ? __('Reseller / Partner Sign') : __('Accounts Verified By') }}</p>
+                <p class="text-[10px] text-slate-400">{{ $reseller ? $reseller->name : __('Finance Dept') }}</p>
             </div>
             <div class="text-center">
                 <div class="border-t border-slate-300 w-44 mx-auto mb-1"></div>
-                <p class="text-[11px] font-semibold text-slate-700">Authorized Seal &amp; Signature</p>
-                <p class="text-[10px] text-slate-400">{{ $tenant->company_name ?? $tenant->name ?? 'ISP Management' }}</p>
+                <p class="text-[11px] font-semibold text-slate-700">{{ __('Authorized Seal & Signature') }}</p>
+                <p class="text-[10px] text-slate-400">{{ $tenant->company_name ?? $tenant->name ?? __('ISP Management') }}</p>
             </div>
         </div>
 

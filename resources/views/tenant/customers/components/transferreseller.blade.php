@@ -25,10 +25,10 @@
                     <i class="fas fa-exchange-alt"></i>
                 </div>
                 <div>
-                    <h4 class="text-xs font-semibold text-slate-800">Transfer Subscriber Affiliation</h4>
+                    <h4 class="text-xs font-semibold text-slate-800">{{ __('Transfer Subscriber Affiliation') }}</h4>
                     <p class="text-[10.5px] text-slate-500 font-normal">
-                        Subscriber: <span class="font-mono font-bold text-slate-700">{{ $customer->username ?: 'Client' }}</span> &bull; 
-                        ID: <span class="font-mono text-slate-600">{{ $customer->customer_id ?: 'CUST-' . $customer->id }}</span>
+                        {{ __('Subscriber') }}: <span class="font-mono font-bold text-slate-700">{{ $customer->username ?: __('Client') }}</span> &bull; 
+                        {{ __('ID') }}: <span class="font-mono text-slate-600">{{ $customer->customer_id ?: 'CUST-' . $customer->id }}</span>
                     </p>
                 </div>
             </div>
@@ -47,10 +47,10 @@
                 <!-- 1. Current Affiliation Snapshot Card -->
                 <div class="p-3 rounded-xl bg-slate-50/90 border border-slate-200/90 flex items-center justify-between gap-3">
                     <div class="space-y-0.5">
-                        <span class="text-[10px] uppercase font-semibold text-slate-400 tracking-wider">Current Affiliation</span>
+                        <span class="text-[10px] uppercase font-semibold text-slate-400 tracking-wider">{{ __('Current Affiliation') }}</span>
                         <div class="font-bold text-slate-800 flex items-center gap-1.5">
                             <span class="w-2 h-2 rounded-full" :class="transferData.currentResellerId ? 'bg-purple-500' : 'bg-cyan-500'"></span>
-                            <span x-text="transferData.currentResellerName || 'ISP Direct Retail'"></span>
+                            <span x-text="transferData.currentResellerName || {{ json_encode(__('ISP Direct Retail'), JSON_UNESCAPED_UNICODE) }}"></span>
                             <template x-if="transferData.currentResellerCode">
                                 <span class="px-1.5 py-0.2 rounded bg-purple-100 text-purple-800 text-[9.5px] font-mono font-semibold" x-text="transferData.currentResellerCode"></span>
                             </template>
@@ -58,12 +58,12 @@
                     </div>
 
                     <div class="text-right space-y-0.5 font-mono flex-shrink-0">
-                        <span class="text-[10px] uppercase font-sans font-semibold text-slate-400 tracking-wider">Plan & Bill</span>
+                        <span class="text-[10px] uppercase font-sans font-semibold text-slate-400 tracking-wider">{{ __('Plan & Bill') }}</span>
                         <div class="text-xs font-bold text-slate-700">
                             <span x-text="packageData.currentPackageName"></span>
                         </div>
                         <div class="text-[10px] text-slate-500">
-                            ৳<span x-text="Number(packageData.currentMonthlyBill).toFixed(2)"></span> /mo
+                            {{ $currencySymbol ?? '৳' }}<span x-text="Number(packageData.currentMonthlyBill).toFixed(2)"></span> {{ __('/mo') }}
                         </div>
                     </div>
                 </div>
@@ -71,7 +71,7 @@
                 <!-- 2. Transfer Destination Target Selection -->
                 <div class="space-y-1.5">
                     <label class="block text-slate-700 font-semibold text-[11px]">
-                        Transfer Target (কোথায় স্থানান্তর করতে চান?) <span class="text-rose-500">*</span>
+                        {{ __('Transfer Target') }} <span class="text-rose-500">*</span>
                     </label>
                     <div class="grid grid-cols-2 gap-2">
                         <!-- Direct ISP Retail -->
@@ -85,9 +85,9 @@
                                    class="text-cyan-600 focus:ring-cyan-500">
                             <div>
                                 <div class="font-semibold text-slate-800 text-xs flex items-center gap-1">
-                                    <i class="fas fa-building text-cyan-600 text-[10px]"></i> ISP Direct
+                                    <i class="fas fa-building text-cyan-600 text-[10px]"></i> {{ __('ISP Direct') }}
                                 </div>
-                                <div class="text-[9.5px] text-slate-500 leading-tight">সরাসরি মেইন আইএসপি</div>
+                                <div class="text-[9.5px] text-slate-500 leading-tight">{{ __('Direct Main ISP') }}</div>
                             </div>
                         </label>
 
@@ -101,9 +101,9 @@
                                    class="text-purple-600 focus:ring-purple-500">
                             <div>
                                 <div class="font-semibold text-slate-800 text-xs flex items-center gap-1">
-                                    <i class="fas fa-handshake text-purple-600 text-[10px]"></i> Reseller Partner
+                                    <i class="fas fa-handshake text-purple-600 text-[10px]"></i> {{ __('Reseller Partner') }}
                                 </div>
-                                <div class="text-[9.5px] text-slate-500 leading-tight">সাব-আইএসপি / পার্টনার</div>
+                                <div class="text-[9.5px] text-slate-500 leading-tight">{{ __('Sub-ISP / Partner') }}</div>
                             </div>
                         </label>
                     </div>
@@ -113,16 +113,16 @@
                 <template x-if="transferForm.target_type === 'reseller'">
                     <div class="space-y-1.5 p-3 rounded-xl bg-purple-50/40 border border-purple-100">
                         <label class="block text-purple-900 font-semibold text-[11px]">
-                            Select Target Reseller Partner <span class="text-rose-500">*</span>
+                            {{ __('Select Target Reseller Partner') }} <span class="text-rose-500">*</span>
                         </label>
                         <div class="relative">
                             <select x-model="transferForm.reseller_id" 
                                     required
                                     class="w-full bg-white border border-purple-200 rounded-lg text-xs px-3 py-2 text-slate-800 font-medium focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition">
-                                <option value="">-- Choose Reseller --</option>
+                                <option value="">{{ __('-- Choose Reseller --') }}</option>
                                 @foreach($allResellers ?? [] as $res)
                                     <option value="{{ $res->id }}">
-                                        {{ $res->name }} ({{ $res->code }}) &bull; Balance: ৳{{ number_format((float)($res->wallet_balance ?? 0), 2) }}
+                                        {{ $res->name }} ({{ $res->code }}) &bull; {{ __('Balance') }}: @currency((float)($res->wallet_balance ?? 0))
                                     </option>
                                 @endforeach
                             </select>
@@ -133,11 +133,11 @@
                 <!-- 4. Transfer Note / Reason -->
                 <div class="space-y-1.5">
                     <label class="block text-slate-700 font-semibold text-[11px]">
-                        Transfer Reason / Note <span class="text-slate-400 font-normal">(Optional)</span>
+                        {{ __('Transfer Reason / Note') }} <span class="text-slate-400 font-normal">({{ __('Optional') }})</span>
                     </label>
                     <input type="text" 
                            x-model="transferForm.notes" 
-                           placeholder="e.g. Area franchise handover, Subscriber request..."
+                           placeholder="{{ __('e.g. Area franchise handover, Subscriber request...') }}"
                            class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 text-slate-800 focus:bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition">
                 </div>
 
@@ -148,7 +148,7 @@
                                x-model="transferForm.sync_mikrotik" 
                                class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
                         <span class="text-slate-700 text-[11px] font-medium">
-                            Sync subscriber profile & comments to MikroTik RouterOS & FreeRADIUS
+                            {{ __('Sync subscriber profile & comments to MikroTik RouterOS & FreeRADIUS') }}
                         </span>
                     </label>
                 </div>
@@ -161,14 +161,14 @@
                         @click="transferModal = false" 
                         :disabled="isTransferLoading"
                         class="border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs px-3.5 py-1.5 rounded-lg transition shadow-2xs">
-                    Cancel
+                    {{ __('Cancel') }}
                 </button>
 
                 <button type="submit" 
                         :disabled="isTransferLoading || (transferForm.target_type === 'reseller' && !transferForm.reseller_id)"
                         class="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-medium text-xs px-4 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow-xs">
                     <i class="fas" :class="isTransferLoading ? 'fa-spinner fa-spin' : 'fa-check'"></i>
-                    <span x-text="isTransferLoading ? 'Transferring...' : 'Confirm Transfer'"></span>
+                    <span x-text="isTransferLoading ? {{ json_encode(__('Transferring...'), JSON_UNESCAPED_UNICODE) }} : {{ json_encode(__('Confirm Transfer'), JSON_UNESCAPED_UNICODE) }}"></span>
                 </button>
             </div>
         </form>

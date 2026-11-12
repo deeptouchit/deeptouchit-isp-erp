@@ -25,10 +25,10 @@
                     <i class="fas fa-credit-card"></i>
                 </div>
                 <div>
-                    <h4 class="text-xs font-semibold text-slate-800">Update Due Balance (বকেয়া সমন্বয়)</h4>
+                    <h4 class="text-xs font-semibold text-slate-800">{{ __('Update Due Balance') }}</h4>
                     <p class="text-[10.5px] text-slate-500 font-normal">
-                        Subscriber: <span class="font-mono font-bold text-slate-700">{{ $customer->username ?: 'Client' }}</span> &bull; 
-                        ID: <span class="font-mono text-slate-600">{{ $customer->customer_id ?: 'CUST-' . $customer->id }}</span>
+                        {{ __('Subscriber') }}: <span class="font-mono font-bold text-slate-700">{{ $customer->username ?: __('Client') }}</span> &bull; 
+                        {{ __('ID') }}: <span class="font-mono text-slate-600">{{ $customer->customer_id ?: 'CUST-' . $customer->id }}</span>
                     </p>
                 </div>
             </div>
@@ -47,7 +47,7 @@
                 <!-- 1. Current Due & Bill Snapshot Card -->
                 <div class="p-3 rounded-xl bg-slate-50/90 border border-slate-200/90 flex items-center justify-between gap-3">
                     <div class="space-y-0.5">
-                        <span class="text-[10px] uppercase font-semibold text-slate-400 tracking-wider">Current Outstanding Due</span>
+                        <span class="text-[10px] uppercase font-semibold text-slate-400 tracking-wider">{{ __('Current Outstanding Due') }}</span>
                         <div class="text-base font-bold font-mono flex items-baseline gap-1" :class="Number(dueData.currentDue) > 0 ? 'text-rose-600' : 'text-emerald-600'">
                             <span class="text-xs font-sans opacity-70">{{ $currencySymbol ?? '৳' }}</span>
                             <span x-text="Number(dueData.currentDue).toFixed(2)"></span>
@@ -55,7 +55,7 @@
                     </div>
 
                     <div class="text-right space-y-0.5 font-mono flex-shrink-0">
-                        <span class="text-[10px] uppercase font-sans font-semibold text-slate-400 tracking-wider">Monthly Bill</span>
+                        <span class="text-[10px] uppercase font-sans font-semibold text-slate-400 tracking-wider">{{ __('Monthly Bill') }}</span>
                         <div class="text-xs font-bold text-slate-700 inline-flex items-baseline gap-0.5">
                             <span class="text-[10px] opacity-70">{{ $currencySymbol ?? '৳' }}</span><span x-text="Number(packageData.currentMonthlyBill || '{{ (float)($customer->monthly_bill ?? 0) }}').toFixed(2)"></span>
                         </div>
@@ -65,7 +65,7 @@
                 <!-- 2. Adjustment Mode Selector (4 Action Tiles) -->
                 <div class="space-y-1.5">
                     <label class="block text-slate-700 font-semibold text-[11px]">
-                        Adjustment Mode (সমন্বয়ের ধরন) <span class="text-rose-500">*</span>
+                        {{ __('Adjustment Mode') }} <span class="text-rose-500">*</span>
                     </label>
                     <div class="grid grid-cols-2 gap-2">
                         <!-- Mode: Deduct / Discount / Waiver -->
@@ -78,9 +78,9 @@
                                    class="text-emerald-600 focus:ring-emerald-500">
                             <div>
                                 <div class="font-semibold text-slate-800 text-[11.5px] flex items-center gap-1">
-                                    <i class="fas fa-tag text-emerald-600 text-[10px]"></i> Discount / Waiver
+                                    <i class="fas fa-tag text-emerald-600 text-[10px]"></i> {{ __('Discount / Waiver') }}
                                 </div>
-                                <div class="text-[9.5px] text-slate-500 leading-tight">বকেয়া থেকে ছাড়/মওকুফ</div>
+                                <div class="text-[9.5px] text-slate-500 leading-tight">{{ __('Discount or waiver from due') }}</div>
                             </div>
                         </label>
 
@@ -94,9 +94,9 @@
                                    class="text-blue-600 focus:ring-blue-500">
                             <div>
                                 <div class="font-semibold text-slate-800 text-[11.5px] flex items-center gap-1">
-                                    <i class="fas fa-pen text-blue-600 text-[10px]"></i> Set Exact Due
+                                    <i class="fas fa-pen text-blue-600 text-[10px]"></i> {{ __('Set Exact Due') }}
                                 </div>
-                                <div class="text-[9.5px] text-slate-500 leading-tight">সরাসরি নির্দিষ্ট পরিমাণ</div>
+                                <div class="text-[9.5px] text-slate-500 leading-tight">{{ __('Set exact amount directly') }}</div>
                             </div>
                         </label>
 
@@ -110,9 +110,9 @@
                                    class="text-amber-600 focus:ring-amber-500">
                             <div>
                                 <div class="font-semibold text-slate-800 text-[11.5px] flex items-center gap-1">
-                                    <i class="fas fa-plus-circle text-amber-600 text-[10px]"></i> Add Charge
+                                    <i class="fas fa-plus-circle text-amber-600 text-[10px]"></i> {{ __('Add Charge') }}
                                 </div>
-                                <div class="text-[9.5px] text-slate-500 leading-tight">অতিরিক্ত চার্জ/বকেয়া যোগ</div>
+                                <div class="text-[9.5px] text-slate-500 leading-tight">{{ __('Add extra charge or due') }}</div>
                             </div>
                         </label>
 
@@ -126,9 +126,9 @@
                                    class="text-purple-600 focus:ring-purple-500">
                             <div>
                                 <div class="font-semibold text-slate-800 text-[11.5px] flex items-center gap-1">
-                                    <i class="fas fa-check-double text-purple-600 text-[10px]"></i> Clear All ({{ $currencySymbol ?? '৳' }}0)
+                                    <i class="fas fa-check-double text-purple-600 text-[10px]"></i> {{ __('Clear All (:amount)', ['amount' => ($currencySymbol ?? '৳') . '0']) }}
                                 </div>
-                                <div class="text-[9.5px] text-slate-500 leading-tight">সম্পূর্ণ বকেয়া ০ করা</div>
+                                <div class="text-[9.5px] text-slate-500 leading-tight">{{ __('Set total due to zero') }}</div>
                             </div>
                         </label>
                     </div>
@@ -138,7 +138,7 @@
                 <template x-if="dueForm.mode !== 'clear'">
                     <div class="space-y-1.5">
                         <label class="block text-slate-700 font-semibold text-[11px]">
-                            <span x-text="dueForm.mode === 'set' ? 'New Due Amount ({{ $currencySymbol ?? '৳' }})' : (dueForm.mode === 'deduct' ? 'Discount / Waiver Amount ({{ $currencySymbol ?? '৳' }})' : 'Additional Charge ({{ $currencySymbol ?? '৳' }})')"></span>
+                            <span x-text="dueForm.mode === 'set' ? {{ json_encode(__('New Due Amount (:currency)', ['currency' => $currencySymbol ?? '৳']), JSON_UNESCAPED_UNICODE) }} : (dueForm.mode === 'deduct' ? {{ json_encode(__('Discount / Waiver Amount (:currency)', ['currency' => $currencySymbol ?? '৳']), JSON_UNESCAPED_UNICODE) }} : {{ json_encode(__('Additional Charge (:currency)', ['currency' => $currencySymbol ?? '৳']), JSON_UNESCAPED_UNICODE) }})"></span>
                             <span class="text-rose-500">*</span>
                         </label>
                         <div class="relative rounded-lg shadow-2xs">
@@ -156,31 +156,31 @@
 
                         <!-- Quick Preset Pill Buttons -->
                         <div class="flex items-center gap-1.5 flex-wrap pt-1">
-                            <span class="text-[10px] text-slate-400">Presets:</span>
+                            <span class="text-[10px] text-slate-400">{{ __('Presets:') }}</span>
                             <template x-if="Number(dueData.currentDue) > 0">
                                 <button type="button" 
-                                        @click="dueForm.amount = Number(dueData.currentDue).toFixed(2); dueForm.remarks = 'Full Due Balance Amount'"
+                                        @click="dueForm.amount = Number(dueData.currentDue).toFixed(2); dueForm.remarks = {{ json_encode(__('Full Due Balance Amount'), JSON_UNESCAPED_UNICODE) }}"
                                         class="px-2 py-0.5 rounded bg-rose-50 hover:bg-rose-100 text-rose-700 text-[10px] font-medium transition border border-rose-200">
-                                    Full Due ({{ $currencySymbol ?? '৳' }}<span x-text="Number(dueData.currentDue).toFixed(0)"></span>)
+                                    {!! __('Full Due (:amount)', ['amount' => e($currencySymbol ?? '৳') . '<span x-text="Number(dueData.currentDue).toFixed(0)"></span>']) !!}
                                 </button>
                             </template>
                             <button type="button" 
-                                    @click="dueForm.amount = Number(packageData.currentMonthlyBill || 500).toFixed(2); dueForm.remarks = '1 Month Package Bill Amount'"
+                                    @click="dueForm.amount = Number(packageData.currentMonthlyBill || 500).toFixed(2); dueForm.remarks = {{ json_encode(__('1 Month Package Bill Amount'), JSON_UNESCAPED_UNICODE) }}"
                                     class="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-medium transition border border-slate-200">
-                                1 Month Bill ({{ $currencySymbol ?? '৳' }}<span x-text="Number(packageData.currentMonthlyBill || 500).toFixed(0)"></span>)
+                                {!! __('1 Month Bill (:amount)', ['amount' => e($currencySymbol ?? '৳') . '<span x-text="Number(packageData.currentMonthlyBill || 500).toFixed(0)"></span>']) !!}
                             </button>
                             <button type="button" 
-                                    @click="dueForm.amount = '100.00'; dueForm.remarks = '{{ $currencySymbol ?? '৳' }}100 Adjustment'"
+                                    @click="dueForm.amount = '100.00'; dueForm.remarks = {{ json_encode(__(':amount Adjustment', ['amount' => ($currencySymbol ?? '৳') . '100']), JSON_UNESCAPED_UNICODE) }}"
                                     class="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-medium transition border border-slate-200">
                                 {{ $currencySymbol ?? '৳' }}100
                             </button>
                             <button type="button" 
-                                    @click="dueForm.amount = '200.00'; dueForm.remarks = '{{ $currencySymbol ?? '৳' }}200 Adjustment'"
+                                    @click="dueForm.amount = '200.00'; dueForm.remarks = {{ json_encode(__(':amount Adjustment', ['amount' => ($currencySymbol ?? '৳') . '200']), JSON_UNESCAPED_UNICODE) }}"
                                     class="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-medium transition border border-slate-200">
                                 {{ $currencySymbol ?? '৳' }}200
                             </button>
                             <button type="button" 
-                                    @click="dueForm.amount = '500.00'; dueForm.remarks = '{{ $currencySymbol ?? '৳' }}500 Adjustment'"
+                                    @click="dueForm.amount = '500.00'; dueForm.remarks = {{ json_encode(__(':amount Adjustment', ['amount' => ($currencySymbol ?? '৳') . '500']), JSON_UNESCAPED_UNICODE) }}"
                                     class="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-medium transition border border-slate-200">
                                 {{ $currencySymbol ?? '৳' }}500
                             </button>
@@ -191,7 +191,7 @@
                 <!-- 4. Live Calculation Summary Alert -->
                 <div class="p-3 rounded-lg border bg-slate-50/80 border-slate-200/90 space-y-1.5 font-mono text-[11px]">
                     <div class="flex items-center justify-between text-slate-600">
-                        <span>Current Due:</span>
+                        <span>{{ __('Current Due:') }}</span>
                         <span class="inline-flex items-baseline gap-0.5"><span class="text-[10px] opacity-70">{{ $currencySymbol ?? '৳' }}</span><span x-text="Number(dueData.currentDue).toFixed(2)"></span></span>
                     </div>
                     <div class="flex items-center justify-between font-medium" 
@@ -200,14 +200,14 @@
                              'text-amber-700': dueForm.mode === 'add',
                              'text-blue-700': dueForm.mode === 'set'
                          }">
-                        <span x-text="dueForm.mode === 'deduct' ? 'Discount / Waiver:' : (dueForm.mode === 'add' ? 'Added Charge:' : (dueForm.mode === 'clear' ? 'Waiver (Clear All):' : 'Set Direct Due:'))"></span>
+                        <span x-text="dueForm.mode === 'deduct' ? {{ json_encode(__('Discount / Waiver:'), JSON_UNESCAPED_UNICODE) }} : (dueForm.mode === 'add' ? {{ json_encode(__('Added Charge:'), JSON_UNESCAPED_UNICODE) }} : (dueForm.mode === 'clear' ? {{ json_encode(__('Waiver (Clear All):'), JSON_UNESCAPED_UNICODE) }} : {{ json_encode(__('Set Direct Due:'), JSON_UNESCAPED_UNICODE) }}))"></span>
                         <span class="inline-flex items-baseline gap-0.5">
-                            <span x-text="dueForm.mode === 'deduct' || dueForm.mode === 'clear' ? '-{{ $currencySymbol ?? '৳' }}' : (dueForm.mode === 'add' ? '+{{ $currencySymbol ?? '৳' }}' : '{{ $currencySymbol ?? '৳' }}')"></span>
+                            <span x-text="dueForm.mode === 'deduct' || dueForm.mode === 'clear' ? '-' + {{ json_encode($currencySymbol ?? '৳', JSON_UNESCAPED_UNICODE) }} : (dueForm.mode === 'add' ? '+' + {{ json_encode($currencySymbol ?? '৳', JSON_UNESCAPED_UNICODE) }} : {{ json_encode($currencySymbol ?? '৳', JSON_UNESCAPED_UNICODE) }})"></span>
                             <span x-text="dueForm.mode === 'clear' ? Number(dueData.currentDue).toFixed(2) : Number(dueForm.amount || 0).toFixed(2)"></span>
                         </span>
                     </div>
                     <div class="pt-1 border-t border-slate-200 flex items-center justify-between font-bold text-xs">
-                        <span class="text-slate-800">New Final Due:</span>
+                        <span class="text-slate-800">{{ __('New Final Due:') }}</span>
                         <span class="inline-flex items-baseline gap-0.5" :class="calculateNewDue() > 0 ? 'text-rose-600' : 'text-emerald-600'">
                             <span class="text-[10px] opacity-70">{{ $currencySymbol ?? '৳' }}</span><span x-text="calculateNewDue().toFixed(2)"></span>
                         </span>
@@ -217,11 +217,11 @@
                 <!-- 5. Remarks / Reason -->
                 <div class="space-y-1.5">
                     <label class="block text-slate-700 font-semibold text-[11px]">
-                        Reason / Note (কারণ বা বিবরণ) <span class="text-slate-400 font-normal">(Optional)</span>
+                        {{ __('Reason / Note') }} <span class="text-slate-400 font-normal">({{ __('Optional') }})</span>
                     </label>
                     <input type="text" 
                            x-model="dueForm.remarks" 
-                           placeholder="e.g. VIP Waiver, Previous month correction, ONU charge..."
+                           placeholder="{{ __('e.g. VIP Waiver, Previous month correction, ONU charge...') }}"
                            class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 text-slate-800 focus:bg-white focus:border-lime-500 focus:ring-1 focus:ring-lime-500 transition">
                 </div>
 
@@ -233,14 +233,14 @@
                         @click="dueModal = false" 
                         :disabled="isDueLoading"
                         class="border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs px-3.5 py-1.5 rounded-lg transition shadow-2xs">
-                    Cancel
+                    {{ __('Cancel') }}
                 </button>
 
                 <button type="submit" 
                         :disabled="isDueLoading || (dueForm.mode !== 'clear' && (dueForm.amount === '' || Number(dueForm.amount) < 0))"
                         class="bg-lime-600 hover:bg-lime-700 disabled:opacity-50 text-white font-medium text-xs px-4 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow-xs">
                     <i class="fas" :class="isDueLoading ? 'fa-spinner fa-spin' : 'fa-check'"></i>
-                    <span x-text="isDueLoading ? 'Updating...' : 'Save Due Balance'"></span>
+                    <span x-text="isDueLoading ? {{ json_encode(__('Updating...'), JSON_UNESCAPED_UNICODE) }} : {{ json_encode(__('Save Due Balance'), JSON_UNESCAPED_UNICODE) }}"></span>
                 </button>
             </div>
         </form>

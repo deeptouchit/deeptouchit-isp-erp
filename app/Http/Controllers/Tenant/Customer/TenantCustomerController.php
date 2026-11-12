@@ -47,7 +47,7 @@ class TenantCustomerController extends Controller
             $tenant = Tenant::first();
         }
         if (!$tenant) {
-            abort(404, 'ISP Tenant record not found.');
+            abort(404, __('ISP Tenant record not found.'));
         }
         return $tenant;
     }
@@ -386,9 +386,11 @@ class TenantCustomerController extends Controller
             ->values();
         $autoCustomerId = TenantCustomer::generateNextCustomerId($tenant->id);
         $customerQuota = PlanQuotaService::checkQuota($tenant, 'customer');
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
 
         return view('tenant.customers.create', compact(
             'tenant',
+            'currencySymbol',
             'allPackages',
             'allRouters',
             'allOlts',
@@ -458,9 +460,11 @@ class TenantCustomerController extends Controller
         $package = !empty($validated['package_id']) ? TenantInternetPackage::find($validated['package_id']) : null;
         $monthlyBill = $validated['monthly_bill'] ?? ($package?->price ?? 0.00);
 
+        $currency = $tenant->currency_symbol ?? '৳';
+
         // Resolve Coverage Zone
         $zoneId = $request->input('zone_id');
-        $zoneName = $validated['zone'] ?? 'General Zone';
+        $zoneName = $validated['zone'] ?? __('General Zone');
         if ($zoneId) {
             $cz = TenantCoverageZone::where('tenant_id', $tenant->id)->find($zoneId);
             if ($cz) {
@@ -490,7 +494,7 @@ class TenantCustomerController extends Controller
             'zone' => $zoneName,
             'connection_type' => $validated['connection_type'],
             'package_id' => $package?->id,
-            'package_name' => $package?->package_name ?: ($package?->name ?? 'Custom Plan'),
+            'package_name' => $package?->package_name ?: ($package?->name ?? __('Custom Plan')),
             'monthly_bill' => $monthlyBill,
             'router_id' => $validated['router_id'] ?? null,
             'ip_address' => $validated['ip_address'] ?? null,
@@ -508,7 +512,8 @@ class TenantCustomerController extends Controller
         ]);
 
         // Automated Opening Subscription Invoice Generation (Package Rate Only - No Hardware/Setup Surcharges)
-        $invoiceMsg = '';
+        $hasInvoice = false;
+        $invoiceNo = null;
         if ($monthlyBill > 0) {
             $billingMonth = Carbon::now()->format('Y-m');
             $invoiceNo = TenantCustomerInvoice::generateInvoiceNo($tenant->id, $billingMonth);
@@ -522,7 +527,7 @@ class TenantCustomerController extends Controller
                 'invoice_no' => $invoiceNo,
                 'billing_month' => $billingMonth,
                 'package_id' => $customer->package_id,
-                'package_name' => $customer->package_display_name ?: ($package?->name ?? 'Internet Package'),
+                'package_name' => $customer->package_display_name ?: ($package?->name ?? __('Internet Package')),
                 'amount' => $monthlyBill,
                 'discount' => 0.00,
                 'vat_tax' => 0.00,
@@ -534,7 +539,7 @@ class TenantCustomerController extends Controller
                 'due_date' => $dueDate,
                 'status' => 'unpaid',
                 'auto_generated' => true,
-                'notes' => 'Opening Internet Package Subscription Invoice',
+                'notes' => __('Opening Internet Package Subscription Invoice'),
                 'created_by' => Auth::id() ?: null,
             ]);
 
@@ -542,7 +547,7 @@ class TenantCustomerController extends Controller
             $customer->due_amount = $monthlyBill;
             $customer->save();
 
-            $invoiceMsg = " with opening invoice {$invoiceNo} (৳" . number_format($monthlyBill, 2) . ")";
+            $hasInvoice = true;
         }
 
         // Audit Trail Event
@@ -550,9 +555,13 @@ class TenantCustomerController extends Controller
             'tenant_id' => $tenant->id,
             'actor_type' => 'App\Models\User',
             'actor_id' => Auth::id() ?: 1,
-            'actor_name' => Auth::user()?->name ?: 'Admin',
+            'actor_name' => Auth::user()?->name ?: __('Admin'),
             'event_type' => 'CUSTOMER_CREATE',
-            'description' => "Onboarded new customer '{$customer->name}' ({$customer->username}) with ID {$customerId}.",
+            'description' => __("Onboarded new customer ':name' (:username) with ID :id.", [
+                'name' => $customer->name,
+                'username' => $customer->username,
+                'id' => $customerId,
+            ]),
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
             'metadata' => [
@@ -564,12 +573,12 @@ class TenantCustomerController extends Controller
         ]);
 
         // Auto Provision to MikroTik Router & FreeRADIUS AAA
-        $mikrotikMsg = '';
+        $mikrotikSynced = false;
         try {
             $mikrotikApi = new MikrotikApiService();
             $syncRes = $mikrotikApi->syncCustomerToMikrotik($customer);
             if ($syncRes['success']) {
-                $mikrotikMsg .= ' & synced to MikroTik RouterOS';
+                $mikrotikSynced = true;
             }
         } catch (\Exception $e) {
             // Non-blocking MikroTik error
@@ -582,7 +591,32 @@ class TenantCustomerController extends Controller
             // Non-blocking RADIUS error
         }
 
-        $msg = "Customer '{$customer->name}' ({$customerId}) created{$invoiceMsg}{$mikrotikMsg} successfully!";
+        $formattedBill = $currency . number_format($monthlyBill, 2);
+        if ($hasInvoice && $mikrotikSynced) {
+            $msg = __("Customer ':name' (:id) created with opening invoice :invoice (:amount) and synced to MikroTik RouterOS successfully!", [
+                'name' => $customer->name,
+                'id' => $customerId,
+                'invoice' => $invoiceNo,
+                'amount' => $formattedBill,
+            ]);
+        } elseif ($hasInvoice) {
+            $msg = __("Customer ':name' (:id) created with opening invoice :invoice (:amount) successfully!", [
+                'name' => $customer->name,
+                'id' => $customerId,
+                'invoice' => $invoiceNo,
+                'amount' => $formattedBill,
+            ]);
+        } elseif ($mikrotikSynced) {
+            $msg = __("Customer ':name' (:id) created and synced to MikroTik RouterOS successfully!", [
+                'name' => $customer->name,
+                'id' => $customerId,
+            ]);
+        } else {
+            $msg = __("Customer ':name' (:id) created successfully!", [
+                'name' => $customer->name,
+                'id' => $customerId,
+            ]);
+        }
 
         if ($request->wantsJson()) {
             return response()->json([
@@ -648,14 +682,14 @@ class TenantCustomerController extends Controller
             ->get();
 
         // Format dues dynamically using global currency settings
-        $currSym = '৳';
+        $currSym = $tenant->currency_symbol ?? '৳';
         $currPos = 'left';
         $currDec = 2;
         $thSep = ',';
         $decSep = '.';
         try {
             $settings = \App\Models\Setting::whereNull('tenant_id')->pluck('value', 'key');
-            $currSym = $settings['currency_symbol'] ?? '৳';
+            $currSym = $settings['currency_symbol'] ?? $currSym;
             $currPos = $settings['currency_position'] ?? 'left';
             $currDec = (int) ($settings['currency_decimals'] ?? 2);
             $thSep = ($settings['thousand_separator'] ?? ',') === 'space' ? ' ' : ($settings['thousand_separator'] ?? ',');
@@ -681,7 +715,7 @@ class TenantCustomerController extends Controller
             return [
                 'id' => $c->id,
                 'customer_id' => $c->customer_id ?: ('#' . $c->id),
-                'name' => $c->name ?: ($c->username ?: 'Customer #' . $c->id),
+                'name' => $c->name ?: ($c->username ?: __('Customer #:id', ['id' => $c->id])),
                 'username' => $c->username ?? '',
                 'phone' => $c->phone ?? '',
                 'zone' => $c->zone ?? '',
@@ -808,7 +842,9 @@ class TenantCustomerController extends Controller
             $customer->setRelation('olt', $onu->olt);
         }
 
-        return view('tenant.customers.show', compact('tenant', 'customer', 'onu', 'allPackages', 'allResellers', 'allRouters', 'recentPayments', 'recentSessions', 'activityLogs'));
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
+
+        return view('tenant.customers.show', compact('tenant', 'currencySymbol', 'customer', 'onu', 'allPackages', 'allResellers', 'allRouters', 'recentPayments', 'recentSessions', 'activityLogs'));
     }
 
     /**
@@ -831,9 +867,11 @@ class TenantCustomerController extends Controller
             ->pluck('pon_port')
             ->sort()
             ->values();
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
 
         return view('tenant.customers.edit', compact(
             'tenant',
+            'currencySymbol',
             'customer',
             'allPackages',
             'allRouters',
@@ -969,7 +1007,10 @@ class TenantCustomerController extends Controller
             // Non-blocking
         }
 
-        $msg = "Customer '{$customer->name}' ({$customer->customer_id}) updated & synchronized successfully!";
+        $msg = __("Customer ':name' (:id) updated & synchronized successfully!", [
+            'name' => $customer->name,
+            'id' => $customer->customer_id,
+        ]);
 
         if ($request->wantsJson()) {
             return response()->json([
@@ -1000,7 +1041,7 @@ class TenantCustomerController extends Controller
         $customer->update($updateData);
 
         // Sync status to MikroTik Router (Enables/Disables secret & disconnects live session if suspended)
-        $mikrotikMsg = '';
+        $mikrotikDetail = '';
         try {
             $router = $customer->router ?: (
                 TenantRouter::where('tenant_id', $tenant->id)->where('status', 'online')->first()
@@ -1014,7 +1055,7 @@ class TenantCustomerController extends Controller
                 // 2. Comprehensive secret sync with full profile & customer comment
                 $mRes = $mikrotikApi->syncCustomerToMikrotik($customer);
                 if (!empty($mRes['message'])) {
-                    $mikrotikMsg = " - MikroTik: " . $mRes['message'];
+                    $mikrotikDetail = $mRes['message'];
                 }
             }
         } catch (\Exception $e) {
@@ -1037,24 +1078,38 @@ class TenantCustomerController extends Controller
             // Non-blocking
         }
 
+        $statusLabel = ($newStatus === 'active') ? __('Active') : __('Suspended');
+
         // Audit Trail Log
         TenantActivityLog::create([
             'tenant_id' => $tenant->id,
             'actor_type' => 'App\Models\User',
             'actor_id' => Auth::id() ?: 1,
-            'actor_name' => Auth::user()?->name ?: 'Admin',
+            'actor_name' => Auth::user()?->name ?: __('Admin'),
             'event_type' => 'CUSTOMER_STATUS_TOGGLE',
-            'description' => "Changed status of subscriber '{$customer->name}' ({$customer->username}) to {$newStatus}.",
+            'description' => __("Changed status of subscriber ':name' (:username) to :status.", [
+                'name' => $customer->name,
+                'username' => $customer->username,
+                'status' => $statusLabel,
+            ]),
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
             'metadata' => ['customer_id' => $customer->id, 'status' => $newStatus],
         ]);
 
-        $stateTitle = ($newStatus === 'active') ? 'Enabled' : 'Disabled';
+        if (!empty($mikrotikDetail)) {
+            $message = ($newStatus === 'active')
+                ? __("Customer ':username' status updated to Active! (MikroTik: :mikrotik)", ['username' => $customer->username, 'mikrotik' => $mikrotikDetail])
+                : __("Customer ':username' status updated to Suspended! (MikroTik: :mikrotik)", ['username' => $customer->username, 'mikrotik' => $mikrotikDetail]);
+        } else {
+            $message = ($newStatus === 'active')
+                ? __("Customer ':username' status updated to Active!", ['username' => $customer->username])
+                : __("Customer ':username' status updated to Suspended!", ['username' => $customer->username]);
+        }
 
         return response()->json([
             'success' => true,
-            'message' => "Customer '{$customer->username}' status updated to {$newStatus}!{$mikrotikMsg}",
+            'message' => $message,
             'status' => $newStatus,
             'online_status' => $customer->online_status,
             'badge' => $customer->status_badge,
@@ -1098,9 +1153,11 @@ class TenantCustomerController extends Controller
             'tenant_id' => $tenant->id,
             'actor_type' => 'App\Models\User',
             'actor_id' => Auth::id() ?: 1,
-            'actor_name' => Auth::user()?->name ?: 'Admin',
+            'actor_name' => Auth::user()?->name ?: __('Admin'),
             'event_type' => 'MIKROTIK_SECRET_TOGGLE',
-            'description' => "Toggled MikroTik PPP secret for '{$customer->username}' to {$newMikrotik}.",
+            'description' => ($newMikrotik === 'enabled')
+                ? __("Toggled MikroTik PPP secret for ':username' to enabled.", ['username' => $customer->username])
+                : __("Toggled MikroTik PPP secret for ':username' to disabled.", ['username' => $customer->username]),
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
             'metadata' => [
@@ -1111,11 +1168,13 @@ class TenantCustomerController extends Controller
             ],
         ]);
 
-        $stateTitle = ucfirst($newMikrotik);
+        $message = ($newMikrotik === 'enabled')
+            ? __("MikroTik Secret for ':username' is now Enabled on router!", ['username' => $customer->username])
+            : __("MikroTik Secret for ':username' is now Disabled on router!", ['username' => $customer->username]);
 
         return response()->json([
             'success' => true,
-            'message' => "MikroTik Secret for '{$customer->username}' is now {$stateTitle} on router!",
+            'message' => $message,
             'mikrotik_status' => $newMikrotik,
             'online_status' => $customer->online_status,
         ]);
@@ -1171,7 +1230,9 @@ class TenantCustomerController extends Controller
             'collected_by' => Auth::id() ?: 1,
             'status' => 'paid',
             'paid_at' => Carbon::now(),
-            'notes' => "Recharge & Renewal for {$months} month(s)",
+            'notes' => $months === 1
+                ? __("Recharge & Renewal for :months month", ['months' => $months])
+                : __("Recharge & Renewal for :months months", ['months' => $months]),
         ]);
 
         // Settle matching or open TenantCustomerInvoice
@@ -1199,9 +1260,11 @@ class TenantCustomerController extends Controller
             'tenant_id' => $tenant->id,
             'actor_type' => 'App\Models\User',
             'actor_id' => Auth::id() ?: 1,
-            'actor_name' => Auth::user()?->name ?: 'Admin',
+            'actor_name' => Auth::user()?->name ?: __('Admin'),
             'event_type' => 'CUSTOMER_RENEW',
-            'description' => "Renewed subscription for '{$customer->name}' for {$months} month(s). New expiry: {$newExpiry->format('d M Y')}.",
+            'description' => $months === 1
+                ? __("Renewed subscription for ':name' for :months month. New expiry: :expiry.", ['name' => $customer->name, 'months' => $months, 'expiry' => $newExpiry->format('d M Y')])
+                : __("Renewed subscription for ':name' for :months months. New expiry: :expiry.", ['name' => $customer->name, 'months' => $months, 'expiry' => $newExpiry->format('d M Y')]),
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
             'metadata' => ['customer_id' => $customer->id, 'months' => $months, 'amount' => $amountPaid],
@@ -1209,7 +1272,10 @@ class TenantCustomerController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => "Subscription renewed for {$customer->name} until " . $newExpiry->format('d M Y') . " (MikroTik & FreeRADIUS Active)!",
+            'message' => __("Subscription renewed for :name until :expiry (MikroTik & FreeRADIUS Active)!", [
+                'name' => $customer->name,
+                'expiry' => $newExpiry->format('d M Y'),
+            ]),
             'expiry_date' => $newExpiry->format('d M Y'),
             'status' => 'active',
             'badge' => $customer->status_badge,
@@ -1261,7 +1327,7 @@ class TenantCustomerController extends Controller
         if ($routers->isEmpty()) {
             return response()->json([
                 'success' => false,
-                'message' => 'No active MikroTik router found configured for this tenant.',
+                'message' => __('No active MikroTik router found configured for this tenant.'),
             ], 422);
         }
 
@@ -1441,7 +1507,11 @@ class TenantCustomerController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => "Two-Way Smart Sync completed! [{$importedCount} imported from router, {$pushedCount} provisioned to network, {$liveCount} live online sessions updated]",
+            'message' => __("Two-Way Smart Sync completed! [:imported imported from router, :pushed provisioned to network, :live live online sessions updated]", [
+                'imported' => $importedCount,
+                'pushed' => $pushedCount,
+                'live' => $liveCount,
+            ]),
             'imported' => $importedCount,
             'pushed' => $pushedCount,
             'failed' => $failedCount,
@@ -1464,7 +1534,7 @@ class TenantCustomerController extends Controller
         if (!$res['success']) {
             return response()->json([
                 'success' => false,
-                'message' => 'Connection failed: ' . ($res['message'] ?? 'Unable to connect to router.'),
+                'message' => __('Connection failed: :error', ['error' => $res['message'] ?? __('Unable to connect to router.')]),
             ], 422);
         }
 
@@ -1528,7 +1598,7 @@ class TenantCustomerController extends Controller
         if (!$res['success']) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to pull secrets from MikroTik: ' . ($res['message'] ?? 'Connection error'),
+                'message' => __('Failed to pull secrets from MikroTik: :error', ['error' => $res['message'] ?? __('Connection error')]),
             ], 422);
         }
 
@@ -1621,9 +1691,35 @@ class TenantCustomerController extends Controller
             }
         }
 
+        if ($updated > 0 && $quotaSkipped > 0) {
+            $importMsg = __("Successfully imported :imported new customers from MikroTik ':router'! (:updated updated, :skipped skipped: plan customer quota limit reached)", [
+                'imported' => $imported,
+                'router' => $router->name,
+                'updated' => $updated,
+                'skipped' => $quotaSkipped,
+            ]);
+        } elseif ($updated > 0) {
+            $importMsg = __("Successfully imported :imported new customers from MikroTik ':router'! (:updated updated)", [
+                'imported' => $imported,
+                'router' => $router->name,
+                'updated' => $updated,
+            ]);
+        } elseif ($quotaSkipped > 0) {
+            $importMsg = __("Successfully imported :imported new customers from MikroTik ':router'! (:skipped skipped: plan customer quota limit reached)", [
+                'imported' => $imported,
+                'router' => $router->name,
+                'skipped' => $quotaSkipped,
+            ]);
+        } else {
+            $importMsg = __("Successfully imported :imported new customers from MikroTik ':router'!", [
+                'imported' => $imported,
+                'router' => $router->name,
+            ]);
+        }
+
         return response()->json([
             'success' => true,
-            'message' => "Successfully imported {$imported} new customers from MikroTik '{$router->name}'!" . ($updated > 0 ? " ({$updated} updated)" : "") . ($quotaSkipped > 0 ? " ({$quotaSkipped} skipped: plan customer quota limit reached)" : ""),
+            'message' => $importMsg,
             'imported' => $imported,
             'updated' => $updated,
             'quota_skipped' => $quotaSkipped,
@@ -1642,7 +1738,7 @@ class TenantCustomerController extends Controller
         if (!$router) {
             return response()->json([
                 'success' => false,
-                'message' => 'No active MikroTik router found for this customer.',
+                'message' => __('No active MikroTik router found for this customer.'),
             ], 422);
         }
 
@@ -1665,9 +1761,12 @@ class TenantCustomerController extends Controller
             'tenant_id' => $tenant->id,
             'actor_type' => 'App\Models\User',
             'actor_id' => Auth::id() ?: 1,
-            'actor_name' => Auth::user()?->name ?: 'Admin',
+            'actor_name' => Auth::user()?->name ?: __('Admin'),
             'event_type' => 'PPPOE_SESSION_KICK',
-            'description' => "Terminated active PPPoE session for '{$customer->username}' on {$router->name}.",
+            'description' => __("Terminated active PPPoE session for ':username' on :router.", [
+                'username' => $customer->username,
+                'router' => $router->name,
+            ]),
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
             'metadata' => ['customer_id' => $customer->id, 'router' => $router->name],
@@ -1675,7 +1774,10 @@ class TenantCustomerController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => "PPPoE session for '{$customer->username}' terminated successfully on {$router->name} (MikroTik & CoA)!",
+            'message' => __("PPPoE session for ':username' terminated successfully on :router (MikroTik & CoA)!", [
+                'username' => $customer->username,
+                'router' => $router->name,
+            ]),
             'online_status' => 'offline',
         ]);
     }
@@ -1807,7 +1909,7 @@ class TenantCustomerController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => "Live online sessions & MikroTik secret states synced! ({$liveCount} active sessions detected)",
+            'message' => __("Live online sessions & MikroTik secret states synced! (:count active sessions detected)", ['count' => $liveCount]),
             'active_count' => $liveCount,
             'online_usernames' => $onlineList,
             'mikrotik_status_map' => $mikrotikStatusMap,
@@ -1855,18 +1957,18 @@ class TenantCustomerController extends Controller
                 'ip' => null,
                 'customer_name' => $customer->name,
                 'username' => $customer->username,
-                'gateway' => $router ? $router->name : 'N/A',
+                'gateway' => $router ? $router->name : __('N/A'),
                 'sent' => $count,
                 'received' => 0,
                 'loss_percent' => 100,
                 'rtt_min' => '--',
-                'rtt_avg' => 'No IP Configured',
+                'rtt_avg' => __('No IP Configured'),
                 'rtt_max' => '--',
                 'lines' => [
-                    "Subscriber '{$customer->username}' is currently offline with no assigned framed IP address.",
-                    "Please verify PPPoE session or assign a static IP."
+                    __("Subscriber ':username' is currently offline with no assigned framed IP address.", ['username' => $customer->username]),
+                    __("Please verify PPPoE session or assign a static IP."),
                 ],
-                'message' => "Customer '{$customer->name}' does not have an assigned or active IP address to ping.",
+                'message' => __("Customer ':name' does not have an assigned or active IP address to ping.", ['name' => $customer->name]),
             ]);
         }
 
@@ -1884,12 +1986,12 @@ class TenantCustomerController extends Controller
                 'sent' => $count,
                 'loss_percent' => $success ? 0 : 100,
                 'rtt_min' => $success ? '1.0ms' : '--',
-                'rtt_avg' => $success ? '1.4ms' : 'Host unreachable',
+                'rtt_avg' => $success ? '1.4ms' : __('Host unreachable'),
                 'rtt_max' => $success ? '2.1ms' : '--',
                 'lines' => !empty($output) ? array_values(array_filter($output)) : [
                     $success ? "64 bytes from {$ip}: icmp_seq=1 ttl=64 time=1.4ms" : "From {$ip} Destination Host Unreachable"
                 ],
-                'gateway' => 'Server Host',
+                'gateway' => __('Server Host'),
             ];
         }
 
@@ -1900,17 +2002,22 @@ class TenantCustomerController extends Controller
             'ip' => $ip,
             'customer_name' => $customer->name,
             'username' => $customer->username,
-            'gateway' => $res['gateway'] ?? ($router ? $router->name : 'Core Gateway'),
+            'gateway' => $res['gateway'] ?? ($router ? $router->name : __('Core Gateway')),
             'sent' => $res['sent'] ?? $count,
             'received' => $res['received'] ?? 0,
             'loss_percent' => $res['loss_percent'] ?? ($isReachable ? 0 : 100),
             'rtt_min' => $res['rtt_min'] ?? ($isReachable ? '< 2ms' : '--'),
-            'rtt_avg' => $res['rtt_avg'] ?? ($isReachable ? '< 5ms' : 'Request timed out'),
+            'rtt_avg' => $res['rtt_avg'] ?? ($isReachable ? '< 5ms' : __('Request timed out')),
             'rtt_max' => $res['rtt_max'] ?? ($isReachable ? '< 10ms' : '--'),
             'lines' => $res['lines'] ?? [],
             'message' => $isReachable
-                ? "Host {$ip} is REACHABLE ({$res['received']}/{$count} packets received, Avg RTT: {$res['rtt_avg']})"
-                : "Host {$ip} is UNREACHABLE (100% packet loss / timeout)",
+                ? __("Host :ip is REACHABLE (:received/:count packets received, Avg RTT: :rtt)", [
+                    'ip' => $ip,
+                    'received' => $res['received'] ?? 0,
+                    'count' => $count,
+                    'rtt' => $res['rtt_avg'] ?? '< 5ms',
+                ])
+                : __("Host :ip is UNREACHABLE (100% packet loss / timeout)", ['ip' => $ip]),
         ]);
     }
 
@@ -1950,14 +2057,14 @@ class TenantCustomerController extends Controller
             'tenant_id' => $tenant->id,
             'actor_type' => 'App\Models\User',
             'actor_id' => Auth::id() ?: 1,
-            'actor_name' => Auth::user()?->name ?: 'Admin',
+            'actor_name' => Auth::user()?->name ?: __('Admin'),
             'event_type' => 'CUSTOMER_DELETE',
-            'description' => "Deleted customer record for '{$name}' (Removed from MikroTik & FreeRADIUS).",
+            'description' => __("Deleted customer record for ':name' (Removed from MikroTik & FreeRADIUS).", ['name' => $name]),
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
         ]);
 
-        $msg = "Customer '{$name}' deleted and removed from MikroTik & FreeRADIUS successfully!";
+        $msg = __("Customer ':name' deleted and removed from MikroTik & FreeRADIUS successfully!", ['name' => $name]);
 
         if ($request->wantsJson()) {
             return response()->json([
@@ -2014,7 +2121,7 @@ class TenantCustomerController extends Controller
         }
 
         // 3. Sync to MikroTik Router (Pushes new password & settings)
-        $mikrotikMsg = '';
+        $mikrotikDetail = '';
         try {
             $mikrotikApi = new MikrotikApiService();
             $syncRes = $mikrotikApi->syncCustomerToMikrotik($customer);
@@ -2026,7 +2133,7 @@ class TenantCustomerController extends Controller
             }
 
             if (!empty($syncRes['message'])) {
-                $mikrotikMsg = " (MikroTik: {$syncRes['message']})";
+                $mikrotikDetail = $syncRes['message'];
             }
         } catch (\Exception $e) {
             \Log::error("MikroTik PPPoE sync error: " . $e->getMessage());
@@ -2044,16 +2151,22 @@ class TenantCustomerController extends Controller
             'tenant_id' => $tenant->id,
             'actor_type' => 'App\Models\User',
             'actor_id' => Auth::id() ?: 1,
-            'actor_name' => Auth::user()?->name ?: 'Admin',
+            'actor_name' => Auth::user()?->name ?: __('Admin'),
             'event_type' => 'CUSTOMER_PPPOE_UPDATE',
-            'description' => "Updated PPPoE credentials for '{$customer->name}' (User: {$customer->username}, Password: {$customer->password}).",
+            'description' => __("Updated PPPoE credentials for ':name' (User: :username, Password: :password).", [
+                'name' => $customer->name,
+                'username' => $customer->username,
+                'password' => $customer->password,
+            ]),
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
         ]);
 
         return response()->json([
             'success' => true,
-            'message' => "PPPoE username & password updated and synced successfully!{$mikrotikMsg}",
+            'message' => !empty($mikrotikDetail)
+                ? __("PPPoE username & password updated and synced successfully! (MikroTik: :mikrotik)", ['mikrotik' => $mikrotikDetail])
+                : __("PPPoE username & password updated and synced successfully!"),
             'username' => $customer->username,
             'password' => $customer->password,
         ]);
@@ -2082,7 +2195,7 @@ class TenantCustomerController extends Controller
         $customer->update($updateData);
 
         // Sync status to MikroTik Router
-        $mikrotikMsg = '';
+        $mikrotikDetail = '';
         try {
             $router = $customer->router ?: (
                 TenantRouter::where('tenant_id', $tenant->id)->where('status', 'online')->first()
@@ -2094,7 +2207,7 @@ class TenantCustomerController extends Controller
                 $mikrotikApi->togglePppSecret($router, $customer->username, $newStatus !== 'active');
                 $mRes = $mikrotikApi->syncCustomerToMikrotik($customer);
                 if (!empty($mRes['message'])) {
-                    $mikrotikMsg = " - MikroTik: " . $mRes['message'];
+                    $mikrotikDetail = $mRes['message'];
                 }
             }
         } catch (\Exception $e) {
@@ -2115,13 +2228,28 @@ class TenantCustomerController extends Controller
             }
         } catch (\Exception $e) {}
 
+        $statusLabels = [
+            'active' => __('Active'),
+            'suspended' => __('Suspended'),
+            'disabled' => __('Disabled'),
+            'expired' => __('Expired'),
+            'due' => __('Due'),
+            'disconnected' => __('Disconnected'),
+        ];
+        $oldStatusLabel = $statusLabels[$oldStatus] ?? __(ucfirst((string) $oldStatus));
+        $newStatusLabel = $statusLabels[$newStatus] ?? __(ucfirst((string) $newStatus));
+
         TenantActivityLog::create([
             'tenant_id' => $tenant->id,
             'actor_type' => 'App\Models\User',
             'actor_id' => Auth::id() ?: 1,
-            'actor_name' => Auth::user()?->name ?: 'Admin',
+            'actor_name' => Auth::user()?->name ?: __('Admin'),
             'event_type' => 'CUSTOMER_STATUS_UPDATE',
-            'description' => "Updated status for '{$customer->name}' from '{$oldStatus}' to '{$newStatus}'.",
+            'description' => __("Updated status for ':name' from ':old' to ':new'.", [
+                'name' => $customer->name,
+                'old' => $oldStatusLabel,
+                'new' => $newStatusLabel,
+            ]),
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
         ]);
@@ -2129,7 +2257,9 @@ class TenantCustomerController extends Controller
         return response()->json([
             'success' => true,
             'status' => $customer->status,
-            'message' => "Status changed to '" . strtoupper($newStatus) . "' and synced to MikroTik & FreeRADIUS.{$mikrotikMsg}",
+            'message' => !empty($mikrotikDetail)
+                ? __("Status changed to ':status' and synced to MikroTik & FreeRADIUS. (MikroTik: :mikrotik)", ['status' => $newStatusLabel, 'mikrotik' => $mikrotikDetail])
+                : __("Status changed to ':status' and synced to MikroTik & FreeRADIUS.", ['status' => $newStatusLabel]),
         ]);
     }
 
@@ -2139,6 +2269,7 @@ class TenantCustomerController extends Controller
     public function updatePackage(Request $request, int $id): JsonResponse
     {
         $tenant = $this->getTenant();
+        $currency = $tenant->currency_symbol ?? '৳';
         $customer = TenantCustomer::where('tenant_id', $tenant->id)->findOrFail($id);
 
         $validated = $request->validate([
@@ -2148,7 +2279,7 @@ class TenantCustomerController extends Controller
         ]);
 
         $newPackage = TenantInternetPackage::where('tenant_id', $tenant->id)->findOrFail($validated['package_id']);
-        $oldPackageName = $customer->package_name ?: ($customer->package?->package_name ?: 'Current Plan');
+        $oldPackageName = $customer->package_name ?: ($customer->package?->package_name ?: __('Current Plan'));
         $oldRetailPrice = (float)($customer->package?->price ?? $customer->monthly_bill);
         $newRetailPrice = (float)$newPackage->price;
 
@@ -2200,11 +2331,17 @@ class TenantCustomerController extends Controller
                             'balance_before' => $balanceBefore,
                             'balance_after' => $reseller->wallet_balance,
                             'payment_method' => 'WALLET',
-                            'description' => "Package upgrade proration for customer '{$customer->username}' ({$oldPackageName} -> {$newPackage->name}) for {$remainingDays} remaining days.",
+                            'description' => $remainingDays === 1
+                                ? __("Package upgrade proration for customer ':username' (:old -> :new) for :days remaining day.", ['username' => $customer->username, 'old' => $oldPackageName, 'new' => $newPackage->name, 'days' => $remainingDays])
+                                : __("Package upgrade proration for customer ':username' (:old -> :new) for :days remaining days.", ['username' => $customer->username, 'old' => $oldPackageName, 'new' => $newPackage->name, 'days' => $remainingDays]),
                             'created_by' => Auth::id() ?: 1,
                         ]);
 
-                        $resellerNotice = "৳" . number_format($proratedCostDiff, 2) . " deducted from Partner ({$reseller->name}) wallet. Expiry remains unchanged.";
+                        $resellerNotice = __(":currency:amount deducted from Partner (:partner) wallet. Expiry remains unchanged.", [
+                            'currency' => $currency,
+                            'amount' => number_format($proratedCostDiff, 2),
+                            'partner' => $reseller->name,
+                        ]);
                     } else {
                         // Reseller has insufficient balance -> adjust validity / expiry date
                         $newDaysCovered = max(1, (int)floor($remainingFinancialValue / $newDailyCost));
@@ -2212,7 +2349,14 @@ class TenantCustomerController extends Controller
                         $customer->expiry_date = $newExpiryDate;
                         $actionType = 'EXPIRY_ADJUSTED';
 
-                        $resellerNotice = "Partner wallet balance insufficient (Available: ৳" . number_format($resellerAvailableBalance, 2) . ", Required: ৳" . number_format($proratedCostDiff, 2) . "). Validity adjusted from {$remainingDays} days to {$newDaysCovered} days (New expiry: {$newExpiryDate}).";
+                        $resellerNotice = __("Partner wallet balance insufficient (Available: :currency:available, Required: :currency:required). Validity adjusted from :old_days days to :new_days days (New expiry: :expiry).", [
+                            'currency' => $currency,
+                            'available' => number_format($resellerAvailableBalance, 2),
+                            'required' => number_format($proratedCostDiff, 2),
+                            'old_days' => $remainingDays,
+                            'new_days' => $newDaysCovered,
+                            'expiry' => $newExpiryDate,
+                        ]);
                     }
                 } elseif ($newCost < $oldCost) {
                     // Downgrade: Prorated refund back to reseller wallet
@@ -2233,11 +2377,17 @@ class TenantCustomerController extends Controller
                             'balance_before' => $balanceBefore,
                             'balance_after' => $reseller->wallet_balance,
                             'payment_method' => 'WALLET',
-                            'description' => "Package downgrade prorated credit for customer '{$customer->username}' ({$oldPackageName} -> {$newPackage->name}) for {$remainingDays} remaining days.",
+                            'description' => $remainingDays === 1
+                                ? __("Package downgrade prorated credit for customer ':username' (:old -> :new) for :days remaining day.", ['username' => $customer->username, 'old' => $oldPackageName, 'new' => $newPackage->name, 'days' => $remainingDays])
+                                : __("Package downgrade prorated credit for customer ':username' (:old -> :new) for :days remaining days.", ['username' => $customer->username, 'old' => $oldPackageName, 'new' => $newPackage->name, 'days' => $remainingDays]),
                             'created_by' => Auth::id() ?: 1,
                         ]);
 
-                        $resellerNotice = "৳" . number_format($proratedRefund, 2) . " credited back to Partner ({$reseller->name}) wallet.";
+                        $resellerNotice = __(":currency:amount credited back to Partner (:partner) wallet.", [
+                            'currency' => $currency,
+                            'amount' => number_format($proratedRefund, 2),
+                            'partner' => $reseller->name,
+                        ]);
                     }
                 }
             } else {
@@ -2254,16 +2404,24 @@ class TenantCustomerController extends Controller
                         $newExpiryDate = Carbon::now()->addDays($newDaysCovered)->format('Y-m-d');
                         $customer->expiry_date = $newExpiryDate;
                         $actionType = 'DIRECT_EXPIRY_ADJUSTED';
-                        $resellerNotice = "Validity adjusted from {$remainingDays} days to {$newDaysCovered} days based on paid value (New Expiry: {$newExpiryDate}).";
+                        $resellerNotice = __("Validity adjusted from :old_days days to :new_days days based on paid value (New Expiry: :expiry).", [
+                            'old_days' => $remainingDays,
+                            'new_days' => $newDaysCovered,
+                            'expiry' => $newExpiryDate,
+                        ]);
                     } elseif ($prorationMode === 'add_to_due') {
                         // 2. Keep expiry, add difference to customer due
                         $customer->due_amount = (float)($customer->due_amount ?? 0) + $proratedCostDiff;
                         $actionType = 'DIRECT_DUE_ADDED';
-                        $resellerNotice = "Prorated upgrade charge of ৳" . number_format($proratedCostDiff, 2) . " added to Customer Due. Expiry remains {$oldExpiryDate}.";
+                        $resellerNotice = __("Prorated upgrade charge of :currency:amount added to Customer Due. Expiry remains :expiry.", [
+                            'currency' => $currency,
+                            'amount' => number_format($proratedCostDiff, 2),
+                            'expiry' => $oldExpiryDate ?: '--',
+                        ]);
                     } else {
                         // 3. Next billing cycle only
                         $actionType = 'DIRECT_NEXT_CYCLE';
-                        $resellerNotice = "Package upgraded. New monthly rate applies from next billing cycle.";
+                        $resellerNotice = __("Package upgraded. New monthly rate applies from next billing cycle.");
                     }
                 } elseif ($newCost < $oldCost) {
                     // Downgrade for Direct ISP Customer
@@ -2275,7 +2433,11 @@ class TenantCustomerController extends Controller
                         $newExpiryDate = Carbon::now()->addDays($newDaysCovered)->format('Y-m-d');
                         $customer->expiry_date = $newExpiryDate;
                         $actionType = 'DIRECT_EXPIRY_EXTENDED';
-                        $resellerNotice = "Validity extended from {$remainingDays} days to {$newDaysCovered} days for remaining balance (New Expiry: {$newExpiryDate}).";
+                        $resellerNotice = __("Validity extended from :old_days days to :new_days days for remaining balance (New Expiry: :expiry).", [
+                            'old_days' => $remainingDays,
+                            'new_days' => $newDaysCovered,
+                            'expiry' => $newExpiryDate,
+                        ]);
                     } elseif ($prorationMode === 'add_to_due') {
                         // 2. Adjust customer due/wallet balance
                         if ((float)$customer->due_amount > 0) {
@@ -2284,7 +2446,10 @@ class TenantCustomerController extends Controller
                             $customer->wallet_balance = (float)($customer->wallet_balance ?? 0) + $proratedRefund;
                         }
                         $actionType = 'DIRECT_CREDIT_ADJUSTED';
-                        $resellerNotice = "Prorated credit of ৳" . number_format($proratedRefund, 2) . " adjusted to customer balance.";
+                        $resellerNotice = __("Prorated credit of :currency:amount adjusted to customer balance.", [
+                            'currency' => $currency,
+                            'amount' => number_format($proratedRefund, 2),
+                        ]);
                     }
                 }
             }
@@ -2331,17 +2496,29 @@ class TenantCustomerController extends Controller
             'tenant_id' => $tenant->id,
             'actor_type' => 'App\Models\User',
             'actor_id' => Auth::id() ?: 1,
-            'actor_name' => Auth::user()?->name ?: 'Admin',
+            'actor_name' => Auth::user()?->name ?: __('Admin'),
             'event_type' => 'CUSTOMER_PACKAGE_UPDATE',
-            'description' => "Changed package for '{$customer->name}' ({$customer->username}) from '{$oldPackageName}' to '{$customer->package_name}'. " . ($resellerNotice ?: ''),
+            'description' => $resellerNotice
+                ? __("Changed package for ':name' (:username) from ':old' to ':new'. :notice", [
+                    'name' => $customer->name,
+                    'username' => $customer->username,
+                    'old' => $oldPackageName,
+                    'new' => $customer->package_name,
+                    'notice' => $resellerNotice,
+                ])
+                : __("Changed package for ':name' (:username) from ':old' to ':new'.", [
+                    'name' => $customer->name,
+                    'username' => $customer->username,
+                    'old' => $oldPackageName,
+                    'new' => $customer->package_name,
+                ]),
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
         ]);
 
-        $successMsg = "Package changed to '{$customer->package_name}' successfully!";
-        if ($resellerNotice) {
-            $successMsg .= " " . $resellerNotice;
-        }
+        $successMsg = $resellerNotice
+            ? __("Package changed to ':package' successfully! :notice", ['package' => $customer->package_name, 'notice' => $resellerNotice])
+            : __("Package changed to ':package' successfully!", ['package' => $customer->package_name]);
 
         return response()->json([
             'success' => true,
@@ -2364,6 +2541,7 @@ class TenantCustomerController extends Controller
     public function updateMonthlyBill(Request $request, int $id): JsonResponse
     {
         $tenant = $this->getTenant();
+        $currency = $tenant->currency_symbol ?? '৳';
         $customer = TenantCustomer::where('tenant_id', $tenant->id)->findOrFail($id);
 
         $validated = $request->validate([
@@ -2385,16 +2563,28 @@ class TenantCustomerController extends Controller
 
         $customer->save();
 
-        $logDesc = "Updated monthly bill for '{$customer->name}' ({$customer->username}) from ৳" . number_format($oldBill, 2) . " to ৳" . number_format($newBill, 2) . ".";
-        if ($reason) {
-            $logDesc .= " Reason: {$reason}.";
-        }
+        $oldFormatted = $currency . number_format($oldBill, 2);
+        $newFormatted = $currency . number_format($newBill, 2);
+        $logDesc = $reason
+            ? __("Updated monthly bill for ':name' (:username) from :old to :new. Reason: :reason.", [
+                'name' => $customer->name,
+                'username' => $customer->username,
+                'old' => $oldFormatted,
+                'new' => $newFormatted,
+                'reason' => $reason,
+            ])
+            : __("Updated monthly bill for ':name' (:username) from :old to :new.", [
+                'name' => $customer->name,
+                'username' => $customer->username,
+                'old' => $oldFormatted,
+                'new' => $newFormatted,
+            ]);
 
         TenantActivityLog::create([
             'tenant_id' => $tenant->id,
             'actor_type' => 'App\Models\User',
             'actor_id' => Auth::id() ?: 1,
-            'actor_name' => Auth::user()?->name ?: 'Admin',
+            'actor_name' => Auth::user()?->name ?: __('Admin'),
             'event_type' => 'CUSTOMER_BILL_UPDATE',
             'description' => $logDesc,
             'ip_address' => $request->ip(),
@@ -2403,7 +2593,9 @@ class TenantCustomerController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => "Monthly bill modified to ৳" . number_format($customer->monthly_bill, 2) . " successfully!" . ($reason ? " ({$reason})" : ""),
+            'message' => $reason
+                ? __("Monthly bill modified to :amount successfully! (:reason)", ['amount' => $newFormatted, 'reason' => $reason])
+                : __("Monthly bill modified to :amount successfully!", ['amount' => $newFormatted]),
             'monthly_bill' => number_format($customer->monthly_bill, 2),
             'due_amount' => number_format((float)($customer->due_amount ?? 0), 2),
         ]);
@@ -2450,13 +2642,13 @@ class TenantCustomerController extends Controller
         $customer->save();
 
         // Sync to MikroTik and FreeRADIUS if status was reactivated
-        $syncMsg = '';
+        $mikrotikSynced = false;
         if ($isReactivated || $request->boolean('sync_mikrotik')) {
             try {
                 $mikrotikApi = new MikrotikApiService();
                 $syncRes = $mikrotikApi->syncCustomerToMikrotik($customer);
                 if ($syncRes['success']) {
-                    $syncMsg .= ' & MikroTik RouterOS synchronized';
+                    $mikrotikSynced = true;
                 }
             } catch (\Exception $e) {
                 // Non-blocking
@@ -2470,13 +2662,27 @@ class TenantCustomerController extends Controller
             }
         }
 
+        $expiryDisplay = $customer->expiry_date?->format('d M Y') ?? __('N/A');
+
         TenantActivityLog::create([
             'tenant_id' => $tenant->id,
             'actor_type' => 'App\Models\User',
             'actor_id' => Auth::id() ?: 1,
-            'actor_name' => Auth::user()?->name ?: 'Admin',
+            'actor_name' => Auth::user()?->name ?: __('Admin'),
             'event_type' => 'CUSTOMER_BILLING_CYCLE_UPDATE',
-            'description' => "Updated billing cycle for subscriber '{$customer->name}' ({$customer->username}). Type: {$customer->billing_type}, Expiry: " . ($customer->expiry_date?->format('d M Y') ?? 'N/A') . ($isReactivated ? " (Re-activated line)" : ""),
+            'description' => $isReactivated
+                ? __("Updated billing cycle for subscriber ':name' (:username). Type: :type, Expiry: :expiry (Re-activated line)", [
+                    'name' => $customer->name,
+                    'username' => $customer->username,
+                    'type' => ucfirst($customer->billing_type),
+                    'expiry' => $expiryDisplay,
+                ])
+                : __("Updated billing cycle for subscriber ':name' (:username). Type: :type, Expiry: :expiry", [
+                    'name' => $customer->name,
+                    'username' => $customer->username,
+                    'type' => ucfirst($customer->billing_type),
+                    'expiry' => $expiryDisplay,
+                ]),
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
             'metadata' => [
@@ -2497,7 +2703,9 @@ class TenantCustomerController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => "Billing cycle and validity updated successfully!{$syncMsg}",
+            'message' => $mikrotikSynced
+                ? __("Billing cycle and validity updated & MikroTik RouterOS synchronized successfully!")
+                : __("Billing cycle and validity updated successfully!"),
             'billing_type' => ucfirst($customer->billing_type),
             'expiry_date' => $customer->expiry_date?->format('d M Y') ?? '--',
             'expiry_raw' => $customer->expiry_date?->format('Y-m-d') ?? '',
@@ -2516,6 +2724,7 @@ class TenantCustomerController extends Controller
     public function updateBalance(Request $request, int $id): JsonResponse
     {
         $tenant = $this->getTenant();
+        $currency = $tenant->currency_symbol ?? '৳';
         $customer = TenantCustomer::where('tenant_id', $tenant->id)->findOrFail($id);
 
         $validated = $request->validate([
@@ -2537,20 +2746,30 @@ class TenantCustomerController extends Controller
         }
         $customer->save();
 
+        $formattedAmount = $currency . number_format($amount, 2);
+        $formattedNewBalance = $currency . number_format($customer->wallet_balance, 2);
+
+        $balanceDesc = match ($mode) {
+            'set' => __("Set wallet balance for ':name' to :amount. New balance: :balance.", ['name' => $customer->name, 'amount' => $formattedAmount, 'balance' => $formattedNewBalance]),
+            'add' => __("Added :amount to wallet balance for ':name'. New balance: :balance.", ['name' => $customer->name, 'amount' => $formattedAmount, 'balance' => $formattedNewBalance]),
+            'deduct' => __("Deducted :amount from wallet balance for ':name'. New balance: :balance.", ['name' => $customer->name, 'amount' => $formattedAmount, 'balance' => $formattedNewBalance]),
+            default => __("Updated wallet balance for ':name'. New balance: :balance.", ['name' => $customer->name, 'balance' => $formattedNewBalance]),
+        };
+
         TenantActivityLog::create([
             'tenant_id' => $tenant->id,
             'actor_type' => 'App\Models\User',
             'actor_id' => Auth::id() ?: 1,
-            'actor_name' => Auth::user()?->name ?: 'Admin',
+            'actor_name' => Auth::user()?->name ?: __('Admin'),
             'event_type' => 'CUSTOMER_BALANCE_UPDATE',
-            'description' => "Updated wallet balance for '{$customer->name}' ({$mode} ৳{$amount}). New balance: ৳{$customer->wallet_balance}.",
+            'description' => $balanceDesc,
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
         ]);
 
         return response()->json([
             'success' => true,
-            'message' => "Wallet balance updated to ৳" . number_format($customer->wallet_balance, 2) . " successfully!",
+            'message' => __("Wallet balance updated to :balance successfully!", ['balance' => $formattedNewBalance]),
             'wallet_balance' => number_format($customer->wallet_balance, 2),
         ]);
     }
@@ -2561,6 +2780,7 @@ class TenantCustomerController extends Controller
     public function updateDueBalance(Request $request, int $id): JsonResponse
     {
         $tenant = $this->getTenant();
+        $currency = $tenant->currency_symbol ?? '৳';
         $customer = TenantCustomer::where('tenant_id', $tenant->id)->findOrFail($id);
 
         $validated = $request->validate([
@@ -2594,22 +2814,41 @@ class TenantCustomerController extends Controller
         $customer->save();
 
         $modeText = match($mode) {
-            'set' => 'Set to ৳' . number_format($newDue, 2),
-            'add' => 'Added ৳' . number_format($amount, 2),
-            'deduct' => 'Deducted/Waived ৳' . number_format($amount, 2),
-            'clear' => 'Cleared all due (৳0.00)',
-            default => 'Adjusted',
+            'set' => __('Set to :currency:amount', ['currency' => $currency, 'amount' => number_format($newDue, 2)]),
+            'add' => __('Added :currency:amount', ['currency' => $currency, 'amount' => number_format($amount, 2)]),
+            'deduct' => __('Deducted/Waived :currency:amount', ['currency' => $currency, 'amount' => number_format($amount, 2)]),
+            'clear' => __('Cleared all due (:amount)', ['amount' => $currency . '0.00']),
+            default => __('Adjusted'),
         };
 
         $remarks = trim($validated['remarks'] ?? '');
+        $oldDueFmt = $currency . number_format($oldDue, 2);
+        $newDueFmt = $currency . number_format($newDue, 2);
+
+        $dueLogDesc = $remarks
+            ? __("Updated due balance for subscriber ':name' (:username): :action. Old Due: :old, New Due: :new [Reason: :reason]", [
+                'name' => $customer->name,
+                'username' => $customer->username,
+                'action' => $modeText,
+                'old' => $oldDueFmt,
+                'new' => $newDueFmt,
+                'reason' => $remarks,
+            ])
+            : __("Updated due balance for subscriber ':name' (:username): :action. Old Due: :old, New Due: :new", [
+                'name' => $customer->name,
+                'username' => $customer->username,
+                'action' => $modeText,
+                'old' => $oldDueFmt,
+                'new' => $newDueFmt,
+            ]);
 
         TenantActivityLog::create([
             'tenant_id' => $tenant->id,
             'actor_type' => 'App\Models\User',
             'actor_id' => Auth::id() ?: 1,
-            'actor_name' => Auth::user()?->name ?: 'Admin',
+            'actor_name' => Auth::user()?->name ?: __('Admin'),
             'event_type' => 'CUSTOMER_DUE_UPDATE',
-            'description' => "Updated due balance for subscriber '{$customer->name}' ({$customer->username}): {$modeText}. Old Due: ৳" . number_format($oldDue, 2) . ", New Due: ৳" . number_format($newDue, 2) . ($remarks ? " [Reason: {$remarks}]" : ""),
+            'description' => $dueLogDesc,
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
             'metadata' => [
@@ -2624,7 +2863,9 @@ class TenantCustomerController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => "Due balance updated to ৳" . number_format($customer->due_amount, 2) . " successfully!" . ($remarks ? " ({$remarks})" : ""),
+            'message' => $remarks
+                ? __("Due balance updated to :amount successfully! (:reason)", ['amount' => $newDueFmt, 'reason' => $remarks])
+                : __("Due balance updated to :amount successfully!", ['amount' => $newDueFmt]),
             'due_amount' => number_format($customer->due_amount, 2),
             'due_amount_raw' => (float) $customer->due_amount,
             'status' => $customer->status,
@@ -2639,6 +2880,7 @@ class TenantCustomerController extends Controller
     public function payBill(Request $request, int $id): JsonResponse
     {
         $tenant = $this->getTenant();
+        $currency = $tenant->currency_symbol ?? '৳';
         $customer = TenantCustomer::where('tenant_id', $tenant->id)->findOrFail($id);
 
         $validated = $request->validate([
@@ -2670,6 +2912,10 @@ class TenantCustomerController extends Controller
         }
         $customer->save();
 
+        $defaultNote = $months > 0
+            ? ($months === 1 ? __("Bill payment for :months month", ['months' => $months]) : __("Bill payment for :months months", ['months' => $months]))
+            : __("Direct payment collection");
+
         // Create Payment Record
         $payment = TenantCustomerPayment::create([
             'tenant_id' => $tenant->id,
@@ -2682,7 +2928,7 @@ class TenantCustomerController extends Controller
             'collected_by' => Auth::id() ?: 1,
             'status' => 'paid',
             'paid_at' => Carbon::now(),
-            'notes' => $validated['notes'] ?? ($months > 0 ? "Bill payment for {$months} month(s)" : "Direct payment collection"),
+            'notes' => $validated['notes'] ?? $defaultNote,
         ]);
 
         // Settle matching or open TenantCustomerInvoice
@@ -2711,20 +2957,30 @@ class TenantCustomerController extends Controller
             // Non-blocking invoice sync
         }
 
+        $formattedPaymentAmount = $currency . number_format($amount, 2);
+
         TenantActivityLog::create([
             'tenant_id' => $tenant->id,
             'actor_type' => 'App\Models\User',
             'actor_id' => Auth::id() ?: 1,
-            'actor_name' => Auth::user()?->name ?: 'Admin',
+            'actor_name' => Auth::user()?->name ?: __('Admin'),
             'event_type' => 'CUSTOMER_PAYMENT',
-            'description' => "Collected payment of ৳{$amount} from '{$customer->name}' via " . strtoupper($validated['payment_method']) . " (Invoice: {$payment->invoice_no}).",
+            'description' => __("Collected payment of :amount from ':name' via :method (Invoice: :invoice).", [
+                'amount' => $formattedPaymentAmount,
+                'name' => $customer->name,
+                'method' => strtoupper($validated['payment_method']),
+                'invoice' => $payment->invoice_no,
+            ]),
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
         ]);
 
         return response()->json([
             'success' => true,
-            'message' => "Payment of ৳" . number_format($amount, 2) . " recorded successfully! Invoice #{$payment->invoice_no}",
+            'message' => __("Payment of :amount recorded successfully! Invoice #:invoice", [
+                'amount' => $formattedPaymentAmount,
+                'invoice' => $payment->invoice_no,
+            ]),
             'invoice_no' => $payment->invoice_no,
             'due_amount' => number_format($customer->due_amount, 2),
             'status' => $customer->status,
@@ -2755,24 +3011,25 @@ class TenantCustomerController extends Controller
             'sync_mikrotik' => 'nullable|boolean',
         ]);
 
-        $oldResellerName = $customer->reseller ? "{$customer->reseller->name} ({$customer->reseller->code})" : 'ISP Direct Retail';
+        $ispDirectLabel = __('ISP Direct Retail');
+        $oldResellerName = $customer->reseller ? "{$customer->reseller->name} ({$customer->reseller->code})" : $ispDirectLabel;
         $newResellerId = !empty($validated['reseller_id']) ? (int) $validated['reseller_id'] : null;
 
         $customer->reseller_id = $newResellerId;
         $customer->save();
         $customer->load('reseller');
 
-        $newResellerName = $customer->reseller ? "{$customer->reseller->name} ({$customer->reseller->code})" : 'ISP Direct Retail';
+        $newResellerName = $customer->reseller ? "{$customer->reseller->name} ({$customer->reseller->code})" : $ispDirectLabel;
         $transferNote = trim($validated['notes'] ?? '');
 
         // Sync customer comment / affiliation to MikroTik & FreeRADIUS
-        $syncMsg = '';
+        $mikrotikSynced = false;
         if ($request->boolean('sync_mikrotik', true)) {
             try {
                 $mikrotikApi = new MikrotikApiService();
                 $syncRes = $mikrotikApi->syncCustomerToMikrotik($customer);
                 if ($syncRes['success']) {
-                    $syncMsg .= ' & MikroTik RouterOS synchronized';
+                    $mikrotikSynced = true;
                 }
             } catch (\Exception $e) {
                 // Non-blocking
@@ -2790,9 +3047,22 @@ class TenantCustomerController extends Controller
             'tenant_id' => $tenant->id,
             'actor_type' => 'App\Models\User',
             'actor_id' => Auth::id() ?: 1,
-            'actor_name' => Auth::user()?->name ?: 'Admin',
+            'actor_name' => Auth::user()?->name ?: __('Admin'),
             'event_type' => 'CUSTOMER_TRANSFER',
-            'description' => "Transferred subscriber '{$customer->name}' ({$customer->username}) from '{$oldResellerName}' to '{$newResellerName}'." . ($transferNote ? " [Note: {$transferNote}]" : ""),
+            'description' => $transferNote
+                ? __("Transferred subscriber ':name' (:username) from ':old' to ':new'. [Note: :note]", [
+                    'name' => $customer->name,
+                    'username' => $customer->username,
+                    'old' => $oldResellerName,
+                    'new' => $newResellerName,
+                    'note' => $transferNote,
+                ])
+                : __("Transferred subscriber ':name' (:username) from ':old' to ':new'.", [
+                    'name' => $customer->name,
+                    'username' => $customer->username,
+                    'old' => $oldResellerName,
+                    'new' => $newResellerName,
+                ]),
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
             'metadata' => [
@@ -2805,9 +3075,11 @@ class TenantCustomerController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => "Subscriber transferred to '{$newResellerName}' successfully!{$syncMsg}",
+            'message' => $mikrotikSynced
+                ? __("Subscriber transferred to ':reseller' & MikroTik RouterOS synchronized successfully!", ['reseller' => $newResellerName])
+                : __("Subscriber transferred to ':reseller' successfully!", ['reseller' => $newResellerName]),
             'reseller_id' => $customer->reseller_id,
-            'reseller_name' => $customer->reseller ? $customer->reseller->name : 'ISP Direct Retail',
+            'reseller_name' => $customer->reseller ? $customer->reseller->name : $ispDirectLabel,
             'reseller_code' => $customer->reseller?->code,
             'scope_badge' => $customer->scope_badge,
         ]);
@@ -2832,16 +3104,16 @@ class TenantCustomerController extends Controller
             'tenant_id' => $tenant->id,
             'actor_type' => 'App\Models\User',
             'actor_id' => Auth::id() ?: 1,
-            'actor_name' => Auth::user()?->name ?: 'Admin',
+            'actor_name' => Auth::user()?->name ?: __('Admin'),
             'event_type' => 'CUSTOMER_NOTE_UPDATE',
-            'description' => "Updated internal note for customer '{$customer->name}'.",
+            'description' => __("Updated internal note for customer ':name'.", ['name' => $customer->name]),
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
         ]);
 
         return response()->json([
             'success' => true,
-            'message' => "Customer notes saved successfully!",
+            'message' => __("Customer notes saved successfully!"),
             'remarks' => $customer->remarks,
         ]);
     }
@@ -2936,8 +3208,8 @@ class TenantCustomerController extends Controller
             'rx_human' => '0.00 Mbps',
             'tx_human' => '0.00 Mbps',
             'uptime' => 'Offline',
-            'ip' => $customer->ip_address ?: 'N/A',
-            'mac' => $customer->mac_address ?: 'N/A',
+            'ip' => $customer->ip_address ?: __('N/A'),
+            'mac' => $customer->mac_address ?: __('N/A'),
             'total_rx_human' => '0 B',
             'total_tx_human' => '0 B',
             'timestamp' => Carbon::now()->format('H:i:s'),
@@ -3050,7 +3322,9 @@ class TenantCustomerController extends Controller
         $pts7d_tx = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
         for ($d = 6; $d >= 0; $d--) {
             $dt = Carbon::now()->subDays($d);
-            $days7[] = $d === 0 ? 'Today' : $dt->format('D (d M)');
+            $days7[] = $d === 0
+                ? __('Today')
+                : (__($dt->format('D')) . ' (' . $dt->format('d') . ' ' . __($dt->format('M')) . ')');
         }
 
         // Fill real session data into 1h, 1d & 7d points
@@ -3336,7 +3610,7 @@ class TenantCustomerController extends Controller
         if (!$handle) {
             return response()->json([
                 'success' => false,
-                'message' => 'Unable to read the uploaded CSV file.'
+                'message' => __('Unable to read the uploaded CSV file.')
             ], 422);
         }
 
@@ -3346,7 +3620,7 @@ class TenantCustomerController extends Controller
             fclose($handle);
             return response()->json([
                 'success' => false,
-                'message' => 'The uploaded CSV file is empty.'
+                'message' => __('The uploaded CSV file is empty.')
             ], 422);
         }
 
@@ -3428,7 +3702,7 @@ class TenantCustomerController extends Controller
 
                 if (empty($name) && empty($username)) {
                     $skippedCount++;
-                    $logs[] = "[Row {$rowNumber}] Skipped: Missing both Name and PPPoE Username.";
+                    $logs[] = __("[Row :row] Skipped: Missing both Name and PPPoE Username.", ['row' => $rowNumber]);
                     continue;
                 }
 
@@ -3499,7 +3773,7 @@ class TenantCustomerController extends Controller
                 if ($existing) {
                     if ($duplicateAction === 'skip') {
                         $skippedCount++;
-                        $logs[] = "[Row {$rowNumber}] Skipped: Duplicate PPPoE username '{$username}' already exists in database.";
+                        $logs[] = __("[Row :row] Skipped: Duplicate PPPoE username ':username' already exists in database.", ['row' => $rowNumber, 'username' => $username]);
                         continue;
                     } elseif ($duplicateAction === 'update') {
                         $existing->update([
@@ -3525,12 +3799,12 @@ class TenantCustomerController extends Controller
                         if ($shouldSyncMikrotik && $mikrotikApi && $existing->router) {
                             try {
                                 $mikrotikApi->syncCustomerToMikrotik($existing);
-                                $logs[] = "[Row {$rowNumber}] Updated & Synced to MikroTik: '{$username}' ({$name})";
+                                $logs[] = __("[Row :row] Updated & Synced to MikroTik: ':username' (:name)", ['row' => $rowNumber, 'username' => $username, 'name' => $name]);
                             } catch (\Exception $e) {
-                                $logs[] = "[Row {$rowNumber}] Updated in DB (MikroTik sync warning: {$e->getMessage()}): '{$username}'";
+                                $logs[] = __("[Row :row] Updated in DB (MikroTik sync warning: :error): ':username'", ['row' => $rowNumber, 'error' => $e->getMessage(), 'username' => $username]);
                             }
                         } else {
-                            $logs[] = "[Row {$rowNumber}] Updated subscriber '{$username}' ({$name}) in master DB.";
+                            $logs[] = __("[Row :row] Updated subscriber ':username' (:name) in master DB.", ['row' => $rowNumber, 'username' => $username, 'name' => $name]);
                         }
 
                         $updatedCount++;
@@ -3540,7 +3814,7 @@ class TenantCustomerController extends Controller
 
                 if ($remainingCustomerSlots <= 0) {
                     $skippedCount++;
-                    $logs[] = "[Row {$rowNumber}] Skipped '{$username}': Plan customer quota limit ({$customerQuotaCheck['limit']}) reached.";
+                    $logs[] = __("[Row :row] Skipped ':username': Plan customer quota limit (:limit) reached.", ['row' => $rowNumber, 'username' => $username, 'limit' => $customerQuotaCheck['limit']]);
                     continue;
                 }
 
@@ -3586,12 +3860,12 @@ class TenantCustomerController extends Controller
                 if ($shouldSyncMikrotik && $mikrotikApi && $newCustomer->router) {
                     try {
                         $mikrotikApi->syncCustomerToMikrotik($newCustomer);
-                        $logs[] = "[Row {$rowNumber}] Imported & Provisioned MikroTik: '{$username}' (ID: {$finalCustomerId})";
+                        $logs[] = __("[Row :row] Imported & Provisioned MikroTik: ':username' (ID: :id)", ['row' => $rowNumber, 'username' => $username, 'id' => $finalCustomerId]);
                     } catch (\Exception $e) {
-                        $logs[] = "[Row {$rowNumber}] Imported in DB (MikroTik sync error: {$e->getMessage()}): '{$username}'";
+                        $logs[] = __("[Row :row] Imported in DB (MikroTik sync error: :error): ':username'", ['row' => $rowNumber, 'error' => $e->getMessage(), 'username' => $username]);
                     }
                 } else {
-                    $logs[] = "[Row {$rowNumber}] Imported subscriber '{$username}' (ID: {$finalCustomerId}) successfully.";
+                    $logs[] = __("[Row :row] Imported subscriber ':username' (ID: :id) successfully.", ['row' => $rowNumber, 'username' => $username, 'id' => $finalCustomerId]);
                 }
 
                 $importedCount++;
@@ -3605,7 +3879,11 @@ class TenantCustomerController extends Controller
             TenantActivityLog::log(
                 $tenant->id,
                 'customer_bulk_imported',
-                "Bulk imported {$importedCount} subscribers, {$updatedCount} updated, {$skippedCount} skipped from CSV.",
+                __("Bulk imported :imported subscribers, :updated updated, :skipped skipped from CSV.", [
+                    'imported' => $importedCount,
+                    'updated' => $updatedCount,
+                    'skipped' => $skippedCount,
+                ]),
                 Auth::id(),
                 ['total' => $totalRows, 'imported' => $importedCount, 'updated' => $updatedCount, 'skipped' => $skippedCount]
             );
@@ -3618,7 +3896,11 @@ class TenantCustomerController extends Controller
                 'skipped_count' => $skippedCount,
                 'errors_count' => $errorsCount,
                 'logs' => $logs,
-                'message' => "Bulk import completed! {$importedCount} new subscribers created, {$updatedCount} updated, {$skippedCount} skipped."
+                'message' => __("Bulk import completed! :imported new subscribers created, :updated updated, :skipped skipped.", [
+                    'imported' => $importedCount,
+                    'updated' => $updatedCount,
+                    'skipped' => $skippedCount,
+                ]),
             ]);
 
         } catch (\Exception $e) {
@@ -3627,7 +3909,7 @@ class TenantCustomerController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to process CSV import: ' . $e->getMessage(),
+                'message' => __('Failed to process CSV import: :error', ['error' => $e->getMessage()]),
                 'logs' => $logs,
             ], 500);
         }
@@ -3639,6 +3921,7 @@ class TenantCustomerController extends Controller
     public function exportCsv(Request $request)
     {
         $tenant = $this->getTenant();
+        $currency = $tenant->currency_symbol ?? '৳';
         $preset = $request->input('preset', 'master'); // 'master', 'billing', 'technical', 'contacts'
 
         $authUser = Auth::user();
@@ -3711,9 +3994,9 @@ class TenantCustomerController extends Controller
         // Column sets based on selected preset
         if ($preset === 'billing') {
             $columns = [
-                'Customer ID', 'Full Name', 'PPPoE Username', 'Mobile Phone', 'Affiliation Scope', 
-                'Partner Name', 'Package Name', 'Monthly Bill (BDT)', 'Due Amount (BDT)', 
-                'Wallet Balance (BDT)', 'Billing Type', 'Expiry Date', 'Status'
+                __('Customer ID'), __('Full Name'), __('PPPoE Username'), __('Mobile Phone'), __('Affiliation Scope'),
+                __('Partner Name'), __('Package Name'), __('Monthly Bill (:currency)', ['currency' => $currency]), __('Due Amount (:currency)', ['currency' => $currency]),
+                __('Wallet Balance (:currency)', ['currency' => $currency]), __('Billing Type'), __('Expiry Date'), __('Status')
             ];
             $rowMapper = function ($c) {
                 return [
@@ -3721,22 +4004,22 @@ class TenantCustomerController extends Controller
                     $c->name,
                     $c->username,
                     $c->phone,
-                    $c->reseller_id ? 'Sub-ISP Franchise' : 'ISP Direct Retail',
-                    $c->reseller?->name ?? 'Headquarters Direct',
+                    $c->reseller_id ? __('Sub-ISP Franchise') : __('ISP Direct Retail'),
+                    $c->reseller?->name ?? __('Headquarters Direct'),
                     $c->package_display_name,
                     number_format((float)$c->monthly_bill, 2),
                     number_format((float)$c->due_amount, 2),
                     number_format((float)$c->wallet_balance, 2),
-                    ucfirst($c->billing_type),
+                    __(ucfirst((string)$c->billing_type)),
                     $c->expiry_date?->format('Y-m-d') ?? '--',
-                    ucfirst($c->status),
+                    __(ucfirst((string)$c->status)),
                 ];
             };
         } elseif ($preset === 'technical') {
             $columns = [
-                'Customer ID', 'Full Name', 'PPPoE Username', 'PPPoE Password', 'Gateway Router', 
-                'Connection Type', 'Framed IP Address', 'ONU MAC / Serial', 'OLT Device', 
-                'Package Profile', 'Status', 'Live Online Status', 'Last Online'
+                __('Customer ID'), __('Full Name'), __('PPPoE Username'), __('PPPoE Password'), __('Gateway Router'),
+                __('Connection Type'), __('Framed IP Address'), __('ONU MAC / Serial'), __('OLT Device'),
+                __('Package Profile'), __('Status'), __('Live Online Status'), __('Last Online')
             ];
             $rowMapper = function ($c) {
                 return [
@@ -3750,16 +4033,16 @@ class TenantCustomerController extends Controller
                     $c->onu_mac_sn ?? '--',
                     $c->olt?->name ?? '--',
                     $c->mikrotik_profile_name,
-                    ucfirst($c->status),
-                    ucfirst($c->online_status),
+                    __(ucfirst((string)$c->status)),
+                    __(ucfirst((string)$c->online_status)),
                     $c->last_online_at?->format('Y-m-d H:i') ?? '--',
                 ];
             };
         } elseif ($preset === 'contacts') {
             $columns = [
-                'Customer ID', 'Full Name', 'PPPoE Username', 'Mobile Phone', 'Alt Phone', 
-                'Email Address', 'National ID (NID)', 'Father Name', 'Zone / Area', 
-                'Installation Address', 'Status'
+                __('Customer ID'), __('Full Name'), __('PPPoE Username'), __('Mobile Phone'), __('Alt Phone'),
+                __('Email Address'), __('National ID (NID)'), __('Father Name'), __('Zone / Area'),
+                __('Installation Address'), __('Status')
             ];
             $rowMapper = function ($c) {
                 return [
@@ -3773,17 +4056,17 @@ class TenantCustomerController extends Controller
                     $c->father_name ?? '--',
                     $c->zone ?? '--',
                     $c->address ?? '--',
-                    ucfirst($c->status),
+                    __(ucfirst((string)$c->status)),
                 ];
             };
         } else {
             // Master Full Dump
             $columns = [
-                'Customer ID', 'Full Name', 'PPPoE Username', 'PPPoE Password', 'Phone', 'Email', 
-                'Affiliation Scope', 'Sub-ISP Partner', 'Zone / Area', 'Package Name', 
-                'Monthly Bill (BDT)', 'Due Amount (BDT)', 'Billing Type', 'Connection Type', 
-                'Gateway Router', 'Framed IP Address', 'ONU MAC / SN', 'Status', 
-                'Live Online Status', 'Expiry Date', 'Address', 'Remarks'
+                __('Customer ID'), __('Full Name'), __('PPPoE Username'), __('PPPoE Password'), __('Phone'), __('Email'),
+                __('Affiliation Scope'), __('Sub-ISP Partner'), __('Zone / Area'), __('Package Name'),
+                __('Monthly Bill (:currency)', ['currency' => $currency]), __('Due Amount (:currency)', ['currency' => $currency]), __('Billing Type'), __('Connection Type'),
+                __('Gateway Router'), __('Framed IP Address'), __('ONU MAC / SN'), __('Status'),
+                __('Live Online Status'), __('Expiry Date'), __('Address'), __('Remarks')
             ];
             $rowMapper = function ($c) {
                 return [
@@ -3793,19 +4076,19 @@ class TenantCustomerController extends Controller
                     $c->password,
                     $c->phone,
                     $c->email ?? '--',
-                    $c->reseller_id ? 'Sub-ISP Franchise' : 'ISP Direct Retail',
-                    $c->reseller?->name ?? 'Headquarters Direct',
+                    $c->reseller_id ? __('Sub-ISP Franchise') : __('ISP Direct Retail'),
+                    $c->reseller?->name ?? __('Headquarters Direct'),
                     $c->zone ?? '--',
                     $c->package_display_name,
                     number_format((float)$c->monthly_bill, 2),
                     number_format((float)$c->due_amount, 2),
-                    ucfirst($c->billing_type),
+                    __(ucfirst((string)$c->billing_type)),
                     strtoupper($c->connection_type),
                     $c->router?->name ?? ($c->router?->ip_address ?? '--'),
                     $c->ip_address ?? '--',
                     $c->onu_mac_sn ?? '--',
-                    ucfirst($c->status),
-                    ucfirst($c->online_status),
+                    __(ucfirst((string)$c->status)),
+                    __(ucfirst((string)$c->online_status)),
                     $c->expiry_date?->format('Y-m-d') ?? '--',
                     $c->address ?? '--',
                     $c->remarks ?? '--',
@@ -4084,8 +4367,11 @@ class TenantCustomerController extends Controller
             return response()->stream($callback, 200, $headers);
         }
 
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
+
         return view('tenant.customers.monthly_analytics', compact(
             'tenant',
+            'currencySymbol',
             'isResellerUser',
             'isCurrentYear',
             'selectedYear',

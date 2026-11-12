@@ -2,6 +2,7 @@
 
 @php
     $authUser = auth()->user();
+    $currencySymbol = $currencySymbol ?? ($tenant->currency_symbol ?? '৳');
     $isDirectRoute = request()->routeIs('tenant.customers.direct*') || ($scopeFilter ?? '') === 'isp';
     $isDueRoute = request()->routeIs('tenant.customers.due*') || ($statusFilter ?? '') === 'due';
     $isOnlineRoute = request()->routeIs('tenant.customers.online*') || ($onlineFilter ?? '') === 'online';
@@ -9,22 +10,22 @@
     $isDisconnectedRoute = request()->routeIs('tenant.customers.disconnected*') || request()->routeIs('tenant.customers.archived*') || in_array(($statusFilter ?? ''), ['disconnected', 'archived']);
 
     if ($isDirectRoute) {
-        $pageTitle = 'ISP Direct Retail Customers';
+        $pageTitle = __('ISP Direct Retail Customers');
         $pageIcon = 'fa-building-user';
     } elseif ($isDueRoute) {
-        $pageTitle = 'Due & Expired Customers';
+        $pageTitle = __('Due & Expired Customers');
         $pageIcon = 'fa-receipt';
     } elseif ($isOnlineRoute) {
-        $pageTitle = 'Live Online PPPoE Sessions';
+        $pageTitle = __('Live Online PPPoE Sessions');
         $pageIcon = 'fa-globe';
     } elseif ($isZonesRoute) {
-        $pageTitle = 'Customer Zones & Coverage Areas';
+        $pageTitle = __('Customer Zones & Coverage Areas');
         $pageIcon = 'fa-location-dot';
     } elseif ($isDisconnectedRoute) {
-        $pageTitle = 'Disconnected Subscribers';
+        $pageTitle = __('Disconnected Subscribers');
         $pageIcon = 'fa-plug-circle-xmark';
     } else {
-        $pageTitle = 'All Customers (Master Database)';
+        $pageTitle = __('All Customers (Master Database)');
         $pageIcon = 'fa-users-line';
     }
 @endphp
@@ -79,9 +80,9 @@
                     @click="syncOnlineSessions()"
                     :disabled="isSyncing"
                     class="px-2.5 py-1.5 rounded-md bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-semibold text-xs transition inline-flex items-center justify-center gap-1.5 shadow-2xs border border-emerald-200 cursor-pointer disabled:opacity-50"
-                    title="Query MikroTik and FreeRADIUS for live active PPPoE sessions">
+                    title="{{ __('Query MikroTik and FreeRADIUS for live active PPPoE sessions') }}">
                 <i class="fas fa-satellite-dish text-emerald-600 text-[11px]" :class="{'fa-spin': isSyncing}"></i>
-                <span class="truncate" x-text="isSyncing ? 'Checking...' : 'Refresh Sessions'"></span>
+                <span class="truncate" x-text="isSyncing ? i18n.checking : i18n.refreshSessions">{{ __('Refresh Sessions') }}</span>
             </button>
 
             @if($isOnlineRoute)
@@ -92,11 +93,11 @@
                         :class="isTableLiveStreaming 
                             ? 'bg-emerald-50 text-emerald-800 border-emerald-300 ring-2 ring-emerald-400/40 hover:bg-emerald-100' 
                             : 'bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-200'"
-                        title="Click to toggle continuous real-time RX / TX bandwidth monitoring (Live 2s refresh)">
+                        title="{{ __('Click to toggle continuous real-time RX / TX bandwidth monitoring (Live 2s refresh)') }}">
                     <span class="w-2 h-2 rounded-full" 
                           :class="isTableLiveStreaming ? 'bg-emerald-500 animate-ping' : 'bg-purple-500'"></span>
                     <i class="fas fa-chart-line text-[11px]" :class="isTableLiveStreaming ? 'text-emerald-700' : 'text-purple-600'"></i>
-                    <span x-text="isTableLiveStreaming ? 'Live Real-time: ON' : 'Check Speeds (RX/TX)'"></span>
+                    <span x-text="isTableLiveStreaming ? i18n.liveRealtimeOn : i18n.checkSpeedsRxTx">{{ __('Check Speeds (RX/TX)') }}</span>
                 </button>
             @endif
 
@@ -108,7 +109,7 @@
                     class="px-2.5 py-1.5 rounded-md bg-cyan-50 hover:bg-cyan-100 text-cyan-700 font-semibold text-xs transition inline-flex items-center justify-center gap-1.5 shadow-2xs border border-cyan-200 cursor-pointer disabled:opacity-50"
                     title="{{ __('Intelligent Two-Way Sync between MikroTik, Software DB & FreeRADIUS') }}">
                 <i class="fas fa-arrows-rotate text-cyan-600 text-[11px]" :class="{'fa-spin': isSyncing}"></i>
-                <span class="truncate" x-text="isSyncing ? '{{ __('Syncing...') }}' : '{{ __('2-Way Smart Sync') }}'"></span>
+                <span class="truncate" x-text="isSyncing ? i18n.syncing : i18n.twoWaySmartSync">{{ __('2-Way Smart Sync') }}</span>
             </button>
 
             <!-- Dedicated Import from MikroTik Router Button -->
@@ -125,32 +126,32 @@
                 <a href="{{ route('tenant.customers.bulk-payments') }}" 
                    class="px-3 py-1.5 rounded-md bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs shadow-xs transition inline-flex items-center justify-center gap-1.5 cursor-pointer">
                     <i class="fas fa-layer-group text-[11px]"></i>
-                    <span>Bulk Payments</span>
+                    <span>{{ __('Bulk Payments') }}</span>
                 </a>
             @elseif(!$isOnlineRoute && !$isDisconnectedRoute)
                 <!-- Bulk Import CSV -->
                 <button type="button" 
                         @click="openImportModal()"
                         class="px-2.5 py-1.5 rounded-md bg-amber-50 hover:bg-amber-100 text-amber-700 font-semibold text-xs transition inline-flex items-center justify-center gap-1.5 shadow-2xs border border-amber-200 cursor-pointer"
-                        title="Bulk import subscriber records from CSV/Excel">
+                        title="{{ __('Bulk import subscriber records from CSV/Excel') }}">
                     <i class="fas fa-file-arrow-up text-amber-600 text-[11px]"></i>
-                    <span>Import CSV</span>
+                    <span>{{ __('Import CSV') }}</span>
                 </button>
 
                 <!-- Export Database Modal -->
                 <button type="button" 
                         @click="openExportModal()"
                         class="px-2.5 py-1.5 rounded-md bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-semibold text-xs transition inline-flex items-center justify-center gap-1.5 shadow-2xs border border-emerald-200 cursor-pointer"
-                        title="Export customer records to Excel CSV with presets and filters">
+                        title="{{ __('Export customer records to Excel CSV with presets and filters') }}">
                     <i class="fas fa-file-arrow-down text-emerald-600 text-[11px]"></i>
-                    <span>Export Data</span>
+                    <span>{{ __('Export Data') }}</span>
                 </button>
 
                 <!-- Onboard New Customer Button (Dedicated Full Page) -->
                 <a href="{{ route('tenant.customers.create') }}" 
                    class="col-span-2 sm:col-span-1 px-3.5 py-1.5 rounded-md bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs shadow-xs transition inline-flex items-center justify-center gap-1.5 cursor-pointer">
                     <i class="fas fa-user-plus text-[11px]"></i>
-                    <span>+ Onboard Customer</span>
+                    <span>{{ __('+ Onboard Customer') }}</span>
                 </a>
             @endif
             @endif
@@ -162,7 +163,7 @@
         <!-- Metric 1: Total Subscribers -->
         <div class="px-2.5 py-1.5 rounded-md bg-white border border-slate-200 shadow-2xs flex items-center justify-between">
             <div class="min-w-0">
-                <span class="text-[9px] font-medium text-slate-500 uppercase tracking-wider block truncate">Subscribers</span>
+                <span class="text-[9px] font-medium text-slate-500 uppercase tracking-wider block truncate">{{ __('Subscribers') }}</span>
                 <span class="text-[13px] font-bold text-slate-900 font-mono leading-tight block">{{ number_format($totalCustomers) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md bg-cyan-50 text-cyan-600 flex items-center justify-center text-[10px] border border-cyan-100 flex-shrink-0">
@@ -173,7 +174,7 @@
         <!-- Metric 2: Live Online Sessions -->
         <div class="px-2.5 py-1.5 rounded-md bg-white border border-slate-200 shadow-2xs flex items-center justify-between">
             <div class="min-w-0">
-                <span class="text-[9px] font-medium text-emerald-700 uppercase tracking-wider block truncate">Online Sessions</span>
+                <span class="text-[9px] font-medium text-emerald-700 uppercase tracking-wider block truncate">{{ __('Online Sessions') }}</span>
                 <span class="text-[13px] font-bold text-emerald-600 font-mono leading-tight block">{{ number_format($onlineSessionsCount) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md bg-emerald-50 text-emerald-600 flex items-center justify-center text-[10px] border border-emerald-100 flex-shrink-0">
@@ -184,7 +185,7 @@
         <!-- Metric 3: ISP Direct Retail -->
         <div class="px-2.5 py-1.5 rounded-md bg-white border border-slate-200 shadow-2xs flex items-center justify-between">
             <div class="min-w-0">
-                <span class="text-[9px] font-medium text-blue-700 uppercase tracking-wider block truncate">ISP Retail</span>
+                <span class="text-[9px] font-medium text-blue-700 uppercase tracking-wider block truncate">{{ __('ISP Retail') }}</span>
                 <span class="text-[13px] font-bold text-blue-600 font-mono leading-tight block">{{ number_format($ispDirectCount) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md bg-blue-50 text-blue-600 flex items-center justify-center text-[10px] border border-blue-100 flex-shrink-0">
@@ -195,7 +196,7 @@
         <!-- Metric 4: Sub-ISP Franchise Users -->
         <div class="px-2.5 py-1.5 rounded-md bg-white border border-slate-200 shadow-2xs flex items-center justify-between">
             <div class="min-w-0">
-                <span class="text-[9px] font-medium text-purple-700 uppercase tracking-wider block truncate">Sub-ISP Users</span>
+                <span class="text-[9px] font-medium text-purple-700 uppercase tracking-wider block truncate">{{ __('Sub-ISP Users') }}</span>
                 <span class="text-[13px] font-bold text-purple-600 font-mono leading-tight block">{{ number_format($resellerCustomersCount) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md bg-purple-50 text-purple-600 flex items-center justify-center text-[10px] border border-purple-100 flex-shrink-0">
@@ -206,10 +207,10 @@
         <!-- Metric 5: Due Accounts -->
         <div class="px-2.5 py-1.5 rounded-md bg-white border border-slate-200 shadow-2xs flex items-center justify-between">
             <div class="min-w-0">
-                <span class="text-[9px] font-medium text-amber-700 uppercase tracking-wider block truncate">Due Accounts</span>
+                <span class="text-[9px] font-medium text-amber-700 uppercase tracking-wider block truncate">{{ __('Due Accounts') }}</span>
                 <span class="text-[13px] font-bold text-amber-600 font-mono leading-tight block">{{ number_format($dueAccountsCount) }}</span>
             </div>
-            <div class="w-6 h-6 rounded-md bg-amber-50 text-amber-600 flex items-center justify-center text-[10px] border border-amber-100 flex-shrink-0" title="Total Due: @currency($totalDueAmount)">
+            <div class="w-6 h-6 rounded-md bg-amber-50 text-amber-600 flex items-center justify-center text-[10px] border border-amber-100 flex-shrink-0" title="{{ __('Total Due: :amount', ['amount' => ($currencySymbol ?? '৳') . ' ' . number_format((float)($totalDueAmount ?? 0), 2)]) }}">
                 <i class="fas fa-receipt"></i>
             </div>
         </div>
@@ -217,7 +218,7 @@
         <!-- Metric 6: Expired / Auto-cut -->
         <div class="px-2.5 py-1.5 rounded-md bg-white border border-slate-200 shadow-2xs flex items-center justify-between">
             <div class="min-w-0">
-                <span class="text-[9px] font-medium text-rose-700 uppercase tracking-wider block truncate">Expired / Auto-cut</span>
+                <span class="text-[9px] font-medium text-rose-700 uppercase tracking-wider block truncate">{{ __('Expired / Auto-cut') }}</span>
                 <span class="text-[13px] font-bold text-rose-600 font-mono leading-tight block">{{ number_format($expiredAccountsCount) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md bg-rose-50 text-rose-600 flex items-center justify-center text-[10px] border border-rose-100 flex-shrink-0">
@@ -232,12 +233,12 @@
             <div class="flex items-center justify-between">
                 <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                     <i class="fas fa-location-dot text-cyan-600"></i>
-                    <span>Coverage Zones &amp; Area Breakdown ({{ $zoneStats->count() }} Zones Configured)</span>
+                    <span>{{ $zoneStats->count() === 1 ? __('Coverage Zones & Area Breakdown (:count Zone Configured)', ['count' => 1]) : __('Coverage Zones & Area Breakdown (:count Zones Configured)', ['count' => $zoneStats->count()]) }}</span>
                 </span>
                 @if($zoneFilter)
                     <a href="{{ route('tenant.customers.zones') }}" class="text-[11px] text-cyan-600 hover:text-cyan-700 font-semibold inline-flex items-center gap-1">
                         <i class="fas fa-filter-circle-xmark"></i>
-                        <span>Clear Zone Filter (Viewing: {{ $zoneFilter }})</span>
+                        <span>{{ __('Clear Zone Filter (Viewing: :zone)', ['zone' => $zoneFilter]) }}</span>
                     </a>
                 @endif
             </div>
@@ -255,20 +256,20 @@
                                 <span>{{ $zs->zone }}</span>
                             </span>
                             <span class="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-white text-cyan-700 border border-slate-200">
-                                {{ $zs->total_subscribers }} Users
+                                {{ $zs->total_subscribers === 1 ? __(':count User', ['count' => 1]) : __(':count Users', ['count' => $zs->total_subscribers]) }}
                             </span>
                         </div>
                         <div class="grid grid-cols-3 gap-1 text-[10px] pt-1.5 border-t border-slate-200/80">
                             <div>
-                                <span class="text-slate-400 block text-[9px] uppercase font-semibold">Active</span>
+                                <span class="text-slate-400 block text-[9px] uppercase font-semibold">{{ __('Active') }}</span>
                                 <span class="font-bold text-emerald-600 font-mono">{{ $zs->active_count }}</span>
                             </div>
                             <div>
-                                <span class="text-slate-400 block text-[9px] uppercase font-semibold">MRR</span>
+                                <span class="text-slate-400 block text-[9px] uppercase font-semibold">{{ __('MRR') }}</span>
                                 <span class="font-bold text-slate-800 font-mono">@currency($zs->total_mrr)</span>
                             </div>
                             <div>
-                                <span class="text-slate-400 block text-[9px] uppercase font-semibold">Due</span>
+                                <span class="text-slate-400 block text-[9px] uppercase font-semibold">{{ __('Due') }}</span>
                                 <span class="font-bold {{ $zs->total_due > 0 ? 'text-amber-600' : 'text-slate-400' }} font-mono">@currency($zs->total_due)</span>
                             </div>
                         </div>
@@ -349,7 +350,7 @@
                         <option value="">{{ __('All Packages') }}</option>
                         @foreach($allPackages as $pkg)
                             <option value="{{ $pkg->id }}" {{ (string)$packageFilter === (string)$pkg->id ? 'selected' : '' }}>
-                                {{ $pkg->name ?: ($pkg->mikrotik_profile ?: ($pkg->package_name ?: 'Package #' . $pkg->id)) }}
+                                {{ $pkg->name ?: ($pkg->mikrotik_profile ?: ($pkg->package_name ?: __('Package #:id', ['id' => $pkg->id]))) }}
                             </option>
                         @endforeach
                     </select>
@@ -360,15 +361,15 @@
                     <select name="per_page" 
                             onchange="this.form.submit()"
                             class="w-full h-[34px] px-2 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700">
-                        <option value="15" {{ request('per_page', 20) == 15 ? 'selected' : '' }}>15 / {{ __('page') }}</option>
-                        <option value="20" {{ request('per_page', 20) == 20 ? 'selected' : '' }}>20 / {{ __('page') }}</option>
-                        <option value="30" {{ request('per_page', 20) == 30 ? 'selected' : '' }}>30 / {{ __('page') }}</option>
-                        <option value="50" {{ request('per_page', 20) == 50 ? 'selected' : '' }}>50 / {{ __('page') }}</option>
-                        <option value="100" {{ request('per_page', 20) == 100 ? 'selected' : '' }}>100 / {{ __('page') }}</option>
-                        <option value="250" {{ request('per_page', 20) == 250 ? 'selected' : '' }}>250 / {{ __('page') }}</option>
-                        <option value="500" {{ request('per_page', 20) == 500 ? 'selected' : '' }}>500 / {{ __('page') }}</option>
-                        <option value="1000" {{ request('per_page', 20) == 1000 ? 'selected' : '' }}>1000 / {{ __('page') }}</option>
-                        <option value="2000" {{ request('per_page', 20) == 2000 ? 'selected' : '' }}>2000 / {{ __('page') }}</option>
+                        <option value="15" {{ request('per_page', 20) == 15 ? 'selected' : '' }}>{{ __(':count / page', ['count' => 15]) }}</option>
+                        <option value="20" {{ request('per_page', 20) == 20 ? 'selected' : '' }}>{{ __(':count / page', ['count' => 20]) }}</option>
+                        <option value="30" {{ request('per_page', 20) == 30 ? 'selected' : '' }}>{{ __(':count / page', ['count' => 30]) }}</option>
+                        <option value="50" {{ request('per_page', 20) == 50 ? 'selected' : '' }}>{{ __(':count / page', ['count' => 50]) }}</option>
+                        <option value="100" {{ request('per_page', 20) == 100 ? 'selected' : '' }}>{{ __(':count / page', ['count' => 100]) }}</option>
+                        <option value="250" {{ request('per_page', 20) == 250 ? 'selected' : '' }}>{{ __(':count / page', ['count' => 250]) }}</option>
+                        <option value="500" {{ request('per_page', 20) == 500 ? 'selected' : '' }}>{{ __(':count / page', ['count' => 500]) }}</option>
+                        <option value="1000" {{ request('per_page', 20) == 1000 ? 'selected' : '' }}>{{ __(':count / page', ['count' => 1000]) }}</option>
+                        <option value="2000" {{ request('per_page', 20) == 2000 ? 'selected' : '' }}>{{ __(':count / page', ['count' => 2000]) }}</option>
                         <option value="all" {{ request('per_page') === 'all' ? 'selected' : '' }}>{{ __('All Subscribers') }}</option>
                     </select>
                 </div>
@@ -466,9 +467,9 @@
                             onchange="this.form.submit()"
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                         <option value="">{{ __('All Connection Types') }}</option>
-                        <option value="pppoe" {{ ($connectionType ?? '') === 'pppoe' ? 'selected' : '' }}>PPPoE</option>
-                        <option value="static_ip" {{ ($connectionType ?? '') === 'static_ip' ? 'selected' : '' }}>Static IP</option>
-                        <option value="hotspot" {{ ($connectionType ?? '') === 'hotspot' ? 'selected' : '' }}>Hotspot</option>
+                        <option value="pppoe" {{ ($connectionType ?? '') === 'pppoe' ? 'selected' : '' }}>{{ __('PPPoE') }}</option>
+                        <option value="static_ip" {{ ($connectionType ?? '') === 'static_ip' ? 'selected' : '' }}>{{ __('Static IP') }}</option>
+                        <option value="hotspot" {{ ($connectionType ?? '') === 'hotspot' ? 'selected' : '' }}>{{ __('Hotspot') }}</option>
                     </select>
                 </div>
 
@@ -508,7 +509,7 @@
                         <option value="">{{ __('All PON Ports') }}</option>
                         @foreach($distinctPonPorts as $pon)
                             <option value="{{ $pon }}" {{ ($ponFilter ?? '') === $pon ? 'selected' : '' }}>
-                                PON: {{ $pon }}
+                                {{ __('PON: :port', ['port' => $pon]) }}
                             </option>
                         @endforeach
                     </select>
@@ -523,30 +524,30 @@
             <table class="saas-table">
                 <thead>
                     <tr>
-                        <th>ID</th>
-                        <th class="w-20 text-center">Live</th>
+                        <th>{{ __('ID') }}</th>
+                        <th class="w-20 text-center">{{ __('Live') }}</th>
                         @if(!$isOnlineRoute)
-                            <th class="w-20 text-center">MikroTik</th>
+                            <th class="w-20 text-center">{{ __('MikroTik') }}</th>
                         @endif
-                        <th class="text-center">Status</th>
-                        <th>Name</th>
-                        <th>Mobile</th>
-                        <th>PPPoE</th>
-                        <th>Zone</th>
-                        <th>Partner</th>
-                        <th>Package</th>
+                        <th class="text-center">{{ __('Status') }}</th>
+                        <th>{{ __('Name') }}</th>
+                        <th>{{ __('Mobile') }}</th>
+                        <th>{{ __('PPPoE') }}</th>
+                        <th>{{ __('Zone') }}</th>
+                        <th>{{ __('Partner') }}</th>
+                        <th>{{ __('Package') }}</th>
                         @if($isOnlineRoute)
-                            <th class="text-right">Download (RX)</th>
-                            <th class="text-right">Upload (TX)</th>
+                            <th class="text-right">{{ __('Download (RX)') }}</th>
+                            <th class="text-right">{{ __('Upload (TX)') }}</th>
                         @else
-                            <th>Bill</th>
+                            <th>{{ __('Bill') }}</th>
                         @endif
                         @if($isDueRoute)
-                            <th class="text-right">Due Amount</th>
+                            <th class="text-right">{{ __('Due Amount') }}</th>
                         @endif
-                        <th>Expiry Date</th>
+                        <th>{{ __('Expiry Date') }}</th>
                         <th class="text-center">{{ __('Validity') }}</th>
-                        <th class="w-14 text-center no-sort">Action</th>
+                        <th class="w-14 text-center no-sort">{{ __('Action') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -589,7 +590,7 @@
                                 @endphp
                                 <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[10px] font-semibold border shadow-2xs whitespace-nowrap {{ $isLiveOnline ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200' }}">
                                     <span class="w-1.5 h-1.5 rounded-full {{ $isLiveOnline ? 'bg-emerald-500 ring-2 ring-emerald-300 animate-pulse' : 'bg-rose-500 ring-2 ring-rose-200' }}"></span>
-                                    <span>{{ $isLiveOnline ? 'Online' : 'Offline' }}</span>
+                                    <span>{{ $isLiveOnline ? __('Online') : __('Offline') }}</span>
                                 </span>
                             </td>
 
@@ -603,15 +604,16 @@
                                     @if(!$authUser || !$authUser->isCollector())
                                     <button type="button" 
                                             @click="toggleMikrotikState({{ $c->id }}, '{{ addslashes($c->username) }}', '{{ $initialMikrotik }}', $event)" 
-                                            title="{{ $isMktEnabled ? 'MikroTik Secret: ENABLED (Click to Disable)' : 'MikroTik Secret: DISABLED (Click to Enable)' }}"
+                                            data-mikrotik-state="{{ $initialMikrotik }}"
+                                            title="{{ $isMktEnabled ? __('MikroTik Secret: ENABLED (Click to Disable)') : __('MikroTik Secret: DISABLED (Click to Enable)') }}"
                                             class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[10px] font-semibold border transition cursor-pointer shadow-2xs whitespace-nowrap {{ $isMktEnabled ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' : 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100' }}">
                                         <span class="w-1.5 h-1.5 rounded-full {{ $isMktEnabled ? 'bg-emerald-500 ring-2 ring-emerald-300' : 'bg-rose-500' }}"></span>
-                                        <span>{{ $isMktEnabled ? 'Enabled' : 'Disabled' }}</span>
+                                        <span>{{ $isMktEnabled ? __('Enabled') : __('Disabled') }}</span>
                                     </button>
                                     @else
                                     <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[10px] font-semibold border shadow-2xs whitespace-nowrap {{ $isMktEnabled ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200' }}">
                                         <span class="w-1.5 h-1.5 rounded-full {{ $isMktEnabled ? 'bg-emerald-500 ring-2 ring-emerald-300' : 'bg-rose-500' }}"></span>
-                                        <span>{{ ucfirst($initialMikrotik) }}</span>
+                                        <span>{{ __(ucfirst($initialMikrotik)) }}</span>
                                     </span>
                                     @endif
                                 </td>
@@ -655,7 +657,7 @@
                                         <span>{{ $c->reseller->code ?: ($c->reseller->prefix ?: $c->reseller->name) }}</span>
                                     </span>
                                 @else
-                                    <span class="inline-flex items-center gap-1 text-purple-700 font-semibold" title="{{ $tenant->company_name ?? $tenant->name }} (Direct Retail)">
+                                    <span class="inline-flex items-center gap-1 text-purple-700 font-semibold" title="{{ __(':company (Direct Retail)', ['company' => $tenant->company_name ?? $tenant->name]) }}">
                                         <i class="fas fa-building text-purple-500 text-[10px]"></i>
                                         <span>{{ $tenant->company_code ?? 'TDC' }}</span>
                                     </span>
@@ -672,7 +674,7 @@
                                 <td class="text-right font-mono text-emerald-700 font-semibold whitespace-nowrap">
                                     <span x-show="liveTrafficMap['{{ $c->id }}']" 
                                           class="inline-flex items-center gap-1" 
-                                          :title="'Total Rx: ' + (liveTrafficMap['{{ $c->id }}']?.total_rx_human || '0 B')">
+                                          :title="i18n.totalRxTooltip.replace(':value', liveTrafficMap['{{ $c->id }}']?.total_rx_human || '0 B')">
                                         <i class="fas fa-arrow-down text-[9px] text-emerald-500" :class="{'animate-pulse text-emerald-600': isTableLiveStreaming}"></i>
                                         <span x-text="liveTrafficMap['{{ $c->id }}']?.rx_human || '0.00 Mbps'">0.00 Mbps</span>
                                     </span>
@@ -690,7 +692,7 @@
                                 <td class="text-right font-mono text-purple-700 font-semibold whitespace-nowrap">
                                     <span x-show="liveTrafficMap['{{ $c->id }}']" 
                                           class="inline-flex items-center gap-1" 
-                                          :title="'Total Tx: ' + (liveTrafficMap['{{ $c->id }}']?.total_tx_human || '0 B')">
+                                          :title="i18n.totalTxTooltip.replace(':value', liveTrafficMap['{{ $c->id }}']?.total_tx_human || '0 B')">
                                         <i class="fas fa-arrow-up text-[9px] text-purple-500" :class="{'animate-pulse text-purple-600': isTableLiveStreaming}"></i>
                                         <span x-text="liveTrafficMap['{{ $c->id }}']?.tx_human || '0.00 Mbps'">0.00 Mbps</span>
                                     </span>
@@ -747,7 +749,7 @@
                         <tr class="no-record-row">
                             <td colspan="{{ $isDueRoute ? 15 : 14 }}" class="px-4 py-8 text-center text-slate-400 text-xs italic bg-slate-50/50">
                                 <i class="fas fa-users-slash text-2xl text-slate-300 mb-2 block"></i>
-                                No customer or subscriber records found. (Database is empty)
+                                {{ __('No customer or subscriber records found. (Database is empty)') }}
                             </td>
                         </tr>
                     @endforelse
@@ -789,7 +791,7 @@
             <a :href="'{{ url('admin/customers') }}/' + (activeMenu ? activeMenu.id : '')" 
                class="w-full px-3 py-1.5 hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition text-left cursor-pointer">
                 <i class="fas fa-arrow-up-right-from-square text-cyan-600 w-3.5 text-center text-[11px]"></i>
-                <span>View Full Profile</span>
+                <span>{{ __('View Full Profile') }}</span>
             </a>
 
             <!-- Receive Bill Payment (Direct Pay Modal) -->
@@ -797,7 +799,7 @@
                     @click="const item = activeMenu; activeMenu = null; openSinglePayModal(item)" 
                     class="w-full px-3 py-1.5 hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition text-left cursor-pointer">
                 <i class="fas fa-money-bill-wave text-emerald-600 w-3.5 text-center text-[11px]"></i>
-                <span>Receive Bill Payment</span>
+                <span>{{ __('Receive Bill Payment') }}</span>
             </button>
 
             @if(!$authUser || !$authUser->isCollector())
@@ -806,14 +808,14 @@
                     @click="const item = activeMenu; activeMenu = null; openRenewModal(item)" 
                     class="w-full px-3 py-1.5 hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition text-left cursor-pointer">
                 <i class="fas fa-bolt text-teal-600 w-3.5 text-center text-[11px]"></i>
-                <span>Quick Renew Line</span>
+                <span>{{ __('Quick Renew Line') }}</span>
             </button>
 
             <!-- Edit Subscriber (Dedicated Full Page) -->
             <a :href="'{{ url('admin/customers') }}/' + (activeMenu ? activeMenu.id : '') + '/edit'" 
                class="w-full px-3 py-1.5 hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition text-left cursor-pointer">
                 <i class="fas fa-pen-to-square text-indigo-600 w-3.5 text-center text-[11px]"></i>
-                <span>Edit Subscriber</span>
+                <span>{{ __('Edit Subscriber') }}</span>
             </a>
 
             <!-- Sync to MikroTik & RADIUS -->
@@ -821,7 +823,7 @@
                     @click="const item = activeMenu; activeMenu = null; syncSingleMikrotik(item.id, item.name)" 
                     class="w-full px-3 py-1.5 hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition text-left cursor-pointer">
                 <i class="fas fa-arrows-rotate text-blue-600 w-3.5 text-center text-[11px]"></i>
-                <span>Sync MikroTik & RADIUS</span>
+                <span>{{ __('Sync MikroTik & RADIUS') }}</span>
             </button>
 
             <!-- Kick Active Session -->
@@ -829,7 +831,7 @@
                     @click="const item = activeMenu; activeMenu = null; confirmKickSession(item.id, item.name)" 
                     class="w-full px-3 py-1.5 hover:bg-slate-50 text-rose-600 flex items-center gap-2 transition text-left cursor-pointer">
                 <i class="fas fa-plug-circle-xmark text-rose-500 w-3.5 text-center text-[11px]"></i>
-                <span>Kick Active Session</span>
+                <span>{{ __('Kick Active Session') }}</span>
             </button>
 
             <!-- Ping Test IP -->
@@ -837,7 +839,7 @@
                     @click="const item = activeMenu; activeMenu = null; runPingTest(item.id, item.name, item.username)" 
                     class="w-full px-3 py-1.5 hover:bg-slate-50 text-cyan-700 flex items-center gap-2 transition text-left cursor-pointer">
                 <i class="fas fa-terminal text-cyan-600 w-3.5 text-center text-[11px]"></i>
-                <span>Ping Test IP</span>
+                <span>{{ __('Ping Test IP') }}</span>
             </button>
             @endif
         </div>
@@ -850,7 +852,7 @@
                     class="w-full px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 transition text-left cursor-pointer"
                     :class="activeMenu?.status === 'active' ? 'text-rose-700 hover:text-rose-800' : 'text-emerald-700 hover:text-emerald-800'">
                 <i class="fas w-3.5 text-center text-[11px]" :class="activeMenu?.status === 'active' ? 'fa-toggle-off text-rose-500' : 'fa-toggle-on text-emerald-600'"></i>
-                <span x-text="activeMenu?.status === 'active' ? 'Disable Subscriber' : 'Enable Subscriber'"></span>
+                <span x-text="activeMenu?.status === 'active' ? i18n.disableSubscriber : i18n.enableSubscriber"></span>
             </button>
 
             <!-- Delete Customer -->
@@ -858,7 +860,7 @@
                     @click="const item = activeMenu; activeMenu = null; confirmDelete(item.id, item.name)" 
                     class="w-full px-3 py-1.5 hover:bg-rose-50 text-rose-600 flex items-center gap-2 transition text-left cursor-pointer">
                 <i class="fas fa-trash-can text-rose-600 w-3.5 text-center text-[11px]"></i>
-                <span>Delete Subscriber</span>
+                <span>{{ __('Delete Subscriber') }}</span>
             </button>
         </div>
         @endif
@@ -898,10 +900,10 @@
                         <i class="fas fa-money-bill-wave"></i>
                     </div>
                     <div>
-                        <h4 class="text-xs font-semibold text-slate-800">Receive Customer Bill Payment</h4>
+                        <h4 class="text-xs font-semibold text-slate-800">{{ __('Receive Customer Bill Payment') }}</h4>
                         <p class="text-[10.5px] text-slate-500 font-normal">
-                            Subscriber: <span class="font-mono font-bold text-slate-700" x-text="payModal.username || 'Client'"></span> &bull; 
-                            ID: <span class="font-mono text-slate-600" x-text="payModal.customer_code || ('CUST-' + payModal.customer_id)"></span>
+                            {{ __('Subscriber:') }} <span class="font-mono font-bold text-slate-700" x-text="payModal.username || i18n.client"></span> &bull; 
+                            {{ __('ID:') }} <span class="font-mono text-slate-600" x-text="payModal.customer_code || ('CUST-' + payModal.customer_id)"></span>
                         </p>
                     </div>
                 </div>
@@ -920,18 +922,18 @@
                     <!-- 1. Customer Financial Snapshot Card -->
                     <div class="p-3 rounded-xl bg-slate-50/90 border border-slate-200/90 flex items-center justify-between gap-3">
                         <div class="space-y-0.5">
-                            <span class="text-[10px] uppercase font-semibold text-slate-400 tracking-wider">Current Due Amount</span>
+                            <span class="text-[10px] uppercase font-semibold text-slate-400 tracking-wider">{{ __('Current Due Amount') }}</span>
                             <div class="text-base font-bold font-mono flex items-baseline gap-1" :class="Number(payModal.due_amount) > 0 ? 'text-rose-600' : 'text-emerald-600'">
                                 <span class="text-xs font-sans opacity-70">{{ $currencySymbol ?? '৳' }}</span>
                                 <span x-text="Number(payModal.due_amount || 0).toFixed(2)"></span>
                             </div>
                             <div class="text-[10px] text-slate-500">
-                                Monthly Plan: <strong class="text-slate-700 font-mono inline-flex items-baseline gap-0.5"><span class="text-[10px] opacity-70">{{ $currencySymbol ?? '৳' }}</span><span x-text="Number(payModal.monthly_bill || 0).toFixed(2)"></span></strong>
+                                {{ __('Monthly Plan:') }} <strong class="text-slate-700 font-mono inline-flex items-baseline gap-0.5"><span class="text-[10px] opacity-70">{{ $currencySymbol ?? '৳' }}</span><span x-text="Number(payModal.monthly_bill || 0).toFixed(2)"></span></strong>
                             </div>
                         </div>
 
                         <div class="text-right space-y-0.5 font-mono flex-shrink-0">
-                            <span class="text-[10px] uppercase font-sans font-semibold text-slate-400 tracking-wider">Expiry Status</span>
+                            <span class="text-[10px] uppercase font-sans font-semibold text-slate-400 tracking-wider">{{ __('Expiry Status') }}</span>
                             <div class="text-xs font-bold text-slate-800">
                                 <span x-text="payModal.expiry_date || '--'"></span>
                             </div>
@@ -944,7 +946,7 @@
                     <!-- 2. Payment Type / Mode Selector -->
                     <div class="space-y-1.5">
                         <label class="block text-slate-700 font-semibold text-[11px]">
-                            Payment Mode (পেমেন্টের ধরন) <span class="text-rose-500">*</span>
+                            {{ __('Payment Mode') }} <span class="text-rose-500">*</span>
                         </label>
                         <div class="grid grid-cols-3 gap-2">
                             <!-- Mode 1: Due / Regular Bill -->
@@ -957,8 +959,8 @@
                                        @change="onPaymentModeChange()"
                                        class="sr-only">
                                 <i class="fas fa-file-invoice text-teal-600 text-xs mb-1"></i>
-                                <span class="font-bold text-[11px]">Due / Regular</span>
-                                <span class="text-[9.5px] text-slate-500">বকেয়া / মাসিক বিল</span>
+                                <span class="font-bold text-[11px]">{{ __('Due / Regular') }}</span>
+                                <span class="text-[9.5px] text-slate-500">{{ __('Due / Monthly Bill') }}</span>
                             </label>
 
                             <!-- Mode 2: Advance Multi-Month Recharge -->
@@ -971,8 +973,8 @@
                                        @change="onPaymentModeChange()"
                                        class="sr-only">
                                 <i class="fas fa-calendar-plus text-teal-600 text-xs mb-1"></i>
-                                <span class="font-bold text-[11px]">Advance Pay</span>
-                                <span class="text-[9.5px] text-slate-500">অগ্রিম রিচার্জ</span>
+                                <span class="font-bold text-[11px]">{{ __('Advance Pay') }}</span>
+                                <span class="text-[9.5px] text-slate-500">{{ __('Advance Recharge') }}</span>
                             </label>
 
                             <!-- Mode 3: Custom Amount -->
@@ -985,8 +987,8 @@
                                        @change="onPaymentModeChange()"
                                        class="sr-only">
                                 <i class="fas fa-coins text-teal-600 text-xs mb-1"></i>
-                                <span class="font-bold text-[11px]">Custom Amount</span>
-                                <span class="text-[9.5px] text-slate-500">আংশিক / কাস্টম</span>
+                                <span class="font-bold text-[11px]">{{ __('Custom Amount') }}</span>
+                                <span class="text-[9.5px] text-slate-500">{{ __('Partial / Custom') }}</span>
                             </label>
                         </div>
                     </div>
@@ -995,7 +997,7 @@
                     <template x-if="payModal.payment_mode === 'advance'">
                         <div class="space-y-1.5 p-2.5 rounded-lg bg-teal-50/40 border border-teal-100">
                             <label class="block text-teal-900 font-semibold text-[11px]">
-                                Select Advance Duration (কত মাসের অগ্রিম বিল?)
+                                {{ __('Select Advance Duration') }}
                             </label>
                             <div class="flex items-center gap-1.5 flex-wrap">
                                 <template x-for="m in [1, 2, 3, 6, 12]" :key="m">
@@ -1003,7 +1005,7 @@
                                             @click="setAdvanceMonths(m)"
                                             class="px-2.5 py-1 rounded-md text-xs font-semibold font-mono transition border cursor-pointer"
                                             :class="payModal.months === m ? 'bg-teal-600 text-white border-teal-700 shadow-2xs' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'">
-                                        <span x-text="m === 12 ? '1 Year (12m)' : m + ' Month' + (m > 1 ? 's' : '')"></span>
+                                        <span x-text="m === 12 ? i18n.oneYear12m : (m === 1 ? i18n.oneMonth : i18n.nMonths.replace(':count', m))"></span>
                                     </button>
                                 </template>
                             </div>
@@ -1015,7 +1017,7 @@
                         <!-- Received Amount -->
                         <div class="space-y-1.5">
                             <label class="block text-slate-700 font-semibold text-[11px]">
-                                Collected Amount (টাকার পরিমাণ) <span class="text-rose-500">*</span>
+                                {{ __('Collected Amount') }} <span class="text-rose-500">*</span>
                             </label>
                             <div class="relative rounded-lg shadow-2xs">
                                 <div class="pointer-events-none absolute inset-y-0 left-0 w-8 flex items-center justify-center text-slate-400 font-mono font-bold text-xs select-none">
@@ -1034,7 +1036,7 @@
                         <!-- Discount / Waiver -->
                         <div class="space-y-1.5">
                             <label class="block text-slate-700 font-semibold text-[11px]">
-                                Special Discount (ছাড় / মওকুফ)
+                                {{ __('Special Discount') }}
                             </label>
                             <div class="relative rounded-lg shadow-2xs">
                                 <div class="pointer-events-none absolute inset-y-0 left-0 w-8 flex items-center justify-center text-slate-400 font-mono font-bold text-xs select-none">
@@ -1053,7 +1055,7 @@
                     <!-- 5. Payment Channel Selection -->
                     <div class="space-y-1.5">
                         <label class="block text-slate-700 font-semibold text-[11px]">
-                            Payment Method (পরিশোধের মাধ্যম) <span class="text-rose-500">*</span>
+                            {{ __('Payment Method') }} <span class="text-rose-500">*</span>
                         </label>
                         <div class="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
                             <!-- Cash -->
@@ -1062,7 +1064,7 @@
                                     class="p-2 rounded-lg border text-center transition flex flex-col items-center gap-0.5 cursor-pointer"
                                     :class="payModal.payment_method === 'cash' ? 'bg-teal-50 border-teal-500 ring-1 ring-teal-400 text-teal-800' : 'bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-700'">
                                 <i class="fas fa-money-bill text-emerald-600 text-xs"></i>
-                                <span class="text-[10px] font-semibold">Cash</span>
+                                <span class="text-[10px] font-semibold">{{ __('Cash') }}</span>
                             </button>
 
                             <!-- bKash -->
@@ -1071,7 +1073,7 @@
                                     class="p-2 rounded-lg border text-center transition flex flex-col items-center gap-0.5 cursor-pointer"
                                     :class="payModal.payment_method === 'bkash' ? 'bg-pink-50 border-pink-500 ring-1 ring-pink-400 text-pink-800' : 'bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-700'">
                                 <i class="fas fa-mobile-alt text-pink-600 text-xs"></i>
-                                <span class="text-[10px] font-semibold">bKash</span>
+                                <span class="text-[10px] font-semibold">{{ __('bKash') }}</span>
                             </button>
 
                             <!-- Nagad -->
@@ -1080,7 +1082,7 @@
                                     class="p-2 rounded-lg border text-center transition flex flex-col items-center gap-0.5 cursor-pointer"
                                     :class="payModal.payment_method === 'nagad' ? 'bg-orange-50 border-orange-500 ring-1 ring-orange-400 text-orange-800' : 'bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-700'">
                                 <i class="fas fa-wallet text-orange-600 text-xs"></i>
-                                <span class="text-[10px] font-semibold">Nagad</span>
+                                <span class="text-[10px] font-semibold">{{ __('Nagad') }}</span>
                             </button>
 
                             <!-- Rocket -->
@@ -1089,7 +1091,7 @@
                                     class="p-2 rounded-lg border text-center transition flex flex-col items-center gap-0.5 cursor-pointer"
                                     :class="payModal.payment_method === 'rocket' ? 'bg-purple-50 border-purple-500 ring-1 ring-purple-400 text-purple-800' : 'bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-700'">
                                 <i class="fas fa-rocket text-purple-600 text-xs"></i>
-                                <span class="text-[10px] font-semibold">Rocket</span>
+                                <span class="text-[10px] font-semibold">{{ __('Rocket') }}</span>
                             </button>
 
                             <!-- Bank -->
@@ -1098,7 +1100,7 @@
                                     class="p-2 rounded-lg border text-center transition flex flex-col items-center gap-0.5 cursor-pointer"
                                     :class="payModal.payment_method === 'bank_transfer' ? 'bg-blue-50 border-blue-500 ring-1 ring-blue-400 text-blue-800' : 'bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-700'">
                                 <i class="fas fa-university text-blue-600 text-xs"></i>
-                                <span class="text-[10px] font-semibold">Bank</span>
+                                <span class="text-[10px] font-semibold">{{ __('Bank') }}</span>
                             </button>
 
                             <!-- Card / POS -->
@@ -1107,7 +1109,7 @@
                                     class="p-2 rounded-lg border text-center transition flex flex-col items-center gap-0.5 cursor-pointer"
                                     :class="payModal.payment_method === 'pos' ? 'bg-indigo-50 border-indigo-500 ring-1 ring-indigo-400 text-indigo-800' : 'bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-700'">
                                 <i class="fas fa-credit-card text-indigo-600 text-xs"></i>
-                                <span class="text-[10px] font-semibold">POS / Card</span>
+                                <span class="text-[10px] font-semibold">{{ __('POS / Card') }}</span>
                             </button>
                         </div>
                     </div>
@@ -1116,21 +1118,21 @@
                     <div class="grid grid-cols-2 gap-3">
                         <div class="space-y-1.5">
                             <label class="block text-slate-700 font-semibold text-[11px]">
-                                Billing Month (বিলের মাস)
+                                {{ __('Billing Month') }}
                             </label>
                             <input type="text" 
                                    x-model="payModal.billing_month" 
-                                   placeholder="e.g. {{ date('F Y') }}"
+                                   placeholder="{{ __('e.g. :month', ['month' => date('F Y')]) }}"
                                    class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 text-slate-800 focus:bg-white focus:border-teal-500 transition">
                         </div>
 
                         <div class="space-y-1.5">
                             <label class="block text-slate-700 font-semibold text-[11px]">
-                                Trx ID / Bank Ref <span class="text-slate-400 font-normal">(Optional)</span>
+                                {{ __('Trx ID / Bank Ref') }} <span class="text-slate-400 font-normal">({{ __('Optional') }})</span>
                             </label>
                             <input type="text" 
                                    x-model="payModal.transaction_id" 
-                                   placeholder="e.g. 9J28KLM..."
+                                   placeholder="{{ __('e.g. 9J28KLM...') }}"
                                    class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 text-slate-800 font-mono focus:bg-white focus:border-teal-500 transition">
                         </div>
                     </div>
@@ -1138,11 +1140,11 @@
                     <!-- 7. Remarks / Note -->
                     <div class="space-y-1.5">
                         <label class="block text-slate-700 font-semibold text-[11px]">
-                            Payment Note / Remarks <span class="text-slate-400 font-normal">(Optional)</span>
+                            {{ __('Payment Note / Remarks') }} <span class="text-slate-400 font-normal">({{ __('Optional') }})</span>
                         </label>
                         <input type="text" 
                                x-model="payModal.notes" 
-                               placeholder="e.g. Collected by Area Agent / Counter..."
+                               placeholder="{{ __('e.g. Collected by Area Agent / Counter...') }}"
                                class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 text-slate-800 focus:bg-white focus:border-teal-500 transition">
                     </div>
 
@@ -1153,7 +1155,7 @@
                                    x-model="payModal.extend_validity" 
                                    class="rounded border-slate-300 text-teal-600 focus:ring-teal-500 cursor-pointer">
                             <span class="text-slate-700 text-[11px] font-medium">
-                                Extend package validity / expiry date automatically
+                                {{ __('Extend package validity / expiry date automatically') }}
                             </span>
                         </label>
 
@@ -1162,7 +1164,7 @@
                                    x-model="payModal.reactivate_line" 
                                    class="rounded border-slate-300 text-teal-600 focus:ring-teal-500 cursor-pointer">
                             <span class="text-slate-700 text-[11px] font-medium">
-                                Auto-reactivate line in MikroTik & FreeRADIUS if currently expired/suspended
+                                {{ __('Auto-reactivate line in MikroTik & FreeRADIUS if currently expired/suspended') }}
                             </span>
                         </label>
                     </div>
@@ -1175,14 +1177,14 @@
                             @click="payModal.open = false" 
                             :disabled="payModal.loading"
                             class="border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs px-3.5 py-1.5 rounded-lg transition shadow-2xs cursor-pointer">
-                        Cancel
+                        {{ __('Cancel') }}
                     </button>
 
                     <button type="submit" 
                             :disabled="payModal.loading || !payModal.amount || Number(payModal.amount) <= 0"
                             class="bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white font-medium text-xs px-4 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow-xs cursor-pointer">
                         <i class="fas" :class="payModal.loading ? 'fa-spinner fa-spin' : 'fa-receipt'"></i>
-                        <span x-text="payModal.loading ? 'Processing...' : 'Confirm & Collect Payment'"></span>
+                        <span x-text="payModal.loading ? i18n.processing : i18n.confirmCollectPayment"></span>
                     </button>
                 </div>
             </form>
@@ -1212,8 +1214,8 @@
                         <i class="fas fa-bolt"></i>
                     </div>
                     <div>
-                        <h3 class="text-xs font-semibold text-slate-800">Instant Subscription Renewal</h3>
-                        <p class="text-[10.5px] text-slate-500 font-normal">Extend validity &amp; update billing ledger</p>
+                        <h3 class="text-xs font-semibold text-slate-800">{{ __('Instant Subscription Renewal') }}</h3>
+                        <p class="text-[10.5px] text-slate-500 font-normal">{{ __('Extend validity & update billing ledger') }}</p>
                     </div>
                 </div>
                 <button type="button" @click="renewModal.open = false" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center cursor-pointer">
@@ -1226,27 +1228,27 @@
                     <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200/80">
                         <div class="flex items-center justify-between">
                             <span class="font-semibold text-slate-800" x-text="renewModal.name"></span>
-                            <span class="font-mono font-bold text-emerald-600">{{ $currencySymbol ?? '৳' }}<span x-text="renewModal.monthly_bill"></span>/mo</span>
+                            <span class="font-mono font-bold text-emerald-600">{{ $currencySymbol ?? '৳' }}<span x-text="renewModal.monthly_bill"></span>/{{ __('mo') }}</span>
                         </div>
-                        <span class="text-[10.5px] text-slate-500 block mt-0.5">Current Expiry: <span class="font-medium text-slate-700" x-text="renewModal.expiry_date"></span></span>
+                        <span class="text-[10.5px] text-slate-500 block mt-0.5">{{ __('Current Expiry:') }} <span class="font-medium text-slate-700" x-text="renewModal.expiry_date"></span></span>
                     </div>
 
                     <div class="grid grid-cols-2 gap-2.5">
                         <div>
-                            <label class="block text-[11px] font-medium text-slate-700 mb-1">Billing Duration</label>
+                            <label class="block text-[11px] font-medium text-slate-700 mb-1">{{ __('Billing Duration') }}</label>
                             <select x-model="renewModal.months" 
                                     @change="renewModal.amount_paid = renewModal.monthly_bill * renewModal.months"
                                     class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium focus:bg-white focus:border-emerald-500 focus:outline-hidden transition">
-                                <option value="1">1 Month (30 Days)</option>
-                                <option value="2">2 Months (60 Days)</option>
-                                <option value="3">3 Months (Quarterly)</option>
-                                <option value="6">6 Months (Half-Yearly)</option>
-                                <option value="12">12 Months (Yearly)</option>
+                                <option value="1">{{ __('1 Month (30 Days)') }}</option>
+                                <option value="2">{{ __('2 Months (60 Days)') }}</option>
+                                <option value="3">{{ __('3 Months (Quarterly)') }}</option>
+                                <option value="6">{{ __('6 Months (Half-Yearly)') }}</option>
+                                <option value="12">{{ __('12 Months (Yearly)') }}</option>
                             </select>
                         </div>
 
                         <div>
-                            <label class="block text-[11px] font-medium text-slate-700 mb-1">Collected Amount ({{ $currencySymbol ?? '৳' }})</label>
+                            <label class="block text-[11px] font-medium text-slate-700 mb-1">{{ __('Collected Amount (:currency)', ['currency' => $currencySymbol ?? '৳']) }}</label>
                             <input type="number" 
                                    step="0.01" 
                                    x-model="renewModal.amount_paid" 
@@ -1258,13 +1260,13 @@
 
                 <div class="px-4 py-2.5 bg-slate-50/80 border-t border-slate-200 flex items-center justify-end gap-2">
                     <button type="button" @click="renewModal.open = false" class="border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs px-3.5 py-1.5 rounded-lg cursor-pointer transition">
-                        Cancel
+                        {{ __('Cancel') }}
                     </button>
                     <button type="submit" 
                             :disabled="renewModal.loading"
                             class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs px-4 py-1.5 rounded-lg shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50">
                         <i class="fas fa-spinner fa-spin text-xs" x-show="renewModal.loading" style="display: none;"></i>
-                        <span>Confirm &amp; Renew Line</span>
+                        <span>{{ __('Confirm & Renew Line') }}</span>
                     </button>
                 </div>
             </form>
@@ -1292,8 +1294,8 @@
                         <i class="fas fa-terminal"></i>
                     </div>
                     <div>
-                        <h3 class="text-xs font-semibold text-slate-800">ICMP Ping Diagnostics</h3>
-                        <p class="text-[10.5px] text-slate-500 font-normal">Real-time gateway packet telemetry &amp; latency test</p>
+                        <h3 class="text-xs font-semibold text-slate-800">{{ __('ICMP Ping Diagnostics') }}</h3>
+                        <p class="text-[10.5px] text-slate-500 font-normal">{{ __('Real-time gateway packet telemetry & latency test') }}</p>
                     </div>
                 </div>
                 <button type="button" @click="pingModal.open = false" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center cursor-pointer">
@@ -1310,12 +1312,12 @@
                             <span class="text-[10.5px] font-mono text-cyan-700 font-semibold" x-text="'(' + pingModal.username + ')'"></span>
                         </div>
                         <div class="text-[10.5px] text-slate-500 mt-0.5 flex items-center gap-2">
-                            <span>Gateway: <span class="font-medium text-slate-700 font-mono" x-text="pingModal.gateway || 'Detecting...'"></span></span>
+                            <span>{{ __('Gateway:') }} <span class="font-medium text-slate-700 font-mono" x-text="pingModal.gateway || i18n.detecting"></span></span>
                         </div>
                     </div>
                     <div class="text-right flex-shrink-0">
-                        <span class="text-[9px] uppercase font-semibold text-slate-400 block">Target IP</span>
-                        <span class="font-mono font-bold text-cyan-700 text-xs" x-text="pingModal.ip || 'Detecting IP...'"></span>
+                        <span class="text-[9px] uppercase font-semibold text-slate-400 block">{{ __('Target IP') }}</span>
+                        <span class="font-mono font-bold text-cyan-700 text-xs" x-text="pingModal.ip || i18n.detectingIp"></span>
                     </div>
                 </div>
 
@@ -1323,22 +1325,22 @@
                 <div class="grid grid-cols-4 gap-2">
                     <!-- Sent -->
                     <div class="p-2 rounded-lg bg-slate-50 border border-slate-200/80 text-center">
-                        <span class="text-[9px] font-semibold text-slate-400 uppercase block">Transmitted</span>
-                        <span class="text-xs font-mono font-bold text-slate-800" x-text="pingModal.sent + ' pkts'"></span>
+                        <span class="text-[9px] font-semibold text-slate-400 uppercase block">{{ __('Transmitted') }}</span>
+                        <span class="text-xs font-mono font-bold text-slate-800" x-text="i18n.pktsCount.replace(':count', pingModal.sent)"></span>
                     </div>
                     <!-- Received -->
                     <div class="p-2 rounded-lg bg-slate-50 border border-slate-200/80 text-center">
-                        <span class="text-[9px] font-semibold text-slate-400 uppercase block">Received</span>
-                        <span class="text-xs font-mono font-bold" :class="pingModal.received > 0 ? 'text-emerald-600' : 'text-rose-600'" x-text="pingModal.received + ' pkts'"></span>
+                        <span class="text-[9px] font-semibold text-slate-400 uppercase block">{{ __('Received') }}</span>
+                        <span class="text-xs font-mono font-bold" :class="pingModal.received > 0 ? 'text-emerald-600' : 'text-rose-600'" x-text="i18n.pktsCount.replace(':count', pingModal.received)"></span>
                     </div>
                     <!-- Packet Loss -->
                     <div class="p-2 rounded-lg bg-slate-50 border border-slate-200/80 text-center">
-                        <span class="text-[9px] font-semibold text-slate-400 uppercase block">Packet Loss</span>
+                        <span class="text-[9px] font-semibold text-slate-400 uppercase block">{{ __('Packet Loss') }}</span>
                         <span class="text-xs font-mono font-bold" :class="pingModal.loss_percent === 0 ? 'text-emerald-600' : (pingModal.loss_percent < 50 ? 'text-amber-600' : 'text-rose-600')" x-text="pingModal.loss_percent + '%'"></span>
                     </div>
                     <!-- Avg Latency -->
                     <div class="p-2 rounded-lg bg-slate-50 border border-slate-200/80 text-center">
-                        <span class="text-[9px] font-semibold text-slate-400 uppercase block">Avg Latency</span>
+                        <span class="text-[9px] font-semibold text-slate-400 uppercase block">{{ __('Avg Latency') }}</span>
                         <span class="text-xs font-mono font-bold text-cyan-700" x-text="pingModal.rtt_avg"></span>
                     </div>
                 </div>
@@ -1356,22 +1358,22 @@
                         </div>
                         <button type="button" 
                                 @click="copyPingOutput()" 
-                                title="Copy ping console output"
+                                title="{{ __('Copy ping console output') }}"
                                 class="text-slate-400 hover:text-cyan-300 font-mono text-[10px] transition cursor-pointer inline-flex items-center gap-1">
                             <i class="fas fa-copy text-[9px]"></i>
-                            <span>Copy</span>
+                            <span>{{ __('Copy') }}</span>
                         </button>
                     </div>
                     <div class="bg-slate-950 p-3 font-mono text-[11px] leading-relaxed max-h-[160px] overflow-y-auto space-y-1 select-text">
                         <template x-if="pingModal.loading">
                             <div class="flex items-center gap-2 text-cyan-400 py-4 justify-center">
                                 <i class="fas fa-circle-notch fa-spin text-sm"></i>
-                                <span class="animate-pulse">Transmitting ICMP echo requests through MikroTik gateway...</span>
+                                <span class="animate-pulse">{{ __('Transmitting ICMP echo requests through MikroTik gateway...') }}</span>
                             </div>
                         </template>
                         <template x-if="!pingModal.loading && pingModal.lines.length === 0">
                             <div class="text-slate-500 italic py-3 text-center">
-                                Ready to ping target host. Click 'Send Ping' below.
+                                {{ __("Ready to ping target host. Click 'Send Ping' below.") }}
                             </div>
                         </template>
                         <template x-if="!pingModal.loading && pingModal.lines.length > 0">
@@ -1387,14 +1389,14 @@
                 <!-- Ping Execution Options -->
                 <div class="flex items-center justify-between gap-2 pt-0.5">
                     <div class="flex items-center gap-2">
-                        <label class="text-[11px] font-medium text-slate-600">Packet Count:</label>
+                        <label class="text-[11px] font-medium text-slate-600">{{ __('Packet Count:') }}</label>
                         <select x-model.number="pingModal.count" 
                                 :disabled="pingModal.loading"
                                 class="px-2 py-1 bg-slate-50 border border-slate-200 rounded text-xs font-mono font-medium focus:bg-white focus:border-cyan-500">
-                            <option value="3">3 Packets</option>
-                            <option value="4">4 Packets</option>
-                            <option value="5">5 Packets</option>
-                            <option value="10">10 Packets</option>
+                            <option value="3">{{ __(':count Packets', ['count' => 3]) }}</option>
+                            <option value="4">{{ __(':count Packets', ['count' => 4]) }}</option>
+                            <option value="5">{{ __(':count Packets', ['count' => 5]) }}</option>
+                            <option value="10">{{ __(':count Packets', ['count' => 10]) }}</option>
                         </select>
                     </div>
 
@@ -1402,7 +1404,7 @@
                         <template x-if="!pingModal.loading && pingModal.sent > 0">
                             <span class="inline-flex items-center gap-1 text-[11px] font-semibold" :class="pingModal.success ? 'text-emerald-700' : 'text-rose-700'">
                                 <i class="fas" :class="pingModal.success ? 'fa-circle-check text-emerald-500' : 'fa-circle-xmark text-rose-500'"></i>
-                                <span x-text="pingModal.success ? 'Host Reachable' : 'Host Unreachable'"></span>
+                                <span x-text="pingModal.success ? i18n.hostReachable : i18n.hostUnreachable"></span>
                             </span>
                         </template>
                     </div>
@@ -1412,7 +1414,7 @@
             <!-- Modal Footer -->
             <div class="px-4 py-2.5 bg-slate-50/80 border-t border-slate-200 flex items-center justify-end gap-2">
                 <button type="button" @click="pingModal.open = false" class="border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs px-3.5 py-1.5 rounded-lg cursor-pointer transition">
-                    Close
+                    {{ __('Close') }}
                 </button>
                 <button type="button" 
                         @click="executePing()" 
@@ -1420,7 +1422,7 @@
                         class="bg-cyan-600 hover:bg-cyan-700 text-white font-medium text-xs px-4 py-1.5 rounded-lg shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50">
                     <i class="fas fa-spinner fa-spin text-xs" x-show="pingModal.loading" style="display: none;"></i>
                     <i class="fas fa-play text-xs" x-show="!pingModal.loading"></i>
-                    <span x-text="pingModal.loading ? 'Pinging Host...' : (pingModal.sent > 0 ? 'Re-Ping Target' : 'Send Ping')"></span>
+                    <span x-text="pingModal.loading ? i18n.pingingHost : (pingModal.sent > 0 ? i18n.rePingTarget : i18n.sendPing)"></span>
                 </button>
             </div>
         </div>
@@ -1447,8 +1449,8 @@
                         <i class="fas fa-file-arrow-up"></i>
                     </div>
                     <div>
-                        <h3 class="text-xs font-semibold text-slate-800">Bulk Customer Import (CSV / Excel)</h3>
-                        <p class="text-[10.5px] text-slate-500 font-normal">Batch onboarding with automatic PPPoE provisioning &amp; ledger binding</p>
+                        <h3 class="text-xs font-semibold text-slate-800">{{ __('Bulk Customer Import (CSV / Excel)') }}</h3>
+                        <p class="text-[10.5px] text-slate-500 font-normal">{{ __('Batch onboarding with automatic PPPoE provisioning & ledger binding') }}</p>
                     </div>
                 </div>
                 <button type="button" @click="if (!importModal.loading) importModal.open = false" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center cursor-pointer">
@@ -1462,19 +1464,19 @@
                 <!-- Step 1: Download Standard Template Banner -->
                 <div class="p-3 bg-amber-50/60 rounded-xl border border-amber-200/70 flex items-center justify-between gap-3">
                     <div class="space-y-0.5 min-w-0">
-                        <span class="font-semibold text-amber-900 block">Download Standard CSV Template</span>
-                        <p class="text-[10.5px] text-amber-800/80">Pre-formatted header columns for PPPoE credentials, billing rate, IP, ONU MAC &amp; router assignment.</p>
+                        <span class="font-semibold text-amber-900 block">{{ __('Download Standard CSV Template') }}</span>
+                        <p class="text-[10.5px] text-amber-800/80">{{ __('Pre-formatted header columns for PPPoE credentials, billing rate, IP, ONU MAC & router assignment.') }}</p>
                     </div>
                     <a href="{{ route('tenant.customers.import-template') }}" 
                        class="px-3 py-1.5 rounded-lg bg-white hover:bg-amber-100 text-amber-800 font-semibold text-xs border border-amber-300 shadow-2xs transition inline-flex items-center gap-1.5 flex-shrink-0">
                         <i class="fas fa-download text-[11px] text-amber-600"></i>
-                        <span>Download Sample</span>
+                        <span>{{ __('Download Sample') }}</span>
                     </a>
                 </div>
 
                 <!-- Step 2: Drag & Drop File Upload Dropzone -->
                 <div class="space-y-1.5">
-                    <label class="block text-[11px] font-medium text-slate-700">Upload CSV File <span class="text-rose-500">*</span></label>
+                    <label class="block text-[11px] font-medium text-slate-700">{{ __('Upload CSV File') }} <span class="text-rose-500">*</span></label>
                     <div class="border-2 border-dashed rounded-xl p-4 text-center transition cursor-pointer"
                          :class="importModal.file ? 'border-amber-400 bg-amber-50/30' : 'border-slate-300 hover:border-amber-400 bg-slate-50/50 hover:bg-amber-50/20'"
                          @click="$refs.csvFileInput.click()">
@@ -1487,8 +1489,8 @@
                         <template x-if="!importModal.file">
                             <div class="space-y-1">
                                 <i class="fas fa-cloud-arrow-up text-2xl text-slate-400 mb-1"></i>
-                                <div class="font-semibold text-slate-700">Click to browse or drag &amp; drop CSV file here</div>
-                                <div class="text-[10px] text-slate-400">Supported format: CSV (UTF-8) up to 10MB</div>
+                                <div class="font-semibold text-slate-700">{{ __('Click to browse or drag & drop CSV file here') }}</div>
+                                <div class="text-[10px] text-slate-400">{{ __('Supported format: CSV (UTF-8) up to 10MB') }}</div>
                             </div>
                         </template>
 
@@ -1514,10 +1516,10 @@
                 <!-- Step 3: Batch Configuration Parameters -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 border-t border-slate-100">
                     <div>
-                        <label class="block text-[11px] font-medium text-slate-700 mb-1">Default Gateway Router</label>
+                        <label class="block text-[11px] font-medium text-slate-700 mb-1">{{ __('Default Gateway Router') }}</label>
                         <select x-model="importModal.default_router_id" 
                                 class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-amber-500 focus:outline-hidden transition">
-                            <option value="">-- Auto-detect / Core Router --</option>
+                            <option value="">-- {{ __('Auto-detect / Core Router') }} --</option>
                             @foreach($allRouters as $rtr)
                                 <option value="{{ $rtr->id }}">{{ $rtr->name }} ({{ $rtr->ip_address }})</option>
                             @endforeach
@@ -1525,29 +1527,29 @@
                     </div>
 
                     <div>
-                        <label class="block text-[11px] font-medium text-slate-700 mb-1">Default Scope / Reseller</label>
+                        <label class="block text-[11px] font-medium text-slate-700 mb-1">{{ __('Default Scope / Reseller') }}</label>
                         <select x-model="importModal.default_reseller_id" 
                                 class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-amber-500 focus:outline-hidden transition">
-                            <option value="">{{ $tenant->company_name ?? 'ISP' }} Direct Retail ({{ $tenant->company_code ?? 'TDC' }})</option>
+                            <option value="">{{ __(':company Direct Retail (:code)', ['company' => $tenant->company_name ?? __('ISP'), 'code' => $tenant->company_code ?? 'TDC']) }}</option>
                             @foreach($allResellers as $r)
-                                <option value="{{ $r->id }}">Sub-ISP: {{ $r->name }} ({{ $r->code }})</option>
+                                <option value="{{ $r->id }}">{{ __('Sub-ISP: :name (:code)', ['name' => $r->name, 'code' => $r->code]) }}</option>
                             @endforeach
                         </select>
                     </div>
 
                     <div>
-                        <label class="block text-[11px] font-medium text-slate-700 mb-1">Duplicate Username Policy</label>
+                        <label class="block text-[11px] font-medium text-slate-700 mb-1">{{ __('Duplicate Username Policy') }}</label>
                         <select x-model="importModal.duplicate_action" 
                                 class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-amber-500 focus:outline-hidden transition">
-                            <option value="skip">Skip Duplicate PPPoE Usernames</option>
-                            <option value="update">Overwrite &amp; Update Existing Records</option>
+                            <option value="skip">{{ __('Skip Duplicate PPPoE Usernames') }}</option>
+                            <option value="update">{{ __('Overwrite & Update Existing Records') }}</option>
                         </select>
                     </div>
 
                     <div class="flex items-center pt-5">
                         <label class="inline-flex items-center gap-2 cursor-pointer">
                             <input type="checkbox" x-model="importModal.sync_mikrotik" class="rounded border-slate-300 text-amber-600 focus:ring-amber-500 w-4 h-4">
-                            <span class="text-xs font-semibold text-slate-700">Auto-Provision to MikroTik (/ppp/secret)</span>
+                            <span class="text-xs font-semibold text-slate-700">{{ __('Auto-Provision to MikroTik (/ppp/secret)') }}</span>
                         </label>
                     </div>
                 </div>
@@ -1558,19 +1560,19 @@
                         <!-- KPI Strip -->
                         <div class="grid grid-cols-4 gap-2">
                             <div class="p-2 rounded-lg bg-slate-50 border border-slate-200 text-center">
-                                <span class="text-[9px] font-semibold text-slate-400 uppercase block">Total Rows</span>
+                                <span class="text-[9px] font-semibold text-slate-400 uppercase block">{{ __('Total Rows') }}</span>
                                 <span class="text-xs font-mono font-bold text-slate-800" x-text="importModal.total_rows"></span>
                             </div>
                             <div class="p-2 rounded-lg bg-emerald-50 border border-emerald-200 text-center">
-                                <span class="text-[9px] font-semibold text-emerald-700 uppercase block">Created</span>
+                                <span class="text-[9px] font-semibold text-emerald-700 uppercase block">{{ __('Created') }}</span>
                                 <span class="text-xs font-mono font-bold text-emerald-700" x-text="importModal.imported_count"></span>
                             </div>
                             <div class="p-2 rounded-lg bg-amber-50 border border-amber-200 text-center">
-                                <span class="text-[9px] font-semibold text-amber-700 uppercase block">Updated / Skipped</span>
+                                <span class="text-[9px] font-semibold text-amber-700 uppercase block">{{ __('Updated / Skipped') }}</span>
                                 <span class="text-xs font-mono font-bold text-amber-700" x-text="(importModal.updated_count + importModal.skipped_count)"></span>
                             </div>
                             <div class="p-2 rounded-lg bg-rose-50 border border-rose-200 text-center">
-                                <span class="text-[9px] font-semibold text-rose-700 uppercase block">Errors</span>
+                                <span class="text-[9px] font-semibold text-rose-700 uppercase block">{{ __('Errors') }}</span>
                                 <span class="text-xs font-mono font-bold text-rose-700" x-text="importModal.errors_count"></span>
                             </div>
                         </div>
@@ -1590,14 +1592,14 @@
                                         @click="copyImportLogs()" 
                                         class="text-slate-400 hover:text-amber-300 font-mono text-[10px] transition cursor-pointer inline-flex items-center gap-1">
                                     <i class="fas fa-copy text-[9px]"></i>
-                                    <span>Copy Log</span>
+                                    <span>{{ __('Copy Log') }}</span>
                                 </button>
                             </div>
                             <div class="bg-slate-950 p-3 font-mono text-[11px] leading-relaxed max-h-[140px] overflow-y-auto space-y-1 select-text">
                                 <template x-if="importModal.loading">
                                     <div class="flex items-center gap-2 text-amber-400 py-2 justify-center">
                                         <i class="fas fa-circle-notch fa-spin text-sm"></i>
-                                        <span class="animate-pulse">Parsing CSV records, validating profiles &amp; provisioning MikroTik...</span>
+                                        <span class="animate-pulse">{{ __('Parsing CSV records, validating profiles & provisioning MikroTik...') }}</span>
                                     </div>
                                 </template>
                                 <template x-for="(log, idx) in importModal.logs" :key="idx">
@@ -1617,7 +1619,7 @@
                             @click="window.location.reload()" 
                             class="text-cyan-700 hover:text-cyan-800 font-semibold text-xs inline-flex items-center gap-1 cursor-pointer">
                         <i class="fas fa-arrows-rotate text-[10px]"></i>
-                        <span>Reload Customer Table</span>
+                        <span>{{ __('Reload Customer Table') }}</span>
                     </button>
                 </template>
                 <template x-if="!importModal.completed">
@@ -1629,7 +1631,7 @@
                             @click="importModal.open = false" 
                             :disabled="importModal.loading"
                             class="border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs px-3.5 py-1.5 rounded-lg cursor-pointer transition disabled:opacity-50">
-                        <span x-text="importModal.completed ? 'Close Window' : 'Cancel'"></span>
+                        <span x-text="importModal.completed ? i18n.closeWindow : i18n.cancel"></span>
                     </button>
                     <button type="button" 
                             @click="submitBulkImport()" 
@@ -1637,7 +1639,7 @@
                             class="bg-amber-600 hover:bg-amber-700 text-white font-medium text-xs px-4 py-1.5 rounded-lg shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50">
                         <i class="fas fa-spinner fa-spin text-xs" x-show="importModal.loading" style="display: none;"></i>
                         <i class="fas fa-file-arrow-up text-xs" x-show="!importModal.loading"></i>
-                        <span x-text="importModal.loading ? 'Importing Subscribers...' : 'Execute Bulk Import'"></span>
+                        <span x-text="importModal.loading ? i18n.importingSubscribers : i18n.executeBulkImport"></span>
                     </button>
                 </div>
             </div>
@@ -1665,8 +1667,8 @@
                         <i class="fas fa-file-arrow-down"></i>
                     </div>
                     <div>
-                        <h3 class="text-xs font-semibold text-slate-800">Export Customer Master Database</h3>
-                        <p class="text-[10.5px] text-slate-500 font-normal">Download structured records formatted for Excel &amp; Google Sheets</p>
+                        <h3 class="text-xs font-semibold text-slate-800">{{ __('Export Customer Master Database') }}</h3>
+                        <p class="text-[10.5px] text-slate-500 font-normal">{{ __('Download structured records formatted for Excel & Google Sheets') }}</p>
                     </div>
                 </div>
                 <button type="button" @click="exportModal.open = false" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center cursor-pointer">
@@ -1679,7 +1681,7 @@
                 
                 <!-- Preset Selection -->
                 <div class="space-y-2">
-                    <label class="block text-[11px] font-semibold text-slate-700 uppercase tracking-wider">Select Export Preset</label>
+                    <label class="block text-[11px] font-semibold text-slate-700 uppercase tracking-wider">{{ __('Select Export Preset') }}</label>
                     <div class="grid grid-cols-2 gap-2.5">
                         
                         <!-- Preset 1: Full Master Dump -->
@@ -1688,8 +1690,8 @@
                              @click="exportModal.preset = 'master'">
                             <i class="fas fa-database text-emerald-600 mt-0.5"></i>
                             <div class="min-w-0">
-                                <span class="font-semibold text-slate-900 block">Master Dump</span>
-                                <span class="text-[10px] text-slate-500 block leading-tight">All 22+ columns (Profiles, Billing, IP, MikroTik &amp; ONU)</span>
+                                <span class="font-semibold text-slate-900 block">{{ __('Master Dump') }}</span>
+                                <span class="text-[10px] text-slate-500 block leading-tight">{{ __('All 22+ columns (Profiles, Billing, IP, MikroTik & ONU)') }}</span>
                             </div>
                         </div>
 
@@ -1699,8 +1701,8 @@
                              @click="exportModal.preset = 'billing'">
                             <i class="fas fa-file-invoice-dollar text-indigo-600 mt-0.5"></i>
                             <div class="min-w-0">
-                                <span class="font-semibold text-slate-900 block">Billing &amp; Ledger</span>
-                                <span class="text-[10px] text-slate-500 block leading-tight">Monthly bills, due amounts, wallet balance &amp; expiry</span>
+                                <span class="font-semibold text-slate-900 block">{{ __('Billing & Ledger') }}</span>
+                                <span class="text-[10px] text-slate-500 block leading-tight">{{ __('Monthly bills, due amounts, wallet balance & expiry') }}</span>
                             </div>
                         </div>
 
@@ -1710,8 +1712,8 @@
                              @click="exportModal.preset = 'technical'">
                             <i class="fas fa-network-wired text-cyan-600 mt-0.5"></i>
                             <div class="min-w-0">
-                                <span class="font-semibold text-slate-900 block">Technical &amp; Router</span>
-                                <span class="text-[10px] text-slate-500 block leading-tight">PPPoE passwords, Framed IP, ONU MAC, Router &amp; OLT</span>
+                                <span class="font-semibold text-slate-900 block">{{ __('Technical & Router') }}</span>
+                                <span class="text-[10px] text-slate-500 block leading-tight">{{ __('PPPoE passwords, Framed IP, ONU MAC, Router & OLT') }}</span>
                             </div>
                         </div>
 
@@ -1721,8 +1723,8 @@
                              @click="exportModal.preset = 'contacts'">
                             <i class="fas fa-address-book text-amber-600 mt-0.5"></i>
                             <div class="min-w-0">
-                                <span class="font-semibold text-slate-900 block">Contacts Directory</span>
-                                <span class="text-[10px] text-slate-500 block leading-tight">Names, mobile phones, email, NID &amp; address</span>
+                                <span class="font-semibold text-slate-900 block">{{ __('Contacts Directory') }}</span>
+                                <span class="text-[10px] text-slate-500 block leading-tight">{{ __('Names, mobile phones, email, NID & address') }}</span>
                             </div>
                         </div>
 
@@ -1732,29 +1734,29 @@
                 <!-- Scope & Filter Adjustments -->
                 <div class="grid grid-cols-2 gap-2.5 pt-2 border-t border-slate-100">
                     <div>
-                        <label class="block text-[11px] font-medium text-slate-700 mb-1">Subscriber Scope</label>
+                        <label class="block text-[11px] font-medium text-slate-700 mb-1">{{ __('Subscriber Scope') }}</label>
                         <select x-model="exportModal.scope" class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium focus:bg-white focus:border-emerald-500">
-                            <option value="">All Subscribers ({{ $tenant->company_code ?? 'TDC' }} + Resellers)</option>
-                            <option value="isp">ISP Direct Retail Only</option>
-                            <option value="all_resellers">Sub-ISP Franchise Only</option>
+                            <option value="">{{ __('All Subscribers (:code + Resellers)', ['code' => $tenant->company_code ?? 'TDC']) }}</option>
+                            <option value="isp">{{ __('ISP Direct Retail Only') }}</option>
+                            <option value="all_resellers">{{ __('Sub-ISP Franchise Only') }}</option>
                         </select>
                     </div>
 
                     <div>
-                        <label class="block text-[11px] font-medium text-slate-700 mb-1">Account Status</label>
+                        <label class="block text-[11px] font-medium text-slate-700 mb-1">{{ __('Account Status') }}</label>
                         <select x-model="exportModal.status" class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium focus:bg-white focus:border-emerald-500">
-                            <option value="all">All Statuses</option>
-                            <option value="active">Active Only</option>
-                            <option value="due">Due Only</option>
-                            <option value="expired">Expired Only</option>
-                            <option value="suspended">Suspended Only</option>
+                            <option value="all">{{ __('All Statuses') }}</option>
+                            <option value="active">{{ __('Active Only') }}</option>
+                            <option value="due">{{ __('Due Only') }}</option>
+                            <option value="expired">{{ __('Expired Only') }}</option>
+                            <option value="suspended">{{ __('Suspended Only') }}</option>
                         </select>
                     </div>
                 </div>
 
                 <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200/80 text-[10.5px] text-slate-600 flex items-center gap-2">
                     <i class="fas fa-circle-info text-cyan-600 text-xs flex-shrink-0"></i>
-                    <span>Exported files automatically include UTF-8 BOM encoding for seamless display in Microsoft Excel and Google Sheets without font distortion.</span>
+                    <span>{{ __('Exported files automatically include UTF-8 BOM encoding for seamless display in Microsoft Excel and Google Sheets without font distortion.') }}</span>
                 </div>
 
             </div>
@@ -1762,13 +1764,13 @@
             <!-- Modal Footer -->
             <div class="px-4 py-2.5 bg-slate-50/80 border-t border-slate-200 flex items-center justify-end gap-2">
                 <button type="button" @click="exportModal.open = false" class="border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs px-3.5 py-1.5 rounded-lg cursor-pointer transition">
-                    Cancel
+                    {{ __('Cancel') }}
                 </button>
                 <button type="button" 
                         @click="triggerExport()" 
                         class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs px-4 py-1.5 rounded-lg shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer">
                     <i class="fas fa-file-arrow-down text-xs"></i>
-                    <span>Download CSV</span>
+                    <span>{{ __('Download CSV') }}</span>
                 </button>
             </div>
         </div>
@@ -1861,7 +1863,7 @@
                         <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-200/80 space-y-1.5">
                             <div class="text-[10px] font-semibold uppercase tracking-wider text-slate-600 flex items-center justify-between">
                                 <span>{{ __('Sample New Users Detected') }}</span>
-                                <span class="font-mono text-slate-500" x-text="'Showing ' + mikrotikImportModal.preview_data.preview_items.length"></span>
+                                <span class="font-mono text-slate-500" x-text="i18n.showingCount.replace(':count', mikrotikImportModal.preview_data.preview_items.length)"></span>
                             </div>
                             <div class="max-h-28 overflow-y-auto space-y-1 pr-1">
                                 <template x-for="item in mikrotikImportModal.preview_data.preview_items" :key="item.username">
@@ -1930,7 +1932,7 @@
                         :disabled="mikrotikImportModal.loading || !mikrotikImportModal.router_id || mikrotikImportModal.previewing"
                         class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-xs px-4 py-1.5 rounded-lg shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50">
                     <i class="fas fa-file-import text-xs" :class="{'fa-spin': mikrotikImportModal.loading}"></i>
-                    <span x-text="mikrotikImportModal.loading ? '{{ __('Importing Records...') }}' : '{{ __('Start Import to Database') }}'"></span>
+                    <span x-text="mikrotikImportModal.loading ? i18n.importingRecords : i18n.startImportToDatabase"></span>
                 </button>
             </div>
         </div>
@@ -1943,6 +1945,89 @@
 <script>
 function customerMasterManager() {
     return {
+        i18n: {
+            checking: @json(__('Checking...')),
+            refreshSessions: @json(__('Refresh Sessions')),
+            liveRealtimeOn: @json(__('Live Real-time: ON')),
+            checkSpeedsRxTx: @json(__('Check Speeds (RX/TX)')),
+            syncing: @json(__('Syncing...')),
+            twoWaySmartSync: @json(__('2-Way Smart Sync')),
+            enabled: @json(__('Enabled')),
+            disabled: @json(__('Disabled')),
+            mikrotikSecretEnabledTooltip: @json(__('MikroTik Secret: ENABLED (Click to Disable)')),
+            mikrotikSecretDisabledTooltip: @json(__('MikroTik Secret: DISABLED (Click to Enable)')),
+            enableSubscriber: @json(__('Enable Subscriber')),
+            disableSubscriber: @json(__('Disable Subscriber')),
+            client: @json(__('Client')),
+            totalRxTooltip: @json(__('Total Rx: :value')),
+            totalTxTooltip: @json(__('Total Tx: :value')),
+            oneYear12m: @json(__('1 Year (12m)')),
+            oneMonth: @json(__(':count Month', ['count' => 1])),
+            nMonths: @json(__(':count Months')),
+            processing: @json(__('Processing...')),
+            confirmCollectPayment: @json(__('Confirm & Collect Payment')),
+            detecting: @json(__('Detecting...')),
+            detectingIp: @json(__('Detecting IP...')),
+            pktsCount: @json(__(':count pkts')),
+            hostReachable: @json(__('Host Reachable')),
+            hostUnreachable: @json(__('Host Unreachable')),
+            pingingHost: @json(__('Pinging Host...')),
+            rePingTarget: @json(__('Re-Ping Target')),
+            sendPing: @json(__('Send Ping')),
+            closeWindow: @json(__('Close Window')),
+            cancel: @json(__('Cancel')),
+            importingSubscribers: @json(__('Importing Subscribers...')),
+            executeBulkImport: @json(__('Execute Bulk Import')),
+            showingCount: @json(__('Showing :count')),
+            importingRecords: @json(__('Importing Records...')),
+            startImportToDatabase: @json(__('Start Import to Database')),
+            liveStatusSynced: @json(__('Live status synced: :count active sessions online.')),
+            paymentFailed: @json(__('Payment collection failed.')),
+            paymentNetworkError: @json(__('Network error while processing payment.')),
+            renewalFailed: @json(__('Renewal failed.')),
+            renewalNetworkError: @json(__('Network error during renewal.')),
+            mikrotikToggleFailed: @json(__('Failed to toggle MikroTik state.')),
+            mikrotikToggleNetworkError: @json(__('Network error toggling MikroTik status.')),
+            statusToggleFailed: @json(__('Failed to toggle status.')),
+            statusToggleNetworkError: @json(__('Network error while updating status.')),
+            syncingCustomer: @json(__('Syncing :name to MikroTik Router...')),
+            customerFallback: @json(__('customer')),
+            syncMikrotikFailed: @json(__('Failed to sync to MikroTik.')),
+            syncMikrotikNetworkError: @json(__('Network error syncing to MikroTik.')),
+            initiatingTwoWaySync: @json(__('Initiating 2-Way Smart Sync (MikroTik <-> Software <-> FreeRADIUS)...')),
+            twoWaySyncFailed: @json(__('Two-way smart sync failed.')),
+            twoWaySyncNetworkError: @json(__('Network error during two-way smart sync.')),
+            routerConnectFailed: @json(__('Failed to connect to router.')),
+            routerPreviewNetworkError: @json(__('Network error fetching router preview.')),
+            selectMikrotikRouter: @json(__('Please select a MikroTik router.')),
+            importFailed: @json(__('Import failed.')),
+            mikrotikImportNetworkError: @json(__('Network error during MikroTik import.')),
+            confirmDeleteCustomer: @json(__("Are you sure you want to delete customer ':name'? This action cannot be undone.")),
+            deleteCustomerFailed: @json(__('Failed to delete customer.')),
+            deleteCustomerNetworkError: @json(__('Network error while deleting customer.')),
+            confirmKickSession: @json(__("Disconnect live PPPoE session for ':name'? This will terminate active session on MikroTik.")),
+            terminatingSession: @json(__('Terminating active session for :name...')),
+            kickSessionFailed: @json(__('Failed to disconnect session.')),
+            kickSessionNetworkError: @json(__('Network error during session disconnect.')),
+            hostUnreachableMsg: @json(__('Host unreachable.')),
+            pingGatewayError: @json(__('Error: Failed to communicate with router gateway.')),
+            pingNetworkError: @json(__('Network error during ping test.')),
+            noTerminalOutputToCopy: @json(__('No terminal output to copy.')),
+            pingOutputCopied: @json(__('Ping diagnostics output copied to clipboard!')),
+            copyOutputFailed: @json(__('Failed to copy output.')),
+            selectValidCsv: @json(__('Please select a valid CSV file to import.')),
+            startingCsvImport: @json(__('Starting CSV import & parsing...')),
+            csvImportFailedCheckLog: @json(__('CSV Import failed. Please check log for errors.')),
+            csvImportNetworkError: @json(__('Network or server error occurred during CSV import.')),
+            bulkImportNetworkError: @json(__('Network error during bulk import.')),
+            noLogsToCopy: @json(__('No logs to copy.')),
+            importLogsCopied: @json(__('Import logs copied to clipboard!')),
+            startingCsvExport: @json(__('Starting CSV export download...')),
+            queryingActiveSessions: @json(__('Querying active PPPoE sessions from MikroTik & FreeRADIUS...')),
+            liveSpeedPaused: @json(__('Live real-time speed monitoring paused.')),
+            liveSpeedActive: @json(__('Real-time RX/TX monitoring active! Updating live from MikroTik...'))
+        },
+        currencySymbol: @json($currencySymbol ?? '৳'),
         isSyncing: false,
         activeMenu: null,
         mikrotikImportModal: {
@@ -2077,7 +2162,7 @@ function customerMasterManager() {
                         this.mikrotikMap = Object.assign({}, this.mikrotikMap, data.mikrotik_status_map);
                     }
                     if (showNotification) {
-                        this.showToast(`Live status synced: ${data.active_count || 0} active sessions online.`, 'success');
+                        this.showToast(this.i18n.liveStatusSynced.replace(':count', data.active_count || 0), 'success');
                     }
                 }
             } catch (err) {
@@ -2110,7 +2195,7 @@ function customerMasterManager() {
             months: 1,
             payment_method: 'cash',
             transaction_id: '',
-            billing_month: '{{ date("F Y") }}',
+            billing_month: @json(date("F Y")),
             notes: '',
             extend_validity: true,
             reactivate_line: true
@@ -2130,7 +2215,7 @@ function customerMasterManager() {
             this.payModal.months = 1;
             this.payModal.payment_method = 'cash';
             this.payModal.transaction_id = '';
-            this.payModal.billing_month = '{{ date("F Y") }}';
+            this.payModal.billing_month = @json(date("F Y"));
             this.payModal.notes = '';
             this.payModal.extend_validity = true;
             this.payModal.reactivate_line = true;
@@ -2187,10 +2272,10 @@ function customerMasterManager() {
                     this.payModal.open = false;
                     setTimeout(() => window.location.reload(), 700);
                 } else {
-                    this.showToast(data.message || 'Payment collection failed.', 'error');
+                    this.showToast(data.message || this.i18n.paymentFailed, 'error');
                 }
             } catch (err) {
-                this.showToast('Network error while processing payment.', 'error');
+                this.showToast(this.i18n.paymentNetworkError, 'error');
             } finally {
                 this.payModal.loading = false;
             }
@@ -2251,13 +2336,13 @@ function customerMasterManager() {
         exportModal: {
             open: false,
             preset: 'master',
-            scope: '{{ request('scope', '') }}',
-            status: '{{ request('status', 'all') }}',
-            online_status: '{{ request('online_status', 'all') }}',
-            search: '{{ request('search', '') }}',
-            reseller_id: '{{ request('reseller_id', '') }}',
-            package_id: '{{ request('package_id', '') }}',
-            zone: '{{ request('zone', '') }}'
+            scope: @json(request('scope', '')),
+            status: @json(request('status', 'all')),
+            online_status: @json(request('online_status', 'all')),
+            search: @json(request('search', '')),
+            reseller_id: @json(request('reseller_id', '')),
+            package_id: @json(request('package_id', '')),
+            zone: @json(request('zone', ''))
         },
 
         showToast(message, type = 'success') {
@@ -2333,10 +2418,10 @@ function customerMasterManager() {
                     this.renewModal.open = false;
                     setTimeout(() => window.location.reload(), 800);
                 } else {
-                    this.showToast(data.message || 'Renewal failed.', 'error');
+                    this.showToast(data.message || this.i18n.renewalFailed, 'error');
                 }
             } catch (err) {
-                this.showToast('Network error during renewal.', 'error');
+                this.showToast(this.i18n.renewalNetworkError, 'error');
             } finally {
                 this.renewModal.loading = false;
             }
@@ -2344,16 +2429,18 @@ function customerMasterManager() {
 
         async toggleMikrotikState(id, username, fallback, event) {
             const btn = event ? event.currentTarget : null;
-            const isCurrentlyEnabled = btn ? btn.innerText.includes('Enabled') : (fallback === 'enabled');
+            const isCurrentlyEnabled = btn && btn.dataset.mikrotikState ? (btn.dataset.mikrotikState === 'enabled') : (fallback === 'enabled');
             const nextState = isCurrentlyEnabled ? 'disabled' : 'enabled';
             
             // Immediate In-Place Optimistic UI Update on button
             if (btn) {
+                btn.dataset.mikrotikState = nextState;
+                btn.title = nextState === 'enabled' ? this.i18n.mikrotikSecretEnabledTooltip : this.i18n.mikrotikSecretDisabledTooltip;
                 btn.className = `inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[10px] font-semibold border transition cursor-pointer shadow-2xs whitespace-nowrap ${nextState === 'enabled' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' : 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100'}`;
                 const dot = btn.querySelector('span:first-child');
                 if (dot) dot.className = `w-1.5 h-1.5 rounded-full ${nextState === 'enabled' ? 'bg-emerald-500 ring-2 ring-emerald-300' : 'bg-rose-500'}`;
                 const txt = btn.querySelector('span:last-child');
-                if (txt) txt.textContent = nextState === 'enabled' ? 'Enabled' : 'Disabled';
+                if (txt) txt.textContent = nextState === 'enabled' ? this.i18n.enabled : this.i18n.disabled;
             }
 
             try {
@@ -2371,24 +2458,28 @@ function customerMasterManager() {
                 } else {
                     if (btn) {
                         const prev = isCurrentlyEnabled ? 'enabled' : 'disabled';
+                        btn.dataset.mikrotikState = prev;
+                        btn.title = prev === 'enabled' ? this.i18n.mikrotikSecretEnabledTooltip : this.i18n.mikrotikSecretDisabledTooltip;
                         btn.className = `inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[10px] font-semibold border transition cursor-pointer shadow-2xs whitespace-nowrap ${prev === 'enabled' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' : 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100'}`;
                         const dot = btn.querySelector('span:first-child');
                         if (dot) dot.className = `w-1.5 h-1.5 rounded-full ${prev === 'enabled' ? 'bg-emerald-500 ring-2 ring-emerald-300' : 'bg-rose-500'}`;
                         const txt = btn.querySelector('span:last-child');
-                        if (txt) txt.textContent = prev === 'enabled' ? 'Enabled' : 'Disabled';
+                        if (txt) txt.textContent = prev === 'enabled' ? this.i18n.enabled : this.i18n.disabled;
                     }
-                    this.showToast(data.message || 'Failed to toggle MikroTik state.', 'error');
+                    this.showToast(data.message || this.i18n.mikrotikToggleFailed, 'error');
                 }
             } catch (err) {
                 if (btn) {
                     const prev = isCurrentlyEnabled ? 'enabled' : 'disabled';
+                    btn.dataset.mikrotikState = prev;
+                    btn.title = prev === 'enabled' ? this.i18n.mikrotikSecretEnabledTooltip : this.i18n.mikrotikSecretDisabledTooltip;
                     btn.className = `inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[10px] font-semibold border transition cursor-pointer shadow-2xs whitespace-nowrap ${prev === 'enabled' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' : 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100'}`;
                     const dot = btn.querySelector('span:first-child');
                     if (dot) dot.className = `w-1.5 h-1.5 rounded-full ${prev === 'enabled' ? 'bg-emerald-500 ring-2 ring-emerald-300' : 'bg-rose-500'}`;
                     const txt = btn.querySelector('span:last-child');
-                    if (txt) txt.textContent = prev === 'enabled' ? 'Enabled' : 'Disabled';
+                    if (txt) txt.textContent = prev === 'enabled' ? this.i18n.enabled : this.i18n.disabled;
                 }
-                this.showToast('Network error toggling MikroTik status.', 'error');
+                this.showToast(this.i18n.mikrotikToggleNetworkError, 'error');
             }
         },
 
@@ -2407,16 +2498,16 @@ function customerMasterManager() {
                     this.showToast(data.message, 'success');
                     setTimeout(() => window.location.reload(), 600);
                 } else {
-                    this.showToast(data.message || 'Failed to toggle status.', 'error');
+                    this.showToast(data.message || this.i18n.statusToggleFailed, 'error');
                 }
             } catch (err) {
-                this.showToast('Network error while updating status.', 'error');
+                this.showToast(this.i18n.statusToggleNetworkError, 'error');
             }
         },
 
         async syncSingleMikrotik(id, name = '') {
             try {
-                this.showToast(`Syncing ${name || 'customer'} to MikroTik Router...`, 'info');
+                this.showToast(this.i18n.syncingCustomer.replace(':name', name || this.i18n.customerFallback), 'info');
                 const res = await fetch(`{{ url('/admin/customers') }}/${id}/sync-mikrotik`, {
                     method: 'POST',
                     headers: {
@@ -2429,17 +2520,17 @@ function customerMasterManager() {
                 if (data.success) {
                     this.showToast(data.message, 'success');
                 } else {
-                    this.showToast(data.message || 'Failed to sync to MikroTik.', 'error');
+                    this.showToast(data.message || this.i18n.syncMikrotikFailed, 'error');
                 }
             } catch (err) {
-                this.showToast('Network error syncing to MikroTik.', 'error');
+                this.showToast(this.i18n.syncMikrotikNetworkError, 'error');
             }
         },
 
         async syncAllMikrotik() {
             this.isSyncing = true;
             try {
-                this.showToast('Initiating 2-Way Smart Sync (MikroTik <-> Software <-> FreeRADIUS)...', 'info');
+                this.showToast(this.i18n.initiatingTwoWaySync, 'info');
                 const res = await fetch(`{{ route('tenant.customers.two-way-sync') }}`, {
                     method: 'POST',
                     headers: {
@@ -2453,10 +2544,10 @@ function customerMasterManager() {
                     this.showToast(data.message, 'success');
                     setTimeout(() => window.location.reload(), 1400);
                 } else {
-                    this.showToast(data.message || 'Two-way smart sync failed.', 'error');
+                    this.showToast(data.message || this.i18n.twoWaySyncFailed, 'error');
                 }
             } catch (err) {
-                this.showToast('Network error during two-way smart sync.', 'error');
+                this.showToast(this.i18n.twoWaySyncNetworkError, 'error');
             } finally {
                 this.isSyncing = false;
             }
@@ -2484,10 +2575,10 @@ function customerMasterManager() {
                 if (data.success) {
                     this.mikrotikImportModal.preview_data = data;
                 } else {
-                    this.mikrotikImportModal.error_message = data.message || 'Failed to connect to router.';
+                    this.mikrotikImportModal.error_message = data.message || this.i18n.routerConnectFailed;
                 }
             } catch (err) {
-                this.mikrotikImportModal.error_message = 'Network error fetching router preview.';
+                this.mikrotikImportModal.error_message = this.i18n.routerPreviewNetworkError;
             } finally {
                 this.mikrotikImportModal.previewing = false;
             }
@@ -2495,7 +2586,7 @@ function customerMasterManager() {
 
         async submitMikrotikImport() {
             if (!this.mikrotikImportModal.router_id) {
-                this.showToast('Please select a MikroTik router.', 'error');
+                this.showToast(this.i18n.selectMikrotikRouter, 'error');
                 return;
             }
             this.mikrotikImportModal.loading = true;
@@ -2520,17 +2611,17 @@ function customerMasterManager() {
                     this.mikrotikImportModal.open = false;
                     setTimeout(() => window.location.reload(), 1200);
                 } else {
-                    this.showToast(data.message || 'Import failed.', 'error');
+                    this.showToast(data.message || this.i18n.importFailed, 'error');
                 }
             } catch (err) {
-                this.showToast('Network error during MikroTik import.', 'error');
+                this.showToast(this.i18n.mikrotikImportNetworkError, 'error');
             } finally {
                 this.mikrotikImportModal.loading = false;
             }
         },
 
         async confirmDelete(id, name) {
-            if (!confirm(`Are you sure you want to delete customer '${name}'? This action cannot be undone.`)) {
+            if (!confirm(this.i18n.confirmDeleteCustomer.replace(':name', name))) {
                 return;
             }
             try {
@@ -2547,15 +2638,15 @@ function customerMasterManager() {
                     this.showToast(data.message, 'success');
                     setTimeout(() => window.location.reload(), 700);
                 } else {
-                    this.showToast(data.message || 'Failed to delete customer.', 'error');
+                    this.showToast(data.message || this.i18n.deleteCustomerFailed, 'error');
                 }
             } catch (err) {
-                this.showToast('Network error while deleting customer.', 'error');
+                this.showToast(this.i18n.deleteCustomerNetworkError, 'error');
             }
         },
 
         async confirmKickSession(id, name) {
-            if (!confirm(`Disconnect live PPPoE session for '${name}'? This will terminate active session on MikroTik.`)) {
+            if (!confirm(this.i18n.confirmKickSession.replace(':name', name))) {
                 return;
             }
             const currentItem = this.activeMenu;
@@ -2563,7 +2654,7 @@ function customerMasterManager() {
                 this.onlineMap[currentItem.username] = 'offline';
             }
             try {
-                this.showToast(`Terminating active session for ${name}...`, 'info');
+                this.showToast(this.i18n.terminatingSession.replace(':name', name), 'info');
                 const res = await fetch(`{{ url('/admin/customers') }}/${id}/kick-session`, {
                     method: 'POST',
                     headers: {
@@ -2580,10 +2671,10 @@ function customerMasterManager() {
                     }
                     setTimeout(() => window.location.reload(), 800);
                 } else {
-                    this.showToast(data.message || 'Failed to disconnect session.', 'error');
+                    this.showToast(data.message || this.i18n.kickSessionFailed, 'error');
                 }
             } catch (err) {
-                this.showToast('Network error during session disconnect.', 'error');
+                this.showToast(this.i18n.kickSessionNetworkError, 'error');
             }
         },
 
@@ -2642,12 +2733,12 @@ function customerMasterManager() {
                     if (data.success) {
                         this.showToast(data.message, 'success');
                     } else {
-                        this.showToast(data.message || 'Host unreachable.', 'error');
+                        this.showToast(data.message || this.i18n.hostUnreachableMsg, 'error');
                     }
                 }
             } catch (err) {
-                this.pingModal.lines = ['Error: Failed to communicate with router gateway.'];
-                this.showToast('Network error during ping test.', 'error');
+                this.pingModal.lines = [this.i18n.pingGatewayError];
+                this.showToast(this.i18n.pingNetworkError, 'error');
             } finally {
                 this.pingModal.loading = false;
             }
@@ -2655,14 +2746,14 @@ function customerMasterManager() {
 
         copyPingOutput() {
             if (!this.pingModal.lines || this.pingModal.lines.length === 0) {
-                this.showToast('No terminal output to copy.', 'info');
+                this.showToast(this.i18n.noTerminalOutputToCopy, 'info');
                 return;
             }
             const text = this.pingModal.lines.join('\n');
             navigator.clipboard.writeText(text).then(() => {
-                this.showToast('Ping diagnostics output copied to clipboard!', 'success');
+                this.showToast(this.i18n.pingOutputCopied, 'success');
             }).catch(() => {
-                this.showToast('Failed to copy output.', 'error');
+                this.showToast(this.i18n.copyOutputFailed, 'error');
             });
         },
 
@@ -2693,12 +2784,12 @@ function customerMasterManager() {
 
         async submitBulkImport() {
             if (!this.importModal.file) {
-                this.showToast('Please select a valid CSV file to import.', 'error');
+                this.showToast(this.i18n.selectValidCsv, 'error');
                 return;
             }
 
             this.importModal.loading = true;
-            this.importModal.logs = ['Starting CSV import & parsing...'];
+            this.importModal.logs = [this.i18n.startingCsvImport];
             this.importModal.completed = false;
 
             const formData = new FormData();
@@ -2733,12 +2824,12 @@ function customerMasterManager() {
                     this.importModal.completed = true;
                     this.showToast(data.message, 'success');
                 } else {
-                    this.importModal.logs = data.logs || [data.message || 'Import failed.'];
-                    this.showToast(data.message || 'CSV Import failed. Please check log for errors.', 'error');
+                    this.importModal.logs = data.logs || [data.message || this.i18n.importFailed];
+                    this.showToast(data.message || this.i18n.csvImportFailedCheckLog, 'error');
                 }
             } catch (err) {
-                this.importModal.logs = ['Network or server error occurred during CSV import.'];
-                this.showToast('Network error during bulk import.', 'error');
+                this.importModal.logs = [this.i18n.csvImportNetworkError];
+                this.showToast(this.i18n.bulkImportNetworkError, 'error');
             } finally {
                 this.importModal.loading = false;
             }
@@ -2746,12 +2837,12 @@ function customerMasterManager() {
 
         copyImportLogs() {
             if (!this.importModal.logs || this.importModal.logs.length === 0) {
-                this.showToast('No logs to copy.', 'info');
+                this.showToast(this.i18n.noLogsToCopy, 'info');
                 return;
             }
             const text = this.importModal.logs.join('\n');
             navigator.clipboard.writeText(text).then(() => {
-                this.showToast('Import logs copied to clipboard!', 'success');
+                this.showToast(this.i18n.importLogsCopied, 'success');
             });
         },
 
@@ -2774,12 +2865,12 @@ function customerMasterManager() {
             const url = `{{ route('tenant.customers.export') }}?` + params.toString();
             window.location.href = url;
             this.exportModal.open = false;
-            this.showToast('Starting CSV export download...', 'success');
+            this.showToast(this.i18n.startingCsvExport, 'success');
         },
 
         async syncOnlineSessions() {
             this.isSyncing = true;
-            this.showToast('Querying active PPPoE sessions from MikroTik & FreeRADIUS...', 'info');
+            this.showToast(this.i18n.queryingActiveSessions, 'info');
             await this.pollLiveSessions(true);
             if (@json($isOnlineRoute)) {
                 await this.fetchAllVisibleTraffic();
@@ -2793,10 +2884,10 @@ function customerMasterManager() {
         toggleTableLiveStream() {
             if (this.isTableLiveStreaming) {
                 this.stopTableLiveStream();
-                this.showToast('Live real-time speed monitoring paused.', 'info');
+                this.showToast(this.i18n.liveSpeedPaused, 'info');
             } else {
                 this.startTableLiveStream();
-                this.showToast('Real-time RX/TX monitoring active! Updating live from MikroTik...', 'success');
+                this.showToast(this.i18n.liveSpeedActive, 'success');
             }
         },
 

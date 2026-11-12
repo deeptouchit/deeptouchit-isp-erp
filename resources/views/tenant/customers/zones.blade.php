@@ -571,7 +571,7 @@
                             <input type="text"
                                    x-model="modal.form.name"
                                    required
-                                   placeholder="Dhanmondi / Mirpur-10"
+                                   placeholder="{{ __('Dhanmondi / Mirpur-10') }}"
                                    class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 text-slate-800 focus:bg-white focus:border-cyan-500 transition">
                         </div>
 
@@ -581,7 +581,7 @@
                             </label>
                             <input type="text"
                                    x-model="modal.form.code"
-                                   placeholder="ZN-01"
+                                   placeholder="{{ __('ZN-01') }}"
                                    title="{{ __('Auto-generated if empty') }}"
                                    class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 text-slate-800 font-mono focus:bg-white focus:border-cyan-500 transition">
                         </div>
@@ -611,7 +611,7 @@
                         </label>
                         <input type="text"
                                x-model="modal.form.city_upazila"
-                               placeholder="Dhaka North / Gazipur Sadar"
+                               placeholder="{{ __('Dhaka North / Gazipur Sadar') }}"
                                class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 text-slate-800 focus:bg-white focus:border-cyan-500 transition">
                     </div>
 
@@ -637,7 +637,7 @@
                             </label>
                             <input type="text"
                                    x-model="modal.form.in_charge_phone"
-                                   placeholder="01712-345678"
+                                   placeholder="{{ __('01712-345678') }}"
                                    class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 text-slate-800 font-mono focus:bg-white focus:border-cyan-500 transition">
                         </div>
 
@@ -647,7 +647,7 @@
                             </label>
                             <input type="text"
                                    x-model="modal.form.in_charge_name"
-                                   placeholder="Md. Rafiqul Islam"
+                                   placeholder="{{ __('Md. Rafiqul Islam') }}"
                                    class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 text-slate-800 focus:bg-white focus:border-cyan-500 transition">
                         </div>
                     </div>
@@ -658,7 +658,7 @@
                         </label>
                         <textarea x-model="modal.form.description"
                                   rows="2"
-                                  placeholder="Road-1, Block-A, Bazar Area..."
+                                  placeholder="{{ __('Road-1, Block-A, Bazar Area...') }}"
                                   class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 text-slate-800 focus:bg-white focus:border-cyan-500 transition"></textarea>
                     </div>
 
@@ -871,7 +871,7 @@
                         <input type="text"
                                x-model="subAreasModal.newSubArea"
                                @keydown.enter.prevent="addSubArea()"
-                               placeholder="Block-A, Bazar Road, Main Crossing..."
+                               placeholder="{{ __('Block-A, Bazar Road, Main Crossing...') }}"
                                class="flex-1 bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 text-slate-800 focus:bg-white focus:border-cyan-500 transition">
                         <button type="button"
                                 @click="addSubArea()"

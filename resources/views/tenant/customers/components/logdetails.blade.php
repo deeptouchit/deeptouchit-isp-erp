@@ -47,12 +47,12 @@
                 <div>
                     <span class="text-[10px] uppercase font-semibold text-slate-400 block tracking-wider">{{ __('Event Type') }}</span>
                     <span class="inline-flex items-center px-2 py-0.5 mt-0.5 rounded text-[10px] font-mono font-bold uppercase bg-purple-50 text-purple-700 border border-purple-200"
-                          x-text="selectedLog.event_type || 'ACTIVITY'">
+                          x-text="selectedLog.event_type || {{ json_encode(__('ACTIVITY'), JSON_UNESCAPED_UNICODE) }}">
                     </span>
                 </div>
                 <div>
                     <span class="text-[10px] uppercase font-semibold text-slate-400 block tracking-wider">{{ __('Performed By') }}</span>
-                    <strong class="text-slate-800 text-[11px]" x-text="selectedLog.actor_name || 'System Admin'"></strong>
+                    <strong class="text-slate-800 text-[11px]" x-text="selectedLog.actor_name || {{ json_encode(__('System Admin'), JSON_UNESCAPED_UNICODE) }}"></strong>
                     <span class="text-[10px] text-slate-500 block font-mono" x-text="selectedLog.actor_type ? '(' + selectedLog.actor_type + ')' : ''"></span>
                 </div>
                 <div>
@@ -61,7 +61,7 @@
                 </div>
                 <div>
                     <span class="text-[10px] uppercase font-semibold text-slate-400 block tracking-wider">{{ __('Logged At') }}</span>
-                    <span class="font-mono text-slate-700 text-[11px]" x-text="selectedLog.created_at || 'N/A'"></span>
+                    <span class="font-mono text-slate-700 text-[11px]" x-text="selectedLog.created_at || {{ json_encode(__('N/A'), JSON_UNESCAPED_UNICODE) }}"></span>
                 </div>
             </div>
 

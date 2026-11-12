@@ -25,10 +25,10 @@
                     <i class="fas fa-calendar-alt"></i>
                 </div>
                 <div>
-                    <h4 class="text-xs font-semibold text-slate-800">Change Billing Cycle & Validity</h4>
+                    <h4 class="text-xs font-semibold text-slate-800">{{ __('Change Billing Cycle & Validity') }}</h4>
                     <p class="text-[10.5px] text-slate-500 font-normal">
-                        Subscriber: <span class="font-mono font-bold text-slate-700">{{ $customer->username ?: 'Client' }}</span> &bull; 
-                        ID: <span class="font-mono text-slate-600">{{ $customer->customer_id ?: 'CUST-' . $customer->id }}</span>
+                        {{ __('Subscriber') }}: <span class="font-mono font-bold text-slate-700">{{ $customer->username ?: __('Client') }}</span> &bull; 
+                        {{ __('ID') }}: <span class="font-mono text-slate-600">{{ $customer->customer_id ?: 'CUST-' . $customer->id }}</span>
                     </p>
                 </div>
             </div>
@@ -47,29 +47,29 @@
                 <!-- 1. Current Expiry & Billing Snapshot Card -->
                 <div class="p-3 rounded-xl bg-slate-50/90 border border-slate-200/90 flex items-center justify-between gap-3">
                     <div class="space-y-1">
-                        <span class="text-[10px] uppercase font-semibold text-slate-400 tracking-wider">Current Expiry Status</span>
+                        <span class="text-[10px] uppercase font-semibold text-slate-400 tracking-wider">{{ __('Current Expiry Status') }}</span>
                         <div class="font-bold text-slate-800 flex items-center gap-1.5 flex-wrap">
-                            <span class="font-mono" x-text="cycleData.currentExpiryDateFormatted || 'No Expiry Set'"></span>
+                            <span class="font-mono" x-text="cycleData.currentExpiryDateFormatted || {{ json_encode(__('No Expiry Set'), JSON_UNESCAPED_UNICODE) }}"></span>
                             <template x-if="cycleData.remainingDays > 0">
-                                <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-mono font-semibold">
-                                    <span x-text="cycleData.remainingDays"></span> days left
+                                <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-mono font-semibold"
+                                      x-text="(cycleData.remainingDays === 1 ? {{ json_encode(__(':days day left'), JSON_UNESCAPED_UNICODE) }} : {{ json_encode(__(':days days left'), JSON_UNESCAPED_UNICODE) }}).replace(':days', cycleData.remainingDays)">
                                 </span>
                             </template>
                             <template x-if="cycleData.remainingDays <= 0 && cycleData.currentExpiryDate">
                                 <span class="px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 text-[10px] font-mono font-semibold">
-                                    Expired
+                                    {{ __('Expired') }}
                                 </span>
                             </template>
                         </div>
                     </div>
 
                     <div class="text-right space-y-0.5 font-mono flex-shrink-0">
-                        <span class="text-[10px] uppercase font-sans font-semibold text-slate-400 tracking-wider">Billing Type</span>
+                        <span class="text-[10px] uppercase font-sans font-semibold text-slate-400 tracking-wider">{{ __('Billing Type') }}</span>
                         <div class="text-xs font-bold text-blue-700 capitalize">
-                            <span x-text="cycleForm.billing_type"></span>
+                            <span x-text="cycleForm.billing_type === 'postpaid' ? {{ json_encode(__('Postpaid'), JSON_UNESCAPED_UNICODE) }} : {{ json_encode(__('Prepaid'), JSON_UNESCAPED_UNICODE) }}"></span>
                         </div>
                         <div class="text-[10px] text-slate-500">
-                            Grace: <strong class="text-slate-700" x-text="cycleForm.grace_period_days + ' Days'"></strong>
+                            {{ __('Grace') }}: <strong class="text-slate-700" x-text="(Number(cycleForm.grace_period_days) === 1 ? {{ json_encode(__(':days Day'), JSON_UNESCAPED_UNICODE) }} : {{ json_encode(__(':days Days'), JSON_UNESCAPED_UNICODE) }}).replace(':days', cycleForm.grace_period_days)"></strong>
                         </div>
                     </div>
                 </div>
@@ -77,7 +77,7 @@
                 <!-- 2. Billing Type Selector (Prepaid vs Postpaid) -->
                 <div class="space-y-1.5">
                     <label class="block text-slate-700 font-semibold text-[11px]">
-                        Billing Method / Cycle Type <span class="text-rose-500">*</span>
+                        {{ __('Billing Method / Cycle Type') }} <span class="text-rose-500">*</span>
                     </label>
                     <div class="grid grid-cols-2 gap-2">
                         <!-- Prepaid -->
@@ -89,8 +89,8 @@
                                    x-model="cycleForm.billing_type" 
                                    class="text-blue-600 focus:ring-blue-500">
                             <div>
-                                <div class="font-semibold text-slate-800 text-xs">Prepaid Billing</div>
-                                <div class="text-[10px] text-slate-500 leading-tight">Pay before use &bull; Fixed validity</div>
+                                <div class="font-semibold text-slate-800 text-xs">{{ __('Prepaid Billing') }}</div>
+                                <div class="text-[10px] text-slate-500 leading-tight">{{ __('Pay before use • Fixed validity') }}</div>
                             </div>
                         </label>
 
@@ -103,8 +103,8 @@
                                    x-model="cycleForm.billing_type" 
                                    class="text-blue-600 focus:ring-blue-500">
                             <div>
-                                <div class="font-semibold text-slate-800 text-xs">Postpaid Billing</div>
-                                <div class="text-[10px] text-slate-500 leading-tight">Monthly bill cycle &bull; Pay on invoice</div>
+                                <div class="font-semibold text-slate-800 text-xs">{{ __('Postpaid Billing') }}</div>
+                                <div class="text-[10px] text-slate-500 leading-tight">{{ __('Monthly bill cycle • Pay on invoice') }}</div>
                             </div>
                         </label>
                     </div>
@@ -114,13 +114,13 @@
                 <div class="space-y-1.5">
                     <div class="flex items-center justify-between">
                         <label class="block text-slate-700 font-semibold text-[11px]">
-                            New Expiry Date <span class="text-rose-500">*</span>
+                            {{ __('New Expiry Date') }} <span class="text-rose-500">*</span>
                         </label>
                         <template x-if="cycleForm.expiry_date">
                             <span class="text-[10.5px] font-mono font-medium" 
                                   :class="getCalculatedDays() > 0 ? 'text-emerald-700' : 'text-rose-600'">
                                 <i class="fas fa-clock mr-0.5"></i>
-                                <span x-text="getCalculatedDays() > 0 ? getCalculatedDays() + ' days validity' : 'Expired on chosen date'"></span>
+                                <span x-text="getCalculatedDays() > 0 ? (getCalculatedDays() === 1 ? {{ json_encode(__(':days day validity'), JSON_UNESCAPED_UNICODE) }} : {{ json_encode(__(':days days validity'), JSON_UNESCAPED_UNICODE) }}).replace(':days', getCalculatedDays()) : {{ json_encode(__('Expired on chosen date'), JSON_UNESCAPED_UNICODE) }}"></span>
                             </span>
                         </template>
                     </div>
@@ -137,31 +137,31 @@
 
                     <!-- Quick Extend Preset Pill Buttons -->
                     <div class="flex items-center gap-1.5 flex-wrap pt-1">
-                        <span class="text-[10px] text-slate-400">Quick Extend:</span>
+                        <span class="text-[10px] text-slate-400">{{ __('Quick Extend:') }}</span>
                         <button type="button" 
                                 @click="extendExpiryDays(30)" 
                                 class="px-2 py-0.5 rounded bg-blue-50 hover:bg-blue-100 text-blue-700 text-[10px] font-medium transition border border-blue-200">
-                            +1 Month (30d)
+                            {{ __('+1 Month (30d)') }}
                         </button>
                         <button type="button" 
                                 @click="extendExpiryDays(90)" 
                                 class="px-2 py-0.5 rounded bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[10px] font-medium transition border border-indigo-200">
-                            +3 Months
+                            {{ __('+3 Months') }}
                         </button>
                         <button type="button" 
                                 @click="extendExpiryDays(180)" 
                                 class="px-2 py-0.5 rounded bg-purple-50 hover:bg-purple-100 text-purple-700 text-[10px] font-medium transition border border-purple-200">
-                            +6 Months
+                            {{ __('+6 Months') }}
                         </button>
                         <button type="button" 
                                 @click="extendExpiryDays(365)" 
                                 class="px-2 py-0.5 rounded bg-amber-50 hover:bg-amber-100 text-amber-800 text-[10px] font-medium transition border border-amber-200">
-                            +1 Year
+                            {{ __('+1 Year') }}
                         </button>
                         <button type="button" 
                                 @click="setToNextMonthFirst()" 
                                 class="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-medium transition border border-slate-200">
-                            1st of Next Month
+                            {{ __('1st of Next Month') }}
                         </button>
                     </div>
                 </div>
@@ -169,7 +169,7 @@
                 <!-- 4. Grace Period (Days) -->
                 <div class="space-y-1.5">
                     <label class="block text-slate-700 font-semibold text-[11px]">
-                        Grace Period Days (গ্রেস পিরিয়ড)
+                        {{ __('Grace Period Days') }}
                     </label>
                     <div class="flex items-center gap-2">
                         <div class="relative w-32 rounded-lg shadow-2xs">
@@ -184,27 +184,27 @@
                             <button type="button" 
                                     @click="cycleForm.grace_period_days = 0"
                                     class="px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-medium transition border border-slate-200">
-                                0 Days
+                                {{ __(':days Days', ['days' => 0]) }}
                             </button>
                             <button type="button" 
                                     @click="cycleForm.grace_period_days = 3"
                                     class="px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-medium transition border border-slate-200">
-                                3 Days
+                                {{ __(':days Days', ['days' => 3]) }}
                             </button>
                             <button type="button" 
                                     @click="cycleForm.grace_period_days = 5"
                                     class="px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-medium transition border border-slate-200">
-                                5 Days
+                                {{ __(':days Days', ['days' => 5]) }}
                             </button>
                             <button type="button" 
                                     @click="cycleForm.grace_period_days = 7"
                                     class="px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-medium transition border border-slate-200">
-                                7 Days
+                                {{ __(':days Days', ['days' => 7]) }}
                             </button>
                         </div>
                     </div>
                     <p class="text-[10px] text-slate-500">
-                        গ্রাহকের মেয়াদ শেষ হওয়ার পর এই কয়দিন লাইন চালু থাকবে এবং এরপর অটো-কাট কার্যকর হবে।
+                        {{ __('The line will remain active for this many days after the customer expiry date, after which auto-cut will take effect.') }}
                     </p>
                 </div>
 
@@ -215,7 +215,7 @@
                                x-model="cycleForm.auto_cut_enabled" 
                                class="rounded border-slate-300 text-blue-600 focus:ring-blue-500">
                         <span class="text-slate-700 text-[11px] font-medium">
-                            Auto-Cut PPPoE connection upon Expiry + Grace Period
+                            {{ __('Auto-Cut PPPoE connection upon Expiry + Grace Period') }}
                         </span>
                     </label>
 
@@ -224,7 +224,7 @@
                                x-model="cycleForm.reactivate_line" 
                                class="rounded border-slate-300 text-blue-600 focus:ring-blue-500">
                         <span class="text-slate-700 text-[11px] font-medium">
-                            Auto-reactivate line & sync to MikroTik RouterOS & FreeRADIUS if extended
+                            {{ __('Auto-reactivate line & sync to MikroTik RouterOS & FreeRADIUS if extended') }}
                         </span>
                     </label>
                 </div>
@@ -237,14 +237,14 @@
                         @click="cycleModal = false" 
                         :disabled="isCycleLoading"
                         class="border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs px-3.5 py-1.5 rounded-lg transition shadow-2xs">
-                    Cancel
+                    {{ __('Cancel') }}
                 </button>
 
                 <button type="submit" 
                         :disabled="isCycleLoading || !cycleForm.expiry_date"
                         class="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-medium text-xs px-4 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow-xs">
                     <i class="fas" :class="isCycleLoading ? 'fa-spinner fa-spin' : 'fa-check'"></i>
-                    <span x-text="isCycleLoading ? 'Updating Cycle...' : 'Save Billing Cycle'"></span>
+                    <span x-text="isCycleLoading ? {{ json_encode(__('Updating Cycle...'), JSON_UNESCAPED_UNICODE) }} : {{ json_encode(__('Save Billing Cycle'), JSON_UNESCAPED_UNICODE) }}"></span>
                 </button>
             </div>
         </form>

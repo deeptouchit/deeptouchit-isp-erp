@@ -29,7 +29,7 @@ class TenantCoverageZoneController extends Controller
             $tenant = Tenant::first();
         }
 
-        return $tenant ?? abort(404, 'No active tenant found.');
+        return $tenant ?? abort(404, __('No active tenant found.'));
     }
 
     /**
@@ -38,6 +38,7 @@ class TenantCoverageZoneController extends Controller
     public function index(Request $request)
     {
         $tenant = $this->getTenant();
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
         $user = Auth::user();
         $isResellerUser = $user && ($user->isResellerUser() || !empty($user->reseller_id));
         $userResellerId = $user?->reseller_id;
@@ -61,7 +62,7 @@ class TenantCoverageZoneController extends Controller
                 'phone' => $s->phone ?? '',
                 'staff_id' => $s->staff_id ?? '',
                 'role' => $s->role,
-                'role_label' => $s->role_badge['label'] ?? ucfirst(str_replace('_', ' ', $s->role)),
+                'role_label' => $s->role_badge['label'] ?? __(ucfirst(str_replace('_', ' ', $s->role))),
                 'reseller_id' => $s->reseller_id ? (string)$s->reseller_id : '',
             ];
         })->values();
@@ -264,6 +265,7 @@ class TenantCoverageZoneController extends Controller
 
         return view('tenant.customers.zones', compact(
             'tenant',
+            'currencySymbol',
             'zones',
             'zoneMetrics',
             'allResellers',
@@ -548,8 +550,8 @@ class TenantCoverageZoneController extends Controller
         ];
 
         $columns = [
-            'Zone Name', 'Code', 'Reseller Code', 'City / Upazila', 
-            'Sub Areas', 'In Charge Name', 'In Charge Phone', 'Status'
+            __('Zone Name'), __('Code'), __('Reseller Code'), __('City / Upazila'), 
+            __('Sub Areas'), __('In Charge Name'), __('In Charge Phone'), __('Status')
         ];
 
         $sampleRows = [

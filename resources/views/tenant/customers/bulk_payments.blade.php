@@ -1,6 +1,6 @@
 @extends('tenant.layouts.app')
 
-@section('title', 'Bulk Bill & Due Payments - ' . ($tenant->company_name ?? $tenant->name))
+@section('title', __('Bulk Bill & Due Payments') . ' - ' . ($tenant->company_name ?? $tenant->name))
 
 @push('styles')
 <style>
@@ -21,7 +21,7 @@
                 <i class="fas fa-layer-group"></i>
             </div>
             <div>
-                <h1 class="text-sm font-bold text-slate-800 leading-none">Bulk Bill &amp; Due Payments</h1>
+                <h1 class="text-sm font-bold text-slate-800 leading-none">{{ __('Bulk Bill & Due Payments') }}</h1>
             </div>
         </div>
 
@@ -30,23 +30,23 @@
             <button type="button" 
                     @click="printSelectedOrAll()" 
                     class="px-3 py-1.5 rounded-md bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs transition inline-flex items-center gap-1.5 shadow-2xs cursor-pointer"
-                    title="Print Bulk Bill Demand & Due Statement">
+                    title="{{ __('Print Bulk Bill Demand & Due Statement') }}">
                 <i class="fas fa-print text-[11px]"></i>
-                <span>Print Sheet</span>
+                <span>{{ __('Print Sheet') }}</span>
             </button>
 
             <!-- Back to Due & Expired Customers -->
             <a href="{{ route('tenant.customers.due') }}" 
                class="px-3 py-1.5 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs transition inline-flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-arrow-left text-[10px]"></i>
-                <span>Due Customers</span>
+                <span>{{ __('Due Customers') }}</span>
             </a>
 
             <!-- Customer Master -->
             <a href="{{ route('tenant.customers.index') }}" 
                class="px-3 py-1.5 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs transition inline-flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-users text-[10px]"></i>
-                <span>All Customers</span>
+                <span>{{ __('All Customers') }}</span>
             </a>
         </div>
     </div>
@@ -56,9 +56,9 @@
         <!-- Metric 1: Processing Mode -->
         <div class="px-2.5 py-1.5 rounded-md bg-white border border-slate-200 shadow-2xs flex items-center justify-between">
             <div class="min-w-0">
-                <span class="text-[9px] font-medium text-slate-500 uppercase tracking-wider block truncate">Scope Mode</span>
+                <span class="text-[9px] font-medium text-slate-500 uppercase tracking-wider block truncate">{{ __('Scope Mode') }}</span>
                 <span class="text-[13px] font-bold text-slate-800 font-mono leading-tight block truncate">
-                    {{ $mode === 'reseller' ? ($selectedReseller ? $selectedReseller->code ?: $selectedReseller->name : 'Reseller Scope') : 'ISP Direct Retail' }}
+                    {{ $mode === 'reseller' ? ($selectedReseller ? $selectedReseller->code ?: $selectedReseller->name : __('Reseller Scope')) : __('ISP Direct Retail') }}
                 </span>
             </div>
             <div class="w-6 h-6 rounded-md bg-purple-50 text-purple-600 flex items-center justify-center text-[10px] border border-purple-100 flex-shrink-0">
@@ -69,7 +69,7 @@
         <!-- Metric 2: Filtered Subscribers -->
         <div class="px-2.5 py-1.5 rounded-md bg-white border border-slate-200 shadow-2xs flex items-center justify-between">
             <div class="min-w-0">
-                <span class="text-[9px] font-medium text-cyan-700 uppercase tracking-wider block truncate">Scope Subscribers</span>
+                <span class="text-[9px] font-medium text-cyan-700 uppercase tracking-wider block truncate">{{ __('Scope Subscribers') }}</span>
                 <span class="text-[13px] font-bold text-cyan-700 font-mono leading-tight block">{{ number_format($kpis['total_subscribers']) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md bg-cyan-50 text-cyan-600 flex items-center justify-center text-[10px] border border-cyan-100 flex-shrink-0">
@@ -80,7 +80,7 @@
         <!-- Metric 3: Total Gross Bill -->
         <div class="px-2.5 py-1.5 rounded-md bg-white border border-slate-200 shadow-2xs flex items-center justify-between">
             <div class="min-w-0">
-                <span class="text-[9px] font-medium text-amber-700 uppercase tracking-wider block truncate">Total Gross Bill</span>
+                <span class="text-[9px] font-medium text-amber-700 uppercase tracking-wider block truncate">{{ __('Total Gross Bill') }}</span>
                 <span class="text-[13px] font-bold text-amber-700 font-mono leading-tight block">@currency($kpis['gross_bill'])</span>
             </div>
             <div class="w-6 h-6 rounded-md bg-amber-50 text-amber-600 flex items-center justify-center text-[10px] border border-amber-100 flex-shrink-0">
@@ -91,7 +91,7 @@
         <!-- Metric 4: Admin Share (Payable) -->
         <div class="px-2.5 py-1.5 rounded-md bg-white border border-slate-200 shadow-2xs flex items-center justify-between">
             <div class="min-w-0">
-                <span class="text-[9px] font-medium text-emerald-700 uppercase tracking-wider block truncate">Admin Share</span>
+                <span class="text-[9px] font-medium text-emerald-700 uppercase tracking-wider block truncate">{{ __('Admin Share') }}</span>
                 <span class="text-[13px] font-bold text-emerald-700 font-mono leading-tight block">@currency($kpis['admin_share'])</span>
             </div>
             <div class="w-6 h-6 rounded-md bg-emerald-50 text-emerald-600 flex items-center justify-center text-[10px] border border-emerald-100 flex-shrink-0">
@@ -102,7 +102,7 @@
         <!-- Metric 5: Reseller Commission -->
         <div class="px-2.5 py-1.5 rounded-md bg-white border border-slate-200 shadow-2xs flex items-center justify-between">
             <div class="min-w-0">
-                <span class="text-[9px] font-medium text-indigo-700 uppercase tracking-wider block truncate">Reseller Profit</span>
+                <span class="text-[9px] font-medium text-indigo-700 uppercase tracking-wider block truncate">{{ __('Reseller Profit') }}</span>
                 <span class="text-[13px] font-bold text-indigo-700 font-mono leading-tight block">@currency($kpis['reseller_commission'])</span>
             </div>
             <div class="w-6 h-6 rounded-md bg-indigo-50 text-indigo-600 flex items-center justify-center text-[10px] border border-indigo-100 flex-shrink-0">
@@ -113,7 +113,7 @@
         <!-- Metric 6: Reseller Wallet -->
         <div class="px-2.5 py-1.5 rounded-md bg-white border border-slate-200 shadow-2xs flex items-center justify-between">
             <div class="min-w-0">
-                <span class="text-[9px] font-medium text-slate-600 uppercase tracking-wider block truncate">Reseller Wallet</span>
+                <span class="text-[9px] font-medium text-slate-600 uppercase tracking-wider block truncate">{{ __('Reseller Wallet') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block {{ $kpis['reseller_available'] >= $kpis['admin_share'] ? 'text-slate-800' : 'text-rose-600' }}">
                     @currency($kpis['reseller_wallet'])
                 </span>
@@ -139,30 +139,30 @@
                         :class="mode === 'reseller' ? 'bg-white text-purple-700 shadow-2xs font-bold' : 'text-slate-600 hover:text-slate-900 font-medium'"
                         class="px-3 py-1 rounded-md text-xs transition cursor-pointer flex items-center gap-1.5">
                     <i class="fas fa-handshake text-[10px]"></i>
-                    <span>Reseller / Sub-ISP Wise</span>
+                    <span>{{ __('Reseller / Sub-ISP Wise') }}</span>
                 </button>
                 <button type="button" 
                         @click="setMode('direct')"
                         :class="mode === 'direct' ? 'bg-white text-cyan-700 shadow-2xs font-bold' : 'text-slate-600 hover:text-slate-900 font-medium'"
                         class="px-3 py-1 rounded-md text-xs transition cursor-pointer flex items-center gap-1.5">
                     <i class="fas fa-building text-[10px]"></i>
-                    <span>ISP Direct / Custom Scope</span>
+                    <span>{{ __('ISP Direct / Custom Scope') }}</span>
                 </button>
             </div>
 
             <div class="flex items-center gap-2">
-                <span class="text-[11px] text-slate-500 font-medium">Auto-Selection:</span>
+                <span class="text-[11px] text-slate-500 font-medium">{{ __('Auto-Selection:') }}</span>
                 <button type="button" 
                         @click="selectAllRows()" 
                         class="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-semibold border border-emerald-200 transition cursor-pointer flex items-center gap-1">
                     <i class="fas fa-check-double text-[10px]"></i>
-                    <span>Select All (<span x-text="tableRows.length"></span>)</span>
+                    <span x-text="i18n.selectAll.replace(':count', tableRows.length)"></span>
                 </button>
                 <button type="button" 
                         @click="clearAllSelections()" 
                         class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold border border-slate-200 transition cursor-pointer flex items-center gap-1">
                     <i class="fas fa-times text-[10px]"></i>
-                    <span>Deselect All</span>
+                    <span>{{ __('Deselect All') }}</span>
                 </button>
             </div>
         </div>
@@ -202,14 +202,14 @@
                             x-model="selectedResellerId"
                             @change="onResellerChange($event)"
                             class="w-full h-[34px] px-2.5 bg-purple-50/60 border border-purple-200 rounded-lg text-xs font-semibold text-purple-900 focus:bg-white focus:border-purple-500 focus:outline-hidden transition">
-                        <option value="">-- Choose Reseller --</option>
+                        <option value="">{{ __('-- Choose Reseller --') }}</option>
                         @foreach($resellers as $res)
                             <option value="{{ $res->id }}" 
                                     data-commission="{{ (float)$res->commission_rate }}"
                                     data-wallet="{{ (float)$res->wallet_balance }}"
                                     data-credit="{{ (float)$res->credit_limit }}"
                                     {{ (string)$resellerId === (string)$res->id ? 'selected' : '' }}>
-                                {{ $res->name }} ({{ $res->code ?: 'RES-' . $res->id }}) - Comm: {{ (float)$res->commission_rate }}%
+                                {{ $res->name }} ({{ $res->code ?: 'RES-' . $res->id }}) - {{ __('Comm:') }} {{ (float)$res->commission_rate }}%
                             </option>
                         @endforeach
                     </select>
@@ -220,12 +220,12 @@
                     <select name="status" 
                             onchange="this.form.submit()"
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700">
-                        <option value="all_due" {{ $status === 'all_due' ? 'selected' : '' }}>Pending Dues &amp; Expired</option>
-                        <option value="all" {{ $status === 'all' ? 'selected' : '' }}>All Statuses</option>
-                        <option value="active" {{ $status === 'active' ? 'selected' : '' }}>🟢 Active Only</option>
-                        <option value="expired" {{ $status === 'expired' ? 'selected' : '' }}>🔴 Expired Only</option>
-                        <option value="suspended" {{ $status === 'suspended' ? 'selected' : '' }}>⛔ Suspended Only</option>
-                        <option value="due" {{ $status === 'due' ? 'selected' : '' }}>🟡 Due Only</option>
+                        <option value="all_due" {{ $status === 'all_due' ? 'selected' : '' }}>{{ __('Pending Dues & Expired') }}</option>
+                        <option value="all" {{ $status === 'all' ? 'selected' : '' }}>{{ __('All Statuses') }}</option>
+                        <option value="active" {{ $status === 'active' ? 'selected' : '' }}>🟢 {{ __('Active Only') }}</option>
+                        <option value="expired" {{ $status === 'expired' ? 'selected' : '' }}>🔴 {{ __('Expired Only') }}</option>
+                        <option value="suspended" {{ $status === 'suspended' ? 'selected' : '' }}>⛔ {{ __('Suspended Only') }}</option>
+                        <option value="due" {{ $status === 'due' ? 'selected' : '' }}>🟡 {{ __('Due Only') }}</option>
                     </select>
                 </div>
 
@@ -234,13 +234,13 @@
                     <select name="per_page" 
                             onchange="this.form.submit()"
                             class="w-full h-[34px] px-2 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition font-medium text-slate-700">
-                        <option value="20" {{ request('per_page', $perPage) == 20 ? 'selected' : '' }}>20 / page</option>
-                        <option value="30" {{ request('per_page', $perPage) == 30 ? 'selected' : '' }}>30 / page</option>
-                        <option value="50" {{ request('per_page', $perPage) == 50 ? 'selected' : '' }}>50 / page</option>
-                        <option value="100" {{ request('per_page', $perPage) == 100 ? 'selected' : '' }}>100 / page</option>
-                        <option value="250" {{ request('per_page', $perPage) == 250 ? 'selected' : '' }}>250 / page</option>
-                        <option value="500" {{ request('per_page', $perPage) == 500 ? 'selected' : '' }}>500 / page</option>
-                        <option value="all" {{ request('per_page', $perPage) === 'all' ? 'selected' : '' }}>All Users</option>
+                        <option value="20" {{ request('per_page', $perPage) == 20 ? 'selected' : '' }}>{{ __(':count / page', ['count' => 20]) }}</option>
+                        <option value="30" {{ request('per_page', $perPage) == 30 ? 'selected' : '' }}>{{ __(':count / page', ['count' => 30]) }}</option>
+                        <option value="50" {{ request('per_page', $perPage) == 50 ? 'selected' : '' }}>{{ __(':count / page', ['count' => 50]) }}</option>
+                        <option value="100" {{ request('per_page', $perPage) == 100 ? 'selected' : '' }}>{{ __(':count / page', ['count' => 100]) }}</option>
+                        <option value="250" {{ request('per_page', $perPage) == 250 ? 'selected' : '' }}>{{ __(':count / page', ['count' => 250]) }}</option>
+                        <option value="500" {{ request('per_page', $perPage) == 500 ? 'selected' : '' }}>{{ __(':count / page', ['count' => 500]) }}</option>
+                        <option value="all" {{ request('per_page', $perPage) === 'all' ? 'selected' : '' }}>{{ __('All Users') }}</option>
                     </select>
                 </div>
 
@@ -249,9 +249,9 @@
                         @click="showMoreFilters = !showMoreFilters" 
                         :class="showMoreFilters || {{ $activeMoreCount }} > 0 ? 'bg-cyan-50 text-cyan-700 border-cyan-300 ring-1 ring-cyan-200' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'"
                         class="h-[34px] py-0 px-2.5 rounded-lg border text-xs font-medium transition flex items-center justify-center gap-1.5 flex-shrink-0 cursor-pointer shadow-2xs"
-                        title="Toggle Area & Package Filters">
+                        title="{{ __('Toggle Area & Package Filters') }}">
                     <i class="fas fa-sliders-h text-[10px]"></i>
-                    <span>More Filters</span>
+                    <span>{{ __('More Filters') }}</span>
                     @if($activeMoreCount > 0)
                         <span class="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-cyan-600 text-white leading-none">
                             {{ $activeMoreCount }}
@@ -265,15 +265,15 @@
                 <div class="flex items-center gap-1.5 flex-shrink-0 sm:ml-auto">
                     <button type="submit" 
                             class="h-[34px] bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-0 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" 
-                            title="Apply Filters">
+                            title="{{ __('Apply Filters') }}">
                         <i class="fas fa-filter text-[10px]"></i>
-                        <span>Filter</span>
+                        <span>{{ __('Filter') }}</span>
                     </button>
                     <a href="{{ route('tenant.customers.bulk-payments', ['mode' => $mode]) }}" 
                        class="h-[34px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-0 px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer" 
-                       title="Reset Filters">
+                       title="{{ __('Reset Filters') }}">
                         <i class="fas fa-rotate-left text-[10px]"></i>
-                        <span>Reset</span>
+                        <span>{{ __('Reset') }}</span>
                     </a>
                 </div>
             </div>
@@ -294,7 +294,7 @@
                     <select name="zone" 
                             onchange="this.form.submit()"
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                        <option value="">All Zones / Areas</option>
+                        <option value="">{{ __('All Zones / Areas') }}</option>
                         @foreach($zones as $z)
                             <option value="{{ $z }}" {{ $zone === $z ? 'selected' : '' }}>{{ $z }}</option>
                         @endforeach
@@ -306,7 +306,7 @@
                     <select name="package_id" 
                             onchange="this.form.submit()"
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                        <option value="">All Packages</option>
+                        <option value="">{{ __('All Packages') }}</option>
                         @foreach($packages as $pkg)
                             <option value="{{ $pkg->id }}" {{ (string)$packageId === (string)$pkg->id ? 'selected' : '' }}>
                                 {{ $pkg->mikrotik_profile ?: ($pkg->name ?: $pkg->package_name) }}
@@ -321,7 +321,7 @@
                     <select name="reseller_id" 
                             onchange="this.form.submit()"
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                        <option value="">All Reseller Scopes</option>
+                        <option value="">{{ __('All Reseller Scopes') }}</option>
                         @foreach($resellers as $res)
                             <option value="{{ $res->id }}" {{ (string)$resellerId === (string)$res->id ? 'selected' : '' }}>
                                 {{ $res->name }} ({{ $res->code ?: 'RES-' . $res->id }})
@@ -346,9 +346,9 @@
                             <span class="px-1.5 py-0.2 rounded bg-purple-200 text-purple-800 text-[10px] font-mono">{{ $selectedReseller->code ?: 'RES-' . $selectedReseller->id }}</span>
                         </div>
                         <div class="text-[11px] text-purple-700">
-                            <span>📞 {{ $selectedReseller->mobile ?: 'N/A' }}</span>
+                            <span>📞 {{ $selectedReseller->mobile ?: __('N/A') }}</span>
                             <span class="mx-1.5">|</span>
-                            <span>Billing Type: <strong>{{ ucfirst($selectedReseller->billing_type ?? 'Prepaid') }}</strong></span>
+                            <span>{{ __('Billing Type:') }} <strong>{{ __(ucfirst($selectedReseller->billing_type ?? 'Prepaid')) }}</strong></span>
                         </div>
                     </div>
                 </div>
@@ -356,25 +356,25 @@
                 <div class="flex items-center gap-2.5 flex-wrap sm:ml-auto">
                     <!-- Commission Rate -->
                     <div class="px-2.5 py-1 bg-white rounded-md border border-purple-200 text-center shadow-2xs">
-                        <span class="text-[9px] text-slate-500 uppercase font-semibold block">Commission Rate</span>
+                        <span class="text-[9px] text-slate-500 uppercase font-semibold block">{{ __('Commission Rate') }}</span>
                         <span class="text-xs font-bold text-purple-700 font-mono">{{ (float)$selectedReseller->commission_rate }}%</span>
                     </div>
 
                     <!-- Current Wallet Balance -->
                     <div class="px-2.5 py-1 bg-white rounded-md border border-purple-200 text-center shadow-2xs">
-                        <span class="text-[9px] text-slate-500 uppercase font-semibold block">Wallet Balance</span>
+                        <span class="text-[9px] text-slate-500 uppercase font-semibold block">{{ __('Wallet Balance') }}</span>
                         <span class="text-xs font-bold text-slate-900 font-mono">@currency($selectedReseller->wallet_balance)</span>
                     </div>
 
                     <!-- Credit Limit -->
                     <div class="px-2.5 py-1 bg-white rounded-md border border-purple-200 text-center shadow-2xs">
-                        <span class="text-[9px] text-slate-500 uppercase font-semibold block">Credit Limit</span>
+                        <span class="text-[9px] text-slate-500 uppercase font-semibold block">{{ __('Credit Limit') }}</span>
                         <span class="text-xs font-bold text-slate-700 font-mono">@currency($selectedReseller->credit_limit)</span>
                     </div>
 
                     <!-- Total Available -->
                     <div class="px-2.5 py-1 bg-emerald-50 rounded-md border border-emerald-200 text-center shadow-2xs">
-                        <span class="text-[9px] text-emerald-800 uppercase font-semibold block">Total Available</span>
+                        <span class="text-[9px] text-emerald-800 uppercase font-semibold block">{{ __('Total Available') }}</span>
                         <span class="text-xs font-bold text-emerald-700 font-mono">@currency($selectedReseller->total_available_balance)</span>
                     </div>
                 </div>
@@ -393,19 +393,19 @@
                                    @change="toggleSelectAll($event)" 
                                    :checked="selectAll"
                                    class="rounded border-slate-300 text-cyan-600 focus:ring-cyan-500 text-xs cursor-pointer"
-                                   title="Select All Subscribers on this page">
+                                   title="{{ __('Select All Subscribers on this page') }}">
                         </th>
-                        <th>ID</th>
-                        <th>Name</th>
-                        <th>Username</th>
-                        <th>Phone</th>
-                        <th>Zone</th>
-                        <th>Package</th>
-                        <th class="text-center">Status</th>
-                        <th>Expiry</th>
-                        <th class="text-right">Bill</th>
-                        <th class="text-right">Due</th>
-                        <th class="text-right">Payable</th>
+                        <th>{{ __('ID') }}</th>
+                        <th>{{ __('Name') }}</th>
+                        <th>{{ __('Username') }}</th>
+                        <th>{{ __('Phone') }}</th>
+                        <th>{{ __('Zone') }}</th>
+                        <th>{{ __('Package') }}</th>
+                        <th class="text-center">{{ __('Status') }}</th>
+                        <th>{{ __('Expiry') }}</th>
+                        <th class="text-right">{{ __('Bill') }}</th>
+                        <th class="text-right">{{ __('Due') }}</th>
+                        <th class="text-right">{{ __('Payable') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -469,7 +469,7 @@
 
                             <!-- 8. Expiry Date -->
                             <td class="font-mono text-slate-600">
-                                {{ $c->expiry_date ? $c->expiry_date->format('d M Y') : '--' }}
+                                {{ $c->expiry_date ? $c->expiry_date->translatedFormat('d M Y') : '--' }}
                             </td>
 
                             <!-- 9. Monthly Bill -->
@@ -491,7 +491,7 @@
                         <tr>
                             <td colspan="12" class="px-4 py-8 text-center text-slate-400 text-xs italic bg-slate-50/50">
                                 <i class="fas fa-users-slash text-2xl text-slate-300 mb-2 block"></i>
-                                No subscribers found matching your bulk filter criteria.
+                                {{ __('No subscribers found matching your bulk filter criteria.') }}
                             </td>
                         </tr>
                     @endforelse
@@ -499,9 +499,7 @@
                 <tfoot class="bg-slate-50/80 border-t-2 border-slate-200 divide-y divide-slate-200/80 text-xs">
                     <!-- 1. Gross Bill -->
                     <tr>
-                        <td colspan="11" class="text-right py-1.5 px-3 font-semibold text-slate-700">
-                            Gross Bill (<span x-text="selectedIds.length"></span> Users):
-                        </td>
+                        <td colspan="11" class="text-right py-1.5 px-3 font-semibold text-slate-700" x-text="i18n.grossBillUsers.replace(':count', selectedIds.length)"></td>
                         <td class="text-right py-1.5 px-2.5 font-mono font-bold text-amber-900">
                             {{ $currencySymbol ?? '৳' }} <span x-text="selectedGrossBill.toFixed(2)"></span>
                         </td>
@@ -509,9 +507,7 @@
 
                     <!-- 2. Reseller Profit -->
                     <tr>
-                        <td colspan="11" class="text-right py-1.5 px-3 font-semibold text-indigo-800">
-                            Reseller Profit (<span x-text="resellerCommissionRate"></span>%):
-                        </td>
+                        <td colspan="11" class="text-right py-1.5 px-3 font-semibold text-indigo-800" x-text="i18n.resellerProfitRate.replace(':rate', resellerCommissionRate)"></td>
                         <td class="text-right py-1.5 px-2.5 font-mono font-bold text-indigo-700">
                             {{ $currencySymbol ?? '৳' }} <span x-text="selectedResellerCommission.toFixed(2)"></span>
                         </td>
@@ -520,7 +516,7 @@
                     <!-- 3. Admin Share -->
                     <tr class="bg-emerald-50/50">
                         <td colspan="11" class="text-right py-1.5 px-3 font-bold text-emerald-900">
-                            Admin Share:
+                            {{ __('Admin Share:') }}
                         </td>
                         <td class="text-right py-1.5 px-2.5 font-mono font-bold text-emerald-800">
                             {{ $currencySymbol ?? '৳' }} <span x-text="selectedAdminShare.toFixed(2)"></span>
@@ -546,53 +542,49 @@
             
             <!-- Card 1: Gross Total Bill -->
             <div class="p-3 bg-amber-50/80 border border-amber-200 rounded-md">
-                <span class="text-[10px] font-semibold text-amber-800 uppercase tracking-wider block">1. Gross Bill</span>
+                <span class="text-[10px] font-semibold text-amber-800 uppercase tracking-wider block">{{ __('1. Gross Bill') }}</span>
                 <div class="mt-1 flex items-baseline justify-between">
                     <span class="text-base font-bold font-mono text-amber-900">
                         {{ $currencySymbol ?? '৳' }} <span x-text="selectedGrossBill.toFixed(2)"></span>
                     </span>
-                    <span class="text-[10.5px] font-medium text-amber-700">
-                        (<span x-text="selectedIds.length"></span> Users)
-                    </span>
+                    <span class="text-[10.5px] font-medium text-amber-700" x-text="i18n.usersCountParen.replace(':count', selectedIds.length)"></span>
                 </div>
             </div>
 
             <!-- Card 2: Admin Share -->
             <div class="p-3 bg-emerald-50/80 border border-emerald-200 rounded-md">
-                <span class="text-[10px] font-semibold text-emerald-800 uppercase tracking-wider block">2. Admin Share</span>
+                <span class="text-[10px] font-semibold text-emerald-800 uppercase tracking-wider block">{{ __('2. Admin Share') }}</span>
                 <div class="mt-1 flex items-baseline justify-between">
                     <span class="text-base font-bold font-mono text-emerald-900">
                         {{ $currencySymbol ?? '৳' }} <span x-text="selectedAdminShare.toFixed(2)"></span>
                     </span>
                     <span class="text-[10.5px] font-medium text-emerald-700">
-                        Net Payable
+                        {{ __('Net Payable') }}
                     </span>
                 </div>
             </div>
 
             <!-- Card 3: Reseller Profit -->
             <div class="p-3 bg-indigo-50/80 border border-indigo-200 rounded-md">
-                <span class="text-[10px] font-semibold text-indigo-800 uppercase tracking-wider block">3. Reseller Profit</span>
+                <span class="text-[10px] font-semibold text-indigo-800 uppercase tracking-wider block">{{ __('3. Reseller Profit') }}</span>
                 <div class="mt-1 flex items-baseline justify-between">
                     <span class="text-base font-bold font-mono text-indigo-900">
                         {{ $currencySymbol ?? '৳' }} <span x-text="selectedResellerCommission.toFixed(2)"></span>
                     </span>
-                    <span class="text-[10.5px] font-medium text-indigo-700 font-mono">
-                        <span x-text="resellerCommissionRate"></span>% Profit
-                    </span>
+                    <span class="text-[10.5px] font-medium text-indigo-700 font-mono" x-text="i18n.profitRateLabel.replace(':rate', resellerCommissionRate)"></span>
                 </div>
             </div>
 
             <!-- Card 4: Reseller Wallet -->
             <div class="p-3 bg-purple-50/80 border border-purple-200 rounded-md" :class="{'ring-2 ring-rose-300 bg-rose-50/50': isWalletInsufficient && paymentMethod === 'reseller_wallet'}">
-                <span class="text-[10px] font-semibold text-purple-800 uppercase tracking-wider block">4. Reseller Wallet</span>
+                <span class="text-[10px] font-semibold text-purple-800 uppercase tracking-wider block">{{ __('4. Reseller Wallet') }}</span>
                 <div class="mt-1 flex items-baseline justify-between">
                     <span class="text-base font-bold font-mono" :class="isWalletInsufficient ? 'text-rose-700' : 'text-purple-900'">
                         {{ $currencySymbol ?? '৳' }} <span x-text="resellerWalletBalance.toFixed(2)"></span>
                     </span>
                     <span class="text-[10px] font-medium" :class="isWalletInsufficient ? 'text-rose-600 font-bold' : 'text-purple-700'">
-                        <span x-show="mode === 'reseller'">Avail: {{ $currencySymbol ?? '৳' }} <span x-text="resellerTotalAvailable.toFixed(2)"></span></span>
-                        <span x-show="mode !== 'reseller'">ISP HQ</span>
+                        <span x-show="mode === 'reseller'" x-text="i18n.availBalance.replace(':currency', currencySymbol).replace(':amount', resellerTotalAvailable.toFixed(2))"></span>
+                        <span x-show="mode !== 'reseller'">{{ __('ISP HQ') }}</span>
                     </span>
                 </div>
             </div>
@@ -603,7 +595,7 @@
              x-transition 
              class="p-2.5 bg-rose-50 border border-rose-200 rounded-md text-xs text-rose-800 flex items-center gap-2">
             <i class="fas fa-triangle-exclamation text-rose-600"></i>
-            <span>Warning: Reseller available balance ({{ $currencySymbol ?? '৳' }} <span x-text="resellerTotalAvailable.toFixed(2)"></span>) is less than Admin Share ({{ $currencySymbol ?? '৳' }} <span x-text="selectedAdminShare.toFixed(2)"></span>). Please top up reseller wallet or choose Cash/Online payment method.</span>
+            <span x-text="i18n.walletInsufficientWarning.replaceAll(':currency', currencySymbol).replace(':available', resellerTotalAvailable.toFixed(2)).replace(':required', selectedAdminShare.toFixed(2))"></span>
         </div>
 
         <!-- Payment Method Selection & Execution Form -->
@@ -613,41 +605,41 @@
                 <!-- Payment Method Select -->
                 <div>
                     <label class="block text-[11px] font-bold text-slate-700 mb-1">
-                        Payment Method <span class="text-rose-500">*</span>
+                        {{ __('Payment Method') }} <span class="text-rose-500">*</span>
                     </label>
                     <select x-model="paymentMethod" 
                             required
                             class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-xs font-semibold focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                         <template x-if="mode === 'reseller'">
-                            <option value="reseller_wallet">💼 Reseller Wallet (Auto-Debit Admin Share)</option>
+                            <option value="reseller_wallet">💼 {{ __('Reseller Wallet (Auto-Debit Admin Share)') }}</option>
                         </template>
-                        <option value="cash">💵 Cash In Hand</option>
-                        <option value="bkash">📱 bKash</option>
-                        <option value="nagad">📱 Nagad</option>
-                        <option value="rocket">📱 Rocket</option>
-                        <option value="bank_transfer">🏦 Bank Transfer</option>
-                        <option value="pos">💳 Card / POS</option>
-                        <option value="online">🌐 Online Gateway</option>
-                        <option value="other">⚙️ Other</option>
+                        <option value="cash">💵 {{ __('Cash in Hand') }}</option>
+                        <option value="bkash">📱 {{ __('bKash') }}</option>
+                        <option value="nagad">📱 {{ __('Nagad') }}</option>
+                        <option value="rocket">📱 {{ __('Rocket') }}</option>
+                        <option value="bank_transfer">🏦 {{ __('Bank Transfer') }}</option>
+                        <option value="pos">💳 {{ __('Card / POS') }}</option>
+                        <option value="online">🌐 {{ __('Online Gateway') }}</option>
+                        <option value="other">⚙️ {{ __('Other') }}</option>
                     </select>
                 </div>
 
                 <!-- Billing Month -->
                 <div>
-                    <label class="block text-[11px] font-bold text-slate-700 mb-1">Billing Month</label>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">{{ __('Billing Month') }}</label>
                     <input type="text" 
                            x-model="billingMonth" 
                            class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition"
-                           placeholder="e.g. {{ date('F Y') }}">
+                           placeholder="{{ __('e.g. :month', ['month' => now()->translatedFormat('F Y')]) }}">
                 </div>
 
                 <!-- Remarks / Notes -->
                 <div>
-                    <label class="block text-[11px] font-bold text-slate-700 mb-1">Batch Remarks / Notes</label>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">{{ __('Batch Remarks / Notes') }}</label>
                     <input type="text" 
                            x-model="notes" 
                            class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition"
-                           placeholder="Optional batch notes...">
+                           placeholder="{{ __('Optional batch notes...') }}">
                 </div>
 
                 <!-- Submit Execution Button -->
@@ -657,7 +649,7 @@
                             class="w-full px-4 py-2 rounded-md bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs shadow-md transition inline-flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
                         <i class="fas fa-spinner fa-spin text-xs" x-show="loading" style="display: none;"></i>
                         <i class="fas fa-check-double text-xs" x-show="!loading"></i>
-                        <span>Confirm &amp; Process (<span x-text="selectedIds.length"></span>)</span>
+                        <span x-text="i18n.confirmAndProcess.replace(':count', selectedIds.length)"></span>
                     </button>
                 </div>
             </div>
@@ -668,13 +660,13 @@
                     <input type="checkbox" 
                            x-model="extendValidity" 
                            class="rounded border-slate-300 text-cyan-600 focus:ring-cyan-500 text-xs cursor-pointer">
-                    <span>Auto Extend Validity (+1 Month from expiry date)</span>
+                    <span>{{ __('Auto Extend Validity (+1 Month from expiry date)') }}</span>
                 </label>
                 <label class="flex items-center gap-2 cursor-pointer">
                     <input type="checkbox" 
                            x-model="reactivateLine" 
                            class="rounded border-slate-300 text-cyan-600 focus:ring-cyan-500 text-xs cursor-pointer">
-                    <span>Auto Re-activate in MikroTik Router &amp; FreeRADIUS</span>
+                    <span>{{ __('Auto Re-activate in MikroTik Router & FreeRADIUS') }}</span>
                 </label>
             </div>
         </form>
@@ -707,8 +699,9 @@ function bulkPaymentManager() {
     ]));
 
     return {
-        mode: '{{ $mode }}',
-        selectedResellerId: '{{ $resellerId ?? "" }}',
+        mode: @json($mode),
+        selectedResellerId: @json($resellerId ?? ''),
+        currencySymbol: @json($currencySymbol ?? '৳'),
         resellerCommissionRate: {{ (float)($kpis['commission_rate'] ?? 0) }},
         resellerWalletBalance: {{ (float)($kpis['reseller_wallet'] ?? 0) }},
         resellerCreditLimit: {{ (float)($kpis['reseller_credit'] ?? 0) }},
@@ -720,7 +713,54 @@ function bulkPaymentManager() {
         selectAll: true,
 
         showMoreFilters: {{ ($isMoreOpen ?? false) ? 'true' : 'false' }},
-        searchQuery: '{{ addslashes($search ?? "") }}',
+        searchQuery: @json($search ?? ''),
+
+        i18n: {
+            selectAll: @json(__('Select All (:count)')),
+            grossBillUsers: @json(__('Gross Bill (:count Users):')),
+            resellerProfitRate: @json(__('Reseller Profit (:rate%):')),
+            usersCountParen: @json(__('(:count Users)')),
+            profitRateLabel: @json(__(':rate% Profit')),
+            availBalance: @json(__('Avail: :currency :amount')),
+            walletInsufficientWarning: @json(__('Warning: Reseller available balance (:currency :available) is less than Admin Share (:currency :required). Please top up reseller wallet or choose Cash/Online payment method.')),
+            confirmAndProcess: @json(__('Confirm & Process (:count)')),
+            noSubscribersTitle: @json(__('No Subscribers Selected')),
+            noSubscribersText: @json(__('Please select at least one subscriber from the table for bulk payment.')),
+            noSubscribersToast: @json(__('Please select at least one subscriber for bulk payment.')),
+            insufficientWalletTitle: @json(__('Insufficient Reseller Wallet')),
+            insufficientWalletText: @json(__('Reseller available balance is insufficient for admin share payment.')),
+            insufficientWalletToast: @json(__('Reseller wallet balance is insufficient for admin share payment.')),
+            totalSelected: @json(__('Total Selected:')),
+            subscribersCount: @json(__(':count Subscribers')),
+            grossTotalBill: @json(__('Gross Total Bill:')),
+            adminShareDue: @json(__('Admin Share (Due):')),
+            resellerProfit: @json(__('Reseller Profit:')),
+            paymentMethodLabel: @json(__('Payment Method:')),
+            billingMonthLabel: @json(__('Billing Month:')),
+            autoExtendLine: @json(__('✓ Auto extend validity (+1 month)')),
+            autoReactivateLine: @json(__('✓ Auto reactivate in MikroTik & FreeRADIUS')),
+            confirmTitle: @json(__('Confirm Bulk Payment?')),
+            confirmBtn: @json(__('Yes, Confirm & Process')),
+            cancelBtn: @json(__('Cancel')),
+            confirmFallback: @json(__("Process bulk payment for :count subscribers?\nGross Total: :currency:gross\nAdmin Share: :currency:admin\nMethod: :method")),
+            batchSuccessTitle: @json(__('Batch Processed Successfully!')),
+            processingFailedTitle: @json(__('Processing Failed')),
+            processingFailedText: @json(__('Bulk payment execution failed.')),
+            networkErrorTitle: @json(__('Network Error')),
+            networkErrorText: @json(__('An unexpected network error occurred during bulk payment processing.')),
+            networkErrorToast: @json(__('Network error during bulk payment processing.')),
+            methodLabels: {
+                reseller_wallet: @json(__('Reseller Wallet')),
+                cash: @json(__('Cash in Hand')),
+                bkash: @json(__('bKash')),
+                nagad: @json(__('Nagad')),
+                rocket: @json(__('Rocket')),
+                bank_transfer: @json(__('Bank Transfer')),
+                pos: @json(__('Card / POS')),
+                online: @json(__('Online Gateway')),
+                other: @json(__('Other'))
+            }
+        },
 
         clearLiveSearch() {
             this.searchQuery = '';
@@ -733,8 +773,8 @@ function bulkPaymentManager() {
             if (form) form.submit();
         },
 
-        paymentMethod: '{{ $mode === "reseller" && $selectedReseller ? "reseller_wallet" : "cash" }}',
-        billingMonth: '{{ date("F Y") }}',
+        paymentMethod: @json($mode === 'reseller' && $selectedReseller ? 'reseller_wallet' : 'cash'),
+        billingMonth: @json(date('F Y')),
         notes: '',
         extendValidity: true,
         reactivateLine: true,
@@ -862,12 +902,12 @@ function bulkPaymentManager() {
                 if (typeof Swal !== 'undefined') {
                     Swal.fire({
                         icon: 'warning',
-                        title: 'No Subscribers Selected',
-                        text: 'Please select at least one subscriber from the table for bulk payment.',
+                        title: this.i18n.noSubscribersTitle,
+                        text: this.i18n.noSubscribersText,
                         confirmButtonColor: '#0891b2'
                     });
                 } else {
-                    this.showToast('Please select at least one subscriber for bulk payment.', 'error');
+                    this.showToast(this.i18n.noSubscribersToast, 'error');
                 }
                 return;
             }
@@ -876,12 +916,12 @@ function bulkPaymentManager() {
                 if (typeof Swal !== 'undefined') {
                     Swal.fire({
                         icon: 'error',
-                        title: 'Insufficient Reseller Wallet',
-                        text: 'Reseller available balance is insufficient for admin share payment.',
+                        title: this.i18n.insufficientWalletTitle,
+                        text: this.i18n.insufficientWalletText,
                         confirmButtonColor: '#e11d48'
                     });
                 } else {
-                    this.showToast('Reseller wallet balance is insufficient for admin share payment.', 'error');
+                    this.showToast(this.i18n.insufficientWalletToast, 'error');
                 }
                 return;
             }
@@ -890,46 +930,46 @@ function bulkPaymentManager() {
             const grossBill = this.selectedGrossBill.toFixed(2);
             const adminShare = this.selectedAdminShare.toFixed(2);
             const resellerComm = this.selectedResellerCommission.toFixed(2);
-            const methodLabel = this.paymentMethod.replace(/_/g, ' ').toUpperCase();
-            const curr = '{{ $currencySymbol ?? '৳' }}';
+            const methodLabel = this.i18n.methodLabels[this.paymentMethod] || this.paymentMethod.replace(/_/g, ' ').toUpperCase();
+            const curr = this.currencySymbol;
 
             let htmlContent = `
                 <div class="text-left text-xs space-y-2.5 p-1">
                     <div class="p-3 bg-slate-50 rounded-lg border border-slate-200 text-slate-700 space-y-1.5 font-mono">
                         <div class="flex justify-between">
-                            <span class="text-slate-500 font-sans">Total Selected:</span>
-                            <strong class="text-slate-900 font-bold">${count} Subscribers</strong>
+                            <span class="text-slate-500 font-sans">${this.i18n.totalSelected}</span>
+                            <strong class="text-slate-900 font-bold">${this.i18n.subscribersCount.replace(':count', count)}</strong>
                         </div>
                         <div class="flex justify-between">
-                            <span class="text-slate-500 font-sans">Gross Total Bill:</span>
+                            <span class="text-slate-500 font-sans">${this.i18n.grossTotalBill}</span>
                             <strong class="text-slate-900">${curr} ${grossBill}</strong>
                         </div>`;
 
             if (this.isResellerMode) {
                 htmlContent += `
                         <div class="flex justify-between border-t border-slate-200 pt-1 text-cyan-700 font-bold">
-                            <span class="font-sans">Admin Share (Due):</span>
+                            <span class="font-sans">${this.i18n.adminShareDue}</span>
                             <span>${curr} ${adminShare}</span>
                         </div>
                         <div class="flex justify-between text-emerald-700">
-                            <span class="font-sans">Reseller Profit:</span>
+                            <span class="font-sans">${this.i18n.resellerProfit}</span>
                             <span>${curr} ${resellerComm}</span>
                         </div>`;
             }
 
             htmlContent += `
                         <div class="flex justify-between border-t border-slate-200 pt-1">
-                            <span class="text-slate-500 font-sans">Payment Method:</span>
+                            <span class="text-slate-500 font-sans">${this.i18n.paymentMethodLabel}</span>
                             <span class="font-bold text-slate-800">${methodLabel}</span>
                         </div>
                         <div class="flex justify-between">
-                            <span class="text-slate-500 font-sans">Billing Month:</span>
+                            <span class="text-slate-500 font-sans">${this.i18n.billingMonthLabel}</span>
                             <span class="font-bold text-slate-800">${this.billingMonth}</span>
                         </div>
                     </div>
                     <div class="text-[11px] text-slate-500 space-y-0.5">
-                        <p class="text-emerald-700 font-medium">✓ Auto extend validity (+1 month)</p>
-                        <p class="text-emerald-700 font-medium">✓ Auto reactivate in MikroTik & FreeRADIUS</p>
+                        <p class="text-emerald-700 font-medium">${this.i18n.autoExtendLine}</p>
+                        <p class="text-emerald-700 font-medium">${this.i18n.autoReactivateLine}</p>
                     </div>
                 </div>
             `;
@@ -937,18 +977,23 @@ function bulkPaymentManager() {
             let isConfirmed = false;
             if (typeof Swal !== 'undefined') {
                 const result = await Swal.fire({
-                    title: 'Confirm Bulk Payment?',
+                    title: this.i18n.confirmTitle,
                     html: htmlContent,
                     icon: 'question',
                     showCancelButton: true,
                     confirmButtonColor: '#0891b2',
                     cancelButtonColor: '#64748b',
-                    confirmButtonText: '<i class="fas fa-check-double mr-1"></i> Yes, Confirm & Process',
-                    cancelButtonText: 'Cancel'
+                    confirmButtonText: '<i class="fas fa-check-double mr-1"></i> ' + this.i18n.confirmBtn,
+                    cancelButtonText: this.i18n.cancelBtn
                 });
                 isConfirmed = result.isConfirmed;
             } else {
-                const confirmMsg = `Process bulk payment for ${count} subscribers?\nGross Total: ${curr}${grossBill}\nAdmin Share: ${curr}${adminShare}\nMethod: ${methodLabel}`;
+                const confirmMsg = this.i18n.confirmFallback
+                    .replace(':count', count)
+                    .replaceAll(':currency', curr)
+                    .replace(':gross', grossBill)
+                    .replace(':admin', adminShare)
+                    .replace(':method', methodLabel);
                 isConfirmed = confirm(confirmMsg);
             }
 
@@ -981,7 +1026,7 @@ function bulkPaymentManager() {
                     if (typeof Swal !== 'undefined') {
                         await Swal.fire({
                             icon: 'success',
-                            title: 'Batch Processed Successfully!',
+                            title: this.i18n.batchSuccessTitle,
                             text: data.message,
                             timer: 2000,
                             showConfirmButton: false
@@ -998,24 +1043,24 @@ function bulkPaymentManager() {
                     if (typeof Swal !== 'undefined') {
                         Swal.fire({
                             icon: 'error',
-                            title: 'Processing Failed',
-                            text: data.message || 'Bulk payment execution failed.',
+                            title: this.i18n.processingFailedTitle,
+                            text: data.message || this.i18n.processingFailedText,
                             confirmButtonColor: '#e11d48'
                         });
                     } else {
-                        this.showToast(data.message || 'Bulk payment execution failed.', 'error');
+                        this.showToast(data.message || this.i18n.processingFailedText, 'error');
                     }
                 }
             } catch (err) {
                 if (typeof Swal !== 'undefined') {
                     Swal.fire({
                         icon: 'error',
-                        title: 'Network Error',
-                        text: 'An unexpected network error occurred during bulk payment processing.',
+                        title: this.i18n.networkErrorTitle,
+                        text: this.i18n.networkErrorText,
                         confirmButtonColor: '#e11d48'
                     });
                 } else {
-                    this.showToast('Network error during bulk payment processing.', 'error');
+                    this.showToast(this.i18n.networkErrorToast, 'error');
                 }
             } finally {
                 this.loading = false;

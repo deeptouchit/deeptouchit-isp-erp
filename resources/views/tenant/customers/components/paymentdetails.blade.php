@@ -66,7 +66,7 @@
                 </div>
                 <div class="flex items-center justify-between py-1 border-b border-slate-200/60">
                     <span class="text-slate-500">{{ __('Billing Month') }}:</span>
-                    <span class="font-medium text-slate-800" x-text="selectedPayment.billing_month || '{{ __('Regular Month') }}'"></span>
+                    <span class="font-medium text-slate-800" x-text="selectedPayment.billing_month || {{ json_encode(__('Regular Month'), JSON_UNESCAPED_UNICODE) }}"></span>
                 </div>
                 <div class="flex items-center justify-between py-1 border-b border-slate-200/60">
                     <span class="text-slate-500">{{ __('Payment Method') }}:</span>
@@ -74,11 +74,11 @@
                 </div>
                 <div class="flex items-center justify-between py-1 border-b border-slate-200/60">
                     <span class="text-slate-500">{{ __('Transaction ID') }}:</span>
-                    <span class="font-mono text-slate-700" x-text="selectedPayment.transaction_id || 'N/A'"></span>
+                    <span class="font-mono text-slate-700" x-text="selectedPayment.transaction_id || {{ json_encode(__('N/A'), JSON_UNESCAPED_UNICODE) }}"></span>
                 </div>
                 <div class="flex items-center justify-between py-1 border-b border-slate-200/60">
                     <span class="text-slate-500">{{ __('Collected By') }}:</span>
-                    <span class="font-medium text-slate-800" x-text="selectedPayment.collector_name || 'System Admin'"></span>
+                    <span class="font-medium text-slate-800" x-text="selectedPayment.collector_name || {{ json_encode(__('System Admin'), JSON_UNESCAPED_UNICODE) }}"></span>
                 </div>
                 <div class="flex items-center justify-between py-1 border-b border-slate-200/60">
                     <span class="text-slate-500">{{ __('Payment Date') }}:</span>

@@ -1,6 +1,6 @@
 @extends('tenant.layouts.app')
 
-@section('title', 'Customer Action Bar - ' . ($tenant->company_name ?? $tenant->name))
+@section('title', __('Customer Action Bar') . ' - ' . ($tenant->company_name ?? $tenant->name))
 
 @push('styles')
 <style>
@@ -124,6 +124,7 @@
 
 @php
     $authUser = auth()->user();
+    $currencySymbol = $currencySymbol ?? ($tenant->currency_symbol ?? '৳');
     $currentPackage = $customer->package ?: (
         $customer->package_id ? $allPackages->firstWhere('id', $customer->package_id) : (
             $customer->package_name ? ($allPackages->firstWhere('name', $customer->package_name) ?? $allPackages->firstWhere('package_name', $customer->package_name)) : null
@@ -136,13 +137,14 @@
         'pppoeUsername' => (string)($customer->username ?? ''),
         'pppoePassword' => (string)($customer->password ?? ''),
         'ipAddress' => (string)($customer->ip_address ?? '127.0.0.1'),
+        'macAddress' => (string)($customer->mac_address ?? ''),
         'packageId' => (string)($currentPackage?->id ?? ($customer->package_id ?? '')),
-        'packageName' => (string)($customer->package_display_name ?? 'Custom Plan'),
+        'packageName' => (string)($customer->package_display_name ?? __('Custom Plan')),
         'packageCode' => (string)($currentPackage?->name ?? ''),
-        'packageSpeed' => (string)($currentPackage ? ($currentPackage->download_speed . '/' . $currentPackage->upload_speed . ' Mbps') : ($customer->bandwidth ?: 'N/A')),
+        'packageSpeed' => (string)($currentPackage ? ($currentPackage->download_speed . '/' . $currentPackage->upload_speed . ' Mbps') : ($customer->bandwidth ?: __('N/A'))),
         'monthlyBill' => number_format((float)($customer->monthly_bill ?? ($currentPackage?->price ?? 0)), 2, '.', ''),
         'expiryDate' => $customer->expiry_date ? $customer->expiry_date->format('Y-m-d') : '',
-        'expiryDateFormatted' => $customer->expiry_date ? $customer->expiry_date->format('d M Y') : 'N/A',
+        'expiryDateFormatted' => $customer->expiry_date ? $customer->expiry_date->format('d M Y') : __('N/A'),
         'billingType' => strtolower((string)($customer->billing_type ?: 'prepaid')),
         'gracePeriodDays' => (int)($customer->grace_period_days ?? 0),
         'autoCutEnabled' => (bool)$customer->auto_cut_enabled,
@@ -309,7 +311,7 @@
                                 @else
                                     <div class="w-10 h-10 rounded-full bg-cyan-50 border border-cyan-200 text-cyan-600 flex flex-col items-center justify-center shadow-2xs flex-shrink-0">
                                         <i class="fas fa-image text-xs text-cyan-500 mb-0.5"></i>
-                                        <span class="text-[6px] uppercase tracking-tighter text-slate-400 font-bold">NO IMAGE</span>
+                                        <span class="text-[6px] uppercase tracking-tighter text-slate-400 font-bold">{{ __('NO IMAGE') }}</span>
                                     </div>
                                 @endif
                                 <div class="min-w-0 flex-1">
@@ -317,7 +319,7 @@
                                         {{ $customer->name }}
                                     </h3>
                                     <span class="inline-flex items-center px-1.5 py-0.5 mt-0.5 rounded text-[9.5px] font-semibold font-mono bg-slate-100 text-slate-700 border border-slate-200">
-                                        ID: {{ $customer->customer_id ?? ('CUS-' . $customer->id) }}
+                                        {{ __('ID:') }} {{ $customer->customer_id ?? ('CUS-' . $customer->id) }}
                                     </span>
                                 </div>
                             </div>
@@ -330,11 +332,11 @@
                                 <div class="flex items-center leading-tight whitespace-nowrap">
                                     <div class="w-[100px] flex items-center gap-1.5 text-slate-500 flex-shrink-0">
                                         <i class="fas fa-user-shield text-slate-400 w-3.5 text-center text-[10px]"></i>
-                                        <span class="text-[10px] font-medium text-slate-600">Guardian</span>
+                                        <span class="text-[10px] font-medium text-slate-600">{{ __('Guardian') }}</span>
                                     </div>
                                     <span class="text-slate-400 font-bold px-1 flex-shrink-0">:</span>
                                     <span class="font-semibold text-slate-800 text-right flex-1 truncate text-[11px] pl-1">
-                                        {{ $customer->father_name ?: 'N/A' }}
+                                        {{ $customer->father_name ?: __('N/A') }}
                                     </span>
                                 </div>
 
@@ -342,7 +344,7 @@
                                 <div class="flex items-center leading-tight whitespace-nowrap">
                                     <div class="w-[100px] flex items-center gap-1.5 text-slate-500 flex-shrink-0">
                                         <i class="fas fa-mobile-alt text-slate-400 w-3.5 text-center text-[10px]"></i>
-                                        <span class="text-[10px] font-medium text-slate-600">Mobile</span>
+                                        <span class="text-[10px] font-medium text-slate-600">{{ __('Mobile') }}</span>
                                     </div>
                                     <span class="text-slate-400 font-bold px-1 flex-shrink-0">:</span>
                                     @if($customer->phone)
@@ -350,7 +352,7 @@
                                             {{ $customer->phone }}
                                         </a>
                                     @else
-                                        <span class="font-medium text-slate-400 text-right flex-1 truncate text-[11px] pl-1">N/A</span>
+                                        <span class="font-medium text-slate-400 text-right flex-1 truncate text-[11px] pl-1">{{ __('N/A') }}</span>
                                     @endif
                                 </div>
 
@@ -358,11 +360,11 @@
                                 <div class="flex items-center leading-tight whitespace-nowrap">
                                     <div class="w-[100px] flex items-center gap-1.5 text-slate-500 flex-shrink-0">
                                         <i class="fas fa-store text-rose-500 w-3.5 text-center text-[10px]"></i>
-                                        <span class="text-[10px] font-medium text-slate-600">Reseller</span>
+                                        <span class="text-[10px] font-medium text-slate-600">{{ __('Reseller') }}</span>
                                     </div>
                                     <span class="text-slate-400 font-bold px-1 flex-shrink-0">:</span>
-                                    <span class="font-semibold text-slate-800 text-right flex-1 truncate text-[11px] pl-1" x-text="transferData.currentResellerName || '{{ $customer->reseller?->name ?? 'Direct ISP' }}'">
-                                        {{ $customer->reseller?->name ?? 'Direct ISP' }}
+                                    <span class="font-semibold text-slate-800 text-right flex-1 truncate text-[11px] pl-1" x-text="transferData.currentResellerName || i18n.directIsp">
+                                        {{ $customer->reseller?->name ?? __('Direct ISP') }}
                                     </span>
                                 </div>
 
@@ -370,11 +372,11 @@
                                 <div class="flex items-center leading-tight whitespace-nowrap">
                                     <div class="w-[100px] flex items-center gap-1.5 text-slate-500 flex-shrink-0">
                                         <i class="fas fa-map-marked-alt text-blue-500 w-3.5 text-center text-[10px]"></i>
-                                        <span class="text-[10px] font-medium text-slate-600">Area / Zone</span>
+                                        <span class="text-[10px] font-medium text-slate-600">{{ __('Area / Zone') }}</span>
                                     </div>
                                     <span class="text-slate-400 font-bold px-1 flex-shrink-0">:</span>
                                     <span class="font-semibold text-slate-800 text-right flex-1 truncate text-[11px] pl-1">
-                                        {{ $customer->zone ?: 'N/A' }}
+                                        {{ $customer->zone ?: __('N/A') }}
                                     </span>
                                 </div>
 
@@ -382,11 +384,11 @@
                                 <div class="flex items-center leading-tight whitespace-nowrap">
                                     <div class="w-[100px] flex items-center gap-1.5 text-slate-500 flex-shrink-0">
                                         <i class="fas fa-map-signs text-amber-500 w-3.5 text-center text-[10px]"></i>
-                                        <span class="text-[10px] font-medium text-slate-600">Sub Area</span>
+                                        <span class="text-[10px] font-medium text-slate-600">{{ __('Sub Area') }}</span>
                                     </div>
                                     <span class="text-slate-400 font-bold px-1 flex-shrink-0">:</span>
                                     <span class="font-semibold text-slate-800 text-right flex-1 truncate text-[11px] pl-1">
-                                        {{ $customer->thana ?: ($customer->sub_zone ?: 'N/A') }}
+                                        {{ $customer->thana ?: ($customer->sub_zone ?: __('N/A')) }}
                                     </span>
                                 </div>
                             </div>
@@ -396,9 +398,9 @@
                         <div class="space-y-1 mt-auto pt-1">
                             <div class="border-t border-slate-100"></div>
                             <div class="space-y-0.5">
-                                <span class="text-[10px] font-medium text-slate-500 block">Address:</span>
-                                <p class="text-[10.5px] font-normal text-slate-700 leading-relaxed bg-slate-50/80 p-1.5 rounded border border-slate-200/70 truncate" title="{{ $customer->address ?: 'No address specified.' }}">
-                                    {{ $customer->address ?: 'No address specified.' }}
+                                <span class="text-[10px] font-medium text-slate-500 block">{{ __('Address:') }}</span>
+                                <p class="text-[10.5px] font-normal text-slate-700 leading-relaxed bg-slate-50/80 p-1.5 rounded border border-slate-200/70 truncate" title="{{ $customer->address ?: __('No address specified.') }}">
+                                    {{ $customer->address ?: __('No address specified.') }}
                                 </p>
                             </div>
                         </div>
@@ -408,7 +410,7 @@
                     <a href="{{ route('tenant.customers.edit', $customer->id) }}" 
                        class="w-full py-1.5 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-[11px] flex items-center justify-center gap-1.5 transition shadow-2xs">
                         <i class="fas fa-edit text-[10px]"></i>
-                        <span>Update Profile</span>
+                        <span>{{ __('Update Profile') }}</span>
                     </a>
                 </div>
 
@@ -423,14 +425,14 @@
                                 </div>
                                 <div class="min-w-0 flex-1">
                                     <h3 class="text-xs font-bold text-slate-900 tracking-tight leading-snug truncate" 
-                                        x-text="packageData.currentPackageName || '{{ addslashes($customer->package_display_name) }}'"
+                                        x-text="packageData.currentPackageName || i18n.defaultPackageName"
                                         title="{{ $customer->package_display_name }}">
                                         {{ $customer->package_display_name }}
                                     </h3>
                                     <span class="inline-flex items-center px-1.5 py-0.5 mt-0.5 rounded text-[9.5px] font-semibold font-mono uppercase border {{ $customer->status === 'active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : ($customer->status === 'expired' ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-rose-50 text-rose-700 border border-rose-200') }}"
                                           :class="statusForm.status === 'active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : (statusForm.status === 'expired' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-rose-50 text-rose-700 border-rose-200')"
-                                          x-text="statusForm.status.toUpperCase()">
-                                        {{ strtoupper($customer->status) }}
+                                          x-text="getStatusLabel(statusForm.status)">
+                                        {{ __(ucfirst($customer->status ?? 'active')) }}
                                     </span>
                                 </div>
                             </div>
@@ -443,12 +445,12 @@
                                 <div class="flex items-center leading-tight whitespace-nowrap">
                                     <div class="w-[100px] flex items-center gap-1.5 text-slate-500 flex-shrink-0">
                                         <i class="fas fa-tachometer-alt text-cyan-500 w-3.5 text-center text-[10px]"></i>
-                                        <span class="text-[10px] font-medium text-slate-600">Bandwidth</span>
+                                        <span class="text-[10px] font-medium text-slate-600">{{ __('Bandwidth') }}</span>
                                     </div>
                                     <span class="text-slate-400 font-bold px-1 flex-shrink-0">:</span>
                                     <span class="font-semibold text-slate-800 text-right flex-1 truncate text-[11px] pl-1 font-mono" 
-                                          x-text="packageData.currentSpeed || '{{ $currentPackage ? ($currentPackage->download_speed . '/' . $currentPackage->upload_speed . ' Mbps') : ($customer->bandwidth ?: 'N/A') }}'">
-                                        {{ $currentPackage ? ($currentPackage->download_speed . '/' . $currentPackage->upload_speed . ' Mbps') : ($customer->bandwidth ?: 'N/A') }}
+                                          x-text="packageData.currentSpeed || i18n.defaultSpeed">
+                                        {{ $currentPackage ? ($currentPackage->download_speed . '/' . $currentPackage->upload_speed . ' Mbps') : ($customer->bandwidth ?: __('N/A')) }}
                                     </span>
                                 </div>
 
@@ -456,7 +458,7 @@
                                 <div class="flex items-center leading-tight whitespace-nowrap">
                                     <div class="w-[100px] flex items-center gap-1.5 text-slate-500 flex-shrink-0">
                                         <i class="fas fa-money-bill-wave text-emerald-500 w-3.5 text-center text-[10px]"></i>
-                                        <span class="text-[10px] font-medium text-slate-600">Monthly Fee</span>
+                                        <span class="text-[10px] font-medium text-slate-600">{{ __('Monthly Fee') }}</span>
                                     </div>
                                     <span class="text-slate-400 font-bold px-1 flex-shrink-0">:</span>
                                     <span class="font-bold text-emerald-700 text-right flex-1 truncate text-[11px] pl-1 font-mono">
@@ -468,12 +470,12 @@
                                 <div class="flex items-center leading-tight whitespace-nowrap">
                                     <div class="w-[100px] flex items-center gap-1.5 text-slate-500 flex-shrink-0">
                                         <i class="fas fa-credit-card text-blue-500 w-3.5 text-center text-[10px]"></i>
-                                        <span class="text-[10px] font-medium text-slate-600">Billing Type</span>
+                                        <span class="text-[10px] font-medium text-slate-600">{{ __('Billing Type') }}</span>
                                     </div>
                                     <span class="text-slate-400 font-bold px-1 flex-shrink-0">:</span>
                                     <span class="font-semibold text-slate-800 text-right flex-1 truncate text-[11px] pl-1 capitalize font-mono"
-                                          x-text="(cycleData.currentBillingType || '{{ $customer->billing_type }}').toUpperCase()">
-                                        {{ strtoupper($customer->billing_type) }}
+                                          x-text="getBillingTypeLabel(cycleData.currentBillingType || i18n.defaultBillingType)">
+                                        {{ __(ucfirst($customer->billing_type ?: 'prepaid')) }}
                                     </span>
                                 </div>
 
@@ -481,12 +483,12 @@
                                 <div class="flex items-center leading-tight whitespace-nowrap">
                                     <div class="w-[100px] flex items-center gap-1.5 text-slate-500 flex-shrink-0">
                                         <i class="fas fa-calendar-times text-rose-500 w-3.5 text-center text-[10px]"></i>
-                                        <span class="text-[10px] font-medium text-slate-600">Expire Date</span>
+                                        <span class="text-[10px] font-medium text-slate-600">{{ __('Expire Date') }}</span>
                                     </div>
                                     <span class="text-slate-400 font-bold px-1 flex-shrink-0">:</span>
                                     <span class="font-bold text-slate-800 text-right flex-1 truncate text-[11px] pl-1 font-mono"
-                                          x-text="cycleData.currentExpiryDateFormatted || '{{ $customer->expiry_date?->format('d M Y') ?? 'N/A' }}'">
-                                        {{ $customer->expiry_date?->format('d M Y') ?? 'N/A' }}
+                                          x-text="cycleData.currentExpiryDateFormatted || i18n.na">
+                                        {{ $customer->expiry_date?->format('d M Y') ?? __('N/A') }}
                                     </span>
                                 </div>
 
@@ -494,11 +496,12 @@
                                 <div class="flex items-center leading-tight whitespace-nowrap">
                                     <div class="w-[100px] flex items-center gap-1.5 text-slate-500 flex-shrink-0">
                                         <i class="fas fa-hourglass-half text-amber-500 w-3.5 text-center text-[10px]"></i>
-                                        <span class="text-[10px] font-medium text-slate-600">Grace Period</span>
+                                        <span class="text-[10px] font-medium text-slate-600">{{ __('Grace Period') }}</span>
                                     </div>
                                     <span class="text-slate-400 font-bold px-1 flex-shrink-0">:</span>
-                                    <span class="font-semibold text-slate-800 text-right flex-1 truncate text-[11px] pl-1 font-mono">
-                                        <span x-text="cycleData.gracePeriodDays ?? {{ $customer->grace_period_days ?? 0 }}">{{ $customer->grace_period_days ?? 0 }}</span> Days
+                                    <span class="font-semibold text-slate-800 text-right flex-1 truncate text-[11px] pl-1 font-mono"
+                                          x-text="(Number(cycleData.gracePeriodDays ?? 0) === 1 ? i18n.graceDay : i18n.graceDays).replace(':count', cycleData.gracePeriodDays ?? 0)">
+                                        {{ ($customer->grace_period_days ?? 0) == 1 ? __(':count Day', ['count' => 1]) : __(':count Days', ['count' => $customer->grace_period_days ?? 0]) }}
                                     </span>
                                 </div>
                             </div>
@@ -508,11 +511,11 @@
                         <div class="space-y-1 mt-auto pt-1">
                             <div class="border-t border-slate-100"></div>
                             <div class="flex items-center justify-between p-1.5 rounded bg-slate-50/80 border border-slate-200/70">
-                                <span class="text-[10px] font-medium text-slate-600">Auto-Cut System:</span>
+                                <span class="text-[10px] font-medium text-slate-600">{{ __('Auto-Cut System:') }}</span>
                                 <span class="px-1.5 py-0.5 rounded text-[9.5px] font-bold font-mono uppercase border"
                                       :class="cycleData.autoCutEnabled ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200'"
-                                      x-text="cycleData.autoCutEnabled ? 'ENABLED' : 'DISABLED'">
-                                    {{ $customer->auto_cut_enabled ? 'ENABLED' : 'DISABLED' }}
+                                      x-text="cycleData.autoCutEnabled ? i18n.enabledUpper : i18n.disabledUpper">
+                                    {{ $customer->auto_cut_enabled ? __('ENABLED') : __('DISABLED') }}
                                 </span>
                             </div>
                         </div>
@@ -523,7 +526,7 @@
                             @click="openPackageModal()" 
                             class="w-full py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-[11px] flex items-center justify-center gap-1.5 transition shadow-2xs cursor-pointer">
                         <i class="fas fa-exchange-alt text-[10px]"></i>
-                        <span>Change Package</span>
+                        <span>{{ __('Change Package') }}</span>
                     </button>
                 </div>
 
@@ -537,13 +540,13 @@
                                     <i class="fas fa-network-wired text-base transition-colors" :class="isLivePolling ? 'text-emerald-500 animate-pulse' : 'text-emerald-600'"></i>
                                 </div>
                                 <div class="min-w-0 flex-1">
-                                    <h3 class="text-xs font-bold text-slate-900 tracking-tight leading-snug truncate" title="Network & Telemetry">
-                                        Network & Telemetry
+                                    <h3 class="text-xs font-bold text-slate-900 tracking-tight leading-snug truncate" title="{{ __('Network & Telemetry') }}">
+                                        {{ __('Network & Telemetry') }}
                                     </h3>
                                     <span class="inline-flex items-center gap-1 px-1.5 py-0.5 mt-0.5 rounded text-[9.5px] font-semibold font-mono uppercase border" 
                                           :class="traffic.is_online ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-600 border-slate-200'">
                                         <span class="w-1.5 h-1.5 rounded-full" :class="traffic.is_online ? 'bg-emerald-500 animate-ping' : 'bg-slate-400'"></span>
-                                        <span x-text="traffic.is_online ? 'ONLINE' : 'OFFLINE'">{{ ($customer->is_online ?? false) ? 'ONLINE' : 'OFFLINE' }}</span>
+                                        <span x-text="traffic.is_online ? i18n.onlineUpper : i18n.offlineUpper">{{ ($customer->is_online ?? false) ? __('ONLINE') : __('OFFLINE') }}</span>
                                     </span>
                                 </div>
                             </div>
@@ -556,11 +559,11 @@
                                 <div class="flex items-center leading-tight whitespace-nowrap">
                                     <div class="w-[100px] flex items-center gap-1.5 text-slate-500 flex-shrink-0">
                                         <i class="fas fa-user-tag text-purple-500 w-3.5 text-center text-[10px]"></i>
-                                        <span class="text-[10px] font-medium text-slate-600">PPPoE</span>
+                                        <span class="text-[10px] font-medium text-slate-600">{{ __('PPPoE') }}</span>
                                     </div>
                                     <span class="text-slate-400 font-bold px-1 flex-shrink-0">:</span>
                                     <span class="font-bold text-slate-800 text-right flex-1 truncate text-[11px] pl-1 font-mono">
-                                        {{ $customer->username ?: 'N/A' }}
+                                        {{ $customer->username ?: __('N/A') }}
                                     </span>
                                 </div>
 
@@ -568,7 +571,7 @@
                                 <div class="flex items-center leading-tight whitespace-nowrap">
                                     <div class="w-[100px] flex items-center gap-1.5 text-slate-500 flex-shrink-0">
                                         <i class="fas fa-key text-amber-500 w-3.5 text-center text-[10px]"></i>
-                                        <span class="text-[10px] font-medium text-slate-600">Password</span>
+                                        <span class="text-[10px] font-medium text-slate-600">{{ __('Password') }}</span>
                                     </div>
                                     <span class="text-slate-400 font-bold px-1 flex-shrink-0">:</span>
                                     <div class="flex items-center justify-end gap-1.5 flex-1 truncate pl-1">
@@ -579,7 +582,7 @@
                                         <button type="button" 
                                                 @click="showPassword = !showPassword" 
                                                 class="text-slate-400 hover:text-slate-700 text-[10px] focus:outline-none cursor-pointer"
-                                                :title="showPassword ? 'Hide Password' : 'Show Password'">
+                                                :title="showPassword ? i18n.hidePassword : i18n.showPassword">
                                             <i class="fas" :class="showPassword ? 'fa-eye-slash' : 'fa-eye'"></i>
                                         </button>
                                     </div>
@@ -589,17 +592,17 @@
                                 <div class="flex items-center leading-tight whitespace-nowrap">
                                     <div class="w-[100px] flex items-center gap-1.5 text-slate-500 flex-shrink-0">
                                         <i class="fas fa-laptop-code text-blue-500 w-3.5 text-center text-[10px]"></i>
-                                        <span class="text-[10px] font-medium text-slate-600">IP Address</span>
+                                        <span class="text-[10px] font-medium text-slate-600">{{ __('IP Address') }}</span>
                                     </div>
                                     <span class="text-slate-400 font-bold px-1 flex-shrink-0">:</span>
                                     <div class="flex items-center justify-end gap-1 flex-1 truncate pl-1">
-                                        <a :href="getRouterRemoteUrl(traffic.ip || '{{ $customer->ip_address }}')" 
+                                        <a :href="getRouterRemoteUrl(traffic.ip || defaultIpAddress)" 
                                            :target="(traffic.ip && traffic.ip !== 'Dynamic / Auto' && traffic.ip !== '127.0.0.1') ? '_blank' : '_self'" 
                                            rel="noopener noreferrer" 
                                            class="inline-flex items-center gap-1 font-bold text-blue-600 hover:text-blue-800 hover:underline font-mono text-[11px] truncate cursor-pointer group"
-                                           :title="'Open Router Remote Access (' + getRouterRemoteUrl(traffic.ip || '{{ $customer->ip_address }}') + ') in new tab'">
-                                            <span x-text="traffic.ip || '{{ $customer->ip_address ?: 'Dynamic / Auto' }}'">
-                                                {{ $customer->ip_address ?: 'Dynamic / Auto' }}
+                                           :title="i18n.openRemoteAccess.replace(':url', getRouterRemoteUrl(traffic.ip || defaultIpAddress))">
+                                            <span x-text="traffic.ip || defaultIpAddress || i18n.dynamicAuto">
+                                                {{ $customer->ip_address ?: __('Dynamic / Auto') }}
                                             </span>
                                             <i class="fas fa-external-link-alt text-[8px] text-blue-400 group-hover:text-blue-600"></i>
                                         </a>
@@ -610,14 +613,14 @@
                                 <div class="flex items-center leading-tight whitespace-nowrap">
                                     <div class="w-[100px] flex items-center gap-1.5 text-slate-500 flex-shrink-0">
                                         <i class="fas fa-stopwatch text-emerald-500 w-3.5 text-center text-[10px]"></i>
-                                        <span class="text-[10px] font-medium text-slate-600">Uptime</span>
+                                        <span class="text-[10px] font-medium text-slate-600">{{ __('Uptime') }}</span>
                                     </div>
                                     <span class="text-slate-400 font-bold px-1 flex-shrink-0">:</span>
                                     <div class="flex items-center justify-end flex-1 truncate pl-1">
                                         <span class="font-bold font-mono text-[11px] truncate"
                                               :class="traffic.is_online ? 'text-emerald-700' : 'text-slate-400'"
                                               x-text="formatUptime(traffic.uptime)">
-                                            Offline
+                                            {{ __('Offline') }}
                                         </span>
                                     </div>
                                 </div>
@@ -628,10 +631,10 @@
                         <div class="space-y-1 mt-auto pt-1">
                             <div class="border-t border-slate-100"></div>
                             <div class="flex items-center justify-between p-1.5 rounded bg-slate-50/80 border border-slate-200/70">
-                                <span class="text-[10px] font-medium text-slate-600">Router / NAS:</span>
+                                <span class="text-[10px] font-medium text-slate-600">{{ __('Router / NAS:') }}</span>
                                 <span class="px-1.5 py-0.5 rounded text-[9.5px] font-bold font-mono text-emerald-700 bg-emerald-50 border border-emerald-200 truncate max-w-[150px]"
-                                      title="{{ $customer->router?->name ?? 'Default Gateway' }}">
-                                    {{ $customer->router?->name ?? 'Default Gateway' }}
+                                      title="{{ $customer->router?->name ?? __('Default Gateway') }}">
+                                    {{ $customer->router?->name ?? __('Default Gateway') }}
                                 </span>
                             </div>
                         </div>
@@ -642,7 +645,7 @@
                             @click="openPppoeModal()" 
                             class="w-full py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-[11px] flex items-center justify-center gap-1.5 transition shadow-2xs cursor-pointer">
                         <i class="fas fa-key text-[10px]"></i>
-                        <span>Change Credentials</span>
+                        <span>{{ __('Change Credentials') }}</span>
                     </button>
                 </div>
             </div>
@@ -677,19 +680,19 @@
                             <i class="fas fa-file-invoice-dollar text-xs"></i>
                         </div>
                         <h3 class="text-xs font-bold text-slate-900 tracking-tight leading-snug">
-                             Invoices
+                             {{ __('Invoices') }}
                         </h3>
                     </div>
 
                     <div class="flex items-center gap-2">
                         <span class="px-2 py-0.5 rounded text-[9.5px] font-mono bg-teal-100 text-teal-800 font-bold border border-teal-200">
-                            Latest {{ $recentPayments->count() }} Invoices
+                            {{ $recentPayments->count() === 1 ? __('Latest :count Invoice', ['count' => 1]) : __('Latest :count Invoices', ['count' => $recentPayments->count()]) }}
                         </span>
                         <button type="button" 
                                 @click="openPayModal()" 
                                 class="px-2.5 py-1 bg-teal-600 hover:bg-teal-700 text-white font-semibold text-[11px] rounded transition flex items-center gap-1.5 shadow-2xs cursor-pointer">
                             <i class="fas fa-money-bill-wave text-[10px]"></i>
-                            <span>Collect Payment</span>
+                            <span>{{ __('Collect Payment') }}</span>
                         </button>
                     </div>
                 </div>
@@ -701,13 +704,13 @@
                             <thead>
                                 <tr>
                                     <th class="w-8 text-center">#</th>
-                                    <th>Invoice</th>
-                                    <th>Month</th>
-                                    <th class="text-right">Paid Amount</th>
-                                    <th>Payment Method</th>
-                                    <th>Paid Date</th>
-                                    <th class="text-center">Status</th>
-                                    <th class="text-center w-20 no-sort">Action</th>
+                                    <th>{{ __('Invoice') }}</th>
+                                    <th>{{ __('Month') }}</th>
+                                    <th class="text-right">{{ __('Paid Amount') }}</th>
+                                    <th>{{ __('Payment Method') }}</th>
+                                    <th>{{ __('Paid Date') }}</th>
+                                    <th class="text-center">{{ __('Status') }}</th>
+                                    <th class="text-center w-20 no-sort">{{ __('Action') }}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -718,7 +721,7 @@
                                             {{ $payment->invoice_no }}
                                         </td>
                                         <td class="font-medium text-slate-700">
-                                            {{ $payment->billing_month ?: 'Regular' }}
+                                            {{ $payment->billing_month ?: __('Regular') }}
                                         </td>
                                         <td class="text-right font-mono font-bold text-emerald-700">
                                             @currency($payment->amount)
@@ -734,7 +737,7 @@
                                                 @else
                                                     <i class="fas fa-credit-card text-indigo-500 text-[10px]"></i>
                                                 @endif
-                                                <span>{{ $payment->payment_method_name }}</span>
+                                                <span>{{ __($payment->payment_method_name) }}</span>
                                             </span>
                                         </td>
                                         <td class="font-mono text-slate-600 text-[10.5px]">
@@ -746,7 +749,7 @@
                                             @endphp
                                             <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9.5px] font-bold font-mono uppercase {{ $badge['class'] ?? 'bg-emerald-50 text-emerald-700 border border-emerald-200' }}">
                                                 <span class="w-1.5 h-1.5 rounded-full {{ $badge['dot'] ?? 'bg-emerald-500' }}"></span>
-                                                <span>{{ $badge['label'] ?? strtoupper($payment->status) }}</span>
+                                                <span>{{ __($badge['label'] ?? strtoupper($payment->status)) }}</span>
                                             </span>
                                         </td>
                                         <td class="text-center">
@@ -755,17 +758,17 @@
                                                     <button type="button" 
                                                             @click="approvePayment({{ $payment->id }}, '{{ $payment->invoice_no }}')"
                                                             class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-[10px] transition shadow-2xs cursor-pointer"
-                                                            title="Approve Payment & Activate Line">
+                                                            title="{{ __('Approve Payment & Activate Line') }}">
                                                         <i class="fas fa-check-circle text-[9px]"></i>
-                                                        <span>Approve</span>
+                                                        <span>{{ __('Approve') }}</span>
                                                     </button>
                                                 @endif
                                                 <a href="{{ route('tenant.customers.payments.receipt', $payment->id) }}" 
                                                    target="_blank"
                                                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-100 hover:bg-teal-50 hover:text-teal-700 border border-slate-200 text-slate-700 font-semibold text-[10px] transition shadow-2xs cursor-pointer"
-                                                   title="View & Print Money Receipt">
+                                                   title="{{ __('View & Print Money Receipt') }}">
                                                     <i class="fas fa-print text-[9px]"></i>
-                                                    <span>Receipt</span>
+                                                    <span>{{ __('Receipt') }}</span>
                                                 </a>
                                             </div>
                                         </td>
@@ -780,14 +783,14 @@
                             <i class="fas fa-file-invoice-dollar text-xl text-teal-600"></i>
                         </div>
                         <div class="space-y-0.5">
-                            <h4 class="text-xs font-bold text-slate-700">No Billing Transactions Recorded</h4>
-                            <p class="text-[11px] text-slate-500">Collect bill payment to generate official money receipts and record customer ledger transactions.</p>
+                            <h4 class="text-xs font-bold text-slate-700">{{ __('No Billing Transactions Recorded') }}</h4>
+                            <p class="text-[11px] text-slate-500">{{ __('Collect bill payment to generate official money receipts and record customer ledger transactions.') }}</p>
                         </div>
                         <button type="button" 
                                 @click="openPayModal()" 
                                 class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-teal-600 hover:bg-teal-700 text-white font-semibold text-xs rounded-lg transition shadow-2xs cursor-pointer">
                             <i class="fas fa-receipt text-[10px]"></i>
-                            <span>Collect First Payment</span>
+                            <span>{{ __('Collect First Payment') }}</span>
                         </button>
                     </div>
                 @endif
@@ -802,12 +805,12 @@
                             <i class="fas fa-network-wired text-xs"></i>
                         </div>
                         <h3 class="text-xs font-bold text-slate-900 tracking-tight leading-snug">
-                            RADIUS PPPoE Sessions & Connection History
+                            {{ __('RADIUS PPPoE Sessions & Connection History') }}
                         </h3>
                     </div>
 
                     <span class="px-2 py-0.5 rounded text-[9.5px] font-mono bg-blue-100 text-blue-800 font-bold border border-blue-200">
-                        Latest {{ $recentSessions->count() }} Sessions
+                        {{ $recentSessions->count() === 1 ? __('Latest :count Session', ['count' => 1]) : __('Latest :count Sessions', ['count' => $recentSessions->count()]) }}
                     </span>
                 </div>
 
@@ -818,16 +821,16 @@
                             <thead>
                                 <tr>
                                     <th class="w-8 text-center">#</th>
-                                    <th>Framed IP</th>
-                                    <th>Caller MAC (Device)</th>
-                                    <th>NAS / Router IP</th>
-                                    <th>Connected (Start)</th>
-                                    <th>Disconnected (Stop)</th>
-                                    <th>Duration</th>
-                                    <th class="text-right">Download (Rx)</th>
-                                    <th class="text-right">Upload (Tx)</th>
-                                    <th class="text-right">Total Usage</th>
-                                    <th class="text-center">Termination Cause</th>
+                                    <th>{{ __('Framed IP') }}</th>
+                                    <th>{{ __('Caller MAC (Device)') }}</th>
+                                    <th>{{ __('NAS / Router IP') }}</th>
+                                    <th>{{ __('Connected (Start)') }}</th>
+                                    <th>{{ __('Disconnected (Stop)') }}</th>
+                                    <th>{{ __('Duration') }}</th>
+                                    <th class="text-right">{{ __('Download (Rx)') }}</th>
+                                    <th class="text-right">{{ __('Upload (Tx)') }}</th>
+                                    <th class="text-right">{{ __('Total Usage') }}</th>
+                                    <th class="text-center">{{ __('Termination Cause') }}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -841,22 +844,22 @@
                                     <tr>
                                         <td class="text-center text-slate-400 font-mono">{{ $sIdx + 1 }}</td>
                                         <td class="font-mono font-bold text-slate-800">
-                                            {{ $session->framedipaddress ?: 'Dynamic' }}
+                                            {{ $session->framedipaddress ?: __('Dynamic') }}
                                         </td>
                                         <td class="font-mono text-slate-600 text-[10.5px]">
-                                            {{ $session->callingstationid ?: 'N/A' }}
+                                            {{ $session->callingstationid ?: __('N/A') }}
                                         </td>
                                         <td class="font-mono text-slate-600 text-[10.5px]">
                                             {{ $session->nasipaddress ?: '127.0.0.1' }}
                                         </td>
                                         <td class="font-mono text-slate-600 text-[10.5px]">
-                                            {{ $session->acctstarttime ? Carbon\Carbon::parse($session->acctstarttime)->format('d M Y, h:i A') : 'N/A' }}
+                                            {{ $session->acctstarttime ? Carbon\Carbon::parse($session->acctstarttime)->format('d M Y, h:i A') : __('N/A') }}
                                         </td>
                                         <td class="font-mono text-slate-600 text-[10.5px]">
                                             @if($isLiveSession)
                                                 <span class="inline-flex items-center gap-1 text-emerald-600 font-bold font-sans text-[10px]">
                                                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
-                                                    Active Session
+                                                    {{ __('Active Session') }}
                                                 </span>
                                             @else
                                                 {{ Carbon\Carbon::parse($session->acctstoptime)->format('d M Y, h:i A') }}
@@ -876,9 +879,9 @@
                                         </td>
                                         <td class="text-center">
                                             @if($isLiveSession)
-                                                <span class="px-1.5 py-0.5 rounded text-[9px] font-bold font-mono uppercase bg-emerald-50 text-emerald-700 border border-emerald-200">ONLINE</span>
+                                                <span class="px-1.5 py-0.5 rounded text-[9px] font-bold font-mono uppercase bg-emerald-50 text-emerald-700 border border-emerald-200">{{ __('ONLINE') }}</span>
                                             @else
-                                                <span class="px-1.5 py-0.5 rounded text-[9px] font-medium font-mono bg-slate-100 text-slate-600 border border-slate-200">{{ $session->acctterminatecause ?: 'User-Request' }}</span>
+                                                <span class="px-1.5 py-0.5 rounded text-[9px] font-medium font-mono bg-slate-100 text-slate-600 border border-slate-200">{{ $session->acctterminatecause ?: __('User-Request') }}</span>
                                             @endif
                                         </td>
                                     </tr>
@@ -891,8 +894,8 @@
                         <div class="w-12 h-12 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center mx-auto text-slate-400">
                             <i class="fas fa-network-wired text-xl text-blue-600"></i>
                         </div>
-                        <h4 class="text-xs font-bold text-slate-700">No RADIUS Session Records Found</h4>
-                        <p class="text-[11px] text-slate-500">Historical PPPoE login and accounting sessions for <code class="font-mono font-bold">{{ $customer->username }}</code> will appear here.</p>
+                        <h4 class="text-xs font-bold text-slate-700">{{ __('No RADIUS Session Records Found') }}</h4>
+                        <p class="text-[11px] text-slate-500">{!! __('Historical PPPoE login and accounting sessions for :username will appear here.', ['username' => '<code class="font-mono font-bold">' . e($customer->username) . '</code>']) !!}</p>
                     </div>
                 @endif
             </div>
@@ -906,12 +909,12 @@
                             <i class="fas fa-history text-xs"></i>
                         </div>
                         <h3 class="text-xs font-bold text-slate-900 tracking-tight leading-snug">
-                            Customer Activity & Audit Trail
+                            {{ __('Customer Activity & Audit Trail') }}
                         </h3>
                     </div>
 
                     <span class="px-2 py-0.5 rounded text-[9.5px] font-mono bg-purple-100 text-purple-800 font-bold border border-purple-200">
-                        Latest {{ $activityLogs->count() }} Log Entries
+                        {{ $activityLogs->count() === 1 ? __('Latest :count Log Entry', ['count' => 1]) : __('Latest :count Log Entries', ['count' => $activityLogs->count()]) }}
                     </span>
                 </div>
 
@@ -922,11 +925,11 @@
                             <thead>
                                 <tr>
                                     <th class="w-8 text-center">#</th>
-                                    <th>Event Type</th>
-                                    <th>Activity Description</th>
-                                    <th>IP Address</th>
-                                    <th>Timestamp</th>
-                                    <th class="text-center w-20 no-sort">Action</th>
+                                    <th>{{ __('Event Type') }}</th>
+                                    <th>{{ __('Activity Description') }}</th>
+                                    <th>{{ __('IP Address') }}</th>
+                                    <th>{{ __('Timestamp') }}</th>
+                                    <th class="text-center w-20 no-sort">{{ __('Action') }}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -934,7 +937,7 @@
                                     <tr>
                                         <td class="text-center text-slate-400 font-mono">{{ $lIdx + 1 }}</td>
                                         <td class="font-mono font-bold text-cyan-800 text-[10.5px]">
-                                            {{ $log->event_type ?: 'ACTIVITY' }}
+                                            {{ $log->event_type ?: __('ACTIVITY') }}
                                         </td>
                                         <td class="text-slate-800 text-[11px] truncate max-w-[320px]" title="{{ $log->description }}">
                                             {{ Str::limit($log->description, 30) }}
@@ -949,17 +952,17 @@
                                             <button type="button" 
                                                     @click="openLogDetails({{ json_encode([
                                                         'id' => $log->id,
-                                                        'event_type' => $log->event_type ?: 'ACTIVITY',
+                                                        'event_type' => $log->event_type ?: __('ACTIVITY'),
                                                         'description' => $log->description,
-                                                        'actor_name' => $log->actor_name ?: 'System Admin',
-                                                        'actor_type' => $log->actor_type ? class_basename($log->actor_type) : 'User',
+                                                        'actor_name' => $log->actor_name ?: __('System Admin'),
+                                                        'actor_type' => $log->actor_type ? class_basename($log->actor_type) : __('User'),
                                                         'ip_address' => $log->ip_address ?: '127.0.0.1',
-                                                        'user_agent' => $log->user_agent ?: 'N/A',
+                                                        'user_agent' => $log->user_agent ?: __('N/A'),
                                                         'metadata' => $log->metadata,
                                                         'created_at' => $log->created_at->format('d M Y, h:i:s A'),
                                                     ]) }})"
                                                     class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-100 hover:bg-purple-50 hover:text-purple-700 border border-slate-200 text-slate-700 font-semibold text-[10px] transition shadow-2xs cursor-pointer"
-                                                    title="View Activity Details">
+                                                    title="{{ __('View Activity Details') }}">
                                                 <i class="fas fa-eye text-[9px]"></i>
                                             </button>
                                         </td>
@@ -973,8 +976,8 @@
                         <div class="w-12 h-12 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center mx-auto text-slate-400">
                             <i class="fas fa-history text-xl text-purple-600"></i>
                         </div>
-                        <h4 class="text-xs font-bold text-slate-700">No Activity Logs Found</h4>
-                        <p class="text-[11px] text-slate-500">System actions and billing transactions related to this subscriber will be recorded here.</p>
+                        <h4 class="text-xs font-bold text-slate-700">{{ __('No Activity Logs Found') }}</h4>
+                        <p class="text-[11px] text-slate-500">{{ __('System actions and billing transactions related to this subscriber will be recorded here.') }}</p>
                     </div>
                 @endif
             </div>
@@ -996,8 +999,8 @@
                             <div class="w-7 h-7 rounded bg-indigo-50 border border-indigo-200 text-indigo-600 flex items-center justify-center shadow-2xs flex-shrink-0">
                                 <i class="fas fa-chart-area text-xs text-indigo-600"></i>
                             </div>
-                            <h3 class="text-xs font-bold text-slate-900 tracking-tight leading-snug truncate" title="Traffic Graph">
-                                Traffic Graph
+                            <h3 class="text-xs font-bold text-slate-900 tracking-tight leading-snug truncate" title="{{ __('Traffic Graph') }}">
+                                {{ __('Traffic Graph') }}
                             </h3>
                         </div>
 
@@ -1006,7 +1009,7 @@
                             <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-semibold font-mono uppercase border"
                                   :class="traffic.is_online ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-500 border-slate-200'">
                                 <span class="w-1.5 h-1.5 rounded-full" :class="traffic.is_online ? 'bg-emerald-500 animate-ping' : 'bg-slate-400'"></span>
-                                <span x-text="traffic.is_online ? 'ONLINE' : 'OFFLINE'">{{ ($customer->is_online ?? false) ? 'ONLINE' : 'OFFLINE' }}</span>
+                                <span x-text="traffic.is_online ? i18n.onlineUpper : i18n.offlineUpper">{{ ($customer->is_online ?? false) ? __('ONLINE') : __('OFFLINE') }}</span>
                             </span>
                         </div>
                     </div>
@@ -1017,25 +1020,25 @@
                                 @click="setTrafficPeriod('5m')" 
                                 class="py-0.5 text-center rounded transition cursor-pointer"
                                 :class="trafficPeriod === '5m' ? 'bg-white text-indigo-700 shadow-2xs font-bold' : 'text-slate-500 hover:text-slate-800'">
-                            5 Min
+                            {{ __('5 Min') }}
                         </button>
                         <button type="button" 
                                 @click="setTrafficPeriod('1h')" 
                                 class="py-0.5 text-center rounded transition cursor-pointer"
                                 :class="trafficPeriod === '1h' ? 'bg-white text-indigo-700 shadow-2xs font-bold' : 'text-slate-500 hover:text-slate-800'">
-                            1 Hour
+                            {{ __('1 Hour') }}
                         </button>
                         <button type="button" 
                                 @click="setTrafficPeriod('1d')" 
                                 class="py-0.5 text-center rounded transition cursor-pointer"
                                 :class="trafficPeriod === '1d' ? 'bg-white text-indigo-700 shadow-2xs font-bold' : 'text-slate-500 hover:text-slate-800'">
-                            1 Day
+                            {{ __('1 Day') }}
                         </button>
                         <button type="button" 
                                 @click="setTrafficPeriod('7d')" 
                                 class="py-0.5 text-center rounded transition cursor-pointer"
                                 :class="trafficPeriod === '7d' ? 'bg-white text-indigo-700 shadow-2xs font-bold' : 'text-slate-500 hover:text-slate-800'">
-                            7 Days
+                            {{ __('7 Days') }}
                         </button>
                     </div>
 
@@ -1048,7 +1051,7 @@
                             <!-- Offline Overlay if client is offline -->
                             <div x-show="!traffic.is_online" class="absolute inset-0 bg-slate-100/90 backdrop-blur-2xs flex flex-col items-center justify-center text-slate-500 gap-1">
                                 <i class="fas fa-signal-slash text-sm text-slate-400"></i>
-                                <span class="text-[9.5px] font-mono font-medium text-slate-600">Client is Offline</span>
+                                <span class="text-[9.5px] font-mono font-medium text-slate-600">{{ __('Client is Offline') }}</span>
                             </div>
                         </div>
 
@@ -1056,37 +1059,37 @@
                         <div class="border-t border-slate-200 bg-slate-50/70 text-[9.5px] font-mono divide-y divide-slate-100">
                             <!-- Table Header -->
                             <div class="grid grid-cols-3 px-2 py-1 bg-slate-100/80 font-bold text-slate-600 text-[9px] uppercase tracking-wider">
-                                <div>Metric</div>
+                                <div>{{ __('Metric') }}</div>
                                 <div class="text-right text-emerald-700 flex items-center justify-end gap-1">
                                     <span class="w-1.5 h-1.5 bg-emerald-500 rounded-xs inline-block"></span>
-                                    <span>Rx (In)</span>
+                                    <span>{{ __('Rx (In)') }}</span>
                                 </div>
                                 <div class="text-right text-blue-700 flex items-center justify-end gap-1">
                                     <span class="w-1.5 h-1.5 bg-blue-500 rounded-xs inline-block"></span>
-                                    <span>Tx (Out)</span>
+                                    <span>{{ __('Tx (Out)') }}</span>
                                 </div>
                             </div>
                             <!-- Current Row -->
                             <div class="grid grid-cols-3 px-2 py-0.5 items-center hover:bg-white transition">
-                                <span class="text-slate-500 font-medium">Current:</span>
+                                <span class="text-slate-500 font-medium">{{ __('Current:') }}</span>
                                 <span class="text-right font-bold text-emerald-700 font-mono" x-text="currentPeriodStats.rx_curr">0.00 Mbps</span>
                                 <span class="text-right font-bold text-blue-700 font-mono" x-text="currentPeriodStats.tx_curr">0.00 Mbps</span>
                             </div>
                             <!-- Average Row -->
                             <div class="grid grid-cols-3 px-2 py-0.5 items-center hover:bg-white transition">
-                                <span class="text-slate-500 font-medium">Average:</span>
+                                <span class="text-slate-500 font-medium">{{ __('Average:') }}</span>
                                 <span class="text-right font-semibold text-emerald-700 font-mono" x-text="currentPeriodStats.rx_avg || '0.00 Mbps'">0.00 Mbps</span>
                                 <span class="text-right font-semibold text-blue-700 font-mono" x-text="currentPeriodStats.tx_avg || '0.00 Mbps'">0.00 Mbps</span>
                             </div>
                             <!-- Max (Peak) Row -->
                             <div class="grid grid-cols-3 px-2 py-0.5 items-center hover:bg-white transition">
-                                <span class="text-slate-500 font-medium">Peak (Max):</span>
+                                <span class="text-slate-500 font-medium">{{ __('Peak (Max):') }}</span>
                                 <span class="text-right font-bold text-emerald-800 font-mono" x-text="currentPeriodStats.rx_max">0.00 Mbps</span>
                                 <span class="text-right font-bold text-blue-800 font-mono" x-text="currentPeriodStats.tx_max">0.00 Mbps</span>
                             </div>
                             <!-- Total Volume Row -->
                             <div class="grid grid-cols-3 px-2 py-1 items-center bg-slate-100/50 font-semibold border-t border-slate-200">
-                                <span class="text-slate-600">Total Volume:</span>
+                                <span class="text-slate-600">{{ __('Total Volume:') }}</span>
                                 <span class="text-right font-bold text-emerald-800 font-mono" x-text="currentPeriodStats.rx_total">0 B</span>
                                 <span class="text-right font-bold text-blue-800 font-mono" x-text="currentPeriodStats.tx_total">0 B</span>
                             </div>
@@ -1099,7 +1102,7 @@
                         @click="openRxtxModal()" 
                         class="w-full py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-[11px] flex items-center justify-center gap-1.5 transition shadow-2xs cursor-pointer">
                     <i class="fas fa-layer-group text-[10px]"></i>
-                    <span>Detailed Live Telemetry & Logs</span>
+                    <span>{{ __('Detailed Live Telemetry & Logs') }}</span>
                 </button>
             </div>
 
@@ -1112,11 +1115,11 @@
                             <i class="fas fa-server text-base text-purple-600"></i>
                         </div>
                         <div class="min-w-0 flex-1">
-                            <h3 class="text-xs font-bold text-slate-900 tracking-tight leading-snug truncate" title="Device & Optical Details">
-                                Device & Optical Details
+                            <h3 class="text-xs font-bold text-slate-900 tracking-tight leading-snug truncate" title="{{ __('Device & Optical Details') }}">
+                                {{ __('Device & Optical Details') }}
                             </h3>
                             <span class="inline-flex items-center px-1.5 py-0.5 mt-0.5 rounded text-[9.5px] font-semibold font-mono uppercase bg-purple-50 text-purple-700 border border-purple-200">
-                                FTTH / CPE
+                                {{ __('FTTH / CPE') }}
                             </span>
                         </div>
                     </div>
@@ -1129,11 +1132,11 @@
                         <div class="flex items-center leading-tight whitespace-nowrap">
                             <div class="w-[100px] flex items-center gap-1.5 text-slate-500 flex-shrink-0">
                                 <i class="fas fa-ethernet text-cyan-500 w-3.5 text-center text-[10px]"></i>
-                                <span class="text-[10px] font-medium text-slate-600">Interface</span>
+                                <span class="text-[10px] font-medium text-slate-600">{{ __('Interface') }}</span>
                             </div>
                             <span class="text-slate-400 font-bold px-1 flex-shrink-0">:</span>
                             <span class="font-semibold text-slate-800 text-right flex-1 truncate text-[11px] pl-1 font-mono">
-                                {{ $onu ? ($onu->pon_port . ($onu->onu_id ? ':' . $onu->onu_id : '')) : ($customer->pon_port ?: 'N/A') }}
+                                {{ $onu ? ($onu->pon_port . ($onu->onu_id ? ':' . $onu->onu_id : '')) : ($customer->pon_port ?: __('N/A')) }}
                             </span>
                         </div>
 
@@ -1141,11 +1144,11 @@
                         <div class="flex items-center leading-tight whitespace-nowrap">
                             <div class="w-[100px] flex items-center gap-1.5 text-slate-500 flex-shrink-0">
                                 <i class="fas fa-microchip text-indigo-500 w-3.5 text-center text-[10px]"></i>
-                                <span class="text-[10px] font-medium text-slate-600">ONU Name</span>
+                                <span class="text-[10px] font-medium text-slate-600">{{ __('ONU Name') }}</span>
                             </div>
                             <span class="text-slate-400 font-bold px-1 flex-shrink-0">:</span>
                             <span class="font-semibold text-slate-800 text-right flex-1 truncate text-[11px] pl-1 font-mono">
-                                {{ $onu?->name ?: ($onu?->model ?: 'N/A') }}
+                                {{ $onu?->name ?: ($onu?->model ?: __('N/A')) }}
                             </span>
                         </div>
 
@@ -1153,11 +1156,11 @@
                         <div class="flex items-center leading-tight whitespace-nowrap">
                             <div class="w-[100px] flex items-center gap-1.5 text-slate-500 flex-shrink-0">
                                 <i class="fas fa-tag text-amber-500 w-3.5 text-center text-[10px]"></i>
-                                <span class="text-[10px] font-medium text-slate-600">ONU Type</span>
+                                <span class="text-[10px] font-medium text-slate-600">{{ __('ONU Type') }}</span>
                             </div>
                             <span class="text-slate-400 font-bold px-1 flex-shrink-0">:</span>
                             <span class="font-semibold text-slate-800 text-right flex-1 truncate text-[11px] pl-1 uppercase font-mono">
-                                {{ $onu?->onu_type ?: ($customer->olt?->brand ?: 'N/A') }}
+                                {{ $onu?->onu_type ?: ($customer->olt?->brand ?: __('N/A')) }}
                             </span>
                         </div>
 
@@ -1165,11 +1168,11 @@
                         <div class="flex items-center leading-tight whitespace-nowrap">
                             <div class="w-[100px] flex items-center gap-1.5 text-slate-500 flex-shrink-0">
                                 <i class="fas fa-fingerprint text-purple-500 w-3.5 text-center text-[10px]"></i>
-                                <span class="text-[10px] font-medium text-slate-600">ONU MAC</span>
+                                <span class="text-[10px] font-medium text-slate-600">{{ __('ONU MAC') }}</span>
                             </div>
                             <span class="text-slate-400 font-bold px-1 flex-shrink-0">:</span>
                             <span class="font-bold text-slate-800 text-right flex-1 truncate text-[11px] pl-1 font-mono">
-                                {{ $customer->onu_mac_sn ?: ($onu?->mac_address ?: 'N/A') }}
+                                {{ $customer->onu_mac_sn ?: ($onu?->mac_address ?: __('N/A')) }}
                             </span>
                         </div>
 
@@ -1177,7 +1180,7 @@
                         <div class="flex items-center leading-tight whitespace-nowrap">
                             <div class="w-[100px] flex items-center gap-1.5 text-slate-500 flex-shrink-0">
                                 <i class="fas fa-bolt text-amber-500 w-3.5 text-center text-[10px]"></i>
-                                <span class="text-[10px] font-medium text-slate-600">Power</span>
+                                <span class="text-[10px] font-medium text-slate-600">{{ __('Power') }}</span>
                             </div>
                             <span class="text-slate-400 font-bold px-1 flex-shrink-0">:</span>
                             @if($onu && $onu->rx_power_dbm !== null)
@@ -1185,7 +1188,7 @@
                                     {{ number_format($onu->rx_power_dbm, 2) }} dBm
                                 </span>
                             @else
-                                <span class="font-medium text-slate-400 text-right flex-1 truncate text-[11px] pl-1">N/A</span>
+                                <span class="font-medium text-slate-400 text-right flex-1 truncate text-[11px] pl-1">{{ __('N/A') }}</span>
                             @endif
                         </div>
 
@@ -1193,7 +1196,7 @@
                         <div class="flex items-center leading-tight whitespace-nowrap">
                             <div class="w-[100px] flex items-center gap-1.5 text-slate-500 flex-shrink-0">
                                 <i class="fas fa-route text-blue-500 w-3.5 text-center text-[10px]"></i>
-                                <span class="text-[10px] font-medium text-slate-600">Distance</span>
+                                <span class="text-[10px] font-medium text-slate-600">{{ __('Distance') }}</span>
                             </div>
                             <span class="text-slate-400 font-bold px-1 flex-shrink-0">:</span>
                             @if($onu && $onu->distance_m !== null)
@@ -1201,7 +1204,7 @@
                                     {{ $onu->distance_m >= 1000 ? number_format($onu->distance_m / 1000, 2) . ' km' : ($onu->distance_m . ' m') }}
                                 </span>
                             @else
-                                <span class="font-medium text-slate-400 text-right flex-1 truncate text-[11px] pl-1">N/A</span>
+                                <span class="font-medium text-slate-400 text-right flex-1 truncate text-[11px] pl-1">{{ __('N/A') }}</span>
                             @endif
                         </div>
 
@@ -1209,11 +1212,11 @@
                         <div class="flex items-center leading-tight whitespace-nowrap">
                             <div class="w-[100px] flex items-center gap-1.5 text-slate-500 flex-shrink-0">
                                 <i class="fas fa-layer-group text-teal-500 w-3.5 text-center text-[10px]"></i>
-                                <span class="text-[10px] font-medium text-slate-600">VLAN</span>
+                                <span class="text-[10px] font-medium text-slate-600">{{ __('VLAN') }}</span>
                             </div>
                             <span class="text-slate-400 font-bold px-1 flex-shrink-0">:</span>
                             <span class="font-semibold text-slate-800 text-right flex-1 truncate text-[11px] pl-1 font-mono">
-                                {{ $onu?->vlan_id ? ('VLAN ' . $onu->vlan_id) : 'N/A' }}
+                                {{ $onu?->vlan_id ? __('VLAN :id', ['id' => $onu->vlan_id]) : __('N/A') }}
                             </span>
                         </div>
 
@@ -1221,12 +1224,12 @@
                         <div class="flex items-center leading-tight whitespace-nowrap">
                             <div class="w-[100px] flex items-center gap-1.5 text-slate-500 flex-shrink-0">
                                 <i class="fas fa-id-badge text-rose-500 w-3.5 text-center text-[10px]"></i>
-                                <span class="text-[10px] font-medium text-slate-600">Router MAC</span>
+                                <span class="text-[10px] font-medium text-slate-600">{{ __('Router MAC') }}</span>
                             </div>
                             <span class="text-slate-400 font-bold px-1 flex-shrink-0">:</span>
                             <span class="font-bold text-slate-800 text-right flex-1 truncate text-[11px] pl-1 font-mono"
-                                  x-text="traffic.mac || '{{ $customer->mac_address ?: 'N/A' }}'">
-                                {{ $customer->mac_address ?: 'N/A' }}
+                                  x-text="traffic.mac || defaultMacAddress || i18n.na">
+                                {{ $customer->mac_address ?: __('N/A') }}
                             </span>
                         </div>
 
@@ -1234,11 +1237,11 @@
                         <div class="flex items-center leading-tight whitespace-nowrap">
                             <div class="w-[100px] flex items-center gap-1.5 text-slate-500 flex-shrink-0">
                                 <i class="fas fa-wifi text-blue-500 w-3.5 text-center text-[10px]"></i>
-                                <span class="text-[10px] font-medium text-slate-600">Router Brand</span>
+                                <span class="text-[10px] font-medium text-slate-600">{{ __('Router Brand') }}</span>
                             </div>
                             <span class="text-slate-400 font-bold px-1 flex-shrink-0">:</span>
                             <span class="font-semibold text-slate-800 text-right flex-1 truncate text-[11px] pl-1 font-mono">
-                                {{ $customer->router?->name ?: ($customer->router?->model ?: 'N/A') }}
+                                {{ $customer->router?->name ?: ($customer->router?->model ?: __('N/A')) }}
                             </span>
                         </div>
 
@@ -1246,11 +1249,11 @@
                         <div class="flex items-center leading-tight whitespace-nowrap">
                             <div class="w-[100px] flex items-center gap-1.5 text-slate-500 flex-shrink-0">
                                 <i class="fas fa-network-wired text-indigo-500 w-3.5 text-center text-[10px]"></i>
-                                <span class="text-[10px] font-medium text-slate-600">OLT</span>
+                                <span class="text-[10px] font-medium text-slate-600">{{ __('OLT') }}</span>
                             </div>
                             <span class="text-slate-400 font-bold px-1 flex-shrink-0">:</span>
                             <span class="font-semibold text-slate-800 text-right flex-1 truncate text-[11px] pl-1 font-mono">
-                                {{ $customer->olt?->name ?: ($onu?->olt?->name ?: 'N/A') }}
+                                {{ $customer->olt?->name ?: ($onu?->olt?->name ?: __('N/A')) }}
                             </span>
                         </div>
                     </div>
@@ -1259,11 +1262,11 @@
 
                     <!-- Location / Distribution Route Box -->
                     <div class="space-y-0.5">
-                        <span class="text-[10px] font-medium text-slate-500 block">Location:</span>
+                        <span class="text-[10px] font-medium text-slate-500 block">{{ __('Location:') }}</span>
                         <p class="text-[10.5px] font-normal text-slate-700 leading-relaxed bg-slate-50/80 p-1.5 rounded border border-slate-200/70 truncate" 
-                           title="{{ $customer->fiber_route_info ?: ($customer->zone ?: ($customer->address ?: 'No location specified.')) }}">
+                           title="{{ $customer->fiber_route_info ?: ($customer->zone ?: ($customer->address ?: __('No location specified.'))) }}">
                             <i class="fas fa-map-marker-alt text-rose-500 text-[9px] mr-1"></i>
-                            {{ $customer->fiber_route_info ?: ($customer->zone ?: ($customer->address ?: 'No location specified.')) }}
+                            {{ $customer->fiber_route_info ?: ($customer->zone ?: ($customer->address ?: __('No location specified.'))) }}
                         </p>
                     </div>
 
@@ -1274,7 +1277,7 @@
                         <div class="flex items-center justify-between text-[10px] font-medium text-slate-600">
                             <span class="flex items-center gap-1 font-semibold text-slate-700">
                                 <i class="fas fa-map-marked-alt text-purple-600 text-[10px]"></i>
-                                <span>Visual Route & GPS Map</span>
+                                <span>{{ __('Visual Route & GPS Map') }}</span>
                             </span>
                             @php
                                 $lat = $customer->gps_lat ?: '23.8759';
@@ -1288,8 +1291,8 @@
                                target="_blank" 
                                rel="noopener noreferrer" 
                                class="text-[9.5px] font-bold text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-0.5 group"
-                               title="Open in Google Maps">
-                                <span>Google Maps</span>
+                               title="{{ __('Open in Google Maps') }}">
+                                <span>{{ __('Google Maps') }}</span>
                                 <i class="fas fa-external-link-alt text-[7.5px] text-blue-400 group-hover:text-blue-600"></i>
                             </a>
                         </div>
@@ -1323,7 +1326,7 @@
                 <a href="{{ Route::has('tenant.network.onu') ? route('tenant.network.onu') : (Route::has('tenant.network.olt') ? route('tenant.network.olt') : '#') }}" 
                    class="w-full py-1.5 bg-purple-600 hover:bg-purple-700 text-white font-semibold text-[11px] flex items-center justify-center gap-1.5 transition shadow-2xs">
                     <i class="fas fa-search-location text-[10px]"></i>
-                    <span>Diagnose Optical Line</span>
+                    <span>{{ __('Diagnose Optical Line') }}</span>
                 </a>
             </div>
 
@@ -1336,15 +1339,15 @@
                             <div class="w-7 h-7 rounded bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center shadow-2xs flex-shrink-0">
                                 <i class="fas fa-sticky-note text-xs"></i>
                             </div>
-                            <h3 class="text-xs font-bold text-slate-900 tracking-tight leading-snug truncate" title="Customer Note & Remarks">
-                                Note &amp; Remarks
+                            <h3 class="text-xs font-bold text-slate-900 tracking-tight leading-snug truncate" title="{{ __('Customer Note & Remarks') }}">
+                                {{ __('Note & Remarks') }}
                             </h3>
                         </div>
                         <button type="button" 
                                 @click="openNoteModal()" 
                                 class="px-2 py-0.5 rounded bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 font-semibold text-[10px] transition flex items-center gap-1 cursor-pointer">
                             <i class="fas fa-edit text-[9px]"></i>
-                            <span>Edit</span>
+                            <span>{{ __('Edit') }}</span>
                         </button>
                     </div>
 
@@ -1358,7 +1361,7 @@
                         <template x-if="!noteForm.remarks || noteForm.remarks.trim() === ''">
                             <span class="text-slate-400 italic text-[11px] flex items-center gap-1">
                                 <i class="fas fa-info-circle text-[10px] text-slate-400"></i>
-                                No internal notes or operational remarks recorded.
+                                {{ __('No internal notes or operational remarks recorded.') }}
                             </span>
                         </template>
                     </div>
@@ -1369,7 +1372,7 @@
                         @click="openNoteModal()" 
                         class="w-full py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-semibold text-[11px] flex items-center justify-center gap-1.5 transition shadow-2xs cursor-pointer">
                     <i class="fas fa-pen-to-square text-[10px]"></i>
-                    <span>Manage Notes &amp; Remarks</span>
+                    <span>{{ __('Manage Notes & Remarks') }}</span>
                 </button>
             </div>
 
@@ -1399,6 +1402,108 @@
 function customerActionBarManager(config) {
     return {
         customerId: config.customerId,
+        currencySymbol: @json($currencySymbol ?? '৳'),
+        defaultIpAddress: config.ipAddress || '',
+        defaultMacAddress: config.macAddress || '',
+        i18n: {
+            directIsp: @json(__('Direct ISP')),
+            defaultPackageName: @json(__('Standard Plan')),
+            defaultSpeed: @json(__('Standard')),
+            defaultBillingType: @json(__('Prepaid')),
+            na: @json(__('N/A')),
+            graceDay: @json(__('Day')),
+            graceDays: @json(__('Days')),
+            enabledUpper: @json(__('ENABLED')),
+            disabledUpper: @json(__('DISABLED')),
+            onlineUpper: @json(__('ONLINE')),
+            offlineUpper: @json(__('OFFLINE')),
+            online: @json(__('Online')),
+            offline: @json(__('Offline')),
+            hidePassword: @json(__('Hide password')),
+            showPassword: @json(__('Show password')),
+            openRemoteAccess: @json(__('Open remote access')),
+            dynamicAuto: @json(__('Dynamic (Auto)')),
+            statuses: {
+                active: @json(__('ACTIVE')),
+                suspended: @json(__('SUSPENDED')),
+                disabled: @json(__('DISABLED')),
+                expired: @json(__('EXPIRED')),
+                pending: @json(__('PENDING')),
+                inactive: @json(__('INACTIVE')),
+                free: @json(__('FREE'))
+            },
+            billingTypes: {
+                prepaid: @json(__('Prepaid')),
+                postpaid: @json(__('Postpaid'))
+            },
+            monthsShort: [
+                @json(__('Jan')), @json(__('Feb')), @json(__('Mar')), @json(__('Apr')),
+                @json(__('May')), @json(__('Jun')), @json(__('Jul')), @json(__('Aug')),
+                @json(__('Sep')), @json(__('Oct')), @json(__('Nov')), @json(__('Dec'))
+            ],
+            paymentSuccessTitle: @json(__('Payment Submitted Successfully!')),
+            paymentSuccessHtml: @json(__('Your payment was recorded successfully. Subscriber line verification and activation will update automatically.')),
+            okGotIt: @json(__('OK, Got It')),
+            approveTitle: @json(__('Approve Payment & Activate Line?')),
+            approveHtmlLine1: @json(__('Are you sure you want to approve receipt :invoice?')),
+            approveHtmlLine2: @json(__('Subscriber line will be activated immediately on MikroTik and validity extended.')),
+            yesApproveActivate: @json(__('Yes, Approve & Activate')),
+            cancel: @json(__('Cancel')),
+            approveConfirm: @json(__("Are you sure you want to approve payment ':invoice' and activate this subscriber line?")),
+            paymentApprovedTitle: @json(__('Payment Approved!')),
+            approvalFailedTitle: @json(__('Approval Failed')),
+            approvalFailedText: @json(__('Failed to approve payment.')),
+            networkErrorTitle: @json(__('Network Error')),
+            networkErrorApproveText: @json(__('Could not communicate with the server to approve payment.')),
+            networkErrorApproveAlert: @json(__('Network error approving payment.')),
+            clientOfflineMonitor: @json(__('Client is offline. Cannot start live traffic monitor.')),
+            graphRxLabel: @json(__('Rx')),
+            graphTxLabel: @json(__('Tx')),
+            pppoeUpdated: @json(__('PPPoE credentials updated and synced to MikroTik & FreeRADIUS!')),
+            pppoeFailed: @json(__('Failed to update PPPoE.')),
+            validationOrNetworkError: @json(__('Validation or network error occurred.')),
+            statusUpdated: @json(__('Status updated and synced to MikroTik & FreeRADIUS!')),
+            statusFailed: @json(__('Failed to update status.')),
+            statusNetworkError: @json(__('Network error while updating status.')),
+            planUpgrade: @json(__('Plan Upgrade')),
+            planDowngrade: @json(__('Plan Downgrade')),
+            planSameTier: @json(__('Same Tier Plan')),
+            selectNewPackage: @json(__('Please select a new package.')),
+            packageChanged: @json(__('Package changed and synced successfully!')),
+            packageChangeFailed: @json(__('Failed to change package.')),
+            packageNetworkError: @json(__('Network error while changing package.')),
+            enterValidBill: @json(__('Please enter a valid monthly bill amount.')),
+            billUpdated: @json(__('Monthly bill updated successfully!')),
+            billUpdateFailed: @json(__('Failed to update monthly bill.')),
+            billNetworkError: @json(__('Network error while updating monthly bill.')),
+            selectExpiryDate: @json(__('Please select an expiry date.')),
+            cycleUpdated: @json(__('Billing cycle updated successfully!')),
+            cycleUpdateFailed: @json(__('Failed to update billing cycle.')),
+            cycleNetworkError: @json(__('Network error while updating billing cycle.')),
+            enterValidAmount: @json(__('Please enter a valid amount.')),
+            dueUpdated: @json(__('Due balance updated successfully!')),
+            dueUpdateFailed: @json(__('Failed to update due balance.')),
+            dueNetworkError: @json(__('Network error while updating due balance.')),
+            enterValidPayment: @json(__('Please enter a valid payment amount.')),
+            paymentRecorded: @json(__('Payment recorded successfully!')),
+            paymentRecordFailed: @json(__('Failed to record payment.')),
+            paymentNetworkError: @json(__('Network error while processing payment.')),
+            selectTargetReseller: @json(__('Please select a target reseller partner.')),
+            subscriberTransferred: @json(__('Subscriber transferred successfully!')),
+            transferFailed: @json(__('Failed to transfer subscriber.')),
+            transferNetworkError: @json(__('Network error while transferring subscriber.')),
+            notesSaved: @json(__('Customer notes saved successfully!')),
+            noteSaveFailed: @json(__('Failed to save note.')),
+            noteNetworkError: @json(__('Network error while saving customer note.'))
+        },
+        getStatusLabel(st) {
+            const key = String(st || 'active').toLowerCase();
+            return this.i18n.statuses[key] || String(st || '').toUpperCase();
+        },
+        getBillingTypeLabel(bt) {
+            const key = String(bt || 'prepaid').toLowerCase();
+            return this.i18n.billingTypes[key] || String(bt || '').toUpperCase();
+        },
         activeBillingTab: 'invoices',
         paymentDetailsModal: false,
         selectedPayment: {},
@@ -1437,7 +1542,7 @@ function customerActionBarManager(config) {
             months: 1,
             payment_method: 'cash',
             transaction_id: '',
-            billing_month: '{{ Carbon\Carbon::now()->format('F Y') }}',
+            billing_month: @json(Carbon\Carbon::now()->format('F Y')),
             notes: '',
             extend_validity: true,
             reactivate_line: true
@@ -1541,7 +1646,7 @@ function customerActionBarManager(config) {
             tx_mbps: 0.00,
             rx_human: '0.00 Mbps',
             tx_human: '0.00 Mbps',
-            uptime: config.isOnline ? 'Online' : 'Offline',
+            uptime: config.isOnline ? @json(__('Online')) : @json(__('Offline')),
             ip: config.ipAddress || '',
             mac: '',
             total_rx_human: '0 B',
@@ -1786,9 +1891,9 @@ function customerActionBarManager(config) {
                 if (typeof Swal !== 'undefined') {
                     Swal.fire({
                         icon: 'success',
-                        title: 'Payment Submitted Successfully!',
-                        html: '<div class="text-xs text-slate-600 mt-1">Your payment was recorded successfully. Subscriber line verification and activation will update automatically.</div>',
-                        confirmButtonText: 'OK, Got It',
+                        title: this.i18n.paymentSuccessTitle,
+                        html: `<div class="text-xs text-slate-600 mt-1">${this.i18n.paymentSuccessHtml}</div>`,
+                        confirmButtonText: this.i18n.okGotIt,
                         customClass: {
                             confirmButton: 'bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs px-4 py-2 rounded-lg cursor-pointer'
                         },
@@ -1824,12 +1929,12 @@ function customerActionBarManager(config) {
         async approvePayment(id, invoiceNo) {
             if (typeof Swal !== 'undefined') {
                 const result = await Swal.fire({
-                    title: 'Approve Payment & Activate Line?',
-                    html: `<div class="text-xs text-slate-600">Are you sure you want to approve receipt <b>${invoiceNo}</b>?<br><span class="text-slate-400 mt-1 block">Subscriber line will be activated immediately on MikroTik and validity extended.</span></div>`,
+                    title: this.i18n.approveTitle,
+                    html: `<div class="text-xs text-slate-600">${this.i18n.approveHtmlLine1.replace(':invoice', `<b>${invoiceNo}</b>`)}<br><span class="text-slate-400 mt-1 block">${this.i18n.approveHtmlLine2}</span></div>`,
                     icon: 'question',
                     showCancelButton: true,
-                    confirmButtonText: 'Yes, Approve & Activate',
-                    cancelButtonText: 'Cancel',
+                    confirmButtonText: this.i18n.yesApproveActivate,
+                    cancelButtonText: this.i18n.cancel,
                     customClass: {
                         confirmButton: 'bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs px-4 py-2 rounded-lg cursor-pointer mr-2',
                         cancelButton: 'bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold text-xs px-4 py-2 rounded-lg cursor-pointer'
@@ -1838,7 +1943,7 @@ function customerActionBarManager(config) {
                 });
                 if (!result.isConfirmed) return;
             } else {
-                if (!confirm(`Are you sure you want to approve payment '${invoiceNo}' and activate this subscriber line?`)) {
+                if (!confirm(this.i18n.approveConfirm.replace(':invoice', invoiceNo))) {
                     return;
                 }
             }
@@ -1857,7 +1962,7 @@ function customerActionBarManager(config) {
                     if (typeof Swal !== 'undefined') {
                         await Swal.fire({
                             icon: 'success',
-                            title: 'Payment Approved!',
+                            title: this.i18n.paymentApprovedTitle,
                             text: data.message,
                             timer: 2000,
                             showConfirmButton: false
@@ -1868,30 +1973,30 @@ function customerActionBarManager(config) {
                     if (typeof Swal !== 'undefined') {
                         Swal.fire({
                             icon: 'error',
-                            title: 'Approval Failed',
-                            text: data.message || 'Failed to approve payment.',
+                            title: this.i18n.approvalFailedTitle,
+                            text: data.message || this.i18n.approvalFailedText,
                             customClass: {
                                 confirmButton: 'bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs px-4 py-2 rounded-lg cursor-pointer'
                             },
                             buttonsStyling: false
                         });
                     } else {
-                        alert(data.message || 'Failed to approve payment.');
+                        alert(data.message || this.i18n.approvalFailedText);
                     }
                 }
             } catch (e) {
                 if (typeof Swal !== 'undefined') {
                     Swal.fire({
                         icon: 'error',
-                        title: 'Network Error',
-                        text: 'Could not communicate with the server to approve payment.',
+                        title: this.i18n.networkErrorTitle,
+                        text: this.i18n.networkErrorApproveText,
                         customClass: {
                             confirmButton: 'bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs px-4 py-2 rounded-lg cursor-pointer'
                         },
                         buttonsStyling: false
                     });
                 } else {
-                    alert('Network error approving payment.');
+                    alert(this.i18n.networkErrorApproveAlert);
                 }
             }
         },
@@ -1915,9 +2020,9 @@ function customerActionBarManager(config) {
         },
 
         formatUptime(val) {
-            if (!val || val === '--' || val === 'Offline' || val === '0s') return 'Offline';
+            if (!val || val === '--' || val === 'Offline' || val === '0s') return this.i18n.offline;
             let str = String(val).trim();
-            if (str.toLowerCase() === 'offline') return 'Offline';
+            if (str.toLowerCase() === 'offline') return this.i18n.offline;
 
             let weeks = 0, days = 0, hours = 0, mins = 0, secs = 0;
 
@@ -1948,7 +2053,7 @@ function customerActionBarManager(config) {
             if (mins > 0 || hours > 0 || totalDays > 0) parts.push(`${mins}m`);
             if (totalDays === 0 && hours === 0 && mins === 0) parts.push(`${secs}s`);
 
-            return parts.length > 0 ? parts.join(' ') : 'Offline';
+            return parts.length > 0 ? parts.join(' ') : this.i18n.offline;
         },
 
         togglePolling() {
@@ -1956,7 +2061,7 @@ function customerActionBarManager(config) {
                 this.stopPolling();
             } else {
                 if (!this.traffic.is_online) {
-                    this.showToast('Client is offline. Cannot start live traffic monitor.', 'warning');
+                    this.showToast(this.i18n.clientOfflineMonitor, 'warning');
                     return;
                 }
                 this.startPolling();
@@ -1998,7 +2103,7 @@ function customerActionBarManager(config) {
                     this.traffic.tx_mbps = parseFloat(res.tx_mbps) || 0;
                     this.traffic.rx_human = res.rx_human || '0.00 Mbps';
                     this.traffic.tx_human = res.tx_human || '0.00 Mbps';
-                    this.traffic.uptime = res.uptime || 'Offline';
+                    this.traffic.uptime = res.uptime || this.i18n.offline;
                     this.traffic.ip = res.ip || config.ipAddress;
                     this.traffic.mac = res.mac || '';
                     this.traffic.total_rx_human = res.total_rx_human || '0 B';
@@ -2296,7 +2401,7 @@ function customerActionBarManager(config) {
                 ctx.stroke();
 
                 // Floating Tooltip Badge Header
-                const text = `${timeLabel ? timeLabel + ' | ' : ''}Rx: ${rxVal.toFixed(2)} ${unit} | Tx: ${txVal.toFixed(2)} ${unit}`;
+                const text = `${timeLabel ? timeLabel + ' | ' : ''}${this.i18n.graphRxLabel}: ${rxVal.toFixed(2)} ${unit} | ${this.i18n.graphTxLabel}: ${txVal.toFixed(2)} ${unit}`;
                 ctx.font = `bold ${Math.round(8 * dpr)}px monospace`;
                 const tw = ctx.measureText(text).width + (12 * dpr);
                 const th = 16 * dpr;
@@ -2321,7 +2426,7 @@ function customerActionBarManager(config) {
                 const dt = new Date(val);
                 if (isNaN(dt.getTime())) return val;
                 const day = String(dt.getDate()).padStart(2, '0');
-                const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                const months = this.i18n.monthsShort;
                 return `${day} ${months[dt.getMonth()]} ${dt.getFullYear()}`;
             } catch (e) {
                 return val;
@@ -2447,13 +2552,13 @@ function customerActionBarManager(config) {
                 if (res.success) {
                     this.pppoeForm.username = res.username;
                     this.pppoeForm.password = res.password;
-                    this.showToast(res.message || 'PPPoE credentials updated and synced to MikroTik & FreeRADIUS!');
+                    this.showToast(res.message || this.i18n.pppoeUpdated);
                     this.pppoeModal = false;
                 } else {
-                    this.showToast(res.message || 'Failed to update PPPoE.', 'error');
+                    this.showToast(res.message || this.i18n.pppoeFailed, 'error');
                 }
             } catch (err) {
-                this.showToast('Validation or network error occurred.', 'error');
+                this.showToast(this.i18n.validationOrNetworkError, 'error');
             } finally {
                 this.isPppoeLoading = false;
             }
@@ -2474,13 +2579,13 @@ function customerActionBarManager(config) {
                 const res = await response.json();
                 if (res.success) {
                     this.statusForm.status = res.status;
-                    this.showToast(res.message || 'Status updated and synced to MikroTik & FreeRADIUS!');
+                    this.showToast(res.message || this.i18n.statusUpdated);
                     this.statusModal = false;
                 } else {
-                    this.showToast(res.message || 'Failed to update status.', 'error');
+                    this.showToast(res.message || this.i18n.statusFailed, 'error');
                 }
             } catch (err) {
-                this.showToast('Network error while updating status.', 'error');
+                this.showToast(this.i18n.statusNetworkError, 'error');
             } finally {
                 this.isStatusLoading = false;
             }
@@ -2544,7 +2649,7 @@ function customerActionBarManager(config) {
             this.upgradeImpact = {
                 isUpgrade: isUpgrade,
                 isDowngrade: isDowngrade,
-                typeLabel: isUpgrade ? 'Plan Upgrade' : (isDowngrade ? 'Plan Downgrade' : 'Same Tier Plan'),
+                typeLabel: isUpgrade ? this.i18n.planUpgrade : (isDowngrade ? this.i18n.planDowngrade : this.i18n.planSameTier),
                 proratedDiff: proratedDiff.toFixed(2),
                 proratedRefund: proratedRefund.toFixed(2),
                 hasSufficientBalance: hasSufficient,
@@ -2557,7 +2662,7 @@ function customerActionBarManager(config) {
 
         async submitPackageChange() {
             if (!this.packageForm.package_id) {
-                this.showToast('Please select a new package.', 'error');
+                this.showToast(this.i18n.selectNewPackage, 'error');
                 return;
             }
             this.isPackageLoading = true;
@@ -2584,13 +2689,13 @@ function customerActionBarManager(config) {
                     if (res.reseller_balance !== null && res.reseller_balance !== undefined) {
                         this.packageData.resellerBalance = parseFloat(res.reseller_balance);
                     }
-                    this.showToast(res.message || 'Package changed and synced successfully!');
+                    this.showToast(res.message || this.i18n.packageChanged);
                     this.packageModal = false;
                 } else {
-                    this.showToast(res.message || 'Failed to change package.', 'error');
+                    this.showToast(res.message || this.i18n.packageChangeFailed, 'error');
                 }
             } catch (err) {
-                this.showToast('Network error while changing package.', 'error');
+                this.showToast(this.i18n.packageNetworkError, 'error');
             } finally {
                 this.isPackageLoading = false;
             }
@@ -2598,7 +2703,7 @@ function customerActionBarManager(config) {
 
         async submitModifyBill() {
             if (!this.billForm.monthly_bill || Number(this.billForm.monthly_bill) < 0) {
-                this.showToast('Please enter a valid monthly bill amount.', 'error');
+                this.showToast(this.i18n.enterValidBill, 'error');
                 return;
             }
             this.isBillLoading = true;
@@ -2617,13 +2722,13 @@ function customerActionBarManager(config) {
                     this.packageData.currentMonthlyBill = res.monthly_bill;
                     this.billForm.current_monthly_bill = res.monthly_bill;
                     this.billForm.monthly_bill = res.monthly_bill;
-                    this.showToast(res.message || 'Monthly bill updated successfully!');
+                    this.showToast(res.message || this.i18n.billUpdated);
                     this.billModal = false;
                 } else {
-                    this.showToast(res.message || 'Failed to update monthly bill.', 'error');
+                    this.showToast(res.message || this.i18n.billUpdateFailed, 'error');
                 }
             } catch (err) {
-                this.showToast('Network error while updating monthly bill.', 'error');
+                this.showToast(this.i18n.billNetworkError, 'error');
             } finally {
                 this.isBillLoading = false;
             }
@@ -2656,7 +2761,7 @@ function customerActionBarManager(config) {
 
         async submitBillingCycle() {
             if (!this.cycleForm.expiry_date) {
-                this.showToast('Please select an expiry date.', 'error');
+                this.showToast(this.i18n.selectExpiryDate, 'error');
                 return;
             }
             this.isCycleLoading = true;
@@ -2682,13 +2787,13 @@ function customerActionBarManager(config) {
                     this.packageData.currentExpiryDate = this.cycleData.currentExpiryDate;
                     this.packageData.remainingDays = this.cycleData.remainingDays;
 
-                    this.showToast(res.message || 'Billing cycle updated successfully!');
+                    this.showToast(res.message || this.i18n.cycleUpdated);
                     this.cycleModal = false;
                 } else {
-                    this.showToast(res.message || 'Failed to update billing cycle.', 'error');
+                    this.showToast(res.message || this.i18n.cycleUpdateFailed, 'error');
                 }
             } catch (err) {
-                this.showToast('Network error while updating billing cycle.', 'error');
+                this.showToast(this.i18n.cycleNetworkError, 'error');
             } finally {
                 this.isCycleLoading = false;
             }
@@ -2706,7 +2811,7 @@ function customerActionBarManager(config) {
 
         async submitDueBalance() {
             if (this.dueForm.mode !== 'clear' && (this.dueForm.amount === '' || Number(this.dueForm.amount) < 0)) {
-                this.showToast('Please enter a valid amount.', 'error');
+                this.showToast(this.i18n.enterValidAmount, 'error');
                 return;
             }
             this.isDueLoading = true;
@@ -2723,13 +2828,13 @@ function customerActionBarManager(config) {
                 const res = await response.json();
                 if (res.success) {
                     this.dueData.currentDue = parseFloat(res.due_amount_raw !== undefined ? res.due_amount_raw : (res.due_amount || 0));
-                    this.showToast(res.message || 'Due balance updated successfully!');
+                    this.showToast(res.message || this.i18n.dueUpdated);
                     this.dueModal = false;
                 } else {
-                    this.showToast(res.message || 'Failed to update due balance.', 'error');
+                    this.showToast(res.message || this.i18n.dueUpdateFailed, 'error');
                 }
             } catch (err) {
-                this.showToast('Network error while updating due balance.', 'error');
+                this.showToast(this.i18n.dueNetworkError, 'error');
             } finally {
                 this.isDueLoading = false;
             }
@@ -2737,7 +2842,7 @@ function customerActionBarManager(config) {
 
         async submitBillPayment() {
             if (!this.payForm.amount || parseFloat(this.payForm.amount) <= 0) {
-                this.showToast('Please enter a valid payment amount.', 'error');
+                this.showToast(this.i18n.enterValidPayment, 'error');
                 return;
             }
             this.isPayLoading = true;
@@ -2763,7 +2868,7 @@ function customerActionBarManager(config) {
                             this.packageData.remainingDays = res.customer.remaining_days;
                         }
                     }
-                    this.showToast(res.message || 'Payment recorded successfully!');
+                    this.showToast(res.message || this.i18n.paymentRecorded);
                     this.payModal = false;
 
                     // Open Money Receipt in a clean popup if invoice exists
@@ -2777,14 +2882,14 @@ function customerActionBarManager(config) {
                         window.location.reload();
                     }, 1200);
                 } else {
-                    let errMsg = res.message || 'Failed to record payment.';
+                    let errMsg = res.message || this.i18n.paymentRecordFailed;
                     if (res.errors) {
                         errMsg = Object.values(res.errors).flat().join('\n');
                     }
                     this.showToast(errMsg, 'error');
                 }
             } catch (err) {
-                this.showToast('Network error while processing payment.', 'error');
+                this.showToast(this.i18n.paymentNetworkError, 'error');
             } finally {
                 this.isPayLoading = false;
             }
@@ -2792,7 +2897,7 @@ function customerActionBarManager(config) {
 
         async submitTransfer() {
             if (this.transferForm.target_type === 'reseller' && !this.transferForm.reseller_id) {
-                this.showToast('Please select a target reseller partner.', 'error');
+                this.showToast(this.i18n.selectTargetReseller, 'error');
                 return;
             }
             this.isTransferLoading = true;
@@ -2816,13 +2921,13 @@ function customerActionBarManager(config) {
                     this.packageData.resellerName = res.reseller_name || '';
                     this.packageData.resellerCode = res.reseller_code || '';
 
-                    this.showToast(res.message || 'Subscriber transferred successfully!');
+                    this.showToast(res.message || this.i18n.subscriberTransferred);
                     this.transferModal = false;
                 } else {
-                    this.showToast(res.message || 'Failed to transfer subscriber.', 'error');
+                    this.showToast(res.message || this.i18n.transferFailed, 'error');
                 }
             } catch (err) {
-                this.showToast('Network error while transferring subscriber.', 'error');
+                this.showToast(this.i18n.transferNetworkError, 'error');
             } finally {
                 this.isTransferLoading = false;
             }
@@ -2858,13 +2963,13 @@ function customerActionBarManager(config) {
                     if (res.remarks !== undefined) {
                         this.noteForm.remarks = res.remarks || '';
                     }
-                    this.showToast(res.message || 'Customer notes saved successfully!');
+                    this.showToast(res.message || this.i18n.notesSaved);
                     this.noteModal = false;
                 } else {
-                    this.showToast(res.message || 'Failed to save note.', 'error');
+                    this.showToast(res.message || this.i18n.noteSaveFailed, 'error');
                 }
             } catch (err) {
-                this.showToast('Network error while saving customer note.', 'error');
+                this.showToast(this.i18n.noteNetworkError, 'error');
             } finally {
                 this.isNoteLoading = false;
             }

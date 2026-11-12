@@ -27,7 +27,7 @@
                 <div>
                     <h4 class="text-xs font-semibold text-slate-800">{{ __('Receive Customer Bill Payment') }}</h4>
                     <p class="text-[10.5px] text-slate-500 font-normal">
-                        {{ __('Subscriber') }}: <span class="font-mono font-bold text-slate-700">{{ $customer->username ?: 'Client' }}</span> &bull; 
+                        {{ __('Subscriber') }}: <span class="font-mono font-bold text-slate-700">{{ $customer->username ?: __('Client') }}</span> &bull; 
                         {{ __('ID') }}: <span class="font-mono text-slate-600">{{ $customer->customer_id ?: 'CUST-' . $customer->id }}</span>
                     </p>
                 </div>
@@ -60,11 +60,11 @@
                     <div class="text-right space-y-0.5 font-mono flex-shrink-0">
                         <span class="text-[10px] uppercase font-sans font-semibold text-slate-400 tracking-wider">{{ __('Expiry Status') }}</span>
                         <div class="text-xs font-bold text-slate-800">
-                            <span x-text="cycleData.currentExpiryDateFormatted || '{{ __('No Expiry Set') }}'"></span>
+                            <span x-text="cycleData.currentExpiryDateFormatted || {{ json_encode(__('No Expiry Set'), JSON_UNESCAPED_UNICODE) }}"></span>
                         </div>
                         <div class="text-[10px]">
                             <template x-if="cycleData.remainingDays > 0">
-                                <span class="text-emerald-600 font-semibold" x-text="cycleData.remainingDays + ' {{ __('days left') }}'"></span>
+                                <span class="text-emerald-600 font-semibold" x-text="(cycleData.remainingDays === 1 ? {{ json_encode(__(':days day left'), JSON_UNESCAPED_UNICODE) }} : {{ json_encode(__(':days days left'), JSON_UNESCAPED_UNICODE) }}).replace(':days', cycleData.remainingDays)"></span>
                             </template>
                             <template x-if="cycleData.remainingDays <= 0 && cycleData.currentExpiryDate">
                                 <span class="text-rose-600 font-semibold">{{ __('Expired') }}</span>
@@ -134,7 +134,7 @@
                                     @click="setAdvanceMonths(m)" 
                                     class="px-2.5 py-1 rounded-md text-xs font-mono font-bold transition cursor-pointer"
                                     :class="payForm.months === m ? 'bg-teal-600 text-white shadow-xs' : 'bg-white text-slate-700 hover:bg-teal-100 border border-slate-200'"
-                                    x-text="m + (m === 1 ? ' {{ __('Month') }}' : ' {{ __('Months') }}')">
+                                    x-text="(m === 1 ? {{ json_encode(__(':count Month'), JSON_UNESCAPED_UNICODE) }} : {{ json_encode(__(':count Months'), JSON_UNESCAPED_UNICODE) }}).replace(':count', m)">
                             </button>
                         </template>
                     </div>
@@ -308,16 +308,16 @@
                                             <i class="fas fa-hand-holding-dollar text-emerald-700"></i>
                                             <span>{{ __('Cash Collection & Wallet Debit:') }}</span>
                                         </span>
-                                        <span class="font-mono text-emerald-800 text-[10px]" x-text="'{{ __('Commission') }}: ' + packageData.resellerCommissionRate + '%'"></span>
+                                        <span class="font-mono text-emerald-800 text-[10px]" x-text="{{ json_encode(__('Commission: :rate%'), JSON_UNESCAPED_UNICODE) }}.replace(':rate', packageData.resellerCommissionRate)"></span>
                                     </div>
                                     <div class="grid grid-cols-2 gap-2 font-mono text-[10.5px]">
                                         <div>
                                             <span class="text-slate-600 font-sans">{{ __('Cash in Hand:') }}</span>
-                                            <strong class="text-slate-900" x-text="'{{ $currencySymbol ?? '৳' }}' + Number(payForm.amount || 0).toFixed(2)"></strong>
+                                            <strong class="text-slate-900" x-text="{{ json_encode($currencySymbol ?? '৳', JSON_UNESCAPED_UNICODE) }} + Number(payForm.amount || 0).toFixed(2)"></strong>
                                         </div>
                                         <div class="text-right">
                                             <span class="text-slate-600 font-sans">{{ __('Net Wallet Debit:') }}</span>
-                                            <strong class="text-rose-700 font-bold" x-text="'{{ $currencySymbol ?? '৳' }}' + (Number(payForm.amount || 0) * (1 - (packageData.resellerCommissionRate / 100))).toFixed(2)"></strong>
+                                            <strong class="text-rose-700 font-bold" x-text="{{ json_encode($currencySymbol ?? '৳', JSON_UNESCAPED_UNICODE) }} + (Number(payForm.amount || 0) * (1 - (packageData.resellerCommissionRate / 100))).toFixed(2)"></strong>
                                         </div>
                                     </div>
                                     <div class="text-[10px] pt-1 flex items-center justify-between"
@@ -338,16 +338,16 @@
                                             <i class="fas fa-gift text-pink-700"></i>
                                             <span>{{ __('bKash API Checkout & Commission:') }}</span>
                                         </span>
-                                        <span class="font-mono text-pink-800 text-[10px]" x-text="'{{ __('Rate') }}: ' + packageData.resellerCommissionRate + '%'"></span>
+                                        <span class="font-mono text-pink-800 text-[10px]" x-text="{{ json_encode(__('Rate: :rate%'), JSON_UNESCAPED_UNICODE) }}.replace(':rate', packageData.resellerCommissionRate)"></span>
                                     </div>
                                     <div class="grid grid-cols-2 gap-2 font-mono text-[10.5px]">
                                         <div>
                                             <span class="text-slate-600 font-sans">{{ __('Customer Pays (Full):') }}</span>
-                                            <strong class="text-slate-900" x-text="'{{ $currencySymbol ?? '৳' }}' + Number(payForm.amount || 0).toFixed(2)"></strong>
+                                            <strong class="text-slate-900" x-text="{{ json_encode($currencySymbol ?? '৳', JSON_UNESCAPED_UNICODE) }} + Number(payForm.amount || 0).toFixed(2)"></strong>
                                         </div>
                                         <div class="text-right">
                                             <span class="text-slate-600 font-sans">{{ __('Commission Earned:') }}</span>
-                                            <strong class="text-emerald-700 font-bold" x-text="'+{{ $currencySymbol ?? '৳' }}' + (Number(payForm.amount || 0) * (packageData.resellerCommissionRate / 100)).toFixed(2)"></strong>
+                                            <strong class="text-emerald-700 font-bold" x-text="'+' + {{ json_encode($currencySymbol ?? '৳', JSON_UNESCAPED_UNICODE) }} + (Number(payForm.amount || 0) * (packageData.resellerCommissionRate / 100)).toFixed(2)"></strong>
                                         </div>
                                     </div>
                                     <div class="text-[10px] text-pink-700 pt-0.5">
@@ -367,7 +367,7 @@
                         </label>
                         <input type="text" 
                                x-model="payForm.billing_month" 
-                               placeholder="e.g. September 2026"
+                               placeholder="{{ __('e.g. September 2026') }}"
                                class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 text-slate-800 focus:bg-white focus:border-teal-500 transition">
                     </div>
 
@@ -377,7 +377,7 @@
                         </label>
                         <input type="text" 
                                x-model="payForm.transaction_id" 
-                               placeholder="e.g. 9J28KLM..."
+                               placeholder="{{ __('e.g. 9J28KLM...') }}"
                                class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 text-slate-800 font-mono focus:bg-white focus:border-teal-500 transition">
                     </div>
                 </div>
@@ -389,7 +389,7 @@
                     </label>
                     <input type="text" 
                            x-model="payForm.notes" 
-                           placeholder="e.g. Collected by Area Agent / Shop Counter..."
+                           placeholder="{{ __('e.g. Collected by Area Agent / Shop Counter...') }}"
                            class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 text-slate-800 focus:bg-white focus:border-teal-500 transition">
                 </div>
 
@@ -430,7 +430,7 @@
                         class="font-medium text-xs px-4 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow-xs disabled:opacity-50 text-white cursor-pointer"
                         :class="payForm.payment_method === 'bkash' ? 'bg-pink-600 hover:bg-pink-700' : 'bg-teal-600 hover:bg-teal-700'">
                     <i class="fas" :class="isPayLoading ? 'fa-spinner fa-spin' : (payForm.payment_method === 'bkash' ? 'fa-external-link-alt' : 'fa-receipt')"></i>
-                    <span x-text="isPayLoading ? '{{ __('Processing...') }}' : (payForm.payment_method === 'bkash' ? '{{ __('Pay with bKash Checkout') }}' : '{{ __('Confirm & Collect Payment') }}')"></span>
+                    <span x-text="isPayLoading ? {{ json_encode(__('Processing...'), JSON_UNESCAPED_UNICODE) }} : (payForm.payment_method === 'bkash' ? {{ json_encode(__('Pay with bKash Checkout'), JSON_UNESCAPED_UNICODE) }} : {{ json_encode(__('Confirm & Collect Payment'), JSON_UNESCAPED_UNICODE) }})"></span>
                 </button>
             </div>
         </form>

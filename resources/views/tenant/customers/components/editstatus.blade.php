@@ -26,7 +26,7 @@
                 </div>
                 <div>
                     <h4 class="text-xs font-semibold text-slate-800">{{ __('Connection Status (Enable/Disable)') }}</h4>
-                    <p class="text-[10.5px] text-slate-500 font-normal">MikroTik Line Enable/Disable &amp; CoA Kick</p>
+                    <p class="text-[10.5px] text-slate-500 font-normal">{{ __('MikroTik Line Enable/Disable & CoA Kick') }}</p>
                 </div>
             </div>
             <button type="button" @click="statusModal = false" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center">
@@ -62,14 +62,14 @@
             <div class="p-3 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-between">
                 <div>
                     <span class="text-xs font-bold text-slate-800 block">{{ __('Quick Action') }}</span>
-                    <span class="text-[10.5px] text-slate-500" x-text="statusForm.status === 'active' ? '{{ __('Line is currently ACTIVE') }}' : '{{ __('Line is currently INACTIVE') }}'"></span>
+                    <span class="text-[10.5px] text-slate-500" x-text="statusForm.status === 'active' ? {{ json_encode(__('Line is currently ACTIVE'), JSON_UNESCAPED_UNICODE) }} : {{ json_encode(__('Line is currently INACTIVE'), JSON_UNESCAPED_UNICODE) }}"></span>
                 </div>
                 <button type="button" 
                         @click="statusForm.status = (statusForm.status === 'active' ? 'suspended' : 'active')"
                         class="px-3 py-1 rounded-md text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
                         :class="statusForm.status === 'active' ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200' : 'bg-rose-100 text-rose-800 hover:bg-rose-200'">
                     <i class="fas" :class="statusForm.status === 'active' ? 'fa-toggle-on text-emerald-600' : 'fa-toggle-off text-rose-600'"></i>
-                    <span x-text="statusForm.status === 'active' ? '{{ __('Switch to Disable') }}' : '{{ __('Switch to Enable') }}'"></span>
+                    <span x-text="statusForm.status === 'active' ? {{ json_encode(__('Switch to Disable'), JSON_UNESCAPED_UNICODE) }} : {{ json_encode(__('Switch to Enable'), JSON_UNESCAPED_UNICODE) }}"></span>
                 </button>
             </div>
 

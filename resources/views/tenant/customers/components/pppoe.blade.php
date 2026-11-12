@@ -26,7 +26,7 @@
                 </div>
                 <div>
                     <h4 class="text-xs font-semibold text-slate-800">{{ __('Update PPPoE Credentials') }}</h4>
-                    <p class="text-[10.5px] text-slate-500 font-normal">MikroTik Router &amp; FreeRADIUS AAA Sync</p>
+                    <p class="text-[10.5px] text-slate-500 font-normal">{{ __('MikroTik Router & FreeRADIUS AAA Sync') }}</p>
                 </div>
             </div>
             <button type="button" @click="pppoeModal = false" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center">

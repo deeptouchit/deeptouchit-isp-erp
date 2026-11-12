@@ -38,7 +38,7 @@ class TenantCustomerPaymentController extends Controller
             $tenant = Tenant::first();
         }
         if (!$tenant) {
-            abort(404, 'ISP Tenant record not found.');
+            abort(404, __('ISP Tenant record not found.'));
         }
         return $tenant;
     }
@@ -49,6 +49,7 @@ class TenantCustomerPaymentController extends Controller
     public function receivePayment(Request $request, int $id): JsonResponse
     {
         $tenant = $this->getTenant();
+        $currency = $tenant->currency_symbol ?? '৳';
         $customer = TenantCustomer::where('tenant_id', $tenant->id)->findOrFail($id);
 
         $validated = $request->validate([
@@ -77,7 +78,7 @@ class TenantCustomerPaymentController extends Controller
         $shouldReactivate = $request->boolean('reactivate_line', true);
 
         return DB::transaction(function () use (
-            $tenant, $customer, $mode, $amountPaid, $discount, $totalCovered, 
+            $tenant, $currency, $customer, $mode, $amountPaid, $discount, $totalCovered, 
             $months, $method, $trxId, $billingMonth, $notes, 
             $shouldExtendValidity, $shouldReactivate, $request
         ) {
@@ -148,7 +149,11 @@ class TenantCustomerPaymentController extends Controller
                 'status' => 'completed',
                 'paid_at' => Carbon::now(),
                 'transaction_id' => $trxId ?: ('TRX-' . strtoupper(substr(md5(uniqid()), 0, 10))),
-                'notes' => $notes ?: ($mode === 'advance' ? "Advance recharge for {$months} month(s)" : "Bill payment for {$billingMonth}"),
+                'notes' => $notes ?: ($mode === 'advance'
+                    ? ($months === 1
+                        ? __('Advance recharge for :count month', ['count' => $months])
+                        : __('Advance recharge for :count months', ['count' => $months]))
+                    : __('Bill payment for :month', ['month' => $billingMonth])),
             ]);
 
             // 5.1 Settle matching or open TenantCustomerInvoice
@@ -208,7 +213,7 @@ class TenantCustomerPaymentController extends Controller
                             'payer_account' => $customer->phone,
                             'payer_name' => $customer->name,
                             'status' => 'SUCCESS',
-                            'status_message' => 'Cleared from Customer Collections',
+                            'status_message' => __('Cleared from Customer Collections'),
                             'ip_address' => $request->ip(),
                             'initiated_at' => Carbon::now(),
                             'completed_at' => Carbon::now(),
@@ -220,12 +225,13 @@ class TenantCustomerPaymentController extends Controller
             }
 
             // 6. Sync to FreeRADIUS AAA & MikroTik RouterOS
-            $syncMsg = '';
+            $radiusSynced = false;
+            $mikrotikSynced = false;
             try {
                 $radiusService = new RadiusService();
                 $radiusRes = $radiusService->syncCustomerSubscriber($customer);
                 if (!empty($radiusRes['success'])) {
-                    $syncMsg .= ' & FreeRADIUS active';
+                    $radiusSynced = true;
                 }
             } catch (\Exception $e) {
                 // Non-blocking
@@ -235,20 +241,32 @@ class TenantCustomerPaymentController extends Controller
                 $mikrotikApi = new MikrotikApiService();
                 $syncRes = $mikrotikApi->syncCustomerToMikrotik($customer);
                 if (!empty($syncRes['success'])) {
-                    $syncMsg .= ' & MikroTik unblocked';
+                    $mikrotikSynced = true;
                 }
             } catch (\Exception $e) {
                 // Non-blocking
             }
 
             // 7. Audit Trail Log
+            $logParams = [
+                'currency' => $currency,
+                'amount' => number_format($amountPaid, 2),
+                'invoice' => $invoiceNo,
+                'name' => $customer->name,
+                'username' => $customer->username,
+                'method' => $payment->payment_method_name,
+            ];
+            $logDescription = $isReactivated
+                ? __('Received payment of :currency:amount (Invoice: :invoice) from subscriber :name (:username) via :method. Line re-activated.', $logParams)
+                : __('Received payment of :currency:amount (Invoice: :invoice) from subscriber :name (:username) via :method.', $logParams);
+
             TenantActivityLog::create([
                 'tenant_id' => $tenant->id,
                 'actor_type' => 'App\Models\User',
                 'actor_id' => Auth::id() ?: 1,
-                'actor_name' => Auth::user()?->name ?: 'Admin',
+                'actor_name' => Auth::user()?->name ?: __('Admin'),
                 'event_type' => 'CUSTOMER_PAYMENT_COLLECTED',
-                'description' => "Received payment of ৳" . number_format($amountPaid, 2) . " (Invoice: {$invoiceNo}) from subscriber '{$customer->name}' ({$customer->username}) via {$payment->payment_method_name}." . ($isReactivated ? " Line re-activated." : ""),
+                'description' => $logDescription,
                 'ip_address' => $request->ip(),
                 'user_agent' => $request->userAgent(),
                 'metadata' => [
@@ -270,9 +288,24 @@ class TenantCustomerPaymentController extends Controller
                 $remainingDays = $customer->expiry_date->isPast() ? 0 : (int) $today->diffInDays($customer->expiry_date, false);
             }
 
+            $msgParams = [
+                'currency' => $currency,
+                'amount' => number_format($amountPaid, 2),
+                'invoice' => $invoiceNo,
+            ];
+            if ($radiusSynced && $mikrotikSynced) {
+                $responseMessage = __('Payment of :currency:amount received successfully! (Receipt: :invoice) FreeRADIUS active & MikroTik unblocked.', $msgParams);
+            } elseif ($radiusSynced) {
+                $responseMessage = __('Payment of :currency:amount received successfully! (Receipt: :invoice) FreeRADIUS active.', $msgParams);
+            } elseif ($mikrotikSynced) {
+                $responseMessage = __('Payment of :currency:amount received successfully! (Receipt: :invoice) MikroTik unblocked.', $msgParams);
+            } else {
+                $responseMessage = __('Payment of :currency:amount received successfully! (Receipt: :invoice)', $msgParams);
+            }
+
             return response()->json([
                 'success' => true,
-                'message' => "Payment of ৳" . number_format($amountPaid, 2) . " received successfully! (Receipt: {$invoiceNo}){$syncMsg}",
+                'message' => $responseMessage,
                 'payment' => [
                     'id' => $payment->id,
                     'invoice_no' => $payment->invoice_no,
@@ -280,17 +313,17 @@ class TenantCustomerPaymentController extends Controller
                     'discount' => number_format($payment->discount, 2),
                     'total' => number_format($payment->amount + $payment->discount, 2),
                     'method' => $payment->payment_method_name,
-                    'paid_at' => $payment->paid_at->format('d M Y, h:i A'),
+                    'paid_at' => $payment->paid_at->translatedFormat('d M Y, h:i A'),
                     'transaction_id' => $payment->transaction_id,
                     'billing_month' => $payment->billing_month,
-                    'collector_name' => Auth::user()?->name ?: 'Admin',
+                    'collector_name' => Auth::user()?->name ?: __('Admin'),
                     'notes' => $payment->notes,
                 ],
                 'customer' => [
                     'id' => $customer->id,
                     'due_amount' => number_format($customer->due_amount, 2),
                     'due_amount_raw' => (float) $customer->due_amount,
-                    'expiry_date' => $customer->expiry_date ? $customer->expiry_date->format('d M Y') : '--',
+                    'expiry_date' => $customer->expiry_date ? $customer->expiry_date->translatedFormat('d M Y') : '--',
                     'expiry_raw' => $customer->expiry_date ? $customer->expiry_date->format('Y-m-d') : '',
                     'remaining_days' => $remainingDays,
                     'status' => $customer->status,
@@ -549,6 +582,7 @@ class TenantCustomerPaymentController extends Controller
     public function processBulkPayment(Request $request): JsonResponse
     {
         $tenant = $this->getTenant();
+        $currency = $tenant->currency_symbol ?? '৳';
 
         $validated = $request->validate([
             'customer_ids' => 'required|array|min:1',
@@ -570,7 +604,7 @@ class TenantCustomerPaymentController extends Controller
         $resellerId = $validated['reseller_id'] ?? null;
 
         return DB::transaction(function () use (
-            $tenant, $customerIds, $method, $billingMonth, $notes,
+            $tenant, $currency, $customerIds, $method, $billingMonth, $notes,
             $shouldExtendValidity, $shouldReactivate, $resellerId, $request
         ) {
             $customers = TenantCustomer::where('tenant_id', $tenant->id)
@@ -581,7 +615,7 @@ class TenantCustomerPaymentController extends Controller
             if ($customers->isEmpty()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'No matching customers found for bulk processing.',
+                    'message' => __('No matching customers found for bulk processing.'),
                 ], 422);
             }
 
@@ -609,7 +643,7 @@ class TenantCustomerPaymentController extends Controller
                 if (!$reseller) {
                     return response()->json([
                         'success' => false,
-                        'message' => 'Reseller Wallet payment requires an active Reseller to be selected.',
+                        'message' => __('Reseller Wallet payment requires an active Reseller to be selected.'),
                     ], 422);
                 }
 
@@ -617,7 +651,11 @@ class TenantCustomerPaymentController extends Controller
                 if ($availableBalance < $adminShare) {
                     return response()->json([
                         'success' => false,
-                        'message' => "Insufficient Reseller Wallet Balance! Available: ৳" . number_format($availableBalance, 2) . ", Required (Admin Share): ৳" . number_format($adminShare, 2),
+                        'message' => __('Insufficient Reseller Wallet Balance! Available: :currency:available, Required (Admin Share): :currency:required', [
+                            'currency' => $currency,
+                            'available' => number_format($availableBalance, 2),
+                            'required' => number_format($adminShare, 2),
+                        ]),
                     ], 422);
                 }
 
@@ -636,7 +674,14 @@ class TenantCustomerPaymentController extends Controller
                     'balance_after' => $reseller->wallet_balance,
                     'payment_method' => 'reseller_wallet',
                     'reference_no' => 'BULK-' . count($customers) . '-' . date('YmdHis'),
-                    'description' => "Bulk payment for " . count($customers) . " subscribers ({$billingMonth}). Gross: ৳" . number_format($totalGrossBill, 2) . ", Reseller Profit: ৳" . number_format($resellerCommission, 2) . ", Admin Share Deducted: ৳" . number_format($adminShare, 2),
+                    'description' => __('Bulk payment for :count subscribers (:month). Gross: :currency:gross, Reseller Profit: :currency:profit, Admin Share Deducted: :currency:admin', [
+                        'count' => count($customers),
+                        'month' => $billingMonth,
+                        'currency' => $currency,
+                        'gross' => number_format($totalGrossBill, 2),
+                        'profit' => number_format($resellerCommission, 2),
+                        'admin' => number_format($adminShare, 2),
+                    ]),
                     'created_by' => Auth::id() ?: 1,
                 ]);
             }
@@ -706,7 +751,9 @@ class TenantCustomerPaymentController extends Controller
                     'status' => 'completed',
                     'paid_at' => Carbon::now(),
                     'transaction_id' => 'BULK-' . strtoupper(substr(md5(uniqid() . $customer->id), 0, 8)),
-                    'notes' => $notes ?: "Bulk payment clearance for {$billingMonth}" . ($reseller ? " (Reseller: {$reseller->name})" : ""),
+                    'notes' => $notes ?: ($reseller
+                        ? __('Bulk payment clearance for :month (Reseller: :reseller)', ['month' => $billingMonth, 'reseller' => $reseller->name])
+                        : __('Bulk payment clearance for :month', ['month' => $billingMonth])),
                 ]);
 
                 // Settle matching or open TenantCustomerInvoice
@@ -757,9 +804,16 @@ class TenantCustomerPaymentController extends Controller
                 'tenant_id' => $tenant->id,
                 'actor_type' => 'App\Models\User',
                 'actor_id' => Auth::id() ?: 1,
-                'actor_name' => Auth::user()?->name ?: 'Admin',
+                'actor_name' => Auth::user()?->name ?: __('Admin'),
                 'event_type' => 'CUSTOMER_BULK_PAYMENT_COLLECTED',
-                'description' => "Bulk payment processed for {$processedCount} subscribers. Total Gross: ৳" . number_format($totalAmountCollected, 2) . ", Admin Share: ৳" . number_format($adminShare, 2) . ", Reseller Share: ৳" . number_format($resellerCommission, 2) . " via {$method}.",
+                'description' => __('Bulk payment processed for :count subscribers. Total Gross: :currency:gross, Admin Share: :currency:admin, Reseller Share: :currency:profit via :method.', [
+                    'count' => $processedCount,
+                    'currency' => $currency,
+                    'gross' => number_format($totalAmountCollected, 2),
+                    'admin' => number_format($adminShare, 2),
+                    'profit' => number_format($resellerCommission, 2),
+                    'method' => $method,
+                ]),
                 'ip_address' => $request->ip(),
                 'user_agent' => $request->userAgent(),
                 'metadata' => [
@@ -782,7 +836,12 @@ class TenantCustomerPaymentController extends Controller
                 'admin_share' => number_format($adminShare, 2),
                 'reseller_commission' => number_format($resellerCommission, 2),
                 'reseller_wallet_balance' => $reseller ? number_format($reseller->wallet_balance, 2) : null,
-                'message' => "Bulk payment completed for {$processedCount} subscribers! Total: ৳" . number_format($totalAmountCollected, 2) . " (Admin Share: ৳" . number_format($adminShare, 2) . ")",
+                'message' => __('Bulk payment completed for :count subscribers! Total: :currency:total (Admin Share: :currency:admin)', [
+                    'count' => $processedCount,
+                    'currency' => $currency,
+                    'total' => number_format($totalAmountCollected, 2),
+                    'admin' => number_format($adminShare, 2),
+                ]),
             ]);
         });
     }
@@ -801,11 +860,12 @@ class TenantCustomerPaymentController extends Controller
     public function printReceipt(Request $request, int $id): View
     {
         $tenant = $this->getTenant();
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
         $payment = TenantCustomerPayment::where('tenant_id', $tenant->id)
             ->with(['customer.package', 'collector'])
             ->findOrFail($id);
 
-        return view('tenant.customers.receipt', compact('tenant', 'payment'));
+        return view('tenant.customers.receipt', compact('tenant', 'payment', 'currencySymbol'));
     }
 
     /**

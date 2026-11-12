@@ -64,9 +64,9 @@ class TenantCustomer extends Model
     public function getPackageDisplayNameAttribute(): string
     {
         if ($this->package) {
-            return $this->package->name ?: ($this->package->mikrotik_profile ?: ($this->package->package_name ?: 'Custom Package'));
+            return $this->package->name ?: ($this->package->mikrotik_profile ?: ($this->package->package_name ?: __('Custom Package')));
         }
-        return $this->package_name ?: 'Custom Package';
+        return $this->package_name ?: __('Custom Package');
     }
 
     /**
@@ -262,37 +262,37 @@ class TenantCustomer extends Model
 
         return match ($status) {
             'active' => [
-                'label' => 'Active',
+                'label' => __('Active'),
                 'class' => 'bg-emerald-50 text-emerald-700 border-emerald-200',
                 'dot' => 'bg-emerald-500',
                 'icon' => 'fa-circle-check',
             ],
             'due' => [
-                'label' => 'Due',
+                'label' => __('Due'),
                 'class' => 'bg-amber-50 text-amber-700 border-amber-200',
                 'dot' => 'bg-amber-500',
                 'icon' => 'fa-clock',
             ],
             'expired' => [
-                'label' => 'Expired',
+                'label' => __('Expired'),
                 'class' => 'bg-rose-50 text-rose-700 border-rose-200',
                 'dot' => 'bg-rose-500',
                 'icon' => 'fa-triangle-exclamation',
             ],
             'suspended' => [
-                'label' => 'Suspended',
+                'label' => __('Suspended'),
                 'class' => 'bg-red-50 text-red-700 border-red-200',
                 'dot' => 'bg-red-500',
                 'icon' => 'fa-ban',
             ],
             'disabled', 'disconnected', 'archived' => [
-                'label' => 'Disabled',
+                'label' => __('Disabled'),
                 'class' => 'bg-slate-100 text-slate-700 border-slate-200',
                 'dot' => 'bg-slate-400',
                 'icon' => 'fa-circle-pause',
             ],
             default => [
-                'label' => ucfirst($status),
+                'label' => __(ucfirst($status)),
                 'class' => 'bg-slate-50 text-slate-700 border-slate-200',
                 'dot' => 'bg-slate-400',
                 'icon' => 'fa-info-circle',
@@ -320,7 +320,9 @@ class TenantCustomer extends Model
         $diff = (int)$today->diffInDays($expiry, false);
 
         if ($diff > 0) {
-            $dayText = $diff . ' ' . ($diff === 1 ? 'Day' : 'Days') . ' Left';
+            $dayText = $diff === 1
+                ? __(':count Day Left', ['count' => $diff])
+                : __(':count Days Left', ['count' => $diff]);
             if ($diff <= 3) {
                 return [
                     'days' => $diff,
@@ -344,14 +346,16 @@ class TenantCustomer extends Model
             return [
                 'days' => 0,
                 'state' => 'today',
-                'label' => 'Expires Today',
+                'label' => __('Expires Today'),
                 'class' => 'bg-amber-50 text-amber-800 border-amber-300 shadow-2xs font-bold animate-pulse',
                 'dot' => 'bg-amber-500 ring-2 ring-amber-300',
             ];
         }
 
         $overdueDays = abs($diff);
-        $overdueText = $overdueDays . ' ' . ($overdueDays === 1 ? 'Day' : 'Days') . ' Over';
+        $overdueText = $overdueDays === 1
+            ? __(':count Day Over', ['count' => $overdueDays])
+            : __(':count Days Over', ['count' => $overdueDays]);
 
         return [
             'days' => $diff,
@@ -371,7 +375,7 @@ class TenantCustomer extends Model
             return [
                 'scope' => 'RESELLER',
                 'label' => $this->reseller->name,
-                'sub_label' => 'Partner (' . $this->reseller->code . ')',
+                'sub_label' => __('Partner (:code)', ['code' => $this->reseller->code]),
                 'class' => 'bg-purple-50 text-purple-700 border-purple-200',
                 'icon' => 'fa-handshake',
             ];
@@ -379,8 +383,8 @@ class TenantCustomer extends Model
 
         return [
             'scope' => 'ISP_DIRECT',
-            'label' => 'ISP Direct Retail',
-            'sub_label' => 'Direct Subscriber',
+            'label' => __('ISP Direct Retail'),
+            'sub_label' => __('Direct Subscriber'),
             'class' => 'bg-cyan-50 text-cyan-700 border-cyan-200',
             'icon' => 'fa-building',
         ];
@@ -394,7 +398,7 @@ class TenantCustomer extends Model
         if ($this->online_status === 'online') {
             return [
                 'status' => 'online',
-                'label' => 'Online',
+                'label' => __('Online'),
                 'class' => 'bg-emerald-50 text-emerald-700 border-emerald-200',
                 'dot' => 'bg-emerald-500 ring-2 ring-emerald-300 animate-pulse',
                 'icon' => 'fa-signal',
@@ -403,7 +407,7 @@ class TenantCustomer extends Model
 
         return [
             'status' => 'offline',
-            'label' => 'Offline',
+            'label' => __('Offline'),
             'class' => 'bg-slate-100 text-slate-600 border-slate-200',
             'dot' => 'bg-slate-400',
             'icon' => 'fa-power-off',

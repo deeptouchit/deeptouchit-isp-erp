@@ -82,16 +82,16 @@ class TenantCustomerPayment extends Model
     public function getPaymentMethodNameAttribute(): string
     {
         return match (strtolower($this->payment_method ?? 'cash')) {
-            'cash' => 'Cash in Hand',
-            'bkash' => 'bKash (MFS)',
-            'bangla_qr', 'banglaqr' => 'Bangla QR',
-            'nagad' => 'Nagad (MFS)',
-            'rocket' => 'Rocket (MFS)',
-            'bank_transfer', 'bank' => 'Bank Transfer',
-            'pos' => 'Card / POS',
-            'online' => 'Online Gateway',
-            'reseller_wallet' => 'Reseller Wallet',
-            default => ucfirst($this->payment_method ?? 'Cash'),
+            'cash' => __('Cash in Hand'),
+            'bkash' => __('bKash (MFS)'),
+            'bangla_qr', 'banglaqr' => __('Bangla QR'),
+            'nagad' => __('Nagad (MFS)'),
+            'rocket' => __('Rocket (MFS)'),
+            'bank_transfer', 'bank' => __('Bank Transfer'),
+            'pos' => __('Card / POS'),
+            'online' => __('Online Gateway'),
+            'reseller_wallet' => __('Reseller Wallet'),
+            default => __(ucfirst($this->payment_method ?? 'Cash')),
         };
     }
 
@@ -122,9 +122,9 @@ class TenantCustomerPayment extends Model
         if (empty($this->billing_month)) return '--';
         try {
             if (preg_match('/^\d{4}-\d{2}$/', $this->billing_month)) {
-                return Carbon::createFromFormat('Y-m', $this->billing_month)->format('F Y');
+                return Carbon::createFromFormat('Y-m', $this->billing_month)->translatedFormat('F Y');
             }
-            return Carbon::parse($this->billing_month)->format('F Y');
+            return Carbon::parse($this->billing_month)->translatedFormat('F Y');
         } catch (\Exception $e) {
             return $this->billing_month;
         }
@@ -137,25 +137,25 @@ class TenantCustomerPayment extends Model
     {
         return match (strtolower($this->status ?? 'paid')) {
             'completed', 'paid', 'approved' => [
-                'label' => 'Completed',
+                'label' => __('Completed'),
                 'class' => 'bg-emerald-50 text-emerald-700 border-emerald-200',
                 'icon' => 'fa-check-circle',
                 'dot' => 'bg-emerald-500'
             ],
             'pending' => [
-                'label' => 'Pending',
+                'label' => __('Pending'),
                 'class' => 'bg-amber-50 text-amber-700 border-amber-200',
                 'icon' => 'fa-clock',
                 'dot' => 'bg-amber-500'
             ],
             'void', 'refunded', 'cancelled' => [
-                'label' => 'Voided',
+                'label' => __('Voided'),
                 'class' => 'bg-slate-100 text-slate-600 border-slate-200',
                 'icon' => 'fa-ban',
                 'dot' => 'bg-slate-400'
             ],
             default => [
-                'label' => ucfirst($this->status ?? 'Paid'),
+                'label' => __(ucfirst($this->status ?? 'Paid')),
                 'class' => 'bg-slate-50 text-slate-700 border-slate-200',
                 'icon' => 'fa-circle-info',
                 'dot' => 'bg-slate-400'

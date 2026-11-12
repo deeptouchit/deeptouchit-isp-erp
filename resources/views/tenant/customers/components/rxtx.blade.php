@@ -27,7 +27,7 @@
                 <div>
                     <h4 class="text-xs font-semibold text-slate-800">{{ __('Real-time Bandwidth Monitor') }}</h4>
                     <p class="text-[10.5px] text-slate-500 font-normal">
-                        {{ __('User') }}: <span class="font-mono font-bold text-slate-700" x-text="($data.rxtxCustomer && $data.rxtxCustomer.username) ? $data.rxtxCustomer.username : '{{ $customer->username ?? 'PPPoE Client' }}'">{{ $customer->username ?? 'PPPoE Client' }}</span> &bull; 
+                        {{ __('User') }}: <span class="font-mono font-bold text-slate-700" x-text="($data.rxtxCustomer && $data.rxtxCustomer.username) ? $data.rxtxCustomer.username : {{ json_encode($customer->username ?? __('PPPoE Client'), JSON_UNESCAPED_UNICODE) }}">{{ $customer->username ?? __('PPPoE Client') }}</span> &bull; 
                         {{ __('ID') }}: <span class="font-mono text-slate-600" x-text="($data.rxtxCustomer && ($data.rxtxCustomer.customer_id || $data.rxtxCustomer.id)) ? ($data.rxtxCustomer.customer_id || ('CUST-' + $data.rxtxCustomer.id)) : '{{ $customer->customer_id ?? ('CUST-' . ($customer->id ?? '')) }}'">{{ $customer->customer_id ?? ('CUST-' . ($customer->id ?? '')) }}</span>
                     </p>
                 </div>
@@ -38,7 +38,7 @@
                 <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9.5px] font-bold tracking-wider uppercase border"
                      :class="traffic.is_online ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200'">
                     <span class="w-1.5 h-1.5 rounded-full" :class="traffic.is_online ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'"></span>
-                    <span x-text="traffic.is_online ? '{{ __('Online') }}' : '{{ __('Offline') }}'"></span>
+                    <span x-text="traffic.is_online ? {{ json_encode(__('Online'), JSON_UNESCAPED_UNICODE) }} : {{ json_encode(__('Offline'), JSON_UNESCAPED_UNICODE) }}"></span>
                 </div>
 
                 <button type="button" 
@@ -87,7 +87,7 @@
                 </div>
                 <div class="p-2 rounded-lg bg-slate-50 border border-slate-200/80">
                     <div class="text-[9.5px] text-slate-400 uppercase font-sans font-medium">{{ __('Session Uptime') }}</div>
-                    <div class="font-bold text-emerald-700 truncate" x-text="traffic.uptime || '{{ __('Offline') }}'">--</div>
+                    <div class="font-bold text-emerald-700 truncate" x-text="traffic.uptime || {{ json_encode(__('Offline'), JSON_UNESCAPED_UNICODE) }}">--</div>
                 </div>
                 <div class="p-2 rounded-lg bg-slate-50 border border-slate-200/80">
                     <div class="text-[9.5px] text-slate-400 uppercase font-sans font-medium">{{ __('Caller MAC') }}</div>
@@ -131,7 +131,7 @@
                         class="px-3 py-1.5 rounded-lg border text-xs font-semibold transition flex items-center gap-1.5 shadow-2xs"
                         :class="isLivePolling ? 'border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100' : 'border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100'">
                     <i class="fas" :class="isLivePolling ? 'fa-pause' : 'fa-play'"></i>
-                    <span x-text="isLivePolling ? '{{ __('Pause Monitor') }}' : '{{ __('Resume Live') }}'"></span>
+                    <span x-text="isLivePolling ? {{ json_encode(__('Pause Monitor'), JSON_UNESCAPED_UNICODE) }} : {{ json_encode(__('Resume Live'), JSON_UNESCAPED_UNICODE) }}"></span>
                 </button>
 
                 <div class="flex items-center gap-2">
