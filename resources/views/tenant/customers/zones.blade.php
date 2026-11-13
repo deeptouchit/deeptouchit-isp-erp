@@ -163,6 +163,13 @@
                     <input type="text"
                            name="search"
                            x-model="searchQuery"
+                           @input="
+                               const term = $event.target.value.trim().toLowerCase();
+                               document.querySelectorAll('.saas-table tbody tr:not(.no-record-row)').forEach(row => {
+                                   row.style.display = (!term || row.innerText.toLowerCase().includes(term)) ? '' : 'none';
+                               });
+                           "
+                           @keydown.enter.prevent="$el.closest('form').submit()"
                            placeholder="{{ __('Search zone name, code, sub-area, staff...') }}"
                            autocomplete="off"
                            class="w-full h-[34px] pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition placeholder:text-slate-400">

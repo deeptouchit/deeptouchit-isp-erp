@@ -478,17 +478,6 @@ function collectorCollectionsManager() {
             });
 
             this.totalMatchingRows = matched;
-
-            // Debounced server-side submit for pagination accuracy
-            clearTimeout(this.searchDebounceTimer);
-            this.isSearching = true;
-            this.searchDebounceTimer = setTimeout(() => {
-                this.isSearching = false;
-                if (q.length === 0 || q.length >= 2) {
-                    const form = document.getElementById('collectorFilterForm');
-                    if (form) form.submit();
-                }
-            }, 600);
         },
 
         submitSearchNow() {

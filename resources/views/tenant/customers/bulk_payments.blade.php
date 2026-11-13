@@ -182,6 +182,7 @@
                            name="search" 
                            id="bulkSearchInput"
                            x-model="searchQuery"
+                           @input="filterRowsOnly($event.target.value)"
                            @keydown.enter.prevent="submitSearchNow()"
                            placeholder="{{ __('Search Name, ID, Username, Phone, IP...') }}" 
                            class="w-full h-[34px] pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition placeholder:text-slate-400"
@@ -764,8 +765,24 @@ function bulkPaymentManager() {
 
         clearLiveSearch() {
             this.searchQuery = '';
+            const rows = document.querySelectorAll('.saas-table tbody tr:not(.no-record-row)');
+            rows.forEach(row => { row.style.display = ''; });
             const form = document.getElementById('bulkPaymentFilterForm');
-            if (form) form.submit();
+            if (form) {
+                const input = form.querySelector('input[name="search"]');
+                if (input) input.value = '';
+                form.submit();
+            }
+        },
+
+        filterRowsOnly(val) {
+            const term = (val || '').trim().toLowerCase();
+            const rows = document.querySelectorAll('.saas-table tbody tr:not(.no-record-row)');
+            rows.forEach(row => {
+                const text = row.innerText.toLowerCase();
+                const matches = !term || text.includes(term);
+                row.style.display = matches ? '' : 'none';
+            });
         },
 
         submitSearchNow() {

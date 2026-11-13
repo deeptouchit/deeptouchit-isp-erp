@@ -2057,15 +2057,6 @@ function customerMasterManager() {
 
         handleLiveSearch(val) {
             this.filterRowsOnly(val);
-
-            // Debounced full database search across all pages
-            clearTimeout(this.searchDebounceTimer);
-            this.searchDebounceTimer = setTimeout(() => {
-                const form = document.getElementById('customerFilterForm');
-                if (form) {
-                    form.submit();
-                }
-            }, 600);
         },
 
         filterRowsOnly(val) {
