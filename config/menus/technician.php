@@ -147,3 +147,4 @@ return [
         'keywords' => 'profile settings account password প্রোফাইল',
     ],
 ];
+

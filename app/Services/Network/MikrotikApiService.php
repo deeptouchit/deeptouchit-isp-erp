@@ -586,6 +586,69 @@ class MikrotikApiService
     }
 
     /**
+     * Get real-time live traffic metrics for a specific interface (WAN, LAN, Trunk, VLAN).
+     */
+    public function getInterfaceTraffic(TenantRouter $router, string $interfaceName): array
+    {
+        $password = $router->decrypted_password ?: '';
+        if (!$this->connect($router->ip_address, $router->api_port ?: 8728, $router->username ?: 'admin', $password, (bool) $router->use_ssl, 3)) {
+            return [
+                'success' => false,
+                'message' => 'Router connection failed: ' . ($this->getLastError() ?: 'Timeout'),
+                'interface' => $interfaceName,
+                'rx_bps' => 0,
+                'tx_bps' => 0,
+                'rx_mbps' => 0.0,
+                'tx_mbps' => 0.0,
+                'rx_human' => '0.00 Mbps',
+                'tx_human' => '0.00 Mbps',
+                'rx_packets_ps' => 0,
+                'tx_packets_ps' => 0,
+            ];
+        }
+
+        $rxBps = 0;
+        $txBps = 0;
+        $rxPackets = 0;
+        $txPackets = 0;
+
+        $this->writeCommand('/interface/monitor-traffic', [
+            '=interface=' . $interfaceName,
+            '=once='
+        ]);
+        $trafficResults = $this->readAll();
+        foreach ($trafficResults as $row) {
+            if (isset($row['!re'])) {
+                $rxBps = (int)($row['!re']['rx-bits-per-second'] ?? 0);
+                $txBps = (int)($row['!re']['tx-bits-per-second'] ?? 0);
+                $rxPackets = (int)($row['!re']['rx-packets-per-second'] ?? 0);
+                $txPackets = (int)($row['!re']['tx-packets-per-second'] ?? 0);
+                break;
+            }
+        }
+
+        $this->disconnect();
+
+        $rxMbps = round($rxBps / 1000000, 2);
+        $txMbps = round($txBps / 1000000, 2);
+        $rxHuman = $rxMbps >= 1000.0 ? round($rxMbps / 1000, 2) . ' Gbps' : $rxMbps . ' Mbps';
+        $txHuman = $txMbps >= 1000.0 ? round($txMbps / 1000, 2) . ' Gbps' : $txMbps . ' Mbps';
+
+        return [
+            'success' => true,
+            'interface' => $interfaceName,
+            'rx_bps' => $rxBps,
+            'tx_bps' => $txBps,
+            'rx_mbps' => $rxMbps,
+            'tx_mbps' => $txMbps,
+            'rx_human' => $rxHuman,
+            'tx_human' => $txHuman,
+            'rx_packets_ps' => $rxPackets,
+            'tx_packets_ps' => $txPackets,
+        ];
+    }
+
+    /**
      * Format bytes to human readable format.
      */
     public function formatBytes(int $bytes, int $precision = 2): string

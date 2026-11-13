@@ -628,12 +628,6 @@ function billingCatchUpManager() {
         handleLiveSearch(val) {
             this.searchQuery = val;
             this.filterRowsOnly(val);
-
-            clearTimeout(this.searchDebounceTimer);
-            this.isSearching = true;
-            this.searchDebounceTimer = setTimeout(() => {
-                this.fetchData();
-            }, 350);
         },
 
         filterRowsOnly(val) {

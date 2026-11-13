@@ -607,9 +607,7 @@ function mrtgReportManager() {
 
         init() {
             this.renderChart();
-            @if($timescale === 'live')
-                this.startLiveTicker();
-            @endif
+            this.startLiveTicker();
         },
 
         openInterfaceModal(iface) {
@@ -723,29 +721,32 @@ function mrtgReportManager() {
         },
 
         startLiveTicker() {
+            const pollUrl = '{{ route("tenant.reports.mrtg.live") }}?router_id={{ $selectedRouter?->id ?? "all" }}';
             setInterval(async () => {
                 try {
-                    const res = await fetch('{{ route("tenant.reports.mrtg.live") }}');
+                    const res = await fetch(pollUrl);
                     const data = await res.json();
-                    if (data.success && mrtgChartInstance) {
-                        mrtgChartInstance.data.labels.shift();
-                        mrtgChartInstance.data.labels.push(data.timestamp);
-
-                        mrtgChartInstance.data.datasets[0].data.shift();
-                        mrtgChartInstance.data.datasets[0].data.push(data.rx_mbps);
-
-                        mrtgChartInstance.data.datasets[1].data.shift();
-                        mrtgChartInstance.data.datasets[1].data.push(data.tx_mbps);
-
-                        mrtgChartInstance.data.datasets[2].data.shift();
-                        mrtgChartInstance.data.datasets[2].data.push(data.bdix_mbps);
-
-                        mrtgChartInstance.update('none');
-
+                    if (data.success) {
                         const curRxElem = document.getElementById('statCurRx');
                         const curTxElem = document.getElementById('statCurTx');
-                        if (curRxElem) curRxElem.textContent = data.rx_formatted;
-                        if (curTxElem) curTxElem.textContent = data.tx_formatted;
+                        if (curRxElem && data.rx_formatted) curRxElem.textContent = data.rx_formatted;
+                        if (curTxElem && data.tx_formatted) curTxElem.textContent = data.tx_formatted;
+
+                        if (mrtgChartInstance && {{ $timescale === 'live' ? 'true' : 'false' }}) {
+                            mrtgChartInstance.data.labels.shift();
+                            mrtgChartInstance.data.labels.push(data.timestamp);
+
+                            mrtgChartInstance.data.datasets[0].data.shift();
+                            mrtgChartInstance.data.datasets[0].data.push(data.rx_mbps);
+
+                            mrtgChartInstance.data.datasets[1].data.shift();
+                            mrtgChartInstance.data.datasets[1].data.push(data.tx_mbps);
+
+                            mrtgChartInstance.data.datasets[2].data.shift();
+                            mrtgChartInstance.data.datasets[2].data.push(data.bdix_mbps);
+
+                            mrtgChartInstance.update('none');
+                        }
                     }
                 } catch (e) {
                     console.error(this.i18n.live_poll_error, e);

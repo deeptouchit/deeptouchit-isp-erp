@@ -1271,13 +1271,6 @@ function invoiceManager() {
         handleLiveSearch(val) {
             this.searchQuery = val;
             this.filterRowsOnly(val);
-
-            // Debounced full database search via AJAX without page reload or focus loss
-            clearTimeout(this.searchDebounceTimer);
-            this.isSearching = true;
-            this.searchDebounceTimer = setTimeout(() => {
-                this.fetchData();
-            }, 350);
         },
 
         filterRowsOnly(val) {
