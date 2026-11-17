@@ -30,9 +30,9 @@ Application security changes are ready for release through GitHub push and the e
 
 ## Validation
 
-- Security suite: 32 tests, 66 assertions passed.
+- Security suite: 33 tests, 68 assertions passed.
 - Tenant authentication and billing/webhook/automation regression: 22 tests, 120 assertions passed.
-- PHP syntax, JSON parsing, deployment shell syntax, Composer validation and dependency advisory checks passed.
+- PHP syntax, JSON parsing, deployment shell syntax, Composer validation and dependency advisory checks passed. The standalone public webhook is also exercised in a fresh PHP process, including request binding before HTTP kernel bootstrap.
 - Provider HTTP traffic in automated tests is mocked. The user separately confirmed working sandbox payments; no real payment was initiated by the agent.
 - The full legacy test suite was not certified. No claim is made that every application route has undergone penetration testing.
 
