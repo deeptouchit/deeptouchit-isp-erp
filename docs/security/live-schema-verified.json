@@ -1,0 +1,1846 @@
+{
+  "php_version": "8.5.10",
+  "tables": {
+    "tenant_subscriptions": {
+      "exists": true,
+      "columns": [
+        {
+          "name": "id",
+          "type_name": "bigint",
+          "type": "bigint unsigned",
+          "collation": null,
+          "nullable": false,
+          "default": null,
+          "auto_increment": true,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "tenant_id",
+          "type_name": "bigint",
+          "type": "bigint unsigned",
+          "collation": null,
+          "nullable": false,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "plan_id",
+          "type_name": "bigint",
+          "type": "bigint unsigned",
+          "collation": null,
+          "nullable": false,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "billing_cycle",
+          "type_name": "varchar",
+          "type": "varchar(255)",
+          "collation": "utf8mb4_unicode_ci",
+          "nullable": false,
+          "default": "monthly",
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "started_at",
+          "type_name": "timestamp",
+          "type": "timestamp",
+          "collation": null,
+          "nullable": true,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "current_period_start",
+          "type_name": "date",
+          "type": "date",
+          "collation": null,
+          "nullable": true,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "current_period_end",
+          "type_name": "date",
+          "type": "date",
+          "collation": null,
+          "nullable": true,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "next_billing_date",
+          "type_name": "date",
+          "type": "date",
+          "collation": null,
+          "nullable": true,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "grace_period_ends_at",
+          "type_name": "timestamp",
+          "type": "timestamp",
+          "collation": null,
+          "nullable": true,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "status",
+          "type_name": "varchar",
+          "type": "varchar(255)",
+          "collation": "utf8mb4_unicode_ci",
+          "nullable": false,
+          "default": "active",
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "auto_renew",
+          "type_name": "tinyint",
+          "type": "tinyint(1)",
+          "collation": null,
+          "nullable": false,
+          "default": "1",
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "cancelled_at",
+          "type_name": "timestamp",
+          "type": "timestamp",
+          "collation": null,
+          "nullable": true,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "suspended_at",
+          "type_name": "timestamp",
+          "type": "timestamp",
+          "collation": null,
+          "nullable": true,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "created_at",
+          "type_name": "timestamp",
+          "type": "timestamp",
+          "collation": null,
+          "nullable": true,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "updated_at",
+          "type_name": "timestamp",
+          "type": "timestamp",
+          "collation": null,
+          "nullable": true,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        }
+      ],
+      "indexes": [
+        {
+          "name": "primary",
+          "columns": [
+            "id"
+          ],
+          "type": "btree",
+          "unique": true,
+          "primary": true
+        },
+        {
+          "name": "tenant_subscriptions_plan_id_foreign",
+          "columns": [
+            "plan_id"
+          ],
+          "type": "btree",
+          "unique": false,
+          "primary": false
+        },
+        {
+          "name": "tenant_subscriptions_tenant_id_foreign",
+          "columns": [
+            "tenant_id"
+          ],
+          "type": "btree",
+          "unique": false,
+          "primary": false
+        }
+      ],
+      "foreign_keys": [
+        {
+          "name": "tenant_subscriptions_plan_id_foreign",
+          "columns": [
+            "plan_id"
+          ],
+          "foreign_schema": "somitysoft_wordg",
+          "foreign_table": "saas_plans",
+          "foreign_columns": [
+            "id"
+          ],
+          "on_update": "no action",
+          "on_delete": "cascade"
+        },
+        {
+          "name": "tenant_subscriptions_tenant_id_foreign",
+          "columns": [
+            "tenant_id"
+          ],
+          "foreign_schema": "somitysoft_wordg",
+          "foreign_table": "tenants",
+          "foreign_columns": [
+            "id"
+          ],
+          "on_update": "no action",
+          "on_delete": "cascade"
+        }
+      ]
+    },
+    "saas_invoices": {
+      "exists": true,
+      "columns": [
+        {
+          "name": "id",
+          "type_name": "bigint",
+          "type": "bigint unsigned",
+          "collation": null,
+          "nullable": false,
+          "default": null,
+          "auto_increment": true,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "tenant_id",
+          "type_name": "bigint",
+          "type": "bigint unsigned",
+          "collation": null,
+          "nullable": false,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "tenant_subscription_id",
+          "type_name": "bigint",
+          "type": "bigint unsigned",
+          "collation": null,
+          "nullable": true,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "saas_plan_id",
+          "type_name": "bigint",
+          "type": "bigint unsigned",
+          "collation": null,
+          "nullable": true,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "invoice_no",
+          "type_name": "varchar",
+          "type": "varchar(255)",
+          "collation": "utf8mb4_unicode_ci",
+          "nullable": false,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "amount",
+          "type_name": "decimal",
+          "type": "decimal(10,2)",
+          "collation": null,
+          "nullable": false,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "subtotal",
+          "type_name": "decimal",
+          "type": "decimal(10,2)",
+          "collation": null,
+          "nullable": false,
+          "default": "0.00",
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "discount",
+          "type_name": "decimal",
+          "type": "decimal(10,2)",
+          "collation": null,
+          "nullable": false,
+          "default": "0.00",
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "tax",
+          "type_name": "decimal",
+          "type": "decimal(10,2)",
+          "collation": null,
+          "nullable": false,
+          "default": "0.00",
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "paid_amount",
+          "type_name": "decimal",
+          "type": "decimal(10,2)",
+          "collation": null,
+          "nullable": false,
+          "default": "0.00",
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "credit_amount",
+          "type_name": "decimal",
+          "type": "decimal(10,2)",
+          "collation": null,
+          "nullable": false,
+          "default": "0.00",
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "due_amount",
+          "type_name": "decimal",
+          "type": "decimal(10,2)",
+          "collation": null,
+          "nullable": false,
+          "default": "0.00",
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "period_start",
+          "type_name": "date",
+          "type": "date",
+          "collation": null,
+          "nullable": true,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "period_end",
+          "type_name": "date",
+          "type": "date",
+          "collation": null,
+          "nullable": true,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "status",
+          "type_name": "enum",
+          "type": "enum('paid','unpaid','cancelled')",
+          "collation": "utf8mb4_unicode_ci",
+          "nullable": false,
+          "default": "unpaid",
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "payment_method",
+          "type_name": "varchar",
+          "type": "varchar(255)",
+          "collation": "utf8mb4_unicode_ci",
+          "nullable": true,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "trx_id",
+          "type_name": "varchar",
+          "type": "varchar(255)",
+          "collation": "utf8mb4_unicode_ci",
+          "nullable": true,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "due_date",
+          "type_name": "date",
+          "type": "date",
+          "collation": null,
+          "nullable": true,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "paid_at",
+          "type_name": "timestamp",
+          "type": "timestamp",
+          "collation": null,
+          "nullable": true,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "notes",
+          "type_name": "text",
+          "type": "text",
+          "collation": "utf8mb4_unicode_ci",
+          "nullable": true,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "created_at",
+          "type_name": "timestamp",
+          "type": "timestamp",
+          "collation": null,
+          "nullable": true,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "updated_at",
+          "type_name": "timestamp",
+          "type": "timestamp",
+          "collation": null,
+          "nullable": true,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        }
+      ],
+      "indexes": [
+        {
+          "name": "primary",
+          "columns": [
+            "id"
+          ],
+          "type": "btree",
+          "unique": true,
+          "primary": true
+        },
+        {
+          "name": "saas_invoices_invoice_no_unique",
+          "columns": [
+            "invoice_no"
+          ],
+          "type": "btree",
+          "unique": true,
+          "primary": false
+        },
+        {
+          "name": "saas_invoices_saas_plan_id_foreign",
+          "columns": [
+            "saas_plan_id"
+          ],
+          "type": "btree",
+          "unique": false,
+          "primary": false
+        },
+        {
+          "name": "saas_invoices_tenant_id_foreign",
+          "columns": [
+            "tenant_id"
+          ],
+          "type": "btree",
+          "unique": false,
+          "primary": false
+        },
+        {
+          "name": "saas_invoices_tenant_subscription_id_foreign",
+          "columns": [
+            "tenant_subscription_id"
+          ],
+          "type": "btree",
+          "unique": false,
+          "primary": false
+        }
+      ],
+      "foreign_keys": [
+        {
+          "name": "saas_invoices_saas_plan_id_foreign",
+          "columns": [
+            "saas_plan_id"
+          ],
+          "foreign_schema": "somitysoft_wordg",
+          "foreign_table": "saas_plans",
+          "foreign_columns": [
+            "id"
+          ],
+          "on_update": "no action",
+          "on_delete": "set null"
+        },
+        {
+          "name": "saas_invoices_tenant_id_foreign",
+          "columns": [
+            "tenant_id"
+          ],
+          "foreign_schema": "somitysoft_wordg",
+          "foreign_table": "tenants",
+          "foreign_columns": [
+            "id"
+          ],
+          "on_update": "no action",
+          "on_delete": "cascade"
+        },
+        {
+          "name": "saas_invoices_tenant_subscription_id_foreign",
+          "columns": [
+            "tenant_subscription_id"
+          ],
+          "foreign_schema": "somitysoft_wordg",
+          "foreign_table": "tenant_subscriptions",
+          "foreign_columns": [
+            "id"
+          ],
+          "on_update": "no action",
+          "on_delete": "set null"
+        }
+      ]
+    },
+    "subscription_invoice_items": {
+      "exists": true,
+      "columns": [
+        {
+          "name": "id",
+          "type_name": "bigint",
+          "type": "bigint unsigned",
+          "collation": null,
+          "nullable": false,
+          "default": null,
+          "auto_increment": true,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "saas_invoice_id",
+          "type_name": "bigint",
+          "type": "bigint unsigned",
+          "collation": null,
+          "nullable": false,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "description",
+          "type_name": "varchar",
+          "type": "varchar(255)",
+          "collation": "utf8mb4_unicode_ci",
+          "nullable": false,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "quantity",
+          "type_name": "int",
+          "type": "int",
+          "collation": null,
+          "nullable": false,
+          "default": "1",
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "unit_price",
+          "type_name": "decimal",
+          "type": "decimal(10,2)",
+          "collation": null,
+          "nullable": false,
+          "default": "0.00",
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "total_price",
+          "type_name": "decimal",
+          "type": "decimal(10,2)",
+          "collation": null,
+          "nullable": false,
+          "default": "0.00",
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "created_at",
+          "type_name": "timestamp",
+          "type": "timestamp",
+          "collation": null,
+          "nullable": true,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "updated_at",
+          "type_name": "timestamp",
+          "type": "timestamp",
+          "collation": null,
+          "nullable": true,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        }
+      ],
+      "indexes": [
+        {
+          "name": "primary",
+          "columns": [
+            "id"
+          ],
+          "type": "btree",
+          "unique": true,
+          "primary": true
+        },
+        {
+          "name": "subscription_invoice_items_saas_invoice_id_foreign",
+          "columns": [
+            "saas_invoice_id"
+          ],
+          "type": "btree",
+          "unique": false,
+          "primary": false
+        }
+      ],
+      "foreign_keys": [
+        {
+          "name": "subscription_invoice_items_saas_invoice_id_foreign",
+          "columns": [
+            "saas_invoice_id"
+          ],
+          "foreign_schema": "somitysoft_wordg",
+          "foreign_table": "saas_invoices",
+          "foreign_columns": [
+            "id"
+          ],
+          "on_update": "no action",
+          "on_delete": "cascade"
+        }
+      ]
+    },
+    "payment_transactions": {
+      "exists": true,
+      "columns": [
+        {
+          "name": "id",
+          "type_name": "bigint",
+          "type": "bigint unsigned",
+          "collation": null,
+          "nullable": false,
+          "default": null,
+          "auto_increment": true,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "tenant_id",
+          "type_name": "bigint",
+          "type": "bigint unsigned",
+          "collation": null,
+          "nullable": false,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "saas_invoice_id",
+          "type_name": "bigint",
+          "type": "bigint unsigned",
+          "collation": null,
+          "nullable": true,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "payment_method",
+          "type_name": "varchar",
+          "type": "varchar(255)",
+          "collation": "utf8mb4_unicode_ci",
+          "nullable": false,
+          "default": "online",
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "gateway",
+          "type_name": "varchar",
+          "type": "varchar(255)",
+          "collation": "utf8mb4_unicode_ci",
+          "nullable": true,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "transaction_reference",
+          "type_name": "varchar",
+          "type": "varchar(255)",
+          "collation": "utf8mb4_unicode_ci",
+          "nullable": false,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "amount",
+          "type_name": "decimal",
+          "type": "decimal(10,2)",
+          "collation": null,
+          "nullable": false,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "currency",
+          "type_name": "varchar",
+          "type": "varchar(10)",
+          "collation": "utf8mb4_unicode_ci",
+          "nullable": false,
+          "default": "BDT",
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "status",
+          "type_name": "varchar",
+          "type": "varchar(255)",
+          "collation": "utf8mb4_unicode_ci",
+          "nullable": false,
+          "default": "pending",
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "gateway_response",
+          "type_name": "json",
+          "type": "json",
+          "collation": null,
+          "nullable": true,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "initiated_at",
+          "type_name": "timestamp",
+          "type": "timestamp",
+          "collation": null,
+          "nullable": true,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "completed_at",
+          "type_name": "timestamp",
+          "type": "timestamp",
+          "collation": null,
+          "nullable": true,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "created_at",
+          "type_name": "timestamp",
+          "type": "timestamp",
+          "collation": null,
+          "nullable": true,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "updated_at",
+          "type_name": "timestamp",
+          "type": "timestamp",
+          "collation": null,
+          "nullable": true,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        }
+      ],
+      "indexes": [
+        {
+          "name": "payment_transactions_saas_invoice_id_foreign",
+          "columns": [
+            "saas_invoice_id"
+          ],
+          "type": "btree",
+          "unique": false,
+          "primary": false
+        },
+        {
+          "name": "payment_transactions_tenant_id_foreign",
+          "columns": [
+            "tenant_id"
+          ],
+          "type": "btree",
+          "unique": false,
+          "primary": false
+        },
+        {
+          "name": "payment_transactions_transaction_reference_unique",
+          "columns": [
+            "transaction_reference"
+          ],
+          "type": "btree",
+          "unique": true,
+          "primary": false
+        },
+        {
+          "name": "primary",
+          "columns": [
+            "id"
+          ],
+          "type": "btree",
+          "unique": true,
+          "primary": true
+        }
+      ],
+      "foreign_keys": [
+        {
+          "name": "payment_transactions_saas_invoice_id_foreign",
+          "columns": [
+            "saas_invoice_id"
+          ],
+          "foreign_schema": "somitysoft_wordg",
+          "foreign_table": "saas_invoices",
+          "foreign_columns": [
+            "id"
+          ],
+          "on_update": "no action",
+          "on_delete": "set null"
+        },
+        {
+          "name": "payment_transactions_tenant_id_foreign",
+          "columns": [
+            "tenant_id"
+          ],
+          "foreign_schema": "somitysoft_wordg",
+          "foreign_table": "tenants",
+          "foreign_columns": [
+            "id"
+          ],
+          "on_update": "no action",
+          "on_delete": "cascade"
+        }
+      ]
+    },
+    "settings": {
+      "exists": true,
+      "columns": [
+        {
+          "name": "id",
+          "type_name": "bigint",
+          "type": "bigint unsigned",
+          "collation": null,
+          "nullable": false,
+          "default": null,
+          "auto_increment": true,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "tenant_id",
+          "type_name": "bigint",
+          "type": "bigint unsigned",
+          "collation": null,
+          "nullable": true,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "key",
+          "type_name": "varchar",
+          "type": "varchar(255)",
+          "collation": "utf8mb4_unicode_ci",
+          "nullable": false,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "value",
+          "type_name": "longtext",
+          "type": "longtext",
+          "collation": "utf8mb4_unicode_ci",
+          "nullable": true,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "group",
+          "type_name": "varchar",
+          "type": "varchar(255)",
+          "collation": "utf8mb4_unicode_ci",
+          "nullable": false,
+          "default": "general",
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "type",
+          "type_name": "varchar",
+          "type": "varchar(255)",
+          "collation": "utf8mb4_unicode_ci",
+          "nullable": false,
+          "default": "string",
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "created_at",
+          "type_name": "timestamp",
+          "type": "timestamp",
+          "collation": null,
+          "nullable": true,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "updated_at",
+          "type_name": "timestamp",
+          "type": "timestamp",
+          "collation": null,
+          "nullable": true,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        }
+      ],
+      "indexes": [
+        {
+          "name": "primary",
+          "columns": [
+            "id"
+          ],
+          "type": "btree",
+          "unique": true,
+          "primary": true
+        },
+        {
+          "name": "settings_group_index",
+          "columns": [
+            "group"
+          ],
+          "type": "btree",
+          "unique": false,
+          "primary": false
+        },
+        {
+          "name": "settings_key_index",
+          "columns": [
+            "key"
+          ],
+          "type": "btree",
+          "unique": false,
+          "primary": false
+        },
+        {
+          "name": "settings_tenant_id_key_unique",
+          "columns": [
+            "tenant_id",
+            "key"
+          ],
+          "type": "btree",
+          "unique": true,
+          "primary": false
+        }
+      ],
+      "foreign_keys": [
+        {
+          "name": "settings_tenant_id_foreign",
+          "columns": [
+            "tenant_id"
+          ],
+          "foreign_schema": "somitysoft_wordg",
+          "foreign_table": "tenants",
+          "foreign_columns": [
+            "id"
+          ],
+          "on_update": "no action",
+          "on_delete": "cascade"
+        }
+      ]
+    },
+    "tenant_routers": {
+      "exists": true,
+      "columns": [
+        {
+          "name": "id",
+          "type_name": "bigint",
+          "type": "bigint unsigned",
+          "collation": null,
+          "nullable": false,
+          "default": null,
+          "auto_increment": true,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "tenant_id",
+          "type_name": "bigint",
+          "type": "bigint unsigned",
+          "collation": null,
+          "nullable": false,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "name",
+          "type_name": "varchar",
+          "type": "varchar(255)",
+          "collation": "utf8mb4_unicode_ci",
+          "nullable": false,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "model",
+          "type_name": "varchar",
+          "type": "varchar(255)",
+          "collation": "utf8mb4_unicode_ci",
+          "nullable": true,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "ros_version",
+          "type_name": "varchar",
+          "type": "varchar(255)",
+          "collation": "utf8mb4_unicode_ci",
+          "nullable": true,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "connection_type",
+          "type_name": "enum",
+          "type": "enum('api','radius','hybrid')",
+          "collation": "utf8mb4_unicode_ci",
+          "nullable": false,
+          "default": "api",
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "ip_address",
+          "type_name": "varchar",
+          "type": "varchar(255)",
+          "collation": "utf8mb4_unicode_ci",
+          "nullable": false,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "api_port",
+          "type_name": "int",
+          "type": "int",
+          "collation": null,
+          "nullable": true,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "coa_port",
+          "type_name": "int",
+          "type": "int",
+          "collation": null,
+          "nullable": false,
+          "default": "3799",
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "use_ssl",
+          "type_name": "tinyint",
+          "type": "tinyint(1)",
+          "collation": null,
+          "nullable": false,
+          "default": "0",
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "username",
+          "type_name": "varchar",
+          "type": "varchar(255)",
+          "collation": "utf8mb4_unicode_ci",
+          "nullable": true,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "password",
+          "type_name": "text",
+          "type": "text",
+          "collation": "utf8mb4_unicode_ci",
+          "nullable": true,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "radius_secret",
+          "type_name": "text",
+          "type": "text",
+          "collation": "utf8mb4_unicode_ci",
+          "nullable": true,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "wireguard_ip",
+          "type_name": "varchar",
+          "type": "varchar(255)",
+          "collation": "utf8mb4_unicode_ci",
+          "nullable": true,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "wireguard_public_key",
+          "type_name": "varchar",
+          "type": "varchar(255)",
+          "collation": "utf8mb4_unicode_ci",
+          "nullable": true,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "status",
+          "type_name": "enum",
+          "type": "enum('online','offline','error','pending')",
+          "collation": "utf8mb4_unicode_ci",
+          "nullable": false,
+          "default": "pending",
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "is_active",
+          "type_name": "tinyint",
+          "type": "tinyint(1)",
+          "collation": null,
+          "nullable": false,
+          "default": "1",
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "cpu_load",
+          "type_name": "int",
+          "type": "int",
+          "collation": null,
+          "nullable": true,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "free_memory",
+          "type_name": "bigint",
+          "type": "bigint",
+          "collation": null,
+          "nullable": true,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "total_memory",
+          "type_name": "bigint",
+          "type": "bigint",
+          "collation": null,
+          "nullable": true,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "uptime",
+          "type_name": "varchar",
+          "type": "varchar(255)",
+          "collation": "utf8mb4_unicode_ci",
+          "nullable": true,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "last_ping_at",
+          "type_name": "timestamp",
+          "type": "timestamp",
+          "collation": null,
+          "nullable": true,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "last_sync_at",
+          "type_name": "timestamp",
+          "type": "timestamp",
+          "collation": null,
+          "nullable": true,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "last_error",
+          "type_name": "text",
+          "type": "text",
+          "collation": "utf8mb4_unicode_ci",
+          "nullable": true,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "created_at",
+          "type_name": "timestamp",
+          "type": "timestamp",
+          "collation": null,
+          "nullable": true,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "updated_at",
+          "type_name": "timestamp",
+          "type": "timestamp",
+          "collation": null,
+          "nullable": true,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        }
+      ],
+      "indexes": [
+        {
+          "name": "primary",
+          "columns": [
+            "id"
+          ],
+          "type": "btree",
+          "unique": true,
+          "primary": true
+        },
+        {
+          "name": "tenant_routers_is_active_index",
+          "columns": [
+            "is_active"
+          ],
+          "type": "btree",
+          "unique": false,
+          "primary": false
+        },
+        {
+          "name": "tenant_routers_tenant_id_status_index",
+          "columns": [
+            "tenant_id",
+            "status"
+          ],
+          "type": "btree",
+          "unique": false,
+          "primary": false
+        }
+      ],
+      "foreign_keys": [
+        {
+          "name": "tenant_routers_tenant_id_foreign",
+          "columns": [
+            "tenant_id"
+          ],
+          "foreign_schema": "somitysoft_wordg",
+          "foreign_table": "tenants",
+          "foreign_columns": [
+            "id"
+          ],
+          "on_update": "no action",
+          "on_delete": "cascade"
+        }
+      ]
+    },
+    "tenant_roles": {
+      "exists": true,
+      "columns": [
+        {
+          "name": "id",
+          "type_name": "bigint",
+          "type": "bigint unsigned",
+          "collation": null,
+          "nullable": false,
+          "default": null,
+          "auto_increment": true,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "tenant_id",
+          "type_name": "bigint",
+          "type": "bigint unsigned",
+          "collation": null,
+          "nullable": false,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "name",
+          "type_name": "varchar",
+          "type": "varchar(50)",
+          "collation": "utf8mb4_unicode_ci",
+          "nullable": false,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "display_name",
+          "type_name": "varchar",
+          "type": "varchar(100)",
+          "collation": "utf8mb4_unicode_ci",
+          "nullable": false,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "description",
+          "type_name": "text",
+          "type": "text",
+          "collation": "utf8mb4_unicode_ci",
+          "nullable": true,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "color",
+          "type_name": "varchar",
+          "type": "varchar(30)",
+          "collation": "utf8mb4_unicode_ci",
+          "nullable": false,
+          "default": "purple",
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "icon",
+          "type_name": "varchar",
+          "type": "varchar(50)",
+          "collation": "utf8mb4_unicode_ci",
+          "nullable": false,
+          "default": "fa-shield-halved",
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "is_system",
+          "type_name": "tinyint",
+          "type": "tinyint(1)",
+          "collation": null,
+          "nullable": false,
+          "default": "0",
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "permissions",
+          "type_name": "json",
+          "type": "json",
+          "collation": null,
+          "nullable": true,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "status",
+          "type_name": "varchar",
+          "type": "varchar(20)",
+          "collation": "utf8mb4_unicode_ci",
+          "nullable": false,
+          "default": "active",
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "created_at",
+          "type_name": "timestamp",
+          "type": "timestamp",
+          "collation": null,
+          "nullable": true,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "updated_at",
+          "type_name": "timestamp",
+          "type": "timestamp",
+          "collation": null,
+          "nullable": true,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        }
+      ],
+      "indexes": [
+        {
+          "name": "primary",
+          "columns": [
+            "id"
+          ],
+          "type": "btree",
+          "unique": true,
+          "primary": true
+        },
+        {
+          "name": "tenant_roles_tenant_id_index",
+          "columns": [
+            "tenant_id"
+          ],
+          "type": "btree",
+          "unique": false,
+          "primary": false
+        },
+        {
+          "name": "tenant_roles_tenant_id_name_unique",
+          "columns": [
+            "tenant_id",
+            "name"
+          ],
+          "type": "btree",
+          "unique": true,
+          "primary": false
+        }
+      ],
+      "foreign_keys": [
+        {
+          "name": "tenant_roles_tenant_id_foreign",
+          "columns": [
+            "tenant_id"
+          ],
+          "foreign_schema": "somitysoft_wordg",
+          "foreign_table": "tenants",
+          "foreign_columns": [
+            "id"
+          ],
+          "on_update": "no action",
+          "on_delete": "cascade"
+        }
+      ]
+    },
+    "tenant_activity_logs": {
+      "exists": true,
+      "columns": [
+        {
+          "name": "id",
+          "type_name": "bigint",
+          "type": "bigint unsigned",
+          "collation": null,
+          "nullable": false,
+          "default": null,
+          "auto_increment": true,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "tenant_id",
+          "type_name": "bigint",
+          "type": "bigint unsigned",
+          "collation": null,
+          "nullable": true,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "actor_type",
+          "type_name": "varchar",
+          "type": "varchar(255)",
+          "collation": "utf8mb4_unicode_ci",
+          "nullable": false,
+          "default": "owner",
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "actor_id",
+          "type_name": "bigint",
+          "type": "bigint unsigned",
+          "collation": null,
+          "nullable": true,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "actor_name",
+          "type_name": "varchar",
+          "type": "varchar(255)",
+          "collation": "utf8mb4_unicode_ci",
+          "nullable": true,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "event_type",
+          "type_name": "varchar",
+          "type": "varchar(255)",
+          "collation": "utf8mb4_unicode_ci",
+          "nullable": false,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "description",
+          "type_name": "text",
+          "type": "text",
+          "collation": "utf8mb4_unicode_ci",
+          "nullable": false,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "ip_address",
+          "type_name": "varchar",
+          "type": "varchar(45)",
+          "collation": "utf8mb4_unicode_ci",
+          "nullable": true,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "user_agent",
+          "type_name": "text",
+          "type": "text",
+          "collation": "utf8mb4_unicode_ci",
+          "nullable": true,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "metadata",
+          "type_name": "json",
+          "type": "json",
+          "collation": null,
+          "nullable": true,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "created_at",
+          "type_name": "timestamp",
+          "type": "timestamp",
+          "collation": null,
+          "nullable": true,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        },
+        {
+          "name": "updated_at",
+          "type_name": "timestamp",
+          "type": "timestamp",
+          "collation": null,
+          "nullable": true,
+          "default": null,
+          "auto_increment": false,
+          "comment": null,
+          "generation": null
+        }
+      ],
+      "indexes": [
+        {
+          "name": "primary",
+          "columns": [
+            "id"
+          ],
+          "type": "btree",
+          "unique": true,
+          "primary": true
+        },
+        {
+          "name": "tenant_activity_logs_tenant_id_event_type_index",
+          "columns": [
+            "tenant_id",
+            "event_type"
+          ],
+          "type": "btree",
+          "unique": false,
+          "primary": false
+        }
+      ],
+      "foreign_keys": [
+        {
+          "name": "tenant_activity_logs_tenant_id_foreign",
+          "columns": [
+            "tenant_id"
+          ],
+          "foreign_schema": "somitysoft_wordg",
+          "foreign_table": "tenants",
+          "foreign_columns": [
+            "id"
+          ],
+          "on_update": "no action",
+          "on_delete": "cascade"
+        }
+      ]
+    }
+  },
+  "configuration": {
+    "webhook_secret_configured": true,
+    "webhook_secret_in_config": false,
+    "webhook_branch": "refs/heads/main",
+    "payment_unsigned_dev_enabled": false,
+    "environment": "production",
+    "webhook_secret_in_dotenv": true,
+    "device_ca_configured": false
+  },
+  "filesystem": {
+    "storage": {
+      "mode": "2777",
+      "owner": "somitysoft",
+      "group": "www-data",
+      "writable_by_ssh_user": true
+    },
+    "storage/framework": {
+      "mode": "2777",
+      "owner": "somitysoft",
+      "group": "www-data",
+      "writable_by_ssh_user": true
+    },
+    "bootstrap/cache": {
+      "mode": "2777",
+      "owner": "somitysoft",
+      "group": "www-data",
+      "writable_by_ssh_user": true
+    }
+  },
+  "tools": {
+    "node --version": "v22.22.1",
+    "npm --version": "9.2.0",
+    "composer --version --no-ansi": "Composer version 2.9.5 2026-01-29 11:40:53"
+  },
+  "network": {
+    "active_tls_routers": 0,
+    "olt_count": 4,
+    "olts": [
+      {
+        "id": 1,
+        "port": 8082,
+        "cached_protocol": null,
+        "tls_expected": true,
+        "tls_verified": false,
+        "tls_error_code": 0,
+        "tls_error_category": "tls_connection_failed"
+      },
+      {
+        "id": 2,
+        "port": 8083,
+        "cached_protocol": null,
+        "tls_expected": false
+      },
+      {
+        "id": 3,
+        "port": 8081,
+        "cached_protocol": null,
+        "tls_expected": false
+      },
+      {
+        "id": 4,
+        "port": 8084,
+        "cached_protocol": null,
+        "tls_expected": false
+      }
+    ]
+  },
+  "nginx": {
+    "sudo_read_available": false,
+    "matching_vhosts": [
+      {
+        "path": "/etc/nginx/sites-enabled/somitysoft.com.conf",
+        "locations": [
+          "    location ^~ /cpanel {",
+          "    location ^~ /client {",
+          "    location ^~ /webmail {",
+          "\n    location / {",
+          "\n    location ~ \\.php$ {",
+          "\n    location ~ /\\.(?!well-known).* {"
+        ]
+      },
+      {
+        "path": "/etc/nginx/sites-enabled/tdc.somitysoft.com.conf",
+        "locations": [
+          "                \n                \n                \n                location / {",
+          "                \n                location ~ \\.php$ {",
+          "                \n                location ~ /\\.(?!well-known).* {"
+        ]
+      }
+    ]
+  }
+}

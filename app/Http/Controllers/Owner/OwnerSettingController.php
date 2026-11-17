@@ -18,6 +18,11 @@ class OwnerSettingController extends Controller
 
     public function update(Request $request)
     {
+        $request->validate([
+            'app_logo' => ['nullable', 'image', 'mimes:jpeg,png,webp', 'max:2048'],
+            'app_favicon' => ['nullable', 'image', 'mimes:jpeg,png,webp,ico', 'max:1024'],
+            'app_login_banner' => ['nullable', 'image', 'mimes:jpeg,png,webp', 'max:5120'],
+        ]);
         $group = $request->input('group', 'general');
         $inputs = $request->except(['_token', 'group', 'app_logo', 'app_favicon', 'app_login_banner']);
 
@@ -38,16 +43,16 @@ class OwnerSettingController extends Controller
         $fileKeys = ['app_logo', 'app_favicon', 'app_login_banner'];
         $uploadDir = public_path('uploads/branding');
         if (!file_exists($uploadDir)) {
-            @mkdir($uploadDir, 0777, true);
+            @mkdir($uploadDir, 0755, true);
         }
-        @chmod($uploadDir, 0777);
+        @chmod($uploadDir, 0755);
 
         foreach ($fileKeys as $fileKey) {
             if ($request->hasFile($fileKey)) {
                 $file = $request->file($fileKey);
-                $filename = time() . '_' . $fileKey . '.' . $file->getClientOriginalExtension();
+                $filename = (string) \Illuminate\Support\Str::uuid().'.'.$file->extension();
                 $file->move($uploadDir, $filename);
-                @chmod($uploadDir . '/' . $filename, 0666);
+                @chmod($uploadDir . '/' . $filename, 0644);
                 Setting::set($fileKey, '/uploads/branding/' . $filename, 'branding', null);
             }
         }

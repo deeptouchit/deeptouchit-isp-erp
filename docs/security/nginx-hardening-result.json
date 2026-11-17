@@ -1,0 +1,1 @@
+{"nginx_protection_installed": true, "validation_passed": true, "reload_passed": true, "backup": "/etc/nginx/sites-available/somitysoft.com.conf.security-backup-20261117165026"}

@@ -7512,5 +7512,8 @@
     "yes (Single Session)": "yes (Single Session)",
     "✓ Auto extend validity (+1 month)": "✓ Auto extend validity (+1 month)",
     "✓ Auto reactivate in MikroTik & FreeRADIUS": "✓ Auto reactivate in MikroTik & FreeRADIUS",
-    "✨ Commission will be credited directly to Reseller Wallet upon successful bKash payment.": "✨ Commission will be credited directly to Reseller Wallet upon successful bKash payment."
+    "✨ Commission will be credited directly to Reseller Wallet upon successful bKash payment.": "✨ Commission will be credited directly to Reseller Wallet upon successful bKash payment.",
+    "Delete Network Devices": "Delete Network Devices",
+    "Restart Network Devices": "Restart Network Devices",
+    "Change Network Settings": "Change Network Settings"
 }

@@ -34,9 +34,6 @@ class MikrotikController extends Controller
             $tenant = \App\Models\Tenant::find($user->tenant_id);
         }
         if (!$tenant) {
-            $tenant = \App\Models\Tenant::first();
-        }
-        if (!$tenant) {
             abort(404, __('ISP Tenant record not found.'));
         }
         return $tenant;

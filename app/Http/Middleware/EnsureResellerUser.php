@@ -20,6 +20,10 @@ class EnsureResellerUser
 
         $user = Auth::user();
 
+        if ($user->status !== 'active' || (!$user->isOwner() && (!$user->tenant_id || !$user->tenant))) {
+            abort(403);
+        }
+
         // Platform Owner or ISP Admin accessing reseller route (Impersonation / Overseeing)
         if ($user->isOwner() || ($user->isIspAdmin() && !$user->reseller_id)) {
             return $next($request);
@@ -34,7 +38,7 @@ class EnsureResellerUser
         }
 
         // Ensure user account is active
-        if (isset($user->status) && $user->status === 'inactive') {
+        if ($user->status !== 'active') {
             Auth::logout();
             return redirect()->route('tenant.login')->withErrors([
                 'email' => 'আপনার ইউজার অ্যাকাউন্টটি নিষ্ক্রিয় করা আছে।',
@@ -42,7 +46,7 @@ class EnsureResellerUser
         }
 
         $reseller = $user->reseller;
-        if (!$reseller) {
+        if (!$reseller || !$user->tenant_id || (int) $reseller->tenant_id !== (int) $user->tenant_id) {
             Auth::logout();
             return redirect()->route('tenant.login')->withErrors([
                 'email' => 'রিসেলার পার্টনার প্রোফাইল রেকর্ড পাওয়া যায়নি।',

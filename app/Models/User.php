@@ -142,27 +142,17 @@ class User extends Authenticatable
             return false;
         }
 
-        // Per-request static cache for maximum speed
-        static $permissionsCache = [];
-        $cacheKey = "{$this->tenant_id}_{$this->role}";
-
-        if (!isset($permissionsCache[$cacheKey])) {
-            $roleObj = TenantRole::where('tenant_id', $this->tenant_id)
-                ->where('name', $this->role)
-                ->where('status', 'active')
-                ->first();
-
-            $perms = $roleObj ? ($roleObj->permissions ?? []) : [];
-            if ($this->isCollector()) {
-                $perms = array_unique(array_merge($perms, ['customers.view', 'billing.collect', 'billing.cash_handover', 'support.tickets']));
-            } elseif ($this->isTechnician()) {
-                $perms = array_unique(array_merge($perms, ['customers.view', 'support.tickets', 'support.field_jobs', 'support.installations']));
-            }
-
-            $permissionsCache[$cacheKey] = $perms;
+        // Read current grants so permission revocation takes effect immediately,
+        // including in long-running workers and repeated requests in tests.
+        $role = TenantRole::where('tenant_id', $this->tenant_id)
+            ->where('name', $this->role)->where('status', 'active')->first();
+        $permissions = $role?->permissions ?? [];
+        if ($this->isCollector()) {
+            $permissions = array_merge($permissions, ['customers.view', 'billing.collect', 'billing.cash_handover', 'support.tickets']);
+        } elseif ($this->isTechnician()) {
+            $permissions = array_merge($permissions, ['customers.view', 'support.tickets', 'support.field_jobs', 'support.installations']);
         }
-
-        return in_array($permission, $permissionsCache[$cacheKey], true);
+        return in_array($permission, $permissions, true);
     }
 
     /**

@@ -63,7 +63,7 @@ return [
             'path' => storage_path('logs/laravel.log'),
             'level' => env('LOG_LEVEL', 'debug'),
             'replace_placeholders' => true,
-            'permission' => 0666,
+            'permission' => 0660,
         ],
 
         'daily' => [
@@ -72,7 +72,7 @@ return [
             'level' => env('LOG_LEVEL', 'debug'),
             'max_files' => env('LOG_DAILY_DAYS', 14),
             'replace_placeholders' => true,
-            'permission' => 0666,
+            'permission' => 0660,
         ],
 
         'monthly' => [
@@ -81,7 +81,7 @@ return [
             'level' => env('LOG_LEVEL', 'debug'),
             'max_files' => 3,
             'replace_placeholders' => true,
-            'permission' => 0666,
+            'permission' => 0660,
         ],
 
         'slack' => [
@@ -91,7 +91,7 @@ return [
             'emoji' => env('LOG_SLACK_EMOJI', ':boom:'),
             'level' => env('LOG_LEVEL', 'critical'),
             'replace_placeholders' => true,
-            'permission' => 0666,
+            'permission' => 0660,
         ],
 
         'papertrail' => [
@@ -122,14 +122,14 @@ return [
             'level' => env('LOG_LEVEL', 'debug'),
             'facility' => env('LOG_SYSLOG_FACILITY', LOG_USER),
             'replace_placeholders' => true,
-            'permission' => 0666,
+            'permission' => 0660,
         ],
 
         'errorlog' => [
             'driver' => 'errorlog',
             'level' => env('LOG_LEVEL', 'debug'),
             'replace_placeholders' => true,
-            'permission' => 0666,
+            'permission' => 0660,
         ],
 
         'null' => [

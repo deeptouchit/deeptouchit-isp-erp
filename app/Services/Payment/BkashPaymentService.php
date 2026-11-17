@@ -193,7 +193,7 @@ class BkashPaymentService
     {
         return DB::transaction(function () use ($paymentId, $trxId, $tenantId) {
             // Acquire pessimistic row-level lock on the transaction
-            $query = PaymentTransaction::where('transaction_reference', $paymentId)->lockForUpdate();
+            $query = PaymentTransaction::where('transaction_reference', $paymentId)->where('gateway', 'bkash')->lockForUpdate();
             if ($tenantId) {
                 $query->where('tenant_id', $tenantId);
             }
@@ -236,13 +236,13 @@ class BkashPaymentService
 
                     if ($response->successful()) {
                         $data = $response->json();
-                        if (($data['statusCode'] ?? '') === '0000') {
+                        if (($data['statusCode'] ?? '') === '0000' && ($data['transactionStatus'] ?? '') === 'Completed' && ($data['paymentID'] ?? '') === $paymentId) {
                             $finalTrxId = $data['trxID'] ?? null;
                             $gatewayResponse = $data;
                             
                             // Amount Verification
-                            $executedAmount = (float)($data['amount'] ?? $transaction->amount);
-                            if (abs($executedAmount - (float)$transaction->amount) > 0.01) {
+                            $executedAmount = $data['amount'] ?? null;
+                            if (!is_numeric($executedAmount) || !is_finite((float) $executedAmount) || abs((float) $executedAmount - (float)$transaction->amount) > 0.001 || strtoupper((string) ($data['currency'] ?? '')) !== strtoupper($transaction->currency)) {
                                 Log::error('bKash Amount Mismatch', [
                                     'expected' => $transaction->amount,
                                     'received' => $executedAmount

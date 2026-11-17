@@ -1,0 +1,15 @@
+{
+  "secret_configured": true,
+  "ping": {
+    "id": 3854591039765479424,
+    "event": "ping",
+    "status_code": 200,
+    "status": "OK",
+    "delivered_at": "2026-11-17T16:43:45.623Z"
+  },
+  "last_response": {
+    "code": 200,
+    "status": "active",
+    "message": "OK"
+  }
+}

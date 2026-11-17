@@ -62,8 +62,8 @@ class TenantAuthTest extends TestCase
     {
         $response = $this->get(route('tenant.login'));
         $response->assertStatus(200);
-        $response->assertSee('ISP Tenant Portal');
-        $response->assertSee('Sign In to ISP Admin Portal');
+        $response->assertViewIs('tenant.auth.login');
+        $response->assertViewHas('tenant', fn ($tenant) => $tenant->id === $this->tenant->id);
     }
 
     public function test_guest_can_view_branded_tenant_login_page(): void
@@ -117,14 +117,15 @@ class TenantAuthTest extends TestCase
             ]);
         }
 
-        // 6th attempt should be blocked
+        // Even correct credentials must be blocked on the sixth attempt.
         $response = $this->post(route('tenant.login.submit'), [
             'email' => 'admin@speednet.com',
-            'password' => 'wrong_pass',
+            'password' => 'password123',
         ]);
 
         $response->assertSessionHasErrors('email');
-        $this->assertTrue(str_contains(session('errors')->first('email'), 'Too many login attempts'));
+        $this->assertTrue(RateLimiter::tooManyAttempts('admin@speednet.com|127.0.0.1', 5));
+        $this->assertGuest();
     }
 
     public function test_suspended_tenant_is_redirected_to_billing_suspended(): void
@@ -148,7 +149,7 @@ class TenantAuthTest extends TestCase
         $response->assertStatus(200);
         $response->assertSee('SpeedNet Communications Ltd.');
         $response->assertSee('Carrier P5');
-        $response->assertSee('ISP Admin Console');
+        $response->assertViewIs('tenant.dashboard');
     }
 
     public function test_tenant_admin_can_logout(): void
@@ -167,18 +168,18 @@ class TenantAuthTest extends TestCase
         // Billing Dashboard
         $billingResp = $this->get(route('tenant.billing.dashboard'));
         $billingResp->assertStatus(200);
-        $billingResp->assertSee('Billing Overview');
-        $billingResp->assertSee('ISP Admin Console');
+        $billingResp->assertViewIs('tenant.billing.dashboard');
+        $billingResp->assertViewHas('tenant', fn ($tenant) => $tenant->id === $this->tenant->id);
 
         // Billing Invoices
         $invoicesResp = $this->get(route('tenant.billing.invoices'));
         $invoicesResp->assertStatus(200);
-        $invoicesResp->assertSee('Subscription Invoices History');
+        $invoicesResp->assertViewIs('tenant.billing.invoices');
 
         // Support Tickets
         $supportResp = $this->get(route('tenant.tickets.index'));
         $supportResp->assertStatus(200);
-        $supportResp->assertSee('Your Support Tickets');
+        $supportResp->assertViewIs('tenant.tickets.index');
     }
 
     public function test_authenticated_tenant_admin_can_access_network_routes(): void
@@ -186,21 +187,21 @@ class TenantAuthTest extends TestCase
         $this->actingAs($this->tenantAdmin);
 
         $routes = [
-            'tenant.network.mikrotik' => 'MikroTik Router Gateways',
-            'tenant.network.nas' => 'Network Access Servers',
-            'tenant.network.olt' => 'OLT Devices',
-            'tenant.network.onu' => 'ONU / ONT Terminal Management',
-            'tenant.network.ip-pools' => 'IP Pools',
-            'tenant.network.vlans' => 'Virtual LANs',
-            'tenant.network.routing' => 'Dynamic Routing',
-            'tenant.network.map' => 'Interactive Network Topology',
+            'tenant.network.mikrotik' => 'tenant.network.mikrotik',
+            'tenant.network.nas' => 'tenant.network.nas',
+            'tenant.network.olt' => 'tenant.network.olt',
+            'tenant.network.onu' => 'tenant.network.onu',
+            'tenant.network.ip-pools' => 'tenant.network.ip_pools',
+            'tenant.network.vlans' => 'tenant.network.vlans',
+            'tenant.network.routing' => 'tenant.network.routing',
+            'tenant.network.map' => 'tenant.network.map',
         ];
 
         foreach ($routes as $route => $expectedText) {
             $resp = $this->get(route($route));
             $resp->assertStatus(200);
-            $resp->assertSee($expectedText);
-            $resp->assertSee('ISP Admin Console');
+            $resp->assertViewIs($expectedText);
+            $resp->assertViewHas('tenant', fn ($tenant) => $tenant->id === $this->tenant->id);
         }
     }
 

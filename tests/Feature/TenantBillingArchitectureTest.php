@@ -13,6 +13,8 @@ use App\Services\Billing\InvoiceService;
 use App\Services\Billing\SubscriptionService;
 use App\Services\Payment\BkashPaymentService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
+use App\Models\Setting;
 use Tests\TestCase;
 
 class TenantBillingArchitectureTest extends TestCase
@@ -75,6 +77,16 @@ class TenantBillingArchitectureTest extends TestCase
         // 5. Test bKash Payment Initiation and Verification
         $this->actingAs($adminUser);
 
+        foreach (['bkash_app_key', 'bkash_app_secret', 'bkash_username', 'bkash_password'] as $key) {
+            Setting::set($key, 'test-only-credential');
+        }
+        Http::preventStrayRequests();
+        Http::fake([
+            '*/tokenized/checkout/token/grant' => Http::response(['id_token' => 'test-only-token']),
+            '*/tokenized/checkout/create' => Http::response(['statusCode' => '0000', 'paymentID' => 'audit-payment', 'bkashURL' => 'https://example.test/checkout']),
+            '*/tokenized/checkout/execute' => Http::response(['statusCode' => '0000', 'paymentID' => 'audit-payment', 'trxID' => 'BKXTEST9999', 'transactionStatus' => 'Completed', 'amount' => '600.00', 'currency' => 'BDT']),
+        ]);
+
         $bkashService = app(BkashPaymentService::class);
         $initResult = $bkashService->initiatePayment($invoice, 600, route('tenant.billing.payment.callback'));
         $this->assertTrue($initResult['success']);
@@ -99,7 +111,7 @@ class TenantBillingArchitectureTest extends TestCase
         // 7. Test Tenant Billing Portal Routes
         $dashRes = $this->get('/admin/billing');
         $dashRes->assertStatus(200);
-        $dashRes->assertSeeText('Subscription & Billing Overview');
+        $dashRes->assertViewIs('tenant.billing.dashboard');
 
         $invListRes = $this->get('/admin/billing/invoices');
         $invListRes->assertStatus(200);
@@ -107,7 +119,7 @@ class TenantBillingArchitectureTest extends TestCase
 
         $invShowRes = $this->get("/admin/billing/invoices/{$freshInvoice->id}");
         $invShowRes->assertStatus(200);
-        $invShowRes->assertSee('Invoice Fully Paid');
+        $invShowRes->assertSee(__('Invoice Fully Paid'));
     }
 
     public function test_payment_callback_tenant_isolation(): void

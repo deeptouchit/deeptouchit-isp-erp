@@ -77,7 +77,9 @@ class InvoiceService
             $remainingDue = max(0, $totalAmount - $newPaidAmount - $creditAmount);
 
             $isFullyPaid = ($remainingDue <= 0);
-            $newStatus = $isFullyPaid ? 'paid' : ($newPaidAmount > 0 ? 'partially_paid' : 'unpaid');
+            // The verified production enum uses unpaid until fully settled;
+            // paid_amount and due_amount retain partial-payment information.
+            $newStatus = $isFullyPaid ? 'paid' : 'unpaid';
 
             $lockedInvoice->update([
                 'paid_amount' => $newPaidAmount,

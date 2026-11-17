@@ -21,12 +21,13 @@ class PaymentWebhookService
 
         // In development/test mode without signature headers, allow fallback if explicitly enabled
         if (empty($signature)) {
-            $allowUnsigned = Setting::get('payment_webhook_allow_unsigned_dev', '0') === '1';
+            $allowUnsigned = app()->environment(['local', 'testing'])
+                && Setting::get('payment_webhook_allow_unsigned_dev', '0') === '1';
             return $allowUnsigned;
         }
 
         // Replay Attack Protection: Reject timestamps older than 5 minutes (300 seconds)
-        if ($timestamp > 0 && abs(time() - $timestamp) > 300) {
+        if ($timestamp <= 0 || abs(time() - $timestamp) > 300) {
             Log::warning("Webhook Replay Attack rejected: Timestamp {$timestamp} expired.");
             return false;
         }
@@ -55,14 +56,15 @@ class PaymentWebhookService
         $trxRef = $data['transaction_reference'] ?? $data['paymentID'] ?? $data['order_id'] ?? $data['mer_txnid'] ?? null;
         $status = strtolower($data['status'] ?? $data['transactionStatus'] ?? '');
         $gatewayTrxId = $data['trxID'] ?? $data['issuerPaymentRefNo'] ?? $data['bank_tran_id'] ?? $trxRef;
-        $amount = isset($data['amount']) ? (float)$data['amount'] : null;
+        $amount = is_numeric($data['amount'] ?? null) ? (float) $data['amount'] : null;
 
         if (!$trxRef) {
             return ['success' => false, 'message' => 'Missing transaction reference in payload.'];
         }
 
         return DB::transaction(function () use ($trxRef, $status, $gatewayTrxId, $amount, $gateway, $data, $tenantId) {
-            $query = PaymentTransaction::where('transaction_reference', $trxRef)->lockForUpdate();
+            $query = PaymentTransaction::where('transaction_reference', $trxRef)
+                ->where('gateway', $gateway)->lockForUpdate();
             if ($tenantId) {
                 $query->where('tenant_id', $tenantId);
             }
@@ -71,6 +73,10 @@ class PaymentWebhookService
             if (!$transaction) {
                 Log::warning("Webhook received for unknown or unauthorized transaction reference: {$trxRef}");
                 return ['success' => false, 'message' => 'Transaction not found or unauthorized.'];
+            }
+
+            if (isset($data['currency']) && strtoupper((string) $data['currency']) !== strtoupper($transaction->currency)) {
+                return ['success' => false, 'message' => 'Currency mismatch.'];
             }
 
             // IDEMPOTENCY GUARD: If already processed, return 200 without duplicate action
@@ -84,7 +90,7 @@ class PaymentWebhookService
             }
 
             // Amount Verification if amount is included in webhook payload
-            if ($amount !== null && abs($amount - (float)$transaction->amount) > 0.01) {
+            if ($amount === null || !is_finite($amount) || abs($amount - (float)$transaction->amount) > 0.001) {
                 Log::error("Webhook Amount Mismatch for {$trxRef}: Expected {$transaction->amount}, Received {$amount}");
                 return ['success' => false, 'message' => 'Amount mismatch.'];
             }
@@ -112,7 +118,7 @@ class PaymentWebhookService
                     'message' => 'Transaction successfully processed and invoice settled.',
                     'transaction' => $transaction,
                 ];
-            } else {
+            } elseif (in_array($status, ['failed', 'failure', 'cancelled', 'canceled'], true)) {
                 $transaction->update([
                     'status' => 'failed',
                     'gateway_response' => array_merge((array)$transaction->gateway_response, $data),
@@ -124,6 +130,7 @@ class PaymentWebhookService
                     'transaction' => $transaction,
                 ];
             }
+            return ['success' => false, 'message' => 'Unsupported payment status.'];
         });
     }
 }

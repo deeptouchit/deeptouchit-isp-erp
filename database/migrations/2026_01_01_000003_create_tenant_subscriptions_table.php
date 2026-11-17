@@ -8,20 +8,29 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // Fresh-install definitions verified against live schema on 2026-11-17.
+        // Existing tables are never altered or backfilled by this migration.
         if (!Schema::hasTable('tenant_subscriptions')) {
             Schema::create('tenant_subscriptions', function (Blueprint $table) {
                 $table->id();
-                $table->foreignId('tenant_id')->constrained('tenants')->cascadeOnDelete();
-                $table->foreignId('saas_plan_id')->nullable()->constrained('saas_plans')->nullOnDelete();
-                $table->string('plan_name');
-                $table->string('billing_cycle')->default('monthly');
-                $table->decimal('amount', 10, 2)->default(0.00);
-                $table->date('starts_at');
-                $table->date('expires_at');
-                $table->date('trial_ends_at')->nullable();
-                $table->enum('status', ['active', 'expired', 'cancelled', 'pending'])->default('active');
-                $table->boolean('auto_renew')->default(true);
-                $table->timestamps();
+                $table->unsignedBigInteger('tenant_id');
+                $table->unsignedBigInteger('plan_id');
+                $table->string('billing_cycle', 255)->default('monthly');
+                $table->timestamp('started_at')->nullable();
+                $table->date('current_period_start')->nullable();
+                $table->date('current_period_end')->nullable();
+                $table->date('next_billing_date')->nullable();
+                $table->timestamp('grace_period_ends_at')->nullable();
+                $table->string('status', 255)->default('active');
+                $table->boolean('auto_renew')->default('1');
+                $table->timestamp('cancelled_at')->nullable();
+                $table->timestamp('suspended_at')->nullable();
+                $table->timestamp('created_at')->nullable();
+                $table->timestamp('updated_at')->nullable();
+                $table->index(['plan_id'], 'tenant_subscriptions_plan_id_foreign');
+                $table->index(['tenant_id'], 'tenant_subscriptions_tenant_id_foreign');
+                $table->foreign(['plan_id'], 'tenant_subscriptions_plan_id_foreign')->references(['id'])->on('saas_plans')->onUpdate('no action')->onDelete('cascade');
+                $table->foreign(['tenant_id'], 'tenant_subscriptions_tenant_id_foreign')->references(['id'])->on('tenants')->onUpdate('no action')->onDelete('cascade');
             });
         }
     }

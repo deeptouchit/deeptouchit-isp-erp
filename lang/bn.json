@@ -7512,5 +7512,8 @@
     "yes (Single Session)": "হ্যাঁ (একটি সেশন)",
     "✓ Auto extend validity (+1 month)": "✓ স্বয়ংক্রিয় মেয়াদ বৃদ্ধি (+১ মাস)",
     "✓ Auto reactivate in MikroTik & FreeRADIUS": "✓ মাইক্রোটিক ও ফ্রি-রেডিয়াসে পুনরায় সচল করুন",
-    "✨ Commission will be credited directly to Reseller Wallet upon successful bKash payment.": "✨ সফল বিকাশ পেমেন্টের সাথে সাথে কমিশন সরাসরি আপনার ওয়ালেটে জমা হবে।"
+    "✨ Commission will be credited directly to Reseller Wallet upon successful bKash payment.": "✨ সফল বিকাশ পেমেন্টের সাথে সাথে কমিশন সরাসরি আপনার ওয়ালেটে জমা হবে।",
+    "Delete Network Devices": "নেটওয়ার্ক ডিভাইস মুছুন",
+    "Restart Network Devices": "নেটওয়ার্ক ডিভাইস পুনরায় চালু করুন",
+    "Change Network Settings": "নেটওয়ার্ক সেটিংস পরিবর্তন করুন"
 }

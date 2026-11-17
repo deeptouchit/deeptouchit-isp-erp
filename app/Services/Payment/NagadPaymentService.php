@@ -120,7 +120,7 @@ class NagadPaymentService
     public function verifyPayment(string $paymentRef, ?string $trxId = null, ?int $tenantId = null): array
     {
         return DB::transaction(function () use ($paymentRef, $trxId, $tenantId) {
-            $query = PaymentTransaction::where('transaction_reference', $paymentRef)->lockForUpdate();
+            $query = PaymentTransaction::where('transaction_reference', $paymentRef)->where('gateway', 'nagad')->lockForUpdate();
             if ($tenantId) {
                 $query->where('tenant_id', $tenantId);
             }
@@ -141,47 +141,31 @@ class NagadPaymentService
                 ];
             }
 
-            $finalTrxId = $trxId;
-            $gatewayResponse = [];
-
-            // Attempt Live Nagad Verification
-            if (!empty($this->merchantId) && !str_starts_with($paymentRef, 'NGD-')) {
-                try {
-                    $response = Http::timeout(20)
-                        ->withHeaders([
-                            'X-KM-Api-Version' => 'v-0.2.0',
-                            'X-KM-IP-V4' => request()->ip() ?? '127.0.0.1',
-                        ])
-                        ->get("{$this->baseUrl}/check-out/verify/payment/{$paymentRef}");
-
-                    if ($response->successful()) {
-                        $data = $response->json();
-                        if (($data['status'] ?? '') === 'Success') {
-                            $finalTrxId = $data['issuerPaymentRefNo'] ?? $finalTrxId;
-                            $gatewayResponse = $data;
-
-                            // Amount verification
-                            $paidAmount = (float)($data['amount'] ?? $transaction->amount);
-                            if (abs($paidAmount - (float)$transaction->amount) > 0.01) {
-                                return ['success' => false, 'message' => 'Nagad payment amount mismatch.'];
-                            }
-                        } else {
-                            $transaction->update(['status' => 'failed', 'gateway_response' => $data]);
-                            return ['success' => false, 'message' => $data['message'] ?? 'Nagad verification failed.'];
-                        }
-                    }
-                } catch (\Throwable $e) {
-                    Log::error('Nagad Verify Exception: ' . $e->getMessage());
-                }
+            // Callback parameters are hints only. Confirm with the provider;
+            // a timeout, missing credentials or a mock reference never means paid.
+            if (empty($this->merchantId) || str_starts_with($paymentRef, 'NGD-')) {
+                return ['success' => false, 'message' => 'Nagad verification is unavailable.'];
             }
-
-            if (!$finalTrxId) {
-                $finalTrxId = 'NGD' . rand(10000000, 99999999);
-                $gatewayResponse = [
-                    'status' => 'Success',
-                    'issuerPaymentRefNo' => $finalTrxId,
-                    'amount' => $transaction->amount,
-                ];
+            try {
+                $response = Http::timeout(20)->withHeaders([
+                    'X-KM-Api-Version' => 'v-0.2.0',
+                    'X-KM-IP-V4' => request()->ip() ?? '127.0.0.1',
+                ])->get("{$this->baseUrl}/check-out/verify/payment/{$paymentRef}");
+                $gatewayResponse = $response->json();
+                if (!$response->successful() || !is_array($gatewayResponse)
+                    || ($gatewayResponse['status'] ?? '') !== 'Success'
+                    || ($gatewayResponse['paymentRefId'] ?? '') !== $paymentRef
+                    || (string) ($gatewayResponse['merchantId'] ?? '') !== (string) $this->merchantId
+                    || !is_numeric($gatewayResponse['amount'] ?? null)
+                    || !is_finite((float) $gatewayResponse['amount'])
+                    || abs((float) $gatewayResponse['amount'] - (float) $transaction->amount) > 0.001
+                    || empty($gatewayResponse['issuerPaymentRefNo'])) {
+                    return ['success' => false, 'message' => 'Nagad payment was not confirmed.'];
+                }
+                $finalTrxId = $gatewayResponse['issuerPaymentRefNo'];
+            } catch (\Throwable $exception) {
+                Log::warning('Nagad verification unavailable', ['exception' => get_class($exception)]);
+                return ['success' => false, 'message' => 'Nagad verification is unavailable.'];
             }
 
             // Update Transaction State

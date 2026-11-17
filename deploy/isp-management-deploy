@@ -1,0 +1,30 @@
+#!/bin/bash
+# Root-owned server runner. Allow only this no-argument entry in sudoers.
+# Set APP_DIR and DEPLOY_USER for the target installation during provisioning.
+set -eu
+APP_DIR="/var/www/vhosts/somitysoft/somitysoft.com/public_html"
+DEPLOY_USER="somitysoft"
+WEB_GROUP="www-data"
+PHP_FPM_SERVICE="php8.4-fpm"
+
+[ "$#" -eq 0 ] || exit 64
+APP_DIR="$(readlink -f "$APP_DIR")"
+
+normalize_runtime_permissions() {
+    local directory resolved
+    for directory in storage bootstrap/cache; do
+        resolved="$(readlink -f "$APP_DIR/$directory")"
+        [ "$resolved" = "$APP_DIR/$directory" ] || { echo "Unexpected runtime path" >&2; return 1; }
+        find -P "$resolved" -type d -exec chgrp "$WEB_GROUP" {} + -exec chmod 2770 {} +
+        find -P "$resolved" -type f -exec chgrp "$WEB_GROUP" {} + -exec chmod 0660 {} +
+    done
+}
+
+normalize_runtime_permissions
+status=0
+/usr/sbin/runuser -u "$DEPLOY_USER" -- /usr/bin/env DEPLOY_APP_DIR="$APP_DIR" /bin/bash "$APP_DIR/deploy.sh" || status=$?
+normalize_runtime_permissions
+if [ "$status" -eq 0 ]; then
+    /bin/systemctl reload "$PHP_FPM_SERVICE"
+fi
+exit "$status"

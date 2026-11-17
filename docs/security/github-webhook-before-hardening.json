@@ -1,0 +1,17 @@
+[
+  {
+    "id": 685133586,
+    "active": true,
+    "events": [
+      "push"
+    ],
+    "url": "https://somitysoft.com/deploy-webhook.php",
+    "content_type": "json",
+    "secret_configured": false,
+    "last_response": {
+      "code": null,
+      "status": "unused",
+      "message": null
+    }
+  }
+]

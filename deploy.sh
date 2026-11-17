@@ -16,12 +16,10 @@ echo "================================================="
 
 cd "$APP_DIR"
 
-# 0. Ensure git safe directory (handle non-writable home directory for www-data)
-export GIT_CONFIG_GLOBAL="/tmp/.gitconfig"
-git config -f /tmp/.gitconfig --add safe.directory "$APP_DIR" 2>/dev/null || true
-git config -f /tmp/.gitconfig --add safe.directory "*" 2>/dev/null || true
-git config --global --add safe.directory "$APP_DIR" 2>/dev/null || true
-git config --global --add safe.directory "*" 2>/dev/null || true
+# Serialize deployments before changing code, maintenance mode or permissions.
+umask 0022
+exec 9>"$APP_DIR/storage/framework/deploy.lock"
+flock -w 300 9 || { echo "Deployment lock timed out" >&2; exit 1; }
 
 # Enable maintenance mode during deployment & ensure it comes back up on exit
 echo "🚧 Putting application into maintenance mode..."
@@ -30,9 +28,9 @@ trap 'php artisan up 2>/dev/null || true' EXIT
 
 # 1. Pull latest changes
 echo "📦 Pulling latest commits from GitHub origin/$BRANCH..."
-git -c safe.directory="*" fetch --all --prune
-git -c safe.directory="*" checkout -f "$BRANCH"
-git -c safe.directory="*" reset --hard "origin/$BRANCH"
+git -c safe.directory="$APP_DIR" fetch --all --prune
+git -c safe.directory="$APP_DIR" checkout -f "$BRANCH"
+git -c safe.directory="$APP_DIR" reset --hard "origin/$BRANCH"
 
 # 2. Install PHP dependencies
 echo "📦 Installing Composer dependencies..."
@@ -43,7 +41,7 @@ fi
 # 3. Build frontend
 echo "⚡ Installing NPM packages & building Vite assets..."
 if command -v npm &> /dev/null; then
-    npm install --no-audit --no-fund
+    npm ci --ignore-scripts --no-audit --no-fund
     npm run build
 fi
 
@@ -62,13 +60,18 @@ php artisan storage:link 2>/dev/null || true
 
 # 7. Update file permissions
 echo "🔒 Updating directory permissions..."
-sudo chown -R somitysoft:www-data "$APP_DIR/storage" "$APP_DIR/bootstrap/cache" 2>/dev/null || true
-chmod -R 777 "$APP_DIR/storage" "$APP_DIR/bootstrap/cache" 2>/dev/null || chmod -R 775 "$APP_DIR/storage" "$APP_DIR/bootstrap/cache" 2>/dev/null || true
+# Ownership is established by the server operator; do not change it on every webhook.
+# Optional explicit values support deployments run by a provisioning account.
+if [ -n "${DEPLOY_OWNER:-}" ] && [ -n "${DEPLOY_GROUP:-}" ]; then
+    sudo -n chown -R "$DEPLOY_OWNER:$DEPLOY_GROUP" "$APP_DIR/storage" "$APP_DIR/bootstrap/cache"
+fi
+find "$APP_DIR/storage" "$APP_DIR/bootstrap/cache" -type d -user "$(id -un)" -exec chmod 2770 {} +
+find "$APP_DIR/storage" "$APP_DIR/bootstrap/cache" -type f -user "$(id -un)" -exec chmod 0660 {} +
 
 # 8. Reload web services (if root/sudo available)
 echo "🔄 Reloading web services..."
-sudo systemctl reload php8.4-fpm 2>/dev/null || sudo systemctl reload php8.3-fpm 2>/dev/null || sudo systemctl reload php8.2-fpm 2>/dev/null || true
-sudo systemctl reload nginx 2>/dev/null || true
+sudo -n systemctl reload php8.4-fpm 2>/dev/null || sudo -n systemctl reload php8.3-fpm 2>/dev/null || sudo -n systemctl reload php8.2-fpm 2>/dev/null || true
+sudo -n systemctl reload nginx 2>/dev/null || true
 
 # 9. Restart queue workers
 php artisan queue:restart 2>/dev/null || true

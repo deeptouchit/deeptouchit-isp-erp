@@ -111,7 +111,7 @@ class TenantAuthController extends Controller
         $user = Auth::user();
 
         // Check if user account itself is inactive
-        if (isset($user->status) && $user->status === 'inactive') {
+        if ($user->status !== 'active') {
             Auth::logout();
             throw ValidationException::withMessages([
                 'email' => 'আপনার ইউজার একাউন্টটি সাময়িকভাবে নিষ্ক্রিয় রয়েছে। অনুগ্রহ করে অ্যাডমিনের সাথে যোগাযোগ করুন।',

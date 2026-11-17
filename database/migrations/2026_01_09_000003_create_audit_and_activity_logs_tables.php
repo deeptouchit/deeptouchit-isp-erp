@@ -8,18 +8,24 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // Fresh-install definitions verified against live schema on 2026-11-17.
+        // Existing tables are never altered or backfilled by this migration.
         if (!Schema::hasTable('tenant_activity_logs')) {
             Schema::create('tenant_activity_logs', function (Blueprint $table) {
                 $table->id();
-                $table->foreignId('tenant_id')->constrained('tenants')->cascadeOnDelete();
-                $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
-                $table->string('event');
-                $table->text('description')->nullable();
+                $table->unsignedBigInteger('tenant_id')->nullable();
+                $table->string('actor_type', 255)->default('owner');
+                $table->unsignedBigInteger('actor_id')->nullable();
+                $table->string('actor_name', 255)->nullable();
+                $table->string('event_type', 255);
+                $table->text('description');
                 $table->string('ip_address', 45)->nullable();
                 $table->text('user_agent')->nullable();
-                $table->json('properties')->nullable();
-                $table->timestamps();
-                $table->index(['tenant_id', 'event']);
+                $table->json('metadata')->nullable();
+                $table->timestamp('created_at')->nullable();
+                $table->timestamp('updated_at')->nullable();
+                $table->index(['tenant_id', 'event_type'], 'tenant_activity_logs_tenant_id_event_type_index');
+                $table->foreign(['tenant_id'], 'tenant_activity_logs_tenant_id_foreign')->references(['id'])->on('tenants')->onUpdate('no action')->onDelete('cascade');
             });
         }
 

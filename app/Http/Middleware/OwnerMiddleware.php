@@ -15,7 +15,7 @@ class OwnerMiddleware
         }
 
         $user = auth()->user();
-        if (!$user->isOwner()) {
+        if (!$user->isOwner() || $user->status !== 'active') {
             auth()->logout();
             return redirect()->route('owner.login')->with('error', 'আপনার প্ল্যাটফর্ম ওনার (SaaS Super Admin) অ্যাক্সেস নেই।');
         }

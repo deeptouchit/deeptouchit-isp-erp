@@ -22,7 +22,6 @@ class PaymentWebhookController extends Controller
      */
     public function handleBkashWebhook(Request $request): JsonResponse
     {
-        Log::info('bKash Webhook Received', ['headers' => $request->headers->all(), 'body' => $request->all()]);
 
         // Verify cryptographic HMAC-SHA256 signature & replay attack timestamp
         if (!$this->webhookService->verifySignature($request, 'bkash')) {
@@ -43,7 +42,6 @@ class PaymentWebhookController extends Controller
      */
     public function handleNagadWebhook(Request $request): JsonResponse
     {
-        Log::info('Nagad Webhook Received', ['headers' => $request->headers->all(), 'body' => $request->all()]);
 
         if (!$this->webhookService->verifySignature($request, 'nagad')) {
             Log::warning('Nagad Webhook Signature Verification Failed');
@@ -63,7 +61,6 @@ class PaymentWebhookController extends Controller
      */
     public function handleGenericWebhook(Request $request, string $gateway): JsonResponse
     {
-        Log::info("Generic Webhook Received ({$gateway})", ['headers' => $request->headers->all(), 'body' => $request->all()]);
 
         if (!$this->webhookService->verifySignature($request, $gateway)) {
             Log::warning("Generic Webhook Signature Verification Failed for {$gateway}");

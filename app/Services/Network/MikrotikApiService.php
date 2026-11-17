@@ -1500,6 +1500,9 @@ class MikrotikApiService
      */
     public function pushPppSecret(TenantRouter $router, array $secretData): array
     {
+        if (!is_string($secretData['password'] ?? null) || $secretData['password'] === '') {
+            return ['success' => false, 'message' => 'PPPoE password is required.'];
+        }
         $password = $router->decrypted_password ?: "";
         if (!$this->connect($router->ip_address, (int)($router->api_port ?: 8728), $router->username ?: "admin", $password, (bool)$router->use_ssl, 4)) {
             return [
@@ -1528,7 +1531,7 @@ class MikrotikApiService
 
         $params = [
             '=name=' . $username,
-            '=password=' . ($secretData['password'] ?? '123456'),
+            '=password=' . $secretData['password'],
             '=service=' . ($secretData['service'] ?? 'pppoe'),
         ];
 
@@ -1916,7 +1919,7 @@ class MikrotikApiService
         $isDisabled = ($customer->status !== 'active');
 
         // Remote address and Caller ID are kept blank in MikroTik (Profile IP Pool dynamically allocates IP, No MAC lock)
-        $password = $customer->password ?: ($customer->pppoe_password ?: '123456');
+        $password = $customer->password ?: $customer->pppoe_password;
 
         $res = $this->pushPppSecret($router, [
             'username' => $username,
