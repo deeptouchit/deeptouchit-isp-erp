@@ -3,8 +3,8 @@
 /**
  * Sidebar Navigation Configuration: ISP Operations Manager
  *
- * Managers handle day-to-day subscribers, staff, billing, reports and support.
- * Network, upstream, reseller, subscription and system administration remain
+ * Managers handle day-to-day subscribers, staff, reseller operations, billing,
+ * reports and support. Network, upstream and system administration remain
  * restricted to the ISP administrator or dedicated specialist roles.
  */
 
@@ -65,6 +65,46 @@ return [
             ['title' => 'Cash Handover', 'route' => 'tenant.finance.cash-handover', 'fallback_route' => 'tenant.collector.handover', 'active' => ['tenant.finance.cash-handover*', 'tenant.collector.handover*'], 'permissions' => ['billing.cash_handover']],
             ['title' => 'Income & Expenses', 'route' => 'tenant.finance.expenses', 'active' => ['tenant.finance.expenses*'], 'permissions' => ['billing.expenses']],
             ['title' => 'Accounts & Ledger', 'route' => 'tenant.finance.ledger', 'active' => ['tenant.finance.ledger*'], 'permissions' => ['billing.ledger']],
+        ],
+    ],
+    [
+        'title'       => 'Reseller Partners',
+        'icon'        => 'fas fa-handshake',
+        'color'       => 'cyan',
+        'active'      => ['tenant.resellers.index*', 'tenant.resellers.show*', 'tenant.resellers.import*', 'tenant.resellers.subscriptions*'],
+        'permissions' => ['resellers.view'],
+        'keywords'    => 'reseller partners directory sub-isps franchise import licenses',
+        'children'    => [
+            ['title' => 'Partner Directory', 'route' => 'tenant.resellers.index', 'active' => ['tenant.resellers.index*', 'tenant.resellers.show*'], 'permissions' => ['resellers.view']],
+            ['title' => 'Import Resellers (Excel)', 'route' => 'tenant.resellers.import', 'active' => ['tenant.resellers.import*'], 'permissions' => ['resellers.view']],
+            ['title' => 'Panel Licenses', 'route' => 'tenant.resellers.subscriptions', 'active' => ['tenant.resellers.subscriptions*'], 'permissions' => ['resellers.view']],
+        ],
+    ],
+    [
+        'title'       => 'Wholesale Bandwidth',
+        'icon'        => 'fas fa-network-wired',
+        'color'       => 'cyan',
+        'active'      => ['tenant.resellers.bandwidth*', 'tenant.resellers.bandwidth-plans*', 'tenant.resellers.invoices*', 'tenant.resellers.capacity*'],
+        'permissions' => ['resellers.view'],
+        'keywords'    => 'wholesale bandwidth allocation rate plans tariff capacity invoices payments',
+        'children'    => [
+            ['title' => 'Bandwidth Rate Plans', 'route' => 'tenant.resellers.bandwidth-plans', 'active' => ['tenant.resellers.bandwidth-plans*'], 'permissions' => ['resellers.view']],
+            ['title' => 'Bandwidth Allocation', 'route' => 'tenant.resellers.bandwidth', 'active' => ['tenant.resellers.bandwidth'], 'permissions' => ['resellers.view']],
+            ['title' => 'Invoices & Payments', 'route' => 'tenant.resellers.invoices', 'active' => ['tenant.resellers.invoices*'], 'permissions' => ['resellers.view']],
+            ['title' => 'Gateway Capacity', 'route' => 'tenant.resellers.capacity', 'active' => ['tenant.resellers.capacity*'], 'permissions' => ['resellers.view']],
+        ],
+    ],
+    [
+        'title'       => 'Reseller Accounts',
+        'icon'        => 'fas fa-wallet',
+        'color'       => 'cyan',
+        'active'      => ['tenant.resellers.recharge*', 'tenant.resellers.wallets*', 'tenant.resellers.ledger*'],
+        'permissions' => ['resellers.view'],
+        'keywords'    => 'reseller accounts billing recharge wallets credit ledger',
+        'children'    => [
+            ['title' => 'Wallets & Credit', 'route' => 'tenant.resellers.wallets', 'active' => ['tenant.resellers.wallets*'], 'permissions' => ['resellers.view']],
+            ['title' => 'Recharge History', 'route' => 'tenant.resellers.recharge', 'active' => ['tenant.resellers.recharge*'], 'permissions' => ['resellers.view']],
+            ['title' => 'Adjustment Ledger', 'route' => 'tenant.resellers.ledger', 'active' => ['tenant.resellers.ledger*'], 'permissions' => ['resellers.view']],
         ],
     ],
     [

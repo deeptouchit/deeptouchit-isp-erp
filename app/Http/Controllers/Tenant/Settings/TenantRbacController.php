@@ -565,7 +565,8 @@ class TenantRbacController extends Controller
                 'permissions' => [
                     'customers.view', 'customers.create', 'customers.edit', 'customers.status_toggle', 'customers.export',
                     'staff.view',
-                    'billing.invoices', 'billing.collect', 'billing.cash_handover', 'billing.expenses', 'billing.ledger',
+                    'billing.invoices', 'billing.collect', 'billing.cash_handover', 'billing.wholesale', 'billing.expenses', 'billing.ledger',
+                    'resellers.view', 'resellers.create', 'resellers.edit', 'resellers.wallet',
                     'support.tickets', 'support.field_jobs', 'support.installations', 'support.escalations', 'support.sla',
                     'reports.revenue', 'reports.collection', 'reports.inventory'
                 ],
