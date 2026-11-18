@@ -98,6 +98,10 @@ class SidebarMenuService
      */
     protected static function loadConfigMenusForUser(User $user): array
     {
+        if ($user->isResellerUser()) {
+            return config('menus.reseller', []);
+        }
+
         if ($user->isCollector()) {
             return config('menus.collector', []);
         }
