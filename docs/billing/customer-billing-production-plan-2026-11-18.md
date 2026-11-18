@@ -153,7 +153,7 @@ Verification:
 
 ## Phase 4 — Expiry, Billing Cycle ও Automation
 
-অবস্থা: অপেক্ষমাণ
+অবস্থা: সম্পন্ন
 
 কাজ:
 
@@ -167,6 +167,23 @@ Acceptance criteria:
 
 - একই billing cycle-এর duplicate invoice তৈরি হবে না।
 - configured package ও tenant policy অনুযায়ী expiry নির্ধারিত হবে।
+
+বাস্তবায়িত পরিবর্তন:
+
+- Dynamic scheduler, invoice generation, auto-cut ও reminder dates tenant timezone অনুযায়ী নির্ধারিত হয়।
+- MySQL-specific `DATE_FORMAT` duplicate query বাদ দিয়ে portable transaction flow করা হয়েছে।
+- Customer ও tenant row lock করে automation invoice এবং customer due একই transaction-এ update হয়।
+- নতুন nullable `cycle_key` এবং `(tenant_id, customer_id, cycle_key)` unique constraint database-level duplicate cycle invoice বন্ধ করে।
+- Existing invoices backfill/modify করা হয়নি; নতুন automation invoice canonical `expiry:YYYY-MM-DD` cycle key ব্যবহার করে।
+- Customer monthly bill না থাকলে package price ব্যবহার হয়; কোনো hardcoded fallback rate নেই।
+- Legacy `settleAndReactivate()` shared payment policy ও row locking ব্যবহার করে; partial payment renewal/reactivation করে না।
+- RADIUS sync financial transaction commit-এর পরে bounded retry করে; final failure tenant/customer context-সহ warning log হয়।
+- Fresh automation settings schema canonical wide fields ও defaults-এর সঙ্গে align করা হয়েছে।
+
+Verification:
+
+- Phase 1–4 focused suites: ১১টি test pass, ৯৮টি assertion pass।
+- Covered: tenant-date invoice generation, configured monthly rate, repeated-run idempotency, database cycle key এবং partial automation settlement safety।
 
 ## Phase 5 — Online/Offline ও Network State
 

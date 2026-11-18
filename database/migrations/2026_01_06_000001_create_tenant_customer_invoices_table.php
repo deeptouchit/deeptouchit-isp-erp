@@ -17,6 +17,7 @@ return new class extends Migration
                 $table->foreignId('package_id')->nullable()->constrained('tenant_internet_packages')->nullOnDelete();
                 $table->string('invoice_no')->unique();
                 $table->string('billing_month', 20); // 2026-10
+                $table->string('cycle_key', 40)->nullable();
                 $table->string('package_name')->nullable();
                 $table->decimal('amount', 10, 2)->default(0.00);
                 $table->decimal('vat_tax', 10, 2)->default(0.00);
@@ -36,6 +37,7 @@ return new class extends Migration
                 $table->timestamps();
                 $table->index(['tenant_id', 'billing_month']);
                 $table->index(['tenant_id', 'status']);
+                $table->unique(['tenant_id', 'customer_id', 'cycle_key'], 'customer_invoice_cycle_unique');
             });
         }
     }

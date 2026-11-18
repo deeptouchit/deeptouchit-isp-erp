@@ -44,7 +44,6 @@ class IspCustomerAutomationService
      */
     public function runDynamicSchedule(?int $tenantId = null): array
     {
-        $currentTime = Carbon::now()->format('H:i');
         $tenantQuery = Tenant::query();
         if ($tenantId) {
             $tenantQuery->where('id', $tenantId);
@@ -54,6 +53,8 @@ class IspCustomerAutomationService
         $overallResults = [];
 
         foreach ($tenants as $tenant) {
+            $tenantNow = Carbon::now($tenant->timezone ?: config('app.timezone'));
+            $currentTime = $tenantNow->format('H:i');
             $settings = TenantAutomationSetting::firstOrCreate(['tenant_id' => $tenant->id]);
             $billingTime = Carbon::parse($settings->billing_generation_time ?: '00:05')->format('H:i');
             $cutTime = Carbon::parse($settings->auto_cut_time ?: '02:00')->format('H:i');
@@ -79,8 +80,8 @@ class IspCustomerAutomationService
             if ($settings->auto_backup_enabled && $currentTime === $backupTime) {
                 $frequency = $settings->backup_frequency ?: 'daily';
                 $shouldRun = match ($frequency) {
-                    'weekly' => Carbon::now()->isSunday(),
-                    'monthly' => Carbon::now()->day === 1,
+                    'weekly' => $tenantNow->isSunday(),
+                    'monthly' => $tenantNow->day === 1,
                     default => true, // 'daily'
                 };
 
@@ -100,9 +101,10 @@ class IspCustomerAutomationService
     public function generateInvoicesForTenant(Tenant $tenant, TenantAutomationSetting $settings, string $triggeredBy = 'cron'): array
     {
         $startTime = microtime(true);
-        $today = Carbon::today();
+        $timezone = $tenant->timezone ?: config('app.timezone');
+        $today = Carbon::now($timezone)->startOfDay();
         $leadDays = (int) ($settings->billing_generation_day ?: 3);
-        $targetExpiryDate = Carbon::today()->addDays($leadDays);
+        $targetExpiryDate = $today->copy()->addDays($leadDays);
         $billingMonth = $targetExpiryDate->format('Y-m');
 
         $invoicesGenerated = 0;
@@ -113,52 +115,41 @@ class IspCustomerAutomationService
             ->whereIn('status', ['active', 'due', 'suspended', 'expired'])
             ->whereNotNull('expiry_date')
             ->whereDate('expiry_date', '<=', $targetExpiryDate)
-            ->whereNotExists(function ($sub) use ($tenant) {
-                $sub->select(DB::raw(1))
-                    ->from('tenant_customer_invoices')
-                    ->whereColumn('tenant_customer_invoices.customer_id', 'tenant_customers.id')
-                    ->where('tenant_customer_invoices.tenant_id', $tenant->id)
-                    ->where(function ($q) {
-                        $q->whereRaw("tenant_customer_invoices.billing_month = DATE_FORMAT(tenant_customers.expiry_date, '%Y-%m')")
-                          ->orWhereRaw("DATE(tenant_customer_invoices.due_date) = DATE(tenant_customers.expiry_date)");
-                    });
-            })
             ->with(['package', 'reseller'])
             ->get();
 
         foreach ($upcomingSubscribers as $customer) {
             try {
-                $cycleMonth = Carbon::parse($customer->expiry_date)->format('Y-m');
-                $customerTargetExpiry = Carbon::parse($customer->expiry_date);
-
-                // Double check idempotency
-                $existingInvoice = TenantCustomerInvoice::where('tenant_id', $tenant->id)
-                    ->where('customer_id', $customer->id)
-                    ->where(function ($q) use ($cycleMonth, $customerTargetExpiry) {
-                        $q->where('billing_month', $cycleMonth)
-                          ->orWhereDate('due_date', $customerTargetExpiry->toDateString());
-                    })
-                    ->first();
-
-                if (!$existingInvoice) {
-                    $monthlyBill = (float) ($customer->monthly_bill > 0 
-                        ? $customer->monthly_bill 
-                        : ($customer->package?->price ?? 0));
-
+                $created = DB::transaction(function () use ($tenant, $customer, $today, $leadDays): bool {
+                    Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
+                    $lockedCustomer = TenantCustomer::where('tenant_id', $tenant->id)
+                        ->whereKey($customer->id)->lockForUpdate()->with('package')->firstOrFail();
+                    $customerTargetExpiry = Carbon::parse($lockedCustomer->expiry_date);
+                    $cycleMonth = $customerTargetExpiry->format('Y-m');
+                    $cycleKey = 'expiry:' . $customerTargetExpiry->toDateString();
+                    $monthlyBill = (float) ($lockedCustomer->monthly_bill > 0
+                        ? $lockedCustomer->monthly_bill
+                        : ($lockedCustomer->package?->price ?? 0));
                     if ($monthlyBill <= 0) {
-                        continue;
+                        return false;
+                    }
+
+                    if (TenantCustomerInvoice::where('tenant_id', $tenant->id)
+                        ->where('customer_id', $lockedCustomer->id)
+                        ->where('cycle_key', $cycleKey)->exists()) {
+                        return false;
                     }
 
                     $invoiceNo = TenantCustomerInvoice::generateInvoiceNo($tenant->id, $cycleMonth);
-
                     TenantCustomerInvoice::create([
                         'tenant_id' => $tenant->id,
-                        'reseller_id' => $customer->reseller_id,
-                        'customer_id' => $customer->id,
+                        'reseller_id' => $lockedCustomer->reseller_id,
+                        'customer_id' => $lockedCustomer->id,
                         'invoice_no' => $invoiceNo,
                         'billing_month' => $cycleMonth,
-                        'package_id' => $customer->package_id,
-                        'package_name' => $customer->package_display_name ?: ($customer->package?->name ?? 'Internet Package'),
+                        'cycle_key' => $cycleKey,
+                        'package_id' => $lockedCustomer->package_id,
+                        'package_name' => $lockedCustomer->package_display_name ?: ($lockedCustomer->package?->name ?? 'Internet Package'),
                         'amount' => $monthlyBill,
                         'discount' => 0.00,
                         'vat_tax' => 0.00,
@@ -175,16 +166,30 @@ class IspCustomerAutomationService
                     ]);
 
                     // Update customer due amount
-                    $customer->due_amount = (float)($customer->due_amount ?? 0) + $monthlyBill;
-                    $customer->save();
+                    $lockedCustomer->due_amount = (float) ($lockedCustomer->due_amount ?? 0) + $monthlyBill;
+                    $lockedCustomer->save();
+                    return true;
+                });
 
-                    // FreeRADIUS AAA Sync
-                    try {
-                        $this->radiusService->syncCustomerSubscriber($customer);
-                    } catch (\Throwable $rErr) {
-                        Log::warning("IspAutomation: FreeRADIUS sync warning for {$customer->username}: " . $rErr->getMessage());
+                if ($created) {
+                    $lastRadiusError = null;
+                    for ($attempt = 1; $attempt <= 2; $attempt++) {
+                        try {
+                            $this->radiusService->syncCustomerSubscriber($customer->fresh());
+                            $lastRadiusError = null;
+                            break;
+                        } catch (\Throwable $rErr) {
+                            $lastRadiusError = $rErr;
+                        }
                     }
-
+                    if ($lastRadiusError) {
+                        Log::warning('IspAutomation: FreeRADIUS invoice sync failed after retry.', [
+                            'tenant_id' => $tenant->id,
+                            'customer_id' => $customer->id,
+                            'attempts' => 2,
+                            'error' => $lastRadiusError->getMessage(),
+                        ]);
+                    }
                     $invoicesGenerated++;
                 }
             } catch (\Throwable $e) {
@@ -220,10 +225,10 @@ class IspCustomerAutomationService
     public function enforceAutoCutForTenant(Tenant $tenant, TenantAutomationSetting $settings, string $triggeredBy = 'cron'): array
     {
         $startTime = microtime(true);
-        $today = Carbon::today();
+        $today = Carbon::now($tenant->timezone ?: config('app.timezone'))->startOfDay();
         $graceDays = (int) ($settings->grace_period_days ?: 0);
         $minThreshold = (float) ($settings->min_due_threshold ?: 0.00);
-        $cutDateThreshold = Carbon::today()->subDays($graceDays);
+        $cutDateThreshold = $today->copy()->subDays($graceDays);
 
         $expiredCount = 0;
         $disconnectedCount = 0;
@@ -336,12 +341,12 @@ class IspCustomerAutomationService
     public function dispatchRemindersForTenant(Tenant $tenant, TenantAutomationSetting $settings, string $triggeredBy = 'cron'): array
     {
         $startTime = microtime(true);
-        $today = Carbon::today();
+        $today = Carbon::now($tenant->timezone ?: config('app.timezone'))->startOfDay();
         $alert1Days = (int) ($settings->reminder_1_days_before ?: 3);
         $alert2Days = (int) ($settings->reminder_2_days_before ?: 1);
 
-        $target1Date = Carbon::today()->addDays($alert1Days)->toDateString();
-        $target2Date = Carbon::today()->addDays($alert2Days)->toDateString();
+        $target1Date = $today->copy()->addDays($alert1Days)->toDateString();
+        $target2Date = $today->copy()->addDays($alert2Days)->toDateString();
 
         $companyName = $tenant->company_name ?: ($tenant->name ?: 'ISP Service');
         $smsSent = 0;
@@ -486,70 +491,88 @@ class IspCustomerAutomationService
     public function settleAndReactivate(TenantCustomer $customer, float $amountPaid, string $paymentMethod = 'cash', ?string $notes = null): array
     {
         return DB::transaction(function () use ($customer, $amountPaid, $paymentMethod, $notes) {
-            $settings = TenantAutomationSetting::where('tenant_id', $customer->tenant_id)->first();
+            $lockedCustomer = TenantCustomer::where('tenant_id', $customer->tenant_id)
+                ->whereKey($customer->id)->lockForUpdate()->with(['package', 'router', 'tenant'])->firstOrFail();
+            $settings = TenantAutomationSetting::where('tenant_id', $lockedCustomer->tenant_id)->first();
 
             // 1. Settle oldest unpaid invoice
-            $pendingInvoice = TenantCustomerInvoice::where('tenant_id', $customer->tenant_id)
-                ->where('customer_id', $customer->id)
-                ->where('status', 'unpaid')
+            $pendingInvoice = TenantCustomerInvoice::where('tenant_id', $lockedCustomer->tenant_id)
+                ->where('customer_id', $lockedCustomer->id)
+                ->whereIn('status', ['unpaid', 'partial', 'partially_paid', 'overdue'])
                 ->orderBy('due_date', 'asc')
+                ->lockForUpdate()
                 ->first();
 
             if ($pendingInvoice) {
-                $pendingInvoice->paid_amount = $amountPaid;
-                $pendingInvoice->due_amount = max(0, (float)$pendingInvoice->total_payable - $amountPaid);
-                $pendingInvoice->status = ($pendingInvoice->due_amount <= 0) ? 'paid' : 'partial';
-                $pendingInvoice->paid_at = Carbon::now();
+                $applied = min($amountPaid, (float) $pendingInvoice->due_amount);
+                $pendingInvoice->paid_amount = round((float) $pendingInvoice->paid_amount + $applied, 2);
+                $pendingInvoice->due_amount = max(0, round((float) $pendingInvoice->due_amount - $applied, 2));
+                $pendingInvoice->status = ($pendingInvoice->due_amount <= 0) ? 'paid' : 'partially_paid';
+                $pendingInvoice->paid_at = $pendingInvoice->due_amount <= 0 ? Carbon::now() : null;
                 $pendingInvoice->payment_method = $paymentMethod;
                 $pendingInvoice->save();
             }
 
-            // 2. Extend customer expiry date
-            $currentExpiry = $customer->expiry_date ? Carbon::parse($customer->expiry_date) : Carbon::today();
-            $newExpiry = ($currentExpiry->isPast()) 
-                ? Carbon::today()->addMonth() 
-                : $currentExpiry->copy()->addMonth();
-
-            $customer->expiry_date = $newExpiry;
-            $customer->status = 'active';
-            $customer->due_amount = max(0, (float)$customer->due_amount - $amountPaid);
-            $customer->save();
+            $monthlyBill = (float) ($lockedCustomer->monthly_bill > 0
+                ? $lockedCustomer->monthly_bill
+                : ($lockedCustomer->package?->price ?? 0));
+            $policy = app(CustomerPaymentPolicy::class)->calculate(
+                oldDue: (float) $lockedCustomer->due_amount,
+                oldExpiry: $lockedCustomer->expiry_date ? Carbon::parse($lockedCustomer->expiry_date) : null,
+                monthlyBill: $monthlyBill,
+                mode: 'due',
+                amountPaid: $amountPaid,
+                discount: 0,
+                months: 1,
+                extendValidity: true,
+                reactivateRequested: true,
+                now: Carbon::now($lockedCustomer->tenant?->timezone ?: config('app.timezone')),
+            );
+            $lockedCustomer->due_amount = $policy['new_due'];
+            if ($policy['new_expiry']) {
+                $lockedCustomer->expiry_date = $policy['new_expiry'];
+            }
+            if ($policy['can_reactivate']) {
+                $lockedCustomer->status = 'active';
+            }
+            $lockedCustomer->save();
+            $newExpiry = $lockedCustomer->expiry_date;
 
             // 3. Auto Re-activate in MikroTik Router
-            if (!$settings || $settings->auto_reconnect_enabled) {
-                if ($customer->router) {
+            if ($policy['can_reactivate'] && (!$settings || $settings->auto_reconnect_enabled)) {
+                if ($lockedCustomer->router) {
                     try {
-                        $this->mikrotikService->togglePppSecret($customer->router, $customer->username, false);
+                        $this->mikrotikService->togglePppSecret($lockedCustomer->router, $lockedCustomer->username, false);
                     } catch (\Throwable $e) {
-                        Log::warning("IspAutomation: Failed to enable secret in MikroTik for {$customer->username}: " . $e->getMessage());
+                        Log::warning("IspAutomation: Failed to enable secret in MikroTik for {$lockedCustomer->username}: " . $e->getMessage());
                     }
                 }
 
                 // 4. Auto Re-activate in FreeRADIUS
                 try {
-                    $this->radiusService->syncCustomerSubscriber($customer);
+                    $this->radiusService->syncCustomerSubscriber($lockedCustomer);
                 } catch (\Throwable $e) {
-                    Log::warning("IspAutomation: Failed to sync RADIUS for {$customer->username}: " . $e->getMessage());
+                    Log::warning("IspAutomation: Failed to sync RADIUS for {$lockedCustomer->username}: " . $e->getMessage());
                 }
 
                 // 5. Optional Restore SMS
-                if ($settings && $settings->auto_send_restore_sms && !empty($customer->phone)) {
+                if ($settings && $settings->auto_send_restore_sms && !empty($lockedCustomer->phone)) {
                     try {
-                        $tenant = $customer->tenant;
+                        $tenant = $lockedCustomer->tenant;
                         $companyName = $tenant?->company_name ?: ($tenant?->name ?: 'ISP');
-                        $restoreMsg = "Dear {$customer->name}, payment of BDT {$amountPaid} received. Your {$companyName} line is active until {$newExpiry->format('d M Y')}. Thank you!";
-                        SmsService::send($customer->phone, $restoreMsg);
+                        $restoreMsg = "Dear {$lockedCustomer->name}, payment of BDT {$amountPaid} received. Your {$companyName} line is active until {$newExpiry->format('d M Y')}. Thank you!";
+                        SmsService::send($lockedCustomer->phone, $restoreMsg);
                     } catch (\Throwable $smsErr) {
-                        Log::warning("IspAutomation: Restore SMS error for {$customer->phone}: " . $smsErr->getMessage());
+                        Log::warning("IspAutomation: Restore SMS error for {$lockedCustomer->phone}: " . $smsErr->getMessage());
                     }
                 }
             }
 
             return [
                 'success' => true,
-                'customer_id' => $customer->id,
-                'new_expiry_date' => $newExpiry->toDateString(),
-                'status' => 'active',
+                'customer_id' => $lockedCustomer->id,
+                'new_expiry_date' => $newExpiry?->toDateString(),
+                'status' => $lockedCustomer->status,
                 'invoice_id' => $pendingInvoice?->id
             ];
         });
