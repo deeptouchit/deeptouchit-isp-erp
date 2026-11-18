@@ -13,7 +13,7 @@
 - Optical responses distinguish live, cached and unavailable data. Cached timestamps are never replaced with the current time. Inventory sync records the observation time only for an actual reading; missing optical data does not determine link status. Old readings without a known observation time show no fabricated timestamp.
 - HSGQ's real firmware web assets and read-only responses were inspected. `onumgmt?form=base-info` supplies identity, while `onu_allow_list` supplies per-ONU status, receive power and distance. The former quota-based online allocation and generated signal/distance values were removed. Unrecognized states show as unknown.
 - Driver selection no longer depends on public forwarding port numbers. PON addresses/FDB indexes come from optional OLT create/edit mapping, or existing inventory. Fresh FastCGI installations without an inventory/mapping fail explicitly instead of probing hardcoded chassis ports. VSOL uses configured PON count. Session tokens and VSOL cookie paths are separated by credentials.
-- Table and KPIs share filters and configurable signal thresholds (`ONU_GOOD_MIN_DBM`, `ONU_WARNING_MIN_DBM`). The table has seven core columns; other fields remain in Details. New messages are included in English and Bengali.
+- Table and KPIs share filters and configurable signal thresholds (`ONU_GOOD_MIN_DBM`, `ONU_WARNING_MIN_DBM`). The existing twelve operational columns are preserved, while additional fields remain in Details. New messages are included in English and Bengali.
 
 ## Validation and deployment
 

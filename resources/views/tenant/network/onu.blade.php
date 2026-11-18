@@ -357,9 +357,14 @@
                     <tr>
                         <th class="w-10 text-center font-semibold">#</th>
                         <th class="text-center font-semibold">{{ __('Client / ONU Name') }}</th>
+                        <th class="text-center font-semibold">{{ __('Area') }}</th>
                         <th class="text-center font-semibold">{{ __('OLT Gateway') }}</th>
                         <th class="text-center font-semibold">{{ __('PON:ONU ID') }}</th>
+                        <th class="text-center font-semibold">{{ __('ONU MAC') }}</th>
+                        <th class="text-center font-semibold">{{ __('Router MAC') }}</th>
+                        <th class="text-center font-semibold">{{ __('Type') }}</th>
                         <th class="text-center font-semibold">{{ __('Optical Power') }}</th>
+                        <th class="text-center font-semibold">{{ __('Distance') }}</th>
                         <th class="text-center font-semibold">{{ __('Status') }}</th>
                         <th class="w-10 text-center font-semibold no-sort">{{ __('Action') }}</th>
                     </tr>
@@ -439,6 +444,18 @@
                             </td>
 
 
+                            <!-- 3. Area (Left Align) -->
+                            <td class="text-left whitespace-nowrap">
+                                @if($areaDisplay)
+                                    <span class="inline-flex items-center gap-1 text-slate-700 font-medium">
+                                        <i class="fas fa-location-dot text-[9px] text-cyan-500"></i>
+                                        <span>{{ $areaDisplay }}</span>
+                                    </span>
+                                @else
+                                    <span class="text-slate-400 text-xs">--</span>
+                                @endif
+                            </td>
+
                             <!-- 4. OLT Gateway (Left Align) -->
                             <td class="text-left whitespace-nowrap">
                                 @if($onu->olt)
@@ -465,6 +482,45 @@
 
 
 
+                            <!-- 6. ONU MAC (Center Align, font-mono) -->
+                            <td class="text-center font-mono text-slate-800 whitespace-nowrap">
+                                <span class="inline-flex items-center gap-1 flex-nowrap whitespace-nowrap">
+                                    <span>{{ $onu->mac_address ?: '--' }}</span>
+                                    @if($onu->mac_address)
+                                        <button type="button"
+                                                @click="copyToClipboard('{{ $onu->mac_address }}', i18n.onuMac)"
+                                                class="text-slate-400 hover:text-cyan-600 text-[10px] cursor-pointer"
+                                                title="{{ __('Copy ONU MAC') }}">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                    @endif
+                                </span>
+                            </td>
+
+                            <!-- 7. Router MAC (Center Align, font-mono) -->
+                            <td class="text-center font-mono whitespace-nowrap">
+                                @if($routerMacDisplay)
+                                    <span class="inline-flex items-center gap-1 flex-nowrap whitespace-nowrap text-slate-800">
+                                        <span>{{ $routerMacDisplay }}</span>
+                                        <button type="button"
+                                                @click="copyToClipboard('{{ $routerMacDisplay }}', i18n.routerMac)"
+                                                class="text-slate-400 hover:text-cyan-600 text-[10px] cursor-pointer"
+                                                title="{{ __('Copy Router MAC') }}">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                    </span>
+                                @else
+                                    <span class="text-slate-400 text-xs">--</span>
+                                @endif
+                            </td>
+
+                            <!-- 8. Type (Center Align) -->
+                            <td class="text-center font-mono whitespace-nowrap">
+                                <span class="inline-flex px-1.5 py-0.5 rounded text-[10px] border {{ $typeBadge }}">
+                                    {{ $onuType }}
+                                </span>
+                            </td>
+
                             <!-- 9. Optical Power (Center Align, font-mono) -->
                             <td class="text-center font-mono whitespace-nowrap">
                                 @if($onu->rx_power_dbm !== null)
@@ -486,6 +542,11 @@
                                 @endif
                             </td>
 
+
+                            <!-- 10. Distance (Center Align, font-mono) -->
+                            <td class="text-center font-mono text-slate-700 whitespace-nowrap">
+                                {{ $onu->distance_m !== null ? $onu->distance_m . 'm' : '--' }}
+                            </td>
 
                             <!-- 11. Status (Center Align) -->
                             <td class="text-center whitespace-nowrap">
@@ -514,7 +575,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="py-10 text-center">
+                            <td colspan="12" class="py-10 text-center">
                                 <div class="max-w-md mx-auto space-y-2.5">
                                     <div class="w-10 h-10 rounded-xl bg-cyan-50 text-cyan-600 mx-auto flex items-center justify-center text-base border border-cyan-100 shadow-xs">
                                         <i class="fas fa-satellite-dish"></i>
