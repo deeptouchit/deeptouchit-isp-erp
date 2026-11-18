@@ -150,7 +150,13 @@ class User extends Authenticatable
         if ($this->isCollector()) {
             $permissions = array_merge($permissions, ['customers.view', 'billing.collect', 'billing.cash_handover', 'support.tickets']);
         } elseif ($this->isTechnician()) {
-            $permissions = array_merge($permissions, ['customers.view', 'support.tickets', 'support.field_jobs', 'support.installations']);
+            $permissions = array_merge($permissions, [
+                'customers.view',
+                'network.olts_onus',
+                'support.tickets',
+                'support.field_jobs',
+                'support.installations',
+            ]);
         }
         return in_array($permission, $permissions, true);
     }
