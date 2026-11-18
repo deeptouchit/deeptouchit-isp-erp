@@ -92,8 +92,8 @@ return [
         'roles' => ['reseller_admin', 'reseller_owner', 'reseller_manager', 'admin', 'manager'],
         'children' => [
             ['title' => 'Balance Recharge', 'route' => 'reseller.recharge.index', 'active' => ['reseller.recharge*']],
-            ['title' => 'Balance Deductions', 'route' => 'reseller.ledger.index', 'params' => ['type' => 'DEBIT'], 'active' => ['reseller.ledger*']],
-            ['title' => 'Transaction Ledger', 'route' => 'reseller.ledger.index', 'active' => ['reseller.ledger*']],
+            ['title' => 'Balance Deductions', 'route' => 'reseller.ledger.index', 'params' => ['type' => 'DEBIT'], 'active' => ['reseller.ledger*'], 'params_match' => ['type' => 'DEBIT']],
+            ['title' => 'Transaction Ledger', 'route' => 'reseller.ledger.index', 'active' => ['reseller.ledger*'], 'require_no_params' => ['type']],
         ],
     ],
     [

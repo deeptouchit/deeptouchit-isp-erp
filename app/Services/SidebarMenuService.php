@@ -179,6 +179,22 @@ class SidebarMenuService
      */
     protected static function isItemActive(array $item): bool
     {
+        if (!empty($item['params_match']) && is_array($item['params_match'])) {
+            foreach ($item['params_match'] as $param => $expected) {
+                if ((string) request($param) !== (string) $expected) {
+                    return false;
+                }
+            }
+        }
+
+        if (!empty($item['require_no_params']) && is_array($item['require_no_params'])) {
+            foreach ($item['require_no_params'] as $param) {
+                if (request()->filled($param)) {
+                    return false;
+                }
+            }
+        }
+
         // Special Finance Ledger modes
         $mode = $item['active_mode'] ?? null;
         if ($mode === 'due_invoices') {
