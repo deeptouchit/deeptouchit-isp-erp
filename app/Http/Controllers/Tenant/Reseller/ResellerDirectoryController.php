@@ -222,18 +222,27 @@ class ResellerDirectoryController extends Controller
 
             // Optional portal admin user creation
             if (!empty($validated['create_portal_user']) && !empty($validated['email'])) {
-                $userExists = User::where('email', $validated['email'])->exists();
-                if (!$userExists) {
-                    User::create([
-                        'tenant_id' => $tenant->id,
-                        'reseller_id' => $reseller->id,
-                        'name' => $validated['contact_person'] ?: $validated['name'],
-                        'email' => $validated['email'],
-                        'phone' => $validated['mobile'],
-                        'password' => Hash::make($validated['portal_password'] ?: '12345678'),
-                        'role' => 'reseller_admin',
-                        'status' => 'active',
-                    ]);
+                $portalUser = User::where('tenant_id', $tenant->id)
+                    ->whereRaw('LOWER(TRIM(email)) = ?', [strtolower(trim($validated['email']))])
+                    ->first();
+
+                $password = $validated['portal_password'] ?: '12345678';
+                $portalData = [
+                    'tenant_id' => $tenant->id,
+                    'reseller_id' => $reseller->id,
+                    'name' => $validated['contact_person'] ?: $validated['name'],
+                    'email' => $validated['email'],
+                    'phone' => $validated['mobile'],
+                    'role' => 'reseller_admin',
+                    'status' => 'active',
+                ];
+
+                if ($portalUser) {
+                    $portalData['password'] = Hash::make($password);
+                    $portalUser->update($portalData);
+                } else {
+                    $portalData['password'] = Hash::make($password);
+                    User::create($portalData);
                 }
             }
 

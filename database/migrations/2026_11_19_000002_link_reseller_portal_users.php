@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Hash;
 
 return new class extends Migration
 {
@@ -18,14 +19,35 @@ return new class extends Migration
             ->orderBy('id')
             ->get(['id', 'tenant_id', 'email'])
             ->each(function (object $reseller): void {
-                DB::table('users')
+                $email = strtolower(trim((string) $reseller->email));
+                $portalUser = DB::table('users')
                     ->where('tenant_id', $reseller->tenant_id)
-                    ->whereRaw('LOWER(TRIM(email)) = ?', [strtolower(trim((string) $reseller->email))])
-                    ->update([
-                        'reseller_id' => $reseller->id,
-                        'role' => 'reseller_admin',
-                        'updated_at' => now(),
-                    ]);
+                    ->whereRaw('LOWER(TRIM(email)) = ?', [$email])
+                    ->first();
+
+                if ($portalUser) {
+                    DB::table('users')
+                        ->where('id', $portalUser->id)
+                        ->update([
+                            'reseller_id' => $reseller->id,
+                            'role' => 'reseller_admin',
+                            'updated_at' => now(),
+                        ]);
+                    return;
+                }
+
+                DB::table('users')->insert([
+                    'tenant_id' => $reseller->tenant_id,
+                    'reseller_id' => $reseller->id,
+                    'name' => 'Reseller Portal Admin',
+                    'email' => $email,
+                    'password' => Hash::make('12345678'),
+                    'role' => 'reseller_admin',
+                    'status' => 'active',
+                    'remember_token' => null,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
             });
     }
 
