@@ -248,6 +248,7 @@ Route::middleware(['web'])->group(function () {
             Route::delete('/{reseller}', [ResellerDirectoryController::class, 'destroy'])->whereNumber('reseller')->name('destroy');
             Route::post('/{reseller}/toggle-status', [ResellerDirectoryController::class, 'toggleStatus'])->whereNumber('reseller')->name('toggle-status');
             Route::post('/{reseller}/adjust-wallet', [ResellerDirectoryController::class, 'adjustWallet'])->whereNumber('reseller')->name('adjust-wallet');
+            Route::post('/{reseller}/portal-login', [ResellerDirectoryController::class, 'portalLogin'])->whereNumber('reseller')->name('portal-login');
         });
 
         // 10. System Users & Login Accounts (Prefix: admin/users)

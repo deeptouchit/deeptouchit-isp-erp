@@ -493,6 +493,13 @@
 
         {{-- Group 2: Configuration & Status --}}
         <div class="py-0.5">
+            <button type="button"
+                    @click="resetPortalLoginFromMenu()"
+                    class="w-full px-2.5 py-1.5 hover:bg-cyan-50 text-slate-700 font-normal flex items-center gap-2 transition text-left cursor-pointer text-[11px]">
+                <i class="fas fa-key text-cyan-600 w-3.5 text-center text-[10px]"></i>
+                <span>{{ __('Create / Reset Portal Login') }}</span>
+            </button>
+
             <button type="button" 
                     @click="editFromMenu()" 
                     class="w-full px-2.5 py-1.5 hover:bg-amber-50 text-slate-700 hover:text-amber-700 font-normal flex items-center gap-2 transition text-left cursor-pointer text-[11px]">
@@ -1062,6 +1069,51 @@ function resellerDirectoryManager() {
             const res = this.activeMenuRes;
             this.activeMenuRes = null;
             this.openEditModal(res);
+        },
+
+        async resetPortalLoginFromMenu() {
+            if (!this.activeMenuRes) return;
+            const res = this.activeMenuRes;
+            this.activeMenuRes = null;
+
+            if (typeof Swal === 'undefined') {
+                alert(@js(__('Create / Reset Portal Login')));
+                return;
+            }
+
+            const result = await Swal.fire({
+                title: @js(__('Reset Reseller Portal Login')),
+                text: res.email ? res.email : @js(__('Reseller email is missing')),
+                input: 'password',
+                inputPlaceholder: @js(__('Enter a password or leave blank for 12345678')),
+                inputAttributes: { autocomplete: 'new-password' },
+                showCancelButton: true,
+                confirmButtonText: @js(__('Create / Reset')),
+                cancelButtonText: @js(__('Cancel')),
+            });
+
+            if (!result.isConfirmed) return;
+
+            const response = await fetch(`/admin/resellers/${res.id}/portal-login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({ password: result.value || '12345678' }),
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: @js(__('Portal login ready')),
+                    html: `<b>${data.email}</b><br>{{ __('Password') }}: <code>${result.value || '12345678'}</code>`,
+                });
+            } else {
+                Swal.fire({ icon: 'error', title: @js(__('Login reset failed')), text: data.message || '' });
+            }
         },
 
         toggleStatusFromMenu() {

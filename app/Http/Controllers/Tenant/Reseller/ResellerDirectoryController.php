@@ -438,6 +438,57 @@ class ResellerDirectoryController extends Controller
     }
 
     /**
+     * Create or reset a reseller partner portal login.
+     */
+    public function portalLogin(Request $request, int $id): JsonResponse
+    {
+        $tenant = Auth::user()?->tenant;
+        if (!$tenant) {
+            abort(403, __('Unauthorized.'));
+        }
+
+        $reseller = TenantReseller::where('tenant_id', $tenant->id)->findOrFail($id);
+        if (!$reseller->email) {
+            return response()->json([
+                'success' => false,
+                'message' => __('Reseller email is missing. Add an email first.'),
+            ], 422);
+        }
+
+        $validated = $request->validate([
+            'password' => 'nullable|string|min:6',
+        ]);
+        $password = $validated['password'] ?: '12345678';
+
+        $portalUser = User::where('tenant_id', $tenant->id)
+            ->whereRaw('LOWER(TRIM(email)) = ?', [strtolower(trim($reseller->email))])
+            ->first();
+
+        $portalData = [
+            'tenant_id' => $tenant->id,
+            'reseller_id' => $reseller->id,
+            'name' => $reseller->contact_person ?: $reseller->name,
+            'email' => $reseller->email,
+            'phone' => $reseller->mobile,
+            'password' => Hash::make($password),
+            'role' => 'reseller_admin',
+            'status' => 'active',
+        ];
+
+        if ($portalUser) {
+            $portalUser->update($portalData);
+        } else {
+            User::create($portalData);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => __('Portal login created/reset successfully.'),
+            'email' => $reseller->email,
+        ]);
+    }
+
+    /**
      * Toggle status (active/suspended/inactive).
      */
     public function toggleStatus(Request $request, int $id): JsonResponse
