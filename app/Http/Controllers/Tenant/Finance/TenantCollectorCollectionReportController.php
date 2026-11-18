@@ -11,6 +11,7 @@ use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -45,11 +46,16 @@ class TenantCollectorCollectionReportController extends Controller
     public function index(Request $request): View
     {
         $tenant = $this->getTenant();
+        $authUser = Auth::user();
+        $isCollector = $authUser && $authUser->isCollector();
 
         // 1. Filter Parameters
         $period = $request->get('period', 'monthly'); // daily, monthly, yearly, all
         $partnerFilter = $request->get('partner_id', 'all'); // all, direct, or reseller_id
         $collectorFilter = $request->get('collector_id', 'all');
+        if ($isCollector) {
+            $collectorFilter = (string) $authUser->id;
+        }
         $search = trim($request->get('search', ''));
         $dateFrom = $request->get('date_from', '');
         $dateTo = $request->get('date_to', '');
@@ -69,15 +75,19 @@ class TenantCollectorCollectionReportController extends Controller
         $monthStart = Carbon::now()->startOfMonth();
         $monthEnd = Carbon::now()->endOfMonth();
 
-        $todayCollections = (float) TenantCustomerPayment::where('tenant_id', $tenant->id)
+        $todayCollectionsQuery = TenantCustomerPayment::where('tenant_id', $tenant->id)
             ->whereBetween('paid_at', [$todayStart, $todayEnd])
-            ->where('status', '!=', 'void')
-            ->sum('amount');
-
-        $thisMonthCollections = (float) TenantCustomerPayment::where('tenant_id', $tenant->id)
+            ->where('status', '!=', 'void');
+        $thisMonthCollectionsQuery = TenantCustomerPayment::where('tenant_id', $tenant->id)
             ->whereBetween('paid_at', [$monthStart, $monthEnd])
-            ->where('status', '!=', 'void')
-            ->sum('amount');
+            ->where('status', '!=', 'void');
+        if ($isCollector) {
+            $todayCollectionsQuery->where('collected_by', $authUser->id);
+            $thisMonthCollectionsQuery->where('collected_by', $authUser->id);
+        }
+        $todayCollections = (float) $todayCollectionsQuery->sum('amount');
+
+        $thisMonthCollections = (float) $thisMonthCollectionsQuery->sum('amount');
 
         // Filtered Scope Query
         $baseQuery = TenantCustomerPayment::where('tenant_id', $tenant->id)

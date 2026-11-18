@@ -64,6 +64,14 @@ class TenantCustomerInvoiceController extends Controller
             ->orderBy('name');
         if ($isResellerUser) {
             $custSelectQuery->where('reseller_id', $userResellerId);
+        } elseif ($user && $user->isCollector()) {
+            $zoneIds = TenantCoverageZone::where('tenant_id', $tenant->id)->where('staff_id', $user->id)->pluck('id');
+            $zoneNames = TenantCoverageZone::where('tenant_id', $tenant->id)->where('staff_id', $user->id)->pluck('name');
+            $custSelectQuery->where(function ($scope) use ($user, $zoneIds, $zoneNames) {
+                $scope->where('assigned_collector_id', $user->id);
+                if ($zoneIds->isNotEmpty()) $scope->orWhereIn('zone_id', $zoneIds);
+                if ($zoneNames->isNotEmpty()) $scope->orWhereIn('zone', $zoneNames);
+            });
         }
         $allCustomers = $custSelectQuery->get(['id', 'customer_id', 'name', 'username', 'phone', 'monthly_bill', 'package_id', 'package_name', 'reseller_id', 'zone'])
             ->map(function ($c) {
@@ -90,6 +98,16 @@ class TenantCustomerInvoiceController extends Controller
                 'creator',
                 'payments.collector'
             ]);
+
+        if (!$isResellerUser && $user && $user->isCollector()) {
+            $zoneIds = TenantCoverageZone::where('tenant_id', $tenant->id)->where('staff_id', $user->id)->pluck('id');
+            $zoneNames = TenantCoverageZone::where('tenant_id', $tenant->id)->where('staff_id', $user->id)->pluck('name');
+            $query->whereHas('customer', function ($scope) use ($user, $zoneIds, $zoneNames) {
+                $scope->where('assigned_collector_id', $user->id);
+                if ($zoneIds->isNotEmpty()) $scope->orWhereIn('zone_id', $zoneIds);
+                if ($zoneNames->isNotEmpty()) $scope->orWhereIn('zone', $zoneNames);
+            });
+        }
 
         // 1. Reseller Scoping
         if ($isResellerUser) {

@@ -97,6 +97,13 @@ class TenantCustomerController extends Controller
         $distinctZonesQuery = TenantCustomer::where('tenant_id', $tenant->id);
         if ($isIspCollector) {
             $distinctZonesQuery->whereNull('reseller_id');
+            $zoneIds = TenantCoverageZone::where('tenant_id', $tenant->id)->where('staff_id', $authUser->id)->pluck('id');
+            $zoneNames = TenantCoverageZone::where('tenant_id', $tenant->id)->where('staff_id', $authUser->id)->pluck('name');
+            $distinctZonesQuery->where(function ($scope) use ($authUser, $zoneIds, $zoneNames) {
+                $scope->where('assigned_collector_id', $authUser->id);
+                if ($zoneIds->isNotEmpty()) $scope->orWhereIn('zone_id', $zoneIds);
+                if ($zoneNames->isNotEmpty()) $scope->orWhereIn('zone', $zoneNames);
+            });
         }
         $distinctZones = $distinctZonesQuery
             ->whereNotNull('zone')
@@ -111,6 +118,13 @@ class TenantCustomerController extends Controller
 
         if ($isIspCollector) {
             $query->whereNull('reseller_id');
+            $zoneIds = TenantCoverageZone::where('tenant_id', $tenant->id)->where('staff_id', $authUser->id)->pluck('id');
+            $zoneNames = TenantCoverageZone::where('tenant_id', $tenant->id)->where('staff_id', $authUser->id)->pluck('name');
+            $query->where(function ($scope) use ($authUser, $zoneIds, $zoneNames) {
+                $scope->where('assigned_collector_id', $authUser->id);
+                if ($zoneIds->isNotEmpty()) $scope->orWhereIn('zone_id', $zoneIds);
+                if ($zoneNames->isNotEmpty()) $scope->orWhereIn('zone', $zoneNames);
+            });
         }
 
         if ($search) {
