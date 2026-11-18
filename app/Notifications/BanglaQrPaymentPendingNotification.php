@@ -5,6 +5,7 @@ namespace App\Notifications;
 use App\Models\TenantCustomer;
 use App\Models\TenantCustomerPayment;
 use App\Models\TenantReseller;
+use App\Models\Setting;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 
@@ -41,6 +42,8 @@ class BanglaQrPaymentPendingNotification extends Notification
     {
         $isReseller = method_exists($notifiable, 'isResellerUser') ? $notifiable->isResellerUser() : false;
         $resellerName = $this->reseller?->name ?? 'Partner';
+        $tenantId = $this->customer->tenant_id ?? $notifiable->tenant_id ?? null;
+        $currencySymbol = Setting::get('currency_symbol', '৳', $tenantId);
 
         $link = $isReseller
             ? route('reseller.customers.show', $this->customer->id)
@@ -54,8 +57,14 @@ class BanglaQrPaymentPendingNotification extends Notification
             'trx_id' => $this->trxId,
             'type' => 'bangla_qr_pending',
             'priority' => 'high',
-            'title' => 'Bangla QR Payment Pending Approval',
-            'message' => "Bangla QR payment of ৳" . number_format($this->amount, 2) . " submitted for customer '{$this->customer->name}' ({$this->customer->username}) by {$resellerName}. TrxID: " . ($this->trxId ?: 'N/A') . ". Line activation is pending approval.",
+            'title' => __('Bangla QR Payment Pending Approval'),
+            'message' => __('Bangla QR payment of :currency submitted for customer :customer (:username) by :reseller. TrxID: :trx. Line activation is pending approval.', [
+                'currency' => $currencySymbol . ' ' . number_format($this->amount, 2),
+                'customer' => $this->customer->name,
+                'username' => $this->customer->username,
+                'reseller' => $resellerName,
+                'trx' => $this->trxId ?: __('N/A'),
+            ]),
             'sender_name' => $resellerName,
             'link' => $link,
             'created_at' => now()->toIso8601String(),

@@ -7550,5 +7550,15 @@
     "open tickets": "open tickets",
     "pending jobs": "pending jobs",
     "Go to Dashboard": "Go to Dashboard",
-    "New Notification": "New Notification"
+    "New Notification": "New Notification",
+    "Bangla QR Payment Pending Approval": "Bangla QR Payment Pending Approval",
+    "Bangla QR payment of :currency submitted for customer :customer (:username) by :reseller. TrxID: :trx. Line activation is pending approval.": "Bangla QR payment of :currency submitted for customer :customer (:username) by :reseller. TrxID: :trx. Line activation is pending approval.",
+    "Reseller Wallet Recharge Request": "Reseller Wallet Recharge Request",
+    "Reseller :reseller submitted wallet recharge request #:number for :currency via :method:trx. Approval required.": "Reseller :reseller submitted wallet recharge request #:number for :currency via :method:trx. Approval required.",
+    "N/A": "N/A",
+    "Wallet Recharge Approved": "Wallet Recharge Approved",
+    "Wallet Recharge Rejected": "Wallet Recharge Rejected",
+    "Your wallet recharge request #:number for :currency has been approved! Balance has been credited.": "Your wallet recharge request #:number for :currency has been approved! Balance has been credited.",
+    "Your wallet recharge request #:number for :currency was rejected.:reason": "Your wallet recharge request #:number for :currency was rejected.:reason",
+    "Reason": "Reason"
 }

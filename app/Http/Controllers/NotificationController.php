@@ -25,13 +25,36 @@ class NotificationController extends Controller
 
         $isReseller = method_exists($user, 'isResellerUser') ? $user->isResellerUser() : false;
 
-        // Fetch unread notifications, or recent ones if no unread
-        $unreadCount = $user->unreadNotifications()->count();
-
         $notifications = $user->notifications()
+            ->whereNull('read_at')
             ->latest()
             ->take(15)
             ->get()
+            ->filter(function ($n) use ($user) {
+                $data = $n->data ?? [];
+                $type = $data['type'] ?? 'general';
+
+                if ($user->isSuperAdmin()) {
+                    return true;
+                }
+
+                return match ($type) {
+                    'bangla_qr_pending' => $user->hasPermission('billing.gateways')
+                        || $user->hasPermission('billing.collect'),
+                    'reseller_recharge_pending', 'reseller_recharge_status' =>
+                        $user->hasPermission('resellers.wallet')
+                        || $user->hasPermission('billing.wholesale'),
+                    'ticket_reply', 'ticket_activity', 'ticket_reply_owner',
+                    'ticket_created', 'ticket_updated', 'ticket_status',
+                    'support_escalation', 'field_job', 'installation' =>
+                        $user->hasPermission('support.tickets')
+                        || $user->hasPermission('support.field_jobs')
+                        || $user->hasPermission('support.installations')
+                        || $user->hasPermission('support.escalations'),
+                    default => true,
+                };
+            })
+            ->values()
             ->map(function ($n) use ($isReseller) {
                 $data = $n->data ?? [];
                 $ticketId = $data['ticket_id'] ?? null;
@@ -58,10 +81,12 @@ class NotificationController extends Controller
                     'link' => $link,
                     'ticket_number' => $data['ticket_number'] ?? null,
                     'read' => $n->read_at !== null,
-                    'time_ago' => $n->created_at ? $n->created_at->locale('en')->diffForHumans() : '',
+                    'time_ago' => $n->created_at ? $n->created_at->locale(app()->getLocale())->diffForHumans() : '',
                     'created_at' => $n->created_at?->toIso8601String(),
                 ];
             });
+
+        $unreadCount = $notifications->where('read', false)->count();
 
         return response()->json([
             'unread_count' => $unreadCount,

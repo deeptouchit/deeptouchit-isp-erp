@@ -4,6 +4,7 @@ namespace App\Notifications;
 
 use App\Models\TenantReseller;
 use App\Models\TenantResellerRecharge;
+use App\Models\Setting;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 
@@ -37,14 +38,23 @@ class ResellerRechargeStatusNotification extends Notification
     {
         $isApproved = $this->status === 'APPROVED';
         $amount = (float) ($this->recharge->total_credited > 0 ? $this->recharge->total_credited : $this->recharge->amount);
+        $tenantId = $this->reseller->tenant_id ?? $notifiable->tenant_id ?? null;
+        $currencySymbol = Setting::get('currency_symbol', '৳', $tenantId);
 
         $title = $isApproved
-            ? 'Wallet Recharge Approved'
-            : 'Wallet Recharge Rejected';
+            ? __('Wallet Recharge Approved')
+            : __('Wallet Recharge Rejected');
 
         $message = $isApproved
-            ? "Your wallet recharge request #{$this->recharge->recharge_no} for ৳" . number_format($amount, 2) . " has been approved! Balance has been credited."
-            : "Your wallet recharge request #{$this->recharge->recharge_no} for ৳" . number_format($this->recharge->amount, 2) . " was rejected." . ($this->reason ? " Reason: {$this->reason}" : "");
+            ? __('Your wallet recharge request #:number for :currency has been approved! Balance has been credited.', [
+                'number' => $this->recharge->recharge_no,
+                'currency' => $currencySymbol . ' ' . number_format($amount, 2),
+            ])
+            : __('Your wallet recharge request #:number for :currency was rejected.:reason', [
+                'number' => $this->recharge->recharge_no,
+                'currency' => $currencySymbol . ' ' . number_format((float) $this->recharge->amount, 2),
+                'reason' => $this->reason ? ' ' . __('Reason') . ': ' . $this->reason : '',
+            ]);
 
         return [
             'recharge_id' => $this->recharge->id,

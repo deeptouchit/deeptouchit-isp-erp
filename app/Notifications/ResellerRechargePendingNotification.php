@@ -4,6 +4,7 @@ namespace App\Notifications;
 
 use App\Models\TenantReseller;
 use App\Models\TenantResellerRecharge;
+use App\Models\Setting;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 
@@ -41,6 +42,8 @@ class ResellerRechargePendingNotification extends Notification
         $resellerName = $this->reseller->name ?? 'Reseller';
         $methodLabel = $this->recharge->payment_method_badge['label'] ?? ($this->method ?? 'Cash/Bank');
         $trxInfo = $this->trxId ? " (TrxID: {$this->trxId})" : "";
+        $tenantId = $this->reseller->tenant_id ?? $notifiable->tenant_id ?? null;
+        $currencySymbol = Setting::get('currency_symbol', '৳', $tenantId);
 
         return [
             'recharge_id' => $this->recharge->id,
@@ -51,8 +54,14 @@ class ResellerRechargePendingNotification extends Notification
             'trx_id' => $this->trxId,
             'type' => 'reseller_recharge_pending',
             'priority' => 'high',
-            'title' => 'Reseller Wallet Recharge Request',
-            'message' => "Reseller '{$resellerName}' submitted wallet recharge request #{$this->recharge->recharge_no} for ৳" . number_format($this->amount, 2) . " via {$methodLabel}{$trxInfo}. Approval required.",
+            'title' => __('Reseller Wallet Recharge Request'),
+            'message' => __('Reseller :reseller submitted wallet recharge request #:number for :currency via :method:trx. Approval required.', [
+                'reseller' => $resellerName,
+                'number' => $this->recharge->recharge_no,
+                'currency' => $currencySymbol . ' ' . number_format($this->amount, 2),
+                'method' => $methodLabel,
+                'trx' => $trxInfo,
+            ]),
             'sender_name' => $resellerName,
             'link' => route('tenant.resellers.recharge'),
             'created_at' => now()->toIso8601String(),

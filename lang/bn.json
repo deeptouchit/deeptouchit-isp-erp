@@ -7550,5 +7550,15 @@
     "open tickets": "খোলা টিকিট",
     "pending jobs": "অপেক্ষমাণ কাজ",
     "Go to Dashboard": "ড্যাশবোর্ডে যান",
-    "New Notification": "নতুন নোটিফিকেশন"
+    "New Notification": "নতুন নোটিফিকেশন",
+    "Bangla QR Payment Pending Approval": "বাংলা QR পেমেন্ট অনুমোদন অপেক্ষমাণ",
+    "Bangla QR payment of :currency submitted for customer :customer (:username) by :reseller. TrxID: :trx. Line activation is pending approval.": "গ্রাহক :customer (:username)-এর জন্য :reseller কর্তৃক :currency বাংলা QR পেমেন্ট জমা হয়েছে। TrxID: :trx। লাইনের চালু করতে অনুমোদন বাকি।",
+    "Reseller Wallet Recharge Request": "রিসেলার ওয়ালেট রিচার্জ অনুরোধ",
+    "Reseller :reseller submitted wallet recharge request #:number for :currency via :method:trx. Approval required.": "রিসেলার :reseller #:number নম্বর ওয়ালেট রিচার্জ অনুরোধ :currency দিয়ে :method:trx মাধ্যমে জমা দিয়েছেন। অনুমোদন প্রয়োজন।",
+    "N/A": "প্রযোজ্য নয়",
+    "Wallet Recharge Approved": "ওয়ালেট রিচার্জ অনুমোদিত",
+    "Wallet Recharge Rejected": "ওয়ালেট রিচার্জ প্রত্যাখ্যাত",
+    "Your wallet recharge request #:number for :currency has been approved! Balance has been credited.": "আপনার #:number নম্বর ওয়ালেট রিচার্জ অনুরোধ :currency অনুমোদিত হয়েছে। ব্যালেন্স যোগ করা হয়েছে।",
+    "Your wallet recharge request #:number for :currency was rejected.:reason": "আপনার #:number নম্বর ওয়ালেট রিচার্জ অনুরোধ :currency প্রত্যাখ্যাত হয়েছে:reason",
+    "Reason": "কারণ"
 }
