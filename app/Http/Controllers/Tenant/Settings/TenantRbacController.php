@@ -564,9 +564,8 @@ class TenantRbacController extends Controller
                 'status' => 'active',
                 'permissions' => [
                     'customers.view', 'customers.create', 'customers.edit', 'customers.status_toggle', 'customers.export',
-                    'network.routers', 'network.packages', 'network.olts_onus', 'network.disconnect_user',
-                    'billing.invoices', 'billing.collect', 'billing.cash_handover', 'billing.wholesale', 'billing.expenses',
-                    'resellers.view', 'resellers.create',
+                    'staff.view',
+                    'billing.invoices', 'billing.collect', 'billing.cash_handover', 'billing.expenses', 'billing.ledger',
                     'support.tickets', 'support.field_jobs', 'support.installations', 'support.escalations', 'support.sla',
                     'reports.revenue', 'reports.collection', 'reports.inventory'
                 ],

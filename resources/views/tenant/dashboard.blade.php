@@ -52,12 +52,19 @@
 
     {{-- Operational health --}}
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-        @foreach([
-            ['label' => __('Online Routers'), 'value' => $onlineRouters . ' / ' . $routerCount, 'href' => route('tenant.network.mikrotik'), 'icon' => 'fa-router', 'link_class' => 'hover:border-cyan-300', 'icon_class' => 'text-cyan-600'],
-            ['label' => __('OLT Devices'), 'value' => number_format($oltCount), 'href' => route('tenant.network.olt'), 'icon' => 'fa-tower-broadcast', 'link_class' => 'hover:border-blue-300', 'icon_class' => 'text-blue-600'],
-            ['label' => __('ONU / ONT'), 'value' => number_format($onuCount), 'href' => route('tenant.network.onu'), 'icon' => 'fa-server', 'link_class' => 'hover:border-purple-300', 'icon_class' => 'text-purple-600'],
-            ['label' => __('Open Tickets'), 'value' => number_format($openTicketsCount), 'href' => route('tenant.tickets.index'), 'icon' => 'fa-headset', 'link_class' => 'hover:border-amber-300', 'icon_class' => 'text-amber-600'],
-        ] as $health)
+        @php
+            $healthCards = auth()->user()?->role === 'isp_manager'
+                ? [
+                    ['label' => __('Open Tickets'), 'value' => number_format($openTicketsCount), 'href' => route('tenant.tickets.index'), 'icon' => 'fa-headset', 'link_class' => 'hover:border-amber-300', 'icon_class' => 'text-amber-600'],
+                ]
+                : [
+                    ['label' => __('Online Routers'), 'value' => $onlineRouters . ' / ' . $routerCount, 'href' => route('tenant.network.mikrotik'), 'icon' => 'fa-router', 'link_class' => 'hover:border-cyan-300', 'icon_class' => 'text-cyan-600'],
+                    ['label' => __('OLT Devices'), 'value' => number_format($oltCount), 'href' => route('tenant.network.olt'), 'icon' => 'fa-tower-broadcast', 'link_class' => 'hover:border-blue-300', 'icon_class' => 'text-blue-600'],
+                    ['label' => __('ONU / ONT'), 'value' => number_format($onuCount), 'href' => route('tenant.network.onu'), 'icon' => 'fa-server', 'link_class' => 'hover:border-purple-300', 'icon_class' => 'text-purple-600'],
+                    ['label' => __('Open Tickets'), 'value' => number_format($openTicketsCount), 'href' => route('tenant.tickets.index'), 'icon' => 'fa-headset', 'link_class' => 'hover:border-amber-300', 'icon_class' => 'text-amber-600'],
+                ];
+        @endphp
+        @foreach($healthCards as $health)
             <a href="{{ $health['href'] }}" class="bg-white rounded-lg border border-slate-200 p-2.5 shadow-xs flex items-center justify-between {{ $health['link_class'] }} transition">
                 <div class="min-w-0">
                     <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ $health['label'] }}</span>

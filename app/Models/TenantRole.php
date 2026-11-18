@@ -135,6 +135,13 @@ class TenantRole extends Model
                     'resellers.wallet' => 'Top-up / Adjust Reseller Prepaid Wallet Balance',
                 ],
             ],
+            'Staff & Operations' => [
+                'icon' => 'fa-user-tie',
+                'color' => 'blue',
+                'permissions' => [
+                    'staff.view' => 'View ISP staff, attendance, activity logs and commissions',
+                ],
+            ],
             'Helpdesk & Field Operations' => [
                 'icon' => 'fa-headset',
                 'color' => 'cyan',

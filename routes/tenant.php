@@ -251,7 +251,7 @@ Route::middleware(['web'])->group(function () {
         });
 
         // 10. System Users & Login Accounts (Prefix: admin/users)
-        Route::prefix('admin/users')->name('tenant.users.')->middleware('permission:settings.rbac,customers.view')->group(function () {
+        Route::prefix('admin/users')->name('tenant.users.')->middleware('permission:settings.rbac')->group(function () {
             Route::get('/', [\App\Http\Controllers\Tenant\Settings\TenantUserController::class, 'index'])->name('index');
             Route::post('/', [\App\Http\Controllers\Tenant\Settings\TenantUserController::class, 'store'])->name('store');
             Route::get('/export', [\App\Http\Controllers\Tenant\Settings\TenantUserController::class, 'exportCsv'])->name('export');
@@ -264,7 +264,7 @@ Route::middleware(['web'])->group(function () {
         });
 
         // 4. Staff Management & HRM Routes (Prefix: admin/staff)
-        Route::prefix('admin/staff')->name('tenant.staff.')->middleware('permission:settings.rbac,customers.view')->group(function () {
+        Route::prefix('admin/staff')->name('tenant.staff.')->middleware('permission:staff.view')->group(function () {
             Route::get('/', [TenantStaffController::class, 'index'])->name('index');
             Route::get('/isp', [TenantStaffController::class, 'ispStaff'])->name('isp');
             Route::get('/resellers', [TenantStaffController::class, 'resellerRoster'])->name('resellers');
