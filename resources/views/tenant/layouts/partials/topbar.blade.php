@@ -303,7 +303,7 @@
                                 <i class="fas fa-arrow-right text-[9px]"></i>
                             </a>
                         @endif
-                        @if($authUser->isSuperAdmin() || $authUser->hasPermission('support.escalations'))
+                        @if($canViewTickets)
                             <a href="{{ route('tenant.tickets.escalations') }}" class="text-[11px] font-medium text-slate-500 hover:text-slate-800 transition">
                                 {{ __('Escalations') }}
                             </a>
@@ -518,7 +518,6 @@
                 newSuffix: @json(__('new'))
             },
             notificationEndpoint: @json(route('tenant.notifications.unread')),
-            markReadEndpoint: @json(route('tenant.notifications.read', ['id' => '__NOTIFICATION_ID__'])),
             markAllEndpoint: @json(route('tenant.notifications.mark-all-read')),
             async init() {
                 if ('Notification' in window && Notification.permission === 'default') {
@@ -634,7 +633,7 @@
             },
             async markRead(notif) {
                 try {
-                    await fetch(this.markReadEndpoint.replace('__NOTIFICATION_ID__', encodeURIComponent(notif.id)), {
+                    await fetch(this.notificationEndpoint + '/' + encodeURIComponent(notif.id) + '/read', {
                         method: 'POST',
                         headers: {
                             'X-CSRF-TOKEN': '{{ csrf_token() }}',
