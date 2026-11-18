@@ -2612,7 +2612,24 @@ function customerMasterManager() {
         },
 
         async confirmDelete(id, name) {
-            if (!confirm(this.i18n.confirmDeleteCustomer.replace(':name', name))) {
+            const confirmationMessage = this.i18n.confirmDeleteCustomer.replace(':name', name);
+            const confirmation = typeof window.Swal !== 'undefined'
+                ? await window.Swal.fire({
+                    icon: 'warning',
+                    title: @json(__('Delete Subscriber')),
+                    text: confirmationMessage,
+                    showCancelButton: true,
+                    confirmButtonText: @json(__('Delete')),
+                    cancelButtonText: this.i18n.cancel,
+                    confirmButtonColor: '#e11d48',
+                    cancelButtonColor: '#64748b',
+                    reverseButtons: true,
+                    focusCancel: true,
+                    allowOutsideClick: false
+                })
+                : { isConfirmed: window.confirm(confirmationMessage) };
+
+            if (!confirmation.isConfirmed) {
                 return;
             }
             try {
