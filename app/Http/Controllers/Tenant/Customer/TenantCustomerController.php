@@ -75,9 +75,10 @@ class TenantCustomerController extends Controller
 
         $authUser = Auth::user();
         $isIspCollector = $authUser && $authUser->isCollector() && empty($authUser->reseller_id);
+        $isIspTechnician = $authUser && $authUser->isTechnician() && empty($authUser->reseller_id);
 
         // Dropdown datasets
-        $allResellers = $isIspCollector ? collect() : TenantReseller::where('tenant_id', $tenant->id)->orderBy('name')->get();
+        $allResellers = ($isIspCollector || $isIspTechnician) ? collect() : TenantReseller::where('tenant_id', $tenant->id)->orderBy('name')->get();
         $allPackages = TenantInternetPackage::where('tenant_id', $tenant->id)->orderBy('name')->get();
         $allRouters = TenantRouter::where('tenant_id', $tenant->id)->orderBy('name')->get();
         $allOlts = TenantOlt::where('tenant_id', $tenant->id)->orderBy('name')->get();
@@ -95,6 +96,9 @@ class TenantCustomerController extends Controller
             ->values();
         
         $distinctZonesQuery = TenantCustomer::where('tenant_id', $tenant->id);
+        if ($isIspTechnician) {
+            $distinctZonesQuery->whereNull('reseller_id');
+        }
         if ($isIspCollector) {
             $distinctZonesQuery->whereNull('reseller_id');
             $zoneIds = TenantCoverageZone::where('tenant_id', $tenant->id)->where('staff_id', $authUser->id)->pluck('id');
@@ -115,6 +119,10 @@ class TenantCustomerController extends Controller
         // Customer Query
         $query = TenantCustomer::where('tenant_id', $tenant->id)
             ->with(['reseller', 'package', 'router', 'olt', 'collector']);
+
+        if ($isIspTechnician) {
+            $query->whereNull('reseller_id');
+        }
 
         if ($isIspCollector) {
             $query->whereNull('reseller_id');
@@ -147,6 +155,8 @@ class TenantCustomerController extends Controller
         }
 
         if ($isIspCollector) {
+            $query->whereNull('reseller_id');
+        } elseif ($isIspTechnician) {
             $query->whereNull('reseller_id');
         } elseif ($scopeFilter === 'isp') {
             $query->whereNull('reseller_id');
@@ -293,6 +303,9 @@ class TenantCustomerController extends Controller
 
         // Compute 6 KPI Summary Metrics
         $baseQuery = TenantCustomer::where('tenant_id', $tenant->id);
+        if ($isIspTechnician) {
+            $baseQuery->whereNull('reseller_id');
+        }
         if ($isIspCollector) {
             $baseQuery->whereNull('reseller_id');
             $zoneIds = TenantCoverageZone::where('tenant_id', $tenant->id)->where('staff_id', $authUser->id)->pluck('id');
@@ -335,6 +348,9 @@ class TenantCustomerController extends Controller
         $zoneStatsQuery = TenantCustomer::where('tenant_id', $tenant->id)
             ->whereNotNull('zone')
             ->where('zone', '!=', '');
+        if ($isIspTechnician) {
+            $zoneStatsQuery->whereNull('reseller_id');
+        }
         if ($isIspCollector) {
             $zoneStatsQuery->whereNull('reseller_id');
             $zoneIds = TenantCoverageZone::where('tenant_id', $tenant->id)->where('staff_id', $authUser->id)->pluck('id');
