@@ -645,77 +645,120 @@ class TenantCustomerPaymentController extends Controller
             'extend_validity' => 'nullable|boolean',
             'reactivate_line' => 'nullable|boolean',
             'reseller_id' => 'nullable|integer',
+            'request_key' => 'required|string|max:60',
         ]);
 
-        $customerIds = $validated['customer_ids'];
+        $customerIds = array_values(array_unique(array_map('intval', $validated['customer_ids'])));
         $method = $validated['payment_method'];
         $billingMonth = $validated['billing_month'] ?: Carbon::now()->format('F Y');
         $notes = trim($validated['notes'] ?? '');
         $shouldExtendValidity = $request->boolean('extend_validity', true);
         $shouldReactivate = $request->boolean('reactivate_line', true);
-        $resellerId = $validated['reseller_id'] ?? null;
+        $resellerId = isset($validated['reseller_id']) ? (int) $validated['reseller_id'] : null;
+        $batchKey = trim($validated['request_key']);
 
-        return DB::transaction(function () use (
+        $result = DB::transaction(function () use (
             $tenant, $currency, $customerIds, $method, $billingMonth, $notes,
-            $shouldExtendValidity, $shouldReactivate, $resellerId, $request
-        ) {
+            $shouldExtendValidity, $shouldReactivate, $resellerId, $request, $batchKey
+        ): array {
+            Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             $customers = TenantCustomer::where('tenant_id', $tenant->id)
                 ->whereIn('id', $customerIds)
                 ->with(['package', 'reseller'])
+                ->orderBy('id')
+                ->lockForUpdate()
                 ->get();
 
-            if ($customers->isEmpty()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => __('No matching customers found for bulk processing.'),
-                ], 422);
+            abort_unless(
+                $customers->count() === count($customerIds),
+                422,
+                __('One or more selected customers do not belong to this tenant.')
+            );
+
+            $resellerKeys = $customers
+                ->map(fn (TenantCustomer $customer): string => $customer->reseller_id ? (string) $customer->reseller_id : 'direct')
+                ->unique()
+                ->values();
+            abort_if($resellerKeys->count() > 1, 422, __('A bulk payment cannot mix customers from different resellers or direct retail.'));
+
+            $resolvedResellerId = $resellerKeys->first() !== 'direct' ? (int) $resellerKeys->first() : null;
+            if ($resellerId !== null) {
+                abort_unless($resolvedResellerId === $resellerId, 422, __('Selected customers do not belong to the selected reseller.'));
             }
 
-            // Calculate Gross Total Bill
-            $totalGrossBill = 0.00;
-            foreach ($customers as $c) {
-                $dueVal = (float) ($c->due_amount > 0 ? $c->due_amount : ($c->monthly_bill ?: 0));
-                $totalGrossBill += max(0, $dueVal);
-            }
-
-            // Reseller identification
             $reseller = null;
-            if ($resellerId) {
-                $reseller = TenantReseller::where('tenant_id', $tenant->id)->find($resellerId);
-            } elseif ($customers->first()->reseller_id) {
-                $reseller = TenantReseller::where('tenant_id', $tenant->id)->find($customers->first()->reseller_id);
+            if ($resolvedResellerId !== null) {
+                $resellerQuery = TenantReseller::where('tenant_id', $tenant->id)->whereKey($resolvedResellerId);
+                if ($method === 'reseller_wallet') {
+                    $resellerQuery->lockForUpdate();
+                }
+                $reseller = $resellerQuery->firstOrFail();
             }
+            abort_if($method === 'reseller_wallet' && !$reseller, 422, __('Reseller Wallet payment requires one valid reseller.'));
+
+            $payableCustomers = $customers->filter(function (TenantCustomer $customer): bool {
+                $due = max(0, (float) $customer->due_amount);
+                $monthlyBill = max(0, (float) ($customer->monthly_bill ?: ($customer->package?->price ?? 0)));
+                return $due > 0 || $monthlyBill > 0;
+            })->values();
+            abort_if($payableCustomers->isEmpty(), 422, __('No selected customer has a payable due or monthly bill.'));
+
+            $paymentKeys = $payableCustomers->mapWithKeys(fn (TenantCustomer $customer): array => [
+                $customer->id => $batchKey . ':' . $customer->id,
+            ]);
+            $existingPayments = TenantCustomerPayment::where('tenant_id', $tenant->id)
+                ->whereIn('request_key', $paymentKeys->values())
+                ->get();
+            if ($existingPayments->isNotEmpty()) {
+                abort_unless($existingPayments->count() === $payableCustomers->count(), 409, __('This bulk request was only partially recorded and requires review.'));
+                foreach ($existingPayments as $existingPayment) {
+                    abort_unless(
+                        $paymentKeys->get($existingPayment->customer_id) === $existingPayment->request_key
+                            && $existingPayment->payment_method === $method,
+                        409,
+                        __('This bulk request key was already used for a different transaction.')
+                    );
+                }
+
+                $replayGross = (float) $existingPayments->sum('amount');
+                $replayCommission = $reseller ? ($replayGross * (float) $reseller->commission_rate) / 100 : 0.0;
+                return [
+                    'already_processed' => true,
+                    'processed_count' => $existingPayments->count(),
+                    'gross_bill' => $replayGross,
+                    'admin_share' => max(0, $replayGross - $replayCommission),
+                    'reseller_commission' => $replayCommission,
+                    'reseller_wallet_balance' => $reseller?->wallet_balance,
+                    'reactivated_ids' => [],
+                ];
+            }
+
+            $totalGrossBill = (float) $payableCustomers->sum(function (TenantCustomer $customer): float {
+                $due = max(0, (float) $customer->due_amount);
+                $monthlyBill = max(0, (float) ($customer->monthly_bill ?: ($customer->package?->price ?? 0)));
+                return $due > 0 ? $due : $monthlyBill;
+            });
 
             $commissionRate = (float) ($reseller?->commission_rate ?? 0);
             $resellerCommission = ($totalGrossBill * $commissionRate) / 100;
             $adminShare = max(0, $totalGrossBill - $resellerCommission);
 
-            // Handle Reseller Wallet Deduction
             if ($method === 'reseller_wallet') {
-                if (!$reseller) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => __('Reseller Wallet payment requires an active Reseller to be selected.'),
-                    ], 422);
-                }
-
                 $availableBalance = (float) $reseller->total_available_balance;
-                if ($availableBalance < $adminShare) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => __('Insufficient Reseller Wallet Balance! Available: :currency:available, Required (Admin Share): :currency:required', [
+                abort_if(
+                    $availableBalance < $adminShare,
+                    422,
+                    __('Insufficient Reseller Wallet Balance! Available: :currency:available, Required (Admin Share): :currency:required', [
                             'currency' => $currency,
                             'available' => number_format($availableBalance, 2),
                             'required' => number_format($adminShare, 2),
-                        ]),
-                    ], 422);
-                }
+                    ])
+                );
 
                 $balanceBefore = (float) $reseller->wallet_balance;
                 $reseller->wallet_balance = round($balanceBefore - $adminShare, 2);
                 $reseller->save();
 
-                // Create Wallet Transaction Record
                 TenantResellerWalletTransaction::create([
                     'tenant_id' => $tenant->id,
                     'reseller_id' => $reseller->id,
@@ -725,9 +768,9 @@ class TenantCustomerPaymentController extends Controller
                     'balance_before' => $balanceBefore,
                     'balance_after' => $reseller->wallet_balance,
                     'payment_method' => 'reseller_wallet',
-                    'reference_no' => 'BULK-' . count($customers) . '-' . date('YmdHis'),
+                    'reference_no' => $batchKey,
                     'description' => __('Bulk payment for :count subscribers (:month). Gross: :currency:gross, Reseller Profit: :currency:profit, Admin Share Deducted: :currency:admin', [
-                        'count' => count($customers),
+                        'count' => $payableCustomers->count(),
                         'month' => $billingMonth,
                         'currency' => $currency,
                         'gross' => number_format($totalGrossBill, 2),
@@ -740,58 +783,37 @@ class TenantCustomerPaymentController extends Controller
 
             $processedCount = 0;
             $totalAmountCollected = 0.00;
-            $mikrotikApi = null;
-            $radiusService = null;
+            $reactivatedIds = [];
 
-            if ($shouldReactivate) {
-                try {
-                    $mikrotikApi = new MikrotikApiService();
-                } catch (\Exception $e) {
-                    // Non-blocking
-                }
-                try {
-                    $radiusService = new RadiusService();
-                } catch (\Exception $e) {
-                    // Non-blocking
-                }
-            }
-
-            foreach ($customers as $customer) {
+            foreach ($payableCustomers as $customer) {
                 $oldDue = (float) ($customer->due_amount ?? 0);
-                $oldExpiry = $customer->expiry_date;
-                $monthlyBill = (float) ($customer->monthly_bill > 0 ? $customer->monthly_bill : 0);
+                $monthlyBill = (float) ($customer->monthly_bill > 0 ? $customer->monthly_bill : ($customer->package?->price ?? 0));
+                $amountToPay = $oldDue > 0 ? $oldDue : $monthlyBill;
+                abort_if($amountToPay <= 0, 422, __('A zero-value customer cannot be processed in bulk payment.'));
 
-                $amountToPay = $oldDue > 0 ? $oldDue : ($monthlyBill > 0 ? $monthlyBill : 0);
-                if ($amountToPay <= 0) {
-                    $amountToPay = 0;
+                $policy = app(CustomerPaymentPolicy::class)->calculate(
+                    oldDue: $oldDue,
+                    oldExpiry: $customer->expiry_date ? Carbon::parse($customer->expiry_date) : null,
+                    monthlyBill: $monthlyBill,
+                    mode: $oldDue > 0 ? 'due' : 'advance',
+                    amountPaid: $amountToPay,
+                    discount: 0,
+                    months: 1,
+                    extendValidity: $shouldExtendValidity,
+                    reactivateRequested: $shouldReactivate,
+                );
+                $customer->due_amount = $policy['new_due'];
+                if ($policy['new_expiry']) {
+                    $customer->expiry_date = $policy['new_expiry'];
                 }
-
-                $newDue = 0.00;
-                $newExpiry = $oldExpiry;
-
-                if ($shouldExtendValidity) {
-                    $baseExpiry = ($oldExpiry && Carbon::parse($oldExpiry)->isFuture())
-                        ? Carbon::parse($oldExpiry)
-                        : Carbon::now();
-                    $newExpiry = $baseExpiry->copy()->addMonth()->endOfDay();
-                }
-
-                $customer->due_amount = $newDue;
-                if ($newExpiry) {
-                    $customer->expiry_date = $newExpiry;
-                }
-
-                $isReactivated = false;
-                if ($shouldReactivate) {
+                if ($policy['can_reactivate']) {
                     $customer->status = 'active';
-                    $isReactivated = true;
+                    $reactivatedIds[] = $customer->id;
                 }
-
                 $customer->save();
 
-                // Create Customer Payment Record
                 $invoiceNo = TenantCustomerPayment::generateInvoiceNo($tenant->id);
-                TenantCustomerPayment::create([
+                $payment = TenantCustomerPayment::create([
                     'tenant_id' => $tenant->id,
                     'customer_id' => $customer->id,
                     'invoice_no' => $invoiceNo,
@@ -803,48 +825,49 @@ class TenantCustomerPaymentController extends Controller
                     'status' => 'completed',
                     'paid_at' => Carbon::now(),
                     'transaction_id' => 'BULK-' . strtoupper(substr(md5(uniqid() . $customer->id), 0, 8)),
+                    'request_key' => $paymentKeys->get($customer->id),
                     'notes' => $notes ?: ($reseller
                         ? __('Bulk payment clearance for :month (Reseller: :reseller)', ['month' => $billingMonth, 'reseller' => $reseller->name])
                         : __('Bulk payment clearance for :month', ['month' => $billingMonth])),
                 ]);
 
-                // Settle matching or open TenantCustomerInvoice
-                try {
-                    $invoice = TenantCustomerInvoice::where('tenant_id', $tenant->id)
-                        ->where('customer_id', $customer->id)
-                        ->where(function ($q) use ($billingMonth) {
-                            $q->where('billing_month', $billingMonth)
-                              ->orWhereIn('status', ['unpaid', 'partial', 'partially_paid', 'overdue']);
-                        })
-                        ->orderBy('due_date', 'asc')
-                        ->first();
-
-                    if ($invoice) {
-                        $invoice->paid_amount = $invoice->total_payable;
-                        $invoice->due_amount = 0.00;
-                        $invoice->status = 'paid';
-                        $invoice->paid_at = Carbon::now();
-                        $invoice->payment_method = $method;
-                        $invoice->save();
+                $remaining = $amountToPay;
+                $firstInvoiceId = null;
+                $openInvoices = TenantCustomerInvoice::where('tenant_id', $tenant->id)
+                    ->where('customer_id', $customer->id)
+                    ->whereIn('status', ['unpaid', 'partial', 'partially_paid', 'overdue'])
+                    ->orderByRaw('CASE WHEN due_date IS NULL THEN 1 ELSE 0 END')
+                    ->orderBy('due_date')->orderBy('id')->lockForUpdate()->get();
+                foreach ($openInvoices as $invoice) {
+                    if ($remaining <= 0) {
+                        break;
                     }
-                } catch (\Exception $e) {
-                    // Non-blocking invoice sync
+                    $currentDue = max(0, (float) $invoice->due_amount);
+                    $applied = min($remaining, $currentDue);
+                    if ($applied <= 0) {
+                        continue;
+                    }
+                    $invoice->paid_amount = round((float) $invoice->paid_amount + $applied, 2);
+                    $invoice->due_amount = max(0, round($currentDue - $applied, 2));
+                    $invoice->status = $invoice->due_amount <= 0 ? 'paid' : 'partially_paid';
+                    $invoice->paid_at = $invoice->due_amount <= 0 ? Carbon::now() : null;
+                    $invoice->payment_method = $method;
+                    $invoice->save();
+                    DB::table('tenant_customer_payment_allocations')->insert([
+                        'tenant_id' => $tenant->id,
+                        'payment_id' => $payment->id,
+                        'invoice_id' => $invoice->id,
+                        'amount' => $applied,
+                        'discount' => 0,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                    $firstInvoiceId ??= $invoice->id;
+                    $remaining = round($remaining - $applied, 2);
                 }
-
-                // Sync FreeRADIUS & MikroTik
-                if ($radiusService) {
-                    try {
-                        $radiusService->syncCustomerSubscriber($customer);
-                    } catch (\Exception $e) {
-                        // Non-blocking
-                    }
-                }
-                if ($mikrotikApi) {
-                    try {
-                        $mikrotikApi->syncCustomerToMikrotik($customer);
-                    } catch (\Exception $e) {
-                        // Non-blocking
-                    }
+                if ($firstInvoiceId !== null) {
+                    $payment->invoice_id = $firstInvoiceId;
+                    $payment->save();
                 }
 
                 $processedCount++;
@@ -878,24 +901,57 @@ class TenantCustomerPaymentController extends Controller
                     'customer_ids' => $customerIds,
                     'method' => $method,
                     'billing_month' => $billingMonth,
+                    'request_key' => $batchKey,
                 ],
             ]);
 
-            return response()->json([
-                'success' => true,
+            return [
+                'already_processed' => false,
                 'processed_count' => $processedCount,
-                'gross_bill' => number_format($totalAmountCollected, 2),
-                'admin_share' => number_format($adminShare, 2),
-                'reseller_commission' => number_format($resellerCommission, 2),
-                'reseller_wallet_balance' => $reseller ? number_format($reseller->wallet_balance, 2) : null,
-                'message' => __('Bulk payment completed for :count subscribers! Total: :currency:total (Admin Share: :currency:admin)', [
-                    'count' => $processedCount,
-                    'currency' => $currency,
-                    'total' => number_format($totalAmountCollected, 2),
-                    'admin' => number_format($adminShare, 2),
-                ]),
-            ]);
+                'gross_bill' => $totalAmountCollected,
+                'admin_share' => $adminShare,
+                'reseller_commission' => $resellerCommission,
+                'reseller_wallet_balance' => $reseller?->wallet_balance,
+                'reactivated_ids' => $reactivatedIds,
+            ];
         });
+
+        if (!$result['already_processed'] && !empty($result['reactivated_ids'])) {
+            $reactivatedCustomers = TenantCustomer::where('tenant_id', $tenant->id)
+                ->whereIn('id', $result['reactivated_ids'])->get();
+            foreach ($reactivatedCustomers as $customer) {
+                try {
+                    (new RadiusService())->syncCustomerSubscriber($customer);
+                } catch (\Throwable $e) {
+                    \Log::warning('Bulk payment RADIUS sync failed.', ['customer_id' => $customer->id, 'error' => $e->getMessage()]);
+                }
+                try {
+                    (new MikrotikApiService())->syncCustomerToMikrotik($customer);
+                } catch (\Throwable $e) {
+                    \Log::warning('Bulk payment MikroTik sync failed.', ['customer_id' => $customer->id, 'error' => $e->getMessage()]);
+                }
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'already_processed' => $result['already_processed'],
+            'processed_count' => $result['processed_count'],
+            'gross_bill' => number_format($result['gross_bill'], 2),
+            'admin_share' => number_format($result['admin_share'], 2),
+            'reseller_commission' => number_format($result['reseller_commission'], 2),
+            'reseller_wallet_balance' => $result['reseller_wallet_balance'] !== null
+                ? number_format((float) $result['reseller_wallet_balance'], 2)
+                : null,
+            'message' => $result['already_processed']
+                ? __('This bulk payment batch was already processed.')
+                : __('Bulk payment completed for :count subscribers! Total: :currency:total (Admin Share: :currency:admin)', [
+                    'count' => $result['processed_count'],
+                    'currency' => $currency,
+                    'total' => number_format($result['gross_bill'], 2),
+                    'admin' => number_format($result['admin_share'], 2),
+                ]),
+        ]);
     }
 
     /**

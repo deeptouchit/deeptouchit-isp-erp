@@ -115,7 +115,7 @@ Verification:
 
 ## Phase 3 — Bulk Payment ও Reseller Wallet
 
-অবস্থা: অপেক্ষমাণ
+অবস্থা: সম্পন্ন
 
 কাজ:
 
@@ -131,6 +131,25 @@ Acceptance criteria:
 - wallet concurrent request-এ overdraft হবে না।
 - zero due/zero bill customer বিনা কারণে renewed হবে না।
 - batch total, receipt total এবং wallet transaction total মিলবে।
+
+বাস্তবায়িত পরিবর্তন:
+
+- Selected customer count tenant-scoped query-এর সঙ্গে exact match না করলে batch reject হয়।
+- একই batch-এ ভিন্ন reseller অথবা direct/reseller customer মেশানো বন্ধ করা হয়েছে।
+- Selected reseller ID এবং প্রতিটি customer-এর reseller ownership মিলিয়ে দেখা হয়।
+- Reseller wallet row `lockForUpdate()` দিয়ে lock করে balance/credit eligibility যাচাই ও atomic debit করা হয়।
+- Zero due এবং zero monthly bill customer skip হয়; receipt, renewal বা reactivation তৈরি হয় না।
+- Batch UUID থেকে per-customer request key তৈরি হয়; exact replay দ্বিতীয় wallet debit/payment তৈরি করে না।
+- Partial batch replay detection HTTP 409 দিয়ে manual review চায়।
+- প্রত্যেক customer-এর payment সবচেয়ে পুরোনো outstanding invoice থেকে allocate হয় এবং allocation ledger-এ record হয়।
+- Shared payment policy দিয়ে expiry ও reactivation নির্ধারিত হয়।
+- Network sync database commit-এর পরে চলে এবং failure structured warning log করে।
+- Fresh reseller/wallet schema canonical model fields-এর সঙ্গে align করা হয়েছে।
+
+Verification:
+
+- Phase 1–3 focused suites: ৯টি test pass, ৮৬টি assertion pass।
+- Covered: mixed-reseller rollback, wallet debit, zero-value skip, invoice allocation, line reactivation এবং exact batch replay।
 
 ## Phase 4 — Expiry, Billing Cycle ও Automation
 

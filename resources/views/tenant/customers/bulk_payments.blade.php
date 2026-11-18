@@ -792,6 +792,9 @@ function bulkPaymentManager() {
 
         paymentMethod: @json($mode === 'reseller' && $selectedReseller ? 'reseller_wallet' : 'cash'),
         billingMonth: @json(date('F Y')),
+        requestKey: (window.crypto && typeof window.crypto.randomUUID === 'function')
+            ? window.crypto.randomUUID()
+            : `bulk-pay-${Date.now()}-${Math.random().toString(36).slice(2)}`,
         notes: '',
         extendValidity: true,
         reactivateLine: true,
@@ -1034,7 +1037,8 @@ function bulkPaymentManager() {
                         notes: this.notes,
                         extend_validity: this.extendValidity,
                         reactivate_line: this.reactivateLine,
-                        reseller_id: this.selectedResellerId || null
+                        reseller_id: this.selectedResellerId || null,
+                        request_key: this.requestKey
                     })
                 });
 
