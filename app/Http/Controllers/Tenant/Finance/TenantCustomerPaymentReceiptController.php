@@ -12,6 +12,7 @@ use App\Models\TenantInternetPackage;
 use App\Models\TenantReseller;
 use App\Models\TenantResellerWalletTransaction;
 use App\Models\User;
+use App\Services\Audit\FinancialAuditService;
 use App\Services\Network\MikrotikApiService;
 use App\Services\Network\RadiusService;
 use Carbon\Carbon;
@@ -427,29 +428,29 @@ class TenantCustomerPaymentReceiptController extends Controller
         $currencySymbol = $tenant->currency_symbol ?? '৳';
 
         // 7. Audit Log
-        TenantActivityLog::create([
-            'tenant_id' => $tenant->id,
-            'actor_type' => 'App\Models\User',
-            'actor_id' => Auth::id() ?: 1,
-            'actor_name' => Auth::user()?->name ?: __('Admin'),
-            'event_type' => 'PAYMENT_COLLECTED',
-            'description' => __("Collected :amount from subscriber ':name' (:username) via :method. Receipt: :receipt.", [
+        app(FinancialAuditService::class)->record(
+            $tenant,
+            'PAYMENT_COLLECTED',
+            __("Collected :amount from subscriber ':name' (:username) via :method. Receipt: :receipt.", [
                 'amount' => $currencySymbol . number_format($amount, 2),
                 'name' => $customer->name,
                 'username' => $customer->username,
                 'method' => $payment->payment_method_name,
                 'receipt' => $receiptNo,
             ]),
-            'ip_address' => $request->ip(),
-            'user_agent' => $request->userAgent(),
-            'metadata' => [
+            [
                 'payment_id' => $payment->id,
                 'receipt_no' => $receiptNo,
                 'customer_id' => $customer->id,
                 'amount' => $amount,
                 'discount' => $discount,
+                'network_provisioning' => [
+                    'mikrotik' => in_array(__('MikroTik unblocked'), $syncParts, true) ? 'success' : 'pending_retry',
+                    'radius' => in_array(__('FreeRADIUS active'), $syncParts, true) ? 'success' : 'pending_retry',
+                ],
             ],
-        ]);
+            $request,
+        );
 
         $syncNotes = count($syncParts) > 0 ? implode(' & ', $syncParts) : null;
         $msg = $syncNotes
@@ -649,6 +650,8 @@ class TenantCustomerPaymentReceiptController extends Controller
 
         $reason = $request->input('reason') ?: __('Payment voided / reversed by admin');
         $customer = $payment->customer;
+        $oldCustomerDue = (float) ($customer?->due_amount ?? 0);
+        $previousPaymentStatus = $payment->status;
         $reversalAmount = (float) $payment->amount + (float) $payment->discount;
         $currencySymbol = $tenant->currency_symbol ?? '৳';
 
@@ -673,19 +676,26 @@ class TenantCustomerPaymentReceiptController extends Controller
         $payment->save();
 
         // 4. Audit Log
-        TenantActivityLog::create([
-            'tenant_id' => $tenant->id,
-            'actor_type' => 'App\Models\User',
-            'actor_id' => Auth::id() ?: 1,
-            'actor_name' => Auth::user()?->name ?: __('Admin'),
-            'event_type' => 'PAYMENT_VOIDED',
-            'description' => __('Voided payment receipt :receipt (:amount). Reason: :reason', [
+        app(FinancialAuditService::class)->record(
+            $tenant,
+            'PAYMENT_VOIDED',
+            __('Voided payment receipt :receipt (:amount).', [
                 'receipt' => $payment->invoice_no,
                 'amount' => $currencySymbol . number_format($payment->amount, 2),
-                'reason' => $reason,
             ]),
-            'ip_address' => $request->ip(),
-        ]);
+            [
+                'payment_id' => $payment->id,
+                'invoice_no' => $payment->invoice_no,
+                'customer_id' => $customer?->id,
+                'reversal_amount' => $reversalAmount,
+                'old_due' => $oldCustomerDue,
+                'new_due' => $customer ? (float) $customer->due_amount : null,
+                'old_payment_status' => $previousPaymentStatus,
+                'new_payment_status' => $payment->status,
+                'network_provisioning' => 'not_applicable',
+            ],
+            $request,
+        );
 
         $msg = __('Payment receipt :receipt has been voided successfully.', ['receipt' => $payment->invoice_no]);
 

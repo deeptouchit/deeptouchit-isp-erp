@@ -16,6 +16,7 @@ use App\Models\TenantReseller;
 use App\Models\TenantResellerWalletTransaction;
 use App\Models\TenantRouter;
 use App\Models\User;
+use App\Services\Audit\FinancialAuditService;
 use App\Services\Billing\PlanQuotaService;
 use App\Services\Network\MikrotikApiService;
 use App\Services\Network\RadiusService;
@@ -2528,6 +2529,7 @@ class TenantCustomerController extends Controller
         ]);
 
         $oldBill = (float)$customer->monthly_bill;
+        $oldDue = (float) ($customer->due_amount ?? 0);
         $newBill = (float)$validated['monthly_bill'];
         $diff = $newBill - $oldBill;
         $reason = trim($validated['reason'] ?? '');
@@ -2542,31 +2544,28 @@ class TenantCustomerController extends Controller
 
         $oldFormatted = $currency . number_format($oldBill, 2);
         $newFormatted = $currency . number_format($newBill, 2);
-        $logDesc = $reason
-            ? __("Updated monthly bill for ':name' (:username) from :old to :new. Reason: :reason.", [
-                'name' => $customer->name,
-                'username' => $customer->username,
-                'old' => $oldFormatted,
-                'new' => $newFormatted,
-                'reason' => $reason,
-            ])
-            : __("Updated monthly bill for ':name' (:username) from :old to :new.", [
-                'name' => $customer->name,
-                'username' => $customer->username,
-                'old' => $oldFormatted,
-                'new' => $newFormatted,
-            ]);
-
-        TenantActivityLog::create([
-            'tenant_id' => $tenant->id,
-            'actor_type' => 'App\Models\User',
-            'actor_id' => Auth::id() ?: 1,
-            'actor_name' => Auth::user()?->name ?: __('Admin'),
-            'event_type' => 'CUSTOMER_BILL_UPDATE',
-            'description' => $logDesc,
-            'ip_address' => $request->ip(),
-            'user_agent' => $request->userAgent(),
+        $logDesc = __("Updated monthly bill for ':name' (:username) from :old to :new.", [
+            'name' => $customer->name,
+            'username' => $customer->username,
+            'old' => $oldFormatted,
+            'new' => $newFormatted,
         ]);
+
+        app(FinancialAuditService::class)->record(
+            $tenant,
+            'CUSTOMER_BILL_UPDATE',
+            $logDesc,
+            [
+                'customer_id' => $customer->id,
+                'old_monthly_bill' => $oldBill,
+                'new_monthly_bill' => $newBill,
+                'old_due' => $oldDue,
+                'new_due' => (float) ($customer->due_amount ?? 0),
+                'due_adjusted' => $request->boolean('adjust_due'),
+                'network_provisioning' => 'not_applicable',
+            ],
+            $request,
+        );
 
         return response()->json([
             'success' => true,
@@ -2733,16 +2732,20 @@ class TenantCustomerController extends Controller
             default => __("Updated wallet balance for ':name'. New balance: :balance.", ['name' => $customer->name, 'balance' => $formattedNewBalance]),
         };
 
-        TenantActivityLog::create([
-            'tenant_id' => $tenant->id,
-            'actor_type' => 'App\Models\User',
-            'actor_id' => Auth::id() ?: 1,
-            'actor_name' => Auth::user()?->name ?: __('Admin'),
-            'event_type' => 'CUSTOMER_BALANCE_UPDATE',
-            'description' => $balanceDesc,
-            'ip_address' => $request->ip(),
-            'user_agent' => $request->userAgent(),
-        ]);
+        app(FinancialAuditService::class)->record(
+            $tenant,
+            'CUSTOMER_BALANCE_UPDATE',
+            $balanceDesc,
+            [
+                'customer_id' => $customer->id,
+                'mode' => $mode,
+                'amount' => $amount,
+                'old_wallet_balance' => $oldBalance,
+                'new_wallet_balance' => (float) $customer->wallet_balance,
+                'network_provisioning' => 'not_applicable',
+            ],
+            $request,
+        );
 
         return response()->json([
             'success' => true,
@@ -2802,41 +2805,28 @@ class TenantCustomerController extends Controller
         $oldDueFmt = $currency . number_format($oldDue, 2);
         $newDueFmt = $currency . number_format($newDue, 2);
 
-        $dueLogDesc = $remarks
-            ? __("Updated due balance for subscriber ':name' (:username): :action. Old Due: :old, New Due: :new [Reason: :reason]", [
-                'name' => $customer->name,
-                'username' => $customer->username,
-                'action' => $modeText,
-                'old' => $oldDueFmt,
-                'new' => $newDueFmt,
-                'reason' => $remarks,
-            ])
-            : __("Updated due balance for subscriber ':name' (:username): :action. Old Due: :old, New Due: :new", [
-                'name' => $customer->name,
-                'username' => $customer->username,
-                'action' => $modeText,
-                'old' => $oldDueFmt,
-                'new' => $newDueFmt,
-            ]);
+        $dueLogDesc = __("Updated due balance for subscriber ':name' (:username): :action. Old Due: :old, New Due: :new", [
+            'name' => $customer->name,
+            'username' => $customer->username,
+            'action' => $modeText,
+            'old' => $oldDueFmt,
+            'new' => $newDueFmt,
+        ]);
 
-        TenantActivityLog::create([
-            'tenant_id' => $tenant->id,
-            'actor_type' => 'App\Models\User',
-            'actor_id' => Auth::id() ?: 1,
-            'actor_name' => Auth::user()?->name ?: __('Admin'),
-            'event_type' => 'CUSTOMER_DUE_UPDATE',
-            'description' => $dueLogDesc,
-            'ip_address' => $request->ip(),
-            'user_agent' => $request->userAgent(),
-            'metadata' => [
+        app(FinancialAuditService::class)->record(
+            $tenant,
+            'CUSTOMER_DUE_UPDATE',
+            $dueLogDesc,
+            [
                 'customer_id' => $customer->id,
                 'mode' => $mode,
                 'amount' => $amount,
                 'old_due' => $oldDue,
                 'new_due' => $newDue,
-                'remarks' => $remarks,
+                'network_provisioning' => 'not_applicable',
             ],
-        ]);
+            $request,
+        );
 
         return response()->json([
             'success' => true,

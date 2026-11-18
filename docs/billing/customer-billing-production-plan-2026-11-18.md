@@ -222,7 +222,7 @@ Verification:
 
 ## Phase 6 — Permissions, Audit ও Observability
 
-অবস্থা: অপেক্ষমাণ
+অবস্থা: সম্পন্ন
 
 কাজ:
 
@@ -235,6 +235,19 @@ Acceptance criteria:
 
 - অনুমতিহীন user financial mutation করতে পারবে না।
 - প্রতিটি balance change audit trail দিয়ে পুনর্গঠন করা যাবে।
+
+বাস্তবায়িত পরিবর্তন:
+
+- Customer collection, bulk collection, invoice payment, receipt collection, void/approve/reject এবং manual billing/balance adjustment route-এ নির্দিষ্ট `billing.collect` বা `billing.invoices` permission প্রয়োগ করা হয়েছে।
+- `FinancialAuditService` actor, request-reference hash, IP/user-agent এবং standard metadata সহ financial audit লেখে।
+- Single/bulk payment, finance-screen collection, void, wallet adjustment, due adjustment ও monthly-bill adjustment-এ before/after financial state audit হয়।
+- Payment provisioning ব্যর্থ হলে financial commit অপরিবর্তিত থাকে; audit-এ `pending_retry` এবং application log-এ structured retry context থাকে।
+- Password, secret, token, authorization, free-form notes এবং reason audit metadata থেকে বাদ দেওয়া হয়।
+
+Verification:
+
+- Phase 1–6 focused suites: ১৬টি test pass, ১২৯টি assertion pass।
+- Covered: view-only user-এর payment collection denial, sanitized/auditable financial metadata এবং পূর্বের billing/payment/session regression flow।
 
 ## Phase 7 — Regression, Deployment ও Verification
 

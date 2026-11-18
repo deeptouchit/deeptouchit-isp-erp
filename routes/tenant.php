@@ -355,15 +355,15 @@ Route::middleware(['web'])->group(function () {
             Route::post('/{customer}/ping', [TenantCustomerController::class, 'pingCustomer'])->whereNumber('customer')->name('ping');
             Route::post('/{customer}/update-pppoe', [TenantCustomerController::class, 'updatePppoe'])->whereNumber('customer')->name('update-pppoe');
             Route::post('/{customer}/update-package', [TenantCustomerController::class, 'updatePackage'])->whereNumber('customer')->name('update-package');
-            Route::post('/{customer}/update-monthly-bill', [TenantCustomerController::class, 'updateMonthlyBill'])->whereNumber('customer')->name('update-monthly-bill');
-            Route::post('/{customer}/update-billing-cycle', [TenantCustomerController::class, 'updateBillingCycle'])->whereNumber('customer')->name('update-billing-cycle');
-            Route::post('/{customer}/update-balance', [TenantCustomerController::class, 'updateBalance'])->whereNumber('customer')->name('update-balance');
-            Route::get('/bulk-payments', [TenantCustomerPaymentController::class, 'bulkPaymentPage'])->name('bulk-payments');
+            Route::post('/{customer}/update-monthly-bill', [TenantCustomerController::class, 'updateMonthlyBill'])->middleware('permission:billing.invoices')->whereNumber('customer')->name('update-monthly-bill');
+            Route::post('/{customer}/update-billing-cycle', [TenantCustomerController::class, 'updateBillingCycle'])->middleware('permission:billing.invoices')->whereNumber('customer')->name('update-billing-cycle');
+            Route::post('/{customer}/update-balance', [TenantCustomerController::class, 'updateBalance'])->middleware('permission:billing.invoices')->whereNumber('customer')->name('update-balance');
+            Route::get('/bulk-payments', [TenantCustomerPaymentController::class, 'bulkPaymentPage'])->middleware('permission:billing.collect')->name('bulk-payments');
             Route::get('/bulk-payments/print', [TenantCustomerPaymentController::class, 'printBulkPayments'])->name('bulk-payments.print');
-            Route::post('/bulk-payments/process', [TenantCustomerPaymentController::class, 'processBulkPayment'])->name('bulk-payments.process');
-            Route::post('/bulk-pay-bills', [TenantCustomerPaymentController::class, 'processBulkPayment'])->name('bulk-pay-bills');
+            Route::post('/bulk-payments/process', [TenantCustomerPaymentController::class, 'processBulkPayment'])->middleware('permission:billing.collect')->name('bulk-payments.process');
+            Route::post('/bulk-pay-bills', [TenantCustomerPaymentController::class, 'processBulkPayment'])->middleware('permission:billing.collect')->name('bulk-pay-bills');
             Route::get('/monthly-analytics', [TenantCustomerController::class, 'monthlyAnalytics'])->name('monthly-analytics');
-            Route::post('/{customer}/pay-bill', [TenantCustomerPaymentController::class, 'receivePayment'])->whereNumber('customer')->name('pay-bill');
+            Route::post('/{customer}/pay-bill', [TenantCustomerPaymentController::class, 'receivePayment'])->middleware('permission:billing.collect')->whereNumber('customer')->name('pay-bill');
             Route::get('/payments/{payment}/receipt', [TenantCustomerPaymentController::class, 'printReceipt'])->whereNumber('payment')->name('payments.receipt');
             Route::get('/{customer}/payments', [TenantCustomerPaymentController::class, 'history'])->whereNumber('customer')->name('payments.history');
             Route::post('/{customer}/transfer-reseller', [TenantCustomerController::class, 'transferReseller'])->whereNumber('customer')->name('transfer-reseller');
@@ -382,19 +382,19 @@ Route::middleware(['web'])->group(function () {
             Route::post('/invoices', [TenantCustomerInvoiceController::class, 'store'])->name('invoices.store');
             Route::post('/invoices/generate-monthly', [TenantCustomerInvoiceController::class, 'generateMonthlyInvoices'])->name('invoices.generate-monthly');
             Route::get('/invoices/{id}', [TenantCustomerInvoiceController::class, 'show'])->whereNumber('id')->name('invoices.show');
-            Route::post('/invoices/{id}/pay', [TenantCustomerInvoiceController::class, 'recordPayment'])->whereNumber('id')->name('invoices.pay');
-            Route::post('/invoices/{id}/cancel', [TenantCustomerInvoiceController::class, 'cancel'])->whereNumber('id')->name('invoices.cancel');
+            Route::post('/invoices/{id}/pay', [TenantCustomerInvoiceController::class, 'recordPayment'])->middleware('permission:billing.collect')->whereNumber('id')->name('invoices.pay');
+            Route::post('/invoices/{id}/cancel', [TenantCustomerInvoiceController::class, 'cancel'])->middleware('permission:billing.invoices')->whereNumber('id')->name('invoices.cancel');
             Route::delete('/invoices/{id}', [TenantCustomerInvoiceController::class, 'destroy'])->whereNumber('id')->name('invoices.destroy');
 
             // 2. Payment Collections & Receipts
             Route::get('/payments', [TenantCustomerPaymentReceiptController::class, 'index'])->name('payments');
-            Route::post('/payments', [TenantCustomerPaymentReceiptController::class, 'store'])->name('payments.store');
+            Route::post('/payments', [TenantCustomerPaymentReceiptController::class, 'store'])->middleware('permission:billing.collect')->name('payments.store');
             Route::get('/payments/export', [TenantCustomerPaymentReceiptController::class, 'exportCsv'])->name('payments.export');
             Route::get('/payments/{id}', [TenantCustomerPaymentReceiptController::class, 'show'])->whereNumber('id')->name('payments.show');
             Route::post('/payments/{id}/sms', [TenantCustomerPaymentReceiptController::class, 'sendSms'])->whereNumber('id')->name('payments.sms');
-            Route::post('/payments/{id}/void', [TenantCustomerPaymentReceiptController::class, 'voidPayment'])->whereNumber('id')->name('payments.void');
-            Route::post('/payments/{id}/approve', [TenantCustomerPaymentReceiptController::class, 'approvePayment'])->whereNumber('id')->name('payments.approve');
-            Route::post('/payments/{id}/reject', [TenantCustomerPaymentReceiptController::class, 'rejectPayment'])->whereNumber('id')->name('payments.reject');
+            Route::post('/payments/{id}/void', [TenantCustomerPaymentReceiptController::class, 'voidPayment'])->middleware('permission:billing.invoices')->whereNumber('id')->name('payments.void');
+            Route::post('/payments/{id}/approve', [TenantCustomerPaymentReceiptController::class, 'approvePayment'])->middleware('permission:billing.invoices')->whereNumber('id')->name('payments.approve');
+            Route::post('/payments/{id}/reject', [TenantCustomerPaymentReceiptController::class, 'rejectPayment'])->middleware('permission:billing.invoices')->whereNumber('id')->name('payments.reject');
 
             // 2b. Collector Collections Summary & Receipts Audit
             Route::get('/collector-collections', [TenantCollectorCollectionReportController::class, 'index'])->name('collector-collections');

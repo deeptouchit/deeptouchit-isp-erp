@@ -12,6 +12,7 @@ use App\Models\TenantInternetPackage;
 use App\Models\TenantReseller;
 use App\Models\TenantResellerWalletTransaction;
 use App\Models\TenantRouter;
+use App\Services\Audit\FinancialAuditService;
 use App\Services\Billing\CustomerPaymentPolicy;
 use App\Services\Network\MikrotikApiService;
 use App\Services\Network\RadiusService;
@@ -286,7 +287,12 @@ class TenantCustomerPaymentController extends Controller
                     $radiusSynced = true;
                 }
             } catch (\Exception $e) {
-                // Non-blocking
+                \Log::warning('Customer payment RADIUS provisioning requires retry.', [
+                    'tenant_id' => $tenant->id,
+                    'customer_id' => $customer->id,
+                    'payment_id' => $payment->id,
+                    'retry_recommended' => true,
+                ]);
             }
 
             try {
@@ -296,7 +302,12 @@ class TenantCustomerPaymentController extends Controller
                     $mikrotikSynced = true;
                 }
             } catch (\Exception $e) {
-                // Non-blocking
+                \Log::warning('Customer payment MikroTik provisioning requires retry.', [
+                    'tenant_id' => $tenant->id,
+                    'customer_id' => $customer->id,
+                    'payment_id' => $payment->id,
+                    'retry_recommended' => true,
+                ]);
             }
 
             // 7. Audit Trail Log
@@ -312,16 +323,11 @@ class TenantCustomerPaymentController extends Controller
                 ? __('Received payment of :currency:amount (Invoice: :invoice) from subscriber :name (:username) via :method. Line re-activated.', $logParams)
                 : __('Received payment of :currency:amount (Invoice: :invoice) from subscriber :name (:username) via :method.', $logParams);
 
-            TenantActivityLog::create([
-                'tenant_id' => $tenant->id,
-                'actor_type' => 'App\Models\User',
-                'actor_id' => Auth::id() ?: 1,
-                'actor_name' => Auth::user()?->name ?: __('Admin'),
-                'event_type' => 'CUSTOMER_PAYMENT_COLLECTED',
-                'description' => $logDescription,
-                'ip_address' => $request->ip(),
-                'user_agent' => $request->userAgent(),
-                'metadata' => [
+            app(FinancialAuditService::class)->record(
+                $tenant,
+                'CUSTOMER_PAYMENT_COLLECTED',
+                $logDescription,
+                [
                     'payment_id' => $payment->id,
                     'invoice_no' => $invoiceNo,
                     'customer_id' => $customer->id,
@@ -329,10 +335,16 @@ class TenantCustomerPaymentController extends Controller
                     'discount' => $discount,
                     'old_due' => $oldDue,
                     'new_due' => $newDue,
+                    'old_expiry' => $oldExpiry ? Carbon::parse($oldExpiry)->format('Y-m-d') : null,
                     'new_expiry' => $newExpiry ? Carbon::parse($newExpiry)->format('Y-m-d') : null,
                     'is_reactivated' => $isReactivated,
+                    'network_provisioning' => [
+                        'radius' => $radiusSynced ? 'success' : 'pending_retry',
+                        'mikrotik' => $mikrotikSynced ? 'success' : 'pending_retry',
+                    ],
                 ],
-            ]);
+                $request,
+            );
 
             $remainingDays = 0;
             if ($customer->expiry_date) {
@@ -875,13 +887,10 @@ class TenantCustomerPaymentController extends Controller
             }
 
             // Audit Trail Log
-            TenantActivityLog::create([
-                'tenant_id' => $tenant->id,
-                'actor_type' => 'App\Models\User',
-                'actor_id' => Auth::id() ?: 1,
-                'actor_name' => Auth::user()?->name ?: __('Admin'),
-                'event_type' => 'CUSTOMER_BULK_PAYMENT_COLLECTED',
-                'description' => __('Bulk payment processed for :count subscribers. Total Gross: :currency:gross, Admin Share: :currency:admin, Reseller Share: :currency:profit via :method.', [
+            app(FinancialAuditService::class)->record(
+                $tenant,
+                'CUSTOMER_BULK_PAYMENT_COLLECTED',
+                __('Bulk payment processed for :count subscribers. Total Gross: :currency:gross, Admin Share: :currency:admin, Reseller Share: :currency:profit via :method.', [
                     'count' => $processedCount,
                     'currency' => $currency,
                     'gross' => number_format($totalAmountCollected, 2),
@@ -889,9 +898,7 @@ class TenantCustomerPaymentController extends Controller
                     'profit' => number_format($resellerCommission, 2),
                     'method' => $method,
                 ]),
-                'ip_address' => $request->ip(),
-                'user_agent' => $request->userAgent(),
-                'metadata' => [
+                [
                     'processed_count' => $processedCount,
                     'gross_bill' => $totalAmountCollected,
                     'admin_share' => $adminShare,
@@ -903,7 +910,8 @@ class TenantCustomerPaymentController extends Controller
                     'billing_month' => $billingMonth,
                     'request_key' => $batchKey,
                 ],
-            ]);
+                $request,
+            );
 
             return [
                 'already_processed' => false,
