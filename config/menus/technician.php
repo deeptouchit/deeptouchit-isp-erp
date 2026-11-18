@@ -19,11 +19,11 @@ return [
         'icon'        => 'fas fa-network-wired',
         'color'       => 'blue',
         'active'      => ['tenant.network*'],
-        'permissions' => ['network.olts_onus'],
+        'roles'       => ['isp_noc', 'isp_technician', 'technician', 'reseller_technician', 'isp_lineman'],
         'keywords'    => 'network olt onu ont optical fiber',
         'children'    => [
-            ['title' => 'OLT Devices', 'route' => 'tenant.network.olt', 'active' => ['tenant.network.olt*'], 'permissions' => ['network.olts_onus'], 'keywords' => 'olt gpon epon'],
-            ['title' => 'ONU / ONT', 'route' => 'tenant.network.onu', 'active' => ['tenant.network.onu*'], 'permissions' => ['network.olts_onus'], 'keywords' => 'onu ont optical signal'],
+            ['title' => 'OLT Devices', 'route' => 'tenant.network.olt', 'active' => ['tenant.network.olt*'], 'roles' => ['isp_noc', 'isp_technician', 'technician', 'reseller_technician', 'isp_lineman'], 'keywords' => 'olt gpon epon'],
+            ['title' => 'ONU / ONT', 'route' => 'tenant.network.onu', 'active' => ['tenant.network.onu*'], 'roles' => ['isp_noc', 'isp_technician', 'technician', 'reseller_technician', 'isp_lineman'], 'keywords' => 'onu ont optical signal'],
         ],
     ],
     [
@@ -31,7 +31,7 @@ return [
         'icon'        => 'fas fa-users-line',
         'color'       => 'cyan',
         'active'      => ['tenant.customers*'],
-        'permissions' => ['customers.view'],
+        'roles'       => ['isp_noc', 'isp_technician', 'technician', 'reseller_technician', 'isp_lineman'],
         'keywords'    => 'customers crm subscribers pppoe online sessions expired zones',
         'children'    => [
             [
@@ -40,7 +40,7 @@ return [
                 'active'            => ['tenant.customers.index', 'tenant.customers.create', 'tenant.customers.edit', 'tenant.customers.show'],
                 'exclude_routes'    => ['tenant.customers.expired*', 'tenant.customers.due*', 'tenant.customers.online*', 'tenant.customers.disconnected*', 'tenant.customers.zones*', 'tenant.customers.bulk-payments*', 'tenant.customers.monthly-analytics*'],
                 'require_no_status' => true,
-                'permissions'       => ['customers.view'],
+                'roles'             => ['isp_noc', 'isp_technician', 'technician', 'reseller_technician', 'isp_lineman'],
                 'keywords'          => 'all customers subscribers list',
             ],
         ],
