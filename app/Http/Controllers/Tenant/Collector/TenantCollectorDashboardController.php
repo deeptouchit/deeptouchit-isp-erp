@@ -19,10 +19,31 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\View\View;
 
 class TenantCollectorDashboardController extends Controller
 {
+    protected function applyCollectorScope(Builder $query, User $user, int $tenantId): Builder
+    {
+        $zoneIds = TenantCoverageZone::where('tenant_id', $tenantId)
+            ->where('staff_id', $user->id)
+            ->pluck('id');
+        $zoneNames = TenantCoverageZone::where('tenant_id', $tenantId)
+            ->where('staff_id', $user->id)
+            ->pluck('name');
+
+        return $query->where(function (Builder $scope) use ($user, $zoneIds, $zoneNames) {
+            $scope->where('assigned_collector_id', $user->id);
+            if ($zoneIds->isNotEmpty()) {
+                $scope->orWhereIn('zone_id', $zoneIds);
+            }
+            if ($zoneNames->isNotEmpty()) {
+                $scope->orWhereIn('zone', $zoneNames);
+            }
+        });
+    }
+
     /**
      * Resolve active authenticated Tenant.
      */
@@ -52,7 +73,7 @@ class TenantCollectorDashboardController extends Controller
         // 1. Customer Metrics
         $customerQuery = TenantCustomer::where('tenant_id', $tenantId);
         if ($authUser->isCollector()) {
-            $customerQuery->where('assigned_collector_id', $collectorId);
+            $customerQuery = $this->applyCollectorScope($customerQuery, $authUser, (int) $tenantId);
         }
 
         $totalCustomers = (clone $customerQuery)->count();
@@ -95,7 +116,7 @@ class TenantCollectorDashboardController extends Controller
                 $q->where('status', 'due')->orWhere('due_amount', '>', 0);
             });
         if ($authUser->isCollector()) {
-            $topDueCustomers->where('assigned_collector_id', $collectorId);
+            $topDueCustomers = $this->applyCollectorScope($topDueCustomers, $authUser, (int) $tenantId);
         }
         $topDueCustomers = $topDueCustomers
             ->orderByDesc('due_amount')
@@ -184,12 +205,7 @@ class TenantCollectorDashboardController extends Controller
 
         // Collector Scoping: If user is collector, filter to assigned customers if any assigned
         if ($isCollector) {
-            $hasSpecificAssignments = TenantCustomer::where('tenant_id', $tenantId)
-                ->where('assigned_collector_id', $collectorId)
-                ->exists();
-            if ($hasSpecificAssignments) {
-                $query->where('assigned_collector_id', $collectorId);
-            }
+            $query = $this->applyCollectorScope($query, $authUser, (int) $tenantId);
         } elseif ($collectorFilter !== 'all' && !empty($collectorFilter)) {
             $query->where('assigned_collector_id', $collectorFilter);
         }
@@ -249,15 +265,22 @@ class TenantCollectorDashboardController extends Controller
         }
 
         // 4. Auxiliary Lists for Filters
-        $zones = TenantCoverageZone::where('tenant_id', $tenantId)->orderBy('name')->get();
+        $zones = TenantCoverageZone::where('tenant_id', $tenantId);
+        if ($isCollector) {
+            $zones->where(function ($scope) use ($collectorId) {
+                $scope->where('staff_id', $collectorId)
+                    ->orWhereHas('customers', fn ($customer) => $customer->where('assigned_collector_id', $collectorId));
+            });
+        }
+        $zones = $zones->orderBy('name')->get();
         $packages = TenantInternetPackage::where('tenant_id', $tenantId)->orderBy('price')->get();
         $collectors = User::where('tenant_id', $tenantId)->whereIn('role', ['isp_collector', 'collector', 'reseller_collector'])->orderBy('name')->get();
         $resellers = TenantReseller::where('tenant_id', $tenantId)->orderBy('name')->get();
 
         // 5. High-Performance KPI Strip
         $baseCustomers = TenantCustomer::where('tenant_id', $tenantId);
-        if ($isCollector && isset($hasSpecificAssignments) && $hasSpecificAssignments) {
-            $baseCustomers->where('assigned_collector_id', $collectorId);
+        if ($isCollector) {
+            $baseCustomers = $this->applyCollectorScope($baseCustomers, $authUser, (int) $tenantId);
         }
 
         $totalDueCustomers = (clone $baseCustomers)->where($isDueOrExpiredClosure)->count();
@@ -369,12 +392,7 @@ class TenantCollectorDashboardController extends Controller
             ->with(['package', 'zone', 'reseller']);
 
         if ($isCollector) {
-            $hasSpecificAssignments = TenantCustomer::where('tenant_id', $tenantId)
-                ->where('assigned_collector_id', $collectorId)
-                ->exists();
-            if ($hasSpecificAssignments) {
-                $query->where('assigned_collector_id', $collectorId);
-            }
+            $query = $this->applyCollectorScope($query, $authUser, (int) $tenantId);
         } elseif ($collectorFilter !== 'all' && !empty($collectorFilter)) {
             $query->where('assigned_collector_id', $collectorFilter);
         }

@@ -320,6 +320,7 @@ return [
                 'title'    => 'Collector Collections',
                 'route'    => 'tenant.finance.collector-collections',
                 'active'   => ['tenant.finance.collector-collections*'],
+                'permissions' => ['billing.cash_handover'],
                 'keywords' => 'collector collections report receipts payments money summary audit',
             ],
             [
@@ -327,6 +328,7 @@ return [
                 'route'          => 'tenant.finance.cash-handover',
                 'fallback_route' => 'tenant.collector.handover',
                 'active'         => ['tenant.finance.cash-handover*', 'tenant.collector.handover*'],
+                'permissions'    => ['billing.cash_handover'],
                 'keywords'       => 'daily cash handover closing collector manager verification cash approval vault',
             ],
             [

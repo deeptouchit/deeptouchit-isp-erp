@@ -97,6 +97,21 @@ class TenantCustomerController extends Controller
         $distinctZonesQuery = TenantCustomer::where('tenant_id', $tenant->id);
         if ($isIspCollector) {
             $distinctZonesQuery->whereNull('reseller_id');
+            $assignedZoneIds = TenantCoverageZone::where('tenant_id', $tenant->id)
+                ->where('staff_id', $authUser->id)
+                ->pluck('id');
+            $assignedZoneNames = TenantCoverageZone::where('tenant_id', $tenant->id)
+                ->where('staff_id', $authUser->id)
+                ->pluck('name');
+            $distinctZonesQuery->where(function ($scope) use ($authUser, $assignedZoneIds, $assignedZoneNames) {
+                $scope->where('assigned_collector_id', $authUser->id);
+                if ($assignedZoneIds->isNotEmpty()) {
+                    $scope->orWhereIn('zone_id', $assignedZoneIds);
+                }
+                if ($assignedZoneNames->isNotEmpty()) {
+                    $scope->orWhereIn('zone', $assignedZoneNames);
+                }
+            });
         }
         $distinctZones = $distinctZonesQuery
             ->whereNotNull('zone')
@@ -111,6 +126,21 @@ class TenantCustomerController extends Controller
 
         if ($isIspCollector) {
             $query->whereNull('reseller_id');
+            $assignedZoneIds = TenantCoverageZone::where('tenant_id', $tenant->id)
+                ->where('staff_id', $authUser->id)
+                ->pluck('id');
+            $assignedZoneNames = TenantCoverageZone::where('tenant_id', $tenant->id)
+                ->where('staff_id', $authUser->id)
+                ->pluck('name');
+            $query->where(function ($scope) use ($authUser, $assignedZoneIds, $assignedZoneNames) {
+                $scope->where('assigned_collector_id', $authUser->id);
+                if ($assignedZoneIds->isNotEmpty()) {
+                    $scope->orWhereIn('zone_id', $assignedZoneIds);
+                }
+                if ($assignedZoneNames->isNotEmpty()) {
+                    $scope->orWhereIn('zone', $assignedZoneNames);
+                }
+            });
         }
 
         if ($search) {
