@@ -283,7 +283,7 @@ Route::middleware(['web'])->group(function () {
         });
 
         // 4b. Field Bill Collector Hub Routes (Prefix: admin/collector)
-        Route::prefix('admin/collector')->name('tenant.collector.')->group(function () {
+        Route::prefix('admin/collector')->name('tenant.collector.')->middleware('role:isp_collector,collector,reseller_collector,isp_admin,isp_manager,admin,manager')->group(function () {
             Route::get('/dashboard', fn() => redirect()->route('tenant.dashboard'))->name('dashboard');
             Route::get('/due-customers', [TenantCollectorDashboardController::class, 'dueCustomers'])->name('due-customers');
             Route::get('/due-customers/print', [TenantCollectorDashboardController::class, 'printDueSheet'])->name('due-customers.print');
@@ -293,22 +293,22 @@ Route::middleware(['web'])->group(function () {
             Route::post('/handover', [TenantCollectorDashboardController::class, 'submitHandover'])->name('handover.submit');
             Route::post('/handover/store', [TenantCollectorDashboardController::class, 'submitHandover'])->name('handover.store');
             Route::get('/handover/{id}', [TenantCollectorDashboardController::class, 'showHandover'])->whereNumber('id')->name('handover.show');
-            Route::post('/handover/{id}/approve', [TenantCollectorDashboardController::class, 'approveHandover'])->whereNumber('id')->name('handover.approve');
-            Route::post('/handover/{id}/update', [TenantCollectorDashboardController::class, 'updateHandover'])->whereNumber('id')->name('handover.update');
-            Route::post('/handover/{id}/delete', [TenantCollectorDashboardController::class, 'deleteHandover'])->whereNumber('id')->name('handover.delete');
+            Route::post('/handover/{id}/approve', [TenantCollectorDashboardController::class, 'approveHandover'])->whereNumber('id')->middleware('role:isp_admin,isp_manager,admin,manager')->name('handover.approve');
+            Route::post('/handover/{id}/update', [TenantCollectorDashboardController::class, 'updateHandover'])->whereNumber('id')->middleware('role:isp_admin,isp_manager,admin,manager')->name('handover.update');
+            Route::post('/handover/{id}/delete', [TenantCollectorDashboardController::class, 'deleteHandover'])->whereNumber('id')->middleware('role:isp_admin,isp_manager,admin,manager')->name('handover.delete');
             Route::post('/collect', [TenantCollectorPaymentController::class, 'collectBill'])->name('collect');
             Route::post('/collect-bill', [TenantCollectorPaymentController::class, 'collectBill'])->name('collect-bill');
         });
 
         // 4c. Direct Collector Handover Aliases (Prefix: collector)
-        Route::prefix('collector')->group(function () {
+        Route::prefix('collector')->middleware('role:isp_collector,collector,reseller_collector,isp_admin,isp_manager,admin,manager')->group(function () {
             Route::get('/handover', [TenantCollectorDashboardController::class, 'handover']);
             Route::post('/handover', [TenantCollectorDashboardController::class, 'submitHandover']);
             Route::post('/handover/store', [TenantCollectorDashboardController::class, 'submitHandover']);
             Route::get('/handover/{id}', [TenantCollectorDashboardController::class, 'showHandover'])->whereNumber('id');
-            Route::post('/handover/{id}/approve', [TenantCollectorDashboardController::class, 'approveHandover'])->whereNumber('id');
-            Route::post('/handover/{id}/update', [TenantCollectorDashboardController::class, 'updateHandover'])->whereNumber('id');
-            Route::post('/handover/{id}/delete', [TenantCollectorDashboardController::class, 'deleteHandover'])->whereNumber('id');
+            Route::post('/handover/{id}/approve', [TenantCollectorDashboardController::class, 'approveHandover'])->whereNumber('id')->middleware('role:isp_admin,isp_manager,admin,manager');
+            Route::post('/handover/{id}/update', [TenantCollectorDashboardController::class, 'updateHandover'])->whereNumber('id')->middleware('role:isp_admin,isp_manager,admin,manager');
+            Route::post('/handover/{id}/delete', [TenantCollectorDashboardController::class, 'deleteHandover'])->whereNumber('id')->middleware('role:isp_admin,isp_manager,admin,manager');
         });
 
         // 5. Customer Management (CRM & Subscribers) Routes (Prefix: admin/customers)

@@ -18,13 +18,9 @@
             <h1 class="text-sm font-bold text-slate-800 tracking-tight">{{ __('Bill Collector Dashboard') }}</h1>
         </div>
         <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-            <a href="{{ route('tenant.customers.due') }}" class="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 rounded-lg text-xs font-semibold border border-amber-200/80 transition inline-flex items-center gap-1.5 shadow-2xs cursor-pointer">
+            <a href="{{ route('tenant.collector.due-customers') }}" class="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 rounded-lg text-xs font-semibold border border-amber-200/80 transition inline-flex items-center gap-1.5 shadow-2xs cursor-pointer">
                 <i class="fas fa-circle-exclamation text-amber-600 text-xs"></i>
                 <span>{{ __('Due Customers') }}</span>
-            </a>
-            <a href="{{ route('tenant.customers.index') }}" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200/80 transition inline-flex items-center gap-1.5 shadow-2xs cursor-pointer">
-                <i class="fas fa-users text-cyan-600 text-xs"></i>
-                <span>{{ __('All Customers') }}</span>
             </a>
             <a href="{{ route('tenant.finance.payments') }}" class="px-3.5 py-1.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-xs font-semibold shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-receipt text-xs"></i>
@@ -169,7 +165,7 @@
                         <i class="fas fa-user-clock text-rose-600 text-xs"></i>
                         <h3 class="text-xs font-bold text-slate-800">{{ __('Due Customers') }} ({{ __('Immediate') }})</h3>
                     </div>
-                    <a href="{{ route('tenant.customers.due') }}" class="text-[10px] font-semibold text-cyan-700 hover:underline">
+                    <a href="{{ route('tenant.collector.due-customers') }}" class="text-[10px] font-semibold text-cyan-700 hover:underline">
                         {{ __('View All') }}
                     </a>
                 </div>
@@ -204,7 +200,7 @@
             </div>
 
             <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px]">
-                <a href="{{ route('tenant.customers.due') }}" class="text-rose-700 hover:text-rose-900 font-semibold inline-flex items-center gap-1 transition">
+                <a href="{{ route('tenant.collector.due-customers') }}" class="text-rose-700 hover:text-rose-900 font-semibold inline-flex items-center gap-1 transition">
                     <span>{{ __('All Due Customers') }}</span>
                     <i class="fas fa-chevron-right text-[9px]"></i>
                 </a>

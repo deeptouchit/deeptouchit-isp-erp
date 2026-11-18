@@ -51,6 +51,9 @@ class TenantCollectorDashboardController extends Controller
 
         // 1. Customer Metrics
         $customerQuery = TenantCustomer::where('tenant_id', $tenantId);
+        if ($authUser->isCollector()) {
+            $customerQuery->where('assigned_collector_id', $collectorId);
+        }
 
         $totalCustomers = (clone $customerQuery)->count();
         $activeCustomers = (clone $customerQuery)->where('status', 'active')->count();
@@ -90,7 +93,11 @@ class TenantCollectorDashboardController extends Controller
         $topDueCustomers = TenantCustomer::where('tenant_id', $tenantId)
             ->where(function ($q) {
                 $q->where('status', 'due')->orWhere('due_amount', '>', 0);
-            })
+            });
+        if ($authUser->isCollector()) {
+            $topDueCustomers->where('assigned_collector_id', $collectorId);
+        }
+        $topDueCustomers = $topDueCustomers
             ->orderByDesc('due_amount')
             ->limit(5)
             ->get();
