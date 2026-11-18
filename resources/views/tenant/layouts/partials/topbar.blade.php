@@ -9,6 +9,8 @@
         && ($authUser->isOwner() || $authUser->isIspAdmin() || $authUser->hasPermission('customers.view'));
     $canViewTickets = $authUser && !$authUser->isCollector() && !$authUser->isTechnician()
         && ($authUser->isOwner() || $authUser->isIspAdmin() || $authUser->hasPermission('support.tickets'));
+    $canViewSaasSubscription = $authUser
+        && ($authUser->isOwner() || $authUser->isIspAdmin() || in_array($authUser->role, ['admin', 'super_admin'], true));
 
     $firstName = trim(explode(' ', trim($authUser->name ?? 'Admin'))[0] ?? 'Admin');
     $avatarInitial = mb_strtoupper(mb_substr(trim($authUser->name ?? 'A'), 0, 1, 'UTF-8'), 'UTF-8') ?: 'A';
@@ -358,7 +360,7 @@
                     <span>{{ __('My Profile') }}</span>
                 </a>
 
-                @if($authUser && !$authUser->isCollector() && !$authUser->isTechnician())
+                @if($canViewSaasSubscription)
                     <a href="{{ route('tenant.billing.dashboard') }}" class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-slate-50 text-slate-700 font-medium transition">
                         <i class="fas fa-credit-card w-4 text-slate-400 text-[11px]"></i>
                         <span>{{ __('SaaS Subscription') }}</span>

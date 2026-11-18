@@ -82,11 +82,20 @@
             <i class="fas fa-chart-pie text-sm"></i>
             <span>Home</span>
         </a>
-        <a href="{{ route('tenant.billing.dashboard') }}" 
-           class="flex flex-col items-center gap-0.5 py-1 px-2 text-[10px] font-medium transition {{ request()->routeIs('tenant.billing*') ? 'text-blue-600 font-bold' : 'text-slate-500 hover:text-slate-800' }}">
-            <i class="fas fa-credit-card text-sm"></i>
-            <span>Billing</span>
-        </a>
+        @php
+            $mobileBillingUser = auth()->user();
+            $canViewMobileBilling = $mobileBillingUser
+                && ($mobileBillingUser->isOwner()
+                    || $mobileBillingUser->isIspAdmin()
+                    || in_array($mobileBillingUser->role, ['admin', 'super_admin'], true));
+        @endphp
+        @if($canViewMobileBilling)
+            <a href="{{ route('tenant.billing.dashboard') }}"
+               class="flex flex-col items-center gap-0.5 py-1 px-2 text-[10px] font-medium transition {{ request()->routeIs('tenant.billing*') ? 'text-blue-600 font-bold' : 'text-slate-500 hover:text-slate-800' }}">
+                <i class="fas fa-credit-card text-sm"></i>
+                <span>{{ __('Billing') }}</span>
+            </a>
+        @endif
         <a href="{{ route('tenant.tickets.index') }}" 
            class="flex flex-col items-center gap-0.5 py-1 px-2 text-[10px] font-medium transition {{ request()->routeIs('tenant.tickets*') ? 'text-blue-600 font-bold' : 'text-slate-500 hover:text-slate-800' }}">
             <i class="fas fa-headset text-sm"></i>

@@ -489,7 +489,7 @@ Route::middleware(['web'])->group(function () {
         });
 
         // Subscription & Billing Routes (Prefix: admin/billing)
-        Route::prefix('admin/billing')->name('tenant.billing.')->group(function () {
+        Route::prefix('admin/billing')->name('tenant.billing.')->middleware('role:isp_admin,admin,super_admin,owner')->group(function () {
             Route::get('/', [TenantBillingController::class, 'dashboard'])->name('dashboard');
             Route::get('/invoices', [TenantBillingController::class, 'invoices'])->name('invoices');
             Route::get('/payments', [TenantBillingController::class, 'payments'])->name('payments');
