@@ -299,4 +299,111 @@ class CustomerBillingProductionTest extends TestCase
 
         Carbon::setTestNow();
     }
+
+    public function test_finance_invoice_payment_is_atomic_linked_and_replay_safe(): void
+    {
+        Carbon::setTestNow('2026-11-18 12:00:00');
+
+        $tenant = Tenant::create([
+            'name' => 'Finance Payment ISP',
+            'company_name' => 'Finance Payment ISP',
+            'slug' => 'finance-payment-isp',
+            'status' => 'active',
+        ]);
+        $user = User::create([
+            'tenant_id' => $tenant->id,
+            'name' => 'Finance Admin',
+            'email' => 'finance-admin@example.test',
+            'password' => bcrypt('test-password'),
+            'role' => 'isp_admin',
+            'status' => 'active',
+        ]);
+        $customer = TenantCustomer::create([
+            'tenant_id' => $tenant->id,
+            'customer_id' => 'FP1001',
+            'name' => 'Finance Customer',
+            'username' => 'finance-customer',
+            'password' => 'pppoe-password',
+            'phone' => '01900000000',
+            'monthly_bill' => 500,
+            'due_amount' => 500,
+            'expiry_date' => '2026-11-10',
+            'status' => 'suspended',
+        ]);
+        $invoice = TenantCustomerInvoice::create([
+            'tenant_id' => $tenant->id,
+            'customer_id' => $customer->id,
+            'invoice_no' => 'INV-FINANCE-1001',
+            'billing_month' => '2026-11',
+            'amount' => 500,
+            'total_payable' => 500,
+            'due_amount' => 500,
+            'issue_date' => '2026-11-01',
+            'due_date' => '2026-11-10',
+            'status' => 'overdue',
+        ]);
+        $payload = [
+            'amount_paying' => 500,
+            'discount' => 0,
+            'payment_method' => 'cash',
+            'request_key' => 'finance-invoice-request-001',
+        ];
+
+        $this->actingAs($user)->postJson(
+            route('tenant.finance.invoices.pay', $invoice->id),
+            $payload,
+        )->assertOk()->assertJsonPath('success', true);
+
+        $payment = TenantCustomerPayment::sole();
+        $this->assertSame($invoice->id, $payment->invoice_id);
+        $this->assertSame('paid', $invoice->fresh()->status);
+        $this->assertSame(0.0, (float) $invoice->fresh()->due_amount);
+        $this->assertSame(0.0, (float) $customer->fresh()->due_amount);
+        $this->assertSame('active', $customer->fresh()->status);
+        $this->assertSame('2026-12-18', $customer->fresh()->expiry_date?->toDateString());
+        $this->assertDatabaseHas('tenant_customer_payment_allocations', [
+            'payment_id' => $payment->id,
+            'invoice_id' => $invoice->id,
+            'amount' => 500,
+        ]);
+
+        $this->actingAs($user)->postJson(
+            route('tenant.finance.invoices.pay', $invoice->id),
+            $payload,
+        )->assertOk()->assertJsonPath('already_processed', true);
+        $this->assertDatabaseCount('tenant_customer_payments', 1);
+
+        $this->actingAs($user)->postJson(
+            route('tenant.finance.invoices.pay', $invoice->id),
+            [...$payload, 'request_key' => 'paid-invoice-new-request'],
+        )->assertUnprocessable();
+        $this->assertDatabaseCount('tenant_customer_payments', 1);
+
+        $secondInvoice = TenantCustomerInvoice::create([
+            'tenant_id' => $tenant->id,
+            'customer_id' => $customer->id,
+            'invoice_no' => 'INV-FINANCE-1002',
+            'billing_month' => '2026-12',
+            'amount' => 300,
+            'total_payable' => 300,
+            'due_amount' => 300,
+            'issue_date' => '2026-12-01',
+            'due_date' => '2026-12-10',
+            'status' => 'unpaid',
+        ]);
+        $this->actingAs($user)->postJson(
+            route('tenant.finance.invoices.pay', $secondInvoice->id),
+            [
+                'amount_paying' => 301,
+                'discount' => 0,
+                'payment_method' => 'cash',
+                'request_key' => 'finance-overpayment-request',
+            ],
+        )->assertUnprocessable();
+        $this->assertSame(300.0, (float) $secondInvoice->fresh()->due_amount);
+        $this->assertSame('unpaid', $secondInvoice->fresh()->status);
+        $this->assertDatabaseCount('tenant_customer_payments', 1);
+
+        Carbon::setTestNow();
+    }
 }

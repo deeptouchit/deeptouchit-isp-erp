@@ -34,6 +34,7 @@ return new class extends Migration
                 $table->decimal('advance_amount', 10, 2)->default(0.00);
                 $table->date('expiry_date')->nullable();
                 $table->enum('status', ['active', 'expired', 'suspended', 'pending'])->default('active');
+                $table->enum('online_status', ['online', 'offline'])->default('offline');
                 $table->enum('mikrotik_status', ['synced', 'error', 'pending'])->default('pending');
                 $table->boolean('auto_disconnect')->default(true);
                 $table->timestamp('last_sync_at')->nullable();

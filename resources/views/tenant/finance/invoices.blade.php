@@ -1402,6 +1402,7 @@ function invoiceManager() {
                 discount: 0,
                 payment_method: 'cash',
                 transaction_id: '',
+                request_key: '',
                 notes: ''
             }
         },
@@ -1498,6 +1499,9 @@ function invoiceManager() {
                 discount: 0,
                 payment_method: 'cash',
                 transaction_id: '',
+                request_key: (window.crypto && typeof window.crypto.randomUUID === 'function')
+                    ? window.crypto.randomUUID()
+                    : `invoice-pay-${Date.now()}-${Math.random().toString(36).slice(2)}`,
                 notes: ''
             };
             this.payModal.open = true;

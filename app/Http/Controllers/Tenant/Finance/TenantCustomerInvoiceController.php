@@ -15,6 +15,7 @@ use App\Models\TenantAutomationSetting;
 use App\Models\AutomationLog;
 use App\Models\TenantCoverageZone;
 use App\Models\User;
+use App\Services\Billing\CustomerPaymentPolicy;
 use App\Services\Network\MikrotikApiService;
 use App\Services\Network\RadiusService;
 use Carbon\Carbon;
@@ -559,64 +560,159 @@ class TenantCustomerInvoiceController extends Controller
             'discount' => 'nullable|numeric|min:0',
             'payment_method' => 'required|string|in:cash,bkash,nagad,rocket,pos,online,bank,wallet',
             'transaction_id' => 'nullable|string|max:100',
+            'request_key' => 'required|string|max:100',
             'notes' => 'nullable|string|max:500',
         ]);
-
-        $query = TenantCustomerInvoice::where('tenant_id', $tenant->id);
-        if ($isResellerUser) {
-            $query->where('reseller_id', $userResellerId);
-        }
-        $invoice = $query->with('customer')->findOrFail($id);
-        $customer = $invoice->customer;
-
         $payingAmount = (float) $validated['amount_paying'];
         $discount = (float) ($validated['discount'] ?? 0.00);
-
-        if ($discount > 0) {
-            $invoice->discount = $invoice->discount + $discount;
-            $invoice->total_payable = max(0, ($invoice->amount + $invoice->vat_tax) - $invoice->discount);
-        }
-
-        $newPaidAmount = $invoice->paid_amount + $payingAmount;
-        $newDueAmount = max(0, $invoice->total_payable - $newPaidAmount);
-
-        $invoice->paid_amount = $newPaidAmount;
-        $invoice->due_amount = $newDueAmount;
-        $invoice->paid_at = Carbon::now();
-        $invoice->payment_method = $validated['payment_method'];
-        $invoice->status = ($newDueAmount <= 0.00) ? 'paid' : 'partially_paid';
-        $invoice->save();
-
+        $method = $validated['payment_method'];
+        $requestKey = trim($validated['request_key']);
         $currency = $tenant->currency_symbol ?? '৳';
 
-        // Generate Money Receipt in TenantCustomerPayment
-        $receiptNo = TenantCustomerPayment::generateInvoiceNo($tenant->id);
-        TenantCustomerPayment::create([
-            'tenant_id' => $tenant->id,
-            'customer_id' => $customer->id,
-            'invoice_no' => $receiptNo,
-            'billing_month' => $invoice->billing_month ?: Carbon::now()->format('Y-m'),
-            'amount' => $payingAmount,
-            'discount' => $discount,
-            'payment_method' => $validated['payment_method'],
-            'transaction_id' => $validated['transaction_id'] ?? null,
-            'collected_by' => Auth::id() ?: 1,
-            'status' => 'completed',
-            'notes' => __('Payment for Invoice #:invoice.', ['invoice' => $invoice->invoice_no]) . (!empty($validated['notes']) ? ' ' . $validated['notes'] : ''),
-            'paid_at' => Carbon::now(),
-        ]);
+        $result = DB::transaction(function () use (
+            $tenant, $userResellerId, $isResellerUser, $id, $payingAmount, $discount,
+            $method, $requestKey, $validated, $request, $currency
+        ): array {
+            Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
+            $invoiceQuery = TenantCustomerInvoice::where('tenant_id', $tenant->id);
+            if ($isResellerUser) {
+                $invoiceQuery->where('reseller_id', $userResellerId);
+            }
+            $invoice = $invoiceQuery->whereKey($id)->lockForUpdate()->firstOrFail();
+            $customer = TenantCustomer::where('tenant_id', $tenant->id)
+                ->whereKey($invoice->customer_id)->lockForUpdate()->firstOrFail();
 
-        // Synchronize Customer Account Balance & Status
-        $customer->due_amount = max(0, $customer->due_amount - ($payingAmount + $discount));
-        if ($customer->due_amount <= 0 && in_array($customer->status, ['due', 'expired', 'suspended'])) {
-            $customer->status = 'active';
-            $customer->online_status = 'offline';
-        }
-        $customer->save();
+            $existingPayment = TenantCustomerPayment::where('tenant_id', $tenant->id)
+                ->where('request_key', $requestKey)->first();
+            if ($existingPayment) {
+                $samePayment = (int) $existingPayment->invoice_id === (int) $invoice->id
+                    && round((float) $existingPayment->amount, 2) === round($payingAmount, 2)
+                    && round((float) $existingPayment->discount, 2) === round($discount, 2)
+                    && (string) $existingPayment->payment_method === $method;
+                abort_unless($samePayment, 409, __('This payment request key was already used for a different transaction.'));
 
-        // If reactivated to active, sync to MikroTik RouterOS & RADIUS
+                return [
+                    'already_processed' => true,
+                    'invoice' => $invoice,
+                    'customer' => $customer,
+                    'receipt_no' => $existingPayment->invoice_no,
+                    'reactivated' => false,
+                ];
+            }
+
+            abort_if(
+                in_array($invoice->status, ['paid', 'cancelled'], true) || (float) $invoice->due_amount <= 0,
+                422,
+                __('This invoice is already paid or unavailable for payment.')
+            );
+            $currentDue = round((float) $invoice->due_amount, 2);
+            $coverage = round($payingAmount + $discount, 2);
+            abort_if($coverage > $currentDue, 422, __('Payment and discount cannot exceed the invoice due amount.'));
+
+            $invoice->paid_amount = round((float) $invoice->paid_amount + $payingAmount, 2);
+            $invoice->discount = round((float) $invoice->discount + $discount, 2);
+            $invoice->total_payable = max(
+                (float) $invoice->paid_amount,
+                round((float) $invoice->total_payable - $discount, 2)
+            );
+            $invoice->due_amount = max(0, round($currentDue - $coverage, 2));
+            $invoice->paid_at = $invoice->due_amount <= 0 ? Carbon::now() : null;
+            $invoice->payment_method = $method;
+            $invoice->status = $invoice->due_amount <= 0 ? 'paid' : 'partially_paid';
+            $invoice->save();
+
+            $policy = app(CustomerPaymentPolicy::class)->calculate(
+                oldDue: (float) $customer->due_amount,
+                oldExpiry: $customer->expiry_date ? Carbon::parse($customer->expiry_date) : null,
+                monthlyBill: (float) ($customer->monthly_bill > 0 ? $customer->monthly_bill : $invoice->amount),
+                mode: 'due',
+                amountPaid: $payingAmount,
+                discount: $discount,
+                months: 1,
+                extendValidity: true,
+                reactivateRequested: true,
+            );
+            $customer->due_amount = $policy['new_due'];
+            if ($policy['new_expiry']) {
+                $customer->expiry_date = $policy['new_expiry'];
+            }
+            $reactivated = false;
+            if ($policy['can_reactivate'] && in_array($customer->status, ['due', 'expired', 'suspended'], true)) {
+                $customer->status = 'active';
+                $customer->online_status = 'offline';
+                $reactivated = true;
+            }
+            $customer->save();
+
+            $receiptNo = TenantCustomerPayment::generateInvoiceNo($tenant->id);
+            $payment = TenantCustomerPayment::create([
+                'tenant_id' => $tenant->id,
+                'customer_id' => $customer->id,
+                'invoice_id' => $invoice->id,
+                'invoice_no' => $receiptNo,
+                'billing_month' => $invoice->billing_month ?: Carbon::now()->format('Y-m'),
+                'amount' => $payingAmount,
+                'discount' => $discount,
+                'payment_method' => $method,
+                'transaction_id' => $validated['transaction_id'] ?? null,
+                'request_key' => $requestKey,
+                'collected_by' => Auth::id() ?: 1,
+                'status' => 'completed',
+                'notes' => __('Payment for Invoice #:invoice.', ['invoice' => $invoice->invoice_no])
+                    . (!empty($validated['notes']) ? ' ' . $validated['notes'] : ''),
+                'paid_at' => Carbon::now(),
+            ]);
+
+            DB::table('tenant_customer_payment_allocations')->insert([
+                'tenant_id' => $tenant->id,
+                'payment_id' => $payment->id,
+                'invoice_id' => $invoice->id,
+                'amount' => $payingAmount,
+                'discount' => $discount,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            TenantActivityLog::create([
+                'tenant_id' => $tenant->id,
+                'actor_type' => 'App\Models\User',
+                'actor_id' => Auth::id() ?: 1,
+                'actor_name' => Auth::user()?->name ?: __('Admin'),
+                'event_type' => 'INVOICE_PAYMENT_COLLECTED',
+                'description' => __("Collected payment of :currency:amount for invoice ':invoice' from :customer.", [
+                    'currency' => $currency,
+                    'amount' => $payingAmount,
+                    'invoice' => $invoice->invoice_no,
+                    'customer' => $customer->name,
+                ]),
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'metadata' => [
+                    'invoice_id' => $invoice->id,
+                    'invoice_no' => $invoice->invoice_no,
+                    'amount' => $payingAmount,
+                    'discount' => $discount,
+                    'payment_method' => $method,
+                    'receipt_no' => $receiptNo,
+                    'request_key' => $requestKey,
+                ],
+            ]);
+
+            return [
+                'already_processed' => false,
+                'invoice' => $invoice,
+                'customer' => $customer,
+                'receipt_no' => $receiptNo,
+                'reactivated' => $reactivated,
+            ];
+        });
+
+        $invoice = $result['invoice'];
+        $customer = $result['customer'];
+        $receiptNo = $result['receipt_no'];
+
         $mikrotikReactivated = false;
-        if ($customer->status === 'active') {
+        if (!$result['already_processed'] && $result['reactivated']) {
             try {
                 $mikrotikApi = new MikrotikApiService();
                 $syncRes = $mikrotikApi->syncCustomerToMikrotik($customer);
@@ -635,32 +731,9 @@ class TenantCustomerInvoiceController extends Controller
             }
         }
 
-        // Audit Trail
-        TenantActivityLog::create([
-            'tenant_id' => $tenant->id,
-            'actor_type' => 'App\Models\User',
-            'actor_id' => Auth::id() ?: 1,
-            'actor_name' => Auth::user()?->name ?: __('Admin'),
-            'event_type' => 'INVOICE_PAYMENT_COLLECTED',
-            'description' => __("Collected payment of :currency:amount for invoice ':invoice' from :customer.", [
-                'currency' => $currency,
-                'amount' => $payingAmount,
-                'invoice' => $invoice->invoice_no,
-                'customer' => $customer->name,
-            ]),
-            'ip_address' => $request->ip(),
-            'user_agent' => $request->userAgent(),
-            'metadata' => [
-                'invoice_id' => $invoice->id,
-                'invoice_no' => $invoice->invoice_no,
-                'amount' => $payingAmount,
-                'discount' => $discount,
-                'payment_method' => $validated['payment_method'],
-                'receipt_no' => $receiptNo,
-            ],
-        ]);
-
-        $msg = $mikrotikReactivated
+        $msg = $result['already_processed']
+            ? __('This payment was already processed as receipt :invoice.', ['invoice' => $receiptNo])
+            : ($mikrotikReactivated
             ? __('Payment of :currency:amount received successfully for Invoice :invoice & MikroTik Line Reactivated!', [
                 'currency' => $currency,
                 'amount' => number_format($payingAmount, 2),
@@ -670,7 +743,7 @@ class TenantCustomerInvoiceController extends Controller
                 'currency' => $currency,
                 'amount' => number_format($payingAmount, 2),
                 'invoice' => $invoice->invoice_no,
-            ]);
+            ]));
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
@@ -678,6 +751,7 @@ class TenantCustomerInvoiceController extends Controller
                 'message' => $msg,
                 'invoice' => $invoice,
                 'receipt_no' => $receiptNo,
+                'already_processed' => $result['already_processed'],
             ]);
         }
 

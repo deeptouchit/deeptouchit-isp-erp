@@ -81,7 +81,7 @@ Verification:
 
 ## Phase 2 — Finance Invoice Payment
 
-অবস্থা: অপেক্ষমাণ
+অবস্থা: সম্পন্ন
 
 কাজ:
 
@@ -95,6 +95,23 @@ Acceptance criteria:
 
 - মাঝপথে failure হলে invoice, receipt বা customer balance আংশিকভাবে save হবে না।
 - invoice due-এর বেশি payment গ্রহণ হবে না।
+
+বাস্তবায়িত পরিবর্তন:
+
+- Invoice, customer এবং tenant row একই database transaction-এ lock করা হয়েছে।
+- Paid/cancelled/zero-due invoice-এ নতুন payment HTTP 422 দিয়ে reject হয়।
+- Cash ও discount-এর মোট coverage invoice due অতিক্রম করলে transaction rollback হয়।
+- Invoice, customer due, receipt, allocation এবং audit log একই atomic transaction-এ save হয়।
+- Receipt-এ সরাসরি `invoice_id` এবং allocation ledger linkage রাখা হয়েছে।
+- UI-generated `request_key` দিয়ে exact replay idempotent; conflicting replay HTTP 409।
+- Phase 1-এর shared payment policy দিয়ে expiry এবং reactivation eligibility নির্ধারিত হয়।
+- MikroTik/FreeRADIUS sync database commit-এর পরে চলে; network delay financial row lock ধরে রাখে না।
+- Fresh customer schema-তে canonical `online_status` field যোগ করা হয়েছে।
+
+Verification:
+
+- `CustomerBillingProductionTest`: ৭টি test pass, ৬০টি assertion pass।
+- Covered: atomic full settlement, receipt/invoice linkage, allocation record, safe reactivation, exact replay, paid-invoice rejection এবং overpayment rollback।
 
 ## Phase 3 — Bulk Payment ও Reseller Wallet
 
