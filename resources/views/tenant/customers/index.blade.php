@@ -2186,6 +2186,7 @@ function customerMasterManager() {
             months: 1,
             payment_method: 'cash',
             transaction_id: '',
+            request_key: '',
             billing_month: @json(date("F Y")),
             notes: '',
             extend_validity: true,
@@ -2206,6 +2207,9 @@ function customerMasterManager() {
             this.payModal.months = 1;
             this.payModal.payment_method = 'cash';
             this.payModal.transaction_id = '';
+            this.payModal.request_key = (window.crypto && typeof window.crypto.randomUUID === 'function')
+                ? window.crypto.randomUUID()
+                : `pay-${Date.now()}-${Math.random().toString(36).slice(2)}`;
             this.payModal.billing_month = @json(date("F Y"));
             this.payModal.notes = '';
             this.payModal.extend_validity = true;
@@ -2250,6 +2254,7 @@ function customerMasterManager() {
                         months: this.payModal.months || 1,
                         payment_method: this.payModal.payment_method,
                         transaction_id: this.payModal.transaction_id,
+                        request_key: this.payModal.request_key,
                         billing_month: this.payModal.billing_month,
                         notes: this.payModal.notes,
                         extend_validity: this.payModal.extend_validity,

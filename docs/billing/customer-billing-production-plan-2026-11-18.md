@@ -43,7 +43,7 @@ Baseline findings:
 
 ## Phase 1 — Single Payment ও Invoice Ledger
 
-অবস্থা: চলমান
+অবস্থা: সম্পন্ন
 
 কাজ:
 
@@ -61,6 +61,23 @@ Acceptance criteria:
 - একই payment পুনরায় submit করলে দ্বিতীয়বার balance পরিবর্তন হবে না।
 - partial payment শুধু due কমাবে; অননুমোদিত expiry/reactivation হবে না।
 - payment শেষ হলে customer due এবং সব open invoice due-এর যোগফল মিলবে।
+
+বাস্তবায়িত পরিবর্তন:
+
+- Tenant ও customer row lock করে একই tenant-এর receipt sequence এবং customer balance mutation serialize করা হয়েছে।
+- UI-generated `request_key` বাধ্যতামূলক করা হয়েছে; exact replay দ্বিতীয়বার payment তৈরি করে না এবং পরিবর্তিত payload replay HTTP 409 দেয়।
+- Partial payment শুধু due কমায়; full cash coverage ছাড়া due-mode validity বাড়ে না।
+- Discount debt settle করতে পারে, কিন্তু service validity কিনতে পারে না।
+- হার্ডকোডেড fallback monthly rate বাদ দিয়ে customer/package rate ব্যবহার করা হয়েছে।
+- Due শূন্য, expiry ভবিষ্যতে এবং reactivation request—তিন শর্ত পূরণ হলেই line active হয়।
+- Cash ও discount সবচেয়ে পুরোনো outstanding invoice থেকে ধারাবাহিকভাবে allocate হয় এবং allocation ledger-এ সংরক্ষিত হয়।
+- Financial invoice allocation ব্যর্থ হলে transaction rollback হয়; mismatch নীরবে ignore করা হয় না।
+- Fresh-install invoice/payment schema বর্তমান canonical model/controller fields-এর সঙ্গে align করা হয়েছে।
+
+Verification:
+
+- `CustomerBillingProductionTest`: ৬টি test pass, ৪২টি assertion pass।
+- Covered: schema contract, partial payment, discount-only settlement, full cash renewal, exact replay/conflicting replay এবং oldest-invoice-first allocation।
 
 ## Phase 2 — Finance Invoice Payment
 

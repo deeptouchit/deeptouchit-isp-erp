@@ -12,6 +12,7 @@ use App\Models\TenantInternetPackage;
 use App\Models\TenantReseller;
 use App\Models\TenantResellerWalletTransaction;
 use App\Models\TenantRouter;
+use App\Services\Billing\CustomerPaymentPolicy;
 use App\Services\Network\MikrotikApiService;
 use App\Services\Network\RadiusService;
 use Carbon\Carbon;
@@ -59,6 +60,7 @@ class TenantCustomerPaymentController extends Controller
             'months' => 'nullable|integer|min:1|max:36',
             'payment_method' => 'required|string|in:cash,bkash,nagad,rocket,bank_transfer,pos,other,online',
             'transaction_id' => 'nullable|string|max:100',
+            'request_key' => 'required|string|max:100',
             'billing_month' => 'nullable|string|max:20',
             'notes' => 'nullable|string|max:255',
             'extend_validity' => 'nullable|boolean',
@@ -68,56 +70,76 @@ class TenantCustomerPaymentController extends Controller
         $mode = $validated['payment_mode'];
         $amountPaid = (float) $validated['amount'];
         $discount = (float) ($validated['discount'] ?? 0);
-        $totalCovered = $amountPaid + $discount;
         $months = (int) ($validated['months'] ?? 1);
         $method = $validated['payment_method'];
         $trxId = trim($validated['transaction_id'] ?? '');
+        $requestKey = trim($validated['request_key'] ?? '');
         $billingMonth = $validated['billing_month'] ?: Carbon::now()->format('F Y');
         $notes = trim($validated['notes'] ?? '');
         $shouldExtendValidity = $request->boolean('extend_validity', true);
         $shouldReactivate = $request->boolean('reactivate_line', true);
 
         return DB::transaction(function () use (
-            $tenant, $currency, $customer, $mode, $amountPaid, $discount, $totalCovered, 
+            $tenant, $currency, $customer, $mode, $amountPaid, $discount,
             $months, $method, $trxId, $billingMonth, $notes, 
-            $shouldExtendValidity, $shouldReactivate, $request
+            $shouldExtendValidity, $shouldReactivate, $request, $requestKey
         ) {
+            Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
+            $customer = TenantCustomer::where('tenant_id', $tenant->id)
+                ->whereKey($customer->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ($requestKey !== '') {
+                $existingPayment = TenantCustomerPayment::where('tenant_id', $tenant->id)
+                    ->where('request_key', $requestKey)
+                    ->first();
+
+                if ($existingPayment) {
+                    $samePayment = (int) $existingPayment->customer_id === (int) $customer->id
+                        && round((float) $existingPayment->amount, 2) === round($amountPaid, 2)
+                        && round((float) $existingPayment->discount, 2) === round($discount, 2)
+                        && (string) $existingPayment->payment_method === $method;
+
+                    if (!$samePayment) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => __('This payment request key was already used for a different transaction.'),
+                        ], 409);
+                    }
+
+                    return response()->json([
+                        'success' => true,
+                        'already_processed' => true,
+                        'message' => __('This payment was already processed as receipt :invoice.', [
+                            'invoice' => $existingPayment->invoice_no,
+                        ]),
+                        'payment' => [
+                            'id' => $existingPayment->id,
+                            'invoice_no' => $existingPayment->invoice_no,
+                        ],
+                    ]);
+                }
+            }
+
             $oldDue = (float) ($customer->due_amount ?? 0);
             $oldExpiry = $customer->expiry_date;
-            $newDue = $oldDue;
-            $newExpiry = $oldExpiry;
-
-            // 1. Calculate Due Deduction
-            if ($oldDue > 0) {
-                if ($totalCovered >= $oldDue) {
-                    $newDue = 0.00;
-                } else {
-                    $newDue = round($oldDue - $totalCovered, 2);
-                }
-            }
-
-            // 2. Calculate Expiry Date Extension
-            if ($shouldExtendValidity) {
-                $baseExpiry = ($oldExpiry && Carbon::parse($oldExpiry)->isFuture()) 
-                    ? Carbon::parse($oldExpiry) 
-                    : Carbon::now();
-
-                if ($mode === 'advance') {
-                    $newExpiry = $baseExpiry->copy()->addMonths($months)->endOfDay();
-                } elseif ($mode === 'due') {
-                    // Regular 1-month recharge / clearance
-                    $newExpiry = $baseExpiry->copy()->addMonth()->endOfDay();
-                } elseif ($mode === 'custom') {
-                    $monthlyBill = (float) ($customer->monthly_bill > 0 ? $customer->monthly_bill : 500);
-                    $dailyRate = $monthlyBill / 30;
-                    if ($dailyRate > 0) {
-                        $daysToAdd = (int) floor($totalCovered / $dailyRate);
-                        if ($daysToAdd > 0) {
-                            $newExpiry = $baseExpiry->copy()->addDays($daysToAdd)->endOfDay();
-                        }
-                    }
-                }
-            }
+            $monthlyBill = (float) ($customer->monthly_bill > 0
+                ? $customer->monthly_bill
+                : ($customer->package?->price ?? 0));
+            $policy = app(CustomerPaymentPolicy::class)->calculate(
+                oldDue: $oldDue,
+                oldExpiry: $oldExpiry ? Carbon::parse($oldExpiry) : null,
+                monthlyBill: $monthlyBill,
+                mode: $mode,
+                amountPaid: $amountPaid,
+                discount: $discount,
+                months: $months,
+                extendValidity: $shouldExtendValidity,
+                reactivateRequested: $shouldReactivate,
+            );
+            $newDue = $policy['new_due'];
+            $newExpiry = $policy['new_expiry'];
 
             // 3. Update Customer Record
             $customer->due_amount = $newDue;
@@ -126,7 +148,7 @@ class TenantCustomerPaymentController extends Controller
             }
 
             $isReactivated = false;
-            if ($shouldReactivate) {
+            if ($policy['can_reactivate']) {
                 $customer->status = 'active';
                 $isReactivated = true;
             }
@@ -149,6 +171,7 @@ class TenantCustomerPaymentController extends Controller
                 'status' => 'completed',
                 'paid_at' => Carbon::now(),
                 'transaction_id' => $trxId ?: ('TRX-' . strtoupper(substr(md5(uniqid()), 0, 10))),
+                'request_key' => $requestKey !== '' ? $requestKey : null,
                 'notes' => $notes ?: ($mode === 'advance'
                     ? ($months === 1
                         ? __('Advance recharge for :count month', ['count' => $months])
@@ -156,33 +179,62 @@ class TenantCustomerPaymentController extends Controller
                     : __('Bill payment for :month', ['month' => $billingMonth])),
             ]);
 
-            // 5.1 Settle matching or open TenantCustomerInvoice
-            try {
-                $invoice = TenantCustomerInvoice::where('tenant_id', $tenant->id)
-                    ->where('customer_id', $customer->id)
-                    ->whereIn('status', ['unpaid', 'partial', 'partially_paid', 'overdue'])
-                    ->orderBy('due_date', 'asc')
-                    ->first();
+            // 5.1 Allocate cash and discount across oldest outstanding invoices.
+            $remainingCash = $amountPaid;
+            $remainingDiscount = $discount;
+            $firstInvoiceId = null;
+            $openInvoices = TenantCustomerInvoice::where('tenant_id', $tenant->id)
+                ->where('customer_id', $customer->id)
+                ->whereIn('status', ['unpaid', 'partial', 'partially_paid', 'overdue'])
+                ->orderByRaw('CASE WHEN due_date IS NULL THEN 1 ELSE 0 END')
+                ->orderBy('due_date')
+                ->orderBy('id')
+                ->lockForUpdate()
+                ->get();
 
-                if ($invoice) {
-                    $totalCoverage = (float)$amountPaid + (float)$discount;
-                    $currentDue = $invoice->due_amount > 0 ? (float)$invoice->due_amount : ((float)$invoice->total_payable - (float)$invoice->paid_amount);
-
-                    if ($totalCoverage >= $currentDue) {
-                        $invoice->paid_amount = $invoice->total_payable;
-                        $invoice->due_amount = 0.00;
-                        $invoice->status = 'paid';
-                    } else {
-                        $invoice->paid_amount = (float)$invoice->paid_amount + $totalCoverage;
-                        $invoice->due_amount = max(0, (float)$invoice->total_payable - (float)$invoice->paid_amount);
-                        $invoice->status = 'partially_paid';
-                    }
-                    $invoice->paid_at = Carbon::now();
-                    $invoice->payment_method = $method;
-                    $invoice->save();
+            foreach ($openInvoices as $invoice) {
+                if ($remainingCash <= 0 && $remainingDiscount <= 0) {
+                    break;
                 }
-            } catch (\Exception $e) {
-                // Non-blocking invoice sync
+
+                $currentDue = max(0, (float) $invoice->due_amount);
+                if ($currentDue <= 0) {
+                    continue;
+                }
+
+                $cashApplied = min($remainingCash, $currentDue);
+                $discountApplied = min($remainingDiscount, $currentDue - $cashApplied);
+                $coverage = round($cashApplied + $discountApplied, 2);
+                if ($coverage <= 0) {
+                    continue;
+                }
+
+                $invoice->paid_amount = round((float) $invoice->paid_amount + $cashApplied, 2);
+                $invoice->discount = round((float) $invoice->discount + $discountApplied, 2);
+                $invoice->due_amount = max(0, round($currentDue - $coverage, 2));
+                $invoice->status = $invoice->due_amount <= 0 ? 'paid' : 'partially_paid';
+                $invoice->paid_at = $invoice->due_amount <= 0 ? Carbon::now() : null;
+                $invoice->payment_method = $method;
+                $invoice->save();
+
+                DB::table('tenant_customer_payment_allocations')->insert([
+                    'tenant_id' => $tenant->id,
+                    'payment_id' => $payment->id,
+                    'invoice_id' => $invoice->id,
+                    'amount' => $cashApplied,
+                    'discount' => $discountApplied,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+                $firstInvoiceId ??= $invoice->id;
+                $remainingCash = round($remainingCash - $cashApplied, 2);
+                $remainingDiscount = round($remainingDiscount - $discountApplied, 2);
+            }
+
+            if ($firstInvoiceId !== null) {
+                $payment->invoice_id = $firstInvoiceId;
+                $payment->save();
             }
 
             // 5.2 Record in Central Online Gateway Transactions if paid via PGW
