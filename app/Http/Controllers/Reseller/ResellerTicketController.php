@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use App\Services\NotificationScopeService;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -220,6 +221,8 @@ class ResellerTicketController extends Controller
                     $q->whereNull('reseller_id')->orWhere('reseller_id', 0);
                 })
                 ->get();
+            $tenantAdmins = app(NotificationScopeService::class)
+                ->filterRecipients($tenantAdmins, 'ticket_activity');
 
             if ($tenantAdmins->isNotEmpty()) {
                 try {
@@ -325,6 +328,8 @@ class ResellerTicketController extends Controller
                     $q->whereNull('reseller_id')->orWhere('reseller_id', 0);
                 })
                 ->get();
+            $tenantAdmins = app(NotificationScopeService::class)
+                ->filterRecipients($tenantAdmins, 'ticket_status');
 
             if ($tenantAdmins->isNotEmpty()) {
                 try {

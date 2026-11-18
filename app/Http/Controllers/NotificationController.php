@@ -6,6 +6,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Services\NotificationScopeService;
 
 class NotificationController extends Controller
 {
@@ -33,26 +34,7 @@ class NotificationController extends Controller
             ->filter(function ($n) use ($user) {
                 $data = $n->data ?? [];
                 $type = $data['type'] ?? 'general';
-
-                if ($user->isSuperAdmin()) {
-                    return true;
-                }
-
-                return match ($type) {
-                    'bangla_qr_pending' => $user->hasPermission('billing.gateways')
-                        || $user->hasPermission('billing.collect'),
-                    'reseller_recharge_pending', 'reseller_recharge_status' =>
-                        $user->hasPermission('resellers.wallet')
-                        || $user->hasPermission('billing.wholesale'),
-                    'ticket_reply', 'ticket_activity', 'ticket_reply_owner',
-                    'ticket_created', 'ticket_updated', 'ticket_status',
-                    'support_escalation', 'field_job', 'installation' =>
-                        $user->hasPermission('support.tickets')
-                        || $user->hasPermission('support.field_jobs')
-                        || $user->hasPermission('support.installations')
-                        || $user->hasPermission('support.escalations'),
-                    default => true,
-                };
+                return app(NotificationScopeService::class)->canReceive($user, $type);
             })
             ->values()
             ->map(function ($n) use ($isReseller) {
@@ -78,6 +60,15 @@ class NotificationController extends Controller
                     'message' => $data['message'] ?? '',
                     'priority' => $data['priority'] ?? 'medium',
                     'sender_name' => $data['sender_name'] ?? null,
+                    'category' => match ($data['type'] ?? 'general') {
+                        'bangla_qr_pending' => 'payment',
+                        'reseller_recharge_pending', 'reseller_recharge_status' => 'wallet',
+                        'ticket_reply', 'ticket_activity', 'ticket_reply_owner',
+                        'ticket_created', 'ticket_updated', 'ticket_status',
+                        'support_escalation' => 'support',
+                        'field_job', 'installation' => 'operations',
+                        default => 'general',
+                    },
                     'link' => $link,
                     'ticket_number' => $data['ticket_number'] ?? null,
                     'read' => $n->read_at !== null,

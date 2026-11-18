@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
+use App\Services\NotificationScopeService;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -216,6 +217,8 @@ class ResellerRechargeController extends Controller
             $tenantAdmins = User::where('tenant_id', $tenant->id)
                 ->whereNull('reseller_id')
                 ->get();
+            $tenantAdmins = app(NotificationScopeService::class)
+                ->filterRecipients($tenantAdmins, 'reseller_recharge_pending');
 
             if ($tenantAdmins->isNotEmpty()) {
                 Notification::send($tenantAdmins, new ResellerRechargePendingNotification(

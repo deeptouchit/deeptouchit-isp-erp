@@ -27,6 +27,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
+use App\Services\NotificationScopeService;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -1157,6 +1158,8 @@ class ResellerCustomerController extends Controller
                 $tenantAdmins = User::where('tenant_id', $tenantId)
                     ->whereNull('reseller_id')
                     ->get();
+                $tenantAdmins = app(NotificationScopeService::class)
+                    ->filterRecipients($tenantAdmins, 'bangla_qr_pending');
 
                 if ($tenantAdmins->isNotEmpty()) {
                     Notification::send($tenantAdmins, new BanglaQrPaymentPendingNotification(

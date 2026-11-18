@@ -273,8 +273,8 @@
                                  class="p-3 hover:bg-slate-50/80 transition cursor-pointer flex items-start gap-3 group relative"
                                  :class="!notif.read ? 'bg-cyan-50/25' : ''">
                                 <div class="w-7 h-7 rounded-lg flex-shrink-0 flex items-center justify-center text-xs font-bold"
-                                     :class="notif.priority === 'urgent' ? 'bg-rose-100 text-rose-700' : (notif.type === 'ticket_reply' ? 'bg-blue-100 text-blue-700' : 'bg-cyan-100 text-cyan-700')">
-                                    <i :class="notif.priority === 'urgent' ? 'fas fa-fire' : (notif.type === 'ticket_reply' ? 'fas fa-reply' : 'fas fa-ticket')"></i>
+                                     :class="notif.priority === 'urgent' ? 'bg-rose-100 text-rose-700' : (notif.category === 'payment' ? 'bg-emerald-100 text-emerald-700' : (notif.category === 'wallet' ? 'bg-amber-100 text-amber-700' : (notif.category === 'support' ? 'bg-blue-100 text-blue-700' : 'bg-cyan-100 text-cyan-700')))">
+                                    <i :class="notif.category === 'payment' ? 'fas fa-money-check-dollar' : (notif.category === 'wallet' ? 'fas fa-wallet' : (notif.category === 'support' ? 'fas fa-headset' : (notif.category === 'operations' ? 'fas fa-screwdriver-wrench' : 'fas fa-bell')))"></i>
                                 </div>
                                 <div class="flex-1 min-w-0">
                                     <div class="flex items-center justify-between gap-1">
@@ -282,6 +282,10 @@
                                         <span class="text-[9.5px] text-slate-400 font-mono flex-shrink-0" x-text="notif.time_ago"></span>
                                     </div>
                                     <p class="text-[10.5px] text-slate-600 mt-0.5 line-clamp-2" x-text="notif.message"></p>
+                                    <span x-show="notif.sender_name" class="mt-1 inline-flex items-center gap-1 text-[9.5px] font-semibold text-slate-500">
+                                        <i class="fas fa-user text-[8px] text-slate-400"></i>
+                                        <span x-text="notif.sender_name"></span>
+                                    </span>
                                 </div>
                                 <template x-if="!notif.read">
                                     <span class="w-1.5 h-1.5 rounded-full bg-cyan-600 flex-shrink-0 mt-1"></span>

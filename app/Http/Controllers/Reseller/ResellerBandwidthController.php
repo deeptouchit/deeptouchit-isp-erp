@@ -20,6 +20,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
+use App\Services\NotificationScopeService;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -322,6 +323,8 @@ class ResellerBandwidthController extends Controller
                     $q->whereNull('reseller_id')->orWhere('reseller_id', 0);
                 })
                 ->get();
+            $tenantAdmins = app(NotificationScopeService::class)
+                ->filterRecipients($tenantAdmins, 'ticket_activity');
 
             if ($tenantAdmins->isNotEmpty()) {
                 try {
