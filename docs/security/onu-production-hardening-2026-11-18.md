@@ -1,0 +1,26 @@
+# ONU production hardening — 2026-11-18
+
+## Changed behavior
+
+- A failed or incomplete OLT query never deletes ONU inventory. Missing devices remain available for investigation; automatic inventory removal is deliberately disabled.
+- Manual synchronization and linking run on the dedicated database `network` queue. A tenant pending marker prevents duplicate submissions; tenant and OLT locks serialize execution. The authenticated status endpoint exposes only the requesting tenant's operation. Expired queued operations cannot run against a newer request.
+- The Laravel scheduler drains this queue every minute. Its worker timeout is 600 seconds and the connection retry interval is 900 seconds. The existing `schedule:run` cron must remain enabled.
+- Writes require a recognized FastCGI driver, a known protocol, and an explicit successful JSON acknowledgement. There are no speculative reboot/reset fallback requests. HTTP 200 or an HTML page alone cannot confirm a write. Reset additionally requires the exact ONU record ID in the confirmation payload. Device actions are permission checked, rate limited, and audited without credentials.
+- The validated FastCGI configuration path covers VLAN mode/ID and LAN port 1 state. Metadata changes are local and stored separately from hardware labels. An unconfirmed or unsupported device configuration is rejected; database configuration is not marked applied. If a multi-command operation partly succeeds, refresh hardware data before retrying.
+- PPPoE, Wi-Fi, bandwidth and CATV writes do not have verified adapters in this repository. Their controls are disabled and direct unsupported requests are rejected. These features must not be represented as successfully configured. Other vendors' reboot/reset controls remain disabled until their write protocol is verified.
+- ONU PPPoE/Wi-Fi secrets are encrypted at rest, hidden from JSON and absent from listing payloads. Related models and raw configuration payloads are excluded from ONU JSON. The migration encrypts legacy secrets idempotently. Keep the application key backed up. Rollback intentionally preserves encrypted values and added inventory fields; restoring old application code must retain compatible decryption support.
+- Customer pairing uses tenant-scoped identities and skips ambiguous candidates, competing ONU claims and existing bindings. Both sides update in one transaction under a tenant lock. It no longer guesses identity from an unscoped RADIUS username. Reading a customer's ONU accessor cannot modify bindings.
+- Optical responses distinguish live, cached and unavailable data. Cached timestamps are never replaced with the current time. Inventory sync records the observation time only for an actual reading; missing optical data does not determine link status. Old readings without a known observation time show no fabricated timestamp.
+- HSGQ's real firmware web assets and read-only responses were inspected. `onumgmt?form=base-info` supplies identity, while `onu_allow_list` supplies per-ONU status, receive power and distance. The former quota-based online allocation and generated signal/distance values were removed. Unrecognized states show as unknown.
+- Driver selection no longer depends on public forwarding port numbers. PON addresses/FDB indexes come from optional OLT create/edit mapping, or existing inventory. Fresh FastCGI installations without an inventory/mapping fail explicitly instead of probing hardcoded chassis ports. VSOL uses configured PON count. Session tokens and VSOL cookie paths are separated by credentials.
+- Table and KPIs share filters and configurable signal thresholds (`ONU_GOOD_MIN_DBM`, `ONU_WARNING_MIN_DBM`). The table has seven core columns; other fields remain in Details. New messages are included in English and Bengali.
+
+## Validation and deployment
+
+Regression coverage is in `tests/Feature/OnuProductionTest.php`: tenant and action permissions, secret encryption/serialization, legacy migration reruns, device rejection, target confirmation, partial sync preservation, cached reading age, real HSGQ response formats, duplicate linking, transaction rollback, queued status and PON validation.
+
+Run the ONU tests together with the security, tenant authentication and billing architecture suites. Blade compilation and JavaScript syntax are also checked. Local Node/npm was unavailable during implementation; JavaScript syntax was checked using the server's Node parser with placeholder Blade values. The deployment must confirm its Vite build separately.
+
+Before migration, a root-only backup of the three affected inventory/customer tables was created outside the public web root (`/var/backups/somitysoft`, directory 0700, backup 0600). No device reboot, factory reset, certificate, firmware or saved device configuration changes are part of validation. Existing TLS verification policy and deferred SSH password rotation remain outside this change.
+
+After webhook deployment, verify the deployed Git revision, migration status, scheduler entry, queue worker, authenticated ONU page and API, inventory preservation and application logs. Vendor-specific hardware writes still require a maintenance-window acceptance test before declaring every firmware/model supported.

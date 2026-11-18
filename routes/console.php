@@ -44,6 +44,9 @@ Schedule::command('queue:prune-failed --hours=168')
     ->runInBackground();
 
 // 5. Automated Core OLT Fleet & ONU Diagnostics Sync (Every 5 Minutes)
+Schedule::command('queue:work network --queue=network --stop-when-empty --max-time=50 --timeout=600 --tries=1')
+    ->everyMinute()->withoutOverlapping(20)->runInBackground();
+
 Schedule::command('network:sync-olts')
     ->everyFiveMinutes()
     ->withoutOverlapping(10)

@@ -15,6 +15,7 @@ class TenantOlt extends Model
     protected $guarded = ['id'];
 
     protected $casts = [
+        'pon_port_map' => 'array',
         'web_port' => 'integer',
         'snmp_port' => 'integer',
         'telnet_port' => 'integer',

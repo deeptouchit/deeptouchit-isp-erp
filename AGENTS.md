@@ -1,5 +1,17 @@
 # ISP MANAGEMENT SYSTEM - MASTER AGENT RULES & DESIGN STANDARDS
 
+## Visible Editor Workflow (User Preference)
+
+- Before each edit, name the file and explain the intended change briefly in Bengali. Include a clickable absolute file/line link when useful.
+- In this Windows workspace, open the target file at the relevant line in the existing VS Code window with `code --reuse-window --goto "ABSOLUTE_PATH:LINE"` before editing. Use the required GUI approval mechanism. If editor control is unavailable or fails, say so and provide the file link; never claim a tab was opened without confirmation from the command.
+- Prefer small, focused `apply_patch` edits so changes are reviewable. Use Python for analysis and automation; avoid opaque multi-file rewrite scripts for routine edits.
+- After editing, reveal the changed location and show a focused diff. Use the editor's Git diff or `code --reuse-window --diff BEFORE_FILE AFTER_FILE` when appropriate. Keep unrelated existing tabs open.
+- Do not simulate keystrokes, install an auto-edit watcher, or change auto-save behavior. Filesystem edits do not guarantee character-by-character animation; describe the actual visibility provided.
+- Never copy credentials, private keys, or other secret-bearing files into temporary diff snapshots. Do not expose secrets in diff output.
+- Editor-only setup does not require application deployment or device/server changes. Do not push merely to activate workspace editor preferences.
+
+---
+
 All pages, components, controllers, and features in this application must strictly adhere to this single unified master rulebook:
 
 ---

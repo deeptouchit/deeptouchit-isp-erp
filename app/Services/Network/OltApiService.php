@@ -19,7 +19,7 @@ class OltApiService
      */
     public function getToken(string $ip, int $port, string $username, string $password, bool $forceRefresh = false): ?string
     {
-        $cacheKey = "olt_token_{$ip}_{$port}_{$username}";
+        $cacheKey = 'olt_token_' . hash('sha256', json_encode([$ip, $port, $username, hash_hmac('sha256', $password, (string) config('app.key'))]));
         $driverKey = "olt_driver_{$ip}_{$port}";
 
         if (!$forceRefresh && Cache::has($cacheKey)) {
@@ -29,7 +29,7 @@ class OltApiService
         $knownDriver = Cache::get($driverKey);
 
         // 1. UniMars / CoreLink (Port 8084 style)
-        if ($knownDriver === 'unimars' || $port === 8084) {
+        if ($knownDriver === 'unimars') {
             $token = $this->attemptUniMarsLogin($ip, $port, $username, $password);
             if ($token) {
                 Cache::put($driverKey, 'unimars', now()->addDays(7));
@@ -39,7 +39,7 @@ class OltApiService
         }
 
         // 2. VSOL HTTPS (Port 8082 style)
-        if ($knownDriver === 'vsol_https' || $port === 8082) {
+        if ($knownDriver === 'vsol_https') {
             $token = $this->attemptVsolHttpsLogin($ip, $port, $username, $password);
             if ($token) {
                 Cache::put($driverKey, 'vsol_https', now()->addDays(7));
@@ -49,7 +49,7 @@ class OltApiService
         }
 
         // 3. HSGQ / VSOL-JSON (Port 8083 style)
-        if ($knownDriver === 'hsgq' || $port === 8083) {
+        if ($knownDriver === 'hsgq') {
             $token = $this->attemptHsgqLogin($ip, $port, $username, $password);
             if ($token) {
                 Cache::put($driverKey, 'hsgq', now()->addDays(7));
@@ -150,7 +150,7 @@ class OltApiService
      */
     protected function attemptFastCgiLogin(string $ip, int $port, string $username, string $password): ?string
     {
-        $protocols = ($port === 8081 || $port === 443 || $port === 8443) ? ['https', 'http'] : ['http', 'https'];
+        $protocols = ['https', 'http'];
 
         foreach ($protocols as $proto) {
             try {
@@ -238,7 +238,8 @@ class OltApiService
      */
     protected function attemptVsolHttpsLogin(string $ip, int $port, string $username, string $password): ?string
     {
-        $cookieFile = storage_path("framework/cache/vsol_cookie_{$ip}_{$port}.txt");
+        $cookieKey = hash('sha256', json_encode([$ip, $port, $username, hash_hmac('sha256', $password, (string) config('app.key'))]));
+        $cookieFile = storage_path("framework/cache/vsol_cookie_{$cookieKey}.txt");
         try {
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, "https://{$ip}:{$port}/action/main.html");
@@ -317,7 +318,8 @@ class OltApiService
      */
     public function fetchVsolHtmlPage(string $ip, int $port, string $username, string $password, string $page, array $postData = []): ?string
     {
-        $cookieFile = storage_path("framework/cache/vsol_cookie_{$ip}_{$port}.txt");
+        $cookieKey = hash('sha256', json_encode([$ip, $port, $username, hash_hmac('sha256', $password, (string) config('app.key'))]));
+        $cookieFile = storage_path("framework/cache/vsol_cookie_{$cookieKey}.txt");
 
         $execCurl = function($targetUrl, $data = null) use ($cookieFile) {
             $ch = curl_init();
@@ -383,7 +385,7 @@ class OltApiService
         $token = $this->getToken($ip, $port, $username, $password);
         if (!$token) return null;
 
-        $proto = Cache::get("olt_proto_{$ip}_{$port}") ?: (($port === 8081 || $port === 443 || $port === 8443) ? 'https' : 'http');
+        $proto = Cache::get("olt_proto_{$ip}_{$port}") ?: 'http';
         $url = "{$proto}://{$ip}:{$port}/cgi-bin/h.cgi?module={$module}";
         try {
             $response = Http::withoutVerifying()
@@ -398,7 +400,7 @@ class OltApiService
             if ($response->status() === 401 || $response->status() === 403 || (is_array($json) && isset($json['code']) && in_array($json['code'], [1, 2]))) {
                 $token = $this->getToken($ip, $port, $username, $password, true);
                 if ($token) {
-                    $proto = Cache::get("olt_proto_{$ip}_{$port}") ?: (($port === 8081 || $port === 443 || $port === 8443) ? 'https' : 'http');
+                    $proto = Cache::get("olt_proto_{$ip}_{$port}") ?: 'http';
                     $url = "{$proto}://{$ip}:{$port}/cgi-bin/h.cgi?module={$module}";
                     $response = Http::withoutVerifying()
                         ->timeout($this->timeout)
@@ -473,7 +475,7 @@ class OltApiService
         $token = $this->getToken($ip, $port, $username, $password);
         if (!$token) return null;
 
-        $proto = Cache::get("olt_proto_{$ip}_{$port}") ?: (($port === 8081 || $port === 443 || $port === 8443) ? 'https' : 'http');
+        $proto = Cache::get("olt_proto_{$ip}_{$port}") ?: 'http';
         $endpoints = [
             "ont_optical_list_get&PonId={$ponId}",
             "onu_optical_list_get&PonId={$ponId}",
@@ -520,7 +522,7 @@ class OltApiService
         $driver = Cache::get($driverKey);
 
         // 1. UniMars / CoreLink
-        if ($driver === 'unimars' || $port === 8084 || str_contains(strtolower($vendor), 'core') || str_contains(strtolower($vendor), 'mars')) {
+        if ($driver === 'unimars' || str_contains(strtolower($vendor), 'core') || str_contains(strtolower($vendor), 'mars')) {
             $sysInfo = $this->fetchUniMarsSystemInfo($ip, $port, $username, $password);
             $latency = round((microtime(true) - $start) * 1000, 1);
 
@@ -549,7 +551,7 @@ class OltApiService
             }
 
             return [
-                'success' => true,
+                'success' => $inventoryComplete,
                 'message' => 'Connected successfully to CoreLink / UniMars OLT.',
                 'latency_ms' => $latency,
                 'device_info' => [
@@ -568,7 +570,7 @@ class OltApiService
         }
 
         // 2. VSOL HTTPS Web
-        if ($driver === 'vsol_https' || $port === 8082) {
+        if ($driver === 'vsol_https') {
             $sysHtml = $this->fetchVsolHtmlPage($ip, $port, $username, $password, 'systeminfo.html');
             $latency = round((microtime(true) - $start) * 1000, 1);
 
@@ -597,7 +599,7 @@ class OltApiService
             $modelName = !empty($deviceModel) ? "VSOL {$deviceModel} (V1600D4)" : 'VSOL V1600D4';
 
             return [
-                'success' => true,
+                'success' => $inventoryComplete,
                 'message' => 'Connected successfully to VSOL HTTPS OLT Gateway.',
                 'latency_ms' => $latency,
                 'device_info' => [
@@ -613,7 +615,7 @@ class OltApiService
         }
 
         // 3. HSGQ JSON-RPC
-        if ($driver === 'hsgq' || $port === 8083) {
+        if ($driver === 'hsgq') {
             $boardRes = $this->getHsgqEndpoint($ip, $port, $username, $password, 'board?info=system');
             $latency = round((microtime(true) - $start) * 1000, 1);
             $sys = $boardRes['data'] ?? [];
@@ -667,6 +669,22 @@ class OltApiService
      */
     public function syncOlt(TenantOlt $olt): array
     {
+        $lock = Cache::lock('olt-sync:' . $olt->id, 660);
+        if (!$lock->get()) {
+            return ['success' => false, 'message' => __('OLT synchronization is already running.')];
+        }
+        try {
+            $result = $this->performSyncOlt($olt);
+            if (!empty($result['success'])) app(OnuLinkService::class)->linkTenant($olt->tenant_id);
+            return $result;
+        } finally {
+            $lock->release();
+        }
+    }
+
+    protected function performSyncOlt(TenantOlt $olt): array
+    {
+        $inventoryComplete = true;
         $start = microtime(true);
         $ip = $olt->ip_address;
         $port = (int) ($olt->web_port ?: 80);
@@ -696,7 +714,7 @@ class OltApiService
         // =========================================================================
         // 1. UniMars / CoreLink Driver Sync
         // =========================================================================
-        if ($driver === 'unimars' || $port === 8084 || str_contains(strtolower($olt->vendor ?? ''), 'core') || str_contains(strtolower($olt->model ?? ''), 'ha73') || str_contains(strtolower($olt->model ?? ''), 'cw2')) {
+        if ($driver === 'unimars' || str_contains(strtolower($olt->vendor ?? ''), 'core') || str_contains(strtolower($olt->model ?? ''), 'ha73') || str_contains(strtolower($olt->model ?? ''), 'cw2')) {
             $sysInfo = $this->fetchUniMarsSystemInfo($ip, $port, $username, $password);
 
             $uptimeStr = null;
@@ -710,6 +728,7 @@ class OltApiService
             $sid = base64_encode("{$username}&{$password}");
             $this->sendUniMarsRequest($ip, $port, "set=login&user={$sid}");
             $onuBody = $this->sendUniMarsRequest($ip, $port, "get=onualllist&sysUnit=1");
+            $inventoryComplete = $onuBody !== null;
             $syncedCount = 0;
             $onlineCount = 0;
 
@@ -773,13 +792,13 @@ class OltApiService
                             'running_state' => $isOnline ? 1 : 0,
                             'control_flag' => 1,
                             'rx_power_dbm' => $rxPower,
+                            'optical_observed_at' => $rxPower !== null ? now() : $existingOnu?->optical_observed_at,
                             'tx_power_dbm' => $txPower,
                             'distance_m' => $distance,
                             'last_online_at' => $isOnline ? now() : null,
                         ]
                     );
 
-                    $this->autoLinkCustomerToOnu($savedOnu, $olt, $routerMac, ($mac && $mac !== 'NA') ? $mac : null);
 
                     $syncedOnuDbIds[] = $savedOnu->id;
                     $syncedCount++;
@@ -788,7 +807,7 @@ class OltApiService
 
             // Prune unlisted ONUs
             if (!empty($syncedOnuDbIds)) {
-                TenantOnu::where('olt_id', $olt->id)->whereNotIn('id', $syncedOnuDbIds)->delete();
+                // Missing rows may be caused by a partial hardware response. Preserve inventory.
             }
 
             $offlineCount = max(0, $syncedCount - $onlineCount);
@@ -801,7 +820,7 @@ class OltApiService
                 'firmware_version' => $sysInfo['sw_version'] ?? ($olt->firmware_version ?: 'V1.1.11'),
                 'mac_address' => $sysInfo['mac'] ?? $olt->mac_address,
                 'uptime' => $uptimeStr ?? $olt->uptime,
-                'total_pon_ports' => 2,
+                'total_pon_ports' => $olt->total_pon_ports ?: $olt->pon_ports_count,
                 'total_onus_count' => $syncedCount,
                 'online_onus_count' => $onlineCount,
                 'offline_onus_count' => $offlineCount,
@@ -814,7 +833,7 @@ class OltApiService
 
             return [
                 'success' => true,
-                'message' => "Successfully synchronized CoreLink OLT (Total: {$syncedCount}, Online: {$onlineCount}, Offline: {$offlineCount}). Latency: {$latency}ms.",
+                'message' => $inventoryComplete ? __('ONU operation completed.') : __('Some devices could not be synchronized.'),
                 'total_onus' => $syncedCount,
                 'online_onus' => $onlineCount,
                 'offline_onus' => $offlineCount,
@@ -826,7 +845,7 @@ class OltApiService
         // =========================================================================
         // 2. VSOL HTTPS Web Sync (Port 8082)
         // =========================================================================
-        if ($driver === 'vsol_https' || $port === 8082) {
+        if ($driver === 'vsol_https') {
             $sysHtml = $this->fetchVsolHtmlPage($ip, $port, $username, $password, 'systeminfo.html');
 
             if (!$sysHtml) {
@@ -875,7 +894,10 @@ class OltApiService
 
             // 2. Fetch Real Optical Diagnostics (Rx/Tx Power, Distance) across all PON ports from onuopmdiag.html
             $opmDiag = [];
-            $maxPorts = max(4, min(16, (int)($olt->total_pon_ports ?: 8)));
+            $maxPorts = (int) ($olt->total_pon_ports ?: $olt->pon_ports_count);
+            if ($maxPorts < 1) {
+                return ['success' => false, 'message' => __('OLT PON count is not configured.')];
+            }
             for ($p = 1; $p <= $maxPorts; $p++) {
                 $opmHtml = $this->fetchVsolHtmlPage($ip, $port, $username, $password, 'onuopmdiag.html', ['select' => (string)$p]);
                 if ($opmHtml && preg_match_all('/<tr>\s*<td[^>]*>EPON0\/(\d+):(\d+)<\/td>\s*<td[^>]*>([0-9a-fA-F:]{17})<\/td>\s*<td[^>]*>([^<]*)<\/td>\s*<td[^>]*>([-\d.]+)<\/td>\s*<td[^>]*>([-\d.]+)<\/td>\s*<td[^>]*>([-\d.]+)<\/td>\s*<td[^>]*>([-\d.]+)<\/td>\s*<td[^>]*>([-\d.]+)<\/td>\s*<td[^>]*>([-\d.]+)<\/td>\s*<\/tr>/i', $opmHtml, $opmMatches, PREG_SET_ORDER)) {
@@ -894,8 +916,9 @@ class OltApiService
             $onlineCount = 0;
             $syncedOnuDbIds = [];
 
-            for ($p = 1; $p <= 4; $p++) {
+            for ($p = 1; $p <= $maxPorts; $p++) {
                 $onuHtml = $this->fetchVsolHtmlPage($ip, $port, $username, $password, 'onustatusinfo.html', ['select' => (string)$p]);
+                if (!$onuHtml) $inventoryComplete = false;
                 if ($onuHtml) {
                     preg_match_all('/<tr>\s*<td[^>]*>EPON0\/(\d+):(\d+)<\/td>\s*<td[^>]*>(.*?)<\/td>\s*<td[^>]*>([^<]+)<\/td>\s*<td[^>]*>([^<]*)<\/td>\s*<td[^>]*>([^<]+)<\/td>/is', $onuHtml, $rows, PREG_SET_ORDER);
                     foreach ($rows as $r) {
@@ -948,13 +971,13 @@ class OltApiService
                                 'control_flag' => 1,
                                 'distance_m' => $realDist,
                                 'rx_power_dbm' => $isOnline ? ($realRx !== null ? $realRx : $existingOnu?->rx_power_dbm) : null,
+                                'optical_observed_at' => $realRx !== null ? now() : $existingOnu?->optical_observed_at,
                                 'tx_power_dbm' => $isOnline ? ($realTx !== null ? $realTx : $existingOnu?->tx_power_dbm) : null,
                                 'last_online_at' => $isOnline ? now() : null,
                             ]
                         );
 
                         // Auto-link customer via Learned Router MAC or ONU MAC
-                        $this->autoLinkCustomerToOnu($savedOnu, $olt, $routerMac, $macAddr);
 
                         $syncedOnuDbIds[] = $savedOnu->id;
                         $syncedCount++;
@@ -964,7 +987,7 @@ class OltApiService
 
             // Prune unlisted ONUs so DB matches hardware active list
             if (!empty($syncedOnuDbIds)) {
-                TenantOnu::where('olt_id', $olt->id)->whereNotIn('id', $syncedOnuDbIds)->delete();
+                // Preserve inventory when a PON query fails or returns incomplete data.
             }
 
             $offlineCount = max(0, $syncedCount - $onlineCount);
@@ -974,7 +997,7 @@ class OltApiService
                 'status' => 'online',
                 'vendor' => 'VSOL',
                 'model' => $oltModel,
-                'total_pon_ports' => 4,
+                'total_pon_ports' => $maxPorts,
                 'serial_number' => $serialNumber ?? $olt->serial_number,
                 'hardware_version' => $hardwareVersion ?? $olt->hardware_version,
                 'firmware_version' => $firmware ?? $olt->firmware_version,
@@ -982,7 +1005,7 @@ class OltApiService
                 'uptime' => $uptime ?? $olt->uptime,
                 'cpu_load' => $cpuLoad ?? $olt->cpu_load,
                 'memory_usage' => $memUsage ?? $olt->memory_usage,
-                'temperature' => 42.0,
+                'temperature' => $olt->temperature,
                 'total_onus_count' => $syncedCount,
                 'online_onus_count' => $onlineCount,
                 'offline_onus_count' => $offlineCount,
@@ -995,7 +1018,7 @@ class OltApiService
 
             return [
                 'success' => true,
-                'message' => "Successfully synchronized {$syncedCount} ONUs from VSOL HTTPS OLT (Online: {$onlineCount}, Offline: {$offlineCount}). Latency: {$latency}ms.",
+                'message' => $inventoryComplete ? __('ONU operation completed.') : __('Some devices could not be synchronized.'),
                 'total_onus' => $syncedCount,
                 'online_onus' => $onlineCount,
                 'offline_onus' => $offlineCount,
@@ -1008,7 +1031,7 @@ class OltApiService
         // =========================================================================
         // 3. HSGQ / JSON-RPC Driver Sync (Port 8083)
         // =========================================================================
-        if ($driver === 'hsgq' || $port === 8083) {
+        if ($driver === 'hsgq') {
             $boardRes = $this->getHsgqEndpoint($ip, $port, $username, $password, 'board?info=system');
             $sys = $boardRes['data'] ?? [];
 
@@ -1016,7 +1039,7 @@ class OltApiService
                 'status' => 'online',
                 'vendor' => !empty($sys['vendor']) ? $sys['vendor'] : 'HSGQ',
                 'model' => $sys['product_name'] ?? ($sys['board_type'] ?? 'HSGQ EPON/GPON OLT'),
-                'total_pon_ports' => (int)($sys['ponports'] ?? 4),
+                'total_pon_ports' => (int)($sys['ponports'] ?? $olt->total_pon_ports ?? $olt->pon_ports_count),
                 'hardware_version' => $sys['hw_ver'] ?? ($sys['board_type'] ?? $olt->hardware_version),
                 'firmware_version' => $sys['fw_ver'] ?? ($sys['firmware_version'] ?? $olt->firmware_version),
                 'mac_address' => $sys['macaddr'] ?? ($sys['system_mac'] ?? $olt->mac_address),
@@ -1026,19 +1049,19 @@ class OltApiService
                 'last_error' => null,
             ]);
 
-            $ponRes = $this->getHsgqEndpoint($ip, $port, $username, $password, 'board?info=pon');
-            $ponStats = $ponRes['data'] ?? [];
-
-            $portOnlineQuota = [];
-            if (is_array($ponStats)) {
-                foreach ($ponStats as $p) {
-                    $portOnlineQuota[(int)($p['port_id'] ?? 1)] = (int)($p['online'] ?? 0);
+            // The base-info endpoint contains identity only. Firmware uses this
+            // separate inventory endpoint for actual per-ONU state and optics.
+            $stateResponse = $this->getHsgqEndpoint($ip, $port, $username, $password, 'onu_allow_list?t=' . now()->timestamp);
+            $states = [];
+            foreach (($stateResponse['data'] ?? []) as $state) {
+                if (isset($state['port_id'], $state['onu_id'])) {
+                    $states[$state['port_id'] . ':' . $state['onu_id']] = $state;
                 }
             }
-            $portOnlineAssigned = [];
 
             $onuRes = $this->getHsgqEndpoint($ip, $port, $username, $password, 'onumgmt?form=base-info');
-            $onuList = $onuRes['data'] ?? [];
+            $onuList = $onuRes['data'] ?? null;
+            $inventoryComplete = is_array($onuList) && is_array($stateResponse['data'] ?? null);
             $syncedCount = 0;
             $onlineCount = 0;
             $syncedOnuDbIds = [];
@@ -1076,29 +1099,21 @@ class OltApiService
                     $onuId = (int) ($raw['onu_id'] ?? 0);
                     if ($onuId <= 0) continue;
 
-                    $quota = $portOnlineQuota[$portId] ?? 0;
-                    $assigned = $portOnlineAssigned[$portId] ?? 0;
-                    if ($assigned < $quota) {
-                        $isOnline = true;
-                        $portOnlineAssigned[$portId] = $assigned + 1;
-                    } else {
-                        $isOnline = false;
-                    }
+                    $state = $states[$portId . ':' . $onuId] ?? [];
+                    $deviceState = strtolower((string) ($state['status'] ?? 'unknown'));
+                    $isOnline = in_array($deviceState, ['online', 'up', '1'], true);
+                    $stateKnown = $isOnline || in_array($deviceState, ['offline', 'down', '0'], true);
 
                     if ($isOnline) $onlineCount++;
 
                     $hsgqModel = $this->parseOnuModel($raw['extmodel'] ?? ($raw['sn_model'] ?? null), $raw['vendor'] ?? null, $raw['chip_model'] ?? null, $raw['onu_name'] ?? null);
                     $hsgqType = $this->detectOnuType($raw['onu_name'] ?? null, $hsgqModel, $raw['vendor'] ?? null, 'HSGQ');
 
-                    $hash = (crc32(($raw['macaddr'] ?? '') . $onuId) % 30) / 10;
-                    $defaultRx = $isOnline ? round(-18.5 - $hash, 2) : null;
-                    $defaultTx = $isOnline ? round(2.1 + ($hash / 10), 2) : null;
-                    $defaultDist = $isOnline ? (int)(850 + ($hash * 220)) : null;
-
                     $existingOnu = $existingOnus->get("{$ponPort}:{$onuId}");
-                    $rxPower = $isOnline ? ($existingOnu?->rx_power_dbm ?: $defaultRx) : null;
-                    $txPower = $isOnline ? ($existingOnu?->tx_power_dbm ?: $defaultTx) : null;
-                    $distVal = $isOnline ? ($existingOnu?->distance_m ?: $defaultDist) : null;
+                    $rawRx = trim(str_replace('dBm', '', (string) ($state['receive_power'] ?? '')));
+                    $rxPower = is_numeric($rawRx) ? (float) $rawRx : $existingOnu?->rx_power_dbm;
+                    $txPower = $existingOnu?->tx_power_dbm;
+                    $distVal = isset($state['distance']) && is_numeric($state['distance']) ? (int) $state['distance'] : $existingOnu?->distance_m;
 
                     $hsgqKey = "{$ponPort}:{$onuId}";
                     $learnedInfo = $hsgqLearned[$hsgqKey] ?? null;
@@ -1126,17 +1141,17 @@ class OltApiService
                             'onu_type' => $hsgqType,
                             'hardware_version' => $raw['chip_model'] ?? null,
                             'software_version' => $raw['software_ver'] ?? null,
-                            'status' => $isOnline ? 'online' : 'offline',
+                            'status' => $stateKnown ? ($isOnline ? 'online' : 'offline') : 'unknown',
                             'running_state' => $isOnline ? 1 : 0,
                             'control_flag' => 1,
                             'rx_power_dbm' => $rxPower,
+                            'optical_observed_at' => is_numeric($rawRx) ? now() : $existingOnu?->optical_observed_at,
                             'tx_power_dbm' => $txPower,
                             'distance_m' => $distVal,
                             'last_online_at' => $isOnline ? now() : null,
                         ]
                     );
 
-                    $this->autoLinkCustomerToOnu($savedOnu, $olt, $routerMac, $raw['macaddr'] ?? null);
 
                     $syncedOnuDbIds[] = $savedOnu->id;
                     $syncedCount++;
@@ -1145,7 +1160,7 @@ class OltApiService
 
             // Prune unlisted ONUs
             if (!empty($syncedOnuDbIds)) {
-                TenantOnu::where('olt_id', $olt->id)->whereNotIn('id', $syncedOnuDbIds)->delete();
+                // Preserve inventory until removal is explicitly confirmed.
             }
 
             $offlineCount = max(0, $syncedCount - $onlineCount);
@@ -1159,8 +1174,8 @@ class OltApiService
             $latency = round((microtime(true) - $start) * 1000, 1);
 
             return [
-                'success' => true,
-                'message' => "Successfully synchronized {$syncedCount} ONUs from HSGQ OLT (Online: {$onlineCount}, Offline: {$offlineCount}).",
+                'success' => $inventoryComplete,
+                'message' => $inventoryComplete ? __('ONU operation completed.') : __('Some devices could not be synchronized.'),
                 'total_onus' => $syncedCount,
                 'online_onus' => $onlineCount,
                 'offline_onus' => $offlineCount,
@@ -1193,24 +1208,31 @@ class OltApiService
             'firmware_version' => $sysInfo['Firmware'] ?? ($sysInfo['soft_ver'] ?? $olt->firmware_version),
             'mac_address' => $sysInfo['DevMacAddr'] ?? ($sysInfo['mac'] ?? $olt->mac_address),
             'uptime' => $uptimeStr ?? ($sysInfo['sys_time'] ?? $olt->uptime),
-            'cpu_load' => $olt->cpu_load ?? 31,
-            'memory_usage' => $olt->memory_usage ?? 12,
-            'temperature' => $olt->temperature ?? 46.5,
-            'total_pon_ports' => 8,
+            'cpu_load' => $sysInfo['CpuLoad'] ?? $olt->cpu_load,
+            'memory_usage' => $sysInfo['MemoryUsage'] ?? $olt->memory_usage,
+            'temperature' => $sysInfo['Temperature'] ?? $olt->temperature,
             'last_ping_at' => now(),
             'last_sync_at' => now(),
             'last_error' => null,
         ]);
 
-        $allPorts = ['0/1/1', '0/1/2', '0/1/3', '0/1/4', '0/2/1', '0/2/2', '0/2/3', '0/2/4'];
+        $portMap = $olt->pon_port_map ?: [];
+        $allPorts = array_keys($portMap);
+        if (!$allPorts) {
+            $allPorts = TenantOnu::where('tenant_id', $olt->tenant_id)->where('olt_id', $olt->id)
+                ->whereNotNull('pon_port')->distinct()->pluck('pon_port')->filter()->values()->all();
+        }
+        if (!$allPorts) {
+            return ['success' => false, 'message' => __('OLT PON mapping is not configured.')];
+        }
         $syncedCount = 0;
         $onlineCount = 0;
 
         // Fetch learned Router MAC table from C-Data FDB (epon_mac_address_get)
         $cdataLearned = [];
-        $portIndices = '17825793,17825794,17825795,17825796,34603009,34603010,34603011,34603012';
+        $portIndices = implode(',', array_filter(array_values($portMap), 'is_numeric'));
         try {
-            $macRes = $this->getModule($ip, $port, $username, $password, "epon_mac_address_get&PortIndex={$portIndices}&PageNumber=1&PageSize=500");
+            $macRes = $portIndices ? $this->getModule($ip, $port, $username, $password, "epon_mac_address_get&PortIndex={$portIndices}&PageNumber=1&PageSize=500") : null;
             $macArray = $macRes['MacArray'] ?? ($macRes['data']['MacArray'] ?? ($macRes['list'] ?? []));
             if (is_array($macArray)) {
                 foreach ($macArray as $mItem) {
@@ -1280,7 +1302,8 @@ class OltApiService
             }
 
             $onuData = $this->getModule($ip, $port, $username, $password, "onu_list_get&PonId={$ponPort}");
-            $list = $onuData['list'] ?? [];
+            $list = $onuData['list'] ?? null;
+            if (!is_array($list)) $inventoryComplete = false;
 
             if (is_array($list)) {
                 foreach ($list as $raw) {
@@ -1342,13 +1365,13 @@ class OltApiService
                             'running_state' => $isOnline ? 1 : 0,
                             'control_flag' => 1,
                             'rx_power_dbm' => $opt['rx'] ?? ($isOnline ? $existingOnu?->rx_power_dbm : null),
+                            'optical_observed_at' => isset($opt['rx']) ? now() : $existingOnu?->optical_observed_at,
                             'tx_power_dbm' => $opt['tx'] ?? ($isOnline ? $existingOnu?->tx_power_dbm : null),
                             'distance_m' => $dist ?? ($isOnline ? $existingOnu?->distance_m : null),
                             'last_online_at' => $isOnline ? now() : null,
                         ]
                     );
 
-                    $this->autoLinkCustomerToOnu($savedOnu, $olt, $routerMac, $raw['Mac'] ?? ($raw['MacAddress'] ?? null));
 
                     $syncedOnuDbIds[] = $savedOnu->id;
                     $syncedCount++;
@@ -1358,7 +1381,7 @@ class OltApiService
 
         // Prune unlisted ONUs
         if (!empty($syncedOnuDbIds)) {
-            TenantOnu::where('olt_id', $olt->id)->whereNotIn('id', $syncedOnuDbIds)->delete();
+            // Preserve inventory until removal is explicitly confirmed.
         }
 
         $offlineCount = max(0, $syncedCount - $onlineCount);
@@ -1372,8 +1395,8 @@ class OltApiService
         $latency = round((microtime(true) - $start) * 1000, 1);
 
         return [
-            'success' => true,
-            'message' => "Successfully synchronized {$syncedCount} ONUs from {$olt->name} (Online: {$onlineCount}, Offline: " . max(0, $syncedCount - $onlineCount) . "). Latency: {$latency}ms.",
+            'success' => $inventoryComplete,
+            'message' => $inventoryComplete ? __('ONU operation completed.') : __('Some devices could not be synchronized.'),
             'total_onus' => $syncedCount,
             'online_onus' => $onlineCount,
             'offline_onus' => max(0, $syncedCount - $onlineCount),
@@ -1387,60 +1410,7 @@ class OltApiService
      */
     public function autoLinkCustomerToOnu(TenantOnu $onu, TenantOlt $olt, ?string $routerMac = null, ?string $onuMac = null): void
     {
-        $effectiveRouterMac = $routerMac ?: $onu->router_mac;
-        $effectiveOnuMac = $onuMac ?: $onu->mac_address;
-        $cust = null;
-
-        // 1. Match by Router MAC (OLT FDB / Learned MAC <=> PPPoE Calling Station ID)
-        if (!empty($effectiveRouterMac)) {
-            $cleanRMac = strtolower(preg_replace('/[^a-f0-9]/i', '', $effectiveRouterMac));
-            if (strlen($cleanRMac) >= 10) {
-                $cust = TenantCustomer::where('tenant_id', $olt->tenant_id)
-                    ->where(function($q) use ($effectiveRouterMac, $cleanRMac) {
-                        $q->where('mac_address', $effectiveRouterMac)
-                          ->orWhereRaw("LOWER(REPLACE(REPLACE(REPLACE(mac_address, ':', ''), '-', ''), '.', '')) = ?", [$cleanRMac]);
-                    })
-                    ->first();
-            }
-        }
-
-        // 2. Match by Hardware ONU MAC / Serial Number
-        if (!$cust && !empty($effectiveOnuMac)) {
-            $cleanOMac = strtolower(preg_replace('/[^a-f0-9]/i', '', $effectiveOnuMac));
-            if (strlen($cleanOMac) >= 10) {
-                $cust = TenantCustomer::where('tenant_id', $olt->tenant_id)
-                    ->where(function($q) use ($effectiveOnuMac, $cleanOMac) {
-                        $q->where('onu_mac_sn', $effectiveOnuMac)
-                          ->orWhereRaw("LOWER(REPLACE(REPLACE(REPLACE(onu_mac_sn, ':', ''), '-', ''), '.', '')) = ?", [$cleanOMac]);
-                    })
-                    ->first();
-            }
-        }
-
-        // 3. Match by exact PPPoE Username if ONU name/desc matches
-        if (!$cust && (!empty($onu->name) || !empty($onu->desc) || !empty($onu->pppoe_username))) {
-            $candidateUsername = $onu->pppoe_username ?: ($onu->desc ?: $onu->name);
-            if ($candidateUsername && strlen($candidateUsername) >= 3) {
-                $cust = TenantCustomer::where('tenant_id', $olt->tenant_id)
-                    ->where('username', strtolower(trim($candidateUsername)))
-                    ->first();
-            }
-        }
-
-        if ($cust) {
-            $route = $onu->pon_port . ($onu->onu_id ? ':' . $onu->onu_id : '');
-            $onu->updateQuietly([
-                'customer_id' => $cust->id,
-                'pppoe_username' => $cust->username,
-                'router_mac' => $effectiveRouterMac ?: ($onu->router_mac ?: $cust->mac_address),
-            ]);
-
-            $cust->updateQuietly([
-                'olt_id' => $olt->id,
-                'pon_port' => $route,
-                'onu_mac_sn' => $effectiveOnuMac ?: $cust->onu_mac_sn,
-            ]);
-        }
+        app(OnuLinkService::class)->link($onu);
     }
 
     /**
@@ -1485,7 +1455,7 @@ class OltApiService
             } elseif (!empty($vendor) && $vendor !== 'EPON') {
                 $m = "{$vendor} ONU";
             } else {
-                $m = "1GE ONU";
+                $m = 'Unknown';
             }
         }
 
@@ -1515,90 +1485,7 @@ class OltApiService
      */
     public function rebootOnu(TenantOlt $olt, string $ponPort, int $onuId): bool
     {
-        $ip = $olt->ip_address;
-        $port = (int) ($olt->web_port ?: 80);
-        $username = $olt->web_username ?: 'admin';
-        $password = $olt->decrypted_web_password ?: ($olt->web_password ?: 'admin');
-
-        $driverKey = "olt_driver_{$ip}_{$port}";
-        $driver = Cache::get($driverKey);
-
-        // Extract integer port number (e.g., '0/1' -> 1, 'EPON0/2' -> 2)
-        $cleanPort = preg_replace('/[^0-9]/', '', substr($ponPort, strrpos($ponPort, '/') ?: 0));
-        $ponNumber = is_numeric($cleanPort) && (int)$cleanPort > 0 ? (int)$cleanPort : 1;
-
-        // 1. UniMars Driver
-        if ($driver === 'unimars' || $port === 8084) {
-            $sid = base64_encode("{$username}&{$password}");
-            $this->sendUniMarsRequest($ip, $port, "set=login&user={$sid}");
-            $res = $this->sendUniMarsRequest($ip, $port, "set=onureset&sysUnit=1&onu={$ponNumber}-{$onuId}");
-            return $res !== null;
-        }
-
-        // 2. FastCGI / VSOL / EPON OLT
-        $token = $this->getToken($ip, $port, $username, $password);
-        if ($token) {
-            $proto = Cache::get("olt_proto_{$ip}_{$port}") ?: (($port === 8081 || $port === 443 || $port === 8443) ? 'https' : 'http');
-            $endpoints = [
-                "{$proto}://{$ip}:{$port}/cgi-bin/h.cgi?module=ont_reboot&PonId={$ponPort}&OntId={$onuId}",
-                "{$proto}://{$ip}:{$port}/cgi-bin/h.cgi?module=ont_reboot&PonId={$ponNumber}&OntId={$onuId}",
-                "{$proto}://{$ip}:{$port}/cgi-bin/h.cgi?module=onu_reboot&PonId={$ponPort}&OntId={$onuId}",
-                "{$proto}://{$ip}:{$port}/cgi-bin/h.cgi?module=onu_reboot&PonId={$ponNumber}&OntId={$onuId}",
-                "{$proto}://{$ip}:{$port}/cgi-bin/h.cgi?module=ont_reset&PonId={$ponPort}&OntId={$onuId}",
-                "{$proto}://{$ip}:{$port}/cgi-bin/h.cgi?module=ont_reset&PonId={$ponNumber}&OntId={$onuId}",
-                "{$proto}://{$ip}:{$port}/cgi-bin/h.cgi?module=onu_reset&PonId={$ponNumber}&OntId={$onuId}",
-                "{$proto}://{$ip}:{$port}/cgi-bin/h.cgi?module=ont_action&action=reboot&PonId={$ponNumber}&OntId={$onuId}",
-            ];
-
-            foreach ($endpoints as $url) {
-                try {
-                    $response = Http::withoutVerifying()->timeout(4)->withHeaders(['token' => $token])->get($url);
-                    if ($response->successful()) {
-                        $json = $response->json();
-                        if (isset($json['code']) && in_array($json['code'], [0, 200])) {
-                            return true;
-                        }
-                    }
-                } catch (Exception $e) {
-                    Log::warning("OLT rebootOnu url {$url} error: " . $e->getMessage());
-                }
-            }
-
-            // Also try POST
-            try {
-                $postRes = Http::withoutVerifying()->timeout(4)->withHeaders(['token' => $token])->asForm()->post("{$proto}://{$ip}:{$port}/cgi-bin/h.cgi?module=ont_reboot", [
-                    'PonId' => $ponPort,
-                    'OntId' => $onuId,
-                    'action' => 'reboot',
-                ]);
-                if ($postRes->successful()) {
-                    return true;
-                }
-            } catch (Exception $e) {}
-
-            // VSOL HTML POST
-            $vsolRes = $this->fetchVsolHtmlPage($ip, $port, $username, $password, 'onu_action.cgi', [
-                'action' => 'reboot',
-                'port' => $ponNumber,
-                'onu' => $onuId,
-            ]);
-            if ($vsolRes !== null) {
-                return true;
-            }
-        }
-
-        // 3. HSGQ API
-        try {
-            $hsgqRes = Http::timeout(4)->withHeaders(['X-Token' => $token])->post("http://{$ip}:{$port}/api/onu_reboot", [
-                'port_id' => $ponNumber,
-                'onu_id' => $onuId,
-            ]);
-            if ($hsgqRes->successful()) {
-                return true;
-            }
-        } catch (Exception $e) {}
-
-        return true;
+        return $this->sendOnuCommand($olt, $ponPort, $onuId, 'ont_reboot');
     }
 
     /**
@@ -1617,53 +1504,29 @@ class OltApiService
         $driverKey = "olt_driver_{$ip}_{$port}";
         $driver = Cache::get($driverKey);
 
-        // 1. HSGQ Driver (optical-diagnose API)
-        if ($driver === 'hsgq' || $port === 8083) {
-            $res = $this->getHsgqEndpoint($ip, $port, $username, $password, "onumgmt?form=optical-diagnose&port_id={$ponNumber}&onu_id={$onuId}");
-            $data = $res['data'] ?? [];
-            if (!empty($data) && is_array($data)) {
-                $rxRaw = $data['receive_power'] ?? '';
-                $txRaw = $data['transmit_power'] ?? '';
-                $rx = (str_contains($rxRaw, 'dBm') && !str_contains($rxRaw, '-inf')) ? (float)str_replace('dBm', '', $rxRaw) : null;
-                $tx = (str_contains($txRaw, 'dBm') && !str_contains($txRaw, '-inf')) ? (float)str_replace('dBm', '', $txRaw) : null;
-
-                $tempRaw = $data['work_temprature'] ?? '';
-                $temp = (str_contains($tempRaw, '°C') || is_numeric(trim(str_replace('°C', '', $tempRaw)))) ? (float)trim(str_replace('°C', '', $tempRaw)) : null;
-
-                $voltRaw = $data['work_voltage'] ?? '';
-                $volt = (str_contains($voltRaw, 'V') || is_numeric(trim(str_replace('V', '', $voltRaw)))) ? (float)trim(str_replace('V', '', $voltRaw)) : null;
-
-                $telemetry = [
-                    'rx_power_dbm' => $rx,
-                    'tx_power_dbm' => $tx,
-                    'distance_m' => null,
-                    'temperature' => $temp,
-                    'voltage' => $volt,
-                    'updated_at' => now()->toIso8601String(),
+        // Firmware's allow-list endpoint supplies actual per-ONU state and RX.
+        if ($driver === 'hsgq') {
+            $response = $this->getHsgqEndpoint($ip, $port, $username, $password, 'onu_allow_list?port_id=' . $ponNumber);
+            foreach (($response['data'] ?? []) as $row) {
+                if ((int) ($row['port_id'] ?? 0) !== $ponNumber || (int) ($row['onu_id'] ?? 0) !== $onuId) continue;
+                $rx = trim(str_replace('dBm', '', (string) ($row['receive_power'] ?? '')));
+                return [
+                    'rx_power_dbm' => is_numeric($rx) ? (float) $rx : null,
+                    'tx_power_dbm' => null,
+                    'distance_m' => isset($row['distance']) && is_numeric($row['distance']) ? (int) $row['distance'] : null,
+                    'temperature' => null, 'voltage' => null,
+                    'updated_at' => now()->toIso8601String(), 'source' => 'live',
                 ];
-
-                // Update DB ONU record
-                TenantOnu::where('olt_id', $olt->id)
-                    ->where(function($q) use ($ponPort, $ponNumber) {
-                        $q->where('pon_port', $ponPort)->orWhere('pon_port', "0/{$ponNumber}");
-                    })
-                    ->where('onu_id', $onuId)
-                    ->update([
-                        'rx_power_dbm' => $rx,
-                        'tx_power_dbm' => $tx,
-                        'status' => ($rx !== null) ? 'online' : 'offline',
-                    ]);
-
-                return $telemetry;
             }
+            return null;
         }
 
         // 2. VSOL HTTPS Web Driver (Port 8082)
-        if ($driver === 'vsol_https' || $port === 8082) {
+        if ($driver === 'vsol_https') {
             $opmHtml = $this->fetchVsolHtmlPage($ip, $port, $username, $password, 'onuopmdiag.html', ['select' => (string)$ponNumber]);
             if ($opmHtml && preg_match_all('/<tr>\s*<td[^>]*>EPON0\/(\d+):(\d+)<\/td>\s*<td[^>]*>([0-9a-fA-F:]{17})<\/td>\s*<td[^>]*>([^<]*)<\/td>\s*<td[^>]*>([-\d.]+)<\/td>\s*<td[^>]*>([-\d.]+)<\/td>\s*<td[^>]*>([-\d.]+)<\/td>\s*<td[^>]*>([-\d.]+)<\/td>\s*<td[^>]*>([-\d.]+)<\/td>\s*<td[^>]*>([-\d.]+)<\/td>\s*<\/tr>/i', $opmHtml, $opmMatches, PREG_SET_ORDER)) {
                 foreach ($opmMatches as $om) {
-                    if ((int)$om[2] === $onuId) {
+                    if ((int)$om[1] === $ponNumber && (int)$om[2] === $onuId) {
                         $dist = (int)$om[5];
                         $temp = is_numeric($om[6]) ? (float)$om[6] : null;
                         $volt = is_numeric($om[7]) ? (float)$om[7] : null;
@@ -1677,19 +1540,9 @@ class OltApiService
                             'temperature' => $temp,
                             'voltage' => $volt,
                             'updated_at' => now()->toIso8601String(),
+                    'source' => 'live',
                         ];
 
-                        TenantOnu::where('olt_id', $olt->id)
-                            ->where(function($q) use ($ponPort, $ponNumber) {
-                                $q->where('pon_port', $ponPort)->orWhere('pon_port', "0/{$ponNumber}");
-                            })
-                            ->where('onu_id', $onuId)
-                            ->update([
-                                'rx_power_dbm' => $rx,
-                                'tx_power_dbm' => $tx,
-                                'distance_m' => $dist,
-                                'status' => ($rx !== null) ? 'online' : 'offline',
-                            ]);
 
                         return $telemetry;
                     }
@@ -1711,7 +1564,8 @@ class OltApiService
                     'distance_m' => $onu->distance_m,
                     'temperature' => null,
                     'voltage' => null,
-                    'updated_at' => now()->toIso8601String(),
+                    'updated_at' => $onu->optical_observed_at?->toIso8601String(),
+                    'source' => 'cache',
                 ];
             }
         }
@@ -1719,9 +1573,6 @@ class OltApiService
         // 3. FastCGI / Standard EPON OLT Driver (C-Data DN-10G, etc.)
         $targetPon = str_contains($ponPort, '/') ? $ponPort : (string)$ponNumber;
         $opticalList = $this->getOpticalList($ip, $port, $username, $password, $targetPon);
-        if (empty($opticalList)) {
-            $opticalList = $this->getOpticalList($ip, $port, $username, $password, (string)$ponNumber);
-        }
         if (!empty($opticalList)) {
             foreach ($opticalList as $opt) {
                 $curOnuId = (int)($opt['OnuId'] ?? ($opt['OntId'] ?? ($opt['onu_id'] ?? ($opt['id'] ?? 0))));
@@ -1767,18 +1618,9 @@ class OltApiService
                         'temperature' => $temp,
                         'voltage' => $volt,
                         'updated_at' => now()->toIso8601String(),
+                    'source' => 'live',
                     ];
 
-                    TenantOnu::where('olt_id', $olt->id)
-                        ->where(function($q) use ($ponPort, $ponNumber) {
-                            $q->where('pon_port', $ponPort)->orWhere('pon_port', "0/{$ponNumber}");
-                        })
-                        ->where('onu_id', $onuId)
-                        ->update([
-                            'rx_power_dbm' => $rx,
-                            'tx_power_dbm' => $tx,
-                            'distance_m' => $dist,
-                        ]);
 
                     return $telemetry;
                 }
@@ -1786,7 +1628,7 @@ class OltApiService
         }
 
         // 4. UniMars / CoreLink Driver (Port 8084 style)
-        if ($driver === 'unimars' || $port === 8084 || str_contains(strtolower($olt->vendor ?? ''), 'core') || str_contains(strtolower($olt->model ?? ''), 'ha73')) {
+        if ($driver === 'unimars' || str_contains(strtolower($olt->vendor ?? ''), 'core') || str_contains(strtolower($olt->model ?? ''), 'ha73')) {
             $onuBody = $this->sendUniMarsRequest($ip, $port, "get=onualllist&sysUnit=1");
             if ($onuBody && preg_match_all('/<item onu="([^"]+)"/i', $onuBody, $matches)) {
                 foreach ($matches[1] as $onuStr) {
@@ -1795,19 +1637,11 @@ class OltApiService
                     $pParts = explode(':', $portOnu);
                     $curPon = $pParts[0] ?? '';
                     $curId = isset($pParts[1]) ? (int)$pParts[1] : 0;
-                    if ($curId === $onuId && ($curPon === $ponPort || str_contains($curPon, (string)$ponNumber))) {
+                    if ($curId === $onuId && $curPon === $ponPort) {
                         $distance = isset($cols[10]) && is_numeric($cols[10]) ? (int)$cols[10] : null;
                         $txPower = isset($cols[14]) && is_numeric($cols[14]) ? (float)$cols[14] : null;
                         $rxPower = isset($cols[15]) && is_numeric($cols[15]) ? (float)$cols[15] : null;
 
-                        TenantOnu::where('olt_id', $olt->id)
-                            ->where('pon_port', $ponPort)
-                            ->where('onu_id', $onuId)
-                            ->update([
-                                'rx_power_dbm' => $rxPower,
-                                'tx_power_dbm' => $txPower,
-                                'distance_m' => $distance,
-                            ]);
 
                         return [
                             'rx_power_dbm' => $rxPower,
@@ -1816,6 +1650,7 @@ class OltApiService
                             'temperature' => null,
                             'voltage' => null,
                             'updated_at' => now()->toIso8601String(),
+                    'source' => 'live',
                         ];
                     }
                 }
@@ -1834,7 +1669,7 @@ class OltApiService
         $driverKey = "olt_driver_{$ip}_{$port}";
         $driver = Cache::get($driverKey);
 
-        if ($driver === 'unimars' || $port === 8084) {
+        if ($driver === 'unimars') {
             $sid = base64_encode("{$username}&{$password}");
             $this->sendUniMarsRequest($ip, $port, "set=login&user={$sid}");
             $body = $this->sendUniMarsRequest($ip, $port, "get=onunotauthlist&sysUnit=1");
@@ -1869,76 +1704,34 @@ class OltApiService
      */
     public function configureOnu(TenantOlt $olt, TenantOnu $onu, array $config): array
     {
-        $ip = $olt->ip_address;
-        $port = (int) ($olt->web_port ?: 80);
-        $username = $olt->web_username ?: 'admin';
-        $password = $olt->decrypted_web_password ?: ($olt->web_password ?: 'admin');
-
-        $driverKey = "olt_driver_{$ip}_{$port}";
-        $driver = Cache::get($driverKey);
-
-        $cleanPort = preg_replace('/[^0-9]/', '', substr($onu->pon_port, strrpos($onu->pon_port, '/') ?: 0));
-        $ponNumber = is_numeric($cleanPort) && (int)$cleanPort > 0 ? (int)$cleanPort : 1;
-        $onuId = (int)$onu->onu_id;
-
-        $vlanId = isset($config['vlan_id']) && is_numeric($config['vlan_id']) ? (int)$config['vlan_id'] : null;
-        $vlanMode = $config['vlan_mode'] ?? 'tag';
-        $lan1State = ($config['lan1_state'] ?? 'enable') === 'enable' ? 1 : 0;
-
-        $pushedOlt = false;
-
-        // 1. UniMars Driver
-        if ($driver === 'unimars' || $port === 8084) {
-            $sid = base64_encode("{$username}&{$password}");
-            $this->sendUniMarsRequest($ip, $port, "set=login&user={$sid}");
-            if ($vlanId) {
-                $this->sendUniMarsRequest($ip, $port, "set=onuvlan&sysUnit=1&onu={$ponNumber}-{$onuId}&vlan={$vlanId}&mode={$vlanMode}");
-            }
-            if (!empty($config['name'])) {
-                $encodedName = urlencode($config['name']);
-                $this->sendUniMarsRequest($ip, $port, "set=onuname&sysUnit=1&onu={$ponNumber}-{$onuId}&name={$encodedName}");
-            }
-            $pushedOlt = true;
+        $hardware = array_diff_key($config, array_flip(['name', 'desc', 'router_mac']));
+        if ($hardware === []) {
+            return ['success' => true, 'pushed_to_olt' => false];
         }
-
-        // 2. FastCGI / VSOL / EPON OLT
-        $token = $this->getToken($ip, $port, $username, $password);
-        if ($token) {
-            // Push VLAN
-            if ($vlanId) {
-                $vlanPayloads = [
-                    "http://{$ip}:{$port}/cgi-bin/h.cgi?module=ont_port_vlan_set&PonId={$ponNumber}&OntId={$onuId}&PortId=1&Mode={$vlanMode}&VlanId={$vlanId}",
-                    "http://{$ip}:{$port}/cgi-bin/h.cgi?module=onu_vlan_set&PonId={$ponNumber}&OntId={$onuId}&Vlan={$vlanId}",
-                ];
-                foreach ($vlanPayloads as $url) {
-                    try {
-                        Http::timeout(3)->withHeaders(['token' => $token])->get($url);
-                    } catch (Exception $e) {}
-                }
-            }
-
-            // Push Description / Name
-            if (!empty($config['name']) || !empty($config['desc'])) {
-                $descVal = urlencode($config['name'] ?? $config['desc']);
-                $descUrl = "http://{$ip}:{$port}/cgi-bin/h.cgi?module=ont_desc_set&PonId={$ponNumber}&OntId={$onuId}&Desc={$descVal}";
-                try {
-                    Http::timeout(3)->withHeaders(['token' => $token])->get($descUrl);
-                } catch (Exception $e) {}
-            }
-
-            // Push Port state
-            try {
-                Http::timeout(3)->withHeaders(['token' => $token])->get("http://{$ip}:{$port}/cgi-bin/h.cgi?module=ont_port_admin_set&PonId={$ponNumber}&OntId={$onuId}&PortId=1&Admin={$lan1State}");
-            } catch (Exception $e) {}
-
-            $pushedOlt = true;
+        $supported = $this->onuCapabilities($olt)['configure'];
+        if (array_diff(array_keys($hardware), $supported)) {
+            return ['success' => false, 'pushed_to_olt' => false, 'unsupported' => true];
         }
-
-        return [
-            'success' => true,
-            'pushed_to_olt' => $pushedOlt,
-            'message' => 'ONU configuration saved and synchronized with OLT.'
-        ];
+        $commands = [];
+        if (array_key_exists('vlan_id', $hardware) || array_key_exists('vlan_mode', $hardware)) {
+            $vlanId = $hardware['vlan_id'] ?? $onu->vlan_id;
+            if (!$vlanId) {
+                return ['success' => false, 'pushed_to_olt' => false];
+            }
+            $commands[] = ['ont_port_vlan_set', [
+                'PortId' => 1, 'Mode' => $hardware['vlan_mode'] ?? $onu->vlan_mode ?? 'tag',
+                'VlanId' => $vlanId,
+            ]];
+        }
+        if (array_key_exists('lan1_state', $hardware)) {
+            $commands[] = ['ont_port_admin_set', ['PortId' => 1, 'Admin' => $hardware['lan1_state'] === 'enable' ? 1 : 0]];
+        }
+        foreach ($commands as [$module, $parameters]) {
+            if (!$this->sendOnuCommand($olt, $onu->pon_port, (int) $onu->onu_id, $module, $parameters)) {
+                return ['success' => false, 'pushed_to_olt' => false];
+            }
+        }
+        return ['success' => true, 'pushed_to_olt' => true];
     }
 
     /**
@@ -1946,37 +1739,50 @@ class OltApiService
      */
     public function factoryResetOnu(TenantOlt $olt, string $ponPort, int $onuId): bool
     {
-        $ip = $olt->ip_address;
+        return $this->sendOnuCommand($olt, $ponPort, $onuId, 'ont_restore_default');
+    }
+
+    /**
+     * Only drivers with a machine-readable acknowledgement may perform writes.
+     * Unknown firmware responses must never be interpreted as success.
+     */
+    public function onuCapabilities(TenantOlt $olt): array
+    {
+        $driver = Cache::get("olt_driver_{$olt->ip_address}_{$olt->web_port}");
+        return [
+            'configure' => $driver === 'fastcgi' ? ['vlan_id', 'vlan_mode', 'lan1_state'] : [],
+            'reboot' => $driver === 'fastcgi',
+            'factory_reset' => $driver === 'fastcgi',
+        ];
+    }
+
+    protected function sendOnuCommand(TenantOlt $olt, string $ponPort, int $onuId, string $module, array $parameters = []): bool
+    {
         $port = (int) ($olt->web_port ?: 80);
-        $username = $olt->web_username ?: 'admin';
-        $password = $olt->decrypted_web_password ?: ($olt->web_password ?: 'admin');
-
-        $driverKey = "olt_driver_{$ip}_{$port}";
-        $driver = Cache::get($driverKey);
-
-        $cleanPort = preg_replace('/[^0-9]/', '', substr($ponPort, strrpos($ponPort, '/') ?: 0));
-        $ponNumber = is_numeric($cleanPort) && (int)$cleanPort > 0 ? (int)$cleanPort : 1;
-
-        if ($driver === 'unimars' || $port === 8084) {
-            $sid = base64_encode("{$username}&{$password}");
-            $this->sendUniMarsRequest($ip, $port, "set=login&user={$sid}");
-            $res = $this->sendUniMarsRequest($ip, $port, "set=onurestore&sysUnit=1&onu={$ponNumber}-{$onuId}");
-            return $res !== null;
+        $ip = $olt->ip_address;
+        $token = $this->getToken($ip, $port, (string) $olt->web_username, (string) $olt->decrypted_web_password);
+        if (!$token || Cache::get("olt_driver_{$ip}_{$port}") !== 'fastcgi' || $onuId < 1 || $ponPort === '') {
+            return false;
         }
-
-        $token = $this->getToken($ip, $port, $username, $password);
-        if ($token) {
-            $urls = [
-                "http://{$ip}:{$port}/cgi-bin/h.cgi?module=ont_restore_default&PonId={$ponNumber}&OntId={$onuId}",
-                "http://{$ip}:{$port}/cgi-bin/h.cgi?module=onu_restore_default&PonId={$ponNumber}&OntId={$onuId}",
-            ];
-            foreach ($urls as $url) {
-                try {
-                    Http::timeout(3)->withHeaders(['token' => $token])->get($url);
-                } catch (Exception $e) {}
-            }
+        $protocol = Cache::get("olt_proto_{$ip}_{$port}");
+        if (!in_array($protocol, ['http', 'https'], true)) {
+            return false;
         }
-        return true;
+        try {
+            $response = Http::withoutVerifying()->timeout(8)->withHeaders(['token' => $token])
+                ->get("{$protocol}://{$ip}:{$port}/cgi-bin/h.cgi", array_merge([
+                    'module' => $module, 'PonId' => $ponPort, 'OntId' => $onuId,
+                ], $parameters));
+            $body = $response->json();
+            return $response->successful() && is_array($body)
+                && array_key_exists('code', $body)
+                && in_array($body['code'], [0, 200, '0', '200'], true);
+        } catch (\Throwable $e) {
+            Log::warning('ONU command could not be confirmed', [
+                'olt_id' => $olt->id, 'onu_id' => $onuId, 'module' => $module,
+            ]);
+            return false;
+        }
     }
 
     /**

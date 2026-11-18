@@ -22,14 +22,26 @@ class OnuController extends Controller
      */
     public function index(Request $request)
     {
+        $request->validate([
+            'search' => 'nullable|string|max:200', 'olt_id' => 'nullable|integer|min:1',
+            'status' => 'nullable|in:online,offline,good,warning,critical,unknown',
+            'onu_type' => 'nullable|string|max:30', 'pon_port' => 'nullable|string|max:20',
+            'vendor' => 'nullable|string|max:100', 'binding' => 'nullable|in:linked,unlinked',
+            'distance_range' => 'nullable|in:under_500,500_1000,1000_2000,over_2000',
+            'per_page' => 'nullable|integer|min:1|max:500',
+        ]);
         $tenant = Auth::user()?->tenant;
         if (!$tenant) {
             abort(404, __('ISP Tenant record not found.'));
         }
 
         $olts = TenantOlt::where('tenant_id', $tenant->id)->get();
+        $onuCapabilities = $olts->mapWithKeys(fn ($olt) => [$olt->id => $this->oltApiService->onuCapabilities($olt)]);
 
-        $query = TenantOnu::where('tenant_id', $tenant->id)->with(['olt', 'customer.coverageZone']);
+        $query = TenantOnu::where('tenant_id', $tenant->id)->with([
+            'olt' => fn ($q) => $q->where('tenant_id', $tenant->id),
+            'customer' => fn ($q) => $q->where('tenant_id', $tenant->id)->with('coverageZone'),
+        ]);
 
         if ($oltId = $request->input('olt_id')) {
             $query->where('olt_id', $oltId);
@@ -40,12 +52,14 @@ class OnuController extends Controller
                 $query->where('status', 'online');
             } elseif ($status === 'offline') {
                 $query->where('status', 'offline');
+            } elseif ($status === 'unknown') {
+                $query->where('status', 'unknown');
             } elseif ($status === 'good') {
-                $query->where('rx_power_dbm', '>=', -20);
+                $query->where('rx_power_dbm', '!=', 0)->where('rx_power_dbm', '>=', config('onu.signal.good_min_dbm'));
             } elseif ($status === 'warning') {
-                $query->where('rx_power_dbm', '>=', -26)->where('rx_power_dbm', '<', -20);
+                $query->where('rx_power_dbm', '>=', config('onu.signal.warning_min_dbm'))->where('rx_power_dbm', '<', config('onu.signal.good_min_dbm'));
             } elseif ($status === 'critical') {
-                $query->where('rx_power_dbm', '<', -26);
+                $query->where('rx_power_dbm', '<', config('onu.signal.warning_min_dbm'));
             }
         }
 
@@ -64,10 +78,10 @@ class OnuController extends Controller
         if ($binding = $request->input('binding')) {
             if ($binding === 'linked') {
                 $query->where(function ($q) {
-                    $q->whereNotNull('customer_id')->orWhereNotNull('router_mac');
+                    $q->whereNotNull('customer_id');
                 });
             } elseif ($binding === 'unlinked') {
-                $query->whereNull('customer_id')->whereNull('router_mac');
+                $query->whereNull('customer_id');
             }
         }
 
@@ -114,137 +128,22 @@ class OnuController extends Controller
             $perPage = 30;
         }
 
+        $metricBase = clone $query;
         $onus = $query->latest('id')->paginate($perPage)->withQueryString();
 
-        // High-performance batch pre-resolving of customer router MACs & Client names
-        $usernames = $onus->pluck('pppoe_username')->filter()->unique()->toArray();
-        $onuMacs = $onus->pluck('mac_address')->filter()->unique()->toArray();
-        $routerMacs = $onus->pluck('router_mac')->filter()->unique()->toArray();
-
-        $customersByUsername = !empty($usernames) ? TenantCustomer::where('tenant_id', $tenant->id)
-            ->with('coverageZone')
-            ->whereIn('username', $usernames)
-            ->get()
-            ->keyBy(fn($c) => strtolower(trim((string)$c->username))) : collect();
-
-        $customersByOnuMac = !empty($onuMacs) ? TenantCustomer::where('tenant_id', $tenant->id)
-            ->with('coverageZone')
-            ->whereIn('onu_mac_sn', $onuMacs)
-            ->get()
-            ->keyBy(fn($c) => strtolower(preg_replace('/[^a-f0-9]/i', '', (string)$c->onu_mac_sn))) : collect();
-
-        $customersByRouterMac = !empty($routerMacs) ? TenantCustomer::where('tenant_id', $tenant->id)
-            ->with('coverageZone')
-            ->whereIn('mac_address', $routerMacs)
-            ->get()
-            ->keyBy(fn($c) => strtolower(preg_replace('/[^a-f0-9]/i', '', (string)$c->mac_address))) : collect();
-
         foreach ($onus as $onu) {
-            $cleanOnuMac = !empty($onu->mac_address) ? strtolower(preg_replace('/[^a-f0-9]/i', '', (string)$onu->mac_address)) : null;
-            $cleanRMac = !empty($onu->router_mac) ? strtolower(preg_replace('/[^a-f0-9]/i', '', (string)$onu->router_mac)) : null;
-            $uKey = !empty($onu->pppoe_username) ? strtolower(trim((string)$onu->pppoe_username)) : null;
-
-            $matchedCust = $onu->customer
-                ?: ($uKey ? $customersByUsername->get($uKey) : null)
-                ?: ($cleanRMac ? $customersByRouterMac->get($cleanRMac) : null)
-                ?: ($cleanOnuMac ? $customersByOnuMac->get($cleanOnuMac) : null);
-
-            if ($matchedCust) {
-                if (!$onu->relationLoaded('customer') || !$onu->customer) {
-                    $onu->setRelation('customer', $matchedCust);
-                }
-                if (empty($onu->customer_id)) {
-                    $onu->linked_customer_id = $matchedCust->id;
-                }
-                if (empty($onu->router_mac) && !empty($matchedCust->mac_address)) {
-                    $onu->auto_router_mac = $matchedCust->mac_address;
-                }
-                if (empty($onu->pppoe_username) && !empty($matchedCust->username)) {
-                    $onu->pppoe_username = $matchedCust->username;
-                }
-                $onu->resolved_client_name = $matchedCust->name;
-                $onu->resolved_area = $matchedCust->zone ?: ($matchedCust->coverageZone?->name ?? null);
-            }
+            $onu->resolved_client_name = $onu->customer?->name;
+            $onu->resolved_area = $onu->customer?->coverageZone?->name;
         }
 
-        // Calculate summary metric counters based on active filter scope
-        $metricBase = TenantOnu::where('tenant_id', $tenant->id);
-
-        if ($oltId = $request->input('olt_id')) {
-            $metricBase->where('olt_id', $oltId);
-        }
-
-        if ($status = $request->input('status')) {
-            if ($status === 'online') {
-                $metricBase->where('status', 'online');
-            } elseif ($status === 'offline') {
-                $metricBase->where('status', 'offline');
-            } elseif ($status === 'good') {
-                $metricBase->where('rx_power_dbm', '>=', -20);
-            } elseif ($status === 'warning') {
-                $metricBase->where('rx_power_dbm', '>=', -26)->where('rx_power_dbm', '<', -20);
-            } elseif ($status === 'critical') {
-                $metricBase->where('rx_power_dbm', '<', -26);
-            }
-        }
-
-        if ($onuType = $request->input('onu_type')) {
-            $metricBase->where('onu_type', $onuType);
-        }
-
-        if ($ponPort = $request->input('pon_port')) {
-            $metricBase->where('pon_port', $ponPort);
-        }
-
-        if ($vendor = $request->input('vendor')) {
-            $metricBase->where('vendor', $vendor);
-        }
-
-        if ($binding = $request->input('binding')) {
-            if ($binding === 'linked') {
-                $metricBase->where(function ($q) {
-                    $q->whereNotNull('customer_id')->orWhereNotNull('router_mac');
-                });
-            } elseif ($binding === 'unlinked') {
-                $metricBase->whereNull('customer_id')->whereNull('router_mac');
-            }
-        }
-
-        if ($distRange = $request->input('distance_range')) {
-            if ($distRange === 'under_500') {
-                $metricBase->where('distance_m', '<', 500);
-            } elseif ($distRange === '500_1000') {
-                $metricBase->whereBetween('distance_m', [500, 1000]);
-            } elseif ($distRange === '1000_2000') {
-                $metricBase->whereBetween('distance_m', [1000, 2000]);
-            } elseif ($distRange === 'over_2000') {
-                $metricBase->where('distance_m', '>', 2000);
-            }
-        }
-
-        if ($search = $request->input('search')) {
-            $metricBase->where(function ($q) use ($search, $matchedUsernames) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('mac_address', 'like', "%{$search}%")
-                  ->orWhere('router_mac', 'like', "%{$search}%")
-                  ->orWhere('onu_id', 'like', "%{$search}%")
-                  ->orWhere('model', 'like', "%{$search}%")
-                  ->orWhere('desc', 'like', "%{$search}%")
-                  ->orWhere('pppoe_username', 'like', "%{$search}%");
-
-                if (!empty($matchedUsernames)) {
-                    $q->orWhereIn('pppoe_username', $matchedUsernames);
-                }
-            });
-        }
-
+        // Reuse exactly the same filters for the table and counters.
         $totalOnus = (clone $metricBase)->count();
         $onlineOnus = (clone $metricBase)->where('status', 'online')->count();
-        $offlineOnus = max(0, $totalOnus - $onlineOnus);
-        $criticalOnus = (clone $metricBase)->where('rx_power_dbm', '<', -26)->count();
+        $offlineOnus = (clone $metricBase)->whereIn('status', ['offline', 'los', 'unregistered'])->count();
+        $criticalOnus = (clone $metricBase)->where('rx_power_dbm', '<', config('onu.signal.warning_min_dbm'))->count();
         $warningOnus = (clone $metricBase)
-            ->where('rx_power_dbm', '>=', -26)
-            ->where('rx_power_dbm', '<', -20)
+            ->where('rx_power_dbm', '>=', config('onu.signal.warning_min_dbm'))
+            ->where('rx_power_dbm', '<', config('onu.signal.good_min_dbm'))
             ->count();
 
         $distinctPonPorts = TenantOnu::where('tenant_id', $tenant->id)
@@ -264,6 +163,7 @@ class OnuController extends Controller
 
         return view('tenant.network.onu', compact(
             'tenant',
+            'onuCapabilities',
             'olts',
             'onus',
             'totalOnus',
@@ -281,74 +181,7 @@ class OnuController extends Controller
      */
     public function syncAll(Request $request)
     {
-        @set_time_limit(300);
-        $tenant = Auth::user()?->tenant;
-        if (!$tenant) {
-            return response()->json(['success' => false, 'message' => __('Unauthorized')], 401);
-        }
-
-        $olts = TenantOlt::where('tenant_id', $tenant->id)->get();
-        if ($olts->isEmpty()) {
-            return response()->json([
-                'success' => false,
-                'message' => __('No active OLT hardware gateways configured. Please register an OLT device first.'),
-            ], 422);
-        }
-
-        $syncedCount = 0;
-        $failedCount = 0;
-        $details = [];
-
-        foreach ($olts as $olt) {
-            try {
-                $res = $this->oltApiService->syncOlt($olt);
-                if (!empty($res['success'])) {
-                    $syncedCount++;
-                    $details[] = "{$olt->name}: " . ($res['message'] ?? __('Synced'));
-                } else {
-                    $failedCount++;
-                    $details[] = "{$olt->name}: " . ($res['message'] ?? __('Connection error'));
-                }
-            } catch (\Throwable $e) {
-                $failedCount++;
-                $details[] = "{$olt->name}: " . $e->getMessage();
-                Log::error("Manual OLT sync exception for {$olt->name}: " . $e->getMessage());
-            }
-        }
-
-        // Trigger auto-link
-        try {
-            \Illuminate\Support\Facades\Artisan::call('isp:auto-link-onus', [
-                '--tenant' => $tenant->id,
-                '--force' => true,
-            ]);
-        } catch (\Throwable $e) {
-            Log::warning("Auto-link error during syncAll: " . $e->getMessage());
-        }
-
-        $totalOnus = TenantOnu::where('tenant_id', $tenant->id)->count();
-        $onlineOnus = TenantOnu::where('tenant_id', $tenant->id)->where('status', 'online')->count();
-        $linkedCount = TenantOnu::where('tenant_id', $tenant->id)
-            ->where(function ($q) {
-                $q->whereNotNull('customer_id')->orWhereNotNull('router_mac');
-            })->count();
-
-        $msg = __('Synchronized :synced of :total OLT(s). Total :onus ONUs (:online online, :linked linked with clients).', [
-            'synced' => $syncedCount,
-            'total' => $olts->count(),
-            'onus' => $totalOnus,
-            'online' => $onlineOnus,
-            'linked' => $linkedCount,
-        ]);
-
-        return response()->json([
-            'success' => $syncedCount > 0,
-            'message' => $msg,
-            'details' => $details,
-            'total_onus' => $totalOnus,
-            'online_onus' => $onlineOnus,
-            'linked_onus' => $linkedCount,
-        ]);
+        return $this->queueOperation(false);
     }
 
     /**
@@ -356,36 +189,40 @@ class OnuController extends Controller
      */
     public function autoLink(Request $request)
     {
-        @set_time_limit(180);
-        $tenant = Auth::user()?->tenant;
-        if (!$tenant) {
-            return response()->json(['success' => false, 'message' => __('Unauthorized')], 401);
-        }
+        return $this->queueOperation(true);
+    }
 
+    private function queueOperation(bool $linkOnly)
+    {
+        $tenant = Auth::user()->tenant;
+        if (!$linkOnly && !TenantOlt::where('tenant_id', $tenant->id)->exists()) {
+            return response()->json(['success' => false, 'message' => __('No OLT devices configured.')], 422);
+        }
+        $pendingKey = 'onu-operation-pending:' . $tenant->id;
+        $operation = (string) \Illuminate\Support\Str::uuid();
+        if (!\Illuminate\Support\Facades\Cache::add($pendingKey, $operation, now()->addMinutes(15))) {
+            return response()->json(['success' => false, 'message' => __('An ONU operation is already queued or running.')], 409);
+        }
         try {
-            \Illuminate\Support\Facades\Artisan::call('isp:auto-link-onus', [
-                '--tenant' => $tenant->id,
-                '--force' => true,
-            ]);
-
-            $linkedCount = TenantOnu::where('tenant_id', $tenant->id)
-                ->where(function ($q) {
-                    $q->whereNotNull('customer_id')->orWhereNotNull('router_mac');
-                })->count();
-
-            return response()->json([
-                'success' => true,
-                'message' => __('Client auto-linking completed successfully. :count ONUs are now linked with customer profiles.', [
-                    'count' => $linkedCount,
-                ]),
-                'linked_onus' => $linkedCount,
-            ]);
+            \Illuminate\Support\Facades\Cache::put('onu-operation-status:' . $tenant->id . ':' . $operation,
+                ['state' => 'queued', 'success' => true], now()->addHour());
+            \App\Jobs\SyncTenantOnus::dispatch($tenant->id, $operation, $linkOnly);
         } catch (\Throwable $e) {
-            return response()->json([
-                'success' => false,
-                'message' => __('Failed to auto-link customers: :error', ['error' => $e->getMessage()]),
-            ], 500);
+            \Illuminate\Support\Facades\Cache::forget($pendingKey);
+            Log::error('Unable to queue ONU operation', ['tenant_id' => $tenant->id]);
+            return response()->json(['success' => false, 'message' => __('ONU operation failed. Please try again.')], 503);
         }
+        return response()->json(['success' => true, 'state' => 'queued',
+            'status_url' => route('tenant.network.onu.operation-status', $operation),
+            'message' => __('ONU operation queued.')], 202);
+    }
+
+    public function operationStatus(Request $request, string $operation)
+    {
+        abort_unless(\Illuminate\Support\Str::isUuid($operation), 404);
+        $status = \Illuminate\Support\Facades\Cache::get('onu-operation-status:' . Auth::user()->tenant_id . ':' . $operation);
+        abort_unless($status, 404);
+        return response()->json($status);
     }
 
     /**
@@ -399,6 +236,7 @@ class OnuController extends Controller
         }
 
         $onu = TenantOnu::where('tenant_id', $tenant->id)->with(['olt', 'customer'])->findOrFail($id);
+        $onu->unsetRelations();
         $onu->append(['signal_quality', 'display_router_mac']);
 
         return response()->json([
@@ -422,7 +260,7 @@ class OnuController extends Controller
         $validated = $request->validate([
             'name' => 'nullable|string|max:255',
             'desc' => 'nullable|string|max:500',
-            'router_mac' => 'nullable|string|max:50',
+            'router_mac' => ['nullable', 'string', 'max:50', 'regex:/^(?:[a-fA-F0-9]{2}[:-]){5}[a-fA-F0-9]{2}$|^[a-fA-F0-9]{12}$|^(?:[a-fA-F0-9]{4}\.){2}[a-fA-F0-9]{4}$/'],
             'vlan_id' => 'nullable|integer|min:1|max:4094',
             'vlan_mode' => 'nullable|string|in:tag,untag,transparent,hybrid',
             'service_mode' => 'nullable|string|in:bridge,pppoe,dhcp,static',
@@ -435,22 +273,33 @@ class OnuController extends Controller
             'bandwidth_profile' => 'nullable|string|max:100',
         ]);
 
-        $onu->update($validated);
-
         // Push configuration changes to the OLT device
-        $oltResult = ['pushed_to_olt' => false];
-        if ($onu->olt) {
+        $oltResult = ['success' => false, 'pushed_to_olt' => false];
+        $validated = array_filter($validated, fn ($value, $key) => $onu->getAttribute($key) != $value, ARRAY_FILTER_USE_BOTH);
+        if ($onu->olt && $onu->olt->tenant_id == $tenant->id) {
             $oltResult = $this->oltApiService->configureOnu($onu->olt, $onu, $validated);
         }
+        $this->audit($request, $onu, 'ONU_CONFIGURE', (bool) $oltResult['success']);
+        if (!$oltResult['success']) {
+            return response()->json(['success' => false, 'message' => __('Device changes were not confirmed. Refresh device data before trying again.')], 422);
+        }
+        $saved = $validated;
+        foreach (['name', 'desc'] as $field) {
+            if (array_key_exists($field, $saved)) {
+                $saved['local_' . $field] = $saved[$field];
+                unset($saved[$field]);
+            }
+        }
+        $onu->update($saved);
 
-        $onu->load(['olt', 'customer']);
+        $onu->unsetRelations();
         $onu->append(['signal_quality', 'display_router_mac']);
 
         return response()->json([
             'success' => true,
             'message' => $oltResult['pushed_to_olt']
                 ? __('ONU configuration saved successfully and synchronized with OLT.')
-                : __('ONU configuration saved successfully.'),
+                : __('Local ONU details saved. Device settings were not changed.'),
             'onu' => $onu,
         ]);
     }
@@ -468,7 +317,7 @@ class OnuController extends Controller
         $onu = TenantOnu::where('tenant_id', $tenant->id)->with('olt')->findOrFail($id);
         $olt = $onu->olt;
 
-        if (!$olt) {
+        if (!$olt || $olt->tenant_id != $tenant->id) {
             return response()->json([
                 'success' => false,
                 'message' => __('Associated OLT not found.'),
@@ -476,6 +325,7 @@ class OnuController extends Controller
         }
 
         $success = $this->oltApiService->rebootOnu($olt, $onu->pon_port, (int)$onu->onu_id);
+        $this->audit($request, $onu, 'ONU_REBOOT', $success);
 
         if ($success) {
             return response()->json([
@@ -507,14 +357,19 @@ class OnuController extends Controller
         $onu = TenantOnu::where('tenant_id', $tenant->id)->with('olt')->findOrFail($id);
         $olt = $onu->olt;
 
-        if (!$olt) {
+        if (!$olt || $olt->tenant_id != $tenant->id) {
             return response()->json([
                 'success' => false,
                 'message' => __('Associated OLT not found.'),
             ], 404);
         }
 
-        $this->oltApiService->factoryResetOnu($olt, $onu->pon_port, (int)$onu->onu_id);
+        $request->validate(['confirm_onu_id' => 'required|integer|in:' . $onu->id]);
+        $success = $this->oltApiService->factoryResetOnu($olt, $onu->pon_port, (int)$onu->onu_id);
+        $this->audit($request, $onu, 'ONU_FACTORY_RESET', $success);
+        if (!$success) {
+            return response()->json(['success' => false, 'message' => __('Device changes were not confirmed. Refresh device data before trying again.')], 422);
+        }
 
         return response()->json([
             'success' => true,
@@ -538,7 +393,7 @@ class OnuController extends Controller
         $onu = TenantOnu::where('tenant_id', $tenant->id)->with('olt')->findOrFail($id);
         $olt = $onu->olt;
 
-        if (!$olt) {
+        if (!$olt || $olt->tenant_id != $tenant->id) {
             return response()->json([
                 'success' => false,
                 'message' => __('Associated OLT not found.'),
@@ -546,25 +401,46 @@ class OnuController extends Controller
         }
 
         $telemetry = $this->oltApiService->getOnuOpticalTelemetry($olt, $onu->pon_port, (int)$onu->onu_id);
+        if (!$telemetry && ($onu->rx_power_dbm !== null || $onu->tx_power_dbm !== null || $onu->distance_m !== null)) {
+            $telemetry = [
+                'rx_power_dbm' => $onu->rx_power_dbm, 'tx_power_dbm' => $onu->tx_power_dbm,
+                'distance_m' => $onu->distance_m, 'updated_at' => $onu->optical_observed_at?->toIso8601String(),
+                'source' => 'cache',
+            ];
+        }
 
-        if ($telemetry) {
+        $isLive = $telemetry && ($telemetry['source'] ?? 'live') === 'live';
+        if ($isLive) {
             $onu->update([
-                'rx_power_dbm' => $telemetry['rx_power_dbm'] ?? $onu->rx_power_dbm,
-                'tx_power_dbm' => $telemetry['tx_power_dbm'] ?? $onu->tx_power_dbm,
+                'rx_power_dbm' => $telemetry['rx_power_dbm'] ?? null,
+                'tx_power_dbm' => $telemetry['tx_power_dbm'] ?? null,
                 'distance_m' => $telemetry['distance_m'] ?? $onu->distance_m,
+                'optical_observed_at' => $telemetry['updated_at'] ?? now(),
             ]);
         }
 
-        $onu->load('olt');
+        $onu->unsetRelations();
         $onu->append('signal_quality');
 
         return response()->json([
-            'success' => true,
-            'message' => $telemetry
+            'success' => $telemetry !== null,
+            'source' => $isLive ? 'live' : ($telemetry ? 'cache' : 'unavailable'),
+            'message' => $isLive
                 ? __('Live optical telemetry fetched successfully.')
-                : __('Optical telemetry updated from latest cache.'),
+                : __('Live reading unavailable. Showing the last stored reading.'),
             'telemetry' => $telemetry,
             'onu' => $onu,
+        ]);
+    }
+
+    private function audit(Request $request, TenantOnu $onu, string $event, bool $success): void
+    {
+        \App\Models\TenantActivityLog::create([
+            'tenant_id' => $onu->tenant_id, 'actor_type' => \App\Models\User::class,
+            'actor_id' => Auth::id(), 'actor_name' => Auth::user()?->name,
+            'event_type' => $event, 'description' => $event,
+            'ip_address' => $request->ip(), 'user_agent' => $request->userAgent(),
+            'metadata' => ['onu_id' => $onu->id, 'olt_id' => $onu->olt_id, 'confirmed' => $success],
         ]);
     }
 }

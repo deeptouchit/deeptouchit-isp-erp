@@ -12,6 +12,8 @@ class TenantOnu extends Model
 
     protected $guarded = ['id'];
 
+    protected $hidden = ['pppoe_password', 'wifi_password', 'config_payload', 'customer', 'olt', 'tenant'];
+
     protected $casts = [
         'onu_id' => 'integer',
         'running_state' => 'integer',
@@ -21,6 +23,9 @@ class TenantOnu extends Model
         'distance_m' => 'integer',
         'last_online_at' => 'datetime',
         'last_offline_at' => 'datetime',
+        'optical_observed_at' => 'datetime',
+        'pppoe_password' => 'encrypted',
+        'wifi_password' => 'encrypted',
     ];
 
     public function tenant(): BelongsTo
@@ -51,7 +56,7 @@ class TenantOnu extends Model
             return $this->auto_router_mac;
         }
 
-        if ($this->customer && !empty($this->customer->mac_address)) {
+        if ($this->relationLoaded('customer') && $this->customer && !empty($this->customer->mac_address)) {
             return $this->customer->mac_address;
         }
 
@@ -77,7 +82,7 @@ class TenantOnu extends Model
         }
 
         // 0 dBm to -20 dBm (Green)
-        if ($rx >= -20.0) {
+        if ($rx >= config('onu.signal.good_min_dbm')) {
             return [
                 'status' => 'good',
                 'label' => 'Good',
@@ -87,7 +92,7 @@ class TenantOnu extends Model
         }
 
         // -21 dBm to -26 dBm (Yellow / Amber)
-        if ($rx >= -26.0 && $rx < -20.0) {
+        if ($rx >= config('onu.signal.warning_min_dbm')) {
             return [
                 'status' => 'warning',
                 'label' => 'Warning',

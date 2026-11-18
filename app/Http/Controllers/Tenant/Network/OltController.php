@@ -219,6 +219,7 @@ class OltController extends Controller
             'vendor' => 'nullable|string|max:100',
             'model' => 'nullable|string|max:100',
             'total_pon_ports' => 'nullable|integer|between:1,64',
+            'pon_ports' => 'nullable|string|max:4000',
             'snmp_port' => 'nullable|integer|between:1,65535',
             'snmp_community' => 'nullable|string|max:120',
             'notes' => 'nullable|string|max:1000',
@@ -242,6 +243,7 @@ class OltController extends Controller
         $olt->vendor = $validated['vendor'] ?? 'EPON OLT';
         $olt->model = $validated['model'] ?? 'EPON OLT';
         $olt->total_pon_ports = $validated['total_pon_ports'] ?? 4;
+        $olt->pon_port_map = $this->parsePonPorts($validated['pon_ports'] ?? '');
         $olt->snmp_port = $validated['snmp_port'] ?? 161;
         $olt->snmp_community = $validated['snmp_community'] ?? 'public';
         $olt->notes = $validated['notes'] ?? null;
@@ -398,6 +400,7 @@ class OltController extends Controller
             'vendor' => 'nullable|string|max:100',
             'model' => 'nullable|string|max:100',
             'total_pon_ports' => 'nullable|integer|between:1,64',
+            'pon_ports' => 'nullable|string|max:4000',
             'snmp_port' => 'nullable|integer|between:1,65535',
             'snmp_community' => 'nullable|string|max:120',
             'notes' => 'nullable|string|max:1000',
@@ -419,6 +422,9 @@ class OltController extends Controller
         $olt->vendor = $validated['vendor'] ?? $olt->vendor;
         $olt->model = $validated['model'] ?? $olt->model;
         $olt->total_pon_ports = $validated['total_pon_ports'] ?? $olt->total_pon_ports;
+        if ($request->has('pon_ports')) {
+            $olt->pon_port_map = $this->parsePonPorts($validated['pon_ports'] ?? '');
+        }
         $olt->snmp_port = $validated['snmp_port'] ?? 161;
         $olt->snmp_community = $validated['snmp_community'] ?? 'public';
         $olt->notes = $validated['notes'] ?? $olt->notes;
@@ -686,5 +692,24 @@ class OltController extends Controller
             'success' => $ok,
             'message' => $ok ? __('Port statistics cleared successfully!') : __('Failed to clear port statistics.')
         ]);
+    }
+    private function parsePonPorts(string $input): array
+    {
+        $map = [];
+        foreach (preg_split('/\R/', trim($input)) as $line) {
+            if (trim($line) === '') continue;
+            $parts = array_map('trim', explode('=', $line));
+            $port = $parts[0];
+            $index = $parts[1] ?? null;
+            if (count($parts) > 2 || strlen($port) > 20 || !preg_match('/^\d+(?:\/\d+){0,3}$/', $port)
+                || array_key_exists($port, $map) || ($index !== null && (!ctype_digit($index) || (float) $index < 1 || (float) $index > 4294967295))) {
+                throw \Illuminate\Validation\ValidationException::withMessages(['pon_ports' => __('Enter valid, unique PON addresses, one per line.')]);
+            }
+            $map[$port] = $index;
+        }
+        if (count($map) > 64) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['pon_ports' => __('Enter valid, unique PON addresses, one per line.')]);
+        }
+        return $map;
     }
 }

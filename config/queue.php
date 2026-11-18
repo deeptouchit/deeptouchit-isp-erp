@@ -31,6 +31,15 @@ return [
 
     'connections' => [
 
+        'network' => [
+            'driver' => 'database',
+            'connection' => env('DB_QUEUE_CONNECTION'),
+            'table' => env('DB_QUEUE_TABLE', 'jobs'),
+            'queue' => 'network',
+            'retry_after' => 900,
+            'after_commit' => true,
+        ],
+
         'sync' => [
             'driver' => 'sync',
         ],

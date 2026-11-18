@@ -147,13 +147,14 @@ Route::middleware(['web'])->group(function () {
             Route::get('/olt/{olt}/port-stats', [OltController::class, 'portStats'])->middleware('permission:network.olts_onus')->name('olt.port-stats');
             Route::post('/olt/{olt}/port-stats/reset', [OltController::class, 'resetPortStats'])->middleware('permission:network.olts_onus')->middleware('permission:network.configure')->name('olt.port-stats.reset');
             Route::get('/onu', [OnuController::class, 'index'])->middleware('permission:network.olts_onus')->name('onu');
+            Route::get('/onu/operations/{operation}', [OnuController::class, 'operationStatus'])->middleware('permission:network.olts_onus')->name('onu.operation-status');
             Route::post('/onu/sync-all', [OnuController::class, 'syncAll'])->middleware('permission:network.olts_onus')->middleware('permission:network.configure')->name('onu.sync-all');
             Route::post('/onu/auto-link', [OnuController::class, 'autoLink'])->middleware('permission:network.olts_onus')->middleware('permission:network.configure')->name('onu.auto-link');
             Route::get('/onu/{onu}', [OnuController::class, 'show'])->middleware('permission:network.olts_onus')->name('onu.show');
-            Route::put('/onu/{onu}', [OnuController::class, 'update'])->middleware('permission:network.olts_onus')->middleware('permission:network.configure')->name('onu.update');
-            Route::post('/onu/{onu}/reboot', [OnuController::class, 'reboot'])->middleware('permission:network.olts_onus')->middleware('permission:network.reboot')->name('onu.reboot');
-            Route::post('/onu/{onu}/factory-reset', [OnuController::class, 'factoryReset'])->middleware('permission:network.olts_onus')->middleware('permission:network.configure')->name('onu.factory-reset');
-            Route::get('/onu/{onu}/optical', [OnuController::class, 'optical'])->middleware('permission:network.olts_onus')->name('onu.optical');
+            Route::put('/onu/{onu}', [OnuController::class, 'update'])->middleware(['permission:network.olts_onus', 'permission:network.configure', 'throttle:20,1'])->name('onu.update');
+            Route::post('/onu/{onu}/reboot', [OnuController::class, 'reboot'])->middleware(['permission:network.olts_onus', 'permission:network.reboot', 'throttle:6,1'])->name('onu.reboot');
+            Route::post('/onu/{onu}/factory-reset', [OnuController::class, 'factoryReset'])->middleware(['permission:network.olts_onus', 'permission:network.configure', 'throttle:3,1'])->name('onu.factory-reset');
+            Route::get('/onu/{onu}/optical', [OnuController::class, 'optical'])->middleware(['permission:network.olts_onus', 'throttle:20,1'])->name('onu.optical');
             Route::get('/ip-pools', [IpPoolController::class, 'index'])->middleware('permission:network.ip_pools')->name('ip-pools');
             Route::get('/ip-pools/create', [IpPoolController::class, 'create'])->middleware('permission:network.ip_pools')->middleware('permission:network.configure')->name('ip-pools.create');
             Route::post('/ip-pools', [IpPoolController::class, 'store'])->middleware('permission:network.ip_pools')->middleware('permission:network.configure')->name('ip-pools.store');

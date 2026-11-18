@@ -261,6 +261,13 @@
 
                     <!-- Total PON Ports -->
                     <div>
+                        <label class="block text-[11px] font-semibold text-slate-700 mb-1" for="pon_ports">{{ __('PON addresses (one per line)') }}</label>
+                        <textarea id="pon_ports" name="pon_ports" rows="3" class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-cyan-500">{{ old('pon_ports', collect($olt->pon_port_map ?? [])->map(fn ($index, $port) => $port . ($index ? '=' . $index : ''))->implode("\n")) }}</textarea>
+                        <span class="text-[10.5px] text-slate-500">{{ __('Add =FDB index after an address when required by the device.') }}</span>
+                        @error('pon_ports')<span class="block text-xs text-rose-600">{{ $message }}</span>@enderror
+                    </div>
+
+                    <div>
                         <label class="block text-[11px] font-semibold text-slate-700 mb-1">
                             {{ __('Total PON Ports') }} <span class="text-rose-500">*</span>
                         </label>

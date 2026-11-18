@@ -65,7 +65,7 @@
         <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap flex-shrink-0">
             <!-- Manual OLT & ONU Sync Button -->
             <button type="button" 
-                    @click="syncAllOlts()" 
+                    @click="syncAllOlts()" x-show="canConfigure"
                     :disabled="syncingAll || linkingClients"
                     class="h-[34px] px-3.5 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs shadow-xs transition inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-60"
                     title="{{ __('Synchronize all live OLT hardware gateways and pull connected ONUs') }}">
@@ -75,7 +75,7 @@
 
             <!-- Auto-Link Clients Button -->
             <button type="button" 
-                    @click="autoLinkClients()" 
+                    @click="autoLinkClients()" x-show="canConfigure"
                     :disabled="syncingAll || linkingClients"
                     class="h-[34px] px-3 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs shadow-2xs transition inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-60"
                     title="{{ __('Re-match all ONUs with existing customers via Router MAC, Calling Station ID, and PPPoE user') }}">
@@ -213,9 +213,10 @@
                         <option value="">{{ __('All Statuses') }}</option>
                         <option value="online" {{ $statusFilter === 'online' ? 'selected' : '' }}>{{ __('Online') }}</option>
                         <option value="offline" {{ $statusFilter === 'offline' ? 'selected' : '' }}>{{ __('Offline') }}</option>
-                        <option value="good" {{ $statusFilter === 'good' ? 'selected' : '' }}>{{ __('Good (≥ -20 dBm)') }}</option>
-                        <option value="warning" {{ $statusFilter === 'warning' ? 'selected' : '' }}>{{ __('Warning (-21 to -26)') }}</option>
-                        <option value="critical" {{ $statusFilter === 'critical' ? 'selected' : '' }}>{{ __('Critical (< -26 dBm)') }}</option>
+                        <option value="unknown" {{ $statusFilter === 'unknown' ? 'selected' : '' }}>{{ __('Unknown') }}</option>
+                        <option value="good" {{ $statusFilter === 'good' ? 'selected' : '' }}>{{ __('Good') }}</option>
+                        <option value="warning" {{ $statusFilter === 'warning' ? 'selected' : '' }}>{{ __('Warning') }}</option>
+                        <option value="critical" {{ $statusFilter === 'critical' ? 'selected' : '' }}>{{ __('Critical') }}</option>
                     </select>
                 </div>
 
@@ -356,14 +357,9 @@
                     <tr>
                         <th class="w-10 text-center font-semibold">#</th>
                         <th class="text-center font-semibold">{{ __('Client / ONU Name') }}</th>
-                        <th class="text-center font-semibold">{{ __('Area') }}</th>
                         <th class="text-center font-semibold">{{ __('OLT Gateway') }}</th>
                         <th class="text-center font-semibold">{{ __('PON:ONU ID') }}</th>
-                        <th class="text-center font-semibold">{{ __('ONU MAC') }}</th>
-                        <th class="text-center font-semibold">{{ __('Router MAC') }}</th>
-                        <th class="text-center font-semibold">{{ __('Type') }}</th>
                         <th class="text-center font-semibold">{{ __('Optical Power') }}</th>
-                        <th class="text-center font-semibold">{{ __('Distance') }}</th>
                         <th class="text-center font-semibold">{{ __('Status') }}</th>
                         <th class="w-10 text-center font-semibold no-sort">{{ __('Action') }}</th>
                     </tr>
@@ -379,8 +375,8 @@
                                 default => 'bg-cyan-50 text-cyan-700 border-cyan-200'
                             };
                             $routerMacDisplay = $onu->router_mac ?: ($onu->auto_router_mac ?: ($onu->customer->mac_address ?? null));
-                            $clientNameDisplay = $onu->resolved_client_name ?: ($onu->customer->name ?? ($onu->name ?: __('Unnamed Terminal')));
-                            $areaDisplay = $onu->resolved_area ?: ($onu->customer?->zone ?: ($onu->customer?->coverageZone?->name ?? null));
+                            $clientNameDisplay = $onu->resolved_client_name ?: ($onu->customer->name ?? ($onu->local_name ?: ($onu->name ?: __('Unnamed Terminal'))));
+                            $areaDisplay = $onu->resolved_area ?: ($onu->customer?->coverageZone?->name ?? null);
                             $pppoeUserDisplay = $onu->pppoe_username ?: ($onu->customer->username ?? null);
                             $customerId = $onu->customer_id ?: ($onu->linked_customer_id ?? null);
                             $onuPayload = [
@@ -392,26 +388,26 @@
                                 'onu_id' => $onu->onu_id,
                                 'name' => $clientNameDisplay,
                                 'area' => $areaDisplay,
-                                'desc' => $onu->desc,
+                                'desc' => $onu->local_desc ?? $onu->desc,
                                 'mac_address' => $onu->mac_address,
                                 'router_mac' => $routerMacDisplay ?: '',
-                                'vendor' => $onu->vendor ?: 'VSOL',
-                                'model' => $onu->model ?: '1GE ONU',
+                                'vendor' => $onu->vendor ?: __('Unknown'),
+                                'model' => $onu->model ?: __('Unknown'),
                                 'onu_type' => $onuType,
                                 'vlan_id' => $onu->vlan_id,
                                 'vlan_mode' => $onu->vlan_mode ?: 'tag',
                                 'service_mode' => $onu->service_mode ?: 'bridge',
                                 'pppoe_username' => $pppoeUserDisplay,
-                                'pppoe_password' => $onu->pppoe_password,
                                 'lan1_state' => $onu->lan1_state ?: 'enable',
                                 'wifi_ssid' => $onu->wifi_ssid,
-                                'wifi_password' => $onu->wifi_password,
                                 'catv_state' => $onu->catv_state ?: 'enable',
                                 'bandwidth_profile' => $onu->bandwidth_profile,
+                                'capabilities' => $onuCapabilities[$onu->olt_id] ?? ['configure' => [], 'reboot' => false, 'factory_reset' => false],
                                 'status' => $onu->status,
                                 'rx_power_dbm' => $onu->rx_power_dbm,
                                 'tx_power_dbm' => $onu->tx_power_dbm,
                                 'distance_m' => $onu->distance_m,
+                                'optical_observed_at' => $onu->optical_observed_at?->toIso8601String(),
                                 'signal_label' => __($sig['label']),
                                 'signal_badge' => $sig['badge'],
                                 'updated_at' => $onu->updated_at ? $onu->updated_at->diffForHumans() : __('Recently')
@@ -442,17 +438,6 @@
                                 @endif
                             </td>
 
-                            <!-- 3. Area (Left Align) -->
-                            <td class="text-left whitespace-nowrap">
-                                @if($areaDisplay)
-                                    <span class="inline-flex items-center gap-1 text-slate-700 font-medium">
-                                        <i class="fas fa-location-dot text-[9px] text-cyan-500"></i>
-                                        <span>{{ $areaDisplay }}</span>
-                                    </span>
-                                @else
-                                    <span class="text-slate-400 text-xs">--</span>
-                                @endif
-                            </td>
 
                             <!-- 4. OLT Gateway (Left Align) -->
                             <td class="text-left whitespace-nowrap">
@@ -477,44 +462,8 @@
                                 </a>
                             </td>
 
-                            <!-- 6. ONU MAC (Center Align, font-mono) -->
-                            <td class="text-center font-mono text-slate-800 whitespace-nowrap">
-                                <span class="inline-flex items-center gap-1">
-                                    <span>{{ $onu->mac_address ?: '--' }}</span>
-                                    @if($onu->mac_address)
-                                        <button type="button" 
-                                                @click="copyToClipboard('{{ $onu->mac_address }}', i18n.onuMac)" 
-                                                class="text-slate-400 hover:text-cyan-600 text-[10px] cursor-pointer" 
-                                                title="{{ __('Copy ONU MAC') }}">
-                                            <i class="fas fa-copy"></i>
-                                        </button>
-                                    @endif
-                                </span>
-                            </td>
 
-                            <!-- 7. Router MAC (Center Align, font-mono) -->
-                            <td class="text-center font-mono whitespace-nowrap">
-                                @if($routerMacDisplay)
-                                    <span class="inline-flex items-center gap-1 text-slate-800">
-                                        <span>{{ $routerMacDisplay }}</span>
-                                        <button type="button" 
-                                                @click="copyToClipboard('{{ $routerMacDisplay }}', i18n.routerMac)" 
-                                                class="text-slate-400 hover:text-cyan-600 text-[10px] cursor-pointer" 
-                                                title="{{ __('Copy Router MAC') }}">
-                                            <i class="fas fa-copy"></i>
-                                        </button>
-                                    </span>
-                                @else
-                                    <span class="text-slate-400 text-xs">--</span>
-                                @endif
-                            </td>
 
-                            <!-- 8. Type (Center Align) -->
-                            <td class="text-center font-mono whitespace-nowrap">
-                                <span class="inline-flex px-1.5 py-0.5 rounded text-[10px] border {{ $typeBadge }}">
-                                    {{ $onuType }}
-                                </span>
-                            </td>
 
                             <!-- 9. Optical Power (Center Align, font-mono) -->
                             <td class="text-center font-mono whitespace-nowrap">
@@ -537,10 +486,6 @@
                                 @endif
                             </td>
 
-                            <!-- 10. Distance (Center Align, font-mono) -->
-                            <td class="text-center font-mono text-slate-700 whitespace-nowrap">
-                                {{ $onu->distance_m !== null ? $onu->distance_m . 'm' : '--' }}
-                            </td>
 
                             <!-- 11. Status (Center Align) -->
                             <td class="text-center whitespace-nowrap">
@@ -552,7 +497,7 @@
                                 @else
                                     <span class="inline-flex items-center justify-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200">
                                         <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
-                                        <span>{{ __('Offline') }}</span>
+                                        <span>{{ __(['offline' => 'Offline', 'los' => 'LOS', 'unregistered' => 'Unregistered', 'unknown' => 'Unknown'][$onu->status] ?? 'Unknown') }}</span>
                                     </span>
                                 @endif
                             </td>
@@ -569,7 +514,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="12" class="py-10 text-center">
+                            <td colspan="7" class="py-10 text-center">
                                 <div class="max-w-md mx-auto space-y-2.5">
                                     <div class="w-10 h-10 rounded-xl bg-cyan-50 text-cyan-600 mx-auto flex items-center justify-center text-base border border-cyan-100 shadow-xs">
                                         <i class="fas fa-satellite-dish"></i>
@@ -624,7 +569,7 @@
         <!-- Group 1: Configuration & Telemetry -->
         <div class="py-0.5">
             <button type="button" 
-                    @click="configureFromMenu('config')" 
+                    @click="configureFromMenu('config')" x-show="canConfigure"
                     class="w-full px-2.5 py-1.5 hover:bg-cyan-50 text-slate-700 hover:text-cyan-700 font-normal flex items-center gap-2 transition text-left cursor-pointer text-[11px]">
                 <i class="fas fa-sliders-h text-cyan-600 w-3.5 text-center text-[10px]"></i>
                 <span>{{ __('Configure Settings') }}</span>
@@ -641,21 +586,21 @@
                     @click="configureFromMenu('optical')" 
                     class="w-full px-2.5 py-1.5 hover:bg-purple-50 text-slate-700 hover:text-purple-700 font-normal flex items-center gap-2 transition text-left cursor-pointer text-[11px]">
                 <i class="fas fa-signal text-purple-600 w-3.5 text-center text-[10px]"></i>
-                <span>{{ __('View Optical Telemetry') }}</span>
+                <span>{{ __('View Details') }}</span>
             </button>
         </div>
 
         <!-- Group 2: Remote Operations -->
         <div class="py-0.5">
             <button type="button" 
-                    @click="rebootFromMenu()" 
+                    @click="rebootFromMenu()" x-show="canReboot && activeMenuOnu?.capabilities?.reboot"
                     class="w-full px-2.5 py-1.5 hover:bg-amber-50 text-amber-700 font-normal flex items-center gap-2 transition text-left cursor-pointer text-[11px]">
                 <i class="fas fa-power-off text-amber-600 w-3.5 text-center text-[10px]"></i>
                 <span>{{ __('Reboot Terminal') }}</span>
             </button>
 
             <button type="button" 
-                    @click="factoryResetFromMenu()" 
+                    @click="factoryResetFromMenu()" x-show="canConfigure && activeMenuOnu?.capabilities?.factory_reset"
                     class="w-full px-2.5 py-1.5 hover:bg-rose-50 text-rose-600 font-normal flex items-center gap-2 transition text-left cursor-pointer text-[11px]">
                 <i class="fas fa-rotate-left text-rose-500 w-3.5 text-center text-[10px]"></i>
                 <span>{{ __('Factory Reset ONU') }}</span>
@@ -742,11 +687,13 @@
 
                         <!-- TAB 1: Configuration -->
                         <div x-show="manageModal.activeTab === 'config'" class="space-y-3">
+                            <div class="text-xs text-slate-500">{{ __('Unavailable settings are not supported by this device driver.') }}</div>
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <!-- Service Mode -->
                                 <div>
                                     <label class="block text-[11px] font-semibold text-slate-700 mb-1">{{ __('Service / WAN Mode') }}</label>
                                     <select x-model="manageModal.form.service_mode" 
+                                            :disabled="!canConfigure || !(manageModal.onu?.capabilities?.configure || []).includes('service_mode')"
                                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                                         <option value="bridge">{{ __('Bridge Mode') }}</option>
                                         <option value="pppoe">{{ __('PPPoE Router Mode') }}</option>
@@ -760,6 +707,7 @@
                                     <label class="block text-[11px] font-semibold text-slate-700 mb-1">{{ __('VLAN ID') }}</label>
                                     <input type="number" 
                                            x-model="manageModal.form.vlan_id" 
+                                            :disabled="!canConfigure || !(manageModal.onu?.capabilities?.configure || []).includes('vlan_id')"
                                            placeholder="{{ __('e.g. 100') }}" 
                                            min="1" max="4094"
                                            class="w-full h-[34px] px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition" />
@@ -769,6 +717,7 @@
                                 <div>
                                     <label class="block text-[11px] font-semibold text-slate-700 mb-1">{{ __('VLAN Mode') }}</label>
                                     <select x-model="manageModal.form.vlan_mode" 
+                                            :disabled="!canConfigure || !(manageModal.onu?.capabilities?.configure || []).includes('vlan_mode')"
                                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                                         <option value="tag">{{ __('Tagged') }}</option>
                                         <option value="untag">{{ __('Untagged') }}</option>
@@ -781,6 +730,7 @@
                                 <div>
                                     <label class="block text-[11px] font-semibold text-slate-700 mb-1">{{ __('LAN Port 1 State') }}</label>
                                     <select x-model="manageModal.form.lan1_state" 
+                                            :disabled="!canConfigure || !(manageModal.onu?.capabilities?.configure || []).includes('lan1_state')"
                                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                                         <option value="enable">{{ __('Enabled') }}</option>
                                         <option value="disable">{{ __('Disabled') }}</option>
@@ -791,13 +741,9 @@
                                 <div>
                                     <label class="block text-[11px] font-semibold text-slate-700 mb-1">{{ __('Bandwidth Profile') }}</label>
                                     <select x-model="manageModal.form.bandwidth_profile" 
+                                            :disabled="!canConfigure || !(manageModal.onu?.capabilities?.configure || []).includes('bandwidth_profile')"
                                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
-                                        <option value="">{{ __('Default (Unlimited)') }}</option>
-                                        <option value="10M">{{ __('10 Mbps') }}</option>
-                                        <option value="20M">{{ __('20 Mbps') }}</option>
-                                        <option value="30M">{{ __('30 Mbps') }}</option>
-                                        <option value="50M">{{ __('50 Mbps') }}</option>
-                                        <option value="100M">{{ __('100 Mbps') }}</option>
+                                        <option value="">{{ __('Not supported by this device driver') }}</option>
                                     </select>
                                 </div>
 
@@ -805,6 +751,7 @@
                                 <div>
                                     <label class="block text-[11px] font-semibold text-slate-700 mb-1">{{ __('CATV RF Port') }}</label>
                                     <select x-model="manageModal.form.catv_state" 
+                                            :disabled="!canConfigure || !(manageModal.onu?.capabilities?.configure || []).includes('catv_state')"
                                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                                         <option value="enable">{{ __('Enabled') }}</option>
                                         <option value="disable">{{ __('Disabled') }}</option>
@@ -820,6 +767,7 @@
                                         <label class="block text-[10.5px] text-slate-500 mb-1">{{ __('Username') }}</label>
                                         <input type="text" 
                                                x-model="manageModal.form.pppoe_username" 
+                                            :disabled="!canConfigure || !(manageModal.onu?.capabilities?.configure || []).includes('pppoe_username')"
                                                placeholder="client_pppoe_user" 
                                                class="w-full h-[34px] px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition" />
                                     </div>
@@ -827,6 +775,7 @@
                                         <label class="block text-[10.5px] text-slate-500 mb-1">{{ __('Password') }}</label>
                                         <input type="password" 
                                                x-model="manageModal.form.pppoe_password" 
+                                            :disabled="!canConfigure || !(manageModal.onu?.capabilities?.configure || []).includes('pppoe_password')"
                                                placeholder="••••••••" 
                                                class="w-full h-[34px] px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition" />
                                     </div>
@@ -841,6 +790,7 @@
                                         <label class="block text-[10.5px] text-slate-500 mb-1">{{ __('SSID Name') }}</label>
                                         <input type="text" 
                                                x-model="manageModal.form.wifi_ssid" 
+                                            :disabled="!canConfigure || !(manageModal.onu?.capabilities?.configure || []).includes('wifi_ssid')"
                                                placeholder="{{ __('e.g. Home_WiFi_2.4G') }}" 
                                                class="w-full h-[34px] px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition" />
                                     </div>
@@ -848,6 +798,7 @@
                                         <label class="block text-[10.5px] text-slate-500 mb-1">{{ __('WPA Key / Password') }}</label>
                                         <input type="text" 
                                                x-model="manageModal.form.wifi_password" 
+                                            :disabled="!canConfigure || !(manageModal.onu?.capabilities?.configure || []).includes('wifi_password')"
                                                placeholder="{{ __('Minimum 8 characters') }}" 
                                                class="w-full h-[34px] px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition" />
                                     </div>
@@ -861,6 +812,7 @@
                                 <label class="block text-[11px] font-semibold text-slate-700 mb-1">{{ __('Terminal Description / Customer Name') }}</label>
                                 <input type="text" 
                                        x-model="manageModal.form.name" 
+                                            :disabled="!canConfigure"
                                        placeholder="{{ __('e.g. John Doe - Home Connection') }}" 
                                        class="w-full h-[34px] px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition" />
                             </div>
@@ -869,6 +821,7 @@
                                 <label class="block text-[11px] font-semibold text-slate-700 mb-1">{{ __('Client Wi-Fi Router WAN MAC Address') }}</label>
                                 <input type="text" 
                                        x-model="manageModal.form.router_mac" 
+                                            :disabled="!canConfigure"
                                        placeholder="{{ __('e.g. 50:D4:F7:AA:BB:CC') }}" 
                                        class="w-full h-[34px] px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition" />
                             </div>
@@ -876,6 +829,7 @@
                             <div>
                                 <label class="block text-[11px] font-semibold text-slate-700 mb-1">{{ __('Notes / Physical Address / Drop Cable Line') }}</label>
                                 <textarea x-model="manageModal.form.desc" 
+                                            :disabled="!canConfigure"
                                           rows="3" 
                                           placeholder="{{ __('e.g. TJ Box #4, Port 3, Fiber core 2 blue...') }}" 
                                           class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition resize-none"></textarea>
@@ -884,11 +838,18 @@
 
                         <!-- TAB 3: Optical Status -->
                         <div x-show="manageModal.activeTab === 'optical'" class="space-y-3">
+                            <div class="text-xs text-slate-500">{{ __('Last Reading') }}: <span x-text="manageModal.onu.optical_observed_at ? new Date(manageModal.onu.optical_observed_at).toLocaleString() : '--'"></span></div>
+                            <div class="grid grid-cols-2 gap-2 text-xs">
+                                <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200/80">{{ __('Area') }}: <span x-text="manageModal.onu.area || '--'"></span></div>
+                                <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200/80">{{ __('Type') }}: <span x-text="manageModal.onu.onu_type || '--'"></span></div>
+                                <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200/80">{{ __('ONU MAC') }}: <span x-text="manageModal.onu.mac_address || '--'"></span></div>
+                                <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200/80">{{ __('Router MAC') }}: <span x-text="manageModal.onu.router_mac || '--'"></span></div>
+                            </div>
                             <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                                 <div class="p-3 bg-slate-50 rounded-lg border border-slate-200 text-center">
                                     <span class="text-[10px] text-slate-500 uppercase block font-medium">{{ __('Rx Optical Power') }}</span>
                                     <span class="text-sm font-mono font-bold block mt-1" 
-                                          :class="manageModal.onu.rx_power_dbm < -26 ? 'text-rose-600' : (manageModal.onu.rx_power_dbm < -20 ? 'text-amber-600' : 'text-emerald-600')"
+                                          :class="manageModal.onu.rx_power_dbm < {{ config('onu.signal.warning_min_dbm') }} ? 'text-rose-600' : (manageModal.onu.rx_power_dbm < {{ config('onu.signal.good_min_dbm') }} ? 'text-amber-600' : 'text-emerald-600')"
                                           x-text="manageModal.onu.rx_power_dbm !== null ? manageModal.onu.rx_power_dbm + ' dBm' : '--'"></span>
                                 </div>
 
@@ -938,7 +899,7 @@
                             {{ __('Cancel') }}
                         </button>
                         <button type="button" 
-                                @click="saveOnuConfig()" 
+                                @click="saveOnuConfig()" x-show="canConfigure"
                                 :disabled="manageModal.saving" 
                                 class="h-[34px] px-4 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50">
                             <i class="fas fa-check text-[10px]" :class="{ 'fa-spinner fa-spin': manageModal.saving }"></i>
@@ -956,6 +917,8 @@
 <script>
 function onuManager() {
     return {
+        canConfigure: @js(auth()->user()->hasPermission('network.configure')),
+        canReboot: @js(auth()->user()->hasPermission('network.reboot')),
         i18n: {
             syncingOlts: @js(__('Syncing OLTs...')),
             syncFromOlts: @js(__('Sync from OLTs')),
@@ -1225,7 +1188,8 @@ function onuManager() {
                         'Content-Type': 'application/json',
                         'Accept': 'application/json',
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    }
+                    },
+                    body: JSON.stringify({ confirm_onu_id: onuId })
                 });
                 const data = await response.json();
                 if (data.success) {
@@ -1275,6 +1239,7 @@ function onuManager() {
             this.manageModal.form.wifi_password = onuData.wifi_password || '';
             this.manageModal.form.catv_state = onuData.catv_state || 'enable';
             this.manageModal.form.bandwidth_profile = onuData.bandwidth_profile || '';
+            this.manageModal.originalForm = { ...this.manageModal.form };
             this.manageModal.open = true;
         },
 
@@ -1293,25 +1258,16 @@ function onuManager() {
                         'Accept': 'application/json',
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     },
-                    body: JSON.stringify({
-                        name: this.manageModal.form.name,
-                        desc: this.manageModal.form.desc,
-                        router_mac: this.manageModal.form.router_mac || null,
-                        vlan_id: this.manageModal.form.vlan_id || null,
-                        vlan_mode: this.manageModal.form.vlan_mode,
-                        service_mode: this.manageModal.form.service_mode,
-                        pppoe_username: this.manageModal.form.pppoe_username,
-                        pppoe_password: this.manageModal.form.pppoe_password,
-                        lan1_state: this.manageModal.form.lan1_state,
-                        wifi_ssid: this.manageModal.form.wifi_ssid,
-                        wifi_password: this.manageModal.form.wifi_password,
-                        catv_state: this.manageModal.form.catv_state,
-                        bandwidth_profile: this.manageModal.form.bandwidth_profile
-                    })
+                    body: JSON.stringify(Object.fromEntries(
+                        Object.entries(this.manageModal.form).filter(([key, value]) =>
+                            ['name', 'desc', 'router_mac', ...(this.manageModal.onu.capabilities?.configure || [])].includes(key)
+                            && String(value ?? '') !== String(this.manageModal.originalForm[key] ?? '')
+                        )
+                    ))
                 });
                 const data = await response.json();
                 if (data.success) {
-                    this.manageModal.onu = { ...this.manageModal.onu, ...this.manageModal.form };
+                    this.manageModal.onu = { ...this.manageModal.onu, ...data.onu };
                     this.showToast(data.message || this.i18n.configSavedFallback, 'success');
                     
                     const nameEl = document.getElementById(`onu-name-${this.manageModal.onu.id}`);
@@ -1329,6 +1285,17 @@ function onuManager() {
             }
         },
 
+        async waitForOperation(url) {
+            for (let attempt = 0; attempt < 150; attempt++) {
+                await new Promise(resolve => setTimeout(resolve, 6000));
+                const response = await fetch(url, { headers: { Accept: 'application/json' } });
+                if (!response.ok) throw new Error('Operation status unavailable');
+                const result = await response.json();
+                if (!['queued', 'running'].includes(result.state)) return result;
+            }
+            return { success: false, message: @js(__('ONU operation is still pending. Check again later.')) };
+        },
+
         async refreshOptical() {
             if (!this.manageModal.onu) return;
             this.manageModal.refreshingOptical = true;
@@ -1342,6 +1309,7 @@ function onuManager() {
                 });
                 const data = await response.json();
                 if (data.success && data.telemetry) {
+                    this.manageModal.onu.optical_observed_at = data.telemetry.updated_at;
                     if (data.telemetry.rx_power_dbm !== undefined) {
                         this.manageModal.onu.rx_power_dbm = data.telemetry.rx_power_dbm;
                     }
@@ -1353,20 +1321,23 @@ function onuManager() {
                     }
 
                     const rx = this.manageModal.onu.rx_power_dbm;
-                    if (rx !== null && rx !== undefined) {
-                        if (rx >= -20.0) {
+                    if (rx !== null && rx !== undefined && Number(rx) !== 0) {
+                        if (rx >= {{ config('onu.signal.good_min_dbm') }}) {
                             this.manageModal.onu.signal_label = this.i18n.signalGood;
                             this.manageModal.onu.signal_badge = 'bg-emerald-50 text-emerald-700 border-emerald-200';
-                        } else if (rx >= -26.0 && rx < -20.0) {
+                        } else if (rx >= {{ config('onu.signal.warning_min_dbm') }}) {
                             this.manageModal.onu.signal_label = this.i18n.signalWarning;
                             this.manageModal.onu.signal_badge = 'bg-amber-50 text-amber-700 border-amber-200';
                         } else {
                             this.manageModal.onu.signal_label = this.i18n.signalCritical;
                             this.manageModal.onu.signal_badge = 'bg-rose-50 text-rose-700 border-rose-200';
                         }
+                    } else {
+                        this.manageModal.onu.signal_label = @js(__('N/A'));
+                        this.manageModal.onu.signal_badge = 'bg-slate-100 text-slate-600 border-slate-200';
                     }
 
-                    this.showToast(this.i18n.liveTelemetryUpdated, 'success');
+                    this.showToast(data.message, data.source === 'live' ? 'success' : 'info');
                 } else {
                     this.showToast(data.message || this.i18n.fetchTelemetryFailFallback, 'info');
                 }
@@ -1667,7 +1638,7 @@ function onuManager() {
                 });
                 const data = await response.json();
                 if (data.success) {
-                    this.showToast(this.i18n.opticalUpdatedToast, 'success');
+                    this.showToast(data.message, data.source === 'live' ? 'success' : 'info');
                     setTimeout(() => {
                         window.location.reload();
                     }, 800);
