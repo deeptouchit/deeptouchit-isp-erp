@@ -143,22 +143,24 @@
     </div>
 
     <!-- 3. Search & Multi-Filter Toolbar (AGENTS.md Rule 2.C) -->
-    <div class="bg-white p-2.5 rounded-xl border border-slate-200 shadow-xs">
-        <form method="GET" action="{{ route('reseller.customers.index') }}" class="flex flex-wrap items-center gap-2">
-            
-            <!-- Search Box -->
-            <div class="relative flex-1 min-w-[160px] sm:max-w-xs">
-                <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
-                <input type="text" 
-                       name="search" 
-                       value="{{ $search }}" 
-                       placeholder="{{ __('Search') }} ({{ __('Username') }}, {{ __('Customer Name') }}, {{ __('Phone Number') }})..." 
-                       class="w-full pl-8 pr-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:border-cyan-500 shadow-2xs">
-            </div>
+    <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5"
+         x-data="{ showMoreFilters: {{ in_array($packageId, ['all', null], true) && in_array($zone, ['all', null], true) && in_array($onlineStatus, ['all', null], true) ? 'false' : 'true' }}, searchQuery: @js((string) $search) }">
+        <form method="GET" action="{{ route('reseller.customers.index') }}" class="space-y-2.5">
+            <div class="flex flex-col md:flex-row items-stretch md:items-center gap-2">
+                <div class="relative flex-1 min-w-[200px]">
+                    <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-xs pointer-events-none"
+                       :class="searchQuery ? 'text-cyan-600 font-bold' : 'text-slate-400'"></i>
+                    <input type="text" name="search" x-model="searchQuery"
+                           placeholder="{{ __('Search by Name, ID, Phone or Username') }}"
+                           class="h-[34px] w-full pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden">
+                    <button type="button" x-show="searchQuery.length > 0"
+                            @click="searchQuery = ''; $nextTick(() => $el.closest('form').submit())"
+                            class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500">
+                        <i class="fas fa-times-circle text-[10px]"></i>
+                    </button>
+                </div>
 
-            <!-- Status Filter -->
-            <div class="w-28 sm:w-32">
-                <select name="status" onchange="this.form.submit()" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:border-cyan-500 shadow-2xs">
+                <select name="status" class="h-[34px] w-full md:w-36 bg-slate-50 border border-slate-200 rounded-lg px-2.5 text-xs">
                     <option value="all" {{ $status === 'all' ? 'selected' : '' }}>{{ __('All Status') }}</option>
                     <option value="active" {{ $status === 'active' ? 'selected' : '' }}>{{ __('Active') }}</option>
                     <option value="due" {{ $status === 'due' ? 'selected' : '' }}>{{ __('Due / Unpaid') }}</option>
@@ -166,61 +168,54 @@
                     <option value="disabled" {{ $status === 'disabled' ? 'selected' : '' }}>{{ __('Disabled') }}</option>
                     <option value="disconnected" {{ $status === 'disconnected' ? 'selected' : '' }}>{{ __('Disconnected') }}</option>
                 </select>
+
+                <select name="per_page" class="h-[34px] w-full md:w-28 bg-slate-50 border border-slate-200 rounded-lg px-2.5 text-xs">
+                    @foreach([10,20,50,100] as $limit)
+                        <option value="{{ $limit }}" {{ (int) $perPage === $limit ? 'selected' : '' }}>{{ $limit }} / {{ __('Page') }}</option>
+                    @endforeach
+                </select>
+
+                <button type="button" @click="showMoreFilters = !showMoreFilters"
+                        class="h-[34px] px-3 bg-slate-100 hover:bg-slate-200 border border-slate-200/80 rounded-lg text-xs font-semibold flex items-center gap-1.5">
+                    {{ __('More Filters') }}
+                    <span class="px-1.5 rounded-full bg-white border border-slate-200 text-[9px]">
+                        {{ (($packageId !== 'all' && $packageId) ? 1 : 0) + (($zone !== 'all' && $zone) ? 1 : 0) + (($onlineStatus !== 'all' && $onlineStatus) ? 1 : 0) }}
+                    </span>
+                    <i class="fas text-[9px]" :class="showMoreFilters ? 'fa-chevron-up text-cyan-600' : 'fa-chevron-down text-slate-400'"></i>
+                </button>
+
+                <div class="flex items-center gap-1.5 flex-shrink-0 md:ml-auto">
+                    <button type="submit" class="h-[34px] bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-0 px-3 rounded-lg shadow-xs flex items-center gap-1.5">
+                        <i class="fas fa-filter text-[10px]"></i><span>{{ __('Filter') }}</span>
+                    </button>
+                    <a href="{{ route('reseller.customers.index') }}" class="h-[34px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-0 px-2.5 rounded-lg border border-slate-200/80 flex items-center gap-1">
+                        <i class="fas fa-rotate-left text-[10px]"></i><span>{{ __('Reset') }}</span>
+                    </a>
+                </div>
             </div>
 
-            <!-- Package Filter -->
-            <div class="w-32 sm:w-36">
-                <select name="package_id" onchange="this.form.submit()" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:border-cyan-500 shadow-2xs">
+            <div x-show="showMoreFilters" x-cloak x-transition
+                 class="pt-2 border-t border-slate-100 flex flex-wrap items-center gap-2">
+                <select name="package_id" class="h-[34px] min-w-[150px] bg-slate-50 border border-slate-200 rounded-lg px-2.5 text-xs">
                     <option value="all" {{ $packageId === 'all' ? 'selected' : '' }}>{{ __('All Packages') }}</option>
                     @foreach($packages as $pkg)
-                        <option value="{{ $pkg->id }}" {{ (string)$packageId === (string)$pkg->id ? 'selected' : '' }}>
-                            {{ $pkg->name ?: ($pkg->mikrotik_profile ?: ($pkg->package_name ?: 'Package #' . $pkg->id)) }}
+                        <option value="{{ $pkg->id }}" {{ (string) $packageId === (string) $pkg->id ? 'selected' : '' }}>
+                            {{ $pkg->package_display_name ?? ($pkg->name ?: ($pkg->mikrotik_profile ?: 'Package #' . $pkg->id)) }}
                         </option>
                     @endforeach
                 </select>
-            </div>
-
-            <!-- Zone Filter -->
-            <div class="w-28 sm:w-32">
-                <select name="zone" onchange="this.form.submit()" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:border-cyan-500 shadow-2xs">
+                <select name="zone" class="h-[34px] min-w-[130px] bg-slate-50 border border-slate-200 rounded-lg px-2.5 text-xs">
                     <option value="all" {{ $zone === 'all' ? 'selected' : '' }}>{{ __('All Zones') }}</option>
                     @foreach($zones as $z)
                         <option value="{{ $z }}" {{ $zone === $z ? 'selected' : '' }}>{{ $z }}</option>
                     @endforeach
                 </select>
-            </div>
-
-            <!-- Live Session Filter -->
-            <div class="w-24 sm:w-28">
-                <select name="online_status" onchange="this.form.submit()" class="w-full px-2 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:border-cyan-500 shadow-2xs">
-                    <option value="all" {{ $onlineStatus === 'all' ? 'selected' : '' }}>{{ __('All Live') ?? 'All' }}</option>
-                    <option value="online" {{ $onlineStatus === 'online' ? 'selected' : '' }}>🟢 {{ __('Online') }}</option>
-                    <option value="offline" {{ $onlineStatus === 'offline' ? 'selected' : '' }}>⚪ {{ __('Offline') }}</option>
+                <select name="online_status" class="h-[34px] w-28 bg-slate-50 border border-slate-200 rounded-lg px-2.5 text-xs">
+                    <option value="all" {{ $onlineStatus === 'all' ? 'selected' : '' }}>{{ __('All Live') }}</option>
+                    <option value="online" {{ $onlineStatus === 'online' ? 'selected' : '' }}>{{ __('Online') }}</option>
+                    <option value="offline" {{ $onlineStatus === 'offline' ? 'selected' : '' }}>{{ __('Offline') }}</option>
                 </select>
             </div>
-
-            <!-- Per Page Selector -->
-            <div class="w-20 sm:w-24">
-                <select name="per_page" onchange="this.form.submit()" class="w-full px-2 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:border-cyan-500 shadow-2xs">
-                    <option value="10" {{ $perPage == 10 ? 'selected' : '' }}>10 / pg</option>
-                    <option value="20" {{ $perPage == 20 ? 'selected' : '' }}>20 / pg</option>
-                    <option value="50" {{ $perPage == 50 ? 'selected' : '' }}>50 / pg</option>
-                    <option value="100" {{ $perPage == 100 ? 'selected' : '' }}>100 / pg</option>
-                </select>
-            </div>
-
-            <!-- Strict Filter & Reset Sequence (AGENTS.md Rule 2.C) -->
-            <div class="flex items-center gap-1.5 ml-auto flex-shrink-0">
-                <button type="submit" class="bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-1.5 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer">
-                    <i class="fas fa-filter text-[10px]"></i>
-                    <span>{{ __('Filter') }}</span>
-                </button>
-                <a href="{{ route('reseller.customers.index') }}" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-1.5 px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer">
-                    <i class="fas fa-rotate-left text-[10px]"></i>
-                    <span>{{ __('Reset') }}</span>
-                </a>
-            </div>
-
         </form>
     </div>
 
@@ -230,17 +225,12 @@
             <table class="saas-table">
                 <thead>
                     <tr>
-                        <th>ID</th>
-                        <th class="w-20 text-center">{{ __('Live') }}</th>
-                        <th class="w-20 text-center">MikroTik</th>
-                        <th>{{ __('Customer Name') }}</th>
-                        <th>{{ __('Phone Number') }}</th>
-                        <th>{{ __('Username') }}</th>
-                        <th>{{ __('Zone') }}</th>
-                        <th>{{ __('Package') }}</th>
-                        <th>{{ __('Monthly Fee') }}</th>
+                        <th class="w-10 text-center no-sort">#</th>
+                        <th class="text-left">{{ __('Customer Name') }}</th>
+                        <th class="text-left">{{ __('Package') }}</th>
+                        <th class="text-right">{{ __('Monthly Fee') }}</th>
+                        <th class="text-right">{{ __('Due Amount') }}</th>
                         <th class="text-center">{{ __('Status') }}</th>
-                        <th>{{ __('Expiry Date') }}</th>
                         <th class="w-14 text-center no-sort">{{ __('Action') }}</th>
                     </tr>
                 </thead>
@@ -249,7 +239,6 @@
                         @php
                             $badge = $customer->status_badge;
                             $packageName = $customer->package_display_name ?: ($customer->package?->name ?: ($customer->package?->package_name ?: ($customer->package_name ?? 'N/A')));
-                            $initialMikrotik = $customer->mikrotik_status ?: 'enabled';
                             $rawCustomerData = [
                                 'id' => $customer->id,
                                 'customer_id' => $customer->customer_id,
@@ -267,109 +256,21 @@
                             ];
                         @endphp
                         <tr>
-                            <!-- 1. Customer ID -->
-                            <td class="font-mono text-cyan-800 font-semibold">
-                                <a href="{{ route('reseller.customers.show', $customer->id) }}" class="hover:underline hover:text-cyan-600">
-                                    {{ $customer->customer_id }}
-                                </a>
-                            </td>
-
-                            <!-- 2. Live Status (Real-time Online / Offline) -->
-                            <td class="text-center">
-                                <template x-if="getOnlineStatus('{{ $customer->username }}', '{{ $customer->online_status }}') === 'online'">
-                                    <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-semibold border bg-emerald-50 text-emerald-700 border-emerald-200 shadow-2xs">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 ring-2 ring-emerald-300 animate-pulse"></span>
-                                        <span>{{ __('Online') }}</span>
-                                    </span>
-                                </template>
-                                <template x-if="getOnlineStatus('{{ $customer->username }}', '{{ $customer->online_status }}') !== 'online'">
-                                    <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-medium border bg-slate-100 text-slate-500 border-slate-200">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
-                                        <span>{{ __('Offline') }}</span>
-                                    </span>
-                                </template>
-                            </td>
-
-                            <!-- 3. MikroTik (Direct Real-time MikroTik /ppp/secret State) -->
-                            <td class="text-center">
-                                @if($authUser && $authUser->isResellerAdmin())
-                                <button type="button" 
-                                        @click="toggleMikrotikState({{ $customer->id }}, '{{ $customer->username }}', '{{ $initialMikrotik }}', '{{ $customer->effective_status }}')" 
-                                        :title="getMikrotikState('{{ $customer->username }}', '{{ $initialMikrotik }}') === 'enabled' ? 'MikroTik Secret: ENABLED (Click to Disable)' : 'MikroTik Secret: DISABLED (Click to Enable)'"
-                                        class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[10px] font-semibold border transition cursor-pointer shadow-2xs"
-                                        :class="getMikrotikState('{{ $customer->username }}', '{{ $initialMikrotik }}') === 'enabled'
-                                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' 
-                                            : 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100'">
-                                    <span class="w-1.5 h-1.5 rounded-full"
-                                          :class="getMikrotikState('{{ $customer->username }}', '{{ $initialMikrotik }}') === 'enabled'
-                                              ? 'bg-emerald-500 ring-2 ring-emerald-300' 
-                                              : 'bg-rose-500'"></span>
-                                    <span x-text="getMikrotikState('{{ $customer->username }}', '{{ $initialMikrotik }}') === 'enabled' ? '{{ __('Active') }}' : '{{ __('Disabled') }}'">
-                                        {{ $initialMikrotik === 'enabled' ? __('Active') : __('Disabled') }}
-                                    </span>
-                                </button>
-                                @else
-                                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[10px] font-semibold border shadow-2xs"
-                                      :class="getMikrotikState('{{ $customer->username }}', '{{ $initialMikrotik }}') === 'enabled'
-                                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
-                                          : 'bg-rose-50 text-rose-700 border-rose-200'">
-                                    <span class="w-1.5 h-1.5 rounded-full"
-                                          :class="getMikrotikState('{{ $customer->username }}', '{{ $initialMikrotik }}') === 'enabled'
-                                              ? 'bg-emerald-500 ring-2 ring-emerald-300' 
-                                              : 'bg-rose-500'"></span>
-                                    <span x-text="getMikrotikState('{{ $customer->username }}', '{{ $initialMikrotik }}') === 'enabled' ? '{{ __('Active') }}' : '{{ __('Disabled') }}'">
-                                        {{ $initialMikrotik === 'enabled' ? __('Active') : __('Disabled') }}
-                                    </span>
-                                </span>
-                                @endif
-                            </td>
-
-                            <!-- 4. Name -->
+                            <td class="text-center font-mono text-slate-700">{{ $customers->firstItem() + $index }}</td>
                             <td class="font-medium text-slate-900">
                                 <a href="{{ route('reseller.customers.show', $customer->id) }}" class="hover:underline hover:text-cyan-600">
                                     {{ $customer->name }}
                                 </a>
                             </td>
-
-                            <!-- 5. Mobile -->
-                            <td class="font-mono text-slate-700">
-                                {{ $customer->phone }}
-                            </td>
-
-                            <!-- 6. PPPoE Username -->
-                            <td class="font-mono text-cyan-900 font-semibold">
-                                {{ $customer->username }}
-                            </td>
-
-                            <!-- 7. Zone -->
-                            <td class="text-center font-medium text-slate-700">
-                                {{ $customer->zone ?: '--' }}
-                            </td>
-
-                            <!-- 8. Package Name -->
-                            <td class="text-slate-800 text-center">
-                                {{ $packageName }}
-                            </td>
-
-                            <!-- 9. Monthly Bill -->
-                            <td class="text-right font-mono text-slate-800">
-                                @currency($customer->monthly_bill)
-                            </td>
-
-                            <!-- 10. Status (Active / Expired / Suspended / Due) -->
+                            <td class="text-left text-slate-800">{{ $packageName }}</td>
+                            <td class="text-right font-mono text-slate-800">@currency($customer->monthly_bill)</td>
+                            <td class="text-right font-mono text-rose-700">@currency($customer->due_amount)</td>
                             <td class="text-center">
                                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold border {{ $badge['class'] }} shadow-2xs">
                                     <span class="w-1.5 h-1.5 rounded-full {{ $badge['dot'] }}"></span>
                                     <span>{{ $badge['label'] }}</span>
                                 </span>
                             </td>
-
-                            <!-- 11. Expiry Date -->
-                            <td class="font-mono text-slate-600">
-                                {{ $customer->expiry_date ? \Carbon\Carbon::parse($customer->expiry_date)->format('d M Y') : '--' }}
-                            </td>
-
-                            <!-- 12. Action (3-Dot Floating Action Menu) -->
                             <td class="text-center">
                                 <button type="button" 
                                         @click="toggleMenu({{ $customer->id }}, $event, {{ Js::from($rawCustomerData) }})" 
@@ -380,7 +281,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="12" class="px-4 py-8 text-center text-slate-400 text-xs italic bg-slate-50/50">
+                            <td colspan="7" class="px-4 py-8 text-center text-slate-400 text-xs italic bg-slate-50/50">
                                 <i class="fas fa-users-slash text-2xl text-slate-300 mb-2 block"></i>
                                 {{ __('No customer records found matching your criteria.') ?? 'No records found.' }}
                             </td>
