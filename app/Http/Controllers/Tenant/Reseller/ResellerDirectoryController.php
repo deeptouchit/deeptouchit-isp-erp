@@ -226,11 +226,12 @@ class ResellerDirectoryController extends Controller
                 if (!$userExists) {
                     User::create([
                         'tenant_id' => $tenant->id,
+                        'reseller_id' => $reseller->id,
                         'name' => $validated['contact_person'] ?: $validated['name'],
                         'email' => $validated['email'],
                         'phone' => $validated['mobile'],
                         'password' => Hash::make($validated['portal_password'] ?: '12345678'),
-                        'role' => 'reseller',
+                        'role' => 'reseller_admin',
                         'status' => 'active',
                     ]);
                 }
