@@ -4,10 +4,7 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use App\Models\Tenant;
-use App\Models\TenantRouter;
-use App\Models\TenantCustomer;
-use App\Services\Network\MikrotikApiService;
-use Illuminate\Support\Facades\DB;
+use App\Services\Network\CustomerSessionStateService;
 
 class SyncNetworkSessionsCommand extends Command
 {
@@ -28,7 +25,7 @@ class SyncNetworkSessionsCommand extends Command
     /**
      * Execute the console command.
      */
-    public function handle(MikrotikApiService $mikrotikApi): int
+    public function handle(CustomerSessionStateService $sessionState): int
     {
         $tenantId = $this->option('tenant');
         $tenantsQuery = Tenant::query();
@@ -38,67 +35,14 @@ class SyncNetworkSessionsCommand extends Command
         $tenants = $tenantsQuery->get();
 
         foreach ($tenants as $tenant) {
-            $routers = TenantRouter::where('tenant_id', $tenant->id)->where('is_active', true)->get();
-            if ($routers->isEmpty()) {
-                $routers = TenantRouter::where('tenant_id', $tenant->id)->get();
-            }
-
-            if ($routers->isEmpty()) {
+            $result = $sessionState->syncTenant($tenant);
+            if (!$result['success']) {
+                $this->warn("Tenant [{$tenant->id}] session sources failed; existing states preserved.");
                 continue;
             }
 
-            $activeUsernames = [];
-
-            foreach ($routers as $router) {
-                try {
-                    $res = $mikrotikApi->getActivePppoe($router);
-                    if (!empty($res['success']) && !empty($res['data'])) {
-                        foreach ($res['data'] as $session) {
-                            $u = trim((string)($session['name'] ?? ''));
-                            if ($u !== '') {
-                                $activeUsernames[$u] = true;
-                            }
-                        }
-                    }
-                } catch (\Exception $e) {
-                    $this->warn("Router [{$router->name}] failed to poll active PPPoE: " . $e->getMessage());
-                }
-            }
-
-            // Also check FreeRADIUS radacct if active
-            try {
-                $radiusSessions = DB::table('radacct')
-                    ->where('tenant_id', $tenant->id)
-                    ->whereNull('acctstoptime')
-                    ->pluck('username');
-
-                foreach ($radiusSessions as $ru) {
-                    $ru = trim((string)$ru);
-                    if ($ru !== '') {
-                        $activeUsernames[$ru] = true;
-                    }
-                }
-            } catch (\Exception $e) {}
-
-            $onlineList = array_values(array_map('strval', array_keys($activeUsernames)));
-            $onlineCount = count($onlineList);
-
-            if (!empty($onlineList)) {
-                foreach (array_chunk($onlineList, 500) as $chunk) {
-                    TenantCustomer::where('tenant_id', $tenant->id)
-                        ->whereIn('username', $chunk)
-                        ->update(['online_status' => 'online']);
-                }
-
-                TenantCustomer::where('tenant_id', $tenant->id)
-                    ->whereNotIn('username', $onlineList)
-                    ->update(['online_status' => 'offline']);
-            } else {
-                TenantCustomer::where('tenant_id', $tenant->id)
-                    ->update(['online_status' => 'offline']);
-            }
-
-            $this->info("Tenant [{$tenant->id}] synced: {$onlineCount} active sessions online.");
+            $mode = $result['degraded'] ? 'degraded' : 'healthy';
+            $this->info("Tenant [{$tenant->id}] synced ({$mode}): {$result['active_count']} active sessions online.");
         }
 
         return Command::SUCCESS;

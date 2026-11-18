@@ -2153,11 +2153,22 @@ function customerMasterManager() {
                         this.mikrotikMap = Object.assign({}, this.mikrotikMap, data.mikrotik_status_map);
                     }
                     if (showNotification) {
-                        this.showToast(this.i18n.liveStatusSynced.replace(':count', data.active_count || 0), 'success');
+                        this.showToast(
+                            data.degraded ? data.message : this.i18n.liveStatusSynced.replace(':count', data.active_count || 0),
+                            data.degraded ? 'warning' : 'success'
+                        );
                     }
+                    return true;
                 }
+                if (showNotification) {
+                    this.showToast(data.message || 'Live session sync failed. Existing status was preserved.', 'error');
+                }
+                return false;
             } catch (err) {
-                // Background poll silent
+                if (showNotification) {
+                    this.showToast('Live session sources could not be reached. Existing status was preserved.', 'error');
+                }
+                return false;
             }
         },
 
@@ -2884,8 +2895,8 @@ function customerMasterManager() {
         async syncOnlineSessions() {
             this.isSyncing = true;
             this.showToast(this.i18n.queryingActiveSessions, 'info');
-            await this.pollLiveSessions(true);
-            if (@json($isOnlineRoute)) {
+            const synced = await this.pollLiveSessions(true);
+            if (synced && @json($isOnlineRoute)) {
                 await this.fetchAllVisibleTraffic();
             }
             this.isSyncing = false;

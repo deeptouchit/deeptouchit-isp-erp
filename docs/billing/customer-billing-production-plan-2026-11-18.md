@@ -187,7 +187,7 @@ Verification:
 
 ## Phase 5 — Online/Offline ও Network State
 
-অবস্থা: অপেক্ষমাণ
+অবস্থা: সম্পন্ন
 
 কাজ:
 
@@ -201,6 +201,24 @@ Acceptance criteria:
 
 - source outage-এর কারণে সব customer ভুলভাবে offline হবে না।
 - session termination ব্যর্থ হলে UI success দেখাবে না।
+
+বাস্তবায়িত পরিবর্তন:
+
+- Shared `CustomerSessionStateService` MikroTik ও FreeRADIUS source একত্রে যাচাই করে; সব source ব্যর্থ হলে existing customer state অপরিবর্তিত রাখে।
+- Successful/failed source count, `healthy`/`degraded`/`failed` status এবং source error context API ও scheduled command-এ পাওয়া যায়।
+- সফল authoritative sync-এ `last_sync_at` এবং active customer-এর `last_online_at` telemetry সংরক্ষিত হয়।
+- Session termination-এ MikroTik ও RADIUS ফল যাচাই হয়; উভয়টি ব্যর্থ হলে HTTP 502 ফেরে এবং customer-কে offline করা হয় না।
+- Manual UI sync degraded হলে warning এবং total failure হলে error দেখায়; background polling failure নীরব থাকে এবং last-known state ধরে রাখে।
+- Financial transaction result এবং network synchronization result আলাদা response metadata হিসেবে বজায় থাকে; network failure financial commit rollback করে না।
+
+Verification:
+
+- Phase 1–5 focused suites: ১৪টি test pass, ১১৮টি assertion pass।
+- Covered: total source outage preservation, successful session timestamp update, failed kick preservation এবং billing/payment regression flows।
+
+অবশিষ্ট ঝুঁকি:
+
+- RADIUS server reachable হলেও upstream accounting record অস্বাভাবিকভাবে stale থাকলে state freshness NAS interim-update/cleanup policy-এর ওপর নির্ভর করবে; Phase 6 observability-তে stale-age alert যোগ করা হবে।
 
 ## Phase 6 — Permissions, Audit ও Observability
 

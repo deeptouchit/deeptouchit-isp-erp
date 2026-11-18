@@ -21,6 +21,7 @@ class TenantCustomer extends Model
         'billing_cycle_date' => 'date',
         'expiry_date' => 'date',
         'last_online_at' => 'datetime',
+        'last_sync_at' => 'datetime',
     ];
 
     public function getPppoeUsernameAttribute(): ?string

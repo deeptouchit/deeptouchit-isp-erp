@@ -19,6 +19,7 @@ use App\Models\User;
 use App\Services\Billing\PlanQuotaService;
 use App\Services\Network\MikrotikApiService;
 use App\Services\Network\RadiusService;
+use App\Services\Network\CustomerSessionStateService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -1742,16 +1743,31 @@ class TenantCustomerController extends Controller
             ], 422);
         }
 
-        $mikrotikApi = new MikrotikApiService();
-        $res = $mikrotikApi->terminateActiveSession($router, $customer->username);
-
-        // Also send RADIUS Disconnect-Request (CoA)
+        $mikrotikResult = ['success' => false, 'message' => __('MikroTik disconnect was not completed.')];
         try {
-            $radiusService = new RadiusService();
+            $mikrotikResult = app(MikrotikApiService::class)
+                ->terminateActiveSession($router, $customer->username);
+        } catch (\Throwable $error) {
+            $mikrotikResult['message'] = $error->getMessage();
+        }
+
+        $radiusResult = ['success' => false, 'message' => __('RADIUS CoA disconnect was not completed.')];
+        try {
             $radiusSecret = $router->decrypted_radius_secret ?: ($router->decrypted_password ?: 'radiussecret');
-            $radiusService->disconnectUser($customer->username, $router->ip_address, $radiusSecret);
-        } catch (\Exception $e) {
-            // Non-blocking
+            $radiusResult = app(RadiusService::class)
+                ->disconnectUser($customer->username, $router->ip_address, $radiusSecret);
+        } catch (\Throwable $error) {
+            $radiusResult['message'] = $error->getMessage();
+        }
+
+        if (empty($mikrotikResult['success']) && empty($radiusResult['success'])) {
+            return response()->json([
+                'success' => false,
+                'message' => __('Session disconnect failed on both MikroTik and RADIUS. Existing online status was preserved.'),
+                'online_status' => $customer->online_status,
+                'mikrotik' => $mikrotikResult,
+                'radius' => $radiusResult,
+            ], 502);
         }
 
         $customer->online_status = 'offline';
@@ -1769,7 +1785,12 @@ class TenantCustomerController extends Controller
             ]),
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
-            'metadata' => ['customer_id' => $customer->id, 'router' => $router->name],
+            'metadata' => [
+                'customer_id' => $customer->id,
+                'router' => $router->name,
+                'mikrotik_success' => !empty($mikrotikResult['success']),
+                'radius_success' => !empty($radiusResult['success']),
+            ],
         ]);
 
         return response()->json([
@@ -1779,6 +1800,8 @@ class TenantCustomerController extends Controller
                 'router' => $router->name,
             ]),
             'online_status' => 'offline',
+            'mikrotik' => $mikrotikResult,
+            'radius' => $radiusResult,
         ]);
     }
 
@@ -1788,81 +1811,28 @@ class TenantCustomerController extends Controller
     public function syncOnlineSessions(Request $request): JsonResponse
     {
         $tenant = $this->getTenant();
+        $sessionSync = app(CustomerSessionStateService::class)->syncTenant($tenant);
+        if (!$sessionSync['success']) {
+            return response()->json([
+                'success' => false,
+                'degraded' => true,
+                'sync_status' => 'failed',
+                'message' => __('Live session sources are unavailable. Existing customer status was preserved.'),
+                'active_count' => 0,
+                'online_usernames' => [],
+                'successful_sources' => 0,
+                'failed_sources' => $sessionSync['failed_sources'],
+                'errors' => $sessionSync['errors'],
+            ], 503);
+        }
+
         $routers = TenantRouter::where('tenant_id', $tenant->id)->where('is_active', true)->get();
         if ($routers->isEmpty()) {
             $routers = TenantRouter::where('tenant_id', $tenant->id)->get();
         }
         $mikrotikApi = new MikrotikApiService();
-
-        $activeUsernames = [];
-        $liveCount = 0;
-        $ipMap = [];
-        $macMap = [];
-
-        // 1. Check live active PPPoE sessions directly from connected MikroTik routers
-        foreach ($routers as $router) {
-            try {
-                $res = $mikrotikApi->getActivePppoe($router);
-                if (!empty($res['success']) && !empty($res['data'])) {
-                    foreach ($res['data'] as $session) {
-                        $u = trim((string)($session['name'] ?? ''));
-                        if ($u !== '') {
-                            $activeUsernames[$u] = true;
-                            if (!empty($session['address'])) {
-                                $ipMap[$u] = $session['address'];
-                            }
-                            if (!empty($session['caller_id'])) {
-                                $macMap[$u] = $session['caller_id'];
-                            }
-                        }
-                    }
-                }
-            } catch (\Exception $e) {
-                // Ignore router connection failure
-            }
-        }
-
-        // 2. Check live accounting sessions from FreeRADIUS radacct (if active)
-        try {
-            $radiusSessions = DB::table('radacct')
-                ->where('tenant_id', $tenant->id)
-                ->whereNull('acctstoptime')
-                ->get();
-
-            foreach ($radiusSessions as $rs) {
-                $ru = trim((string)($rs->username ?? ''));
-                if ($ru !== '') {
-                    $activeUsernames[$ru] = true;
-                    if (!empty($rs->framedipaddress) && !isset($ipMap[$ru])) {
-                        $ipMap[$ru] = $rs->framedipaddress;
-                    }
-                    if (!empty($rs->callingstationid) && !isset($macMap[$ru])) {
-                        $macMap[$ru] = $rs->callingstationid;
-                    }
-                }
-            }
-        } catch (\Exception $e) {
-            // Ignore if radacct table not used
-        }
-
-        $onlineList = array_values(array_map('strval', array_keys($activeUsernames)));
-        $liveCount = count($onlineList);
-
-        // Bulk update online / offline states safely without mixed-type SQL coercion
-        if (!empty($onlineList)) {
-            foreach (array_chunk($onlineList, 500) as $chunk) {
-                TenantCustomer::where('tenant_id', $tenant->id)
-                    ->whereIn('username', $chunk)
-                    ->update(['online_status' => 'online']);
-            }
-
-            TenantCustomer::where('tenant_id', $tenant->id)
-                ->whereNotIn('username', $onlineList)
-                ->update(['online_status' => 'offline']);
-        } else {
-            TenantCustomer::where('tenant_id', $tenant->id)
-                ->update(['online_status' => 'offline']);
-        }
+        $onlineList = $sessionSync['online_usernames'];
+        $liveCount = $sessionSync['active_count'];
 
         // 3. Pull real-time /ppp/secret states directly from MikroTik routers
         $mikrotikStatusMap = [];
@@ -1909,10 +1879,17 @@ class TenantCustomerController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => __("Live online sessions & MikroTik secret states synced! (:count active sessions detected)", ['count' => $liveCount]),
+            'degraded' => $sessionSync['degraded'],
+            'sync_status' => $sessionSync['status'],
+            'message' => $sessionSync['degraded']
+                ? __("Live sessions synced in degraded mode (:count active; some sources unavailable).", ['count' => $liveCount])
+                : __("Live online sessions & MikroTik secret states synced! (:count active sessions detected)", ['count' => $liveCount]),
             'active_count' => $liveCount,
             'online_usernames' => $onlineList,
             'mikrotik_status_map' => $mikrotikStatusMap,
+            'successful_sources' => $sessionSync['successful_sources'],
+            'failed_sources' => $sessionSync['failed_sources'],
+            'errors' => $sessionSync['errors'],
         ]);
     }
 
