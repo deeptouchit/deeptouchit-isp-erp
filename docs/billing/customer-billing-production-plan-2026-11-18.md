@@ -251,7 +251,7 @@ Verification:
 
 ## Phase 7 — Regression, Deployment ও Verification
 
-অবস্থা: অপেক্ষমাণ
+অবস্থা: local verification সম্পন্ন; live webhook verification অপেক্ষমাণ
 
 কাজ:
 
@@ -267,6 +267,18 @@ Acceptance criteria:
 - নতুন billing tests সম্পূর্ণ pass করবে।
 - পুরোনো known failures নতুন পরিবর্তনের কারণে বাড়বে না।
 - live server expected commit চালাবে এবং error log-এ নতুন regression থাকবে না।
+
+বাস্তবায়িত যাচাই:
+
+- Sample feature test-এ missing `RefreshDatabase` trait সক্রিয় করা হয়েছে, যাতে isolated test schema ছাড়া homepage request করে suite transaction state নষ্ট না করে।
+- Phase 1–6 billing/customer/session suite এবং security-critical suite: ২০টি test pass, ৭৫টি assertion pass।
+- Route, configuration এবং Blade cache build সফল হয়েছে; cache build-এর পরে PHPUnit চালানোর আগে local config cache clear করা হয়েছে, যাতে test SQLite connection সঠিকভাবে ব্যবহার করে।
+- Full repository suite চালানো হয়েছে। ৮২৩টির মধ্যে প্রথম ১৯টি pass হলেও unrelated pre-existing test infrastructure gaps-এর কারণে ৮০৪টি error হয়েছে: missing user 2FA column migration, missing API/support tables/models এবং missing `NginxManager` service। এগুলো এই billing/customer release-এর regression নয়, তবে whole-repository green CI-এর জন্য আলাদা remediation দরকার।
+- GitHub push configured webhook deployment trigger করে; repository deployment runbook অনুযায়ী দ্বিতীয় SSH deployment শুরু করা হয়নি।
+
+অবশিষ্ট যাচাই:
+
+- Live host-এ deployed commit, pending migration, PHP/nginx status, deployment log এবং authenticated read-only smoke test যাচাই করতে হবে। এই workspace-এ live SSH session/host-key verification উপলভ্য নয় বলে তা এখান থেকে confirm করা সম্ভব হয়নি।
 
 ## বাস্তবায়নের ক্রম
 
