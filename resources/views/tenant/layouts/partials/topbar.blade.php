@@ -207,7 +207,7 @@
             </a>
         </div>
 
-        @if($authUser && !$authUser->isCollector() && !$authUser->isTechnician())
+        @if($authUser)
             <!-- Live Notifications Center -->
             <div class="relative" x-data="topbarNotifications()" @click.outside="open = false">
 
@@ -292,17 +292,25 @@
 
                     <!-- Panel Footer -->
                     <div class="p-2.5 border-t border-slate-100 bg-slate-50/70 text-center flex items-center justify-between px-4">
-                        <a href="{{ route('tenant.tickets.index') }}" class="text-[11px] font-bold text-cyan-700 hover:text-cyan-900 transition flex items-center gap-1">
-                            <span>{{ __('View Support Desk') }}</span>
-                            <i class="fas fa-arrow-right text-[9px]"></i>
-                        </a>
-                        <a href="{{ route('tenant.tickets.escalations') }}" class="text-[11px] font-medium text-slate-500 hover:text-slate-800 transition">
-                            {{ __('Escalations') }}
-                        </a>
+                        @if($canViewTickets)
+                            <a href="{{ route('tenant.tickets.index') }}" class="text-[11px] font-bold text-cyan-700 hover:text-cyan-900 transition flex items-center gap-1">
+                                <span>{{ __('View Support Desk') }}</span>
+                                <i class="fas fa-arrow-right text-[9px]"></i>
+                            </a>
+                        @else
+                            <a href="{{ route('tenant.dashboard') }}" class="text-[11px] font-bold text-cyan-700 hover:text-cyan-900 transition flex items-center gap-1">
+                                <span>{{ __('Go to Dashboard') }}</span>
+                                <i class="fas fa-arrow-right text-[9px]"></i>
+                            </a>
+                        @endif
+                        @if($authUser->isSuperAdmin() || $authUser->hasPermission('support.escalations'))
+                            <a href="{{ route('tenant.tickets.escalations') }}" class="text-[11px] font-medium text-slate-500 hover:text-slate-800 transition">
+                                {{ __('Escalations') }}
+                            </a>
+                        @endif
                     </div>
                 </div>
             </div>
-        @endif
 
         <!-- User Account Chip & Dropdown -->
         <div class="relative" x-data="{ profileOpen: false }">
@@ -505,10 +513,13 @@
             notifications: [],
             knownIds: new Set(),
             i18n: {
-                newAlert: @json(__('New Support Alert')),
+                newAlert: @json(__('New Notification')),
                 viewBtn: @json(__('View')),
                 newSuffix: @json(__('new'))
             },
+            notificationEndpoint: @json(route('tenant.notifications.unread')),
+            markReadEndpoint: @json(route('tenant.notifications.read', ['id' => '__NOTIFICATION_ID__'])),
+            markAllEndpoint: @json(route('tenant.notifications.mark-all-read')),
             async init() {
                 if ('Notification' in window && Notification.permission === 'default') {
                     setTimeout(() => {
@@ -586,7 +597,9 @@
             },
             async loadNotifications(isFirst = false) {
                 try {
-                    const res = await fetch('{{ route('tenant.notifications.unread') }}');
+                    const res = await fetch(this.notificationEndpoint, {
+                        headers: { 'Accept': 'application/json' }
+                    });
                     if (res.ok) {
                         const data = await res.json();
                         const newNotifs = data.notifications || [];
@@ -621,7 +634,7 @@
             },
             async markRead(notif) {
                 try {
-                    await fetch('/admin/notifications/' + notif.id + '/read', {
+                    await fetch(this.markReadEndpoint.replace('__NOTIFICATION_ID__', encodeURIComponent(notif.id)), {
                         method: 'POST',
                         headers: {
                             'X-CSRF-TOKEN': '{{ csrf_token() }}',
@@ -639,7 +652,7 @@
             },
             async markAllAsRead() {
                 try {
-                    await fetch('{{ route('tenant.notifications.mark-all-read') }}', {
+                    await fetch(this.markAllEndpoint, {
                         method: 'POST',
                         headers: {
                             'X-CSRF-TOKEN': '{{ csrf_token() }}',
