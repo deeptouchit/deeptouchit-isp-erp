@@ -7535,5 +7535,18 @@
     "Add =FDB index after an address when required by the device.": "Add =FDB index after an address when required by the device.",
     "Enter valid, unique PON addresses, one per line.": "Enter valid, unique PON addresses, one per line.",
     "Last Reading": "Last Reading",
-    "Unregistered": "Unregistered"
+    "Unregistered": "Unregistered",
+    "Billing": "Billing",
+    "ISP Operations Manager": "ISP Operations Manager",
+    "No collections found.": "No collections found.",
+    "No customers found.": "No customers found.",
+    "Open Tickets": "Open Tickets",
+    "Recent Collections": "Recent Collections",
+    "Recent Customers": "Recent Customers",
+    "Subscription": "Subscription",
+    "Support Queue": "Support Queue",
+    "Today Collection": "Today Collection",
+    "days remaining": "days remaining",
+    "open tickets": "open tickets",
+    "pending jobs": "pending jobs"
 }

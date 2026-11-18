@@ -7535,5 +7535,18 @@
     "Add =FDB index after an address when required by the device.": "ডিভাইসের প্রয়োজন হলে ঠিকানার পরে =FDB ইনডেক্স দিন।",
     "Enter valid, unique PON addresses, one per line.": "প্রতি লাইনে একটি সঠিক ও পৃথক PON ঠিকানা দিন।",
     "Last Reading": "সর্বশেষ তথ্য সংগ্রহ",
-    "Unregistered": "নিবন্ধিত নয়"
+    "Unregistered": "নিবন্ধিত নয়",
+    "Billing": "বিলিং",
+    "ISP Operations Manager": "আইএসপি অপারেশন ম্যানেজার",
+    "No collections found.": "কোনো সংগ্রহ পাওয়া যায়নি।",
+    "No customers found.": "কোনো গ্রাহক পাওয়া যায়নি।",
+    "Open Tickets": "খোলা টিকিট",
+    "Recent Collections": "সাম্প্রতিক সংগ্রহ",
+    "Recent Customers": "সাম্প্রতিক গ্রাহক",
+    "Subscription": "সাবস্ক্রিপশন",
+    "Support Queue": "সাপোর্ট কিউ",
+    "Today Collection": "আজকের সংগ্রহ",
+    "days remaining": "দিন বাকি",
+    "open tickets": "খোলা টিকিট",
+    "pending jobs": "অপেক্ষমাণ কাজ"
 }
