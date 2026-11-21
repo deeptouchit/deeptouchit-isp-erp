@@ -73,7 +73,8 @@ class ResellerCustomerController extends Controller
         $zone = $request->input('zone', 'all');
         $onlineStatus = $request->input('online_status', 'all');
         $perPage = (int) $request->input('per_page', 20);
-        if (!in_array($perPage, [10, 20, 50, 100], true)) {
+        $pageSizes = [10, 15, 20, 30, 50, 100, 250, 500];
+        if (!in_array($perPage, $pageSizes, true)) {
             $perPage = 20;
         }
 
@@ -204,6 +205,7 @@ class ResellerCustomerController extends Controller
             'zone',
             'onlineStatus',
             'perPage',
+            'pageSizes',
             'currencySymbol'
         ));
     }
@@ -3036,7 +3038,6 @@ class ResellerCustomerController extends Controller
         $mikrotikApi = new MikrotikApiService();
 
         $activeUsernames = [];
-        $liveCount = 0;
 
         // 1. Check live active PPPoE sessions from MikroTik routers
         foreach ($routers as $router) {
@@ -3047,7 +3048,6 @@ class ResellerCustomerController extends Controller
                         $u = $session['name'] ?? null;
                         if ($u) {
                             $activeUsernames[$u] = true;
-                            $liveCount++;
                             TenantCustomer::where('tenant_id', $tenantId)
                                 ->where('reseller_id', $resellerId)
                                 ->where('username', $u)
@@ -3073,10 +3073,7 @@ class ResellerCustomerController extends Controller
 
             foreach ($radiusSessions as $rs) {
                 if (!empty($rs->username)) {
-                    if (!isset($activeUsernames[$rs->username])) {
-                        $activeUsernames[$rs->username] = true;
-                        $liveCount++;
-                    }
+                    $activeUsernames[$rs->username] = true;
                     TenantCustomer::where('tenant_id', $tenantId)
                         ->where('reseller_id', $resellerId)
                         ->where('username', $rs->username)
@@ -3123,12 +3120,18 @@ class ResellerCustomerController extends Controller
                 ->update(['online_status' => 'offline']);
         }
 
+        $resellerCustomers = TenantCustomer::where('tenant_id', $tenantId)->where('reseller_id', $resellerId);
+        $onlineUsernames = (clone $resellerCustomers)->where('online_status', 'online')->pluck('username');
+        $knownMikrotikUsernames = $mikrotikStatusMap
+            ? $resellerCustomers->whereIn('username', array_keys($mikrotikStatusMap))->pluck('username')->all()
+            : [];
+
         return response()->json([
             'success' => true,
-            'message' => "Live online sessions & MikroTik secret states synced! ({$liveCount} active sessions detected)",
-            'active_count' => $liveCount,
-            'online_usernames' => $onlineList,
-            'mikrotik_status_map' => $mikrotikStatusMap,
+            'message' => __('Sessions refreshed: :count online.', ['count' => $onlineUsernames->count()]),
+            'active_count' => $onlineUsernames->count(),
+            'online_usernames' => $onlineUsernames,
+            'mikrotik_status_map' => array_intersect_key($mikrotikStatusMap, array_flip($knownMikrotikUsernames)),
         ]);
     }
 }

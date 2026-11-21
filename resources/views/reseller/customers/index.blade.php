@@ -7,6 +7,17 @@
 @endpush
 
 @section('content')
+@php
+    $isDueList = $status === 'due';
+    $activeMoreCount = (int) in_array($onlineStatus, ['online', 'offline'], true);
+    $pageTitle = match (true) {
+        $isDueList => __('Due Customers'),
+        $status === 'expired' => __('Expired Customers'),
+        $status === 'disconnected' => __('Disconnected'),
+        $onlineStatus === 'online' => __('Online Sessions'),
+        default => __('All Customers'),
+    };
+@endphp
 <div class="space-y-3" 
      x-data="customerMasterManager()" 
      @scroll.window="activeMenu = null" 
@@ -36,16 +47,21 @@
     </div>
 
     <!-- 1. Top Header Bar (AGENTS.md Rule 2.A: Icon + Title + Action Buttons ONLY) -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3 rounded-xl border border-slate-200 shadow-xs">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3 rounded-md border border-slate-200 shadow-2xs">
         <div class="flex items-center gap-3">
-            <div class="w-7 h-7 rounded-lg bg-cyan-50 text-cyan-600 border border-cyan-100 flex items-center justify-center text-xs flex-shrink-0">
+            <div class="w-7 h-7 rounded-md bg-cyan-50 text-cyan-600 border border-cyan-100 flex items-center justify-center text-xs flex-shrink-0">
                 <i class="fas fa-users-line"></i>
             </div>
-            <h1 class="text-xs sm:text-sm font-bold text-slate-800 tracking-tight">{{ __('Customers') }}</h1>
+            <h1 class="text-xs sm:text-sm font-bold text-slate-900 tracking-tight">{{ $pageTitle }}</h1>
         </div>
 
-        @if($authUser && $authUser->isResellerAdmin())
-        <div class="flex items-center gap-2 w-full sm:w-auto justify-end flex-shrink-0">
+        <div class="grid grid-cols-2 sm:flex sm:flex-wrap sm:items-center gap-2 w-full sm:w-auto flex-shrink-0">
+            <button type="button" @click="pollLiveSessions(true)" :disabled="isSyncing"
+                    class="px-2.5 py-1.5 rounded-md bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-semibold text-xs transition inline-flex items-center justify-center gap-1.5 shadow-2xs border border-emerald-200 cursor-pointer disabled:opacity-50">
+                <i class="fas fa-satellite-dish text-emerald-600 text-[11px]" :class="{ 'fa-spin': isSyncing }"></i>
+                <span>{{ __('Refresh Sessions') }}</span>
+            </button>
+            @if($authUser?->isResellerAdmin())
             <!-- Bulk Payments Page -->
             <a href="{{ route('reseller.customers.bulk-payments') }}" 
                class="px-3 py-1.5 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 font-semibold text-xs transition inline-flex items-center justify-center gap-1.5 shadow-2xs border border-purple-200 cursor-pointer"
@@ -67,10 +83,10 @@
             <a href="{{ route('reseller.customers.create') }}" 
                class="px-3.5 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs shadow-xs transition inline-flex items-center justify-center gap-1.5 cursor-pointer">
                 <i class="fas fa-user-plus text-[11px]"></i>
-                <span>+ {{ __('Add Customer') }}</span>
+                <span>{{ __('Add Customer') }}</span>
             </a>
+            @endif
         </div>
-        @endif
     </div>
 
     <!-- 2. KPI Summary Strip (Strictly 6 Cards - AGENTS.md Rule 2.B) -->
@@ -89,7 +105,7 @@
         <!-- Metric 2: Live Online Sessions -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-emerald-700 block truncate">{{ __('Active') }}</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-emerald-700 block truncate">{{ __('Online Sessions') }}</span>
                 <span class="text-[13px] font-bold font-mono text-emerald-600 leading-tight block truncate">{{ number_format($stats['online_sessions']) }}</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border border-emerald-200 bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0">
@@ -122,7 +138,7 @@
         <!-- Metric 5: Monthly Billing (MRR) -->
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-purple-700 block truncate">{{ __('Monthly Fee') }}</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-purple-700 block truncate">{{ __('Monthly Billing') }}</span>
                 <span class="text-[13px] font-bold font-mono text-purple-600 leading-tight block truncate">@currency($stats['monthly_mrr'])</span>
             </div>
             <div class="w-6 h-6 rounded-md text-[10px] border border-purple-200 bg-purple-50 text-purple-600 flex items-center justify-center flex-shrink-0">
@@ -144,43 +160,70 @@
 
     <!-- 3. Search & Multi-Filter Toolbar (AGENTS.md Rule 2.C) -->
     <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5"
-         x-data="{ showMoreFilters: {{ in_array($packageId, ['all', null], true) && in_array($zone, ['all', null], true) && in_array($onlineStatus, ['all', null], true) ? 'false' : 'true' }}, searchQuery: @js((string) $search) }">
+         x-data="{ showMoreFilters: {{ $activeMoreCount ? 'true' : 'false' }} }">
         <form method="GET" action="{{ route('reseller.customers.index') }}" class="space-y-2.5">
-            <div class="flex flex-col md:flex-row items-stretch md:items-center gap-2">
-                <div class="relative flex-1 min-w-[200px]">
+            <div class="flex flex-wrap items-center gap-2">
+                <div class="relative flex-1 min-w-[180px]">
                     <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-xs pointer-events-none"
                        :class="searchQuery ? 'text-cyan-600 font-bold' : 'text-slate-400'"></i>
-                    <input type="text" name="search" x-model="searchQuery"
-                           placeholder="{{ __('Search by Name, ID, Phone or Username') }}"
+                    <input type="text" name="search" value="{{ $search }}" x-model="searchQuery"
+                           @input="previewCustomers($event.target.value)" autocomplete="off"
+                           placeholder="{{ __('Live Search Name, ID, Username, Phone, IP...') }}"
                            class="h-[34px] w-full pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden">
-                    <button type="button" x-show="searchQuery.length > 0"
-                            @click="searchQuery = ''; $nextTick(() => $el.closest('form').submit())"
+                    <button type="button" x-show="searchQuery.length > 0" x-cloak
+                            aria-label="{{ __('Clear Search') }}"
+                            @click="searchQuery = ''; $nextTick(() => $el.closest('form').requestSubmit())"
                             class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500">
                         <i class="fas fa-times-circle text-[10px]"></i>
                     </button>
                 </div>
 
-                <select name="status" class="h-[34px] w-full md:w-36 bg-slate-50 border border-slate-200 rounded-lg px-2.5 text-xs">
+                <select name="status" aria-label="{{ __('Status') }}"
+                        onchange="this.form.requestSubmit()"
+                        class="h-[34px] w-full sm:w-32 flex-shrink-0 px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                     <option value="all" {{ $status === 'all' ? 'selected' : '' }}>{{ __('All Status') }}</option>
                     <option value="active" {{ $status === 'active' ? 'selected' : '' }}>{{ __('Active') }}</option>
                     <option value="due" {{ $status === 'due' ? 'selected' : '' }}>{{ __('Due / Unpaid') }}</option>
                     <option value="expired" {{ $status === 'expired' ? 'selected' : '' }}>{{ __('Expired') }}</option>
+                    <option value="suspended" @selected($status === 'suspended')>{{ __('Suspended') }}</option>
                     <option value="disabled" {{ $status === 'disabled' ? 'selected' : '' }}>{{ __('Disabled') }}</option>
                     <option value="disconnected" {{ $status === 'disconnected' ? 'selected' : '' }}>{{ __('Disconnected') }}</option>
                 </select>
-
-                <select name="per_page" class="h-[34px] w-full md:w-28 bg-slate-50 border border-slate-200 rounded-lg px-2.5 text-xs">
-                    @foreach([10,20,50,100] as $limit)
-                        <option value="{{ $limit }}" {{ (int) $perPage === $limit ? 'selected' : '' }}>{{ $limit }} / {{ __('Page') }}</option>
+                <select name="zone" aria-label="{{ __('Zone') }}"
+                        onchange="this.form.requestSubmit()"
+                        class="h-[34px] w-full sm:w-36 flex-shrink-0 px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
+                    <option value="all" {{ $zone === 'all' ? 'selected' : '' }}>{{ __('All Zones') }}</option>
+                    @foreach($zones as $z)
+                        <option value="{{ $z }}" {{ $zone === $z ? 'selected' : '' }}>{{ $z }}</option>
+                    @endforeach
+                </select>
+                <select name="package_id" aria-label="{{ __('Package') }}"
+                        onchange="this.form.requestSubmit()"
+                        class="h-[34px] w-full sm:w-36 flex-shrink-0 px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
+                    <option value="all" {{ $packageId === 'all' ? 'selected' : '' }}>{{ __('All Packages') }}</option>
+                    @foreach($packages as $pkg)
+                        <option value="{{ $pkg->id }}" {{ (string) $packageId === (string) $pkg->id ? 'selected' : '' }}>
+                            {{ $pkg->name ?: ($pkg->mikrotik_profile ?: ($pkg->package_name ?: __('Package #:id', ['id' => $pkg->id]))) }}
+                        </option>
+                    @endforeach
+                </select>
+                <select name="per_page" aria-label="{{ __('Customers per page') }}"
+                        onchange="this.form.requestSubmit()"
+                        class="h-[34px] w-full sm:w-28 flex-shrink-0 px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
+                    @foreach($pageSizes as $limit)
+                        <option value="{{ $limit }}" {{ (int) $perPage === $limit ? 'selected' : '' }}>{{ __(':count / page', ['count' => $limit]) }}</option>
                     @endforeach
                 </select>
 
                 <button type="button" @click="showMoreFilters = !showMoreFilters"
-                        class="h-[34px] px-3 bg-slate-100 hover:bg-slate-200 border border-slate-200/80 rounded-lg text-xs font-semibold flex items-center gap-1.5">
-                    {{ __('More Filters') }}
-                    <span class="px-1.5 rounded-full bg-white border border-slate-200 text-[9px]">
-                        {{ (($packageId !== 'all' && $packageId) ? 1 : 0) + (($zone !== 'all' && $zone) ? 1 : 0) + (($onlineStatus !== 'all' && $onlineStatus) ? 1 : 0) }}
-                    </span>
+                        :aria-expanded="showMoreFilters"
+                        :class="showMoreFilters ? 'bg-cyan-50 text-cyan-700 border-cyan-300 ring-1 ring-cyan-200' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'"
+                        class="h-[34px] py-0 px-2.5 rounded-lg border text-xs font-medium transition flex items-center justify-center gap-1.5 flex-shrink-0 cursor-pointer shadow-2xs">
+                    <i class="fas fa-sliders-h text-[10px]"></i>
+                    <span>{{ __('More Filters') }}</span>
+                    @if($activeMoreCount)
+                        <span class="px-1.5 rounded-full bg-cyan-600 text-white text-[9px] font-bold">{{ $activeMoreCount }}</span>
+                    @endif
                     <i class="fas text-[9px]" :class="showMoreFilters ? 'fa-chevron-up text-cyan-600' : 'fa-chevron-down text-slate-400'"></i>
                 </button>
 
@@ -196,21 +239,9 @@
 
             <div x-show="showMoreFilters" x-cloak x-transition
                  class="pt-2 border-t border-slate-100 flex flex-wrap items-center gap-2">
-                <select name="package_id" class="h-[34px] min-w-[150px] bg-slate-50 border border-slate-200 rounded-lg px-2.5 text-xs">
-                    <option value="all" {{ $packageId === 'all' ? 'selected' : '' }}>{{ __('All Packages') }}</option>
-                    @foreach($packages as $pkg)
-                        <option value="{{ $pkg->id }}" {{ (string) $packageId === (string) $pkg->id ? 'selected' : '' }}>
-                            {{ $pkg->package_display_name ?? ($pkg->name ?: ($pkg->mikrotik_profile ?: 'Package #' . $pkg->id)) }}
-                        </option>
-                    @endforeach
-                </select>
-                <select name="zone" class="h-[34px] min-w-[130px] bg-slate-50 border border-slate-200 rounded-lg px-2.5 text-xs">
-                    <option value="all" {{ $zone === 'all' ? 'selected' : '' }}>{{ __('All Zones') }}</option>
-                    @foreach($zones as $z)
-                        <option value="{{ $z }}" {{ $zone === $z ? 'selected' : '' }}>{{ $z }}</option>
-                    @endforeach
-                </select>
-                <select name="online_status" class="h-[34px] w-28 bg-slate-50 border border-slate-200 rounded-lg px-2.5 text-xs">
+                <select name="online_status" aria-label="{{ __('Live session status') }}"
+                        onchange="this.form.requestSubmit()"
+                        class="h-[34px] w-full sm:w-32 flex-shrink-0 px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                     <option value="all" {{ $onlineStatus === 'all' ? 'selected' : '' }}>{{ __('All Live') }}</option>
                     <option value="online" {{ $onlineStatus === 'online' ? 'selected' : '' }}>{{ __('Online') }}</option>
                     <option value="offline" {{ $onlineStatus === 'offline' ? 'selected' : '' }}>{{ __('Offline') }}</option>
@@ -225,20 +256,21 @@
             <table class="saas-table">
                 <thead>
                     <tr>
-                        <th class="w-10 text-center no-sort">#</th>
-                        <th class="text-left">{{ __('Customer Name') }}</th>
-                        <th class="text-left">{{ __('Package') }}</th>
-                        <th class="text-right">{{ __('Monthly Fee') }}</th>
-                        <th class="text-right">{{ __('Due Amount') }}</th>
-                        <th class="text-center">{{ __('Status') }}</th>
-                        <th class="w-14 text-center no-sort">{{ __('Action') }}</th>
+                        <th class="text-center font-semibold">{{ __('ID') }}</th>
+                        <th class="text-center font-semibold">{{ __('Live') }}</th>
+                        <th class="text-center font-semibold">{{ __('Status') }}</th>
+                        <th class="text-center font-semibold">{{ __('Name') }}</th>
+                        <th class="text-center font-semibold">{{ __('Package') }}</th>
+                        <th class="text-center font-semibold">{{ $isDueList ? __('Due Amount') : __('Bill') }}</th>
+                        <th class="w-14 text-center font-semibold no-sort">{{ __('Action') }}</th>
                     </tr>
                 </thead>
-                <tbody>
-                    @forelse($customers as $index => $customer)
+                <tbody x-ref="customerRows">
+                    @forelse($customers as $customer)
                         @php
                             $badge = $customer->status_badge;
-                            $packageName = $customer->package_display_name ?: ($customer->package?->name ?: ($customer->package?->package_name ?: ($customer->package_name ?? 'N/A')));
+                            $packageName = $customer->package_display_name;
+                            $isLiveOnline = $customer->online_status === 'online';
                             $rawCustomerData = [
                                 'id' => $customer->id,
                                 'customer_id' => $customer->customer_id,
@@ -255,38 +287,59 @@
                                 'package_name' => $packageName,
                             ];
                         @endphp
-                        <tr>
-                            <td class="text-center font-mono text-slate-700">{{ $customers->firstItem() + $index }}</td>
-                            <td class="font-medium text-slate-900">
-                                <a href="{{ route('reseller.customers.show', $customer->id) }}" class="hover:underline hover:text-cyan-600">
-                                    {{ $customer->name }}
-                                </a>
+                        <tr data-customer-search="{{ implode(' ', [$customer->customer_id, $customer->name, $customer->username, $customer->phone, $customer->ip_address]) }}"
+                            x-show="!previewQuery || $el.dataset.customerSearch.toLowerCase().includes(previewQuery)">
+                            <td class="text-center font-mono text-cyan-800 font-semibold">{{ $customer->customer_id }}</td>
+                            <td class="text-center" x-data="{ get online() { return getOnlineStatus(@js((string) $customer->username), @js($isLiveOnline)); } }">
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[10px] font-semibold border shadow-2xs"
+                                      :class="online ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200'">
+                                    <span class="w-1.5 h-1.5 rounded-full" :class="online ? 'bg-emerald-500 ring-2 ring-emerald-300' : 'bg-rose-500 ring-2 ring-rose-200'"></span>
+                                    <span x-text="online ? @js(__('Online')) : @js(__('Offline'))">{{ $isLiveOnline ? __('Online') : __('Offline') }}</span>
+                                </span>
                             </td>
-                            <td class="text-left text-slate-800">{{ $packageName }}</td>
-                            <td class="text-right font-mono text-slate-800">@currency($customer->monthly_bill)</td>
-                            <td class="text-right font-mono text-rose-700">@currency($customer->due_amount)</td>
                             <td class="text-center">
                                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold border {{ $badge['class'] }} shadow-2xs">
                                     <span class="w-1.5 h-1.5 rounded-full {{ $badge['dot'] }}"></span>
                                     <span>{{ $badge['label'] }}</span>
                                 </span>
                             </td>
+                            <td class="text-left font-medium text-slate-900">
+                                <a href="{{ route('reseller.customers.show', $customer->id) }}" class="hover:underline hover:text-cyan-600">
+                                    {{ $customer->name }}
+                                </a>
+                            </td>
+                            <td class="text-left text-slate-800">{{ $packageName }}</td>
+                            <td class="text-right font-mono {{ $isDueList && $customer->due_amount > 0 ? 'font-bold text-amber-600' : 'text-slate-800' }}">
+                                @currency($isDueList ? $customer->due_amount : $customer->monthly_bill)
+                            </td>
                             <td class="text-center">
                                 <button type="button" 
-                                        @click="toggleMenu({{ $customer->id }}, $event, {{ Js::from($rawCustomerData) }})" 
+                                        @click.stop="toggleMenu({{ $customer->id }}, $event, {{ Js::from($rawCustomerData) }})"
+                                        aria-label="{{ __('Customer actions') }}"
                                         class="w-6 h-6 rounded-md hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition cursor-pointer inline-flex items-center justify-center">
                                     <i class="fas fa-ellipsis-v text-[10px]"></i>
                                 </button>
                             </td>
                         </tr>
                     @empty
-                        <tr>
-                            <td colspan="7" class="px-4 py-8 text-center text-slate-400 text-xs italic bg-slate-50/50">
-                                <i class="fas fa-users-slash text-2xl text-slate-300 mb-2 block"></i>
-                                {{ __('No customer records found matching your criteria.') ?? 'No records found.' }}
+                        <tr class="no-record-row">
+                            <td colspan="7" class="py-8 text-center bg-slate-50/50">
+                                <i class="fas fa-users-slash text-xl text-slate-300 mb-2 block"></i>
+                                <p class="font-semibold text-slate-700">{{ __('No customers found') }}</p>
+                                <a href="{{ route('reseller.customers.index') }}" class="inline-flex mt-2 text-xs font-semibold text-cyan-700 hover:underline">{{ __('Reset Filters') }}</a>
+                                @if($authUser?->isResellerAdmin())
+                                    <a href="{{ route('reseller.customers.create') }}" class="inline-flex mt-2 ml-2 text-xs font-semibold text-cyan-700 hover:underline">{{ __('Add Customer') }}</a>
+                                @endif
                             </td>
                         </tr>
                     @endforelse
+                    @if($customers->isNotEmpty())
+                        <tr x-show="previewQuery && !hasPreviewMatches" x-cloak class="no-record-row">
+                            <td colspan="7" class="py-8 text-center text-xs text-slate-500 bg-slate-50/50">
+                                {{ __('No matches on this page. Press Enter to search all customers.') }}
+                            </td>
+                        </tr>
+                    @endif
                 </tbody>
             </table>
         </div>
@@ -1014,7 +1067,20 @@ function customerMasterManager() {
     return {
         activeMenu: null,
         menuPos: null,
-        onlineMap: {},
+        searchQuery: {{ Js::from((string) $search) }},
+        previewQuery: '',
+        hasPreviewMatches: true,
+
+        previewCustomers(value) {
+            this.previewQuery = value.trim().toLowerCase();
+            this.activeMenu = null;
+            this.hasPreviewMatches = !this.previewQuery || Array.from(
+                this.$refs.customerRows.querySelectorAll('[data-customer-search]')
+            ).some(row => row.dataset.customerSearch.toLowerCase().includes(this.previewQuery));
+        },
+
+        onlineUsernames: null,
+        isSyncing: false,
         mikrotikMap: {},
 
         // Toast
@@ -1100,6 +1166,9 @@ function customerMasterManager() {
         },
 
         async pollLiveSessions(showNotification = false) {
+            if (this.isSyncing) return;
+            this.isSyncing = true;
+
             try {
                 const res = await fetch(`{{ route('reseller.customers.sync-online') }}`, {
                     method: 'POST',
@@ -1110,31 +1179,27 @@ function customerMasterManager() {
                     }
                 });
                 const data = await res.json();
-                if (data.success) {
-                    if (Array.isArray(data.online_usernames)) {
-                        const newMap = {};
-                        data.online_usernames.forEach(u => {
-                            newMap[u] = 'online';
-                        });
-                        this.onlineMap = newMap;
-                    }
-                    if (data.mikrotik_status_map && typeof data.mikrotik_status_map === 'object') {
-                        this.mikrotikMap = Object.assign({}, this.mikrotikMap, data.mikrotik_status_map);
-                    }
-                    if (showNotification) {
-                        this.showToast(`Live status synced: ${data.active_count || 0} active sessions online.`, 'success');
-                    }
+                if (!res.ok || !data.success) {
+                    throw new Error(data.message || @js(__('Unable to refresh sessions')));
                 }
-            } catch (err) {
-                // Background poll silent
+                if (Array.isArray(data.online_usernames)) {
+                    this.onlineUsernames = new Set(data.online_usernames);
+                }
+                if (data.mikrotik_status_map && typeof data.mikrotik_status_map === 'object') {
+                    this.mikrotikMap = Object.assign({}, this.mikrotikMap, data.mikrotik_status_map);
+                }
+                if (showNotification) {
+                    this.showToast(data.message, 'success');
+                }
+            } catch (error) {
+                if (showNotification) this.showToast(error.message, 'error');
+            } finally {
+                this.isSyncing = false;
             }
         },
 
         getOnlineStatus(username, fallback) {
-            if (this.onlineMap[username] !== undefined) {
-                return this.onlineMap[username];
-            }
-            return fallback || 'offline';
+            return this.onlineUsernames ? this.onlineUsernames.has(username) : fallback;
         },
 
         getMikrotikState(username, fallback) {
