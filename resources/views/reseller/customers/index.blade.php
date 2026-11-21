@@ -9,12 +9,14 @@
 @section('content')
 @php
     $isDueList = $status === 'due';
+    $isOnlineList = $onlineStatus === 'online';
+    $columnCount = $isDueList ? 15 : 14;
     $activeMoreCount = (int) in_array($onlineStatus, ['online', 'offline'], true);
     $pageTitle = match (true) {
         $isDueList => __('Due Customers'),
         $status === 'expired' => __('Expired Customers'),
         $status === 'disconnected' => __('Disconnected'),
-        $onlineStatus === 'online' => __('Online Sessions'),
+        $isOnlineList => __('Online Sessions'),
         default => __('All Customers'),
     };
 @endphp
@@ -257,11 +259,28 @@
                 <thead>
                     <tr>
                         <th class="text-center font-semibold">{{ __('ID') }}</th>
-                        <th class="text-center font-semibold">{{ __('Live') }}</th>
+                        <th class="w-20 text-center font-semibold">{{ __('Live') }}</th>
+                        @unless($isOnlineList)
+                            <th class="w-20 text-center font-semibold">{{ __('MikroTik') }}</th>
+                        @endunless
                         <th class="text-center font-semibold">{{ __('Status') }}</th>
                         <th class="text-center font-semibold">{{ __('Name') }}</th>
+                        <th class="text-center font-semibold">{{ __('Mobile') }}</th>
+                        <th class="text-center font-semibold">{{ __('PPPoE') }}</th>
+                        <th class="text-center font-semibold">{{ __('Zone') }}</th>
+                        <th class="text-center font-semibold">{{ __('Partner') }}</th>
                         <th class="text-center font-semibold">{{ __('Package') }}</th>
-                        <th class="text-center font-semibold">{{ $isDueList ? __('Due Amount') : __('Bill') }}</th>
+                        @if($isOnlineList)
+                            <th class="text-center font-semibold no-sort">{{ __('Download (RX)') }}</th>
+                            <th class="text-center font-semibold no-sort">{{ __('Upload (TX)') }}</th>
+                        @else
+                            <th class="text-center font-semibold">{{ __('Bill') }}</th>
+                        @endif
+                        @if($isDueList)
+                            <th class="text-center font-semibold">{{ __('Due Amount') }}</th>
+                        @endif
+                        <th class="text-center font-semibold">{{ __('Expiry Date') }}</th>
+                        <th class="text-center font-semibold">{{ __('Validity') }}</th>
                         <th class="w-14 text-center font-semibold no-sort">{{ __('Action') }}</th>
                     </tr>
                 </thead>
@@ -271,6 +290,8 @@
                             $badge = $customer->status_badge;
                             $packageName = $customer->package_display_name;
                             $isLiveOnline = $customer->online_status === 'online';
+                            $expiryBadge = $customer->expiry_days_badge;
+                            $mikrotikStatus = $customer->mikrotik_status ?: 'pending';
                             $rawCustomerData = [
                                 'id' => $customer->id,
                                 'customer_id' => $customer->customer_id,
@@ -297,6 +318,15 @@
                                     <span x-text="online ? @js(__('Online')) : @js(__('Offline'))">{{ $isLiveOnline ? __('Online') : __('Offline') }}</span>
                                 </span>
                             </td>
+                            @unless($isOnlineList)
+                                <td class="text-center" x-data="{ get secretStatus() { return getMikrotikState(@js((string) $customer->username), @js($mikrotikStatus)); } }">
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[10px] font-semibold border shadow-2xs"
+                                          :class="secretStatus === 'enabled' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : (secretStatus === 'disabled' ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-slate-50 text-slate-600 border-slate-200')">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-current"></span>
+                                        <span x-text="mikrotikLabels[secretStatus] || secretStatus">{{ __(ucfirst($mikrotikStatus)) }}</span>
+                                    </span>
+                                </td>
+                            @endunless
                             <td class="text-center">
                                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold border {{ $badge['class'] }} shadow-2xs">
                                     <span class="w-1.5 h-1.5 rounded-full {{ $badge['dot'] }}"></span>
@@ -308,9 +338,46 @@
                                     {{ $customer->name }}
                                 </a>
                             </td>
+                            <td class="text-center font-mono text-slate-700">{{ $customer->phone ?: '?' }}</td>
+                            <td class="text-center font-mono text-cyan-900 font-semibold">{{ $customer->username ?: '?' }}</td>
+                            <td class="text-left text-slate-700">{{ $customer->zone ?: '?' }}</td>
+                            <td class="text-center font-mono text-indigo-700 font-semibold" title="{{ $reseller?->name }}">
+                                {{ $reseller?->code ?: ($reseller?->prefix ?: ($reseller?->name ?? '?')) }}
+                            </td>
                             <td class="text-left text-slate-800">{{ $packageName }}</td>
-                            <td class="text-right font-mono {{ $isDueList && $customer->due_amount > 0 ? 'font-bold text-amber-600' : 'text-slate-800' }}">
-                                @currency($isDueList ? $customer->due_amount : $customer->monthly_bill)
+                            @if($isOnlineList)
+                                @foreach(['rx' => __('Check download speed'), 'tx' => __('Check upload speed')] as $direction => $label)
+                                    <td class="text-right font-mono {{ $direction === 'rx' ? 'text-emerald-700' : 'text-purple-700' }}">
+                                        <button type="button"
+                                                @click="checkTraffic({{ $customer->id }}, @js(route('reseller.customers.traffic', $customer->id)))"
+                                                :disabled="loadingTraffic[{{ $customer->id }}]"
+                                                aria-label="{{ $label }}" title="{{ $label }}"
+                                                class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-slate-50 hover:bg-slate-100 border border-slate-200 disabled:opacity-50 cursor-pointer">
+                                            <i class="fas {{ $direction === 'rx' ? 'fa-arrow-down' : 'fa-arrow-up' }} text-[9px]"></i>
+                                            <span x-text="loadingTraffic[{{ $customer->id }}] ? '?' : (rowTraffic[{{ $customer->id }}]?.{{ $direction }}_human || '?')">?</span>
+                                        </button>
+                                    </td>
+                                @endforeach
+                            @else
+                                <td class="text-right font-mono text-slate-800">@currency($customer->monthly_bill)</td>
+                            @endif
+                            @if($isDueList)
+                                <td class="text-right font-mono {{ $customer->due_amount > 0 ? 'font-bold text-amber-600' : 'text-slate-500' }}">
+                                    @currency($customer->due_amount)
+                                </td>
+                            @endif
+                            <td class="text-center font-mono text-slate-600" data-sort-value="{{ $customer->expiry_date?->format('Y-m-d') }}">
+                                {{ $customer->expiry_date?->format('d M Y') ?? '?' }}
+                            </td>
+                            <td class="text-center font-mono" data-sort-value="{{ $expiryBadge['days'] ?? 99999 }}">
+                                @if($expiryBadge['state'] === 'none')
+                                    <span class="text-slate-400">?</span>
+                                @else
+                                    <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] border {{ $expiryBadge['class'] }}">
+                                        <span class="w-1.5 h-1.5 rounded-full {{ $expiryBadge['dot'] }}"></span>
+                                        <span>{{ __($expiryBadge['label']) }}</span>
+                                    </span>
+                                @endif
                             </td>
                             <td class="text-center">
                                 <button type="button" 
@@ -323,7 +390,7 @@
                         </tr>
                     @empty
                         <tr class="no-record-row">
-                            <td colspan="7" class="py-8 text-center bg-slate-50/50">
+                            <td colspan="{{ $columnCount }}" class="py-8 text-center bg-slate-50/50">
                                 <i class="fas fa-users-slash text-xl text-slate-300 mb-2 block"></i>
                                 <p class="font-semibold text-slate-700">{{ __('No customers found') }}</p>
                                 <a href="{{ route('reseller.customers.index') }}" class="inline-flex mt-2 text-xs font-semibold text-cyan-700 hover:underline">{{ __('Reset Filters') }}</a>
@@ -335,7 +402,7 @@
                     @endforelse
                     @if($customers->isNotEmpty())
                         <tr x-show="previewQuery && !hasPreviewMatches" x-cloak class="no-record-row">
-                            <td colspan="7" class="py-8 text-center text-xs text-slate-500 bg-slate-50/50">
+                            <td colspan="{{ $columnCount }}" class="py-8 text-center text-xs text-slate-500 bg-slate-50/50">
                                 {{ __('No matches on this page. Press Enter to search all customers.') }}
                             </td>
                         </tr>
@@ -1082,6 +1149,33 @@ function customerMasterManager() {
         onlineUsernames: null,
         isSyncing: false,
         mikrotikMap: {},
+        mikrotikLabels: {
+            enabled: @js(__('Enabled')),
+            disabled: @js(__('Disabled')),
+            pending: @js(__('Pending')),
+            synced: @js(__('Synced')),
+            error: @js(__('Error')),
+        },
+        rowTraffic: {},
+        loadingTraffic: {},
+
+        async checkTraffic(id, url) {
+            if (this.loadingTraffic[id]) return;
+            this.loadingTraffic[id] = true;
+
+            try {
+                const response = await fetch(url, { headers: { Accept: 'application/json' } });
+                const data = await response.json();
+                if (!response.ok || !data.success) {
+                    throw new Error(data.message || @js(__('Unable to check traffic')));
+                }
+                this.rowTraffic[id] = data;
+            } catch (error) {
+                this.showToast(error.message, 'error');
+            } finally {
+                this.loadingTraffic[id] = false;
+            }
+        },
 
         // Toast
         toast: {
