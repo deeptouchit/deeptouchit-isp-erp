@@ -1,6 +1,6 @@
 @extends('reseller.layouts.app')
 
-@section('title', 'Assigned Packages & Rates - ' . ($tenant->company_name ?? $tenant->name ?? 'Reseller Portal'))
+@section('title', 'Available Packages & Rates - ' . ($tenant->company_name ?? $tenant->name ?? 'Reseller Portal'))
 
 @push('styles')
     {{-- Page-specific CSS --}}
@@ -15,7 +15,7 @@
             <div class="w-8 h-8 rounded-lg bg-cyan-50 text-cyan-600 border border-cyan-100 flex items-center justify-center text-sm shadow-2xs flex-shrink-0">
                 <i class="fas fa-boxes-stacked"></i>
             </div>
-            <h1 class="text-sm font-bold text-slate-800 tracking-tight">{{ __('Assigned Packages') }}</h1>
+            <h1 class="text-sm font-bold text-slate-800 tracking-tight">{{ __('Available Packages') }}</h1>
         </div>
         <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap sm:flex-nowrap justify-start sm:justify-end">
             <a href="{{ route('reseller.packages.print', request()->query()) }}" target="_blank" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200/80 transition flex items-center gap-1.5 cursor-pointer">
@@ -35,7 +35,7 @@
         {{-- Card 1: Total Assigned Plans --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Assigned Packages') }}</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Available Packages') }}</span>
                 <span class="text-[13px] font-bold font-mono text-cyan-800 leading-tight block truncate">
                     {{ number_format($stats['total_assigned_plans']) }}
                 </span>
@@ -84,7 +84,7 @@
             </div>
         </div>
 
-        {{-- Card 5: Total Monthly Profit --}}
+        {{-- Card 5: Total Estimated Monthly Margin --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
                 <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Profit') }}</span>
@@ -112,66 +112,7 @@
 
     </div>
 
-    {{-- 3. SEARCH & MULTI-FILTER TOOLBAR (AGENTS.md Rule 2.C) --}}
-    <div class="bg-white p-2.5 sm:p-3 rounded-xl border border-slate-200 shadow-xs space-y-2">
-        <form method="GET" action="{{ route('reseller.packages.index') }}" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-2 items-center">
-            
-            <!-- Search Box (MD: 4 Cols) -->
-            <div class="relative md:col-span-4">
-                <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
-                <input type="search" 
-                       name="search" 
-                       value="{{ $search }}" 
-                       autocomplete="off"
-                       placeholder="Search package name, profile..." 
-                       class="w-full pl-8 pr-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:border-cyan-500 shadow-2xs">
-            </div>
-
-            <!-- Service Type Filter (MD: 2 Cols) -->
-            <div class="md:col-span-2">
-                <select name="service_type" onchange="this.form.submit()" class="w-full py-1.5 px-2 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:border-cyan-500 shadow-2xs">
-                    <option value="all" {{ $serviceType === 'all' ? 'selected' : '' }}>All Service Types</option>
-                    <option value="PPPOE" {{ $serviceType === 'PPPOE' ? 'selected' : '' }}>PPPoE</option>
-                    <option value="STATIC_IP" {{ $serviceType === 'STATIC_IP' ? 'selected' : '' }}>Static IP</option>
-                    <option value="HOTSPOT" {{ $serviceType === 'HOTSPOT' ? 'selected' : '' }}>Hotspot</option>
-                </select>
-            </div>
-
-            <!-- Speed Tier Filter (MD: 2 Cols) -->
-            <div class="md:col-span-2">
-                <select name="speed" onchange="this.form.submit()" class="w-full py-1.5 px-2 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:border-cyan-500 shadow-2xs">
-                    <option value="all" {{ $speedTier === 'all' ? 'selected' : '' }}>All Speeds</option>
-                    <option value="10" {{ $speedTier === '10' ? 'selected' : '' }}>Up to 10 Mbps</option>
-                    <option value="20" {{ $speedTier === '20' ? 'selected' : '' }}>11 - 20 Mbps</option>
-                    <option value="35" {{ $speedTier === '35' ? 'selected' : '' }}>21 - 35 Mbps</option>
-                    <option value="50+" {{ $speedTier === '50+' ? 'selected' : '' }}>40+ Mbps</option>
-                </select>
-            </div>
-
-            <!-- Per Page Selector (MD: 2 Cols) -->
-            <div class="md:col-span-2">
-                <select name="per_page" onchange="this.form.submit()" class="w-full py-1.5 px-2 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:border-cyan-500 shadow-2xs">
-                    <option value="10" {{ $perPage == 10 ? 'selected' : '' }}>10 Per Page</option>
-                    <option value="20" {{ $perPage == 20 ? 'selected' : '' }}>20 Per Page</option>
-                    <option value="50" {{ $perPage == 50 ? 'selected' : '' }}>50 Per Page</option>
-                    <option value="100" {{ $perPage == 100 ? 'selected' : '' }}>100 Per Page</option>
-                </select>
-            </div>
-
-            <!-- Strict Filter & Reset Sequence (AGENTS.md Rule 2.C - MD: 2 Cols) -->
-            <div class="flex items-center gap-1.5 md:col-span-2">
-                <button type="submit" class="w-1/2 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-1.5 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer">
-                    <i class="fas fa-filter text-[10px]"></i>
-                    <span>Filter</span>
-                </button>
-                <a href="{{ route('reseller.packages.index') }}" class="w-1/2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-1.5 px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer">
-                    <i class="fas fa-rotate-left text-[10px]"></i>
-                    <span>Reset</span>
-                </a>
-            </div>
-
-        </form>
-    </div>
+    @include('reseller.packages.filters', ['filterRoute' => 'reseller.packages.index'])
 
     {{-- 4. MASTER COMPACT TABLE (AGENTS.md Rule 2.D: Compact .saas-table with Bandwidth Breakdown) --}}
     <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
@@ -179,65 +120,35 @@
             <table class="saas-table">
                 <thead>
                     <tr>
-                        <th class="w-10 text-center">#</th>
-                        <th>Package</th>
-                        <th class="w-20 text-center font-mono">Download</th>
-                        <th class="w-20 text-center font-mono">Upload</th>
-                        <th class="w-20 text-center font-mono">Facebook</th>
-                        <th class="w-20 text-center font-mono">YouTube</th>
-                        <th class="w-20 text-center font-mono">BDIX</th>
-                        <th class="w-24 text-right">Retail Rate</th>
-                        <th class="w-24 text-right">Wholesale Cost</th>
-                        <th class="w-28 text-right">Margin ({{ $commissionRate }}%)</th>
-                        <th class="w-20 text-center font-mono">Subscribers</th>
-                        <th class="w-10 text-center no-sort">Action</th>
+                        <th class="text-center font-semibold">Package</th>
+                        <th class="w-20 font-mono text-center font-semibold">Download</th>
+                        <th class="w-24 text-center font-semibold">Retail Rate</th>
+                        <th class="w-24 text-center font-semibold">Wholesale Cost</th>
+                        <th class="w-28 text-center font-semibold">Margin ({{ $commissionRate }}%)</th>
+                        <th class="w-20 font-mono text-center font-semibold">Subscribers</th>
+                        <th class="w-10 no-sort text-center font-semibold">Action</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($packages as $index => $pkg)
                         @php
                             $retail = (float) $pkg->price;
-                            $margin = ($retail * $commissionRate) / 100;
-                            $cost = max(0, $retail - $margin);
+                            $margin = $reseller->calculateCommissionAmount($retail);
+                            $cost = $reseller->calculateResellerCost($retail);
                             $subs = $subscriberCounts->get($pkg->id);
                             $activeSubs = $subs ? $subs->active_subscribers : 0;
                         @endphp
                         <tr>
-                            <!-- 1. Index -->
-                            <td class="text-center font-mono text-slate-500">
-                                {{ ($packages->currentPage() - 1) * $packages->perPage() + $index + 1 }}
-                            </td>
-
                             <!-- 2. Package (MikroTik Profile Name) -->
                             <td class="font-mono font-bold text-cyan-800">
                                 <button type="button" class="hover:underline cursor-pointer font-mono font-bold" @click="fetchPackageDetails({{ $pkg->id }})">
-                                    {{ $pkg->mikrotik_profile ?? $pkg->name }}
+                                    {{ $pkg->name ?: ($pkg->mikrotik_profile ?: $pkg->package_name) }}
                                 </button>
                             </td>
 
                             <!-- 3. Download (M) -->
                             <td class="text-center font-mono font-bold text-blue-700">
                                 {{ $pkg->download_speed ? $pkg->download_speed . 'M' : '—' }}
-                            </td>
-
-                            <!-- 4. Upload (M) -->
-                            <td class="text-center font-mono font-bold text-teal-700">
-                                {{ $pkg->upload_speed ? $pkg->upload_speed . 'M' : '—' }}
-                            </td>
-
-                            <!-- 5. Facebook (M) -->
-                            <td class="text-center font-mono font-bold text-indigo-700">
-                                {{ $pkg->facebook_speed ? $pkg->facebook_speed . 'M' : '—' }}
-                            </td>
-
-                            <!-- 6. YouTube (M) -->
-                            <td class="text-center font-mono font-bold text-rose-700">
-                                {{ $pkg->youtube_speed ? $pkg->youtube_speed . 'M' : '—' }}
-                            </td>
-
-                            <!-- 7. BDIX (M) -->
-                            <td class="text-center font-mono font-bold text-purple-700">
-                                {{ $pkg->bdix_speed ? $pkg->bdix_speed . 'M' : '—' }}
                             </td>
 
                             <!-- 8. Retail Rate -->
@@ -265,7 +176,7 @@
                                 <button type="button" 
                                         @click.stop="toggleMenu({{ Js::from([
                                             'id' => $pkg->id,
-                                            'name' => $pkg->mikrotik_profile ?? $pkg->name,
+                                            'name' => $pkg->name ?: ($pkg->mikrotik_profile ?: $pkg->package_name),
                                             'speed' => $pkg->download_speed
                                         ]) }}, $event)" 
                                         class="w-7 h-7 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition flex items-center justify-center mx-auto cursor-pointer">
@@ -275,7 +186,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="12" class="py-8 text-center text-slate-400 text-xs">
+                            <td colspan="7" class="py-8 text-center text-slate-400 text-xs">
                                 <i class="fas fa-boxes-stacked text-3xl text-slate-300 mb-2 block"></i>
                                 <span>No assigned internet packages found matching your criteria.</span>
                             </td>
@@ -351,15 +262,15 @@
                 <div class="grid grid-cols-3 gap-2">
                     <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-center">
                         <span class="text-[10px] uppercase font-medium text-slate-500 block">Retail Rate</span>
-                        <span class="text-sm font-bold font-mono text-slate-900" x-text="'{{ $currencySymbol ?? '৳' }}' + Number(pkgData?.price || 0).toLocaleString('en-US', {minimumFractionDigits: 2})"></span>
+                        <span class="text-sm font-bold font-mono text-slate-900" x-text="formatMoney(pkgData?.price)"></span>
                     </div>
                     <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-center">
                         <span class="text-[10px] uppercase font-medium text-slate-500 block">Wholesale Cost</span>
-                        <span class="text-sm font-bold font-mono text-slate-600" x-text="'{{ $currencySymbol ?? '৳' }}' + Number(pkgData?.wholesale_cost || 0).toLocaleString('en-US', {minimumFractionDigits: 2})"></span>
+                        <span class="text-sm font-bold font-mono text-slate-600" x-text="formatMoney(pkgData?.wholesale_cost)"></span>
                     </div>
                     <div class="p-2.5 rounded-lg bg-emerald-50/70 border border-emerald-200 text-center">
                         <span class="text-[10px] uppercase font-medium text-emerald-700 block">Your Margin</span>
-                        <span class="text-sm font-bold font-mono text-emerald-700" x-text="'+{{ $currencySymbol ?? '৳' }}' + Number(pkgData?.profit_margin || 0).toLocaleString('en-US', {minimumFractionDigits: 2})"></span>
+                        <span class="text-sm font-bold font-mono text-emerald-700" x-text="formatMoney(pkgData?.profit_margin)"></span>
                     </div>
                 </div>
 
@@ -402,11 +313,11 @@
                     </div>
                     <div class="flex items-center justify-between">
                         <span class="font-semibold text-slate-700">Total Monthly Revenue:</span>
-                        <span class="font-mono font-bold text-slate-900" x-text="'{{ $currencySymbol ?? '৳' }}' + Number(pkgData?.total_revenue || 0).toLocaleString('en-US', {minimumFractionDigits: 2})"></span>
+                        <span class="font-mono font-bold text-slate-900" x-text="formatMoney(pkgData?.total_revenue)"></span>
                     </div>
                     <div class="flex items-center justify-between border-t border-cyan-100 pt-1">
-                        <span class="font-bold text-emerald-800">Your Monthly Profit:</span>
-                        <span class="font-mono font-bold text-emerald-700 text-sm" x-text="'{{ $currencySymbol ?? '৳' }}' + Number(pkgData?.total_profit || 0).toLocaleString('en-US', {minimumFractionDigits: 2})"></span>
+                        <span class="font-bold text-emerald-800">Your Estimated Monthly Margin:</span>
+                        <span class="font-mono font-bold text-emerald-700 text-sm" x-text="formatMoney(pkgData?.total_profit)"></span>
                     </div>
                 </div>
 
@@ -430,6 +341,14 @@
 <script>
 function packageManager() {
     return {
+        formatMoney(value) {
+            const precision = Number(@js($currencyDecimals ?? 2));
+            const [integer, decimals] = Number(value || 0).toFixed(precision).split('.');
+            const grouped = integer.replace(/\B(?=(\d{3})+(?!\d))/g, () => @js($thousandSeparator ?? ','));
+            const amount = decimals === undefined ? grouped : grouped + @js($decimalSeparator ?? '.') + decimals;
+            const symbol = @js($currencySymbol);
+            return @js($currencyPosition ?? 'left') === 'right' ? amount + ' ' + symbol : symbol + ' ' + amount;
+        },
         activeMenu: null,
         activeMenuItem: null,
         menuPos: {},

@@ -75,21 +75,21 @@
                         <th class="py-1.5 px-2 text-right font-semibold w-24">Wholesale Cost</th>
                         <th class="py-1.5 px-2 text-right font-semibold w-24">Margin ({{ $commissionRate }}%)</th>
                         <th class="py-1.5 px-2 text-center font-semibold w-24">Active Users</th>
-                        <th class="py-1.5 px-2 text-right font-semibold w-28">Monthly Profit</th>
+                        <th class="py-1.5 px-2 text-right font-semibold w-28">Estimated Monthly Margin</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
                     @forelse($packages as $index => $pkg)
                         @php
                             $retail = (float) $pkg->price;
-                            $margin = ($retail * $commissionRate) / 100;
-                            $cost = max(0, $retail - $margin);
+                            $margin = $reseller->calculateCommissionAmount($retail);
+                            $cost = $reseller->calculateResellerCost($retail);
                             $activeSubs = $subscriberCounts->get($pkg->id)?->active_subscribers ?? 0;
-                            $pkgProfit = $activeSubs * $margin;
+                            $pkgProfit = (float) ($subscriberCounts->get($pkg->id)?->estimated_margin ?? 0);
                         @endphp
                         <tr>
                             <td class="py-2 px-2 font-mono text-slate-500">{{ $index + 1 }}</td>
-                            <td class="py-2 px-2 font-mono font-bold text-cyan-800">{{ $pkg->mikrotik_profile ?? $pkg->name }}</td>
+                            <td class="py-2 px-2 font-mono font-bold text-cyan-800">{{ $pkg->name ?: ($pkg->mikrotik_profile ?: $pkg->package_name) }}</td>
                             <td class="py-2 px-2 text-right font-mono font-bold text-slate-900">@currency($retail)</td>
                             <td class="py-2 px-2 text-right font-mono font-semibold text-slate-600">@currency($cost)</td>
                             <td class="py-2 px-2 text-right font-mono font-bold text-emerald-700">+@currency($margin)</td>

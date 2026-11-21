@@ -328,7 +328,7 @@ class ResellerCustomerController extends Controller
             'remarks' => 'nullable|string|max:500',
         ]);
 
-        $package = TenantInternetPackage::where('tenant_id', $tenantId)->findOrFail($validated['package_id']);
+        $package = TenantInternetPackage::where('tenant_id', $tenantId)->where('is_active', true)->findOrFail($validated['package_id']);
         $monthlyBill = isset($validated['monthly_bill']) && $validated['monthly_bill'] !== ''
             ? (float) $validated['monthly_bill']
             : (float) $package->price;
@@ -548,7 +548,7 @@ class ResellerCustomerController extends Controller
             ->findOrFail($id);
 
         $packages = TenantInternetPackage::where('tenant_id', $tenantId)
-            ->where('is_active', true)
+            ->where(fn ($packages) => $packages->where('is_active', true)->orWhereKey($customer->package_id))
             ->orderBy('price')
             ->get();
 
@@ -622,7 +622,9 @@ class ResellerCustomerController extends Controller
             'remarks' => 'nullable|string|max:500',
         ]);
 
-        $package = TenantInternetPackage::where('tenant_id', $tenantId)->findOrFail($validated['package_id']);
+        $package = TenantInternetPackage::where('tenant_id', $tenantId)
+            ->where(fn ($packages) => $packages->where('is_active', true)->orWhereKey($customer->package_id))
+            ->findOrFail($validated['package_id']);
         $monthlyBill = isset($validated['monthly_bill']) && $validated['monthly_bill'] !== ''
             ? (float) $validated['monthly_bill']
             : (float) $package->price;
@@ -2153,7 +2155,7 @@ class ResellerCustomerController extends Controller
             'disconnect_session' => 'nullable|boolean',
         ]);
 
-        $newPackage = TenantInternetPackage::where('tenant_id', $tenantId)->findOrFail($validated['package_id']);
+        $newPackage = TenantInternetPackage::where('tenant_id', $tenantId)->where('is_active', true)->findOrFail($validated['package_id']);
         $oldPackageName = $customer->package_name ?: ($customer->package?->package_name ?: 'Current Plan');
         $oldRetailPrice = (float)($customer->package?->price ?? $customer->monthly_bill);
         $newRetailPrice = (float)$newPackage->price;

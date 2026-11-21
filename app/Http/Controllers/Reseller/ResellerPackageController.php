@@ -3,39 +3,14 @@
 namespace App\Http\Controllers\Reseller;
 
 use App\Http\Controllers\Controller;
-use App\Models\Tenant;
-use App\Models\TenantCustomer;
-use App\Models\TenantInternetPackage;
-use App\Models\TenantReseller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ResellerPackageController extends Controller
 {
-    /**
-     * Resolve the active authenticated Reseller and Tenant.
-     */
-    protected function getResellerData(): array
-    {
-        $user = Auth::user();
-        $reseller = $user->reseller;
-        if (!$reseller && $user->reseller_id) {
-            $reseller = TenantReseller::find($user->reseller_id);
-        }
-        if (!$reseller && $user->tenant_id) {
-            $reseller = TenantReseller::where('tenant_id', $user->tenant_id)->first();
-        }
-        if (!$reseller) {
-            $reseller = TenantReseller::first();
-        }
-
-        $tenant = $reseller?->tenant ?? ($user->tenant ?? Tenant::first());
-
-        return [$user, $reseller, $tenant];
-    }
+    use ResellerPackageReport;
 
     /**
      * Display Assigned Internet Packages & Margin Rates.
@@ -43,88 +18,15 @@ class ResellerPackageController extends Controller
     public function index(Request $request): View
     {
         [$authUser, $reseller, $tenant] = $this->getResellerData();
-        $resellerId = $reseller?->id;
-        $tenantId = $tenant?->id;
-
-        $search = trim($request->input('search', ''));
-        $serviceType = $request->input('service_type', 'all');
-        $speedTier = $request->input('speed', 'all');
-        $perPage = (int) $request->input('per_page', 20);
-        if (!in_array($perPage, [10, 20, 50, 100], true)) {
-            $perPage = 20;
-        }
-
-        // 1. Base Query
-        $query = TenantInternetPackage::query()
-            ->where('tenant_id', $tenantId)
-            ->where('is_active', true);
-
-        if ($search !== '') {
-            $query->where(function ($q) use ($search) {
-                $q->where('package_name', 'like', "%{$search}%")
-                  ->orWhere('name', 'like', "%{$search}%")
-                  ->orWhere('code', 'like', "%{$search}%")
-                  ->orWhere('mikrotik_profile', 'like', "%{$search}%");
-            });
-        }
-
-        if ($serviceType !== 'all') {
-            $query->where('service_type', strtoupper($serviceType));
-        }
-
-        if ($speedTier !== 'all') {
-            if ($speedTier === '10') {
-                $query->where('download_speed', '<=', 10);
-            } elseif ($speedTier === '20') {
-                $query->whereBetween('download_speed', [11, 20]);
-            } elseif ($speedTier === '35') {
-                $query->whereBetween('download_speed', [21, 35]);
-            } elseif ($speedTier === '50+') {
-                $query->where('download_speed', '>=', 40);
-            }
-        }
-
-        $packages = $query->orderBy('price')->paginate($perPage)->withQueryString();
-
-        // 2. Fetch subscriber counts per package under this reseller
-        $subscriberCounts = TenantCustomer::where('tenant_id', $tenantId)
-            ->where('reseller_id', $resellerId)
-            ->selectRaw('package_id, COUNT(*) as total_subscribers, SUM(CASE WHEN status = "active" THEN 1 ELSE 0 END) as active_subscribers')
-            ->groupBy('package_id')
-            ->get()
-            ->keyBy('package_id');
-
-        $commissionRate = (float) ($reseller->commission_rate ?? 30);
-
-        // 3. Compute 6 KPI Metric Cards (AGENTS.md Rule 2.B)
-        $allPackages = TenantInternetPackage::where('tenant_id', $tenantId)->where('is_active', true)->get();
-        $totalAssignedPlans = $allPackages->count();
-
-        $activeCustomers = TenantCustomer::where('tenant_id', $tenantId)
-            ->where('reseller_id', $resellerId)
-            ->where('status', 'active')
-            ->with('package')
-            ->get();
-
-        $totalActiveSubscribers = $activeCustomers->count();
-        $totalRetailMrr = (float) $activeCustomers->sum('monthly_bill');
-        if ($totalRetailMrr <= 0) {
-            $totalRetailMrr = (float) $activeCustomers->sum(fn($c) => $c->package?->price ?? 0);
-        }
-
-        $totalMonthlyProfit = ($totalRetailMrr * $commissionRate) / 100;
-        $totalWholesaleCost = max(0, $totalRetailMrr - $totalMonthlyProfit);
-
-        $stats = [
-            'total_assigned_plans' => $totalAssignedPlans,
-            'commission_rate' => $commissionRate,
-            'active_subscribers' => $totalActiveSubscribers,
-            'total_retail_mrr' => $totalRetailMrr,
-            'total_monthly_profit' => $totalMonthlyProfit,
-            'total_wholesale_cost' => $totalWholesaleCost,
-        ];
-
-        $currencySymbol = '৳';
+        [$query, $search, $serviceType, $speedTier] = $this->filteredPackages($request, $tenant->id);
+        $pageSizes = self::PAGE_SIZES;
+        $perPage = $request->integer('per_page', 20);
+        $perPage = in_array($perPage, $pageSizes, true) ? $perPage : 20;
+        $subscriberCounts = $this->subscriberMetrics($query, $reseller);
+        $stats = $this->packageStats($query, $subscriberCounts, $reseller);
+        $packages = $query->orderBy('price')->orderBy('id')->paginate($perPage)->withQueryString();
+        $commissionRate = $stats['commission_rate'];
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
 
         return view('reseller.packages.index', compact(
             'authUser',
@@ -138,6 +40,7 @@ class ResellerPackageController extends Controller
             'serviceType',
             'speedTier',
             'perPage',
+            'pageSizes',
             'currencySymbol'
         ));
     }
@@ -149,23 +52,20 @@ class ResellerPackageController extends Controller
     {
         [$authUser, $reseller, $tenant] = $this->getResellerData();
 
-        $pkg = TenantInternetPackage::where('tenant_id', $tenant->id)->findOrFail($id);
-        $commissionRate = (float) ($reseller->commission_rate ?? 30);
+        $query = $this->availablePackages($tenant->id)->whereKey($id);
+        $pkg = (clone $query)->firstOrFail();
+        $commissionRate = (float) ($reseller->commission_rate ?? 0);
         $retailPrice = (float) $pkg->price;
-        $profitMargin = ($retailPrice * $commissionRate) / 100;
-        $wholesaleCost = max(0, $retailPrice - $profitMargin);
-
-        $activeCount = TenantCustomer::where('tenant_id', $tenant->id)
-            ->where('reseller_id', $reseller->id)
-            ->where('package_id', $pkg->id)
-            ->where('status', 'active')
-            ->count();
+        $profitMargin = $reseller->calculateCommissionAmount($retailPrice);
+        $wholesaleCost = $reseller->calculateResellerCost($retailPrice);
+        $metrics = $this->subscriberMetrics($query, $reseller)->get($id);
+        $activeCount = (int) ($metrics?->active_subscribers ?? 0);
 
         return response()->json([
             'success' => true,
             'data' => [
                 'id' => $pkg->id,
-                'package_name' => $pkg->package_name ?? $pkg->name,
+                'package_name' => $pkg->name ?: ($pkg->mikrotik_profile ?: $pkg->package_name),
                 'name' => $pkg->name,
                 'code' => $pkg->code,
                 'service_type' => $pkg->service_type ?? 'PPPoE',
@@ -182,8 +82,8 @@ class ResellerPackageController extends Controller
                 'wholesale_cost' => $wholesaleCost,
                 'mikrotik_profile' => $pkg->mikrotik_profile ?? 'default',
                 'active_subscribers' => $activeCount,
-                'total_revenue' => $activeCount * $retailPrice,
-                'total_profit' => $activeCount * $profitMargin,
+                'total_revenue' => (float) ($metrics?->monthly_revenue ?? 0),
+                'total_profit' => (float) ($metrics?->estimated_margin ?? 0),
                 'description' => $pkg->description,
             ]
         ]);
@@ -195,31 +95,13 @@ class ResellerPackageController extends Controller
     public function exportCsv(Request $request): StreamedResponse
     {
         [$authUser, $reseller, $tenant] = $this->getResellerData();
-        $resellerId = $reseller?->id;
-        $tenantId = $tenant?->id;
+        [$query] = $this->filteredPackages($request, $tenant->id);
+        $packages = (clone $query)->orderBy('price')->orderBy('id')->get();
+        $commissionRate = (float) ($reseller->commission_rate ?? 0);
+        $currency = $tenant->currency_code ?? config('app.currency', 'BDT');
+        $filename = 'available_packages_' . ($reseller->code ?? 'RES') . '_' . now()->format('Ymd_His') . '.csv';
 
-        $search = trim($request->input('search', ''));
-        $serviceType = $request->input('service_type', 'all');
-
-        $query = TenantInternetPackage::where('tenant_id', $tenantId)->where('is_active', true);
-
-        if ($search !== '') {
-            $query->where(function ($q) use ($search) {
-                $q->where('package_name', 'like', "%{$search}%")
-                  ->orWhere('name', 'like', "%{$search}%")
-                  ->orWhere('code', 'like', "%{$search}%");
-            });
-        }
-
-        if ($serviceType !== 'all') {
-            $query->where('service_type', strtoupper($serviceType));
-        }
-
-        $packages = $query->orderBy('price')->get();
-        $commissionRate = (float) ($reseller->commission_rate ?? 30);
-        $filename = 'assigned_packages_' . ($reseller->code ?? 'RES') . '_' . now()->format('Ymd_His') . '.csv';
-
-        return response()->streamDownload(function () use ($packages, $commissionRate) {
+        return response()->streamDownload(function () use ($packages, $commissionRate, $reseller, $currency) {
             $handle = fopen('php://output', 'w');
             fputcsv($handle, [
                 '#',
@@ -227,9 +109,9 @@ class ResellerPackageController extends Controller
                 'Download Speed (Mbps)',
                 'Upload Speed (Mbps)',
                 'BDIX Speed (Mbps)',
-                'Retail Price (BDT)',
-                'Wholesale Cost (BDT)',
-                'Margin Amount (BDT)',
+                'Retail Price (' . $currency . ')',
+                'Wholesale Cost (' . $currency . ')',
+                'Margin Amount (' . $currency . ')',
                 'Commission Rate (%)',
                 'Validity (Days)',
                 'Service Type'
@@ -237,12 +119,12 @@ class ResellerPackageController extends Controller
 
             foreach ($packages as $idx => $p) {
                 $retail = (float) $p->price;
-                $margin = ($retail * $commissionRate) / 100;
-                $wholesale = max(0, $retail - $margin);
+                $margin = $reseller->calculateCommissionAmount($retail);
+                $wholesale = $reseller->calculateResellerCost($retail);
 
                 fputcsv($handle, [
                     $idx + 1,
-                    $p->package_name ?? $p->name,
+                    $p->name ?: ($p->mikrotik_profile ?: $p->package_name),
                     $p->download_speed,
                     $p->upload_speed,
                     $p->bdix_speed ?? $p->download_speed,
@@ -267,16 +149,10 @@ class ResellerPackageController extends Controller
     public function printReport(Request $request): View
     {
         [$authUser, $reseller, $tenant] = $this->getResellerData();
-        $resellerId = $reseller?->id;
-        $tenantId = $tenant?->id;
-
-        $packages = TenantInternetPackage::where('tenant_id', $tenantId)
-            ->where('is_active', true)
-            ->orderBy('price')
-            ->get();
-
-        $commissionRate = (float) ($reseller->commission_rate ?? 30);
-        $currencySymbol = '৳';
+        [$query] = $this->filteredPackages($request, $tenant->id);
+        $packages = (clone $query)->orderBy('price')->orderBy('id')->get();
+        $commissionRate = (float) ($reseller->commission_rate ?? 0);
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
 
         return view('reseller.packages.print', compact(
             'authUser',

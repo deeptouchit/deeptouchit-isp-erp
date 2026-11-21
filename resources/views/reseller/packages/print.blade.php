@@ -84,12 +84,12 @@
                     @forelse($packages as $index => $pkg)
                         @php
                             $retail = (float) $pkg->price;
-                            $margin = ($retail * $commissionRate) / 100;
-                            $cost = max(0, $retail - $margin);
+                            $margin = $reseller->calculateCommissionAmount($retail);
+                            $cost = $reseller->calculateResellerCost($retail);
                         @endphp
                         <tr>
                             <td class="py-2 px-2 font-mono text-slate-500">{{ $index + 1 }}</td>
-                            <td class="py-2 px-2 font-mono font-bold text-cyan-800">{{ $pkg->mikrotik_profile ?? $pkg->name }}</td>
+                            <td class="py-2 px-2 font-mono font-bold text-cyan-800">{{ $pkg->name ?: ($pkg->mikrotik_profile ?: $pkg->package_name) }}</td>
                             <td class="py-2 px-2 text-center font-mono font-bold text-slate-700">{{ $pkg->download_speed ? $pkg->download_speed . 'M' : '—' }} ↓ / {{ $pkg->upload_speed ? $pkg->upload_speed . 'M' : '—' }} ↑</td>
                             <td class="py-2 px-2 text-center font-mono font-bold text-indigo-700">{{ $pkg->facebook_speed ? $pkg->facebook_speed . 'M' : '—' }}</td>
                             <td class="py-2 px-2 text-center font-mono font-bold text-rose-700">{{ $pkg->youtube_speed ? $pkg->youtube_speed . 'M' : '—' }}</td>

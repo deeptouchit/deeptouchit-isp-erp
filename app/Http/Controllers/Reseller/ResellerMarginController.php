@@ -3,39 +3,14 @@
 namespace App\Http\Controllers\Reseller;
 
 use App\Http\Controllers\Controller;
-use App\Models\Tenant;
-use App\Models\TenantCustomer;
-use App\Models\TenantInternetPackage;
-use App\Models\TenantReseller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ResellerMarginController extends Controller
 {
-    /**
-     * Resolve the active authenticated Reseller and Tenant.
-     */
-    protected function getResellerData(): array
-    {
-        $user = Auth::user();
-        $reseller = $user->reseller;
-        if (!$reseller && $user->reseller_id) {
-            $reseller = TenantReseller::find($user->reseller_id);
-        }
-        if (!$reseller && $user->tenant_id) {
-            $reseller = TenantReseller::where('tenant_id', $user->tenant_id)->first();
-        }
-        if (!$reseller) {
-            $reseller = TenantReseller::first();
-        }
-
-        $tenant = $reseller?->tenant ?? ($user->tenant ?? Tenant::first());
-
-        return [$user, $reseller, $tenant];
-    }
+    use ResellerPackageReport;
 
     /**
      * Display Partner Margin & Profit Rates Analytics.
@@ -43,67 +18,15 @@ class ResellerMarginController extends Controller
     public function index(Request $request): View
     {
         [$authUser, $reseller, $tenant] = $this->getResellerData();
-        $resellerId = $reseller?->id;
-        $tenantId = $tenant?->id;
-
-        $search = trim($request->input('search', ''));
-        $perPage = (int) $request->input('per_page', 20);
-        if (!in_array($perPage, [10, 20, 50, 100], true)) {
-            $perPage = 20;
-        }
-
-        // 1. Base Query
-        $query = TenantInternetPackage::query()
-            ->where('tenant_id', $tenantId)
-            ->where('is_active', true);
-
-        if ($search !== '') {
-            $query->where(function ($q) use ($search) {
-                $q->where('package_name', 'like', "%{$search}%")
-                  ->orWhere('name', 'like', "%{$search}%")
-                  ->orWhere('mikrotik_profile', 'like', "%{$search}%");
-            });
-        }
-
-        $packages = $query->orderBy('price')->paginate($perPage)->withQueryString();
-
-        // 2. Fetch subscriber counts per package
-        $subscriberCounts = TenantCustomer::where('tenant_id', $tenantId)
-            ->where('reseller_id', $resellerId)
-            ->selectRaw('package_id, COUNT(*) as total_subscribers, SUM(CASE WHEN status = "active" THEN 1 ELSE 0 END) as active_subscribers')
-            ->groupBy('package_id')
-            ->get()
-            ->keyBy('package_id');
-
-        $commissionRate = (float) ($reseller->commission_rate ?? 30);
-
-        // 3. Compute 6 KPI Metric Cards (AGENTS.md Rule 2.B)
-        $activeCustomers = TenantCustomer::where('tenant_id', $tenantId)
-            ->where('reseller_id', $resellerId)
-            ->where('status', 'active')
-            ->with('package')
-            ->get();
-
-        $activeSubscribersCount = $activeCustomers->count();
-        $totalRetailMrr = (float) $activeCustomers->sum('monthly_bill');
-        if ($totalRetailMrr <= 0) {
-            $totalRetailMrr = (float) $activeCustomers->sum(fn($c) => $c->package?->price ?? 0);
-        }
-
-        $totalMonthlyProfit = ($totalRetailMrr * $commissionRate) / 100;
-        $totalWholesaleCost = max(0, $totalRetailMrr - $totalMonthlyProfit);
-        $avgProfitPerUser = $activeSubscribersCount > 0 ? ($totalMonthlyProfit / $activeSubscribersCount) : 0;
-
-        $stats = [
-            'commission_rate' => $commissionRate,
-            'total_monthly_profit' => $totalMonthlyProfit,
-            'total_retail_mrr' => $totalRetailMrr,
-            'total_wholesale_cost' => $totalWholesaleCost,
-            'avg_profit_per_user' => $avgProfitPerUser,
-            'active_subscribers' => $activeSubscribersCount,
-        ];
-
-        $currencySymbol = '৳';
+        [$query, $search, $serviceType, $speedTier] = $this->filteredPackages($request, $tenant->id);
+        $pageSizes = self::PAGE_SIZES;
+        $perPage = $request->integer('per_page', 20);
+        $perPage = in_array($perPage, $pageSizes, true) ? $perPage : 20;
+        $subscriberCounts = $this->subscriberMetrics($query, $reseller);
+        $stats = $this->packageStats($query, $subscriberCounts, $reseller);
+        $packages = $query->orderBy('price')->orderBy('id')->paginate($perPage)->withQueryString();
+        $commissionRate = $stats['commission_rate'];
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
 
         return view('reseller.margins.index', compact(
             'authUser',
@@ -114,7 +37,10 @@ class ResellerMarginController extends Controller
             'commissionRate',
             'stats',
             'search',
+            'serviceType',
+            'speedTier',
             'perPage',
+            'pageSizes',
             'currencySymbol'
         ));
     }
@@ -126,24 +52,21 @@ class ResellerMarginController extends Controller
     {
         [$authUser, $reseller, $tenant] = $this->getResellerData();
 
-        $pkg = TenantInternetPackage::where('tenant_id', $tenant->id)->findOrFail($id);
-        $commissionRate = (float) ($reseller->commission_rate ?? 30);
+        $query = $this->availablePackages($tenant->id)->whereKey($id);
+        $pkg = (clone $query)->firstOrFail();
+        $commissionRate = (float) ($reseller->commission_rate ?? 0);
         $retailPrice = (float) $pkg->price;
-        $profitMargin = ($retailPrice * $commissionRate) / 100;
-        $wholesaleCost = max(0, $retailPrice - $profitMargin);
-
-        $activeCount = TenantCustomer::where('tenant_id', $tenant->id)
-            ->where('reseller_id', $reseller->id)
-            ->where('package_id', $pkg->id)
-            ->where('status', 'active')
-            ->count();
+        $profitMargin = $reseller->calculateCommissionAmount($retailPrice);
+        $wholesaleCost = $reseller->calculateResellerCost($retailPrice);
+        $metrics = $this->subscriberMetrics($query, $reseller)->get($id);
+        $activeCount = (int) ($metrics?->active_subscribers ?? 0);
 
         return response()->json([
             'success' => true,
             'data' => [
                 'id' => $pkg->id,
-                'name' => $pkg->mikrotik_profile ?? $pkg->name,
-                'package_name' => $pkg->package_name ?? $pkg->name,
+                'name' => $pkg->name ?: ($pkg->mikrotik_profile ?: $pkg->package_name),
+                'package_name' => $pkg->name ?: ($pkg->mikrotik_profile ?: $pkg->package_name),
                 'download_speed' => $pkg->download_speed,
                 'upload_speed' => $pkg->upload_speed,
                 'price' => $retailPrice,
@@ -151,8 +74,8 @@ class ResellerMarginController extends Controller
                 'profit_margin' => $profitMargin,
                 'commission_rate' => $commissionRate,
                 'active_subscribers' => $activeCount,
-                'monthly_revenue' => $activeCount * $retailPrice,
-                'monthly_profit' => $activeCount * $profitMargin,
+                'monthly_revenue' => (float) ($metrics?->monthly_revenue ?? 0),
+                'monthly_profit' => (float) ($metrics?->estimated_margin ?? 0),
             ]
         ]);
     }
@@ -163,47 +86,36 @@ class ResellerMarginController extends Controller
     public function exportCsv(Request $request): StreamedResponse
     {
         [$authUser, $reseller, $tenant] = $this->getResellerData();
-        $resellerId = $reseller?->id;
-        $tenantId = $tenant?->id;
-
-        $packages = TenantInternetPackage::where('tenant_id', $tenantId)
-            ->where('is_active', true)
-            ->orderBy('price')
-            ->get();
-
-        $subscriberCounts = TenantCustomer::where('tenant_id', $tenantId)
-            ->where('reseller_id', $resellerId)
-            ->selectRaw('package_id, SUM(CASE WHEN status = "active" THEN 1 ELSE 0 END) as active_subscribers')
-            ->groupBy('package_id')
-            ->get()
-            ->keyBy('package_id');
-
-        $commissionRate = (float) ($reseller->commission_rate ?? 30);
+        [$query] = $this->filteredPackages($request, $tenant->id);
+        $packages = (clone $query)->orderBy('price')->orderBy('id')->get();
+        $subscriberCounts = $this->subscriberMetrics($query, $reseller);
+        $commissionRate = (float) ($reseller->commission_rate ?? 0);
+        $currency = $tenant->currency_code ?? config('app.currency', 'BDT');
         $filename = 'margin_rates_' . ($reseller->code ?? 'RES') . '_' . now()->format('Ymd_His') . '.csv';
 
-        return response()->streamDownload(function () use ($packages, $subscriberCounts, $commissionRate) {
+        return response()->streamDownload(function () use ($packages, $subscriberCounts, $commissionRate, $reseller, $currency) {
             $handle = fopen('php://output', 'w');
             fputcsv($handle, [
                 '#',
                 'MikroTik Profile',
-                'Retail Price (BDT)',
-                'Partner Wholesale Cost (BDT)',
-                'Margin Per User (BDT)',
+                'Retail Price (' . $currency . ')',
+                'Partner Wholesale Cost (' . $currency . ')',
+                'Margin Per User (' . $currency . ')',
                 'Commission Rate (%)',
                 'Active Subscribers',
-                'Total Monthly Profit (BDT)'
+                'Estimated Monthly Margin (' . $currency . ')'
             ]);
 
             foreach ($packages as $idx => $p) {
                 $retail = (float) $p->price;
-                $margin = ($retail * $commissionRate) / 100;
-                $cost = max(0, $retail - $margin);
+                $margin = $reseller->calculateCommissionAmount($retail);
+                $cost = $reseller->calculateResellerCost($retail);
                 $activeSubs = $subscriberCounts->get($p->id)?->active_subscribers ?? 0;
-                $totalProfit = $activeSubs * $margin;
+                $totalProfit = (float) ($subscriberCounts->get($p->id)?->estimated_margin ?? 0);
 
                 fputcsv($handle, [
                     $idx + 1,
-                    $p->mikrotik_profile ?? $p->name,
+                    $p->name ?: ($p->mikrotik_profile ?: $p->package_name),
                     $retail,
                     $cost,
                     $margin,
@@ -225,29 +137,13 @@ class ResellerMarginController extends Controller
     public function printReport(Request $request): View
     {
         [$authUser, $reseller, $tenant] = $this->getResellerData();
-        $resellerId = $reseller?->id;
-        $tenantId = $tenant?->id;
-
-        $packages = TenantInternetPackage::where('tenant_id', $tenantId)
-            ->where('is_active', true)
-            ->orderBy('price')
-            ->get();
-
-        $subscriberCounts = TenantCustomer::where('tenant_id', $tenantId)
-            ->where('reseller_id', $resellerId)
-            ->selectRaw('package_id, SUM(CASE WHEN status = "active" THEN 1 ELSE 0 END) as active_subscribers')
-            ->groupBy('package_id')
-            ->get()
-            ->keyBy('package_id');
-
+        [$query] = $this->filteredPackages($request, $tenant->id);
+        $packages = (clone $query)->orderBy('price')->orderBy('id')->get();
+        $commissionRate = (float) ($reseller->commission_rate ?? 0);
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
+        $subscriberCounts = $this->subscriberMetrics($query, $reseller);
         $totalSubscribers = (int) $subscriberCounts->sum('active_subscribers');
-        $totalProfit = 0;
-        foreach ($packages as $pkg) {
-            $retail = (float) $pkg->price;
-            $margin = ($retail * $commissionRate) / 100;
-            $activeSubs = (int) ($subscriberCounts->get($pkg->id)?->active_subscribers ?? 0);
-            $totalProfit += ($activeSubs * $margin);
-        }
+        $totalProfit = (float) $subscriberCounts->sum('estimated_margin');
 
         return view('reseller.margins.print', compact(
             'authUser',
