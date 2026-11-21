@@ -1,4 +1,4 @@
-@extends('tenant.layouts.app')
+@extends($resellerPortal ? 'reseller.layouts.app' : 'tenant.layouts.app')
 
 @section('title', __('Coverage Zones') . ' - ' . ($tenant->company_name ?? $tenant->name))
 
@@ -67,16 +67,17 @@
         </div>
 
         <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-            <a href="{{ route('tenant.customers.zones.import-template') }}"
+            @if($canManageZones)
+            <a href="{{ route($zoneRoute . '.import-template') }}"
                class="px-3 py-1.5 rounded-lg bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs border border-slate-200 shadow-2xs transition inline-flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-file-excel text-emerald-600 text-[11px]"></i>
-                <span>{{ __('Excel Template') }}</span>
+                <span>{{ __('CSV Template') }}</span>
             </a>
             <button type="button"
                     @click="openImportModal()"
                     class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-file-import text-[11px]"></i>
-                <span>{{ __('Import Excel / CSV') }}</span>
+                <span>{{ __('Import CSV') }}</span>
             </button>
             <button type="button"
                     @click="openCreateModal()"
@@ -84,6 +85,7 @@
                 <i class="fas fa-plus text-[11px]"></i>
                 <span>{{ __('Add New Zone') }}</span>
             </button>
+            @endif
         </div>
     </div>
 
@@ -153,7 +155,7 @@
     <!-- 3. Search & Multi-Filter Toolbar (Customer-Standard 2-Tier System, Strict Uniform h-[34px]) -->
     <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5"
          x-data='{!! json_encode(["showMoreFilters" => $isMoreOpen, "searchQuery" => $search ?? ""], JSON_HEX_APOS) !!}'>
-        <form method="GET" action="{{ route('tenant.customers.zones') }}" class="space-y-2.5">
+        <form method="GET" action="{{ route($zoneRoute) }}" class="space-y-2.5">
             <!-- Tier 1: Primary Filter Bar -->
             <div class="flex flex-col md:flex-row items-stretch md:items-center gap-2">
                 <!-- Live Search Input -->
@@ -247,7 +249,7 @@
                         <i class="fas fa-filter text-[10px]"></i>
                         <span>{{ __('Filter') }}</span>
                     </button>
-                    <a href="{{ route('tenant.customers.zones') }}"
+                    <a href="{{ route($zoneRoute) }}"
                        class="h-[34px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-0 px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer"
                        title="{{ __('Reset Filters') }}">
                         <i class="fas fa-rotate-left text-[10px]"></i>
@@ -387,7 +389,7 @@
                                         @foreach(array_slice($subAreasList, 0, 2) as $sa)
                                             <span class="inline-block px-1.5 py-0.5 bg-slate-100 text-slate-700 rounded text-[10px] font-medium border border-slate-200/80 whitespace-nowrap">{{ $sa }}</span>
                                         @endforeach
-                                        @if(count($subAreasList) > 2)
+                                        @if(count($subAreasList) > 2 && $canManageZones)
                                             <button type="button"
                                                     @click="openSubAreasModal({{ Js::from($zoneData) }})"
                                                     class="text-[10px] font-semibold text-cyan-700 bg-cyan-50 hover:bg-cyan-100 px-1.5 py-0.5 rounded border border-cyan-200/70 transition cursor-pointer whitespace-nowrap"
@@ -408,7 +410,7 @@
 
                             <!-- 5. Subscribers Count -->
                             <td class="text-center font-mono">
-                                <a href="{{ route('tenant.customers.index', ['zone' => $z->name]) }}"
+                                <a href="{{ route($resellerPortal ? 'reseller.customers.index' : 'tenant.customers.index', ['zone' => $z->name]) }}"
                                    class="inline-flex items-center gap-1 font-bold text-xs {{ $subCount > 0 ? 'text-cyan-700 hover:text-cyan-900 underline' : 'text-slate-400' }}"
                                    title="{{ __('View Subscribers') }}">
                                     <span>{{ $subCount }}</span>
@@ -441,9 +443,10 @@
                                     </div>
                                     <div class="space-y-0.5">
                                         <p class="text-xs font-bold text-slate-800">{{ __('No coverage zones found') }}</p>
-                                        <p class="text-[11px] text-slate-500 whitespace-normal">{{ __('Define your operational areas or import zones from Excel / CSV.') }}</p>
+                                        <p class="text-[11px] text-slate-500 whitespace-normal">{{ __('Define your operational areas or import zones from CSV.') }}</p>
                                     </div>
                                     <div class="flex items-center gap-2 pt-1">
+                                        @if($canManageZones)
                                         <button type="button"
                                                 @click="openCreateModal()"
                                                 class="px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer">
@@ -454,8 +457,9 @@
                                                 @click="openImportModal()"
                                                 class="px-3 py-1.5 rounded-lg bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs border border-slate-200 shadow-2xs transition inline-flex items-center gap-1.5 cursor-pointer">
                                             <i class="fas fa-file-import text-emerald-600 text-[10px]"></i>
-                                            <span>{{ __('Import Excel / CSV') }}</span>
+                                            <span>{{ __('Import CSV') }}</span>
                                         </button>
+                                        @endif
                                     </div>
                                 </div>
                             </td>
@@ -489,14 +493,16 @@
                 <span>{{ __('View Details') }}</span>
             </button>
 
+            @if($canManageZones)
             <button type="button"
                     @click="const item = activeMenu; activeMenu = null; openSubAreasModal(item)"
                     class="w-full px-3 py-1.5 hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition text-left cursor-pointer">
                 <i class="fas fa-layer-group text-emerald-600 w-3.5 text-center text-[11px]"></i>
                 <span>{{ __('Manage Sub Areas') }}</span>
             </button>
+            @endif
 
-            <a :href="'{{ url('admin/customers') }}?zone=' + encodeURIComponent(activeMenu ? activeMenu.name : '')"
+            <a :href="'{{ route($resellerPortal ? 'reseller.customers.index' : 'tenant.customers.index') }}?zone=' + encodeURIComponent(activeMenu ? activeMenu.name : '')"
                class="w-full px-3 py-1.5 hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition text-left cursor-pointer">
                 <i class="fas fa-users text-blue-600 w-3.5 text-center text-[11px]"></i>
                 <span>{{ __('View Subscribers') }}</span>
@@ -504,6 +510,7 @@
         </div>
 
         <div class="py-1">
+            @if($canManageZones)
             <button type="button"
                     @click="const item = activeMenu; activeMenu = null; toggleStatus(item.id, item.name)"
                     class="w-full px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 transition text-left cursor-pointer"
@@ -511,20 +518,25 @@
                 <i class="fas w-3.5 text-center text-[11px]" :class="activeMenu?.is_active ? 'fa-toggle-off text-rose-500' : 'fa-toggle-on text-emerald-600'"></i>
                 <span x-text="activeMenu?.is_active ? i18n.disableZone : i18n.enableZone"></span>
             </button>
+            @endif
 
+            @if($canManageZones)
             <button type="button"
                     @click="const item = activeMenu; activeMenu = null; openEditModal(item)"
                     class="w-full px-3 py-1.5 hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition text-left cursor-pointer">
                 <i class="fas fa-pen-to-square text-amber-600 w-3.5 text-center text-[11px]"></i>
                 <span>{{ __('Edit Zone') }}</span>
             </button>
+            @endif
 
+            @if($canManageZones)
             <button type="button"
                     @click="const item = activeMenu; activeMenu = null; confirmDelete(item.id, item.name, item.subscribers_count)"
                     class="w-full px-3 py-1.5 hover:bg-rose-50 text-rose-600 flex items-center gap-2 transition text-left cursor-pointer">
                 <i class="fas fa-trash-can text-rose-500 w-3.5 text-center text-[11px]"></i>
                 <span>{{ __('Delete Zone') }}</span>
             </button>
+            @endif
         </div>
     </div>
 
@@ -790,12 +802,14 @@
                             <span class="text-[9.5px] font-semibold text-slate-500 uppercase tracking-wider block">
                                 {{ __('Sub Areas') }} (<span x-text="detailsModal.zone?.sub_areas?.length ?? 0"></span>)
                             </span>
+                            @if($canManageZones)
                             <button type="button"
                                     @click="const z = detailsModal.zone; detailsModal.open = false; openSubAreasModal(z)"
                                     class="text-[10px] text-cyan-700 hover:text-cyan-900 font-semibold inline-flex items-center gap-1 cursor-pointer">
                                 <i class="fas fa-layer-group text-[9px]"></i>
                                 <span>{{ __('Manage Sub Areas') }}</span>
                             </button>
+                            @endif
                         </div>
                         <div class="flex items-center gap-1.5 flex-wrap" x-show="detailsModal.zone?.sub_areas && detailsModal.zone?.sub_areas?.length > 0">
                             <template x-for="(sa, idx) in (detailsModal.zone?.sub_areas ?? [])" :key="idx">
@@ -817,12 +831,14 @@
                     {{ __('Close') }}
                 </button>
 
+                @if($canManageZones)
                 <button type="button"
                         @click="const item = detailsModal.zone; detailsModal.open = false; openEditModal(item)"
                         class="bg-cyan-600 hover:bg-cyan-700 text-white font-medium text-xs px-4 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow-xs cursor-pointer">
                     <i class="fas fa-pen-to-square text-[11px]"></i>
                     <span>{{ __('Edit Zone') }}</span>
                 </button>
+                @endif
             </div>
         </div>
     </div>
@@ -962,7 +978,7 @@
         </div>
     </div>
 
-    <!-- Modal 4: Import Excel / CSV -->
+    <!-- Modal 4: Import CSV -->
     <div x-show="importModal.open"
          x-cloak
          class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs"
@@ -991,7 +1007,7 @@
                     </div>
                     <div>
                         <h3 class="text-xs font-semibold text-slate-800">{{ __('Import Coverage Zones & Areas') }}</h3>
-                        <p class="text-[10.5px] text-slate-500 font-normal">{{ __('Upload Excel or CSV file to import operational areas & sub-areas') }}</p>
+                        <p class="text-[10.5px] text-slate-500 font-normal">{{ __('Upload a CSV file to import operational areas & sub-areas') }}</p>
                     </div>
                 </div>
                 <button type="button"
@@ -1009,11 +1025,13 @@
                             <i class="fas fa-info-circle text-cyan-600"></i>
                             <span class="text-[11px] font-medium">{{ __('Need formatting guidelines? Download standard template.') }}</span>
                         </div>
-                        <a href="{{ route('tenant.customers.zones.import-template') }}"
+                        @if($canManageZones)
+                        <a href="{{ route($zoneRoute . '.import-template') }}"
                            class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-white border border-cyan-200 hover:bg-cyan-50 text-cyan-700 text-[10.5px] font-semibold transition shadow-2xs">
                             <i class="fas fa-download text-[10px]"></i>
                             <span>{{ __('Template (CSV)') }}</span>
                         </a>
+                        @endif
                     </div>
 
                     <div class="relative border-2 border-dashed rounded-xl p-5 text-center transition cursor-pointer"
@@ -1024,7 +1042,7 @@
 
                         <input type="file"
                                id="zone_import_file"
-                               accept=".csv,.xlsx,.xls"
+                               accept=".csv"
                                class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                                @change="handleImportFileSelect($event)">
 
@@ -1141,7 +1159,7 @@ function zoneManager() {
             deletedTitle: @json(__('Deleted!')),
             deleteFailed: @json(__('Delete Failed')),
             deleteNetErr: @json(__('Network error while deleting zone.')),
-            selectImportFile: @json(__('Please select a CSV or Excel file to import.')),
+            selectImportFile: @json(__('Please select a CSV file to import.')),
             importFailed: @json(__('Import failed. Check file format.')),
             importNetErr: @json(__('Network error while importing file.'))
         },
@@ -1319,7 +1337,7 @@ function zoneManager() {
             if (!this.subAreasModal.zone) return;
             this.subAreasModal.loading = true;
             try {
-                const res = await fetch(`{{ url('admin/customers/zones') }}/${this.subAreasModal.zone.id}/sub-areas`, {
+                const res = await fetch(`{{ route($zoneRoute) }}/${this.subAreasModal.zone.id}/sub-areas`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1348,8 +1366,8 @@ function zoneManager() {
         async submitModal() {
             this.modal.loading = true;
             const url = this.modal.isEdit
-                ? `{{ url('admin/customers/zones') }}/${this.modal.editId}`
-                : `{{ route('tenant.customers.zones.store') }}`;
+                ? `{{ route($zoneRoute) }}/${this.modal.editId}`
+                : `{{ route($zoneRoute . '.store') }}`;
             const method = this.modal.isEdit ? 'PUT' : 'POST';
 
             try {
@@ -1407,7 +1425,7 @@ function zoneManager() {
 
         async toggleStatus(id, name) {
             try {
-                const res = await fetch(`{{ url('admin/customers/zones') }}/${id}/toggle-status`, {
+                const res = await fetch(`{{ route($zoneRoute) }}/${id}/toggle-status`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1462,7 +1480,7 @@ function zoneManager() {
             if (!isConfirmed) return;
 
             try {
-                const res = await fetch(`{{ url('admin/customers/zones') }}/${id}`, {
+                const res = await fetch(`{{ route($zoneRoute) }}/${id}`, {
                     method: 'DELETE',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1547,7 +1565,7 @@ function zoneManager() {
             formData.append('default_reseller_id', this.importModal.defaultResellerId);
 
             try {
-                const res = await fetch(`{{ route('tenant.customers.zones.import') }}`, {
+                const res = await fetch(`{{ route($zoneRoute . '.import') }}`, {
                     method: 'POST',
                     headers: {
                         'X-CSRF-TOKEN': '{{ csrf_token() }}',

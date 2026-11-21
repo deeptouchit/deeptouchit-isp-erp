@@ -15,6 +15,7 @@ use App\Http\Controllers\Reseller\ResellerRechargeController;
 use App\Http\Controllers\Reseller\ResellerStaffController;
 use App\Http\Controllers\Reseller\ResellerTicketController;
 use App\Http\Controllers\Tenant\Auth\TenantAuthController;
+use App\Http\Controllers\Tenant\Customer\TenantCoverageZoneController;
 use App\Http\Middleware\EnsureResellerAdmin;
 use App\Http\Middleware\EnsureResellerUser;
 use Illuminate\Support\Facades\Route;
@@ -52,6 +53,18 @@ Route::middleware(['web'])->group(function () {
 
         // Customer Management (Collectors & Techs have access to view, search & collect)
         Route::get('/reseller/customers', [ResellerCustomerController::class, 'index'])->name('reseller.customers.index');
+        Route::prefix('reseller/customers/zones')->name('reseller.customers.zones')->controller(TenantCoverageZoneController::class)->group(function () {
+            Route::get('/', 'index')->name('');
+            Route::middleware(EnsureResellerAdmin::class)->group(function () {
+                Route::get('/import-template', 'downloadSampleTemplate')->name('.import-template');
+                Route::post('/import', 'importProcess')->name('.import');
+                Route::post('/', 'store')->name('.store');
+                Route::put('/{id}', 'update')->whereNumber('id')->name('.update');
+                Route::delete('/{id}', 'destroy')->whereNumber('id')->name('.destroy');
+                Route::post('/{id}/toggle-status', 'toggleStatus')->whereNumber('id')->name('.toggle-status');
+                Route::post('/{id}/sub-areas', 'updateSubAreas')->whereNumber('id')->name('.sub-areas');
+            });
+        });
         Route::get('/reseller/customers/create', [ResellerCustomerController::class, 'create'])->name('reseller.customers.create');
         Route::post('/reseller/customers', [ResellerCustomerController::class, 'store'])->name('reseller.customers.store');
         Route::get('/reseller/customers/bulk-payments', [ResellerCustomerController::class, 'bulkPaymentPage'])->name('reseller.customers.bulk-payments');
