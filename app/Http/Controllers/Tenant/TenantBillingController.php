@@ -310,7 +310,7 @@ class TenantBillingController extends Controller
         }
 
         // Strictly verify transaction belongs to the currently authenticated tenant
-        $transaction = PaymentTransaction::where('tenant_id', $tenant->id)
+        $transaction = PaymentTransaction::withoutWalletCheckouts()->where('tenant_id', $tenant->id)
             ->where('transaction_reference', $paymentRef)
             ->first();
 

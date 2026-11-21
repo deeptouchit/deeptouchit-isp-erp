@@ -22,6 +22,8 @@ class TenantResellerWalletTransaction extends Model
         'balance_after',
         'payment_method',
         'reference_no',
+        'reference_id',
+        'reference_type',
         'description',
         'created_by',
     ];

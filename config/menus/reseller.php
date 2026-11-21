@@ -150,7 +150,7 @@ return [
         'children' => [
             ['title' => 'Balance Recharge', 'route' => 'reseller.recharge.index', 'active' => ['reseller.recharge*']],
             ['title' => 'Balance Deductions', 'route' => 'reseller.ledger.index', 'params' => ['type' => 'DEBIT'], 'active' => ['reseller.ledger*'], 'params_match' => ['type' => 'DEBIT']],
-            ['title' => 'Transaction Ledger', 'route' => 'reseller.ledger.index', 'active' => ['reseller.ledger*'], 'require_no_params' => ['type']],
+            ['title' => 'Transaction Ledger', 'route' => 'reseller.ledger.index', 'active' => ['reseller.ledger*'], 'exclude_params' => ['type' => 'DEBIT']],
         ],
     ],
     [

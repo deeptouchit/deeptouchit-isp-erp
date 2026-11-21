@@ -63,7 +63,7 @@ class PaymentWebhookService
         }
 
         return DB::transaction(function () use ($trxRef, $status, $gatewayTrxId, $amount, $gateway, $data, $tenantId) {
-            $query = PaymentTransaction::where('transaction_reference', $trxRef)
+            $query = PaymentTransaction::withoutWalletCheckouts()->where('transaction_reference', $trxRef)
                 ->where('gateway', $gateway)->lockForUpdate();
             if ($tenantId) {
                 $query->where('tenant_id', $tenantId);

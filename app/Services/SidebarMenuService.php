@@ -187,6 +187,12 @@ class SidebarMenuService
             }
         }
 
+        foreach (($item['exclude_params'] ?? []) as $param => $excluded) {
+            if (strcasecmp((string) request($param), (string) $excluded) === 0) {
+                return false;
+            }
+        }
+
         if (!empty($item['require_no_params']) && is_array($item['require_no_params'])) {
             foreach ($item['require_no_params'] as $param) {
                 if (request()->filled($param)) {

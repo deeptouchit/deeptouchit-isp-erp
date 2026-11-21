@@ -6,6 +6,7 @@ use App\Models\PaymentGateway;
 use App\Models\PaymentTransaction;
 use App\Models\SaasInvoice;
 use App\Models\Setting;
+use App\Models\Tenant;
 use App\Models\TenantReseller;
 use App\Models\TenantResellerRecharge;
 use App\Models\TenantResellerWalletTransaction;
@@ -193,7 +194,7 @@ class BkashPaymentService
     {
         return DB::transaction(function () use ($paymentId, $trxId, $tenantId) {
             // Acquire pessimistic row-level lock on the transaction
-            $query = PaymentTransaction::where('transaction_reference', $paymentId)->where('gateway', 'bkash')->lockForUpdate();
+            $query = PaymentTransaction::withoutWalletCheckouts()->where('transaction_reference', $paymentId)->where('gateway', 'bkash')->lockForUpdate();
             if ($tenantId) {
                 $query->where('tenant_id', $tenantId);
             }
@@ -341,6 +342,7 @@ class BkashPaymentService
                     return [
                         'success' => true,
                         'payment_id' => $paymentId,
+                        'merchant_invoice' => $merchantInvoiceNumber,
                         'redirect_url' => $redirectUrl,
                     ];
                 }
@@ -378,100 +380,56 @@ class BkashPaymentService
      * Execute and Capture bKash Reseller Wallet Recharge Payment.
      * ONLY writes to database AFTER bKash payment verification succeeds!
      */
-    public function executeResellerPayment(string $paymentId, array|TenantResellerRecharge|null $sessionData = null, ?int $tenantId = null): array
+    public function executeResellerPayment(string $paymentId, PaymentTransaction $session, bool $capture): array
     {
-        if ($sessionData instanceof TenantResellerRecharge) {
-            $tenantId = $sessionData->tenant_id;
-            $resellerId = $sessionData->reseller_id;
-            $amount = (float) $sessionData->amount;
-            $createdBy = $sessionData->created_by;
-        } else {
-            $tenantId = $tenantId ?? ($sessionData['tenant_id'] ?? null);
-            $resellerId = $sessionData['reseller_id'] ?? null;
-            $amount = (float) ($sessionData['amount'] ?? 0);
-            $createdBy = $sessionData['created_by'] ?? null;
+        $metadata = $session->gateway_response ?? [];
+        $tenantId = (int) $session->tenant_id;
+        $resellerId = (int) ($metadata['reseller_id'] ?? 0);
+        if ($session->payment_method !== 'reseller_wallet' || $session->gateway !== 'bkash'
+            || $session->transaction_reference !== 'reseller-bkash:' . $paymentId || !$resellerId) {
+            return ['success' => false, 'message' => __('Invalid bKash recharge session.')];
         }
 
-        if (!$tenantId || !$resellerId || $amount <= 0) {
-            return ['success' => false, 'message' => 'Invalid or expired recharge session.'];
+        if ($session->status === 'successful') {
+            $reseller = TenantReseller::where('tenant_id', $tenantId)->findOrFail($resellerId);
+
+            return $this->settledResellerPayment($session, $reseller);
         }
 
-        $reseller = TenantReseller::where('tenant_id', $tenantId)->find($resellerId);
-        if (!$reseller) {
-            return ['success' => false, 'message' => 'Reseller account not found.'];
-        }
-
-        // Idempotency check: verify if already settled
-        $existing = TenantResellerRecharge::where('tenant_id', $tenantId)
-            ->where(function ($q) use ($paymentId) {
-                $q->where('gateway_trx_id', $paymentId)
-                  ->orWhere('notes', 'like', "%{$paymentId}%");
-            })
-            ->first();
-
-        if ($existing && $existing->status === 'APPROVED') {
-            return [
-                'success' => true,
-                'already_processed' => true,
-                'recharge' => $existing,
-                'trx_id' => $existing->gateway_trx_id,
-                'new_balance' => (float) $reseller->wallet_balance,
-            ];
-        }
-
-        $tokenResult = $this->grantToken();
-        $token = $tokenResult['token'] ?? null;
-
+        $token = $this->grantToken()['token'] ?? null;
         if (!$token) {
-            return ['success' => false, 'message' => $tokenResult['error'] ?? 'bKash authentication failed.'];
+            return ['success' => false, 'message' => __('Unable to connect to bKash. Try checking this payment again.')];
         }
 
-        $finalTrxId = null;
-        try {
-            $response = Http::timeout(20)
-                ->withHeaders([
-                    'Authorization' => $token,
-                    'X-APP-Key' => $this->appKey,
-                    'Content-Type' => 'application/json',
-                ])
-                ->post("{$this->baseUrl}/tokenized/checkout/execute", [
-                    'paymentID' => $paymentId,
-                ]);
+        $data = $this->completedResellerPayment($paymentId, $token, $capture);
+        if (!$data) {
+            return ['success' => false, 'message' => __('bKash has not confirmed this payment. Try checking its status again.')];
+        }
 
-            $data = $response->json();
-            if ($response->successful() && ($data['statusCode'] ?? '') === '0000') {
-                $finalTrxId = $data['trxID'] ?? null;
-            } else {
-                $errMsg = $data['statusMessage'] ?? 'bKash payment execution was not successful.';
-                Log::warning('bKash execute failed', ['response' => $data]);
-                return ['success' => false, 'message' => $errMsg];
+        $amount = (float) $session->amount;
+        if (!is_numeric($data['amount'] ?? null) || !is_finite((float) $data['amount'])
+            || abs((float) $data['amount'] - $amount) > 0.001
+            || strtoupper((string) ($data['currency'] ?? '')) !== strtoupper($session->currency)
+            || (!empty($metadata['merchant_invoice']) && ($data['merchantInvoiceNumber'] ?? null) !== $metadata['merchant_invoice'])) {
+            return ['success' => false, 'message' => __('bKash payment details did not match this recharge.')];
+        }
+
+        $finalTrxId = strtoupper(trim((string) $data['trxID']));
+        $createdBy = $metadata['created_by'] ?? null;
+
+        return DB::transaction(function () use ($session, $tenantId, $resellerId, $amount, $finalTrxId, $paymentId, $createdBy) {
+            Tenant::whereKey($tenantId)->lockForUpdate()->firstOrFail();
+            $session = PaymentTransaction::where('tenant_id', $tenantId)->lockForUpdate()->findOrFail($session->id);
+            $reseller = TenantReseller::where('tenant_id', $tenantId)->lockForUpdate()->findOrFail($resellerId);
+            if ($session->status === 'successful') {
+                return $this->settledResellerPayment($session, $reseller);
             }
-        } catch (\Throwable $e) {
-            Log::error('bKash Reseller Execute Exception: ' . $e->getMessage());
-            return ['success' => false, 'message' => 'bKash Connection Exception: ' . $e->getMessage()];
-        }
 
-        if (empty($finalTrxId)) {
-            return ['success' => false, 'message' => 'bKash transaction ID not received. Payment was not confirmed.'];
-        }
+            if (TenantResellerRecharge::where('tenant_id', $tenantId)
+                ->whereRaw('UPPER(TRIM(gateway_trx_id)) = ?', [$finalTrxId])->exists()) {
+                return ['success' => false, 'message' => __('This gateway reference already belongs to a recharge. Contact your billing administrator.')];
+            }
 
-        // Idempotency check with final TrxID
-        $existingTrx = TenantResellerRecharge::where('tenant_id', $tenantId)
-            ->where('gateway_trx_id', $finalTrxId)
-            ->first();
-
-        if ($existingTrx) {
-            return [
-                'success' => true,
-                'already_processed' => true,
-                'recharge' => $existingTrx,
-                'trx_id' => $finalTrxId,
-                'new_balance' => (float) $reseller->fresh()->wallet_balance,
-            ];
-        }
-
-        // ONLY NOW CREATE RECHARGE & TRANSACTION IN DATABASE
-        return DB::transaction(function () use ($tenantId, $reseller, $amount, $finalTrxId, $paymentId, $createdBy) {
             $rechargeNo = TenantResellerRecharge::generateRechargeNo($tenantId);
 
             $recharge = TenantResellerRecharge::create([
@@ -512,6 +470,15 @@ class BkashPaymentService
                 'created_by' => $createdBy,
             ]);
 
+            $session->update([
+                'status' => 'successful',
+                'completed_at' => now(),
+                'gateway_response' => array_merge($session->gateway_response ?? [], [
+                    'recharge_id' => $recharge->id,
+                    'trx_id' => $finalTrxId,
+                ]),
+            ]);
+
             // Record in Central Online Gateway Transactions
             try {
                 \App\Models\TenantGatewayTransaction::updateOrCreate(
@@ -550,6 +517,46 @@ class BkashPaymentService
                 'new_balance' => $balanceAfter,
             ];
         });
+    }
+
+    private function completedResellerPayment(string $paymentId, string $token, bool $capture): ?array
+    {
+        foreach ($capture ? ['execute', 'payment/status'] : ['payment/status'] as $endpoint) {
+            try {
+                $response = Http::timeout(20)->withHeaders([
+                    'Authorization' => $token,
+                    'X-APP-Key' => $this->appKey,
+                    'Content-Type' => 'application/json',
+                ])->post("{$this->baseUrl}/tokenized/checkout/{$endpoint}", ['paymentID' => $paymentId]);
+
+                $data = $response->json();
+                if ($response->successful() && ($data['statusCode'] ?? '') === '0000'
+                    && ($data['paymentID'] ?? '') === $paymentId
+                    && ($data['transactionStatus'] ?? '') === 'Completed'
+                    && trim((string) ($data['trxID'] ?? '')) !== '') {
+                    return $data;
+                }
+            } catch (\Illuminate\Http\Client\ConnectionException $exception) {
+                report($exception);
+            }
+        }
+
+        return null;
+    }
+
+    private function settledResellerPayment(PaymentTransaction $session, TenantReseller $reseller): array
+    {
+        $metadata = $session->gateway_response ?? [];
+        $recharge = TenantResellerRecharge::where('tenant_id', $session->tenant_id)
+            ->where('reseller_id', $reseller->id)->find($metadata['recharge_id'] ?? null);
+
+        return [
+            'success' => (bool) $recharge,
+            'already_processed' => (bool) $recharge,
+            'recharge' => $recharge,
+            'trx_id' => $metadata['trx_id'] ?? null,
+            'new_balance' => (float) $reseller->wallet_balance,
+        ];
     }
 
     /**

@@ -24,18 +24,9 @@ class ResellerInvoiceController extends Controller
     protected function getResellerData(): array
     {
         $user = Auth::user();
-        $reseller = $user->reseller;
-        if (!$reseller && $user->reseller_id) {
-            $reseller = TenantReseller::find($user->reseller_id);
-        }
-        if (!$reseller && $user->tenant_id) {
-            $reseller = TenantReseller::where('tenant_id', $user->tenant_id)->first();
-        }
-        if (!$reseller) {
-            $reseller = TenantReseller::first();
-        }
-
-        $tenant = $reseller?->tenant ?? ($user->tenant ?? Tenant::first());
+        $reseller = $user?->reseller;
+        $tenant = $user?->tenant;
+        abort_unless($reseller && $tenant && (int) $reseller->tenant_id === (int) $tenant->id, 403);
 
         return [$user, $reseller, $tenant];
     }
@@ -215,32 +206,32 @@ class ResellerInvoiceController extends Controller
     {
         [$authUser, $reseller, $tenant] = $this->getResellerData();
 
-        $invoice = TenantResellerInvoice::where('tenant_id', $tenant->id)
-            ->where('reseller_id', $reseller->id)
-            ->findOrFail($id);
-
-        if ($invoice->payment_status === 'PAID' || $invoice->due_amount <= 0) {
-            return response()->json([
-                'success' => false,
-                'message' => "Invoice #{$invoice->invoice_no} is already fully paid.",
-            ], 422);
-        }
-
-        $dueToPay = (float) $invoice->due_amount;
-        $availableBalance = (float) ($reseller->wallet_balance + $reseller->credit_limit);
-
-        if ($availableBalance < $dueToPay) {
-            return response()->json([
-                'success' => false,
-                'message' => "Insufficient available balance. Required: ৳" . number_format($dueToPay, 2) . ", Available: ৳" . number_format($availableBalance, 2) . ". Please recharge your wallet first.",
-            ], 422);
-        }
-
         DB::beginTransaction();
         try {
+            Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
+            $reseller = TenantReseller::where('tenant_id', $tenant->id)->lockForUpdate()->findOrFail($reseller->id);
+            $invoice = TenantResellerInvoice::where('tenant_id', $tenant->id)
+                ->where('reseller_id', $reseller->id)->lockForUpdate()->findOrFail($id);
+
+            $status = strtoupper((string) $invoice->payment_status);
+            if ($status === 'PAID' || $invoice->due_amount <= 0) {
+                DB::rollBack();
+                return response()->json(['success' => false, 'message' => __('This invoice is already fully paid.')], 422);
+            }
+
+            $dueCents = (int) round((float) $invoice->due_amount * 100);
+            $balanceCents = (int) round((float) $reseller->wallet_balance * 100);
+            $limitCents = (int) round((float) $reseller->credit_limit * 100);
+            if (!in_array($status, ['UNPAID', 'PARTIAL', 'PARTIALLY_PAID', 'DUE', 'OVERDUE', 'PENDING'], true)
+                || $dueCents <= 0 || $balanceCents + $limitCents < $dueCents) {
+                DB::rollBack();
+                return response()->json(['success' => false, 'message' => __('This invoice cannot be paid with the available wallet balance.')], 422);
+            }
+            $dueToPay = $dueCents / 100;
+
             // 1. Deduct Reseller Wallet
-            $balanceBefore = (float) $reseller->wallet_balance;
-            $balanceAfter = $balanceBefore - $dueToPay;
+            $balanceBefore = $balanceCents / 100;
+            $balanceAfter = ($balanceCents - $dueCents) / 100;
             $reseller->update(['wallet_balance' => $balanceAfter]);
 
             // 2. Record Wallet Transaction
@@ -255,6 +246,8 @@ class ResellerInvoiceController extends Controller
                 'balance_after' => $balanceAfter,
                 'payment_method' => 'PREPAID_WALLET',
                 'reference_no' => $invoice->invoice_no,
+                'reference_id' => $invoice->id,
+                'reference_type' => TenantResellerInvoice::class,
                 'description' => "Settlement of Wholesale Invoice #{$invoice->invoice_no}",
                 'created_by' => Auth::id(),
             ]);
@@ -271,7 +264,7 @@ class ResellerInvoiceController extends Controller
 
             DB::commit();
 
-            $msg = "Invoice #{$invoice->invoice_no} successfully paid ৳" . number_format($dueToPay, 2) . " using your wallet balance!";
+            $msg = __('Invoice :invoice was paid from the wallet.', ['invoice' => $invoice->invoice_no]);
 
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json([
@@ -283,11 +276,15 @@ class ResellerInvoiceController extends Controller
             }
 
             return redirect()->route('reseller.invoices.index')->with('success', $msg);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            DB::rollBack();
+            throw $e;
         } catch (\Throwable $e) {
             DB::rollBack();
+            report($e);
             return response()->json([
                 'success' => false,
-                'message' => 'Payment failed: ' . $e->getMessage(),
+                'message' => __('Wallet payment failed.'),
             ], 500);
         }
     }

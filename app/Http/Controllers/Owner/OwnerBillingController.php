@@ -159,7 +159,7 @@ class OwnerBillingController extends Controller
         $subscriptions = $subQuery->paginate(15, ['*'], 'subs_page')->withQueryString();
 
         // 4. Payment Transactions Query
-        $trxQuery = PaymentTransaction::with(['tenant', 'invoice'])->latest();
+        $trxQuery = PaymentTransaction::withoutWalletCheckouts()->with(['tenant', 'invoice'])->latest();
         if ($request->filled('trx_gateway')) {
             $trxQuery->where('gateway', $request->trx_gateway);
         }

@@ -18,14 +18,14 @@ class OwnerTransactionController extends Controller
         $today = Carbon::today();
 
         // 1. Transaction Stats
-        $totalTransactions = PaymentTransaction::count();
-        $successfulCount = PaymentTransaction::where('status', 'successful')->count();
-        $pendingCount = PaymentTransaction::where('status', 'pending')->count();
-        $failedCount = PaymentTransaction::where('status', 'failed')->count();
-        $successfulVolume = (float) PaymentTransaction::where('status', 'successful')->sum('amount');
+        $totalTransactions = PaymentTransaction::withoutWalletCheckouts()->count();
+        $successfulCount = PaymentTransaction::withoutWalletCheckouts()->where('status', 'successful')->count();
+        $pendingCount = PaymentTransaction::withoutWalletCheckouts()->where('status', 'pending')->count();
+        $failedCount = PaymentTransaction::withoutWalletCheckouts()->where('status', 'failed')->count();
+        $successfulVolume = (float) PaymentTransaction::withoutWalletCheckouts()->where('status', 'successful')->sum('amount');
 
         // 2. Query Builder
-        $query = PaymentTransaction::with(['tenant', 'invoice']);
+        $query = PaymentTransaction::withoutWalletCheckouts()->with(['tenant', 'invoice']);
 
         if ($request->filled('search')) {
             $search = trim($request->search);

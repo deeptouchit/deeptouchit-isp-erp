@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -16,6 +17,11 @@ class PaymentTransaction extends Model
         'initiated_at' => 'datetime',
         'completed_at' => 'datetime',
     ];
+
+    public function scopeWithoutWalletCheckouts(Builder $query): Builder
+    {
+        return $query->where('payment_method', '!=', 'reseller_wallet');
+    }
 
     public function tenant()
     {

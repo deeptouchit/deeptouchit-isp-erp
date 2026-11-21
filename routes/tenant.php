@@ -214,8 +214,8 @@ Route::middleware(['web'])->group(function () {
             // 6. Recharge History & Payment Requests (Online PGW, Bank & Cash Top-ups)
             Route::get('/recharge', [ResellerRechargeController::class, 'index'])->name('recharge');
             Route::post('/recharge', [ResellerRechargeController::class, 'store'])->name('recharge.store');
-            Route::post('/recharge/{id}/approve', [ResellerRechargeController::class, 'approve'])->whereNumber('id')->name('recharge.approve');
-            Route::post('/recharge/{id}/reject', [ResellerRechargeController::class, 'reject'])->whereNumber('id')->name('recharge.reject');
+            Route::post('/recharge/{id}/approve', [ResellerRechargeController::class, 'approve'])->whereNumber('id')->middleware('permission:resellers.wallet')->name('recharge.approve');
+            Route::post('/recharge/{id}/reject', [ResellerRechargeController::class, 'reject'])->whereNumber('id')->middleware('permission:resellers.wallet')->name('recharge.reject');
             Route::get('/recharge/{id}/receipt', [ResellerRechargeController::class, 'receipt'])->whereNumber('id')->name('recharge.receipt');
 
             // 7. Bandwidth Allocation & Wholesale MRTG (Committed CIR, Burstable MIR, VLAN & Router Simple Queues)

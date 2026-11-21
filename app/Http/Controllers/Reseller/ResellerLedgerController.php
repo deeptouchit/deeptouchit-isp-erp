@@ -21,18 +21,9 @@ class ResellerLedgerController extends Controller
     protected function getResellerData(): array
     {
         $user = Auth::user();
-        $reseller = $user->reseller;
-        if (!$reseller && $user->reseller_id) {
-            $reseller = TenantReseller::find($user->reseller_id);
-        }
-        if (!$reseller && $user->tenant_id) {
-            $reseller = TenantReseller::where('tenant_id', $user->tenant_id)->first();
-        }
-        if (!$reseller) {
-            $reseller = TenantReseller::first();
-        }
-
-        $tenant = $reseller?->tenant ?? ($user->tenant ?? Tenant::first());
+        $reseller = $user?->reseller;
+        $tenant = $user?->tenant;
+        abort_unless($reseller && $tenant && (int) $reseller->tenant_id === (int) $tenant->id, 403);
 
         return [$user, $reseller, $tenant];
     }
@@ -40,51 +31,61 @@ class ResellerLedgerController extends Controller
     /**
      * Display Reseller Wallet Transaction Ledger.
      */
+
+    private function filteredWalletRecords(Request $request, int $tenantId, int $resellerId): array
+    {
+        $search = trim($request->string('search')->toString());
+        $type = strtoupper($request->string('type', 'all')->toString());
+        $type = $type === 'ALL' ? 'all' : $type;
+        $method = strtoupper($request->string('payment_method', 'all')->toString());
+        $method = $method === 'ALL' ? 'all' : $method;
+        $month = $request->string('month', 'all')->toString();
+        $dates = $request->validate(['date_from' => 'nullable|date_format:Y-m-d', 'date_to' => 'nullable|date_format:Y-m-d|after_or_equal:date_from']);
+
+        $query = TenantResellerWalletTransaction::where('tenant_id', $tenantId)->where('reseller_id', $resellerId);
+        if ($search !== '') {
+            $query->where(function ($q) use ($search) {
+                $q->where('trx_id', 'like', "%{$search}%")
+                  ->orWhere('reference_no', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%");
+            });
+        }
+
+        if ($type !== 'all') {
+            $query->where('type', $type);
+        }
+        if ($method !== 'all') {
+            $query->where('payment_method', $method);
+        }
+        if (preg_match('/^\d{4}-(?:0[1-9]|1[0-2])$/', $month)) {
+            $startOfMonth = Carbon::createFromFormat('!Y-m', $month);
+            $query->whereBetween('created_at', [$startOfMonth, $startOfMonth->copy()->endOfMonth()]);
+        }
+        if (!empty($dates['date_from'])) {
+            $query->where('created_at', '>=', Carbon::parse($dates['date_from'])->startOfDay());
+        }
+        if (!empty($dates['date_to'])) {
+            $query->where('created_at', '<=', Carbon::parse($dates['date_to'])->endOfDay());
+        }
+
+        return [$query, $search, $type, $method, $month];
+    }
+
     public function index(Request $request): View
     {
         [$authUser, $reseller, $tenant] = $this->getResellerData();
         $resellerId = $reseller?->id;
         $tenantId = $tenant?->id;
 
-        $search = trim($request->input('search', ''));
-        $type = $request->input('type', 'all');
-        $method = $request->input('payment_method', 'all');
-        $month = $request->input('month', 'all');
+        [$query, $search, $type, $method, $month] = $this->filteredWalletRecords($request, $tenantId, $resellerId);
+        $pageSizes = [10, 15, 20, 30, 50, 100, 250, 500];
         $perPage = (int) $request->input('per_page', 20);
-        if (!in_array($perPage, [10, 20, 50, 100], true)) {
+        if (!in_array($perPage, $pageSizes, true)) {
             $perPage = 20;
         }
 
-        // Scope filter closure
-        $applyFilterScope = function ($q) use ($search, $type, $method, $month) {
-            if ($search !== '') {
-                $q->where(function ($sub) use ($search) {
-                    $sub->where('trx_id', 'like', "%{$search}%")
-                        ->orWhere('reference_no', 'like', "%{$search}%")
-                        ->orWhere('description', 'like', "%{$search}%");
-                });
-            }
-
-            if ($type !== 'all' && !empty($type)) {
-                $q->where('type', strtoupper($type));
-            }
-
-            if ($method !== 'all' && !empty($method)) {
-                $q->where('payment_method', strtoupper($method));
-            }
-
-            if ($month !== 'all' && !empty($month) && preg_match('/^\d{4}-\d{2}$/', $month)) {
-                $q->whereRaw("DATE_FORMAT(created_at, '%Y-%m') = ?", [$month]);
-            }
-        };
-
-        // 1. Base Query
-        $query = TenantResellerWalletTransaction::query()
-            ->where('tenant_id', $tenantId)
-            ->where('reseller_id', $resellerId)
-            ->with(['creator']);
-
-        $applyFilterScope($query);
+        $filteredTotals = clone $query;
+        $query->with(['creator']);
 
         $transactions = $query->latest('id')->paginate($perPage)->withQueryString();
 
@@ -93,10 +94,7 @@ class ResellerLedgerController extends Controller
         $creditLimit = (float) ($reseller->credit_limit ?? 0);
         $totalAvailable = (float) ($reseller->total_available_balance ?? ($walletBalance + $creditLimit));
 
-        $kpiBaseQuery = TenantResellerWalletTransaction::where('tenant_id', $tenantId)
-            ->where('reseller_id', $resellerId);
-
-        $applyFilterScope($kpiBaseQuery);
+        $kpiBaseQuery = $filteredTotals;
 
         $totalCredits = (float) (clone $kpiBaseQuery)->where('type', 'CREDIT')->sum('amount');
         $totalDebits = (float) (clone $kpiBaseQuery)->where('type', 'DEBIT')->sum('amount');
@@ -114,7 +112,9 @@ class ResellerLedgerController extends Controller
         // 3. Dropdowns
         $availableMonths = TenantResellerWalletTransaction::where('tenant_id', $tenantId)
             ->where('reseller_id', $resellerId)
-            ->selectRaw("DISTINCT DATE_FORMAT(created_at, '%Y-%m') as m")
+            ->selectRaw((new TenantResellerWalletTransaction)->getConnection()->getDriverName() === 'sqlite'
+                ? "DISTINCT strftime('%Y-%m', created_at) as m"
+                : "DISTINCT DATE_FORMAT(created_at, '%Y-%m') as m")
             ->orderByDesc('m')
             ->pluck('m')
             ->filter()
@@ -128,7 +128,7 @@ class ResellerLedgerController extends Controller
             ->filter()
             ->values();
 
-        $currencySymbol = '৳';
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
 
         return view('reseller.ledger.index', compact(
             'authUser',
@@ -141,6 +141,7 @@ class ResellerLedgerController extends Controller
             'method',
             'month',
             'perPage',
+            'pageSizes',
             'availableMonths',
             'availableMethods',
             'currencySymbol'
@@ -190,34 +191,7 @@ class ResellerLedgerController extends Controller
         $resellerId = $reseller?->id;
         $tenantId = $tenant?->id;
 
-        $search = trim($request->input('search', ''));
-        $type = $request->input('type', 'all');
-        $method = $request->input('payment_method', 'all');
-        $month = $request->input('month', 'all');
-
-        $query = TenantResellerWalletTransaction::query()
-            ->where('tenant_id', $tenantId)
-            ->where('reseller_id', $resellerId);
-
-        if ($search !== '') {
-            $query->where(function ($q) use ($search) {
-                $q->where('trx_id', 'like', "%{$search}%")
-                  ->orWhere('reference_no', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
-            });
-        }
-
-        if ($type !== 'all') {
-            $query->where('type', strtoupper($type));
-        }
-
-        if ($method !== 'all') {
-            $query->where('payment_method', strtoupper($method));
-        }
-
-        if ($month !== 'all' && preg_match('/^\d{4}-\d{2}$/', $month)) {
-            $query->whereRaw("DATE_FORMAT(created_at, '%Y-%m') = ?", [$month]);
-        }
+        [$query, $search, $type, $method, $month] = $this->filteredWalletRecords($request, $tenantId, $resellerId);
 
         $transactions = $query->latest('id')->get();
         $filename = 'wallet_ledger_' . ($reseller->code ?? 'RES') . '_' . now()->format('Ymd_His') . '.csv';
@@ -267,41 +241,13 @@ class ResellerLedgerController extends Controller
         $resellerId = $reseller?->id;
         $tenantId = $tenant?->id;
 
-        $search = trim($request->input('search', ''));
-        $type = $request->input('type', 'all');
-        $method = $request->input('payment_method', 'all');
-        $month = $request->input('month', 'all');
+        [$query, $search, $type, $method, $month] = $this->filteredWalletRecords($request, $tenantId, $resellerId);
 
-        $query = TenantResellerWalletTransaction::query()
-            ->where('tenant_id', $tenantId)
-            ->where('reseller_id', $resellerId)
-            ->with(['creator']);
-
-        if ($search !== '') {
-            $query->where(function ($q) use ($search) {
-                $q->where('trx_id', 'like', "%{$search}%")
-                  ->orWhere('reference_no', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
-            });
-        }
-
-        if ($type !== 'all') {
-            $query->where('type', strtoupper($type));
-        }
-
-        if ($method !== 'all') {
-            $query->where('payment_method', strtoupper($method));
-        }
-
-        if ($month !== 'all' && preg_match('/^\d{4}-\d{2}$/', $month)) {
-            $query->whereRaw("DATE_FORMAT(created_at, '%Y-%m') = ?", [$month]);
-        }
-
-        $transactions = $query->latest('id')->get();
+        $transactions = $query->with(['creator'])->latest('id')->get();
 
         $totalCredits = $transactions->where('type', 'CREDIT')->sum('amount');
         $totalDebits = $transactions->where('type', 'DEBIT')->sum('amount');
-        $currencySymbol = '৳';
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
 
         return view('reseller.ledger.print', compact(
             'authUser',

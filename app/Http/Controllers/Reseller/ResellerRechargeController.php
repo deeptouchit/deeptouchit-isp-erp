@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Reseller;
 
 use App\Http\Controllers\Controller;
-use App\Models\PaymentGateway;
 use App\Models\Setting;
+use App\Models\PaymentTransaction;
 use App\Models\Tenant;
 use App\Models\TenantReseller;
 use App\Models\TenantResellerRecharge;
@@ -33,18 +33,9 @@ class ResellerRechargeController extends Controller
     protected function getResellerData(): array
     {
         $user = Auth::user();
-        $reseller = $user->reseller;
-        if (!$reseller && $user->reseller_id) {
-            $reseller = TenantReseller::find($user->reseller_id);
-        }
-        if (!$reseller && $user->tenant_id) {
-            $reseller = TenantReseller::where('tenant_id', $user->tenant_id)->first();
-        }
-        if (!$reseller) {
-            $reseller = TenantReseller::first();
-        }
-
-        $tenant = $reseller?->tenant ?? ($user->tenant ?? Tenant::first());
+        $reseller = $user?->reseller;
+        $tenant = $user?->tenant;
+        abort_unless($reseller && $tenant && (int) $reseller->tenant_id === (int) $tenant->id, 403);
 
         return [$user, $reseller, $tenant];
     }
@@ -52,27 +43,18 @@ class ResellerRechargeController extends Controller
     /**
      * Display Reseller Wallet Recharge Ledger & Topup Requests.
      */
-    public function index(Request $request): View
+
+    private function filteredWalletRecords(Request $request, int $tenantId, int $resellerId): array
     {
-        [$authUser, $reseller, $tenant] = $this->getResellerData();
-        $resellerId = $reseller?->id;
-        $tenantId = $tenant?->id;
+        $search = trim($request->string('search')->toString());
+        $status = strtoupper($request->string('status', 'all')->toString());
+        $status = $status === 'ALL' ? 'all' : $status;
+        $method = strtoupper($request->string('payment_method', 'all')->toString());
+        $method = $method === 'ALL' ? 'all' : $method;
+        $month = $request->string('month', 'all')->toString();
+        $dates = $request->validate(['date_from' => 'nullable|date_format:Y-m-d', 'date_to' => 'nullable|date_format:Y-m-d|after_or_equal:date_from']);
 
-        $search = trim($request->input('search', ''));
-        $status = $request->input('status', 'all');
-        $method = $request->input('payment_method', 'all');
-        $month = $request->input('month', 'all');
-        $perPage = (int) $request->input('per_page', 20);
-        if (!in_array($perPage, [10, 20, 50, 100], true)) {
-            $perPage = 20;
-        }
-
-        // 1. Base Query for this Reseller
-        $query = TenantResellerRecharge::query()
-            ->where('tenant_id', $tenantId)
-            ->where('reseller_id', $resellerId)
-            ->with(['approver', 'creator']);
-
+        $query = TenantResellerRecharge::where('tenant_id', $tenantId)->where('reseller_id', $resellerId);
         if ($search !== '') {
             $query->where(function ($q) use ($search) {
                 $q->where('recharge_no', 'like', "%{$search}%")
@@ -84,22 +66,45 @@ class ResellerRechargeController extends Controller
         }
 
         if ($status !== 'all') {
-            $query->where('status', strtoupper($status));
+            $query->where('status', $status);
         }
-
         if ($method !== 'all') {
-            $query->where('payment_method', strtoupper($method));
+            $query->where('payment_method', $method);
+        }
+        if (preg_match('/^\d{4}-(?:0[1-9]|1[0-2])$/', $month)) {
+            $startOfMonth = Carbon::createFromFormat('!Y-m', $month);
+            $query->whereBetween('created_at', [$startOfMonth, $startOfMonth->copy()->endOfMonth()]);
+        }
+        if (!empty($dates['date_from'])) {
+            $query->where('created_at', '>=', Carbon::parse($dates['date_from'])->startOfDay());
+        }
+        if (!empty($dates['date_to'])) {
+            $query->where('created_at', '<=', Carbon::parse($dates['date_to'])->endOfDay());
         }
 
-        if ($month !== 'all' && preg_match('/^\d{4}-\d{2}$/', $month)) {
-            $query->whereRaw("DATE_FORMAT(created_at, '%Y-%m') = ?", [$month]);
+        return [$query, $search, $status, $method, $month];
+    }
+
+    public function index(Request $request): View
+    {
+        [$authUser, $reseller, $tenant] = $this->getResellerData();
+        $resellerId = $reseller?->id;
+        $tenantId = $tenant?->id;
+
+        [$query, $search, $status, $method, $month] = $this->filteredWalletRecords($request, $tenantId, $resellerId);
+        $pageSizes = [10, 15, 20, 30, 50, 100, 250, 500];
+        $perPage = (int) $request->input('per_page', 20);
+        if (!in_array($perPage, $pageSizes, true)) {
+            $perPage = 20;
         }
+
+        $filteredTotals = clone $query;
+        $query->with(['approver', 'creator']);
 
         $recharges = $query->latest('id')->paginate($perPage)->withQueryString();
 
         // 2. Compute 6 KPI Metric Cards
-        $allRecharges = TenantResellerRecharge::where('tenant_id', $tenantId)
-            ->where('reseller_id', $resellerId);
+        $allRecharges = $filteredTotals;
 
         $walletBalance = (float) ($reseller->wallet_balance ?? 0);
         $creditLimit = (float) ($reseller->credit_limit ?? 0);
@@ -121,7 +126,9 @@ class ResellerRechargeController extends Controller
         // 3. Dropdown options
         $availableMonths = TenantResellerRecharge::where('tenant_id', $tenantId)
             ->where('reseller_id', $resellerId)
-            ->selectRaw("DISTINCT DATE_FORMAT(created_at, '%Y-%m') as m")
+            ->selectRaw((new TenantResellerRecharge)->getConnection()->getDriverName() === 'sqlite'
+                ? "DISTINCT strftime('%Y-%m', created_at) as m"
+                : "DISTINCT DATE_FORMAT(created_at, '%Y-%m') as m")
             ->orderByDesc('m')
             ->pluck('m')
             ->filter()
@@ -135,12 +142,15 @@ class ResellerRechargeController extends Controller
             ->filter()
             ->values();
 
-        $gateways = PaymentGateway::where('is_active', true)->get()->keyBy('slug');
+        $pendingCheckouts = PaymentTransaction::where('tenant_id', $tenantId)
+            ->where('gateway', 'bkash')->where('payment_method', 'reseller_wallet')
+            ->where('gateway_response->reseller_id', $resellerId)
+            ->where('status', 'pending')->latest('id')->limit(10)->get();
+
         $paymentSettings = Setting::getGroup('payment', $tenantId);
-        $bkashMerchantNumber = $paymentSettings['bkash_merchant_number'] ?? ($paymentSettings['bkash_username'] ?? ($gateways['bkash']->credentials['username'] ?? '01819-000000'));
         $bkashApiEnabled = !empty($paymentSettings['bkash_app_key']) && !empty($paymentSettings['bkash_app_secret']) && ($paymentSettings['bkash_enabled'] ?? '1') == '1';
 
-        $currencySymbol = '৳';
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
 
         return view('reseller.recharge.index', compact(
             'authUser',
@@ -153,12 +163,11 @@ class ResellerRechargeController extends Controller
             'method',
             'month',
             'perPage',
+            'pageSizes',
             'availableMonths',
             'availableMethods',
-            'gateways',
-            'paymentSettings',
-            'bkashMerchantNumber',
             'bkashApiEnabled',
+            'pendingCheckouts',
             'currencySymbol'
         ));
     }
@@ -174,8 +183,8 @@ class ResellerRechargeController extends Controller
         }
 
         $validated = $request->validate([
-            'amount' => 'required|numeric|min:10',
-            'payment_method' => 'required|string|in:BKASH,NAGAD,ROCKET,BANK_TRANSFER,CASH,CARD,ONLINE_GATEWAY',
+            'amount' => 'required|numeric|decimal:0,2|min:10|max:9999999999.99',
+            'payment_method' => 'required|string|in:BKASH,NAGAD,ROCKET,BANK_TRANSFER,CASH,CARD,ONLINE_GATEWAY,BANGLA_QR',
             'gateway_trx_id' => 'nullable|string|max:100',
             'bank_name' => 'nullable|string|max:100',
             'bank_branch' => 'nullable|string|max:100',
@@ -185,32 +194,54 @@ class ResellerRechargeController extends Controller
             'notes' => 'nullable|string|max:500',
         ]);
 
-        $slipPath = null;
-        if ($request->hasFile('slip')) {
-            $slipPath = $request->file('slip')->store("recharges/{$tenant->id}", 'public');
+        $reference = isset($validated['gateway_trx_id']) ? strtoupper(trim($validated['gateway_trx_id'])) : null;
+        $validated['gateway_trx_id'] = $reference ?: null;
+
+        if ($validated['payment_method'] !== 'CASH' && !$reference && !$request->hasFile('slip')) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'gateway_trx_id' => __('Enter the payment reference or attach a deposit slip.'),
+            ]);
         }
 
-        $amount = (float) $validated['amount'];
-        $rechargeNo = TenantResellerRecharge::generateRechargeNo($tenant->id);
+        $recharge = DB::transaction(function () use ($request, $validated, $tenant, $reseller) {
+            Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
 
-        $recharge = TenantResellerRecharge::create([
-            'tenant_id' => $tenant->id,
-            'reseller_id' => $reseller->id,
-            'recharge_no' => $rechargeNo,
-            'amount' => $amount,
-            'bonus_amount' => 0.00,
-            'total_credited' => $amount,
-            'payment_method' => $validated['payment_method'],
-            'gateway_trx_id' => $validated['gateway_trx_id'] ?? null,
-            'bank_name' => $validated['bank_name'] ?? null,
-            'bank_branch' => $validated['bank_branch'] ?? null,
-            'bank_account_no' => $validated['bank_account_no'] ?? null,
-            'deposit_date' => $validated['deposit_date'] ?? now()->toDateString(),
-            'slip_path' => $slipPath,
-            'status' => 'PENDING',
-            'notes' => $validated['notes'] ?? null,
-            'created_by' => Auth::id(),
-        ]);
+            if ($validated['gateway_trx_id'] && TenantResellerRecharge::where('tenant_id', $tenant->id)
+                ->whereRaw('UPPER(TRIM(gateway_trx_id)) = ?', [$validated['gateway_trx_id']])->exists()) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'gateway_trx_id' => __('This payment reference has already been submitted.'),
+                ]);
+            }
+
+            $slipPath = null;
+            if ($request->hasFile('slip')) {
+                $slipPath = $request->file('slip')->store("recharges/{$tenant->id}", 'public');
+            }
+
+            $amount = (float) $validated['amount'];
+            $rechargeNo = TenantResellerRecharge::generateRechargeNo($tenant->id);
+
+            return TenantResellerRecharge::create([
+                'tenant_id' => $tenant->id,
+                'reseller_id' => $reseller->id,
+                'recharge_no' => $rechargeNo,
+                'amount' => $amount,
+                'bonus_amount' => 0.00,
+                'total_credited' => 0,
+                'payment_method' => $validated['payment_method'],
+                'gateway_trx_id' => $validated['gateway_trx_id'] ?? null,
+                'bank_name' => $validated['bank_name'] ?? null,
+                'bank_branch' => $validated['bank_branch'] ?? null,
+                'bank_account_no' => $validated['bank_account_no'] ?? null,
+                'deposit_date' => $validated['deposit_date'] ?? now()->toDateString(),
+                'slip_path' => $slipPath,
+                'status' => 'PENDING',
+                'notes' => $validated['notes'] ?? null,
+                'created_by' => Auth::id(),
+            ]);
+        });
+        $amount = (float) $recharge->amount;
+        $rechargeNo = $recharge->recharge_no;
 
         // Send Realtime Push / In-App Notification to Tenant Admins
         try {
@@ -298,36 +329,7 @@ class ResellerRechargeController extends Controller
         $resellerId = $reseller?->id;
         $tenantId = $tenant?->id;
 
-        $search = trim($request->input('search', ''));
-        $status = $request->input('status', 'all');
-        $method = $request->input('payment_method', 'all');
-        $month = $request->input('month', 'all');
-
-        $query = TenantResellerRecharge::query()
-            ->where('tenant_id', $tenantId)
-            ->where('reseller_id', $resellerId);
-
-        if ($search !== '') {
-            $query->where(function ($q) use ($search) {
-                $q->where('recharge_no', 'like', "%{$search}%")
-                  ->orWhere('gateway_trx_id', 'like', "%{$search}%")
-                  ->orWhere('bank_name', 'like', "%{$search}%")
-                  ->orWhere('bank_account_no', 'like', "%{$search}%")
-                  ->orWhere('notes', 'like', "%{$search}%");
-            });
-        }
-
-        if ($status !== 'all') {
-            $query->where('status', strtoupper($status));
-        }
-
-        if ($method !== 'all') {
-            $query->where('payment_method', strtoupper($method));
-        }
-
-        if ($month !== 'all' && preg_match('/^\d{4}-\d{2}$/', $month)) {
-            $query->whereRaw("DATE_FORMAT(created_at, '%Y-%m') = ?", [$month]);
-        }
+        [$query, $search, $status, $method, $month] = $this->filteredWalletRecords($request, $tenantId, $resellerId);
 
         $recharges = $query->latest('id')->get();
         $filename = 'wallet_recharges_' . ($reseller->code ?? 'RES') . '_' . now()->format('Ymd_His') . '.csv';
@@ -383,43 +385,13 @@ class ResellerRechargeController extends Controller
         $resellerId = $reseller?->id;
         $tenantId = $tenant?->id;
 
-        $search = trim($request->input('search', ''));
-        $status = $request->input('status', 'all');
-        $method = $request->input('payment_method', 'all');
-        $month = $request->input('month', 'all');
+        [$query, $search, $status, $method, $month] = $this->filteredWalletRecords($request, $tenantId, $resellerId);
 
-        $query = TenantResellerRecharge::query()
-            ->where('tenant_id', $tenantId)
-            ->where('reseller_id', $resellerId)
-            ->with(['approver', 'creator']);
-
-        if ($search !== '') {
-            $query->where(function ($q) use ($search) {
-                $q->where('recharge_no', 'like', "%{$search}%")
-                  ->orWhere('gateway_trx_id', 'like', "%{$search}%")
-                  ->orWhere('bank_name', 'like', "%{$search}%")
-                  ->orWhere('bank_account_no', 'like', "%{$search}%")
-                  ->orWhere('notes', 'like', "%{$search}%");
-            });
-        }
-
-        if ($status !== 'all') {
-            $query->where('status', strtoupper($status));
-        }
-
-        if ($method !== 'all') {
-            $query->where('payment_method', strtoupper($method));
-        }
-
-        if ($month !== 'all' && preg_match('/^\d{4}-\d{2}$/', $month)) {
-            $query->whereRaw("DATE_FORMAT(created_at, '%Y-%m') = ?", [$month]);
-        }
-
-        $recharges = $query->latest('id')->get();
+        $recharges = $query->with(['approver', 'creator'])->latest('id')->get();
 
         $totalApproved = $recharges->where('status', 'APPROVED')->sum('total_credited');
         $totalPending = $recharges->where('status', 'PENDING')->sum('amount');
-        $currencySymbol = '৳';
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
 
         return view('reseller.recharge.print', compact(
             'authUser',
@@ -446,7 +418,7 @@ class ResellerRechargeController extends Controller
         }
 
         $validated = $request->validate([
-            'amount' => 'required|numeric|min:10',
+            'amount' => 'required|numeric|decimal:0,2|min:10|max:9999999999.99',
             'gateway_channel' => 'required|string|in:BKASH_MERCHANT,BANGLA_QR,BANK_GATEWAY,CARD,ONLINE_GATEWAY',
             'trx_id' => 'required|string|min:3|max:100',
             'bank_name' => 'nullable|string|max:100',
@@ -454,84 +426,16 @@ class ResellerRechargeController extends Controller
             'notes' => 'nullable|string|max:500',
         ]);
 
-        $amount = (float) $validated['amount'];
-        $channel = strtoupper($validated['gateway_channel']);
-        $trxId = strtoupper(trim($validated['trx_id']));
+        $request->merge([
+            'payment_method' => match ($validated['gateway_channel']) {
+                'BKASH_MERCHANT' => 'BKASH',
+                'BANK_GATEWAY' => 'BANK_TRANSFER',
+                default => $validated['gateway_channel'],
+            },
+            'gateway_trx_id' => $validated['trx_id'],
+        ]);
 
-        $channelNames = [
-            'BKASH_MERCHANT' => 'bKash Merchant Checkout',
-            'BANGLA_QR' => 'Bangla QR Interoperable',
-            'BANK_GATEWAY' => 'Bank Online Gateway',
-            'CARD' => 'Debit/Credit Card',
-            'ONLINE_GATEWAY' => 'Online Payment Gateway',
-        ];
-        $channelLabel = $channelNames[$channel] ?? 'Online Gateway';
-
-        $paymentMethod = match ($channel) {
-            'BKASH_MERCHANT' => 'BKASH_MERCHANT',
-            'BANGLA_QR' => 'BANGLA_QR',
-            'BANK_GATEWAY' => 'BANK_GATEWAY',
-            default => 'ONLINE_GATEWAY',
-        };
-
-        return DB::transaction(function () use ($tenant, $reseller, $amount, $paymentMethod, $trxId, $channelLabel, $channel, $validated, $request) {
-            $rechargeNo = TenantResellerRecharge::generateRechargeNo($tenant->id);
-
-            // 1. Create Approved Recharge Record
-            $recharge = TenantResellerRecharge::create([
-                'tenant_id' => $tenant->id,
-                'reseller_id' => $reseller->id,
-                'recharge_no' => $rechargeNo,
-                'amount' => $amount,
-                'bonus_amount' => 0.00,
-                'total_credited' => $amount,
-                'payment_method' => $paymentMethod,
-                'gateway_trx_id' => $trxId,
-                'bank_name' => $validated['bank_name'] ?? ($channel === 'BANK_GATEWAY' ? 'Online Bank Transfer' : null),
-                'bank_account_no' => $validated['bank_account_no'] ?? null,
-                'deposit_date' => now()->toDateString(),
-                'status' => 'APPROVED',
-                'approved_by' => Auth::id(),
-                'approved_at' => now(),
-                'notes' => $validated['notes'] ?? "Instant Online Recharge via {$channelLabel} (TrxID: {$trxId})",
-                'created_by' => Auth::id(),
-            ]);
-
-            // 2. Update Reseller Wallet Balance
-            $balanceBefore = (float) ($reseller->wallet_balance ?? 0);
-            $reseller->increment('wallet_balance', $amount);
-            $freshReseller = $reseller->fresh();
-            $balanceAfter = (float) $freshReseller->wallet_balance;
-
-            // 3. Record in Wallet Transaction Ledger
-            $wtxId = TenantResellerWalletTransaction::generateTrxId($tenant->id);
-            TenantResellerWalletTransaction::create([
-                'tenant_id' => $tenant->id,
-                'reseller_id' => $reseller->id,
-                'trx_id' => $wtxId,
-                'type' => 'CREDIT',
-                'amount' => $amount,
-                'balance_before' => $balanceBefore,
-                'balance_after' => $balanceAfter,
-                'payment_method' => $paymentMethod,
-                'reference_no' => $rechargeNo,
-                'description' => "Online Instant Recharge via {$channelLabel} (TrxID: {$trxId})",
-                'created_by' => Auth::id(),
-            ]);
-
-            $successMsg = "Wallet recharged successfully with ৳" . number_format($amount, 2) . " via {$channelLabel}! Updated balance: ৳" . number_format($balanceAfter, 2);
-
-            if ($request->wantsJson() || $request->ajax()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => $successMsg,
-                    'new_balance' => $balanceAfter,
-                    'recharge' => $recharge,
-                ]);
-            }
-
-            return redirect()->route('reseller.recharge.index')->with('success', $successMsg);
-        });
+        return $this->store($request);
     }
 
     /**
@@ -546,7 +450,7 @@ class ResellerRechargeController extends Controller
         }
 
         $validated = $request->validate([
-            'amount' => 'required|numeric|min:10',
+            'amount' => 'required|numeric|decimal:0,2|min:10|max:99999999.99',
         ]);
 
         $amount = (float) $validated['amount'];
@@ -563,14 +467,22 @@ class ResellerRechargeController extends Controller
         if ($result['success'] ?? false) {
             $paymentId = $result['payment_id'];
 
-            // Store transient recharge session in Cache (expires in 1 hour)
-            // NO rows are inserted into tenant_reseller_recharges yet!
-            Cache::put("bkash_reseller_session_{$paymentId}", [
+            PaymentTransaction::create([
                 'tenant_id' => $tenant->id,
-                'reseller_id' => $reseller->id,
+                'payment_method' => 'reseller_wallet',
+                'gateway' => 'bkash',
+                'transaction_reference' => 'reseller-bkash:' . $paymentId,
                 'amount' => $amount,
-                'created_by' => Auth::id(),
-            ], now()->addHour());
+                'currency' => 'BDT',
+                'status' => 'pending',
+                'initiated_at' => now(),
+                'gateway_response' => [
+                    'reseller_id' => $reseller->id,
+                    'payment_id' => $paymentId,
+                    'merchant_invoice' => $result['merchant_invoice'],
+                    'created_by' => $authUser->id,
+                ],
+            ]);
 
             return response()->json([
                 'success' => true,
@@ -592,46 +504,52 @@ class ResellerRechargeController extends Controller
     public function handleBkashCallback(Request $request): RedirectResponse
     {
         [$authUser, $reseller, $tenant] = $this->getResellerData();
-        $paymentId = $request->input('paymentID');
-        $status = $request->input('status');
-
-        if (!$paymentId) {
-            return redirect()->route('reseller.recharge.index')->with('error', 'bKash session was invalid or closed.');
+        $paymentId = trim($request->string('paymentID')->toString());
+        if ($paymentId === '' || strlen($paymentId) > 200) {
+            return redirect()->route('reseller.recharge.index')->with('error', __('Invalid bKash payment reference.'));
         }
 
-        if ($status === 'cancel') {
-            Cache::forget("bkash_reseller_session_{$paymentId}");
-            return redirect()->route('reseller.recharge.index')->with('error', 'bKash payment was cancelled. No invoice or recharge record was created.');
-        }
-
-        if ($status === 'failure') {
-            Cache::forget("bkash_reseller_session_{$paymentId}");
-            return redirect()->route('reseller.recharge.index')->with('error', 'bKash payment failed or was declined. No record was created.');
-        }
-
-        $sessionData = Cache::get("bkash_reseller_session_{$paymentId}");
-        if (!$sessionData) {
-            // Check if already processed
-            $existing = TenantResellerRecharge::where('tenant_id', $tenant?->id)
-                ->where(function ($q) use ($paymentId) {
-                    $q->where('gateway_trx_id', $paymentId)
-                      ->orWhere('notes', 'like', "%{$paymentId}%");
-                })
+        $session = PaymentTransaction::where('tenant_id', $tenant->id)
+            ->where('transaction_reference', 'reseller-bkash:' . $paymentId)
+            ->where('payment_method', 'reseller_wallet')
+            ->where('gateway', 'bkash')
+            ->first();
+        if (!$session) {
+            $legacyRecharge = TenantResellerRecharge::where('tenant_id', $tenant->id)
+                ->where('reseller_id', $reseller->id)->where('status', 'APPROVED')
+                ->where('payment_method', 'BKASH_MERCHANT')
+                ->where('notes', 'like', 'Instant bKash API Checkout Clearance (PaymentID: ' . addcslashes($paymentId, '%_\\\\') . ', TrxID: %')
                 ->first();
-            if ($existing) {
-                return redirect()->route('reseller.recharge.index')->with('success', "Payment already processed. Voucher #{$existing->recharge_no} (TrxID: {$existing->gateway_trx_id}).");
+            if ($legacyRecharge) {
+                return redirect()->route('reseller.recharge.index')->with('success', __('This recharge was already credited.'));
             }
-            return redirect()->route('reseller.recharge.index')->with('error', 'Recharge session expired. Please initiate payment again.');
+
+            // Preserve in-flight checkouts started by the previous release.
+            $legacy = Cache::get("bkash_reseller_session_{$paymentId}");
+            abort_unless($legacy && (int) ($legacy['tenant_id'] ?? 0) === (int) $tenant->id
+                && (int) ($legacy['reseller_id'] ?? 0) === (int) $reseller->id, 404);
+
+            $session = PaymentTransaction::firstOrCreate(
+                ['transaction_reference' => 'reseller-bkash:' . $paymentId],
+                [
+                    'tenant_id' => $tenant->id, 'payment_method' => 'reseller_wallet', 'gateway' => 'bkash',
+                    'amount' => $legacy['amount'], 'currency' => 'BDT', 'status' => 'pending',
+                    'initiated_at' => now(), 'gateway_response' => $legacy + ['payment_id' => $paymentId],
+                ]
+            );
         }
 
-        // Execute & Capture payment - ONLY NOW will record be generated in DB
-        $bkashService = BkashPaymentService::forTenant($sessionData['tenant_id'] ?? $tenant?->id);
-        $result = $bkashService->executeResellerPayment($paymentId, $sessionData, $tenant?->id);
+        abort_unless((int) $session->tenant_id === (int) $tenant->id
+            && (int) ($session->gateway_response['reseller_id'] ?? 0) === (int) $reseller->id, 404);
 
-        Cache::forget("bkash_reseller_session_{$paymentId}");
+        if ($session->status !== 'successful' && in_array($request->input('status'), ['cancel', 'failure'], true)) {
+            return redirect()->route('reseller.recharge.index')->with('error', __('The checkout was cancelled or failed. You can check the payment status again.'));
+        }
 
+        $result = BkashPaymentService::forTenant($tenant->id)->executeResellerPayment($paymentId, $session, $request->input('status') === 'success');
         if ($result['success'] ?? false) {
-            $amount = number_format((float) ($result['recharge']->amount ?? $sessionData['amount']), 2);
+            Cache::forget("bkash_reseller_session_{$paymentId}");
+            $amount = number_format((float) ($result['recharge']->amount ?? $session->amount), 2);
             $trxId = $result['trx_id'] ?? $paymentId;
             $newBalance = number_format((float) ($result['new_balance'] ?? 0), 2);
             $rechargeNo = $result['recharge']->recharge_no ?? '';

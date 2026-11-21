@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Tenant\Reseller;
 
 use App\Http\Controllers\Controller;
+use App\Models\Tenant;
 use App\Models\TenantReseller;
 use App\Models\TenantResellerRecharge;
 use App\Models\TenantResellerWalletTransaction;
@@ -278,33 +279,32 @@ class ResellerRechargeController extends Controller
     public function approve(Request $request, int $id): JsonResponse
     {
         $tenant = Auth::user()?->tenant;
-        if (!$tenant) {
-            abort(403, __('Unauthorized.'));
-        }
+        abort_unless($tenant && !Auth::user()->isResellerUser(), 403, __('Unauthorized.'));
 
         $currency = $tenant->currency_symbol ?? '৳';
 
-        $recharge = TenantResellerRecharge::where('tenant_id', $tenant->id)->findOrFail($id);
-
-        if ($recharge->status !== 'PENDING') {
-            $statusMessage = match ($recharge->status) {
-                'APPROVED' => __('This recharge has already been approved.'),
-                'REJECTED' => __('This recharge has already been rejected.'),
-                default => __('This recharge has already been processed.'),
-            };
-
-            return response()->json(['success' => false, 'message' => $statusMessage], 422);
-        }
-
-        $reseller = $recharge->reseller;
-        $totalCredited = (float) $recharge->total_credited;
-        if ($totalCredited <= 0) {
-            $totalCredited = (float) $recharge->amount + (float) $recharge->bonus_amount;
-            $recharge->total_credited = $totalCredited;
-        }
-
         DB::beginTransaction();
         try {
+            Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
+            $recharge = TenantResellerRecharge::where('tenant_id', $tenant->id)->lockForUpdate()->findOrFail($id);
+
+            if ($recharge->status !== 'PENDING') {
+                DB::rollBack();
+                return response()->json(['success' => false, 'message' => __('This recharge has already been processed.')], 422);
+            }
+
+            $reference = strtoupper(trim((string) $recharge->gateway_trx_id));
+            if ($reference !== '' && TenantResellerRecharge::where('tenant_id', $tenant->id)
+                ->whereKeyNot($recharge->id)
+                ->whereRaw('UPPER(status) = ?', ['APPROVED'])
+                ->whereRaw('UPPER(TRIM(gateway_trx_id)) = ?', [$reference])->exists()) {
+                DB::rollBack();
+                return response()->json(['success' => false, 'message' => __('This payment reference has already been credited.')], 422);
+            }
+
+            $reseller = TenantReseller::where('tenant_id', $tenant->id)->lockForUpdate()->findOrFail($recharge->reseller_id);
+            $totalCredited = (float) $recharge->amount + (float) $recharge->bonus_amount;
+
             $balanceBefore = (float) $reseller->wallet_balance;
             $balanceAfter = $balanceBefore + $totalCredited;
 
@@ -335,6 +335,7 @@ class ResellerRechargeController extends Controller
 
             $recharge->update([
                 'status' => 'APPROVED',
+                'total_credited' => $totalCredited,
                 'approved_by' => Auth::id(),
                 'approved_at' => now(),
             ]);
@@ -368,9 +369,13 @@ class ResellerRechargeController extends Controller
                 ]),
                 'new_balance' => $balanceAfter,
             ]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            DB::rollBack();
+            throw $e;
         } catch (\Throwable $e) {
             DB::rollBack();
-            return response()->json(['success' => false, 'message' => __('Approval failed: :message', ['message' => $e->getMessage()])], 500);
+            report($e);
+            return response()->json(['success' => false, 'message' => __('Recharge approval failed.')], 500);
         }
     }
 
@@ -380,9 +385,7 @@ class ResellerRechargeController extends Controller
     public function reject(Request $request, int $id): JsonResponse
     {
         $tenant = Auth::user()?->tenant;
-        if (!$tenant) {
-            abort(403, __('Unauthorized.'));
-        }
+        abort_unless($tenant && !Auth::user()->isResellerUser(), 403, __('Unauthorized.'));
 
         $validated = $request->validate([
             'reason' => 'required|string|max:255',
@@ -400,12 +403,16 @@ class ResellerRechargeController extends Controller
             return response()->json(['success' => false, 'message' => $statusMessage], 422);
         }
 
-        $recharge->update([
+        $updated = TenantResellerRecharge::where('tenant_id', $tenant->id)
+            ->whereKey($recharge->id)->where('status', 'PENDING')->update([
             'status' => 'REJECTED',
             'rejection_reason' => $validated['reason'],
             'approved_by' => Auth::id(),
             'approved_at' => now(),
         ]);
+        if (!$updated) {
+            return response()->json(['success' => false, 'message' => __('This recharge has already been processed.')], 422);
+        }
 
         // Notify Reseller Users
         try {

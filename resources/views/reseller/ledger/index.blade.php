@@ -15,7 +15,7 @@
             <div class="w-8 h-8 rounded-lg bg-cyan-50 text-cyan-600 border border-cyan-100 flex items-center justify-center text-sm shadow-2xs flex-shrink-0">
                 <i class="fas fa-list-check"></i>
             </div>
-            <h1 class="text-sm font-bold text-slate-800 tracking-tight">{{ __('Transaction Ledger') }}</h1>
+            <h1 class="text-sm font-bold text-slate-800 tracking-tight">{{ $type === 'DEBIT' ? __('Balance Deductions') : __('Transaction Ledger') }}</h1>
         </div>
         <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap sm:flex-nowrap justify-start sm:justify-end">
             <a href="{{ route('reseller.ledger.print', request()->query()) }}" target="_blank" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200/80 transition flex items-center gap-1.5 cursor-pointer">
@@ -112,67 +112,76 @@
 
     </div>
 
-    {{-- 3. SEARCH & MULTI-FILTER TOOLBAR (AGENTS.md Rule 2.C) --}}
-    <div class="bg-white p-2.5 sm:p-3 rounded-xl border border-slate-200 shadow-xs space-y-2">
-        <form method="GET" action="{{ route('reseller.ledger.index') }}" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-2 items-center">
-            
-            <!-- Search Box (MD: 4 Cols) -->
-            <div class="relative md:col-span-4">
-                <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
-                <input type="search" 
-                       name="search" 
+    @php
+        $activeMoreCount = (int) ($month !== 'all') + (int) request()->filled('date_from') + (int) request()->filled('date_to');
+    @endphp
+    <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5"
+         x-data="{ showMoreFilters: @js($activeMoreCount > 0), searchQuery: @js($search) }">
+        <form method="GET" action="{{ route('reseller.ledger.index') }}" class="space-y-2.5">
+            <div class="flex flex-col md:flex-row items-stretch md:items-center gap-2 flex-wrap">
+                <div class="relative flex-1 min-w-[200px]">
+                    <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-xs pointer-events-none"
+                       :class="searchQuery ? 'text-cyan-600' : 'text-slate-400'"></i>
+                    <input type="search"
+                       name="search" x-model="searchQuery"
                        value="{{ $search }}" 
                        autocomplete="off"
                        placeholder="Search trx ID, reference, note..." 
-                       class="w-full pl-8 pr-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:border-cyan-500 shadow-2xs">
-            </div>
-
-            <!-- Type Filter (MD: 2 Cols) -->
-            <div class="md:col-span-2">
-                <select name="type" onchange="this.form.submit()" class="w-full py-1.5 px-2 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:border-cyan-500 shadow-2xs">
+                       class="w-full pl-8 pr-7 h-[34px] py-0 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:border-cyan-500 shadow-2xs">
+                    <button type="button" x-show="searchQuery" x-cloak aria-label="{{ __('Clear Search') }}"
+                            @click="searchQuery = ''; $nextTick(() => $el.closest('form').requestSubmit())"
+                            class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500">
+                        <i class="fas fa-times-circle"></i>
+                    </button>
+                </div>
+                <div class="w-full md:w-32"><select name="type" onchange="this.form.submit()" class="w-full h-[34px] py-0 px-2 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:border-cyan-500 shadow-2xs">
                     <option value="all" {{ $type === 'all' ? 'selected' : '' }}>All Types</option>
                     <option value="CREDIT" {{ $type === 'CREDIT' ? 'selected' : '' }}>Credit (+Inflow)</option>
                     <option value="DEBIT" {{ $type === 'DEBIT' ? 'selected' : '' }}>Debit (-Outflow)</option>
-                </select>
-            </div>
-
-            <!-- Payment Method Filter (MD: 2 Cols) -->
-            <div class="md:col-span-2">
-                <select name="payment_method" onchange="this.form.submit()" class="w-full py-1.5 px-2 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:border-cyan-500 shadow-2xs">
+                </select></div>
+                <div class="w-full md:w-36"><select name="payment_method" onchange="this.form.submit()" class="w-full h-[34px] py-0 px-2 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:border-cyan-500 shadow-2xs">
                     <option value="all" {{ $method === 'all' ? 'selected' : '' }}>All Methods</option>
-                    <option value="PREPAID_WALLET" {{ $method === 'PREPAID_WALLET' ? 'selected' : '' }}>Prepaid Wallet</option>
-                    <option value="BKASH" {{ $method === 'BKASH' ? 'selected' : '' }}>bKash</option>
-                    <option value="NAGAD" {{ $method === 'NAGAD' ? 'selected' : '' }}>Nagad</option>
-                    <option value="ROCKET" {{ $method === 'ROCKET' ? 'selected' : '' }}>Rocket</option>
-                    <option value="BANK_TRANSFER" {{ $method === 'BANK_TRANSFER' ? 'selected' : '' }}>Bank Transfer</option>
-                    <option value="CASH" {{ $method === 'CASH' ? 'selected' : '' }}>Cash</option>
+                    @foreach($availableMethods as $option)
+                        <option value="{{ $option }}" @selected($method === strtoupper($option))>{{ __(ucwords(strtolower(str_replace('_', ' ', $option)))) }}</option>
+                    @endforeach
+                </select></div>
+                <select name="per_page" aria-label="{{ __('Rows per page') }}" onchange="this.form.requestSubmit()"
+                        class="h-[34px] w-full md:w-28 px-2 rounded-lg border border-slate-200 bg-slate-50 text-xs">
+                    @foreach($pageSizes as $limit)
+                        <option value="{{ $limit }}" @selected($perPage === $limit)>{{ __(':count / page', ['count' => $limit]) }}</option>
+                    @endforeach
                 </select>
+                <button type="button" @click="showMoreFilters = !showMoreFilters" :aria-expanded="showMoreFilters"
+                        class="h-[34px] py-0 px-2.5 rounded-lg border border-slate-200 bg-slate-50 text-xs font-semibold flex items-center justify-center gap-1.5">
+                    <i class="fas fa-sliders-h text-[10px]"></i><span>{{ __('More Filters') }}</span>
+                    @if($activeMoreCount)
+                        <span class="px-1.5 rounded-full bg-cyan-600 text-white text-[9px]">{{ $activeMoreCount }}</span>
+                    @endif
+                    <i class="fas text-[9px]" :class="showMoreFilters ? 'fa-chevron-up text-cyan-600' : 'fa-chevron-down text-slate-400'"></i>
+                </button>
+                <div class="flex items-center gap-1.5 md:ml-auto">
+                    <button type="submit" class="h-[34px] py-0 px-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-semibold flex items-center gap-1.5">
+                        <i class="fas fa-filter text-[10px]"></i><span>{{ __('Filter') }}</span>
+                    </button>
+                    <a href='{{ route('reseller.ledger.index', $type === 'DEBIT' ? ['type' => 'DEBIT'] : []) }}' class="h-[34px] py-0 px-2.5 rounded-lg border border-slate-200 bg-slate-100 hover:bg-slate-200 text-xs font-semibold flex items-center gap-1">
+                        <i class="fas fa-rotate-left text-[10px]"></i><span>{{ __('Reset') }}</span>
+                    </a>
+                </div>
             </div>
-
-            <!-- Month Filter (MD: 2 Cols) -->
-            <div class="md:col-span-2">
-                <select name="month" onchange="this.form.submit()" class="w-full py-1.5 px-2 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:border-cyan-500 shadow-2xs">
+            <div x-show="showMoreFilters" x-cloak x-transition class="pt-2 border-t border-slate-100 flex flex-wrap items-center gap-2">
+                <div class="w-full sm:w-40"><select name="month" onchange="this.form.submit()" class="w-full h-[34px] py-0 px-2 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:border-cyan-500 shadow-2xs">
                     <option value="all" {{ $month === 'all' ? 'selected' : '' }}>All Months</option>
                     @foreach($availableMonths as $m)
                         <option value="{{ $m }}" {{ $month === $m ? 'selected' : '' }}>
                             {{ \Carbon\Carbon::parse($m . '-01')->format('F Y') }}
                         </option>
                     @endforeach
-                </select>
+                </select></div>
+                <input type="date" name="date_from" value="{{ request('date_from') }}" aria-label="{{ __('From Date') }}"
+                       class="h-[34px] px-2 rounded-lg border border-slate-200 bg-slate-50 text-xs">
+                <input type="date" name="date_to" value="{{ request('date_to') }}" aria-label="{{ __('To Date') }}"
+                       class="h-[34px] px-2 rounded-lg border border-slate-200 bg-slate-50 text-xs">
             </div>
-
-            <!-- Strict Filter & Reset Sequence (AGENTS.md Rule 2.C - MD: 2 Cols) -->
-            <div class="flex items-center gap-1.5 md:col-span-2">
-                <button type="submit" class="w-1/2 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-1.5 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer">
-                    <i class="fas fa-filter text-[10px]"></i>
-                    <span>Filter</span>
-                </button>
-                <a href="{{ route('reseller.ledger.index') }}" class="w-1/2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-1.5 px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer">
-                    <i class="fas fa-rotate-left text-[10px]"></i>
-                    <span>Reset</span>
-                </a>
-            </div>
-
         </form>
     </div>
 
@@ -182,23 +191,18 @@
             <table class="saas-table">
                 <thead>
                     <tr>
-                        <th class="w-10 text-center">#</th>
-                        <th class="w-32 font-mono">Trx ID</th>
-                        <th class="w-20 text-center">Type</th>
-                        <th>Particulars / Reference</th>
-                        <th class="w-28 text-right">Amount</th>
-                        <th class="w-28 text-right">Balance</th>
-                        <th class="w-32 text-center font-mono">Date &amp; Time</th>
-                        <th class="w-10 text-center no-sort">Action</th>
+                        <th class="w-32 font-mono text-center font-semibold">Trx ID</th>
+                        <th class="w-20 text-center font-semibold">Type</th>
+                        <th class="text-center font-semibold">Particulars / Reference</th>
+                        <th class="w-28 text-center font-semibold">Amount</th>
+                        <th class="w-28 text-center font-semibold">Balance</th>
+                        <th class="w-32 font-mono text-center font-semibold">Date &amp; Time</th>
+                        <th class="w-10 no-sort text-center font-semibold">Action</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($transactions as $index => $trx)
                         <tr>
-                            <!-- 1. Index -->
-                            <td class="text-center font-mono text-slate-500">
-                                {{ ($transactions->currentPage() - 1) * $transactions->perPage() + $index + 1 }}
-                            </td>
 
                             <!-- 2. Trx ID (Single Clean Field) -->
                             <td class="font-mono font-bold text-cyan-800">
@@ -253,7 +257,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="py-8 text-center text-slate-400 text-xs">
+                            <td colspan="7" class="py-8 text-center text-slate-400 text-xs">
                                 <i class="fas fa-list-check text-3xl text-slate-300 mb-2 block"></i>
                                 <span>No wallet transactions found matching your criteria.</span>
                             </td>

@@ -124,70 +124,94 @@
 
     </div>
 
-    {{-- 3. SEARCH & MULTI-FILTER TOOLBAR (AGENTS.md Rule 2.C) --}}
-    <div class="bg-white p-2.5 sm:p-3 rounded-xl border border-slate-200 shadow-xs space-y-2">
-        <form method="GET" action="{{ route('reseller.recharge.index') }}" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-2 items-center">
-            
-            <!-- Search Box (MD: 4 Cols) -->
-            <div class="relative md:col-span-4">
-                <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
-                <input type="search" 
-                       name="search" 
+    @php
+        $activeMoreCount = (int) ($month !== 'all') + (int) request()->filled('date_from') + (int) request()->filled('date_to');
+    @endphp
+    <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5"
+         x-data="{ showMoreFilters: @js($activeMoreCount > 0), searchQuery: @js($search) }">
+        <form method="GET" action="{{ route('reseller.recharge.index') }}" class="space-y-2.5">
+            <div class="flex flex-col md:flex-row items-stretch md:items-center gap-2 flex-wrap">
+                <div class="relative flex-1 min-w-[200px]">
+                    <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-xs pointer-events-none"
+                       :class="searchQuery ? 'text-cyan-600' : 'text-slate-400'"></i>
+                    <input type="search"
+                       name="search" x-model="searchQuery"
                        value="{{ $search }}" 
                        autocomplete="off"
                        placeholder="Search recharge #, trx ID, bank..." 
-                       class="w-full pl-8 pr-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:border-cyan-500 shadow-2xs">
-            </div>
-
-            <!-- Status Filter (MD: 2 Cols) -->
-            <div class="md:col-span-2">
-                <select name="status" onchange="this.form.submit()" class="w-full py-1.5 px-2 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:border-cyan-500 shadow-2xs">
+                       class="w-full pl-8 pr-7 h-[34px] py-0 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:border-cyan-500 shadow-2xs">
+                    <button type="button" x-show="searchQuery" x-cloak aria-label="{{ __('Clear Search') }}"
+                            @click="searchQuery = ''; $nextTick(() => $el.closest('form').requestSubmit())"
+                            class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500">
+                        <i class="fas fa-times-circle"></i>
+                    </button>
+                </div>
+                <div class="w-full md:w-32"><select name="status" onchange="this.form.submit()" class="w-full h-[34px] py-0 px-2 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:border-cyan-500 shadow-2xs">
                     <option value="all" {{ $status === 'all' ? 'selected' : '' }}>All Status</option>
                     <option value="APPROVED" {{ $status === 'APPROVED' ? 'selected' : '' }}>Approved</option>
                     <option value="PENDING" {{ $status === 'PENDING' ? 'selected' : '' }}>Pending</option>
                     <option value="REJECTED" {{ $status === 'REJECTED' ? 'selected' : '' }}>Rejected</option>
-                </select>
-            </div>
-
-            <!-- Payment Method Filter (MD: 2 Cols) -->
-            <div class="md:col-span-2">
-                <select name="payment_method" onchange="this.form.submit()" class="w-full py-1.5 px-2 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:border-cyan-500 shadow-2xs">
+                </select></div>
+                <div class="w-full md:w-36"><select name="payment_method" onchange="this.form.submit()" class="w-full h-[34px] py-0 px-2 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:border-cyan-500 shadow-2xs">
                     <option value="all" {{ $method === 'all' ? 'selected' : '' }}>All Methods</option>
-                    <option value="BKASH" {{ $method === 'BKASH' ? 'selected' : '' }}>bKash</option>
-                    <option value="NAGAD" {{ $method === 'NAGAD' ? 'selected' : '' }}>Nagad</option>
-                    <option value="ROCKET" {{ $method === 'ROCKET' ? 'selected' : '' }}>Rocket</option>
-                    <option value="BANK_TRANSFER" {{ $method === 'BANK_TRANSFER' ? 'selected' : '' }}>Bank Deposit</option>
-                    <option value="CASH" {{ $method === 'CASH' ? 'selected' : '' }}>Cash</option>
-                    <option value="ONLINE_GATEWAY" {{ $method === 'ONLINE_GATEWAY' ? 'selected' : '' }}>Online PGW</option>
+                    @foreach($availableMethods as $option)
+                        <option value="{{ $option }}" @selected($method === strtoupper($option))>{{ __(ucwords(strtolower(str_replace('_', ' ', $option)))) }}</option>
+                    @endforeach
+                </select></div>
+                <select name="per_page" aria-label="{{ __('Rows per page') }}" onchange="this.form.requestSubmit()"
+                        class="h-[34px] w-full md:w-28 px-2 rounded-lg border border-slate-200 bg-slate-50 text-xs">
+                    @foreach($pageSizes as $limit)
+                        <option value="{{ $limit }}" @selected($perPage === $limit)>{{ __(':count / page', ['count' => $limit]) }}</option>
+                    @endforeach
                 </select>
+                <button type="button" @click="showMoreFilters = !showMoreFilters" :aria-expanded="showMoreFilters"
+                        class="h-[34px] py-0 px-2.5 rounded-lg border border-slate-200 bg-slate-50 text-xs font-semibold flex items-center justify-center gap-1.5">
+                    <i class="fas fa-sliders-h text-[10px]"></i><span>{{ __('More Filters') }}</span>
+                    @if($activeMoreCount)
+                        <span class="px-1.5 rounded-full bg-cyan-600 text-white text-[9px]">{{ $activeMoreCount }}</span>
+                    @endif
+                    <i class="fas text-[9px]" :class="showMoreFilters ? 'fa-chevron-up text-cyan-600' : 'fa-chevron-down text-slate-400'"></i>
+                </button>
+                <div class="flex items-center gap-1.5 md:ml-auto">
+                    <button type="submit" class="h-[34px] py-0 px-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-semibold flex items-center gap-1.5">
+                        <i class="fas fa-filter text-[10px]"></i><span>{{ __('Filter') }}</span>
+                    </button>
+                    <a href='{{ route('reseller.recharge.index') }}' class="h-[34px] py-0 px-2.5 rounded-lg border border-slate-200 bg-slate-100 hover:bg-slate-200 text-xs font-semibold flex items-center gap-1">
+                        <i class="fas fa-rotate-left text-[10px]"></i><span>{{ __('Reset') }}</span>
+                    </a>
+                </div>
             </div>
-
-            <!-- Month Filter (MD: 2 Cols) -->
-            <div class="md:col-span-2">
-                <select name="month" onchange="this.form.submit()" class="w-full py-1.5 px-2 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:border-cyan-500 shadow-2xs">
+            <div x-show="showMoreFilters" x-cloak x-transition class="pt-2 border-t border-slate-100 flex flex-wrap items-center gap-2">
+                <div class="w-full sm:w-40"><select name="month" onchange="this.form.submit()" class="w-full h-[34px] py-0 px-2 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:border-cyan-500 shadow-2xs">
                     <option value="all" {{ $month === 'all' ? 'selected' : '' }}>All Months</option>
                     @foreach($availableMonths as $m)
                         <option value="{{ $m }}" {{ $month === $m ? 'selected' : '' }}>
                             {{ \Carbon\Carbon::parse($m . '-01')->format('F Y') }}
                         </option>
                     @endforeach
-                </select>
+                </select></div>
+                <input type="date" name="date_from" value="{{ request('date_from') }}" aria-label="{{ __('From Date') }}"
+                       class="h-[34px] px-2 rounded-lg border border-slate-200 bg-slate-50 text-xs">
+                <input type="date" name="date_to" value="{{ request('date_to') }}" aria-label="{{ __('To Date') }}"
+                       class="h-[34px] px-2 rounded-lg border border-slate-200 bg-slate-50 text-xs">
             </div>
-
-            <!-- Strict Filter & Reset Sequence (AGENTS.md Rule 2.C - MD: 2 Cols) -->
-            <div class="flex items-center gap-1.5 md:col-span-2">
-                <button type="submit" class="w-1/2 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-1.5 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer">
-                    <i class="fas fa-filter text-[10px]"></i>
-                    <span>Filter</span>
-                </button>
-                <a href="{{ route('reseller.recharge.index') }}" class="w-1/2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-1.5 px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer">
-                    <i class="fas fa-rotate-left text-[10px]"></i>
-                    <span>Reset</span>
-                </a>
-            </div>
-
         </form>
     </div>
+
+    @if($pendingCheckouts->isNotEmpty())
+        <details class="bg-white rounded-lg border border-slate-200 px-3 py-2 text-xs">
+            <summary class="font-semibold text-slate-700 cursor-pointer">{{ __('bKash payments awaiting confirmation') }}</summary>
+            <ul class="mt-2 space-y-1">
+                @foreach($pendingCheckouts as $checkout)
+                    <li class="flex items-center justify-between gap-2">
+                        <span>{{ $checkout->initiated_at?->translatedFormat('d M Y H:i') }} ? @currency($checkout->amount)</span>
+                        <a class="text-cyan-700 font-semibold hover:underline"
+                           href="{{ route('reseller.recharge.bkash.callback', ['paymentID' => $checkout->gateway_response['payment_id']]) }}">{{ __('Check Payment Status') }}</a>
+                    </li>
+                @endforeach
+            </ul>
+        </details>
+    @endif
 
     {{-- 4. MASTER COMPACT TABLE (AGENTS.md Rule 2.D: Max 5-7 Minimal Columns) --}}
     <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
@@ -195,23 +219,18 @@
             <table class="saas-table">
                 <thead>
                     <tr>
-                        <th class="w-10 text-center">#</th>
-                        <th class="w-36 font-mono">Recharge #</th>
-                        <th class="w-24 text-center">Method</th>
-                        <th>Reference / Trx ID</th>
-                        <th class="w-32 text-right">Amount Credited</th>
-                        <th class="w-24 text-center">Status</th>
-                        <th class="w-28 text-center font-mono">Date</th>
-                        <th class="w-10 text-center no-sort">Action</th>
+                        <th class="w-36 font-mono text-center font-semibold">Recharge #</th>
+                        <th class="w-24 text-center font-semibold">Method</th>
+                        <th class="text-center font-semibold">Reference / Trx ID</th>
+                        <th class="w-32 text-center font-semibold">{{ __("Amount") }}</th>
+                        <th class="w-24 text-center font-semibold">Status</th>
+                        <th class="w-28 font-mono text-center font-semibold">Date</th>
+                        <th class="w-10 no-sort text-center font-semibold">Action</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($recharges as $index => $recharge)
                         <tr>
-                            <!-- 1. Index -->
-                            <td class="text-center font-mono text-slate-500">
-                                {{ ($recharges->currentPage() - 1) * $recharges->perPage() + $index + 1 }}
-                            </td>
 
                             <!-- 2. Recharge # (Single Clean Field) -->
                             <td class="font-mono font-bold text-cyan-800">
@@ -243,7 +262,7 @@
 
                             <!-- 5. Amount Credited -->
                             <td class="text-right font-mono font-bold text-emerald-600">
-                                @currency($recharge->total_credited > 0 ? $recharge->total_credited : $recharge->amount)
+                                @currency(strtoupper($recharge->status) === 'APPROVED' ? $recharge->total_credited : $recharge->amount)
                             </td>
 
                             <!-- 6. Status Badge -->
@@ -276,7 +295,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="py-8 text-center text-slate-400 text-xs">
+                            <td colspan="7" class="py-8 text-center text-slate-400 text-xs">
                                 <i class="fas fa-wallet text-3xl text-slate-300 mb-2 block"></i>
                                 <span>No wallet recharge records found matching your criteria.</span>
                             </td>
@@ -733,7 +752,7 @@
                                     <span class="text-[9.5px] px-1.5 py-0.5 rounded bg-pink-100 text-pink-700 font-mono font-bold">1-Click Auto Credit</span>
                                 </div>
                                 <p class="text-[10.5px] text-slate-600 leading-tight">
-                                    Pay securely using official bKash Payment Gateway (PIN/OTP). Wallet balance will be credited instantly in real-time.
+                                    Pay securely using official bKash Payment Gateway (PIN/OTP). The wallet is credited after bKash confirms the payment.
                                 </p>
                                 <button type="button" 
                                         @click="payWithBkashApi()" 
@@ -749,65 +768,12 @@
                                 </button>
                             </div>
 
-                            <!-- Manual TrxID Alternative -->
-                            <div class="p-2.5 rounded-lg bg-slate-50/90 border border-slate-200 text-xs space-y-1.5">
-                                <div class="flex items-center justify-between">
-                                    <span class="text-[10px] font-semibold text-slate-600 uppercase tracking-wide">Or Manual App Payment:</span>
-                                    <div class="flex items-center gap-1 font-mono font-bold text-slate-800 text-[11px]">
-                                        <span>{{ $bkashMerchantNumber ?? '01819-000000' }}</span>
-                                        <button type="button" 
-                                                @click="copyText('{{ $bkashMerchantNumber ?? '01819-000000' }}', 'Merchant Number')" 
-                                                class="text-pink-600 hover:text-pink-800 cursor-pointer p-0.5" title="Copy">
-                                            <i class="fas fa-copy text-[10px]"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="text-[10px] text-slate-500 leading-tight border-t border-slate-200/80 pt-1">
-                                    bKash App $\rightarrow$ Make Payment $\rightarrow$ <strong>{{ $bkashMerchantNumber ?? '01819-000000' }}</strong> $\rightarrow$ Ref: <strong class="font-mono text-slate-700">{{ $reseller->code ?? 'RES-01' }}</strong>. Paste <strong>TrxID</strong> below:
-                                </div>
-                            </div>
                         </div>
                     </template>
 
-                    <!-- Channel 2: Bangla QR -->
-                    <template x-if="onlineForm.gateway_channel === 'BANGLA_QR'">
-                        <div class="p-2.5 rounded-lg bg-teal-50/50 border border-teal-100 text-xs flex items-center gap-3">
-                            <div class="w-16 h-16 bg-white p-1 rounded-md border border-teal-200 flex-shrink-0 flex items-center justify-center">
-                                <svg class="w-14 h-14" viewBox="0 0 100 100" fill="none">
-                                    <rect width="100" height="100" fill="white" rx="4"/>
-                                    <rect x="8" y="8" width="24" height="24" rx="2" fill="#0f766e"/>
-                                    <rect x="12" y="12" width="16" height="16" rx="1" fill="white"/>
-                                    <rect x="15" y="15" width="10" height="10" fill="#0f766e"/>
-                                    <rect x="68" y="8" width="24" height="24" rx="2" fill="#0f766e"/>
-                                    <rect x="72" y="12" width="16" height="16" rx="1" fill="white"/>
-                                    <rect x="75" y="15" width="10" height="10" fill="#0f766e"/>
-                                    <rect x="8" y="68" width="24" height="24" rx="2" fill="#0f766e"/>
-                                    <rect x="12" y="72" width="16" height="16" rx="1" fill="white"/>
-                                    <rect x="15" y="75" width="10" height="10" fill="#0f766e"/>
-                                    <circle cx="50" cy="50" r="10" fill="#0d9488"/>
-                                    <text x="50" y="53" font-size="6" font-family="sans-serif" font-weight="bold" fill="white" text-anchor="middle">বাংলা QR</text>
-                                </svg>
-                            </div>
-                            <div class="text-[10.5px] text-slate-600 leading-tight space-y-0.5">
-                                <span class="font-bold text-teal-800 block text-[11px]">Interoperable Bangla QR</span>
-                                <span>Scan with <strong>bKash, Nagad, Rocket, Cellfin, CityTouch</strong> app and enter the Transaction ID below.</span>
-                            </div>
-                        </div>
-                    </template>
-
-                    <!-- Channel 3: Bank & Cards -->
-                    <template x-if="onlineForm.gateway_channel === 'BANK_GATEWAY'">
-                        <div class="p-2.5 rounded-lg bg-blue-50/50 border border-blue-100 text-xs space-y-1">
-                            <div class="flex items-center justify-between text-[11px]">
-                                <span class="font-bold text-slate-800">{{ $gateways['bank']->credentials['bank_name'] ?? 'The City Bank Ltd.' }}</span>
-                                <span class="text-[9px] px-1.5 py-0.2 rounded bg-blue-100 text-blue-700 font-semibold">NPSB / BEFTN</span>
-                            </div>
-                            <div class="flex items-center justify-between text-[10.5px] text-slate-600 font-mono">
-                                <span>A/C: <strong class="text-slate-800">{{ $gateways['bank']->credentials['account_number'] ?? '1102983746001' }}</strong></span>
-                                <span>Routing: <strong>{{ $gateways['bank']->credentials['routing_number'] ?? '225271890' }}</strong></span>
-                            </div>
-                        </div>
-                    </template>
+                    <p class="text-xs text-slate-600">
+                        {{ __('If you have already paid, submit the reference below for verification. Your wallet balance changes after approval.') }}
+                    </p>
 
                     <!-- 4. Mandatory TrxID Input -->
                     <div class="space-y-1">
@@ -846,7 +812,7 @@
                         <template x-if="!isSubmittingOnline">
                             <i class="fas fa-bolt text-xs"></i>
                         </template>
-                        <span x-text="isSubmittingOnline ? 'Processing...' : 'Credit Wallet Instantly'"></span>
+                        <span x-text="isSubmittingOnline ? 'Processing...' : 'Submit Payment Reference'"></span>
                     </button>
                 </div>
             </form>
@@ -998,7 +964,7 @@ function rechargeManager() {
                     if (typeof Swal !== 'undefined') {
                         await Swal.fire({
                             icon: 'success',
-                            title: 'Recharge Successful!',
+                            title: 'Recharge Request Submitted',
                             text: data.message,
                             confirmButtonColor: '#0891b2',
                         });
