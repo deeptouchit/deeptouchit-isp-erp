@@ -1,6 +1,6 @@
 @extends('reseller.layouts.app')
 
-@section('title', 'Available Packages & Rates - ' . ($tenant->company_name ?? $tenant->name ?? 'Reseller Portal'))
+@section('title', __('Available Packages & Rates') . ' - ' . ($tenant->company_name ?? $tenant->name ?? __('Reseller Portal')))
 
 @push('styles')
     {{-- Page-specific CSS --}}
@@ -120,6 +120,7 @@
             <table class="saas-table">
                 <thead>
                     <tr>
+                        <th scope="col" class="w-10 text-center font-semibold no-sort">#</th>
                         <th scope="col" class="text-center font-semibold">{{ __('Package Profile') }}</th>
                         <th scope="col" class="text-center font-semibold">{{ __('Download') }}</th>
                         <th scope="col" class="text-center font-semibold">{{ __('Upload') }}</th>
@@ -137,6 +138,7 @@
                             $cost = $reseller->calculateResellerCost($retail);
                         @endphp
                         <tr>
+                            <td class="text-center font-mono">{{ $packages->firstItem() + $loop->index }}</td>
                             <td class="text-left font-semibold text-cyan-800">{{ $profileName }}</td>
                             <td class="text-center font-mono text-blue-700" data-sort-value="{{ $pkg->download_speed }}">
                                 @if(filled($pkg->download_speed))
@@ -180,9 +182,9 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="py-8 text-center text-slate-400 text-xs">
+                            <td colspan="8" class="py-8 text-center text-slate-400 text-xs">
                                 <i class="fas fa-boxes-stacked text-3xl text-slate-300 mb-2 block"></i>
-                                <span>No assigned internet packages found matching your criteria.</span>
+                                <span>{{ __('No internet packages match your filters.') }}</span>
                             </td>
                         </tr>
                     @endforelse
@@ -194,7 +196,7 @@
         @if($packages->hasPages())
             <div class="px-4 py-2.5 bg-white border-t border-slate-200 flex items-center justify-between text-xs">
                 <div>
-                    Showing <span class="font-bold">{{ $packages->firstItem() }}</span> to <span class="font-bold">{{ $packages->lastItem() }}</span> of <span class="font-bold">{{ $packages->total() }}</span> packages
+                    {{ __('Showing :first to :last of :total packages', ['first' => $packages->firstItem(), 'last' => $packages->lastItem(), 'total' => $packages->total()]) }}
                 </div>
                 <div>
                     {{ $packages->links() }}
@@ -215,7 +217,7 @@
                 @click="fetchPackageDetails(activeMenuItem.id); activeMenu = null" 
                 class="w-full px-3 py-1.5 text-left hover:bg-slate-50 hover:text-cyan-700 flex items-center gap-2 cursor-pointer transition">
             <i class="fas fa-circle-info text-cyan-600 w-4"></i>
-            <span>View Details</span>
+            <span>{{ __('View Details') }}</span>
         </button>
     </div>
 
@@ -240,8 +242,8 @@
                         <i class="fas fa-box-open"></i>
                     </div>
                     <div>
-                        <h3 class="text-xs font-semibold text-slate-800">Package Specifications &amp; Rates</h3>
-                        <p class="text-[10.5px] text-slate-500 font-normal" x-text="pkgData?.mikrotik_profile || pkgData?.package_name || 'Package'"></p>
+                        <h3 class="text-xs font-semibold text-slate-800">{{ __('Package Specifications & Rates') }}</h3>
+                        <p class="text-[10.5px] text-slate-500 font-normal" x-text="pkgData?.mikrotik_profile || pkgData?.package_name || @js(__('Package'))"></p>
                     </div>
                 </div>
                 <button type="button" @click="showPkgModal = false" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center cursor-pointer">
@@ -255,46 +257,46 @@
                 <!-- Financial Margin Banner -->
                 <div class="grid grid-cols-3 gap-2">
                     <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-center">
-                        <span class="text-[10px] uppercase font-medium text-slate-500 block">Retail Rate</span>
+                        <span class="text-[10px] uppercase font-medium text-slate-500 block">{{ __('Retail Rate') }}</span>
                         <span class="text-sm font-bold font-mono text-slate-900" x-text="formatMoney(pkgData?.price)"></span>
                     </div>
                     <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-center">
-                        <span class="text-[10px] uppercase font-medium text-slate-500 block">Wholesale Cost</span>
+                        <span class="text-[10px] uppercase font-medium text-slate-500 block">{{ __('Wholesale Cost') }}</span>
                         <span class="text-sm font-bold font-mono text-slate-600" x-text="formatMoney(pkgData?.wholesale_cost)"></span>
                     </div>
                     <div class="p-2.5 rounded-lg bg-emerald-50/70 border border-emerald-200 text-center">
-                        <span class="text-[10px] uppercase font-medium text-emerald-700 block">Your Margin</span>
+                        <span class="text-[10px] uppercase font-medium text-emerald-700 block">{{ __('Your Margin') }}</span>
                         <span class="text-sm font-bold font-mono text-emerald-700" x-text="formatMoney(pkgData?.profit_margin)"></span>
                     </div>
                 </div>
 
                 <!-- Speed Breakdown -->
                 <div class="space-y-1.5">
-                    <h4 class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Bandwidth &amp; Speed Caps</h4>
+                    <h4 class="text-[10px] font-bold uppercase tracking-wider text-slate-500">{{ __('Bandwidth & Speed Caps') }}</h4>
                     <div class="grid grid-cols-3 gap-2 text-xs">
                         <div class="p-2 bg-slate-50 rounded-lg border border-slate-200/80">
-                            <span class="text-[10px] text-slate-500 block">Download Speed</span>
-                            <span class="font-bold font-mono text-cyan-800" x-text="(pkgData?.download_speed || 0) + ' Mbps'"></span>
+                            <span class="text-[10px] text-slate-500 block">{{ __('Download Speed') }}</span>
+                            <span class="font-bold font-mono text-cyan-800" x-text="formatSpeed(pkgData?.download_speed)"></span>
                         </div>
                         <div class="p-2 bg-slate-50 rounded-lg border border-slate-200/80">
-                            <span class="text-[10px] text-slate-500 block">Upload Speed</span>
-                            <span class="font-bold font-mono text-cyan-800" x-text="(pkgData?.upload_speed || 0) + ' Mbps'"></span>
+                            <span class="text-[10px] text-slate-500 block">{{ __('Upload Speed') }}</span>
+                            <span class="font-bold font-mono text-cyan-800" x-text="formatSpeed(pkgData?.upload_speed)"></span>
                         </div>
                         <div class="p-2 bg-slate-50 rounded-lg border border-slate-200/80">
-                            <span class="text-[10px] text-slate-500 block">BDIX Speed</span>
-                            <span class="font-bold font-mono text-purple-700" x-text="(pkgData?.bdix_speed || pkgData?.download_speed || 0) + ' Mbps'"></span>
+                            <span class="text-[10px] text-slate-500 block">{{ __('BDIX Speed') }}</span>
+                            <span class="font-bold font-mono text-purple-700" x-text="formatSpeed(pkgData?.bdix_speed ?? pkgData?.download_speed)"></span>
                         </div>
                         <div class="p-2 bg-slate-50 rounded-lg border border-slate-200/80">
-                            <span class="text-[10px] text-slate-500 block">YouTube Cache</span>
-                            <span class="font-bold font-mono text-rose-700" x-text="(pkgData?.youtube_speed || pkgData?.download_speed || 0) + ' Mbps'"></span>
+                            <span class="text-[10px] text-slate-500 block">{{ __('YouTube Cache') }}</span>
+                            <span class="font-bold font-mono text-rose-700" x-text="formatSpeed(pkgData?.youtube_speed ?? pkgData?.download_speed)"></span>
                         </div>
                         <div class="p-2 bg-slate-50 rounded-lg border border-slate-200/80">
-                            <span class="text-[10px] text-slate-500 block">Facebook CDN</span>
-                            <span class="font-bold font-mono text-indigo-700" x-text="(pkgData?.facebook_speed || pkgData?.download_speed || 0) + ' Mbps'"></span>
+                            <span class="text-[10px] text-slate-500 block">{{ __('Facebook CDN') }}</span>
+                            <span class="font-bold font-mono text-indigo-700" x-text="formatSpeed(pkgData?.facebook_speed ?? pkgData?.download_speed)"></span>
                         </div>
                         <div class="p-2 bg-slate-50 rounded-lg border border-slate-200/80">
-                            <span class="text-[10px] text-slate-500 block">Validity</span>
-                            <span class="font-bold font-mono text-slate-800" x-text="pkgData?.validity_days == null ? '&mdash;' : (Number.isNaN(Number(pkgData.validity_days)) ? pkgData.validity_days : pkgData.validity_days + ' ' + (pkgData.validity_unit || @js(__('Days'))))"></span>
+                            <span class="text-[10px] text-slate-500 block">{{ __('Validity') }}</span>
+                            <span class="font-bold font-mono text-slate-800" x-text="formatValidity()"></span>
                         </div>
                     </div>
                 </div>
@@ -302,15 +304,15 @@
                 <!-- Subscribers & Revenue Projection -->
                 <div class="p-3 rounded-lg bg-cyan-50/50 border border-cyan-100 space-y-1.5 text-xs">
                     <div class="flex items-center justify-between">
-                        <span class="font-semibold text-slate-700">Active Subscribers:</span>
-                        <span class="font-mono font-bold text-cyan-900" x-text="(pkgData?.active_subscribers || 0) + ' Users'"></span>
+                        <span class="font-semibold text-slate-700">{{ __('Active Subscribers') }}:</span>
+                        <span class="font-mono font-bold text-cyan-900" x-text="@js(__(':count users')).replace(':count', pkgData?.active_subscribers ?? 0)"></span>
                     </div>
                     <div class="flex items-center justify-between">
-                        <span class="font-semibold text-slate-700">Total Monthly Revenue:</span>
+                        <span class="font-semibold text-slate-700">{{ __('Total Monthly Revenue') }}:</span>
                         <span class="font-mono font-bold text-slate-900" x-text="formatMoney(pkgData?.total_revenue)"></span>
                     </div>
                     <div class="flex items-center justify-between border-t border-cyan-100 pt-1">
-                        <span class="font-bold text-emerald-800">Your Estimated Monthly Margin:</span>
+                        <span class="font-bold text-emerald-800">{{ __('Your Estimated Monthly Margin') }}:</span>
                         <span class="font-mono font-bold text-emerald-700 text-sm" x-text="formatMoney(pkgData?.total_profit)"></span>
                     </div>
                 </div>
@@ -322,7 +324,7 @@
                 <button type="button" 
                         @click="showPkgModal = false" 
                         class="border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs px-4 py-1.5 rounded-lg transition cursor-pointer">
-                    Close
+                    {{ __('Close') }}
                 </button>
             </div>
         </div>
@@ -343,6 +345,22 @@ function packageManager() {
             const symbol = @js($currencySymbol);
             return @js($currencyPosition ?? 'left') === 'right' ? amount + ' ' + symbol : symbol + ' ' + amount;
         },
+        formatSpeed(value) {
+            if (value == null || String(value).trim() === '') return '—';
+
+            return Number.isNaN(Number(value)) ? value : @js(__(':speed Mbps')).replace(':speed', Number(value));
+        },
+
+        formatValidity() {
+            const duration = this.pkgData?.validity_days;
+            if (duration == null || duration === '') return '—';
+            if (Number.isNaN(Number(duration))) return duration;
+
+            const units = @js(collect(['hours', 'days', 'weeks', 'months', 'years'])->mapWithKeys(fn ($unit) => [$unit => __(ucfirst($unit))]));
+            const unit = (this.pkgData.validity_unit || 'days').toLowerCase();
+            return duration + ' ' + (units[unit] ?? this.pkgData.validity_unit);
+        },
+
         activeMenu: null,
         activeMenuItem: null,
         menuPos: {},

@@ -51,6 +51,17 @@ class ResellerPackageReportTest extends TestCase
 
         $filters = ['speed' => '50+', 'service_type' => 'PPPOE', 'search' => 'Catalog'];
         $this->actingAs($this->partner($own));
+        foreach ([
+            'bn' => ['খুচরা মূল্য', 'প্যাকেজের বিবরণ ও মূল্য'],
+            'en' => ['Retail Rate', 'Package Specifications & Rates'],
+        ] as $locale => [$rateLabel, $detailsLabel]) {
+            $this->withSession(['locale' => $locale])->get(route('reseller.packages.index', $filters))
+                ->assertOk()
+                ->assertSee($rateLabel)
+                ->assertSee($detailsLabel)
+                ->assertSeeInOrder(['no-sort">#</th>', '<td class="text-center font-mono">1</td>', 'Catalog-37M</td>'], false);
+        }
+
         foreach (['reseller.packages', 'reseller.margins'] as $group) {
             $result = $this->get(route("$group.index", $filters))->assertOk();
             $this->assertSame([$package], $result->viewData('packages')->pluck('id')->all());
