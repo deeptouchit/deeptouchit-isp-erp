@@ -97,7 +97,7 @@ return [
         'title' => 'Billing & Payment',
         'icon' => 'fas fa-coins',
         'color' => 'amber',
-        'active' => ['reseller.customer-invoices*', 'reseller.collections*', 'reseller.invoices*'],
+        'active' => ['reseller.customer-invoices*', 'reseller.collections*', 'reseller.invoices*', 'reseller.finance.cash-handover*', 'reseller.finance.gateway-transactions*', 'reseller.finance.expenses*', 'reseller.finance.ledger*'],
         'roles' => ['reseller_admin', 'reseller_owner', 'reseller_manager', 'admin', 'manager'],
         'keywords' => 'billing invoices payments collections wholesale',
         'children' => [
@@ -118,7 +118,11 @@ return [
                 'keywords' => 'paid settled customer invoices receipts',
             ],
             ['title' => 'Collector Collections', 'route' => 'reseller.collections.index', 'active' => ['reseller.collections*']],
+            ['title' => 'Cash Handover', 'route' => 'reseller.finance.cash-handover', 'active' => ['reseller.finance.cash-handover*']],
             ['title' => 'Wholesale Invoices', 'route' => 'reseller.invoices.index', 'active' => ['reseller.invoices*']],
+            ['title' => 'Gateway Payments', 'route' => 'reseller.finance.gateway-transactions', 'active' => ['reseller.finance.gateway-transactions*']],
+            ['title' => 'Income & Expenses', 'route' => 'reseller.finance.expenses', 'active' => ['reseller.finance.expenses*']],
+            ['title' => 'Accounts & Ledger', 'route' => 'reseller.finance.ledger', 'active' => ['reseller.finance.ledger*']],
         ],
     ],
     [
@@ -127,6 +131,14 @@ return [
         'active' => ['reseller.collections*'],
         'icon' => 'fas fa-receipt',
         'color' => 'blue',
+        'roles' => ['reseller_collector', 'collector'],
+    ],
+    [
+        'title' => 'Cash Handover',
+        'route' => 'reseller.finance.cash-handover',
+        'active' => ['reseller.finance.cash-handover*'],
+        'icon' => 'fas fa-vault',
+        'color' => 'amber',
         'roles' => ['reseller_collector', 'collector'],
     ],
     [

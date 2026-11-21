@@ -1,4 +1,8 @@
-@extends('tenant.layouts.app')
+@extends($resellerPortal ? 'reseller.layouts.app' : 'tenant.layouts.app')
+
+@php
+    $gatewayRoute = $resellerPortal ? 'reseller.finance.gateway-transactions' : 'tenant.finance.gateway-transactions';
+@endphp
 
 @section('title', __('Online Gateway Transactions') . ' - ' . ($tenant->company_name ?? $tenant->name))
 
@@ -24,7 +28,7 @@
                 <span>{{ __('PGWs Active') }}</span>
             </div>
 
-            <a href="{{ route('tenant.finance.gateway-transactions.export', request()->all()) }}" class="h-[34px] py-0 px-3 inline-flex items-center gap-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-lg text-xs font-semibold shadow-2xs transition">
+            <a href="{{ route($gatewayRoute . '.export', request()->all()) }}" class="h-[34px] py-0 px-3 inline-flex items-center gap-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-lg text-xs font-semibold shadow-2xs transition">
                 <i class="fas fa-file-excel text-emerald-600 text-[11px]"></i>
                 <span>{{ __('Export CSV') }}</span>
             </a>
@@ -106,7 +110,7 @@
              showMoreFilters: {{ ($isMoreOpen ?? false) ? 'true' : 'false' }}, 
              searchQuery: '{{ addslashes(request('search', '')) }}' 
          }">
-        <form method="GET" action="{{ route('tenant.finance.gateway-transactions') }}" class="space-y-2.5">
+        <form method="GET" action="{{ route($gatewayRoute) }}" class="space-y-2.5">
             <!-- Tier 1: Primary Filter Bar (Single Uniform Line on md+) -->
             <div class="flex flex-col md:flex-row items-stretch md:items-center gap-2">
                 <!-- Intelligent Live Search Box -->
@@ -194,7 +198,7 @@
                         <i class="fas fa-filter text-[10px]"></i>
                         <span>{{ __('Filter') }}</span>
                     </button>
-                    <a href="{{ route('tenant.finance.gateway-transactions') }}" 
+                    <a href="{{ route($gatewayRoute) }}"
                        class="h-[34px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-0 px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer" 
                        title="{{ __('Reset Filters') }}">
                         <i class="fas fa-rotate-left text-[10px]"></i>
@@ -431,6 +435,7 @@
             </template>
         </div>
 
+        @unless($resellerPortal)
         {{-- Group 2: Verification & Reconciliation --}}
         <div class="py-1">
             <template x-if="activeMenu && (activeMenu.status === 'PENDING' || activeMenu.status === 'FAILED')">
@@ -447,6 +452,7 @@
                 </button>
             </template>
         </div>
+        @endunless
     </div>
 
     {{-- MODAL 1: Full Transaction Telemetry & Detailed Audit Modal --}}
@@ -580,6 +586,7 @@
 
             {{-- Modal Footer --}}
             <div class="px-4 py-2.5 bg-slate-50/80 border-t border-slate-200 flex items-center justify-end gap-2 flex-shrink-0">
+                @unless($resellerPortal)
                 <template x-if="detailData && (detailData.transaction.status === 'PENDING' || detailData.transaction.status === 'FAILED')">
                     <button type="button" @click="verifyTransaction(detailData.transaction.id); showDetailModal = false;" class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs px-3.5 py-1.5 rounded-lg shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer">
                         <i class="fas fa-rotate text-[10px]"></i>
@@ -593,6 +600,7 @@
                         <span>{{ __('Refund Transaction') }}</span>
                     </button>
                 </template>
+                @endunless
 
                 <button type="button" @click="showDetailModal = false" class="border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs px-3.5 py-1.5 rounded-lg transition cursor-pointer">
                     {{ __('Close') }}
@@ -769,7 +777,7 @@
 
             async viewDetails(id) {
                 try {
-                    const url = "{{ url('admin/finance/gateway-transactions') }}/" + id;
+                    const url = "{{ route($gatewayRoute) }}/" + id;
                     const res = await fetch(url, {
                         headers: { 'Accept': 'application/json' }
                     });
@@ -815,7 +823,7 @@
                 if (!result.isConfirmed) return;
 
                 try {
-                    const url = "{{ url('admin/finance/gateway-transactions') }}/" + id + "/verify";
+                    const url = "{{ route($gatewayRoute) }}/" + id + "/verify";
                     const res = await fetch(url, {
                         method: 'POST',
                         headers: {
@@ -863,7 +871,7 @@
             async submitRefund() {
                 this.isSubmitting = true;
                 try {
-                    const url = "{{ url('admin/finance/gateway-transactions') }}/" + this.refundForm.id + "/refund";
+                    const url = "{{ route($gatewayRoute) }}/" + this.refundForm.id + "/refund";
                     const res = await fetch(url, {
                         method: 'POST',
                         headers: {

@@ -27,6 +27,13 @@ class TenantCashHandoverController extends Controller
     {
         $user = Auth::user();
         $tenant = $user?->tenant;
+        if ($this->resellerPortal()) {
+            abort_unless($tenant && $user->reseller
+                && (int) $user->reseller->tenant_id === (int) $tenant->id
+                && ($user->isResellerAdmin() || $user->isResellerCollector()), 403);
+
+            return $tenant;
+        }
         if (!$tenant && $user?->tenant_id) {
             $tenant = Tenant::find($user->tenant_id);
         }
@@ -35,6 +42,48 @@ class TenantCashHandoverController extends Controller
         }
 
         return $tenant ?? abort(404, __('No active tenant found.'));
+    }
+
+    private function resellerPortal(): bool
+    {
+        return request()->routeIs('reseller.finance.cash-handover*');
+    }
+
+    private function handoverRoute(): string
+    {
+        return $this->resellerPortal() ? 'reseller.finance.cash-handover' : 'tenant.finance.cash-handover';
+    }
+
+    private function canVerify(): bool
+    {
+        return !$this->resellerPortal() || in_array(Auth::user()->role, ['reseller_admin', 'reseller_owner', 'admin'], true);
+    }
+
+    private function eligibleStaff(Tenant $tenant): \Illuminate\Database\Eloquent\Builder
+    {
+        return User::where('tenant_id', $tenant->id)
+            ->when($this->resellerPortal(), fn ($query) => $query
+                ->where('reseller_id', Auth::user()->reseller_id)
+                ->when(!$this->canVerify(), fn ($staff) => $staff->whereKey(Auth::id())));
+    }
+
+    private function handovers(Tenant $tenant): \Illuminate\Database\Eloquent\Builder
+    {
+        return TenantDailyCashHandover::where('tenant_id', $tenant->id)
+            ->when($this->resellerPortal(), fn ($query) => $query
+                ->where('reseller_id', Auth::user()->reseller_id)
+                ->when(!$this->canVerify(), fn ($records) => $records->where('collector_id', Auth::id())));
+    }
+
+    private function payments(Tenant $tenant): \Illuminate\Database\Eloquent\Builder
+    {
+        return TenantCustomerPayment::where('tenant_id', $tenant->id)
+            ->when($this->resellerPortal(), function ($query) use ($tenant) {
+                $resellerId = Auth::user()->reseller_id;
+                $query->where(fn ($payment) => $payment->where('reseller_id', $resellerId)->orWhereNull('reseller_id'))
+                    ->whereHas('customer', fn ($customer) => $customer
+                        ->where('tenant_id', $tenant->id)->where('reseller_id', $resellerId));
+            });
     }
 
     /**
@@ -46,9 +95,9 @@ class TenantCashHandoverController extends Controller
         $user = Auth::user();
         $isResellerUser = $user && ($user->isResellerUser() || !empty($user->reseller_id));
 
-        $allCollectors = User::where('tenant_id', $tenant->id)->orderBy('name')->get(['id', 'name', 'email', 'role']);
+        $allCollectors = $this->eligibleStaff($tenant)->orderBy('name')->get(['id', 'name', 'email', 'role']);
 
-        $query = TenantDailyCashHandover::where('tenant_id', $tenant->id)
+        $query = $this->handovers($tenant)
             ->with(['collector', 'verifier']);
 
         // 1. Collector Filter
@@ -125,10 +174,10 @@ class TenantCashHandoverController extends Controller
             $perPage = 20;
         }
 
+        $kpiBaseQuery = clone $query;
         $handovers = $query->orderByDesc('id')->paginate($perPage)->withQueryString();
 
-        // 6. Compute 6 KPI Stats (Scoped to active query scope)
-        $kpiBaseQuery = clone $query;
+        // Compute totals before applying page limits.
         $allKpiHandovers = $kpiBaseQuery->get();
         $totalApprovedVault = (float) $allKpiHandovers->where('status', 'approved')->sum('handed_over_amount');
         $totalPendingCash = (float) $allKpiHandovers->where('status', 'pending')->sum('handed_over_amount');
@@ -145,7 +194,14 @@ class TenantCashHandoverController extends Controller
 
         $currencySymbol = $tenant->currency_symbol ?? '৳';
 
+        $resellerPortal = $this->resellerPortal();
+        $handoverRoute = $this->handoverRoute();
+        $canVerify = $this->canVerify();
+
         return view('tenant.finance.cash_handover', compact(
+            'resellerPortal',
+            'handoverRoute',
+            'canVerify',
             'tenant',
             'handovers',
             'allCollectors',
@@ -175,18 +231,21 @@ class TenantCashHandoverController extends Controller
     {
         $tenant = $this->getTenant();
         $collectorId = (int) $request->input('collector_id', Auth::id());
+        $request->validate(['collector_id' => 'nullable|integer', 'date' => 'nullable|date_format:Y-m-d']);
+        $this->eligibleStaff($tenant)->findOrFail($collectorId);
         $date = $request->input('date', Carbon::today()->toDateString());
 
         $hasHandoverCol = Schema::hasColumn('tenant_customer_payments', 'handover_id');
 
         // Core Accounting Query: All un-handed customer payments for this collector
-        $query = TenantCustomerPayment::where('tenant_id', $tenant->id)
+        $query = $this->payments($tenant)
             ->where('collected_by', $collectorId)
             ->when($hasHandoverCol, fn($q) => $q->whereNull('handover_id'))
-            ->whereNotIn('status', ['void', 'refunded', 'cancelled']);
+            ->whereNotIn('status', ['void', 'refunded', 'cancelled'])
+            ->when($this->resellerPortal(), fn ($query) => $query->whereIn('status', ['paid', 'completed', 'approved', 'active']));
 
         if (!empty($date)) {
-            $query->whereDate('paid_at', '<=', $date);
+            $query->whereDate(DB::raw('COALESCE(paid_at, created_at)'), '<=', $date);
         }
 
         $payments = $query->with('customer:id,customer_id,name,username,phone')->get();
@@ -200,7 +259,7 @@ class TenantCashHandoverController extends Controller
         $receiptsCount = $cashPayments->count();
 
         // Check if a pending handover voucher already exists for this collector
-        $pendingHandover = TenantDailyCashHandover::where('tenant_id', $tenant->id)
+        $pendingHandover = $this->handovers($tenant)
             ->where('collector_id', $collectorId)
             ->where('status', 'pending')
             ->first();
@@ -247,7 +306,7 @@ class TenantCashHandoverController extends Controller
 
         $validated = $request->validate([
             'collector_id' => 'required|exists:users,id',
-            'handover_date' => 'required|date',
+            'handover_date' => 'required|date_format:Y-m-d|before_or_equal:today',
             'shift_type' => 'required|string|in:daily,morning,evening,night,full_day',
             'handed_over_amount' => 'required|numeric|min:0',
             'denominations' => 'nullable|array',
@@ -255,6 +314,7 @@ class TenantCashHandoverController extends Controller
         ]);
 
         $collectorId = (int) $validated['collector_id'];
+        $collector = $this->eligibleStaff($tenant)->findOrFail($collectorId);
         $handoverDate = $validated['handover_date'];
         $shiftType = $validated['shift_type'];
         $handedOverAmount = (float) $validated['handed_over_amount'];
@@ -263,31 +323,38 @@ class TenantCashHandoverController extends Controller
 
         DB::beginTransaction();
         try {
+            Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
+
             // 1. Calculate actual unhanded system collections for this collector up to handover_date
-            $paymentsQuery = TenantCustomerPayment::where('tenant_id', $tenant->id)
+            $paymentsQuery = $this->payments($tenant)
                 ->where('collected_by', $collectorId)
                 ->when($hasHandoverCol, fn($q) => $q->whereNull('handover_id'))
-                ->whereNotIn('status', ['void', 'refunded', 'cancelled']);
+                ->whereNotIn('status', ['void', 'refunded', 'cancelled'])
+                ->when($this->resellerPortal(), fn ($query) => $query->whereIn('status', ['paid', 'completed', 'approved', 'active']));
 
             if (!empty($handoverDate)) {
-                $paymentsQuery->whereDate('paid_at', '<=', $handoverDate);
+                $paymentsQuery->whereDate(DB::raw('COALESCE(paid_at, created_at)'), '<=', $handoverDate);
             }
 
-            $allPayments = $paymentsQuery->get();
+            $allPayments = $paymentsQuery->lockForUpdate()->get();
             $cashPayments = $allPayments->where('payment_method', 'cash');
             $digitalPayments = $allPayments->where('payment_method', '!=', 'cash');
 
             $systemCash = (float) $cashPayments->sum('amount');
             $digitalTotal = (float) $digitalPayments->sum('amount');
             $receiptsCount = $cashPayments->count();
+            if ($this->resellerPortal() && (!$hasHandoverCol || $receiptsCount === 0)) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'collector_id' => __('No eligible cash receipts are available for handover.'),
+                ]);
+            }
 
             // 2. Discrepancy Calculation
             $shortage = max(0, $systemCash - $handedOverAmount);
             $excess = max(0, $handedOverAmount - $systemCash);
 
             // 3. Admin / Owner direct cash collection auto-vaulting check
-            $collector = User::where('tenant_id', $tenant->id)->find($collectorId);
-            $isCollectorAdmin = $collector && ($collector->isOwner() || $collector->isIspAdmin());
+            $isCollectorAdmin = !$this->resellerPortal() && $collector && ($collector->isOwner() || $collector->isIspAdmin());
             $status = $isCollectorAdmin ? 'approved' : 'pending';
 
             // 4. Generate Handover Number
@@ -299,6 +366,7 @@ class TenantCashHandoverController extends Controller
 
             // 5. Create Handover Record
             $handover = TenantDailyCashHandover::create([
+                ...($this->resellerPortal() ? ['reseller_id' => Auth::user()->reseller_id] : []),
                 'tenant_id' => $tenant->id,
                 'handover_no' => $handoverNo,
                 'collector_id' => $collectorId,
@@ -389,7 +457,7 @@ class TenantCashHandoverController extends Controller
             ]);
         }
 
-        return redirect()->route('tenant.finance.cash-handover')->with('success', $msg);
+        return redirect()->route($this->handoverRoute())->with('success', $msg);
     }
 
     /**
@@ -398,7 +466,7 @@ class TenantCashHandoverController extends Controller
     public function show(Request $request, int $id): JsonResponse
     {
         $tenant = $this->getTenant();
-        $handover = TenantDailyCashHandover::where('tenant_id', $tenant->id)
+        $handover = $this->handovers($tenant)
             ->with(['collector', 'verifier'])
             ->findOrFail($id);
 
@@ -416,8 +484,8 @@ class TenantCashHandoverController extends Controller
         }
 
         // Fallback for older legacy handover records created before handover_id was populated
-        if ($payments->isEmpty()) {
-            $payments = TenantCustomerPayment::where('tenant_id', $tenant->id)
+        if ($payments->isEmpty() && !$this->resellerPortal()) {
+            $payments = $this->payments($tenant)
                 ->where('collected_by', $handover->collector_id)
                 ->whereDate('paid_at', $handover->handover_date->toDateString())
                 ->where('payment_method', 'cash')
@@ -496,23 +564,19 @@ class TenantCashHandoverController extends Controller
     public function approve(Request $request, int $id): JsonResponse|RedirectResponse
     {
         $tenant = $this->getTenant();
-        $handover = TenantDailyCashHandover::where('tenant_id', $tenant->id)->findOrFail($id);
-
-        if ($handover->status === 'approved') {
-            return response()->json([
-                'success' => false,
-                'message' => __('This cash handover voucher is already approved.'),
-            ], 422);
-        }
+        abort_unless($this->canVerify(), 403);
 
         $remarks = $request->input('manager_remarks', __('Verified physical cash and approved into ISP vault.'));
         $currencySymbol = $tenant->currency_symbol ?? '৳';
-        $formattedAmount = $currencySymbol . number_format($handover->handed_over_amount, 2);
 
         $hasHandoverCol = Schema::hasColumn('tenant_customer_payments', 'handover_id');
 
         DB::beginTransaction();
         try {
+            $handover = $this->handovers($tenant)->lockForUpdate()->findOrFail($id);
+            abort_if($this->resellerPortal() && (int) $handover->collector_id === (int) Auth::id(), 403);
+            abort_unless($handover->status === 'pending', 422, __('Only pending handovers can be verified.'));
+            $formattedAmount = $currencySymbol . number_format($handover->handed_over_amount, 2);
             $handover->status = 'approved';
             $handover->verified_by = Auth::id() ?: 1;
             $handover->verified_at = Carbon::now();
@@ -520,8 +584,8 @@ class TenantCashHandoverController extends Controller
             $handover->save();
 
             // For legacy records created before handover_id was set, link matching cash payments
-            if ($hasHandoverCol && $handover->payments()->count() === 0) {
-                TenantCustomerPayment::where('tenant_id', $tenant->id)
+            if ($hasHandoverCol && !$this->resellerPortal() && !$handover->reseller_id && $handover->payments()->count() === 0) {
+                $this->payments($tenant)
                     ->where('collected_by', $handover->collector_id)
                     ->whereDate('paid_at', $handover->handover_date->toDateString())
                     ->where('payment_method', 'cash')
@@ -571,7 +635,7 @@ class TenantCashHandoverController extends Controller
             ]);
         }
 
-        return redirect()->route('tenant.finance.cash-handover')->with('success', $msg);
+        return redirect()->route($this->handoverRoute())->with('success', $msg);
     }
 
     /**
@@ -580,7 +644,7 @@ class TenantCashHandoverController extends Controller
     public function reject(Request $request, int $id): JsonResponse|RedirectResponse
     {
         $tenant = $this->getTenant();
-        $handover = TenantDailyCashHandover::where('tenant_id', $tenant->id)->findOrFail($id);
+        abort_unless($this->canVerify(), 403);
 
         $remarks = $request->input('manager_remarks', __('Cash discrepancy not resolved / rejected by accounts manager.'));
 
@@ -588,6 +652,9 @@ class TenantCashHandoverController extends Controller
 
         DB::beginTransaction();
         try {
+            $handover = $this->handovers($tenant)->lockForUpdate()->findOrFail($id);
+            abort_if($this->resellerPortal() && (int) $handover->collector_id === (int) Auth::id(), 403);
+            abort_unless($handover->status === 'pending', 422, __('Only pending handovers can be verified.'));
             $handover->status = 'rejected';
             $handover->verified_by = Auth::id() ?: 1;
             $handover->verified_at = Carbon::now();
@@ -596,7 +663,7 @@ class TenantCashHandoverController extends Controller
 
             // Unlock constituent payments so they return to collector's un-handed balance
             if ($hasHandoverCol) {
-                TenantCustomerPayment::where('handover_id', $handover->id)
+                TenantCustomerPayment::where('tenant_id', $tenant->id)->where('handover_id', $handover->id)
                     ->update(['handover_id' => null]);
             }
 
@@ -634,7 +701,7 @@ class TenantCashHandoverController extends Controller
             ]);
         }
 
-        return redirect()->route('tenant.finance.cash-handover')->with('success', $msg);
+        return redirect()->route($this->handoverRoute())->with('success', $msg);
     }
 
     /**
@@ -643,7 +710,7 @@ class TenantCashHandoverController extends Controller
     public function exportCsv(Request $request): StreamedResponse
     {
         $tenant = $this->getTenant();
-        $handovers = TenantDailyCashHandover::where('tenant_id', $tenant->id)
+        $handovers = $this->handovers($tenant)
             ->with(['collector', 'verifier'])
             ->orderByDesc('id')
             ->get();

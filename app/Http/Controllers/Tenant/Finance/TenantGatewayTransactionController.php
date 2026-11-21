@@ -47,6 +47,32 @@ class TenantGatewayTransactionController extends Controller
     /**
      * Display listing of Online Gateway Transactions across all system modules
      */
+    private function resellerPortal(): bool
+    {
+        return request()->routeIs('reseller.finance.gateway-transactions*');
+    }
+
+    private function transactions(Tenant $tenant): \Illuminate\Database\Eloquent\Builder
+    {
+        $query = TenantGatewayTransaction::where('tenant_id', $tenant->id);
+        if ($this->resellerPortal()) {
+            $user = Auth::user();
+            abort_unless($user?->reseller && (int) $user->reseller->tenant_id === (int) $tenant->id
+                && (int) $user->tenant_id === (int) $tenant->id, 403);
+
+            $ownedCustomer = fn ($customer) => $customer
+                ->where('tenant_id', $tenant->id)->where('reseller_id', $user->reseller_id);
+
+            $query->where(function ($owned) use ($user, $ownedCustomer) {
+                $owned->where(fn ($explicit) => $explicit->where('reseller_id', $user->reseller_id)
+                    ->where(fn ($record) => $record->whereNull('customer_id')->orWhereHas('customer', $ownedCustomer)))
+                    ->orWhere(fn ($legacy) => $legacy->whereNull('reseller_id')->whereHas('customer', $ownedCustomer));
+            });
+        }
+
+        return $query;
+    }
+
     public function index(Request $request): View
     {
         $tenant = $this->getTenant();
@@ -55,14 +81,16 @@ class TenantGatewayTransactionController extends Controller
         $userResellerId = $user?->reseller_id;
 
         // Auto-sync gateway payments across Retail Customers, Reseller Topups & Wholesale Invoices
-        $this->syncFromAllSections($tenant->id);
+        $resellerPortal = $this->resellerPortal();
 
         // Base Query
-        $query = TenantGatewayTransaction::where('tenant_id', $tenant->id)
-            ->with(['customer', 'reseller', 'user']);
+        $query = $this->transactions($tenant)->with(['customer', 'reseller', 'user']);
+        if (!$resellerPortal) {
+            $this->syncFromAllSections($tenant->id);
+        }
 
         // 1. Reseller Scoping
-        if ($isResellerUser) {
+        if ($isResellerUser && !$this->resellerPortal()) {
             $query->where(function ($q) use ($userResellerId) {
                 $q->where('reseller_id', $userResellerId)
                   ->orWhereHas('customer', function ($cq) use ($userResellerId) {
@@ -199,6 +227,7 @@ class TenantGatewayTransactionController extends Controller
 
         return view('tenant.finance.gateway_transactions', compact(
             'tenant',
+            'resellerPortal',
             'currencySymbol',
             'transactions',
             'allGateways',
@@ -231,7 +260,7 @@ class TenantGatewayTransactionController extends Controller
     public function show(int $id): JsonResponse
     {
         $tenant = $this->getTenant();
-        $trx = TenantGatewayTransaction::where('tenant_id', $tenant->id)
+        $trx = $this->transactions($tenant)
             ->with(['customer', 'reseller', 'user'])
             ->findOrFail($id);
 
@@ -255,8 +284,8 @@ class TenantGatewayTransactionController extends Controller
                 'status' => $trx->status,
                 'status_badge' => $trx->status_badge,
                 'status_message' => $trx->status_message ?: '--',
-                'ip_address' => $trx->ip_address ?: '--',
-                'gateway_payload' => $trx->gateway_payload ?: [],
+                'ip_address' => $this->resellerPortal() ? '--' : ($trx->ip_address ?: '--'),
+                'gateway_payload' => $this->resellerPortal() ? [] : ($trx->gateway_payload ?: []),
                 'initiated_at' => $trx->initiated_at ? Carbon::parse($trx->initiated_at)->translatedFormat('d M, Y h:i:s A') : '--',
                 'completed_at' => $trx->completed_at ? Carbon::parse($trx->completed_at)->translatedFormat('d M, Y h:i:s A') : '--',
                 'created_at' => $trx->created_at->translatedFormat('d M, Y h:i:s A'),
@@ -459,10 +488,9 @@ class TenantGatewayTransactionController extends Controller
         $isResellerUser = $user && ($user->isResellerUser() || !empty($user->reseller_id));
         $userResellerId = $user?->reseller_id;
 
-        $query = TenantGatewayTransaction::where('tenant_id', $tenant->id)
-            ->with(['customer', 'reseller', 'user']);
+        $query = $this->transactions($tenant)->with(['customer', 'reseller', 'user']);
 
-        if ($isResellerUser) {
+        if ($isResellerUser && !$this->resellerPortal()) {
             $query->where(function ($q) use ($userResellerId) {
                 $q->where('reseller_id', $userResellerId)
                   ->orWhereHas('customer', fn($cq) => $cq->where('reseller_id', $userResellerId));

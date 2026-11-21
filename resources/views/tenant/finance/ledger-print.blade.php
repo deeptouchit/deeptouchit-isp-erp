@@ -348,7 +348,7 @@
                 </span>
             </div>
             <div class="summary-box">
-                <span class="summary-label">{{ __('Upstream COGS') }}</span>
+                <span class="summary-label">{{ __($resellerPortal ? 'Wholesale Cost' : 'Upstream COGS') }}</span>
                 <span class="summary-val font-mono text-rose">
                     @currency($kpi['upstream_cogs'] ?? $kpi['cogs_upstream'] ?? 0)
                 </span>
@@ -385,8 +385,10 @@
                             <span class="font-mono" style="font-weight: 600;">@currency($pnl['retail_revenue'])</span>
                         </div>
                         <div class="pnl-row">
+                            @unless($resellerPortal)
                             <span>{{ __('2. Reseller Wholesale') }}</span>
                             <span class="font-mono" style="font-weight: 600;">@currency($pnl['wholesale_revenue'])</span>
+                            @endunless
                         </div>
                         @foreach($pnl['direct_income_groups'] as $headName => $amount)
                             <div class="pnl-row">
@@ -404,7 +406,7 @@
                 {{-- B. Cost of Goods Sold (COGS - Upstream Bandwidth) --}}
                 <div class="pnl-card">
                     <div class="pnl-card-head" style="background: #ffedd5; color: #9a3412; border-bottom: 1px solid #fed7aa;">
-                        <span>{{ __('B. Upstream COGS') }}</span>
+                        <span>{{ __($resellerPortal ? 'B. Wholesale Cost' : 'B. Upstream COGS') }}</span>
                         <span class="font-mono">@currency($pnl['total_cogs'] ?? $pnl['total_upstream_cogs'] ?? 0)</span>
                     </div>
                     <div class="pnl-card-body">
@@ -414,10 +416,10 @@
                                 <span class="font-mono text-rose" style="font-weight: 600;">@currency($amount)</span>
                             </div>
                         @empty
-                            <div style="padding: 12px; text-align: center; color: #94a3b8;">{{ __('No upstream carrier payments.') }}</div>
+                            <div style="padding: 12px; text-align: center; color: #94a3b8;">{{ __($resellerPortal ? 'No wholesale payments.' : 'No upstream carrier payments.') }}</div>
                         @endforelse
                         <div class="pnl-total-row" style="background: #ffedd5; color: #9a3412;">
-                            <span>{{ __('Total Upstream (B):') }}</span>
+                            <span>{{ __($resellerPortal ? 'Total Wholesale Cost (B):' : 'Total Upstream (B):') }}</span>
                             <span class="font-mono">@currency($pnl['total_cogs'] ?? $pnl['total_upstream_cogs'] ?? 0)</span>
                         </div>
                     </div>
@@ -477,6 +479,12 @@
                             <span>{{ __('Total Cash Inflows') }}</span>
                             <span class="font-mono text-green">+@currency($cashbook['cash_in'])</span>
                         </div>
+                    @if($resellerPortal)
+                        <div class="flex-row">
+                            <span>{{ __('Approved Cash Handovers (Internal Transfer)') }}</span>
+                            <span class="font-mono">@currency($cashbook['approved_handovers'])</span>
+                        </div>
+                    @endif
                         <div class="pnl-row">
                             <span>{{ __('Total Cash Outflows (Disbursed)') }}</span>
                             <span class="font-mono text-rose">-@currency($cashbook['cash_out'])</span>

@@ -1,4 +1,4 @@
-@extends('tenant.layouts.app')
+@extends($resellerPortal ? 'reseller.layouts.app' : 'tenant.layouts.app')
 
 @section('title', __('Income & Expense Accounts') . ' - ' . ($tenant->company_name ?? $tenant->name))
 
@@ -57,7 +57,7 @@
                 <span>{{ __('Chart of Accounts') }}</span>
             </button>
 
-            <a href="{{ route('tenant.finance.expenses.export', request()->all()) }}" class="h-[34px] py-0 px-3 inline-flex items-center gap-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-lg text-xs font-semibold shadow-2xs transition">
+            <a href="{{ route($expenseRoute . '.export', request()->all()) }}" class="h-[34px] py-0 px-3 inline-flex items-center gap-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-lg text-xs font-semibold shadow-2xs transition">
                 <i class="fas fa-file-excel text-emerald-600 text-[11px]"></i>
                 <span>{{ __('Export CSV') }}</span>
             </a>
@@ -91,7 +91,7 @@
         {{-- Card 3: Wholesale & Direct --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between gap-2">
             <div class="min-w-0">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Wholesale & Direct') }}</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __($resellerPortal ? 'Direct Income' : 'Wholesale & Direct') }}</span>
                 <span class="text-[13px] font-bold font-mono text-cyan-800 leading-tight block truncate">@currency($wholesaleAndDirect)</span>
             </div>
             <div class="w-6 h-6 rounded-md bg-cyan-50 border border-cyan-100 text-cyan-700 flex items-center justify-center text-[10px] flex-shrink-0">
@@ -149,7 +149,7 @@
 
     <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5"
          x-data="{ showMoreFilters: {{ $isMoreOpen ? 'true' : 'false' }}, searchQuery: '{{ addslashes(request('search', '')) }}' }">
-        <form method="GET" action="{{ route('tenant.finance.expenses') }}" id="filterForm">
+        <form method="GET" action="{{ route($expenseRoute) }}" id="filterForm">
             {{-- 1st Tier: Primary Single Row (Strict Uniform Height h-[34px]) --}}
             <div class="flex flex-col md:flex-row items-stretch md:items-center gap-2">
                 {{-- Intelligent Live Search Box --}}
@@ -178,10 +178,10 @@
                             onchange="this.form.submit()"
                             class="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition shadow-2xs cursor-pointer">
                         <option value="all" {{ $selectedType === 'all' ? 'selected' : '' }}>{{ __('All Transactions') }}</option>
-                        <option value="EXPENSE" {{ $selectedType === 'EXPENSE' ? 'selected' : '' }}>{{ __('Expenses & Upstream (Debit)') }}</option>
+                        <option value="EXPENSE" {{ $selectedType === 'EXPENSE' ? 'selected' : '' }}>{{ __($resellerPortal ? 'Expenses (Debit)' : 'Expenses & Upstream (Debit)') }}</option>
                         <option value="INCOME" {{ $selectedType === 'INCOME' ? 'selected' : '' }}>{{ __('All Revenues & Incomes (Credit)') }}</option>
                         <option value="CUSTOMER_COLLECTION" {{ $selectedType === 'CUSTOMER_COLLECTION' ? 'selected' : '' }}>{{ __('Retail Customer Billing') }}</option>
-                        <option value="WHOLESALE" {{ $selectedType === 'WHOLESALE' ? 'selected' : '' }}>{{ __('Reseller Wholesale Billing') }}</option>
+                        <option value="WHOLESALE" {{ $selectedType === 'WHOLESALE' ? 'selected' : '' }}>{{ __($resellerPortal ? 'Wholesale Payments' : 'Reseller Wholesale Billing') }}</option>
                         <option value="DIRECT_INCOME" {{ $selectedType === 'DIRECT_INCOME' ? 'selected' : '' }}>{{ __('Direct Other Incomes') }}</option>
                     </select>
                 </div>
@@ -239,7 +239,7 @@
                         <i class="fas fa-filter text-[10px]"></i>
                         <span>{{ __('Filter') }}</span>
                     </button>
-                    <a href="{{ route('tenant.finance.expenses') }}" 
+                    <a href="{{ route($expenseRoute) }}"
                        class="h-[34px] py-0 px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer flex-shrink-0" 
                        title="{{ __('Reset All Filters') }}">
                         <i class="fas fa-rotate-left text-[10px]"></i>
@@ -971,7 +971,7 @@
             async submitVoucher() {
                 this.isSubmitting = true;
                 try {
-                    const res = await fetch("{{ route('tenant.finance.expenses.store') }}", {
+                    const res = await fetch("{{ route($expenseRoute . '.store') }}", {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -1012,7 +1012,7 @@
             async submitNewCategory() {
                 this.isSubmitting = true;
                 try {
-                    const res = await fetch("{{ route('tenant.finance.expenses.category') }}", {
+                    const res = await fetch("{{ route($expenseRoute . '.category') }}", {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -1054,7 +1054,7 @@
 
             async viewVoucher(id, source = 'voucher') {
                 try {
-                    const url = "{{ url('admin/finance/expenses') }}/" + id + "?source=" + source;
+                    const url = "{{ route($expenseRoute) }}/" + id + "?source=" + source;
                     const res = await fetch(url, {
                         headers: { 'Accept': 'application/json' }
                     });
@@ -1100,7 +1100,7 @@
                 if (!result.isConfirmed) return;
 
                 try {
-                    const url = "{{ url('admin/finance/expenses') }}/" + id + "/approve";
+                    const url = "{{ route($expenseRoute) }}/" + id + "/approve";
                     const res = await fetch(url, {
                         method: 'POST',
                         headers: {
@@ -1157,7 +1157,7 @@
                 if (!result.isConfirmed) return;
 
                 try {
-                    const url = "{{ url('admin/finance/expenses') }}/" + id + "/reject";
+                    const url = "{{ route($expenseRoute) }}/" + id + "/reject";
                     const res = await fetch(url, {
                         method: 'POST',
                         headers: {
@@ -1214,7 +1214,7 @@
                 if (!result.isConfirmed) return;
 
                 try {
-                    const url = "{{ url('admin/finance/expenses') }}/" + id;
+                    const url = "{{ route($expenseRoute) }}/" + id;
                     const res = await fetch(url, {
                         method: 'DELETE',
                         headers: {

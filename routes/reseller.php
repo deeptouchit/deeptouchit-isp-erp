@@ -17,6 +17,10 @@ use App\Http\Controllers\Reseller\ResellerTicketController;
 use App\Http\Controllers\Tenant\Auth\TenantAuthController;
 use App\Http\Controllers\Tenant\Customer\TenantCoverageZoneController;
 use App\Http\Controllers\Tenant\Customer\TenantCustomerController;
+use App\Http\Controllers\Tenant\Finance\TenantCashHandoverController;
+use App\Http\Controllers\Tenant\Finance\TenantGatewayTransactionController;
+use App\Http\Controllers\Tenant\Finance\TenantExpenseAccountController;
+use App\Http\Controllers\Tenant\Finance\TenantFinancialLedgerController;
 use App\Http\Middleware\EnsureResellerAdmin;
 use App\Http\Middleware\EnsureResellerUser;
 use Illuminate\Support\Facades\Route;
@@ -94,6 +98,16 @@ Route::middleware(['web'])->group(function () {
         Route::get('/reseller/customers/{id}/traffic', [ResellerCustomerController::class, 'getTraffic'])->whereNumber('id')->name('reseller.customers.traffic');
         Route::get('/reseller/customers/{id}/usage-history', [ResellerCustomerController::class, 'getUsageHistory'])->whereNumber('id')->name('reseller.customers.usage-history');
 
+        Route::prefix('reseller/finance/cash-handover')->name('reseller.finance.cash-handover')->controller(TenantCashHandoverController::class)->group(function () {
+            Route::get('/', 'index')->name('');
+            Route::post('/', 'store')->name('.store');
+            Route::get('/collector-cash', 'getCollectorPendingCash')->name('.collector-cash');
+            Route::get('/export', 'exportCsv')->name('.export');
+            Route::get('/{id}', 'show')->whereNumber('id')->name('.show');
+            Route::post('/{id}/approve', 'approve')->whereNumber('id')->name('.approve');
+            Route::post('/{id}/reject', 'reject')->whereNumber('id')->name('.reject');
+        });
+
         // Collection Reports & Money Receipts (Collector & Admin)
         Route::get('/reseller/collections', [ResellerCollectionController::class, 'index'])->name('reseller.collections.index');
         Route::get('/reseller/collections/{id}/receipt', [ResellerCollectionController::class, 'receipt'])->whereNumber('id')->name('reseller.collections.receipt');
@@ -128,6 +142,29 @@ Route::middleware(['web'])->group(function () {
 
         // 3. Reseller Admin ONLY Protected Routes (Financials, Packages, Staff & Margins)
         Route::middleware([EnsureResellerAdmin::class])->group(function () {
+            Route::prefix('reseller/finance/expenses')->name('reseller.finance.expenses')->controller(TenantExpenseAccountController::class)->group(function () {
+                Route::get('/', 'index')->name('');
+                Route::post('/', 'store')->name('.store');
+                Route::post('/category', 'storeCategory')->name('.category');
+                Route::get('/export', 'exportCsv')->name('.export');
+                Route::get('/{id}', 'show')->whereNumber('id')->name('.show');
+                Route::post('/{id}/approve', 'approve')->whereNumber('id')->name('.approve');
+                Route::post('/{id}/reject', 'reject')->whereNumber('id')->name('.reject');
+                Route::delete('/{id}', 'destroy')->whereNumber('id')->name('.destroy');
+            });
+
+            Route::prefix('reseller/finance/ledger')->name('reseller.finance.ledger')->controller(TenantFinancialLedgerController::class)->group(function () {
+                Route::get('/', 'index')->name('');
+                Route::get('/export', 'exportCsv')->name('.export');
+                Route::get('/print', 'printStatement')->name('.print');
+            });
+
+            Route::prefix('reseller/finance/gateway-transactions')->name('reseller.finance.gateway-transactions')->controller(TenantGatewayTransactionController::class)->group(function () {
+                Route::get('/', 'index')->name('');
+                Route::get('/export', 'exportCsv')->name('.export');
+                Route::get('/{id}', 'show')->whereNumber('id')->name('.show');
+            });
+
             Route::get('/reseller/customers/monthly-analytics', [TenantCustomerController::class, 'monthlyAnalytics'])
                 ->name('reseller.customers.monthly-analytics');
             // Customer Deletion

@@ -14,6 +14,7 @@ class TenantExpenseTransaction extends Model
 
     protected $fillable = [
         'tenant_id',
+        'reseller_id',
         'category_id',
         'voucher_no',
         'type',

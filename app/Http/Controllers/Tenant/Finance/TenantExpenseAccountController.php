@@ -26,9 +26,17 @@ class TenantExpenseAccountController extends Controller
     /**
      * Get active tenant
      */
+    use ScopesResellerAccounts;
+
     protected function getTenant(): Tenant
     {
         $user = Auth::user();
+        if ($this->resellerAccountPortal()) {
+            abort_unless($user?->tenant, 403);
+            $this->accountReseller($user->tenant);
+
+            return $user->tenant;
+        }
         $tenant = $user?->tenant;
         if (!$tenant && $user?->tenant_id) {
             $tenant = Tenant::find($user->tenant_id);
@@ -43,17 +51,33 @@ class TenantExpenseAccountController extends Controller
     /**
      * Display listing of Unified Income & Expense Accounts
      */
+    private function expenseRoute(): string
+    {
+        return $this->resellerAccountPortal() ? 'reseller.finance.expenses' : 'tenant.finance.expenses';
+    }
+
     public function index(Request $request): View
     {
-        $tenant = $this->getTenant();
-        $user = Auth::user();
+        return view('tenant.finance.expenses', $this->expenseReport($request));
+    }
 
-        // Ensure default ISP categories exist
-        if (TenantExpenseCategory::where('tenant_id', $tenant->id)->count() === 0) {
-            TenantExpenseCategory::seedDefaultCategories($tenant->id);
+    private function expenseReport(Request $request): array
+    {
+        $tenant = $this->getTenant();
+        $resellerPortal = $this->resellerAccountPortal();
+        $expenseRoute = $this->expenseRoute();
+
+        // Ensure default categories exist for this account.
+        if ($this->accountQuery(TenantExpenseCategory::class, $tenant->id)->count() === 0) {
+            DB::transaction(function () use ($tenant, $resellerPortal) {
+                Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
+                if (!$this->accountQuery(TenantExpenseCategory::class, $tenant->id)->exists()) {
+                    TenantExpenseCategory::seedDefaultCategories($tenant->id, $resellerPortal ? $this->accountReseller($tenant) : null);
+                }
+            });
         }
 
-        $allCategories = TenantExpenseCategory::where('tenant_id', $tenant->id)
+        $allCategories = $this->accountQuery(TenantExpenseCategory::class, $tenant->id)
             ->where('is_active', true)
             ->orderBy('type')
             ->orderBy('name')
@@ -96,8 +120,8 @@ class TenantExpenseAccountController extends Controller
                     $dateTo = Carbon::now()->endOfMonth()->toDateString();
                     break;
                 case 'last_month':
-                    $dateFrom = Carbon::now()->subMonth()->startOfMonth()->toDateString();
-                    $dateTo = Carbon::now()->subMonth()->endOfMonth()->toDateString();
+                    $dateFrom = Carbon::now()->subMonthNoOverflow()->startOfMonth()->toDateString();
+                    $dateTo = Carbon::now()->subMonthNoOverflow()->endOfMonth()->toDateString();
                     break;
             }
         } elseif (!empty($selectedMonth) && $selectedMonth !== 'all') {
@@ -113,8 +137,9 @@ class TenantExpenseAccountController extends Controller
 
         // 7. Calculate 6 Core KPI Summary Cards (Fast Database Aggregations)
         // 7a. Operating Expenses & Direct Manual Incomes
-        $expBaseQ = TenantExpenseTransaction::where('tenant_id', $tenant->id)
-            ->whereNotIn('status', ['rejected', 'REJECTED', 'cancelled', 'CANCELLED']);
+        $expBaseQ = $this->accountQuery(TenantExpenseTransaction::class, $tenant->id)
+            ->whereNotIn('status', ['rejected', 'REJECTED', 'cancelled', 'CANCELLED'])
+            ->when($resellerPortal, fn ($query) => $query->whereIn('status', ['approved', 'APPROVED']));
         if ($dateFrom) $expBaseQ->whereDate('transaction_date', '>=', $dateFrom);
         if ($dateTo) $expBaseQ->whereDate('transaction_date', '<=', $dateTo);
         if ($selectedMethod !== 'all') $expBaseQ->where('payment_method', strtoupper($selectedMethod));
@@ -123,7 +148,7 @@ class TenantExpenseAccountController extends Controller
         $directIncomeSum = (float) (clone $expBaseQ)->where('type', 'INCOME')->sum('amount');
 
         // 7b. Upstream Bandwidth & Carrier Disbursements (COGS Expense)
-        $upstreamBaseQ = TenantUpstreamPayment::where('tenant_id', $tenant->id);
+        $upstreamBaseQ = $this->accountQuery(TenantUpstreamPayment::class, $tenant->id);
         if ($dateFrom) $upstreamBaseQ->whereDate('paid_at', '>=', $dateFrom);
         if ($dateTo) $upstreamBaseQ->whereDate('paid_at', '<=', $dateTo);
         if ($selectedMethod !== 'all') $upstreamBaseQ->whereRaw('LOWER(payment_method) = ?', [strtolower($selectedMethod)]);
@@ -133,7 +158,7 @@ class TenantExpenseAccountController extends Controller
         $totalExpenses = $directExpenseSum + $upstreamDisbursements;
 
         // 7c. Retail Customer Subscription Collections (Main ISP Revenue Stream)
-        $custPayBaseQ = TenantCustomerPayment::where('tenant_id', $tenant->id)
+        $custPayBaseQ = $this->accountQuery(TenantCustomerPayment::class, $tenant->id)
             ->whereNotIn('status', ['void', 'VOID', 'cancelled', 'CANCELLED']);
         if ($dateFrom) {
             $custPayBaseQ->where(function ($q) use ($dateFrom) {
@@ -157,7 +182,7 @@ class TenantExpenseAccountController extends Controller
         $customerCollections = (float) $custPayBaseQ->sum('amount');
 
         // 7d. Reseller / Sub-ISP Wholesale Collections
-        $wholesaleBaseQ = TenantResellerInvoice::where('tenant_id', $tenant->id)
+        $wholesaleBaseQ = $this->accountQuery(TenantResellerInvoice::class, $tenant->id)
             ->where('paid_amount', '>', 0)
             ->whereNotIn('payment_status', ['cancelled', 'CANCELLED']);
         if ($dateFrom) {
@@ -182,7 +207,10 @@ class TenantExpenseAccountController extends Controller
         $wholesaleCollections = (float) $wholesaleBaseQ->sum('paid_amount');
 
         // KPI Summary Aggregates (Strictly 6 Metrics)
-        $wholesaleAndDirect = $wholesaleCollections + $directIncomeSum;
+        if ($resellerPortal) {
+            $totalExpenses += $wholesaleCollections;
+        }
+        $wholesaleAndDirect = $directIncomeSum + ($resellerPortal ? 0 : $wholesaleCollections);
         $grossTotalIncome = $customerCollections + $wholesaleAndDirect;
         $realNetCashFlow = $grossTotalIncome - $totalExpenses;
         $categoriesCount = $allCategories->count();
@@ -199,10 +227,10 @@ class TenantExpenseAccountController extends Controller
         // Stream A: Manual Vouchers (Expense & Direct Income)
         $needVouchers = in_array($selectedType, ['all', 'EXPENSE', 'INCOME', 'DIRECT_INCOME']);
         if ($needVouchers) {
-            $vQ = TenantExpenseTransaction::where('tenant_id', $tenant->id)
+            $vQ = $this->accountQuery(TenantExpenseTransaction::class, $tenant->id)
                 ->with(['category', 'creator', 'approver']);
             if ($selectedType === 'EXPENSE') $vQ->where('type', 'EXPENSE');
-            if ($selectedType === 'DIRECT_INCOME') $vQ->where('type', 'INCOME');
+            if (in_array($selectedType, ['INCOME', 'DIRECT_INCOME'], true)) $vQ->where('type', 'INCOME');
             if ($selectedCategory !== 'all') $vQ->where('category_id', (int) $selectedCategory);
             if ($selectedMethod !== 'all') $vQ->where('payment_method', strtoupper($selectedMethod));
             if ($selectedStatus !== 'all') $vQ->where('status', strtoupper($selectedStatus));
@@ -243,8 +271,7 @@ class TenantExpenseAccountController extends Controller
         // Stream B: Retail Customer Subscription Collections
         $needCustomer = in_array($selectedType, ['all', 'INCOME', 'CUSTOMER_COLLECTION']) && ($selectedCategory === 'all');
         if ($needCustomer) {
-            $pQ = TenantCustomerPayment::with(['customer.package', 'collector'])
-                ->where('tenant_id', $tenant->id)
+            $pQ = $this->accountQuery(TenantCustomerPayment::class, $tenant->id)->with(['customer.package', 'collector'])
                 ->whereNotIn('status', ['void', 'VOID', 'cancelled', 'CANCELLED']);
             if ($dateFrom) {
                 $pQ->where(function ($q) use ($dateFrom) {
@@ -308,10 +335,9 @@ class TenantExpenseAccountController extends Controller
         }
 
         // Stream C: Reseller / Sub-ISP Wholesale Collections
-        $needWholesale = in_array($selectedType, ['all', 'INCOME', 'WHOLESALE']) && ($selectedCategory === 'all');
+        $needWholesale = in_array($selectedType, $resellerPortal ? ['all', 'EXPENSE', 'WHOLESALE'] : ['all', 'INCOME', 'WHOLESALE'], true) && ($selectedCategory === 'all');
         if ($needWholesale) {
-            $wQ = TenantResellerInvoice::with('reseller')
-                ->where('tenant_id', $tenant->id)
+            $wQ = $this->accountQuery(TenantResellerInvoice::class, $tenant->id)->with('reseller')
                 ->where('paid_amount', '>', 0)
                 ->whereNotIn('payment_status', ['cancelled', 'CANCELLED']);
             if ($dateFrom) {
@@ -350,8 +376,8 @@ class TenantExpenseAccountController extends Controller
                     'raw_id' => $w->id,
                     'source' => 'wholesale',
                     'voucher_no' => $w->invoice_no ?: ('WS-' . $w->id),
-                    'type' => 'INCOME',
-                    'category_name' => __('Reseller Wholesale'),
+                    'type' => $resellerPortal ? 'EXPENSE' : 'INCOME',
+                    'category_name' => $resellerPortal ? __('Wholesale Payments') : __('Reseller Wholesale'),
                     'title' => __('Wholesale Bandwidth - :reseller (:period)', ['reseller' => $resName, 'period' => $monthStr]),
                     'amount' => (float) $w->paid_amount,
                     'payment_method' => strtoupper($w->payment_method ?: 'BANK'),
@@ -372,8 +398,7 @@ class TenantExpenseAccountController extends Controller
         // Stream D: Upstream Bandwidth & Carrier Disbursements (COGS Expense)
         $needUpstream = in_array($selectedType, ['all', 'EXPENSE']) && ($selectedCategory === 'all');
         if ($needUpstream) {
-            $uQ = TenantUpstreamPayment::with('provider')
-                ->where('tenant_id', $tenant->id);
+            $uQ = $this->accountQuery(TenantUpstreamPayment::class, $tenant->id)->with('provider');
             if ($dateFrom) $uQ->whereDate('paid_at', '>=', $dateFrom);
             if ($dateTo) $uQ->whereDate('paid_at', '<=', $dateTo);
             if ($selectedMethod !== 'all') $uQ->whereRaw('LOWER(payment_method) = ?', [strtolower($selectedMethod)]);
@@ -430,10 +455,13 @@ class TenantExpenseAccountController extends Controller
 
         $currencySymbol = $tenant->currency_symbol ?? '৳';
 
-        return view('tenant.finance.expenses', compact(
+        return compact(
+            'resellerPortal',
+            'expenseRoute',
             'tenant',
             'currencySymbol',
             'vouchers',
+            'sortedEntries',
             'allCategories',
             'selectedType',
             'selectedCategory',
@@ -451,7 +479,7 @@ class TenantExpenseAccountController extends Controller
             'grossTotalIncome',
             'realNetCashFlow',
             'categoriesCount'
-        ));
+        );
     }
 
     /**
@@ -475,26 +503,33 @@ class TenantExpenseAccountController extends Controller
             'notes' => 'nullable|string|max:500',
         ]);
 
+        $this->accountQuery(TenantExpenseCategory::class, $tenant->id)
+            ->where('is_active', true)
+            ->whereRaw('UPPER(type) = ?', [$validated['type']])
+            ->findOrFail($validated['category_id']);
+
         DB::beginTransaction();
         try {
+            Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             $voucherNo = TenantExpenseTransaction::generateVoucherNo($tenant->id, $validated['type']);
 
             $voucher = TenantExpenseTransaction::create([
                 'tenant_id' => $tenant->id,
+                'reseller_id' => $this->resellerAccountPortal() ? $this->accountReseller($tenant) : null,
                 'category_id' => $validated['category_id'],
                 'voucher_no' => $voucherNo,
                 'type' => $validated['type'],
                 'title' => $validated['title'],
                 'amount' => $validated['amount'],
                 'payment_method' => $validated['payment_method'],
-                'account_name' => $validated['account_name'],
-                'payee_payer' => $validated['payee_payer'],
-                'reference_no' => $validated['reference_no'],
+                'account_name' => $validated['account_name'] ?? null,
+                'payee_payer' => $validated['payee_payer'] ?? null,
+                'reference_no' => $validated['reference_no'] ?? null,
                 'transaction_date' => $validated['transaction_date'],
                 'status' => 'APPROVED',
                 'created_by' => $user?->id,
                 'approved_by' => $user?->id,
-                'notes' => $validated['notes'],
+                'notes' => $validated['notes'] ?? null,
             ]);
 
             DB::commit();
@@ -513,7 +548,7 @@ class TenantExpenseAccountController extends Controller
                 ]);
             }
 
-            return redirect()->route('tenant.finance.expenses')->with('success', $msg);
+            return redirect()->route($this->expenseRoute())->with('success', $msg);
         } catch (\Throwable $e) {
             DB::rollBack();
             if ($request->wantsJson()) {
@@ -540,11 +575,12 @@ class TenantExpenseAccountController extends Controller
 
         $category = TenantExpenseCategory::create([
             'tenant_id' => $tenant->id,
+            'reseller_id' => $this->resellerAccountPortal() ? $this->accountReseller($tenant) : null,
             'name' => $validated['name'],
             'type' => $validated['type'],
-            'code' => $validated['code'] ?: ($validated['type'] === 'INCOME' ? 'INC-' : 'EXP-') . rand(10, 99),
+            'code' => ($validated['code'] ?? null) ?: ($validated['type'] === 'INCOME' ? 'INC-' : 'EXP-') . rand(10, 99),
             'monthly_budget' => $validated['monthly_budget'] ?? 0.00,
-            'description' => $validated['description'],
+            'description' => $validated['description'] ?? null,
             'is_active' => true,
         ]);
 
@@ -565,7 +601,7 @@ class TenantExpenseAccountController extends Controller
 
         // Case A: Retail Customer Payment Receipt
         if ($source === 'customer_payment') {
-            $payment = TenantCustomerPayment::where('tenant_id', $tenant->id)
+            $payment = $this->accountQuery(TenantCustomerPayment::class, $tenant->id)
                 ->with(['customer.package', 'collector'])
                 ->findOrFail($id);
 
@@ -604,7 +640,7 @@ class TenantExpenseAccountController extends Controller
 
         // Case B: Sub-ISP Wholesale Invoice
         if ($source === 'wholesale') {
-            $invoice = TenantResellerInvoice::where('tenant_id', $tenant->id)
+            $invoice = $this->accountQuery(TenantResellerInvoice::class, $tenant->id)
                 ->with('reseller')
                 ->findOrFail($id);
 
@@ -643,7 +679,7 @@ class TenantExpenseAccountController extends Controller
 
         // Case C: Upstream Carrier Disbursement
         if ($source === 'upstream_payment') {
-            $up = TenantUpstreamPayment::where('tenant_id', $tenant->id)
+            $up = $this->accountQuery(TenantUpstreamPayment::class, $tenant->id)
                 ->with('provider')
                 ->findOrFail($id);
 
@@ -681,7 +717,7 @@ class TenantExpenseAccountController extends Controller
         }
 
         // Default Case: Operating Expense / Direct Income Voucher
-        $voucher = TenantExpenseTransaction::where('tenant_id', $tenant->id)
+        $voucher = $this->accountQuery(TenantExpenseTransaction::class, $tenant->id)
             ->with(['category', 'creator', 'approver'])
             ->findOrFail($id);
 
@@ -724,7 +760,7 @@ class TenantExpenseAccountController extends Controller
     public function approve(Request $request, int $id): JsonResponse|RedirectResponse
     {
         $tenant = $this->getTenant();
-        $voucher = TenantExpenseTransaction::where('tenant_id', $tenant->id)->findOrFail($id);
+        $voucher = $this->accountQuery(TenantExpenseTransaction::class, $tenant->id)->findOrFail($id);
 
         $voucher->update([
             'status' => 'APPROVED',
@@ -737,7 +773,7 @@ class TenantExpenseAccountController extends Controller
             return response()->json(['success' => true, 'message' => $msg]);
         }
 
-        return redirect()->route('tenant.finance.expenses')->with('success', $msg);
+        return redirect()->route($this->expenseRoute())->with('success', $msg);
     }
 
     /**
@@ -746,7 +782,7 @@ class TenantExpenseAccountController extends Controller
     public function reject(Request $request, int $id): JsonResponse|RedirectResponse
     {
         $tenant = $this->getTenant();
-        $voucher = TenantExpenseTransaction::where('tenant_id', $tenant->id)->findOrFail($id);
+        $voucher = $this->accountQuery(TenantExpenseTransaction::class, $tenant->id)->findOrFail($id);
 
         $voucher->update([
             'status' => 'REJECTED',
@@ -759,7 +795,7 @@ class TenantExpenseAccountController extends Controller
             return response()->json(['success' => true, 'message' => $msg]);
         }
 
-        return redirect()->route('tenant.finance.expenses')->with('success', $msg);
+        return redirect()->route($this->expenseRoute())->with('success', $msg);
     }
 
     /**
@@ -768,7 +804,7 @@ class TenantExpenseAccountController extends Controller
     public function destroy(int $id): JsonResponse|RedirectResponse
     {
         $tenant = $this->getTenant();
-        $voucher = TenantExpenseTransaction::where('tenant_id', $tenant->id)->findOrFail($id);
+        $voucher = $this->accountQuery(TenantExpenseTransaction::class, $tenant->id)->findOrFail($id);
 
         $vNo = $voucher->voucher_no;
         $voucher->delete();
@@ -779,7 +815,7 @@ class TenantExpenseAccountController extends Controller
             return response()->json(['success' => true, 'message' => $msg]);
         }
 
-        return redirect()->route('tenant.finance.expenses')->with('success', $msg);
+        return redirect()->route($this->expenseRoute())->with('success', $msg);
     }
 
     /**
@@ -787,9 +823,23 @@ class TenantExpenseAccountController extends Controller
      */
     public function exportCsv(Request $request): StreamedResponse
     {
+        if ($this->resellerAccountPortal()) {
+            $entries = $this->expenseReport($request)['sortedEntries'];
+
+            return response()->streamDownload(function () use ($entries) {
+                $file = fopen('php://output', 'w');
+                fputcsv($file, [__('Voucher No'), __('Date'), __('Type'), __('Category'), __('Description'), __('Amount'), __('Payment Method'), __('Status')]);
+                foreach ($entries as $entry) {
+                    fputcsv($file, [$entry->voucher_no, $entry->transaction_date, $entry->type, $entry->category_name,
+                        $entry->title, $entry->amount, $entry->payment_method, $entry->status]);
+                }
+                fclose($file);
+            }, 'income_expense_' . now()->format('Ymd_His') . '.csv');
+        }
+
         $tenant = $this->getTenant();
 
-        $query = TenantExpenseTransaction::where('tenant_id', $tenant->id)
+        $query = $this->accountQuery(TenantExpenseTransaction::class, $tenant->id)
             ->with(['category', 'creator', 'approver']);
 
         $type = $request->input('type');
@@ -830,8 +880,8 @@ class TenantExpenseAccountController extends Controller
                     $dateTo = Carbon::now()->endOfMonth()->toDateString();
                     break;
                 case 'last_month':
-                    $dateFrom = Carbon::now()->subMonth()->startOfMonth()->toDateString();
-                    $dateTo = Carbon::now()->subMonth()->endOfMonth()->toDateString();
+                    $dateFrom = Carbon::now()->subMonthNoOverflow()->startOfMonth()->toDateString();
+                    $dateTo = Carbon::now()->subMonthNoOverflow()->endOfMonth()->toDateString();
                     break;
             }
         }

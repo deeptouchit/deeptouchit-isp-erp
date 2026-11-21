@@ -5,11 +5,13 @@ namespace App\Http\Controllers\Tenant\Finance;
 use App\Http\Controllers\Controller;
 use App\Models\Tenant;
 use App\Models\TenantCustomerPayment;
+use App\Models\TenantDailyCashHandover;
 use App\Models\TenantResellerInvoice;
 use App\Models\TenantUpstreamPayment;
 use App\Models\TenantExpenseTransaction;
 use App\Models\TenantExpenseCategory;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class TenantFinancialLedgerController extends Controller
@@ -17,9 +19,17 @@ class TenantFinancialLedgerController extends Controller
     /**
      * Resolve the active Tenant.
      */
+    use ScopesResellerAccounts;
+
     protected function getTenant(): Tenant
     {
         $user = auth()->user();
+        if ($this->resellerAccountPortal()) {
+            abort_unless($user?->tenant, 403);
+            $this->accountReseller($user->tenant);
+
+            return $user->tenant;
+        }
         $tenant = $user?->tenant;
         if (!$tenant && $user?->tenant_id) {
             $tenant = Tenant::find($user->tenant_id);
@@ -42,6 +52,7 @@ class TenantFinancialLedgerController extends Controller
     public function index(Request $request)
     {
         $tenant = $this->getTenant();
+        $resellerPortal = $this->resellerAccountPortal();
         $currencySymbol = $tenant->currency_symbol ?? '৳';
 
         // 1. Resolve Date Range Filters
@@ -95,6 +106,7 @@ class TenantFinancialLedgerController extends Controller
         );
 
         return view('tenant.finance.ledger', compact(
+            'resellerPortal',
             'tenant',
             'currencySymbol',
             'period',
@@ -182,6 +194,7 @@ class TenantFinancialLedgerController extends Controller
     public function printStatement(Request $request)
     {
         $tenant = $this->getTenant();
+        $resellerPortal = $this->resellerAccountPortal();
         $currencySymbol = $tenant->currency_symbol ?? '৳';
 
         $period = $request->get('period', 'this_month');
@@ -212,6 +225,7 @@ class TenantFinancialLedgerController extends Controller
         $headSummary = $this->computeHeadWiseSummary($tenant->id, $startDate, $endDate);
 
         return view('tenant.finance.ledger-print', compact(
+            'resellerPortal',
             'tenant',
             'currencySymbol',
             'period',
@@ -305,7 +319,7 @@ class TenantFinancialLedgerController extends Controller
         $startStr = $startDate->toDateTimeString();
 
         // 1. Prior Customer Payments (Credits)
-        $customerCredits = TenantCustomerPayment::where('tenant_id', $tenantId)
+        $customerCredits = $this->accountQuery(TenantCustomerPayment::class, $tenantId)
             ->where(function ($q) use ($startStr) {
                 $q->where('paid_at', '<', $startStr)
                   ->orWhere(function ($sub) use ($startStr) {
@@ -316,7 +330,7 @@ class TenantFinancialLedgerController extends Controller
             ->sum('amount');
 
         // 2. Prior Reseller Wholesale (Credits)
-        $wholesaleCredits = TenantResellerInvoice::where('tenant_id', $tenantId)
+        $wholesaleCredits = $this->accountQuery(TenantResellerInvoice::class, $tenantId)
             ->where(function ($q) use ($startStr) {
                 $q->where('paid_at', '<', $startStr)
                   ->orWhere(function ($sub) use ($startStr) {
@@ -328,8 +342,8 @@ class TenantFinancialLedgerController extends Controller
             ->sum('paid_amount');
 
         // 3. Prior Direct Expenses & Incomes
-        $priorExpenseTransactions = TenantExpenseTransaction::where('tenant_id', $tenantId)
-            ->where('transaction_date', '<', $startStr)
+        $priorExpenseTransactions = $this->accountQuery(TenantExpenseTransaction::class, $tenantId)
+            ->where('transaction_date', '<', $startDate->toDateString())
             ->whereIn('status', ['approved', 'APPROVED'])
             ->get(['type', 'amount', 'payment_method']);
 
@@ -337,12 +351,12 @@ class TenantFinancialLedgerController extends Controller
         $directIncomeCredits = $priorExpenseTransactions->filter(fn($t) => strtolower($t->type) === 'income')->sum('amount');
 
         // 4. Prior Upstream Carrier Disbursements (Debits - COGS)
-        $upstreamDebits = (float) TenantUpstreamPayment::where('tenant_id', $tenantId)
+        $upstreamDebits = (float) $this->accountQuery(TenantUpstreamPayment::class, $tenantId)
             ->where('paid_at', '<', $startStr)
             ->sum('amount');
 
-        $totalCredits = $customerCredits + $wholesaleCredits + $directIncomeCredits;
-        $totalDebits = $expenseDebits + $upstreamDebits;
+        $totalCredits = $customerCredits + $directIncomeCredits + ($this->resellerAccountPortal() ? 0 : $wholesaleCredits);
+        $totalDebits = $expenseDebits + $upstreamDebits + ($this->resellerAccountPortal() ? $wholesaleCredits : 0);
 
         return [
             'credits' => (float) $totalCredits,
@@ -361,8 +375,7 @@ class TenantFinancialLedgerController extends Controller
         $entries = [];
 
         // 1. Customer Bill Payments (Credits)
-        $paymentQuery = TenantCustomerPayment::with('customer')
-            ->where('tenant_id', $tenantId)
+        $paymentQuery = $this->accountQuery(TenantCustomerPayment::class, $tenantId)->with('customer')
             ->where(function ($q) use ($startStr, $endStr) {
                 $q->whereBetween('paid_at', [$startStr, $endStr])
                   ->orWhere(function ($sub) use ($startStr, $endStr) {
@@ -405,8 +418,7 @@ class TenantFinancialLedgerController extends Controller
         }
 
         // 2. Reseller Wholesale Billing Payments (Credits)
-        $wholesaleQuery = TenantResellerInvoice::with('reseller')
-            ->where('tenant_id', $tenantId)
+        $wholesaleQuery = $this->accountQuery(TenantResellerInvoice::class, $tenantId)->with('reseller')
             ->where(function ($q) use ($startStr, $endStr) {
                 $q->whereBetween('paid_at', [$startStr, $endStr])
                   ->orWhere(function ($sub) use ($startStr, $endStr) {
@@ -416,11 +428,15 @@ class TenantFinancialLedgerController extends Controller
             ->where('paid_amount', '>', 0)
             ->whereNotIn('payment_status', ['cancelled', 'CANCELLED']);
 
+        if ($method !== 'all' && $this->resellerAccountPortal()) {
+            $wholesaleQuery->whereRaw('LOWER(payment_method) = ?', [strtolower($method)]);
+        }
+
         $wholesales = $wholesaleQuery->get();
         foreach ($wholesales as $w) {
             $resellerName = $w->reseller->name ?? __('Sub-ISP Partner');
             $monthStr = $w->billing_month ? (is_string($w->billing_month) ? $w->billing_month : $w->billing_month->translatedFormat('M Y')) : __('Trunk');
-            $desc = __('Wholesale Reseller Revenue - :reseller (:period)', ['reseller' => $resellerName, 'period' => $monthStr]);
+            $desc = __($this->resellerAccountPortal() ? 'Wholesale Payment to ISP - :reseller (:period)' : 'Wholesale Reseller Revenue - :reseller (:period)', ['reseller' => $resellerName, 'period' => $monthStr]);
 
             if ($search && !str_contains(strtolower($desc . ' ' . $w->invoice_no), strtolower($search))) {
                 continue;
@@ -432,11 +448,11 @@ class TenantFinancialLedgerController extends Controller
                 'id' => 'WS-' . $w->id,
                 'raw_id' => $w->id,
                 'source' => 'wholesale_billing',
-                'type' => 'credit',
+                'type' => $this->resellerAccountPortal() ? 'debit' : 'credit',
                 'date' => $dateObj ? $dateObj->format('Y-m-d H:i') : now()->format('Y-m-d H:i'),
                 'sort_timestamp' => $dateObj ? $dateObj->timestamp : now()->timestamp,
                 'ref_no' => $w->invoice_no ?? ('WS-' . str_pad($w->id, 5, '0', STR_PAD_LEFT)),
-                'category' => __('Reseller Wholesale'),
+                'category' => $this->resellerAccountPortal() ? __('Wholesale Payments') : __('Reseller Wholesale'),
                 'description' => $desc,
                 'party' => $resellerName,
                 'amount' => (float) $w->paid_amount,
@@ -447,8 +463,7 @@ class TenantFinancialLedgerController extends Controller
         }
 
         // 3. Upstream Carrier Bandwidth & NTTN Disbursements (Debits - COGS)
-        $upstreamQuery = TenantUpstreamPayment::with('provider')
-            ->where('tenant_id', $tenantId)
+        $upstreamQuery = $this->accountQuery(TenantUpstreamPayment::class, $tenantId)->with('provider')
             ->whereBetween('paid_at', [$startStr, $endStr]);
 
         if ($method !== 'all') {
@@ -487,10 +502,10 @@ class TenantFinancialLedgerController extends Controller
         }
 
         // 4. Operational Expenses & Direct Incomes (Debits & Credits)
-        $expenseQuery = TenantExpenseTransaction::with('category')
-            ->where('tenant_id', $tenantId)
-            ->whereBetween('transaction_date', [$startStr, $endStr])
-            ->whereNotIn('status', ['rejected', 'REJECTED', 'cancelled', 'CANCELLED']);
+        $expenseQuery = $this->accountQuery(TenantExpenseTransaction::class, $tenantId)->with('category')
+            ->whereBetween('transaction_date', [$startDate->toDateString(), $endDate->toDateString()])
+            ->whereNotIn('status', ['rejected', 'REJECTED', 'cancelled', 'CANCELLED'])
+            ->when($this->resellerAccountPortal(), fn ($query) => $query->whereIn('status', ['approved', 'APPROVED']));
 
         if ($method !== 'all') {
             $expenseQuery->whereRaw('LOWER(payment_method) = ?', [strtolower($method)]);
@@ -537,13 +552,23 @@ class TenantFinancialLedgerController extends Controller
     /**
      * Compute 6 KPI Summary Cards.
      */
+    private function wholesaleCashAmount(int $tenantId, string $start, string $end): float
+    {
+        return (float) $this->accountQuery(TenantResellerInvoice::class, $tenantId)
+            ->whereBetween(DB::raw('COALESCE(paid_at, created_at)'), [$start, $end])
+            ->whereNotIn('payment_status', ['cancelled', 'CANCELLED'])
+            ->where('paid_amount', '>', 0)
+            ->whereRaw('LOWER(payment_method) = ?', ['cash'])
+            ->sum('paid_amount');
+    }
+
     protected function computeKpiSummary($tenantId, Carbon $startDate, Carbon $endDate)
     {
         $startStr = $startDate->toDateTimeString();
         $endStr = $endDate->toDateTimeString();
 
         // 1. Total Customer Collections
-        $customerCollections = (float) TenantCustomerPayment::where('tenant_id', $tenantId)
+        $customerCollections = (float) $this->accountQuery(TenantCustomerPayment::class, $tenantId)
             ->where(function ($q) use ($startStr, $endStr) {
                 $q->whereBetween('paid_at', [$startStr, $endStr])
                   ->orWhere(function ($sub) use ($startStr, $endStr) {
@@ -554,7 +579,7 @@ class TenantFinancialLedgerController extends Controller
             ->sum('amount');
 
         // 2. Total Wholesale Collections
-        $wholesaleCollections = (float) TenantResellerInvoice::where('tenant_id', $tenantId)
+        $wholesaleCollections = (float) $this->accountQuery(TenantResellerInvoice::class, $tenantId)
             ->where(function ($q) use ($startStr, $endStr) {
                 $q->whereBetween('paid_at', [$startStr, $endStr])
                   ->orWhere(function ($sub) use ($startStr, $endStr) {
@@ -566,8 +591,8 @@ class TenantFinancialLedgerController extends Controller
             ->sum('paid_amount');
 
         // 3. Direct Incomes & Operating Expenses
-        $expTransactions = TenantExpenseTransaction::where('tenant_id', $tenantId)
-            ->whereBetween('transaction_date', [$startStr, $endStr])
+        $expTransactions = $this->accountQuery(TenantExpenseTransaction::class, $tenantId)
+            ->whereBetween('transaction_date', [$startDate->toDateString(), $endDate->toDateString()])
             ->whereIn('status', ['approved', 'APPROVED'])
             ->get(['type', 'amount', 'payment_method']);
 
@@ -575,9 +600,18 @@ class TenantFinancialLedgerController extends Controller
         $operatingExpenses = (float) $expTransactions->filter(fn($t) => strtolower($t->type) === 'expense')->sum('amount');
 
         // 4. Upstream Carrier Bandwidth Disbursements (COGS)
-        $upstreamDisbursements = (float) TenantUpstreamPayment::where('tenant_id', $tenantId)
+        $upstreamDisbursements = (float) $this->accountQuery(TenantUpstreamPayment::class, $tenantId)
             ->whereBetween('paid_at', [$startStr, $endStr])
             ->sum('amount');
+
+        $wholesaleCashOut = 0.0;
+        $wholesaleBankOut = 0.0;
+        if ($this->resellerAccountPortal()) {
+            $upstreamDisbursements += $wholesaleCollections;
+            $wholesaleCashOut = $this->wholesaleCashAmount($tenantId, $startStr, $endStr);
+            $wholesaleBankOut = $wholesaleCollections - $wholesaleCashOut;
+            $wholesaleCollections = 0.0;
+        }
 
         $grossRevenue = $customerCollections + $wholesaleCollections + $directIncomes;
         $totalOutflow = $operatingExpenses + $upstreamDisbursements;
@@ -586,7 +620,7 @@ class TenantFinancialLedgerController extends Controller
         $grossMargin = $grossRevenue > 0 ? round((($grossRevenue - $upstreamDisbursements) / $grossRevenue) * 100, 1) : 0;
 
         // Cash vs Bank Inflow/Outflow
-        $cashCustIn = (float) TenantCustomerPayment::where('tenant_id', $tenantId)
+        $cashCustIn = (float) $this->accountQuery(TenantCustomerPayment::class, $tenantId)
             ->where(function ($q) use ($startStr, $endStr) {
                 $q->whereBetween('paid_at', [$startStr, $endStr])
                   ->orWhere(function ($sub) use ($startStr, $endStr) {
@@ -601,24 +635,24 @@ class TenantFinancialLedgerController extends Controller
         $cashIn = $cashCustIn + $cashInc;
 
         $cashExpOut = (float) $expTransactions->filter(fn($t) => strtolower($t->type) === 'expense' && strtolower($t->payment_method) === 'cash')->sum('amount');
-        $cashUpstreamOut = (float) TenantUpstreamPayment::where('tenant_id', $tenantId)
+        $cashUpstreamOut = (float) $this->accountQuery(TenantUpstreamPayment::class, $tenantId)
             ->whereBetween('paid_at', [$startStr, $endStr])
             ->whereRaw('LOWER(payment_method) = ?', ['cash'])
             ->sum('amount');
-        $cashOut = $cashExpOut + $cashUpstreamOut;
+        $cashOut = $cashExpOut + $cashUpstreamOut + $wholesaleCashOut;
         $cashNet = $cashIn - $cashOut;
 
         $bankIn = ($grossRevenue - $cashIn);
         $bankExpOut = (float) $expTransactions->filter(fn($t) => strtolower($t->type) === 'expense' && strtolower($t->payment_method) !== 'cash')->sum('amount');
-        $bankUpstreamOut = (float) TenantUpstreamPayment::where('tenant_id', $tenantId)
+        $bankUpstreamOut = (float) $this->accountQuery(TenantUpstreamPayment::class, $tenantId)
             ->whereBetween('paid_at', [$startStr, $endStr])
             ->whereRaw('LOWER(payment_method) != ?', ['cash'])
             ->sum('amount');
-        $bankOut = $bankExpOut + $bankUpstreamOut;
+        $bankOut = $bankExpOut + $bankUpstreamOut + $wholesaleBankOut;
         $bankNet = $bankIn - $bankOut;
 
-        $pendingApprovals = TenantExpenseTransaction::where('tenant_id', $tenantId)
-            ->whereBetween('transaction_date', [$startStr, $endStr])
+        $pendingApprovals = $this->accountQuery(TenantExpenseTransaction::class, $tenantId)
+            ->whereBetween('transaction_date', [$startDate->toDateString(), $endDate->toDateString()])
             ->whereIn('status', ['pending', 'PENDING'])
             ->count();
 
@@ -645,7 +679,7 @@ class TenantFinancialLedgerController extends Controller
         $endStr = $endDate->toDateTimeString();
 
         // 1. Revenue Streams
-        $retailRevenue = (float) TenantCustomerPayment::where('tenant_id', $tenantId)
+        $retailRevenue = (float) $this->accountQuery(TenantCustomerPayment::class, $tenantId)
             ->where(function ($q) use ($startStr, $endStr) {
                 $q->whereBetween('paid_at', [$startStr, $endStr])
                   ->orWhere(function ($sub) use ($startStr, $endStr) {
@@ -655,7 +689,7 @@ class TenantFinancialLedgerController extends Controller
             ->whereNotIn('status', ['void', 'VOID', 'cancelled', 'CANCELLED'])
             ->sum('amount');
 
-        $wholesaleRevenue = (float) TenantResellerInvoice::where('tenant_id', $tenantId)
+        $wholesaleRevenue = (float) $this->accountQuery(TenantResellerInvoice::class, $tenantId)
             ->where(function ($q) use ($startStr, $endStr) {
                 $q->whereBetween('paid_at', [$startStr, $endStr])
                   ->orWhere(function ($sub) use ($startStr, $endStr) {
@@ -666,11 +700,10 @@ class TenantFinancialLedgerController extends Controller
             ->whereNotIn('payment_status', ['cancelled', 'CANCELLED'])
             ->sum('paid_amount');
 
-        $directIncomes = TenantExpenseTransaction::with('category')
-            ->where('tenant_id', $tenantId)
+        $directIncomes = $this->accountQuery(TenantExpenseTransaction::class, $tenantId)->with('category')
             ->whereIn('type', ['income', 'INCOME'])
             ->whereIn('status', ['approved', 'APPROVED'])
-            ->whereBetween('transaction_date', [$startStr, $endStr])
+            ->whereBetween('transaction_date', [$startDate->toDateString(), $endDate->toDateString()])
             ->get();
 
         $directIncomeGroups = [];
@@ -681,16 +714,17 @@ class TenantFinancialLedgerController extends Controller
             $totalDirectIncome += (float) $inc->amount;
         }
 
+        $wholesaleCost = $this->resellerAccountPortal() ? $wholesaleRevenue : 0.0;
+        $wholesaleRevenue -= $wholesaleCost;
         $totalGrossRevenue = $retailRevenue + $wholesaleRevenue + $totalDirectIncome;
 
         // 2. Cost of Goods Sold (COGS - Upstream Bandwidth & Transmission)
-        $upstreamPayments = TenantUpstreamPayment::with('provider')
-            ->where('tenant_id', $tenantId)
+        $upstreamPayments = $this->accountQuery(TenantUpstreamPayment::class, $tenantId)->with('provider')
             ->whereBetween('paid_at', [$startStr, $endStr])
             ->get();
 
-        $cogsGroups = [];
-        $totalCogs = 0;
+        $cogsGroups = $wholesaleCost > 0 ? [__('Wholesale Payments') => $wholesaleCost] : [];
+        $totalCogs = $wholesaleCost;
         foreach ($upstreamPayments as $up) {
             $cName = $up->provider->name ?? __('Upstream Bandwidth');
             $cogsGroups[$cName] = ($cogsGroups[$cName] ?? 0) + (float) $up->amount;
@@ -701,11 +735,10 @@ class TenantFinancialLedgerController extends Controller
         $grossMarginPercent = $totalGrossRevenue > 0 ? round(($grossProfit / $totalGrossRevenue) * 100, 1) : 0;
 
         // 3. Operating Expenses Streams (OPEX)
-        $expenses = TenantExpenseTransaction::with('category')
-            ->where('tenant_id', $tenantId)
+        $expenses = $this->accountQuery(TenantExpenseTransaction::class, $tenantId)->with('category')
             ->whereIn('type', ['expense', 'EXPENSE'])
             ->whereIn('status', ['approved', 'APPROVED'])
-            ->whereBetween('transaction_date', [$startStr, $endStr])
+            ->whereBetween('transaction_date', [$startDate->toDateString(), $endDate->toDateString()])
             ->get();
 
         $expenseGroups = [];
@@ -745,7 +778,7 @@ class TenantFinancialLedgerController extends Controller
         $endStr = $endDate->toDateTimeString();
 
         // 1. Cash Inflows & Outflows
-        $cashIn = (float) TenantCustomerPayment::where('tenant_id', $tenantId)
+        $cashIn = (float) $this->accountQuery(TenantCustomerPayment::class, $tenantId)
             ->where(function ($q) use ($startStr, $endStr) {
                 $q->whereBetween('paid_at', [$startStr, $endStr])
                   ->orWhere(function ($sub) use ($startStr, $endStr) {
@@ -756,23 +789,23 @@ class TenantFinancialLedgerController extends Controller
             ->whereNotIn('status', ['void', 'VOID', 'cancelled', 'CANCELLED'])
             ->sum('amount');
 
-        $cashIncome = (float) TenantExpenseTransaction::where('tenant_id', $tenantId)
+        $cashIncome = (float) $this->accountQuery(TenantExpenseTransaction::class, $tenantId)
             ->whereIn('type', ['income', 'INCOME'])
             ->whereRaw('LOWER(payment_method) = ?', ['cash'])
             ->whereIn('status', ['approved', 'APPROVED'])
-            ->whereBetween('transaction_date', [$startStr, $endStr])
+            ->whereBetween('transaction_date', [$startDate->toDateString(), $endDate->toDateString()])
             ->sum('amount');
 
         $totalCashIn = $cashIn + $cashIncome;
 
-        $cashExpOut = (float) TenantExpenseTransaction::where('tenant_id', $tenantId)
+        $cashExpOut = (float) $this->accountQuery(TenantExpenseTransaction::class, $tenantId)
             ->whereIn('type', ['expense', 'EXPENSE'])
             ->whereRaw('LOWER(payment_method) = ?', ['cash'])
             ->whereIn('status', ['approved', 'APPROVED'])
-            ->whereBetween('transaction_date', [$startStr, $endStr])
+            ->whereBetween('transaction_date', [$startDate->toDateString(), $endDate->toDateString()])
             ->sum('amount');
 
-        $cashUpstreamOut = (float) TenantUpstreamPayment::where('tenant_id', $tenantId)
+        $cashUpstreamOut = (float) $this->accountQuery(TenantUpstreamPayment::class, $tenantId)
             ->whereBetween('paid_at', [$startStr, $endStr])
             ->whereRaw('LOWER(payment_method) = ?', ['cash'])
             ->sum('amount');
@@ -780,7 +813,7 @@ class TenantFinancialLedgerController extends Controller
         $totalCashOut = $cashExpOut + $cashUpstreamOut;
 
         // 2. Bank & Digital MFS Inflows & Outflows
-        $bankIn = (float) TenantCustomerPayment::where('tenant_id', $tenantId)
+        $bankIn = (float) $this->accountQuery(TenantCustomerPayment::class, $tenantId)
             ->where(function ($q) use ($startStr, $endStr) {
                 $q->whereBetween('paid_at', [$startStr, $endStr])
                   ->orWhere(function ($sub) use ($startStr, $endStr) {
@@ -789,7 +822,26 @@ class TenantFinancialLedgerController extends Controller
             })
             ->whereRaw('LOWER(payment_method) != ?', ['cash'])
             ->whereNotIn('status', ['void', 'VOID', 'cancelled', 'CANCELLED'])
-            ->sum('amount') + (float) TenantResellerInvoice::where('tenant_id', $tenantId)
+            ->sum('amount') + (float) $this->accountQuery(TenantExpenseTransaction::class, $tenantId)
+            ->whereIn('type', ['income', 'INCOME'])
+            ->whereRaw('LOWER(payment_method) != ?', ['cash'])
+            ->whereIn('status', ['approved', 'APPROVED'])
+            ->whereBetween('transaction_date', [$startDate->toDateString(), $endDate->toDateString()])
+            ->sum('amount');
+
+        $bankExpOut = (float) $this->accountQuery(TenantExpenseTransaction::class, $tenantId)
+            ->whereIn('type', ['expense', 'EXPENSE'])
+            ->whereRaw('LOWER(payment_method) != ?', ['cash'])
+            ->whereIn('status', ['approved', 'APPROVED'])
+            ->whereBetween('transaction_date', [$startDate->toDateString(), $endDate->toDateString()])
+            ->sum('amount');
+
+        $bankUpstreamOut = (float) $this->accountQuery(TenantUpstreamPayment::class, $tenantId)
+            ->whereBetween('paid_at', [$startStr, $endStr])
+            ->whereRaw('LOWER(payment_method) != ?', ['cash'])
+            ->sum('amount');
+
+        $wholesalePaid = (float) $this->accountQuery(TenantResellerInvoice::class, $tenantId)
             ->where(function ($q) use ($startStr, $endStr) {
                 $q->whereBetween('paid_at', [$startStr, $endStr])
                   ->orWhere(function ($sub) use ($startStr, $endStr) {
@@ -798,28 +850,26 @@ class TenantFinancialLedgerController extends Controller
             })
             ->where('paid_amount', '>', 0)
             ->whereNotIn('payment_status', ['cancelled', 'CANCELLED'])
-            ->sum('paid_amount') + (float) TenantExpenseTransaction::where('tenant_id', $tenantId)
-            ->whereIn('type', ['income', 'INCOME'])
-            ->whereRaw('LOWER(payment_method) != ?', ['cash'])
-            ->whereIn('status', ['approved', 'APPROVED'])
-            ->whereBetween('transaction_date', [$startStr, $endStr])
-            ->sum('amount');
-
-        $bankExpOut = (float) TenantExpenseTransaction::where('tenant_id', $tenantId)
-            ->whereIn('type', ['expense', 'EXPENSE'])
-            ->whereRaw('LOWER(payment_method) != ?', ['cash'])
-            ->whereIn('status', ['approved', 'APPROVED'])
-            ->whereBetween('transaction_date', [$startStr, $endStr])
-            ->sum('amount');
-
-        $bankUpstreamOut = (float) TenantUpstreamPayment::where('tenant_id', $tenantId)
-            ->whereBetween('paid_at', [$startStr, $endStr])
-            ->whereRaw('LOWER(payment_method) != ?', ['cash'])
-            ->sum('amount');
-
+            ->sum('paid_amount');
         $totalBankOut = $bankExpOut + $bankUpstreamOut;
+        if ($this->resellerAccountPortal()) {
+            $wholesaleCash = $this->wholesaleCashAmount($tenantId, $startStr, $endStr);
+            $totalCashOut += $wholesaleCash;
+            $totalBankOut += $wholesalePaid - $wholesaleCash;
+        } else {
+            $bankIn += $wholesalePaid;
+        }
+
+        $approvedHandovers = $this->resellerAccountPortal()
+            ? (float) TenantDailyCashHandover::where('tenant_id', $tenantId)
+                ->where('reseller_id', request()->user()->reseller_id)
+                ->where('status', 'approved')
+                ->whereBetween('handover_date', [$startDate->toDateString(), $endDate->toDateString()])
+                ->sum('handed_over_amount')
+            : 0.0;
 
         return [
+            'approved_handovers' => $approvedHandovers,
             'cash_in' => $totalCashIn,
             'cash_out' => $totalCashOut,
             'cash_net' => $totalCashIn - $totalCashOut,
@@ -841,7 +891,7 @@ class TenantFinancialLedgerController extends Controller
         $heads = [];
 
         // 1. Customer Subscriptions Head
-        $subSum = (float) TenantCustomerPayment::where('tenant_id', $tenantId)
+        $subSum = (float) $this->accountQuery(TenantCustomerPayment::class, $tenantId)
             ->where(function ($q) use ($startStr, $endStr) {
                 $q->whereBetween('paid_at', [$startStr, $endStr])
                   ->orWhere(function ($sub) use ($startStr, $endStr) {
@@ -861,7 +911,7 @@ class TenantFinancialLedgerController extends Controller
         ];
 
         // 2. Wholesale Billing Head
-        $wsSum = (float) TenantResellerInvoice::where('tenant_id', $tenantId)
+        $wsSum = (float) $this->accountQuery(TenantResellerInvoice::class, $tenantId)
             ->where(function ($q) use ($startStr, $endStr) {
                 $q->whereBetween('paid_at', [$startStr, $endStr])
                   ->orWhere(function ($sub) use ($startStr, $endStr) {
@@ -873,16 +923,16 @@ class TenantFinancialLedgerController extends Controller
             ->sum('paid_amount');
 
         $heads[] = [
-            'code' => 'INC-WHOLESALE',
-            'name' => __('Reseller Wholesale Billing'),
-            'type' => 'income',
-            'debit' => 0,
-            'credit' => $wsSum,
-            'net' => $wsSum,
+            'code' => $this->resellerAccountPortal() ? 'EXP-WHOLESALE' : 'INC-WHOLESALE',
+            'name' => $this->resellerAccountPortal() ? __('Wholesale Payments') : __('Reseller Wholesale Billing'),
+            'type' => $this->resellerAccountPortal() ? 'expense' : 'income',
+            'debit' => $this->resellerAccountPortal() ? $wsSum : 0,
+            'credit' => $this->resellerAccountPortal() ? 0 : $wsSum,
+            'net' => $this->resellerAccountPortal() ? -$wsSum : $wsSum,
         ];
 
         // 3. Upstream Bandwidth COGS Head
-        $upstreamSum = (float) TenantUpstreamPayment::where('tenant_id', $tenantId)
+        $upstreamSum = (float) $this->accountQuery(TenantUpstreamPayment::class, $tenantId)
             ->whereBetween('paid_at', [$startStr, $endStr])
             ->sum('amount');
 
@@ -898,13 +948,13 @@ class TenantFinancialLedgerController extends Controller
         }
 
         // 4. Category heads from Expense Transactions
-        $categories = TenantExpenseCategory::where('tenant_id', $tenantId)->get();
+        $categories = $this->accountQuery(TenantExpenseCategory::class, $tenantId)->get();
 
         foreach ($categories as $cat) {
-            $txns = TenantExpenseTransaction::where('tenant_id', $tenantId)
+            $txns = $this->accountQuery(TenantExpenseTransaction::class, $tenantId)
                 ->where('category_id', $cat->id)
                 ->whereIn('status', ['approved', 'APPROVED'])
-                ->whereBetween('transaction_date', [$startStr, $endStr])
+                ->whereBetween('transaction_date', [$startDate->toDateString(), $endDate->toDateString()])
                 ->get();
 
             if ($txns->isEmpty()) {

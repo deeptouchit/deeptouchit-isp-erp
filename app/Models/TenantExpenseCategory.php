@@ -15,6 +15,7 @@ class TenantExpenseCategory extends Model
 
     protected $fillable = [
         'tenant_id',
+        'reseller_id',
         'name',
         'type',
         'code',
@@ -42,7 +43,7 @@ class TenantExpenseCategory extends Model
     /**
      * Pre-populate standard ISP Chart of Accounts for a new tenant
      */
-    public static function seedDefaultCategories(int $tenantId): void
+    public static function seedDefaultCategories(int $tenantId, ?int $resellerId = null): void
     {
         $defaults = [
             // Expense Categories
@@ -69,8 +70,8 @@ class TenantExpenseCategory extends Model
 
         foreach ($defaults as $d) {
             self::firstOrCreate(
-                ['tenant_id' => $tenantId, 'name' => $d['name']],
-                array_merge($d, ['tenant_id' => $tenantId, 'is_active' => true])
+                ['tenant_id' => $tenantId, 'reseller_id' => $resellerId, 'name' => $d['name']],
+                array_merge($d, ['is_active' => true, 'monthly_budget' => $resellerId ? 0 : $d['monthly_budget']])
             );
         }
     }

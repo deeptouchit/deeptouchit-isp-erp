@@ -1,4 +1,4 @@
-@extends('tenant.layouts.app')
+@extends($resellerPortal ? 'reseller.layouts.app' : 'tenant.layouts.app')
 
 @section('title', __('Daily Cash Handover & Closing') . ' - ' . ($tenant->company_name ?? $tenant->name))
 
@@ -44,7 +44,7 @@
 
         <div class="flex items-center gap-2">
             <!-- Export CSV -->
-            <a href="{{ route('tenant.finance.cash-handover.export', request()->query()) }}" 
+            <a href="{{ route($handoverRoute . '.export', request()->query()) }}"
                class="h-[34px] py-0 px-3 border border-slate-300 hover:bg-slate-50 text-slate-700 font-medium text-xs rounded-lg transition inline-flex items-center gap-1.5 shadow-2xs">
                 <i class="fas fa-file-csv text-emerald-600 text-xs"></i>
                 <span class="hidden sm:inline">{{ __('Export CSV') }}</span><span class="sm:hidden">{{ __('CSV') }}</span>
@@ -152,7 +152,7 @@
              showMoreFilters: {{ $isMoreOpen ? 'true' : 'false' }}, 
              searchQuery: '{{ addslashes($search ?? '') }}' 
          }">
-        <form method="GET" action="{{ route('tenant.finance.cash-handover') }}" id="cashHandoverFilterForm">
+        <form method="GET" action="{{ route($handoverRoute) }}" id="cashHandoverFilterForm">
             <!-- Tier 1: Primary Filter Bar (Single Row on md+) -->
             <div class="flex flex-col md:flex-row items-stretch md:items-center gap-2">
                 <!-- Intelligent Live Search Box -->
@@ -240,7 +240,7 @@
                         <i class="fas fa-filter text-[10px]"></i>
                         <span>{{ __('Filter') }}</span>
                     </button>
-                    <a href="{{ route('tenant.finance.cash-handover') }}" 
+                    <a href="{{ route($handoverRoute) }}"
                        class="h-[34px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-0 px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer" 
                        title="{{ __('Reset Filters') }}">
                         <i class="fas fa-rotate-left text-[10px]"></i>
@@ -472,6 +472,7 @@
             </button>
         </div>
 
+        @if($canVerify)
         <!-- Group 2: Verification Actions -->
         <div class="py-1">
             <template x-if="activeMenu?.status === 'pending'">
@@ -492,6 +493,7 @@
                 </button>
             </template>
         </div>
+        @endif
     </div>
 
     <!-- 6. Production-Grade Natural Modal: Submit Daily Cash Handover -->
@@ -859,7 +861,7 @@
                     </div>
                     <div>
                         <h3 class="text-xs font-semibold text-slate-800">{{ __('Verify & Approve to Vault') }}</h3>
-                        <p class="text-[10.5px] text-slate-500 font-normal">{{ __('Transfer physical cash into ISP main vault') }}</p>
+                        <p class="text-[10.5px] text-slate-500 font-normal">{{ __('Transfer physical cash into the vault') }}</p>
                     </div>
                 </div>
                 <button type="button" 
@@ -1194,7 +1196,7 @@ function cashHandoverManager() {
             this.createModal.fetchingLive = true;
 
             try {
-                const res = await fetch(`{{ route('tenant.finance.cash-handover.collector-cash') }}?collector_id=${this.createModal.form.collector_id}&date=${this.createModal.form.handover_date}`, {
+                const res = await fetch(`{{ route($handoverRoute . '.collector-cash') }}?collector_id=${this.createModal.form.collector_id}&date=${this.createModal.form.handover_date}`, {
                     headers: {
                         'Accept': 'application/json',
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
@@ -1217,7 +1219,7 @@ function cashHandoverManager() {
         async submitCreateHandover() {
             this.createModal.loading = true;
             try {
-                const res = await fetch(`{{ route('tenant.finance.cash-handover.store') }}`, {
+                const res = await fetch(`{{ route($handoverRoute . '.store') }}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1247,7 +1249,7 @@ function cashHandoverManager() {
             this.voucherModal.open = true;
 
             try {
-                const res = await fetch(`{{ url('/admin/finance/cash-handover') }}/${id}`, {
+                const res = await fetch(`{{ route($handoverRoute) }}/${id}`, {
                     headers: {
                         'Accept': 'application/json',
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
@@ -1282,7 +1284,7 @@ function cashHandoverManager() {
             if (!this.approveModal.handover?.id) return;
             this.approveModal.loading = true;
             try {
-                const res = await fetch(`{{ url('/admin/finance/cash-handover') }}/${this.approveModal.handover.id}/approve`, {
+                const res = await fetch(`{{ route($handoverRoute) }}/${this.approveModal.handover.id}/approve`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1322,7 +1324,7 @@ function cashHandoverManager() {
             if (!this.rejectModal.handover?.id) return;
             this.rejectModal.loading = true;
             try {
-                const res = await fetch(`{{ url('/admin/finance/cash-handover') }}/${this.rejectModal.handover.id}/reject`, {
+                const res = await fetch(`{{ route($handoverRoute) }}/${this.rejectModal.handover.id}/reject`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

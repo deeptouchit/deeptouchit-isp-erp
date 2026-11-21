@@ -1,4 +1,8 @@
-@extends('tenant.layouts.app')
+@extends($resellerPortal ? 'reseller.layouts.app' : 'tenant.layouts.app')
+
+@php
+    $ledgerRoute = $resellerPortal ? 'reseller.finance.ledger' : 'tenant.finance.ledger';
+@endphp
 
 @section('title', __('Financial Statements & General Ledger') . ' - ' . ($tenant->company_name ?? $tenant->name))
 
@@ -19,12 +23,12 @@
         </div>
         
         <div class="flex items-center gap-1.5">
-            <a href="{{ route('tenant.finance.ledger.export', request()->query()) }}" 
+            <a href="{{ route($ledgerRoute . '.export', request()->query()) }}"
                class="h-[34px] py-0 px-3 inline-flex items-center gap-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-lg text-xs font-semibold shadow-2xs transition">
                 <i class="fas fa-file-csv text-emerald-600 text-[11px]"></i>
                 <span>{{ __('Export CSV') }}</span>
             </a>
-            <a href="{{ route('tenant.finance.ledger.print', request()->query()) }}" 
+            <a href="{{ route($ledgerRoute . '.print', request()->query()) }}"
                target="_blank" 
                class="h-[34px] py-0 px-3.5 inline-flex items-center gap-1.5 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs rounded-lg shadow-xs transition">
                 <i class="fas fa-print text-[11px]"></i>
@@ -51,7 +55,7 @@
         {{-- Card 2: Upstream Bandwidth COGS --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between gap-1.5">
             <div class="min-w-0">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">{{ __('Upstream COGS') }}</span>
+                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">{{ __($resellerPortal ? 'Wholesale Cost' : 'Upstream COGS') }}</span>
                 <span class="text-[13px] font-bold font-mono leading-tight block text-indigo-700 truncate">
                     @currency($kpi['upstream_cogs'])
                 </span>
@@ -127,22 +131,22 @@
          x-data="{ showMoreFilters: {{ $isMoreOpen ? 'true' : 'false' }}, searchQuery: '{{ addslashes(request('search', '')) }}' }">
         {{-- Statement Tab Switcher --}}
         <div class="flex items-center gap-1 border-b border-slate-100 pb-2 overflow-x-auto">
-            <a href="{{ route('tenant.finance.ledger', array_merge(request()->query(), ['tab' => 'ledger'])) }}" 
+            <a href="{{ route($ledgerRoute, array_merge(request()->query(), ['tab' => 'ledger'])) }}"
                class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap {{ $tab === 'ledger' ? 'bg-cyan-50 text-cyan-800 border border-cyan-200' : 'text-slate-600 hover:bg-slate-50 border border-transparent' }}">
                 <i class="fas fa-list-ol text-[11px]"></i>
                 <span>{{ __('General Ledger') }}</span>
             </a>
-            <a href="{{ route('tenant.finance.ledger', array_merge(request()->query(), ['tab' => 'pnl'])) }}" 
+            <a href="{{ route($ledgerRoute, array_merge(request()->query(), ['tab' => 'pnl'])) }}"
                class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap {{ $tab === 'pnl' ? 'bg-cyan-50 text-cyan-800 border border-cyan-200' : 'text-slate-600 hover:bg-slate-50 border border-transparent' }}">
                 <i class="fas fa-file-invoice-dollar text-[11px]"></i>
                 <span>{{ __('Profit & Loss Statement') }}</span>
             </a>
-            <a href="{{ route('tenant.finance.ledger', array_merge(request()->query(), ['tab' => 'cashbook'])) }}" 
+            <a href="{{ route($ledgerRoute, array_merge(request()->query(), ['tab' => 'cashbook'])) }}"
                class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap {{ $tab === 'cashbook' ? 'bg-cyan-50 text-cyan-800 border border-cyan-200' : 'text-slate-600 hover:bg-slate-50 border border-transparent' }}">
                 <i class="fas fa-vault text-[11px]"></i>
                 <span>{{ __('Cash & Bank Summary') }}</span>
             </a>
-            <a href="{{ route('tenant.finance.ledger', array_merge(request()->query(), ['tab' => 'heads'])) }}" 
+            <a href="{{ route($ledgerRoute, array_merge(request()->query(), ['tab' => 'heads'])) }}"
                class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap {{ $tab === 'heads' ? 'bg-cyan-50 text-cyan-800 border border-cyan-200' : 'text-slate-600 hover:bg-slate-50 border border-transparent' }}">
                 <i class="fas fa-tags text-[11px]"></i>
                 <span>{{ __('Account Heads Summary') }}</span>
@@ -150,7 +154,7 @@
         </div>
 
         {{-- 2-Tier Filter Form --}}
-        <form method="GET" action="{{ route('tenant.finance.ledger') }}" id="ledgerFilterForm" class="space-y-2">
+        <form method="GET" action="{{ route($ledgerRoute) }}" id="ledgerFilterForm" class="space-y-2">
             <input type="hidden" name="tab" value="{{ $tab }}">
 
             {{-- 1st Tier: Primary Single Row (Strict Uniform Height h-[34px]) --}}
@@ -230,7 +234,7 @@
                         <i class="fas fa-filter text-[10px]"></i>
                         <span>{{ __('Filter') }}</span>
                     </button>
-                    <a href="{{ route('tenant.finance.ledger', ['tab' => $tab]) }}" 
+                    <a href="{{ route($ledgerRoute, ['tab' => $tab]) }}"
                        class="h-[34px] py-0 px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer flex-shrink-0" 
                        title="{{ __('Reset All Filters') }}">
                         <i class="fas fa-rotate-left text-[10px]"></i>
@@ -428,8 +432,10 @@
                         <span class="font-mono font-bold text-slate-800">@currency($pnl['retail_revenue'])</span>
                     </div>
                     <div class="flex items-center justify-between py-1.5 border-b border-slate-100">
+                        @unless($resellerPortal)
                         <span class="text-slate-600">{{ __('2. Reseller Wholesale') }}</span>
                         <span class="font-mono font-bold text-slate-800">@currency($pnl['wholesale_revenue'])</span>
+                        @endunless
                     </div>
                     @foreach($pnl['direct_income_groups'] as $headName => $amount)
                         <div class="flex items-center justify-between py-1.5 border-b border-slate-100">
@@ -449,7 +455,7 @@
                 <div class="bg-indigo-50/70 border-b border-indigo-100 px-4 py-2.5 flex items-center justify-between">
                     <div class="flex items-center gap-2">
                         <i class="fas fa-tower-broadcast text-indigo-600 text-xs"></i>
-                        <span class="text-xs font-bold text-slate-800 uppercase tracking-wider">{{ __('B. Upstream COGS') }}</span>
+                        <span class="text-xs font-bold text-slate-800 uppercase tracking-wider">{{ __($resellerPortal ? 'B. Wholesale Cost' : 'B. Upstream COGS') }}</span>
                     </div>
                     <span class="text-xs font-bold font-mono text-indigo-700">@currency($pnl['total_cogs'])</span>
                 </div>
@@ -512,7 +518,7 @@
                 </div>
             </div>
             <div class="flex items-center gap-2">
-                <a href="{{ route('tenant.finance.ledger.print', array_merge(request()->query(), ['tab' => 'pnl'])) }}" 
+                <a href="{{ route($ledgerRoute . '.print', array_merge(request()->query(), ['tab' => 'pnl'])) }}"
                    target="_blank" 
                    class="px-3.5 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs transition shadow-2xs">
                     <i class="fas fa-print mr-1"></i> {{ __('Print P&L Statement') }}
@@ -542,6 +548,12 @@
                         <span class="text-slate-600">{{ __('Total Cash Inflow (Payments + OTC)') }}</span>
                         <span class="font-mono font-bold text-emerald-600">+@currency($cashbook['cash_in'])</span>
                     </div>
+                    @if($resellerPortal)
+                        <div class="flex items-center justify-between gap-3 text-xs">
+                            <span>{{ __('Approved Cash Handovers (Internal Transfer)') }}</span>
+                            <span class="font-mono">@currency($cashbook['approved_handovers'])</span>
+                        </div>
+                    @endif
                     <div class="flex items-center justify-between py-1 border-b border-slate-50">
                         <span class="text-slate-600">{{ __('Total Cash Outflow (Disbursements)') }}</span>
                         <span class="font-mono font-bold text-rose-600">-@currency($cashbook['cash_out'])</span>
@@ -568,7 +580,7 @@
                 </div>
                 <div class="space-y-2 text-xs">
                     <div class="flex items-center justify-between py-1 border-b border-slate-50">
-                        <span class="text-slate-600">{{ __('Total Bank & MFS Deposits (Wholesale + Online)') }}</span>
+                        <span class="text-slate-600">{{ __($resellerPortal ? 'Total Bank & MFS Deposits' : 'Total Bank & MFS Deposits (Wholesale + Online)') }}</span>
                         <span class="font-mono font-bold text-emerald-600">+@currency($cashbook['bank_in'])</span>
                     </div>
                     <div class="flex items-center justify-between py-1 border-b border-slate-50">
@@ -653,7 +665,7 @@
             <span>{{ __('Copy Reference') }}</span>
         </button>
 
-        <a :href="'{{ route('tenant.finance.ledger.print') }}?search=' + encodeURIComponent(activeMenu?.ref_no || '')" 
+        <a :href="'{{ route($ledgerRoute . '.print') }}?search=' + encodeURIComponent(activeMenu?.ref_no || '')"
            target="_blank" 
            @click="activeMenu = null"
            class="w-full text-left px-3 py-1.5 text-slate-700 hover:bg-slate-50 flex items-center gap-2">
@@ -727,7 +739,7 @@
 
             {{-- Modal Footer --}}
             <div class="px-4 py-2.5 bg-slate-50/80 border-t border-slate-200 flex items-center justify-end gap-2">
-                <a :href="'{{ route('tenant.finance.ledger.print') }}?search=' + encodeURIComponent(selectedEntry?.ref_no || '')" 
+                <a :href="'{{ route($ledgerRoute . '.print') }}?search=' + encodeURIComponent(selectedEntry?.ref_no || '')"
                    target="_blank" 
                    class="bg-cyan-600 hover:bg-cyan-700 text-white font-medium text-xs px-3.5 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow-2xs">
                     <i class="fas fa-print"></i>
