@@ -97,8 +97,8 @@ Route::middleware(['web'])->group(function () {
         // Collection Reports & Money Receipts (Collector & Admin)
         Route::get('/reseller/collections', [ResellerCollectionController::class, 'index'])->name('reseller.collections.index');
         Route::get('/reseller/collections/{id}/receipt', [ResellerCollectionController::class, 'receipt'])->whereNumber('id')->name('reseller.collections.receipt');
-        Route::post('/reseller/collections/{id}/approve', [ResellerCollectionController::class, 'approvePayment'])->whereNumber('id')->name('reseller.collections.approve');
-        Route::post('/reseller/collections/{id}/reject', [ResellerCollectionController::class, 'rejectPayment'])->whereNumber('id')->name('reseller.collections.reject');
+        Route::post('/reseller/collections/{id}/approve', [ResellerCollectionController::class, 'approvePayment'])->whereNumber('id')->middleware(EnsureResellerAdmin::class)->name('reseller.collections.approve');
+        Route::post('/reseller/collections/{id}/reject', [ResellerCollectionController::class, 'rejectPayment'])->whereNumber('id')->middleware(EnsureResellerAdmin::class)->name('reseller.collections.reject');
         Route::get('/reseller/collections/export', [ResellerCollectionController::class, 'exportCsv'])->name('reseller.collections.export');
         Route::get('/reseller/collections/print', [ResellerCollectionController::class, 'printReport'])->name('reseller.collections.print');
 

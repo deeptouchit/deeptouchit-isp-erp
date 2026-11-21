@@ -55,119 +55,27 @@ class ResellerCollectionController extends Controller
         $resellerId = $reseller?->id;
         $tenantId = $tenant?->id;
 
-        $search = trim($request->input('search', ''));
-        $collectorId = $request->input('collector_id', 'all');
-        $method = $request->input('method', 'all');
-        $status = $request->input('status', 'all');
-        $period = $request->input('period', '');
-        $dateFrom = $request->input('date_from');
-        $dateTo = $request->input('date_to');
-        $month = $request->input('month', 'all');
+        [$search, $collectorId, $method, $status, $period, $dateFrom, $dateTo, $month] = $this->resolveFilterScope($request);
         $perPage = (int) $request->input('per_page', 20);
         if (!in_array($perPage, [10, 20, 50, 100], true)) {
             $perPage = 20;
         }
 
-        // Resolve Period Presets & Date Range
-        if (!empty($period) && $period !== 'custom' && $period !== 'all') {
-            switch ($period) {
-                case 'today':
-                    $dateFrom = Carbon::today()->toDateString();
-                    $dateTo = Carbon::today()->toDateString();
-                    break;
-                case 'yesterday':
-                    $dateFrom = Carbon::yesterday()->toDateString();
-                    $dateTo = Carbon::yesterday()->toDateString();
-                    break;
-                case 'this_week':
-                    $dateFrom = Carbon::now()->startOfWeek()->toDateString();
-                    $dateTo = Carbon::now()->endOfWeek()->toDateString();
-                    break;
-                case 'this_month':
-                    $dateFrom = Carbon::now()->startOfMonth()->toDateString();
-                    $dateTo = Carbon::now()->endOfMonth()->toDateString();
-                    break;
-                case 'last_month':
-                    $dateFrom = Carbon::now()->subMonth()->startOfMonth()->toDateString();
-                    $dateTo = Carbon::now()->subMonth()->endOfMonth()->toDateString();
-                    break;
-            }
-        } elseif (!empty($dateFrom) || !empty($dateTo)) {
-            $period = 'custom';
-        } elseif ($month !== 'all' && !empty($month)) {
-            $period = 'custom';
-            $dateFrom = Carbon::parse($month . '-01')->startOfMonth()->toDateString();
-            $dateTo = Carbon::parse($month . '-01')->endOfMonth()->toDateString();
-        } else {
-            // Default initial load: This Month
-            if (!$request->has('period') && !$request->has('date_from') && !$request->has('search') && !$request->has('collector_id') && !$request->has('status') && !$request->has('method')) {
-                $period = 'this_month';
-                $dateFrom = Carbon::now()->startOfMonth()->toDateString();
-                $dateTo = Carbon::now()->endOfMonth()->toDateString();
-            } else {
-                $period = $period ?: 'all';
-            }
-        }
-
-        // Filter Scope Closure
-        $applyFilterScope = function ($q) use ($search, $collectorId, $method, $status, $dateFrom, $dateTo) {
-            if (!empty($search)) {
-                $q->where(function ($sub) use ($search) {
-                    $sub->where('invoice_no', 'like', "%{$search}%")
-                        ->orWhere('payment_method', 'like', "%{$search}%")
-                        ->orWhere('notes', 'like', "%{$search}%")
-                        ->orWhereHas('customer', function ($cq) use ($search) {
-                            $cq->where('name', 'like', "%{$search}%")
-                               ->orWhere('customer_id', 'like', "%{$search}%")
-                               ->orWhere('username', 'like', "%{$search}%")
-                               ->orWhere('mobile', 'like', "%{$search}%");
-                        });
-                });
-            }
-
-            if ($collectorId !== 'all' && !empty($collectorId)) {
-                $q->where('collected_by', (int) $collectorId);
-            }
-
-            if ($method !== 'all' && !empty($method)) {
-                $q->where('payment_method', $method);
-            }
-
-            if ($status !== 'all' && !empty($status)) {
-                $q->where('status', $status);
-            }
-
-            if (!empty($dateFrom) && !empty($dateTo)) {
-                $q->whereRaw("DATE(COALESCE(paid_at, created_at)) BETWEEN ? AND ?", [$dateFrom, $dateTo]);
-            } elseif (!empty($dateFrom)) {
-                $q->whereRaw("DATE(COALESCE(paid_at, created_at)) >= ?", [$dateFrom]);
-            } elseif (!empty($dateTo)) {
-                $q->whereRaw("DATE(COALESCE(paid_at, created_at)) <= ?", [$dateTo]);
-            }
-        };
-
-        // 1. Base Payments Query
-        $query = TenantCustomerPayment::where('tenant_id', $tenantId)
-            ->where('reseller_id', $resellerId)
+        $query = $this->collectionQuery($authUser, $tenantId, $resellerId)
             ->with(['customer.package', 'collector'])
             ->latest('id');
-
-        $applyFilterScope($query);
-
+        $this->applyCollectionFilters($query, [$search, $collectorId, $method, $status, $period, $dateFrom, $dateTo]);
+        $kpiBaseQuery = (clone $query)->reorder();
         $payments = $query->paginate($perPage)->withQueryString();
 
         // 2. Fetch Collectors for Dropdown
         $collectors = User::where('tenant_id', $tenantId)
             ->where('reseller_id', $resellerId)
+            ->when(!$authUser->isResellerAdmin(), fn ($query) => $query->whereKey($authUser->id))
             ->orderBy('name')
             ->get();
 
         // 3. Compute 6 KPI Metric Cards (AGENTS.md Rule 2.B)
-        $kpiBaseQuery = TenantCustomerPayment::where('tenant_id', $tenantId)
-            ->where('reseller_id', $resellerId);
-
-        $applyFilterScope($kpiBaseQuery);
-
         $totalCollected = (float) (clone $kpiBaseQuery)->whereIn('status', ['paid', 'completed', 'approved', 'active'])->sum('amount');
         $totalTransactions = (int) (clone $kpiBaseQuery)->count();
         $cashCollected = (float) (clone $kpiBaseQuery)->where('payment_method', 'cash')->whereIn('status', ['paid', 'completed', 'approved', 'active'])->sum('amount');
@@ -203,9 +111,10 @@ class ResellerCollectionController extends Controller
         }
 
         // Available billing months for filter dropdown
-        $availableMonths = TenantCustomerPayment::where('tenant_id', $tenantId)
-            ->where('reseller_id', $resellerId)
-            ->selectRaw("DISTINCT DATE_FORMAT(COALESCE(paid_at, created_at), '%Y-%m') as month_code")
+        $availableMonths = $this->collectionQuery($authUser, $tenantId, $resellerId)
+            ->selectRaw((new TenantCustomerPayment)->getConnection()->getDriverName() === 'sqlite'
+                ? "DISTINCT strftime('%Y-%m', COALESCE(paid_at, created_at)) as month_code"
+                : "DISTINCT DATE_FORMAT(COALESCE(paid_at, created_at), '%Y-%m') as month_code")
             ->orderByDesc('month_code')
             ->pluck('month_code')
             ->toArray();
@@ -245,8 +154,7 @@ class ResellerCollectionController extends Controller
     {
         [$authUser, $reseller, $tenant] = $this->getResellerData();
 
-        $payment = TenantCustomerPayment::where('tenant_id', $tenant->id)
-            ->where('reseller_id', $reseller->id)
+        $payment = $this->collectionQuery($authUser, $tenant->id, $reseller->id)
             ->with(['customer.package', 'collector'])
             ->findOrFail($id);
 
@@ -284,6 +192,55 @@ class ResellerCollectionController extends Controller
     /**
      * Helper to resolve filters for query scoping.
      */
+    private function collectionQuery(User $user, ?int $tenantId, ?int $resellerId): \Illuminate\Database\Eloquent\Builder
+    {
+        abort_unless($tenantId && $resellerId && ($user->isResellerAdmin() || $user->isResellerCollector()), 403);
+
+        return TenantCustomerPayment::where('tenant_id', $tenantId)
+            ->where('reseller_id', $resellerId)
+            ->when(!$user->isResellerAdmin(), fn ($query) => $query->where('collected_by', $user->id));
+    }
+
+    private function applyCollectionFilters($q, array $filters): void
+    {
+        [$search, $collectorId, $method, $status, , $dateFrom, $dateTo] = $filters;
+        if (!empty($search)) {
+            $q->where(function ($sub) use ($search) {
+                $sub->where('invoice_no', 'like', "%{$search}%")
+                    ->orWhere('payment_method', 'like', "%{$search}%")
+                    ->orWhere('notes', 'like', "%{$search}%")
+                    ->orWhereHas('customer', function ($cq) use ($search) {
+                        $cq->where('name', 'like', "%{$search}%")
+                           ->orWhere('customer_id', 'like', "%{$search}%")
+                           ->orWhere('username', 'like', "%{$search}%")
+                           ->orWhere('phone', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        if ($collectorId !== 'all' && !empty($collectorId)) {
+            $q->where('collected_by', (int) $collectorId);
+        }
+
+        if ($method !== 'all' && !empty($method)) {
+            $q->where('payment_method', $method);
+        }
+
+        if ($status === 'paid') {
+            $q->whereIn('status', ['paid', 'completed', 'approved', 'active']);
+        } elseif ($status !== 'all' && !empty($status)) {
+            $q->where('status', $status);
+        }
+
+        if (!empty($dateFrom) && !empty($dateTo)) {
+            $q->whereRaw("DATE(COALESCE(paid_at, created_at)) BETWEEN ? AND ?", [$dateFrom, $dateTo]);
+        } elseif (!empty($dateFrom)) {
+            $q->whereRaw("DATE(COALESCE(paid_at, created_at)) >= ?", [$dateFrom]);
+        } elseif (!empty($dateTo)) {
+            $q->whereRaw("DATE(COALESCE(paid_at, created_at)) <= ?", [$dateTo]);
+        }
+    }
+
     protected function resolveFilterScope(Request $request): array
     {
         $search = trim($request->input('search', ''));
@@ -295,6 +252,7 @@ class ResellerCollectionController extends Controller
         $dateTo = $request->input('date_to');
         $month = $request->input('month', 'all');
 
+        // Resolve Period Presets & Date Range
         if (!empty($period) && $period !== 'custom' && $period !== 'all') {
             switch ($period) {
                 case 'today':
@@ -314,8 +272,8 @@ class ResellerCollectionController extends Controller
                     $dateTo = Carbon::now()->endOfMonth()->toDateString();
                     break;
                 case 'last_month':
-                    $dateFrom = Carbon::now()->subMonth()->startOfMonth()->toDateString();
-                    $dateTo = Carbon::now()->subMonth()->endOfMonth()->toDateString();
+                    $dateFrom = Carbon::now()->subMonthNoOverflow()->startOfMonth()->toDateString();
+                    $dateTo = Carbon::now()->subMonthNoOverflow()->endOfMonth()->toDateString();
                     break;
             }
         } elseif (!empty($dateFrom) || !empty($dateTo)) {
@@ -324,6 +282,15 @@ class ResellerCollectionController extends Controller
             $period = 'custom';
             $dateFrom = Carbon::parse($month . '-01')->startOfMonth()->toDateString();
             $dateTo = Carbon::parse($month . '-01')->endOfMonth()->toDateString();
+        } else {
+            // Default initial load: This Month
+            if (!$request->has('period') && !$request->has('date_from') && !$request->has('search') && !$request->has('collector_id') && !$request->has('status') && !$request->has('method')) {
+                $period = 'this_month';
+                $dateFrom = Carbon::now()->startOfMonth()->toDateString();
+                $dateTo = Carbon::now()->endOfMonth()->toDateString();
+            } else {
+                $period = $period ?: 'all';
+            }
         }
 
         return [$search, $collectorId, $method, $status, $period, $dateFrom, $dateTo, $month];
@@ -342,44 +309,10 @@ class ResellerCollectionController extends Controller
 
         $fileName = 'reseller_collections_' . ($dateFrom ? $dateFrom . '_to_' . ($dateTo ?: $dateFrom) : date('Ymd_His')) . '.csv';
 
-        $query = TenantCustomerPayment::where('tenant_id', $tenantId)
-            ->where('reseller_id', $resellerId)
+        $query = $this->collectionQuery($authUser, $tenantId, $resellerId)
             ->with(['customer.package', 'collector'])
             ->latest('id');
-
-        if (!empty($search)) {
-            $query->where(function ($sub) use ($search) {
-                $sub->where('invoice_no', 'like', "%{$search}%")
-                    ->orWhere('payment_method', 'like', "%{$search}%")
-                    ->orWhere('notes', 'like', "%{$search}%")
-                    ->orWhereHas('customer', function ($cq) use ($search) {
-                        $cq->where('name', 'like', "%{$search}%")
-                           ->orWhere('customer_id', 'like', "%{$search}%")
-                           ->orWhere('username', 'like', "%{$search}%")
-                           ->orWhere('mobile', 'like', "%{$search}%");
-                    });
-            });
-        }
-
-        if ($collectorId !== 'all' && !empty($collectorId)) {
-            $query->where('collected_by', (int) $collectorId);
-        }
-
-        if ($method !== 'all' && !empty($method)) {
-            $query->where('payment_method', $method);
-        }
-
-        if ($status !== 'all' && !empty($status)) {
-            $query->where('status', $status);
-        }
-
-        if (!empty($dateFrom) && !empty($dateTo)) {
-            $query->whereRaw("DATE(COALESCE(paid_at, created_at)) BETWEEN ? AND ?", [$dateFrom, $dateTo]);
-        } elseif (!empty($dateFrom)) {
-            $query->whereRaw("DATE(COALESCE(paid_at, created_at)) >= ?", [$dateFrom]);
-        } elseif (!empty($dateTo)) {
-            $query->whereRaw("DATE(COALESCE(paid_at, created_at)) <= ?", [$dateTo]);
-        }
+        $this->applyCollectionFilters($query, [$search, $collectorId, $method, $status, $period, $dateFrom, $dateTo]);
 
         $payments = $query->get();
 
@@ -421,44 +354,10 @@ class ResellerCollectionController extends Controller
 
         [$search, $collectorId, $method, $status, $period, $dateFrom, $dateTo, $month] = $this->resolveFilterScope($request);
 
-        $query = TenantCustomerPayment::where('tenant_id', $tenantId)
-            ->where('reseller_id', $resellerId)
+        $query = $this->collectionQuery($authUser, $tenantId, $resellerId)
             ->with(['customer.package', 'collector'])
             ->latest('id');
-
-        if (!empty($search)) {
-            $query->where(function ($sub) use ($search) {
-                $sub->where('invoice_no', 'like', "%{$search}%")
-                    ->orWhere('payment_method', 'like', "%{$search}%")
-                    ->orWhere('notes', 'like', "%{$search}%")
-                    ->orWhereHas('customer', function ($cq) use ($search) {
-                        $cq->where('name', 'like', "%{$search}%")
-                           ->orWhere('customer_id', 'like', "%{$search}%")
-                           ->orWhere('username', 'like', "%{$search}%")
-                           ->orWhere('mobile', 'like', "%{$search}%");
-                    });
-            });
-        }
-
-        if ($collectorId !== 'all' && !empty($collectorId)) {
-            $query->where('collected_by', (int) $collectorId);
-        }
-
-        if ($method !== 'all' && !empty($method)) {
-            $query->where('payment_method', $method);
-        }
-
-        if ($status !== 'all' && !empty($status)) {
-            $query->where('status', $status);
-        }
-
-        if (!empty($dateFrom) && !empty($dateTo)) {
-            $query->whereRaw("DATE(COALESCE(paid_at, created_at)) BETWEEN ? AND ?", [$dateFrom, $dateTo]);
-        } elseif (!empty($dateFrom)) {
-            $query->whereRaw("DATE(COALESCE(paid_at, created_at)) >= ?", [$dateFrom]);
-        } elseif (!empty($dateTo)) {
-            $query->whereRaw("DATE(COALESCE(paid_at, created_at)) <= ?", [$dateTo]);
-        }
+        $this->applyCollectionFilters($query, [$search, $collectorId, $method, $status, $period, $dateFrom, $dateTo]);
 
         $payments = $query->get();
         $totalAmount = (float) $payments->whereIn('status', ['paid', 'completed', 'approved', 'active'])->sum('amount');

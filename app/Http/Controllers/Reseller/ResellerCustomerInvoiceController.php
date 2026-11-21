@@ -47,25 +47,19 @@ class ResellerCustomerInvoiceController extends Controller
     /**
      * Display Customer Invoices List.
      */
-    public function index(Request $request): View
+    private const DUE_STATUSES = ['unpaid', 'due', 'partial', 'partially_paid', 'overdue'];
+
+    private function filteredInvoices(Request $request, ?int $tenantId, ?int $resellerId): array
     {
-        [$authUser, $reseller, $tenant] = $this->getResellerData();
-        $resellerId = $reseller?->id;
-        $tenantId = $tenant?->id;
-        $currencySymbol = $tenant->currency_symbol ?? '৳';
+        abort_unless($tenantId && $resellerId, 403);
 
         $search = trim($request->input('search', ''));
-        $status = $request->input('status', 'all');
+        $status = strtolower($request->string('status', 'all')->toString());
         $month = $request->input('month', 'all');
         $packageId = $request->input('package_id', 'all');
         $datePreset = $request->input('date_preset', 'all');
         $fromDate = $request->input('from_date');
         $toDate = $request->input('to_date');
-        $perPage = (int) $request->input('per_page', 20);
-        if (!in_array($perPage, [10, 20, 50, 100], true)) {
-            $perPage = 20;
-        }
-
         // Resolve Date Preset Ranges
         if ($datePreset === 'today') {
             $fromDate = Carbon::today()->toDateString();
@@ -80,8 +74,8 @@ class ResellerCustomerInvoiceController extends Controller
             $fromDate = Carbon::now()->startOfMonth()->toDateString();
             $toDate = Carbon::now()->endOfMonth()->toDateString();
         } elseif ($datePreset === 'last_month') {
-            $fromDate = Carbon::now()->subMonth()->startOfMonth()->toDateString();
-            $toDate = Carbon::now()->subMonth()->endOfMonth()->toDateString();
+            $fromDate = Carbon::now()->subMonthNoOverflow()->startOfMonth()->toDateString();
+            $toDate = Carbon::now()->subMonthNoOverflow()->endOfMonth()->toDateString();
         }
 
         // 1. Base Query
@@ -105,9 +99,11 @@ class ResellerCustomerInvoiceController extends Controller
 
         if ($status !== 'all' && !empty($status)) {
             if ($status === 'due' || $status === 'unpaid') {
-                $query->whereIn('status', ['unpaid', 'due', 'overdue']);
+                $query->whereIn('status', self::DUE_STATUSES);
+            } elseif (in_array($status, ['partial', 'partially_paid'], true)) {
+                $query->whereIn('status', ['partial', 'partially_paid']);
             } else {
-                $query->where('status', strtolower($status));
+                $query->where('status', $status);
             }
         }
 
@@ -119,6 +115,7 @@ class ResellerCustomerInvoiceController extends Controller
             $query->where('package_id', (int) $packageId);
         }
 
+        $request->validate(['from_date' => 'nullable|date_format:Y-m-d', 'to_date' => 'nullable|date_format:Y-m-d']);
         if (!empty($fromDate) && !empty($toDate)) {
             $query->whereBetween('created_at', [
                 Carbon::parse($fromDate)->startOfDay(),
@@ -128,6 +125,24 @@ class ResellerCustomerInvoiceController extends Controller
             $query->where('created_at', '>=', Carbon::parse($fromDate)->startOfDay());
         } elseif (!empty($toDate)) {
             $query->where('created_at', '<=', Carbon::parse($toDate)->endOfDay());
+        }
+
+        return [$query, $search, $status, $month, $packageId, $datePreset, $fromDate, $toDate];
+    }
+
+    public function index(Request $request): View
+    {
+        [$authUser, $reseller, $tenant] = $this->getResellerData();
+        $resellerId = $reseller?->id;
+        $tenantId = $tenant?->id;
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
+
+        [$query, $search, $status, $month, $packageId, $datePreset, $fromDate, $toDate] =
+            $this->filteredInvoices($request, $tenantId, $resellerId);
+        $pageSizes = [10, 15, 20, 30, 50, 100, 250, 500];
+        $perPage = (int) $request->input('per_page', 20);
+        if (!in_array($perPage, $pageSizes, true)) {
+            $perPage = 20;
         }
 
         // 2. Dropdown Datasets
@@ -152,7 +167,7 @@ class ResellerCustomerInvoiceController extends Controller
         $totalPaid = (float) (clone $kpiBase)->sum('paid_amount');
         $totalDue = (float) (clone $kpiBase)->sum('due_amount');
         $paidCount = (int) (clone $kpiBase)->where('status', 'paid')->count();
-        $unpaidCount = (int) (clone $kpiBase)->whereIn('status', ['unpaid', 'due', 'partial', 'partially_paid', 'overdue'])->count();
+        $unpaidCount = (int) (clone $kpiBase)->whereIn('status', self::DUE_STATUSES)->count();
 
         $stats = [
             'total_invoices' => $totalInvoicesCount,
@@ -181,6 +196,7 @@ class ResellerCustomerInvoiceController extends Controller
             'fromDate',
             'toDate',
             'perPage',
+            'pageSizes',
             'currencySymbol'
         ));
     }
@@ -227,7 +243,7 @@ class ResellerCustomerInvoiceController extends Controller
             ]);
         }
 
-        $currencySymbol = '৳';
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
 
         return view('reseller.customer_invoices.show', compact('authUser', 'reseller', 'tenant', 'invoice', 'currencySymbol'));
     }
@@ -339,7 +355,7 @@ class ResellerCustomerInvoiceController extends Controller
             ->with(['customer.package', 'package', 'creator'])
             ->findOrFail($id);
 
-        $currencySymbol = '৳';
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
 
         return view('reseller.customer_invoices.print', compact('authUser', 'reseller', 'tenant', 'invoice', 'currencySymbol'));
     }
@@ -353,23 +369,10 @@ class ResellerCustomerInvoiceController extends Controller
         $resellerId = $reseller?->id;
         $tenantId = $tenant?->id;
 
-        $query = TenantCustomerInvoice::where('tenant_id', $tenantId)
-            ->where('reseller_id', $resellerId)
-            ->with(['customer', 'package'])
-            ->latest('id');
-
-        $status = $request->input('status', 'all');
-        if ($status !== 'all' && !empty($status)) {
-            $query->where('status', $status);
-        }
-
-        $month = $request->input('month', 'all');
-        if ($month !== 'all' && preg_match('/^\d{4}-\d{2}$/', $month)) {
-            $query->where('billing_month', $month);
-        }
+        [$query, , $status, $month] = $this->filteredInvoices($request, $tenantId, $resellerId);
 
         $invoices = $query->get();
-        $currencySymbol = '৳';
+        $currencySymbol = $tenant->currency_symbol ?? '৳';
 
         return view('reseller.customer_invoices.print_report', compact(
             'authUser',
@@ -391,11 +394,7 @@ class ResellerCustomerInvoiceController extends Controller
         $resellerId = $reseller?->id;
         $tenantId = $tenant?->id;
 
-        $query = TenantCustomerInvoice::where('tenant_id', $tenantId)
-            ->where('reseller_id', $resellerId)
-            ->with(['customer', 'package'])
-            ->latest('id');
-
+        [$query] = $this->filteredInvoices($request, $tenantId, $resellerId);
         $invoices = $query->get();
         $filename = 'customer_invoices_' . ($reseller->code ?? 'RES') . '_' . now()->format('Ymd_His') . '.csv';
 

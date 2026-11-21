@@ -147,30 +147,34 @@
         </div>
     @endif
 
-    {{-- 4. SEARCH & MULTI-FILTER TOOLBAR (AGENTS.md Rule 2.C) --}}
-    <div class="bg-white p-2.5 sm:p-3 rounded-xl border border-slate-200 shadow-xs space-y-2.5">
-        <form method="GET" action="{{ route('reseller.collections.index') }}" class="space-y-2">
-            
-            {{-- Row 1: Primary Search, Quick Period Preset, Date From, Date To --}}
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-2 items-center">
-                
+    @php
+        $activeMoreCount = (int) ($collectorId !== 'all') + (int) ($period === 'custom');
+    @endphp
+    <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5"
+         x-data="{ showMoreFilters: @js($activeMoreCount > 0), searchQuery: @js($search) }">
+        <form method="GET" action="{{ route('reseller.collections.index') }}" class="space-y-2.5">
+            <div class="flex flex-col md:flex-row items-stretch md:items-center gap-2 flex-wrap">
                 <!-- Search Box (MD: 4 Cols) -->
-                <div class="relative md:col-span-4">
+                <div class="relative flex-1 min-w-[200px]">
                     <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
-                    <input type="search" 
-                           name="search" 
-                           value="{{ $search }}" 
+                    <input type="search"
+                           name="search" x-model="searchQuery"
+                           value="{{ $search }}"
                            autocomplete="off"
-                           placeholder="Search receipt #, subscriber, phone..." 
-                           class="w-full pl-8 pr-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:border-cyan-500 shadow-2xs">
+                           placeholder="Search receipt #, subscriber, phone..."
+                           class="w-full pl-8 pr-7 h-[34px] py-0 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:border-cyan-500 shadow-2xs">
+                    <button type="button" x-show="searchQuery" x-cloak aria-label="{{ __('Clear Search') }}"
+                            @click="searchQuery = ''; $nextTick(() => $el.closest('form').requestSubmit())"
+                            class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500">
+                        <i class="fas fa-times-circle"></i>
+                    </button>
                 </div>
-
                 <!-- Quick Period Preset (MD: 2 Cols) -->
-                <div class="md:col-span-2">
-                    <select name="period" 
-                            x-model="filterPeriod" 
-                            @change="handlePeriodChange($event.target.value)" 
-                            class="w-full py-1.5 px-2.5 rounded-lg border border-slate-200 bg-slate-50 text-xs font-medium text-slate-700 focus:bg-white focus:outline-none focus:border-cyan-500 shadow-2xs">
+                <div class="w-full md:w-40">
+                    <select name="period"
+                            x-model="filterPeriod"
+                            @change="handlePeriodChange($event.target.value)"
+                            class="w-full h-[34px] py-0 px-2.5 rounded-lg border border-slate-200 bg-slate-50 text-xs font-medium text-slate-700 focus:bg-white focus:outline-none focus:border-cyan-500 shadow-2xs">
                         <option value="today">Today (আজ)</option>
                         <option value="yesterday">Yesterday (গতকাল)</option>
                         <option value="this_week">This Week (এই সপ্তাহ)</option>
@@ -180,49 +184,9 @@
                         <option value="all">All Records (সব সময়)</option>
                     </select>
                 </div>
-
-                <!-- Date From (MD: 3 Cols) -->
-                <div class="md:col-span-3">
-                    <div class="relative">
-                        <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[9.5px] uppercase font-bold text-slate-400 pointer-events-none">From</span>
-                        <input type="date" 
-                               name="date_from" 
-                               x-model="filterDateFrom" 
-                               @input="filterPeriod = 'custom'"
-                               class="w-full pl-11 pr-2 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-xs font-mono focus:bg-white focus:outline-none focus:border-cyan-500 shadow-2xs">
-                    </div>
-                </div>
-
-                <!-- Date To (MD: 3 Cols) -->
-                <div class="md:col-span-3">
-                    <div class="relative">
-                        <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[9.5px] uppercase font-bold text-slate-400 pointer-events-none">To</span>
-                        <input type="date" 
-                               name="date_to" 
-                               x-model="filterDateTo" 
-                               @input="filterPeriod = 'custom'"
-                               class="w-full pl-8 pr-2 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-xs font-mono focus:bg-white focus:outline-none focus:border-cyan-500 shadow-2xs">
-                    </div>
-                </div>
-
-            </div>
-
-            {{-- Row 2: Secondary Dropdowns (Collector, Method, Status, Per Page) + Strict Filter & Reset Sequence --}}
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 items-center pt-1 border-t border-slate-100">
-                
-                <!-- Collector Filter -->
-                <div>
-                    <select name="collector_id" onchange="this.form.submit()" class="w-full py-1.5 px-2 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:border-cyan-500 shadow-2xs">
-                        <option value="all" {{ $collectorId === 'all' ? 'selected' : '' }}>All Collectors</option>
-                        @foreach($collectors as $col)
-                            <option value="{{ $col->id }}" {{ $collectorId == $col->id ? 'selected' : '' }}>{{ $col->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-
                 <!-- Payment Method Filter -->
                 <div>
-                    <select name="method" onchange="this.form.submit()" class="w-full py-1.5 px-2 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:border-cyan-500 shadow-2xs">
+                    <select name="method" onchange="this.form.submit()" class="w-full h-[34px] py-0 px-2 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:border-cyan-500 shadow-2xs">
                         <option value="all" {{ $method === 'all' ? 'selected' : '' }}>All Methods</option>
                         <option value="cash" {{ $method === 'cash' ? 'selected' : '' }}>Cash in Hand</option>
                         <option value="bangla_qr" {{ $method === 'bangla_qr' ? 'selected' : '' }}>Bangla QR</option>
@@ -232,40 +196,79 @@
                         <option value="bank_transfer" {{ $method === 'bank_transfer' ? 'selected' : '' }}>Bank Transfer</option>
                     </select>
                 </div>
-
                 <!-- Status Filter -->
                 <div>
-                    <select name="status" onchange="this.form.submit()" class="w-full py-1.5 px-2 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:border-cyan-500 shadow-2xs">
+                    <select name="status" onchange="this.form.submit()" class="w-full h-[34px] py-0 px-2 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:border-cyan-500 shadow-2xs">
                         <option value="all" {{ ($status ?? 'all') === 'all' ? 'selected' : '' }}>All Statuses</option>
                         <option value="paid" {{ ($status ?? '') === 'paid' ? 'selected' : '' }}>Paid / Settled</option>
                         <option value="pending" {{ ($status ?? '') === 'pending' ? 'selected' : '' }}>Pending Approval</option>
                     </select>
                 </div>
-
                 <!-- Per Page -->
                 <div>
-                    <select name="per_page" onchange="this.form.submit()" class="w-full py-1.5 px-2 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:border-cyan-500 shadow-2xs">
+                    <select name="per_page" onchange="this.form.submit()" class="w-full h-[34px] py-0 px-2 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:border-cyan-500 shadow-2xs">
                         <option value="10" {{ $perPage == 10 ? 'selected' : '' }}>Show 10 Rows</option>
                         <option value="20" {{ $perPage == 20 ? 'selected' : '' }}>Show 20 Rows</option>
                         <option value="50" {{ $perPage == 50 ? 'selected' : '' }}>Show 50 Rows</option>
                         <option value="100" {{ $perPage == 100 ? 'selected' : '' }}>Show 100 Rows</option>
                     </select>
                 </div>
-
+                <button type="button" @click="showMoreFilters = !showMoreFilters" :aria-expanded="showMoreFilters"
+                        class="h-[34px] px-2.5 rounded-lg border border-slate-200 bg-slate-50 text-xs font-semibold inline-flex items-center justify-center gap-1.5">
+                    <i class="fas fa-sliders-h text-[10px]"></i>
+                    {{ __('More Filters') }}
+                    @if($activeMoreCount)
+                        <span class="px-1.5 rounded-full bg-cyan-600 text-white text-[9px]">{{ $activeMoreCount }}</span>
+                    @endif
+                    <i class="fas text-[9px]" :class="showMoreFilters ? 'fa-chevron-up text-cyan-600' : 'fa-chevron-down text-slate-400'"></i>
+                </button>
                 <!-- Strict Filter & Reset Sequence (AGENTS.md Rule 2.C) -->
-                <div class="flex items-center gap-1.5 col-span-2 sm:col-span-1">
-                    <button type="submit" class="w-1/2 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-1.5 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer">
+                <div class="flex items-center gap-1.5 md:ml-auto">
+                    <button type="submit" class="bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs h-[34px] py-0 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer">
                         <i class="fas fa-filter text-[10px]"></i>
                         <span>Filter</span>
                     </button>
-                    <a href="{{ route('reseller.collections.index') }}" class="w-1/2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-1.5 px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer">
+                    <a href="{{ route('reseller.collections.index') }}" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs h-[34px] py-0 px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer">
                         <i class="fas fa-rotate-left text-[10px]"></i>
                         <span>Reset</span>
                     </a>
                 </div>
-
             </div>
+            <div x-show="showMoreFilters || filterPeriod === 'custom'" x-cloak x-transition
+                 class="pt-2 border-t border-slate-100 flex flex-wrap items-center gap-2">
+                <!-- Collector Filter -->
+                <div>
+                    <select name="collector_id" onchange="this.form.submit()" class="w-full h-[34px] py-0 px-2 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:border-cyan-500 shadow-2xs">
+                        <option value="all" {{ $collectorId === 'all' ? 'selected' : '' }}>All Collectors</option>
+                        @foreach($collectors as $col)
+                            <option value="{{ $col->id }}" {{ $collectorId == $col->id ? 'selected' : '' }}>{{ $col->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <!-- Date From (MD: 3 Cols) -->
+                <div class="w-full sm:w-40" x-show="filterPeriod === 'custom'">
+                    <div class="relative">
+                        <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[9.5px] uppercase font-bold text-slate-400 pointer-events-none">From</span>
+                        <input type="date"
+                               name="date_from"
+                               x-model="filterDateFrom"
+                               @input="filterPeriod = 'custom'"
+                               class="w-full pl-11 pr-2 h-[34px] py-0 rounded-lg border border-slate-200 bg-slate-50 text-xs font-mono focus:bg-white focus:outline-none focus:border-cyan-500 shadow-2xs">
+                    </div>
+                </div>
 
+                <!-- Date To (MD: 3 Cols) -->
+                <div class="w-full sm:w-40" x-show="filterPeriod === 'custom'">
+                    <div class="relative">
+                        <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[9.5px] uppercase font-bold text-slate-400 pointer-events-none">To</span>
+                        <input type="date"
+                               name="date_to"
+                               x-model="filterDateTo"
+                               @input="filterPeriod = 'custom'"
+                               class="w-full pl-8 pr-2 h-[34px] py-0 rounded-lg border border-slate-200 bg-slate-50 text-xs font-mono focus:bg-white focus:outline-none focus:border-cyan-500 shadow-2xs">
+                    </div>
+                </div>
+            </div>
         </form>
     </div>
 
@@ -275,15 +278,15 @@
             <table class="saas-table">
                 <thead>
                     <tr>
-                        <th class="w-10 text-center">#</th>
-                        <th class="w-28 font-mono">Receipt #</th>
-                        <th>Subscriber</th>
-                        <th class="w-28 font-mono">Package</th>
-                        <th class="w-28">Collector</th>
-                        <th class="w-24 text-center">Method</th>
-                        <th class="w-28 text-right">Amount</th>
-                        <th class="w-20 text-center">Status</th>
-                        <th class="w-10 text-center no-sort">Action</th>
+                        <th class="w-10 text-center font-semibold">#</th>
+                        <th class="w-28 font-mono text-center font-semibold">Receipt #</th>
+                        <th class="text-center font-semibold">Subscriber</th>
+                        <th class="w-28 font-mono text-center font-semibold">Package</th>
+                        <th class="w-28 text-center font-semibold">Collector</th>
+                        <th class="w-24 text-center font-semibold">Method</th>
+                        <th class="w-28 text-center font-semibold">Amount</th>
+                        <th class="w-20 text-center font-semibold">Status</th>
+                        <th class="w-10 no-sort text-center font-semibold">Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -398,6 +401,7 @@
          style="display: none;"
          x-cloak>
         
+        @if($authUser->isResellerAdmin())
         <template x-if="activeMenu?.status === 'pending'">
             <div class="py-0.5 bg-amber-50/60">
                 <button type="button" 
@@ -414,6 +418,7 @@
                 </button>
             </div>
         </template>
+        @endif
 
         <div class="py-0.5">
             <button type="button" 

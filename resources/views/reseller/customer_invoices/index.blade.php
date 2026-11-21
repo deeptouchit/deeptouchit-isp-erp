@@ -15,7 +15,7 @@
             <div class="w-8 h-8 rounded-lg bg-cyan-50 text-cyan-600 border border-cyan-100 flex items-center justify-center text-sm shadow-2xs flex-shrink-0">
                 <i class="fas fa-file-invoice-dollar"></i>
             </div>
-            <h1 class="text-sm font-bold text-slate-800 tracking-tight">{{ __('Customer Invoices') }}</h1>
+            <h1 class="text-sm font-bold text-slate-800 tracking-tight">{{ match ($status) { 'paid' => __('Paid Invoices'), 'due', 'unpaid' => __('Due Invoices'), default => __('Customer Invoices') } }}</h1>
         </div>
         <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap">
             <!-- Bulk Payments Link -->
@@ -121,20 +121,29 @@
 
     </div>
 
+    @php
+        $activeMoreCount = (int) ($packageId && $packageId !== 'all') + (int) ($datePreset === 'custom');
+    @endphp
     <!-- 3. Advanced Search & Multi-Filter Toolbar (AGENTS.md Rule 2.C) -->
-    <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-xs space-y-2">
+    <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5"
+         x-data="{ showMoreFilters: @js($activeMoreCount > 0), searchQuery: @js($search) }">
         <form method="GET" action="{{ route('reseller.customer-invoices.index') }}" class="space-y-2">
             
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-2 items-center">
+            <div class="flex flex-col md:flex-row items-stretch md:items-center gap-2 flex-wrap">
                 
                 <!-- Search Box (col-span-2) -->
-                <div class="lg:col-span-2 relative">
+                <div class="relative flex-1 min-w-[200px]">
                     <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
                     <input type="text" 
-                           name="search" 
+                           name="search" x-model="searchQuery"
                            value="{{ $search }}" 
                            placeholder="Search invoice no, customer, username..." 
-                           class="w-full pl-8 pr-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:border-cyan-500 shadow-2xs">
+                           class="w-full h-[34px] pl-8 pr-7 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:border-cyan-500 shadow-2xs">
+                    <button type="button" x-show="searchQuery" x-cloak aria-label="{{ __('Clear Search') }}"
+                            @click="searchQuery = ''; $nextTick(() => $el.closest('form').requestSubmit())"
+                            class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500">
+                        <i class="fas fa-times-circle"></i>
+                    </button>
                 </div>
 
                 <!-- Date Range Preset Selector -->
@@ -142,7 +151,7 @@
                     <select name="date_preset" 
                             x-model="datePreset"
                             @change="onDatePresetChange($event)"
-                            class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:border-cyan-500 shadow-2xs">
+                            class="w-full px-2.5 h-[34px] py-0 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:border-cyan-500 shadow-2xs">
                         <option value="all">All Dates</option>
                         <option value="today">Today</option>
                         <option value="yesterday">Yesterday</option>
@@ -155,7 +164,7 @@
 
                 <!-- Status Filter -->
                 <div>
-                    <select name="status" onchange="this.form.submit()" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:border-cyan-500 shadow-2xs">
+                    <select name="status" onchange="this.form.submit()" class="w-full px-2.5 h-[34px] py-0 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:border-cyan-500 shadow-2xs">
                         <option value="all" {{ $status === 'all' ? 'selected' : '' }}>All Statuses</option>
                         <option value="paid" {{ $status === 'paid' ? 'selected' : '' }}>Paid</option>
                         <option value="due" {{ in_array($status, ['due', 'unpaid']) ? 'selected' : '' }}>Due / Unpaid</option>
@@ -166,7 +175,7 @@
 
                 <!-- Billing Month Filter -->
                 <div>
-                    <select name="month" onchange="this.form.submit()" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:border-cyan-500 shadow-2xs">
+                    <select name="month" onchange="this.form.submit()" class="w-full px-2.5 h-[34px] py-0 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:border-cyan-500 shadow-2xs">
                         <option value="all" {{ $month === 'all' ? 'selected' : '' }}>All Months</option>
                         @foreach($months as $m)
                             <option value="{{ $m }}" {{ $month === $m ? 'selected' : '' }}>
@@ -176,9 +185,45 @@
                     </select>
                 </div>
 
+                <!-- Per Page Selector & Buttons -->
+                <div class="flex flex-wrap items-center gap-1.5 flex-shrink-0 md:ml-auto">
+                    <select name="per_page" onchange="this.form.submit()" class="w-20 px-2 h-[34px] py-0 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:border-cyan-500 shadow-2xs">
+                        @foreach($pageSizes as $limit)
+                            <option value="{{ $limit }}" @selected($perPage === $limit)>{{ __(':count / page', ['count' => $limit]) }}</option>
+                        @endforeach
+                    </select>
+
+                <button type="button" @click="showMoreFilters = !showMoreFilters" :aria-expanded="showMoreFilters"
+                        class="h-[34px] px-2.5 rounded-lg border border-slate-200 bg-slate-50 text-xs font-semibold inline-flex items-center justify-center gap-1.5">
+                    <i class="fas fa-sliders-h text-[10px]"></i>
+                    {{ __('More Filters') }}
+                    @if($activeMoreCount)
+                        <span class="px-1.5 rounded-full bg-cyan-600 text-white text-[9px]">{{ $activeMoreCount }}</span>
+                    @endif
+                    <i class="fas text-[9px]" :class="showMoreFilters ? 'fa-chevron-up text-cyan-600' : 'fa-chevron-down text-slate-400'"></i>
+                </button>
+
+                    <!-- Strict Filter & Reset Sequence (AGENTS.md Rule 2.C) -->
+                    <button type="submit" class="flex-1 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs h-[34px] py-0 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" title="Apply Filters">
+                        <i class="fas fa-filter text-[10px]"></i>
+                        <span>Filter</span>
+                    </button>
+                    <a href="{{ route('reseller.customer-invoices.index', in_array($status, ['due', 'paid', 'unpaid'], true) ? ['status' => $status] : []) }}" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs h-[34px] py-0 px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer" title="Reset Filters">
+                        <i class="fas fa-rotate-left text-[10px]"></i>
+                        <span>Reset</span>
+                    </a>
+                </div>
+
+            </div>
+
+            <!-- Custom Date Range Picker (Visible when date_preset === 'custom') -->
+            <div x-show="showMoreFilters || datePreset === 'custom'" x-cloak
+                 x-transition 
+                 class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 pt-2 border-t border-slate-100 items-center"
+                 style="display: none;">
                 <!-- Package Filter -->
                 <div>
-                    <select name="package_id" onchange="this.form.submit()" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:border-cyan-500 shadow-2xs">
+                    <select name="package_id" onchange="this.form.submit()" class="w-full px-2.5 h-[34px] py-0 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:border-cyan-500 shadow-2xs">
                         <option value="all" {{ $packageId === 'all' ? 'selected' : '' }}>All Packages</option>
                         @foreach($packages as $pkg)
                             <option value="{{ $pkg->id }}" {{ (string)$packageId === (string)$pkg->id ? 'selected' : '' }}>
@@ -188,46 +233,19 @@
                     </select>
                 </div>
 
-                <!-- Per Page Selector & Buttons -->
-                <div class="flex items-center gap-1.5 flex-shrink-0">
-                    <select name="per_page" onchange="this.form.submit()" class="w-20 px-2 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:border-cyan-500 shadow-2xs">
-                        <option value="10" {{ $perPage == 10 ? 'selected' : '' }}>10 / pg</option>
-                        <option value="20" {{ $perPage == 20 ? 'selected' : '' }}>20 / pg</option>
-                        <option value="50" {{ $perPage == 50 ? 'selected' : '' }}>50 / pg</option>
-                        <option value="100" {{ $perPage == 100 ? 'selected' : '' }}>100 / pg</option>
-                    </select>
-
-                    <!-- Strict Filter & Reset Sequence (AGENTS.md Rule 2.C) -->
-                    <button type="submit" class="flex-1 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-1.5 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer" title="Apply Filters">
-                        <i class="fas fa-filter text-[10px]"></i>
-                        <span>Filter</span>
-                    </button>
-                    <a href="{{ route('reseller.customer-invoices.index') }}" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-1.5 px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer" title="Reset Filters">
-                        <i class="fas fa-rotate-left text-[10px]"></i>
-                        <span>Reset</span>
-                    </a>
-                </div>
-
-            </div>
-
-            <!-- Custom Date Range Picker (Visible when date_preset === 'custom') -->
-            <div x-show="datePreset === 'custom'" 
-                 x-transition 
-                 class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 pt-2 border-t border-slate-100 items-center"
-                 style="display: none;">
-                <div>
+                <div x-show="datePreset === 'custom'">
                     <label class="block text-[10px] font-semibold text-slate-600 uppercase mb-0.5">From Date</label>
                     <input type="date" 
                            name="from_date" 
                            value="{{ $fromDate }}" 
-                           class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:border-cyan-500">
+                           class="w-full px-2.5 h-[34px] py-0 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:border-cyan-500">
                 </div>
-                <div>
+                <div x-show="datePreset === 'custom'">
                     <label class="block text-[10px] font-semibold text-slate-600 uppercase mb-0.5">To Date</label>
                     <input type="date" 
                            name="to_date" 
                            value="{{ $toDate }}" 
-                           class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:border-cyan-500">
+                           class="w-full px-2.5 h-[34px] py-0 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:border-cyan-500">
                 </div>
             </div>
 
@@ -240,15 +258,15 @@
             <table class="saas-table">
                 <thead>
                     <tr>
-                        <th class="w-10 text-center">#</th>
-                        <th class="w-28">Invoice No</th>
-                        <th>Customer Name</th>
-                        <th class="w-24">Month</th>
-                        <th>Package</th>
-                        <th class="w-28 text-right">Bill Amount</th>
-                        <th class="w-28 text-right">Due Amount</th>
-                        <th class="w-20 text-center">Status</th>
-                        <th class="w-12 text-center no-sort">Action</th>
+                        <th class="w-10 text-center font-semibold">#</th>
+                        <th class="w-28 text-center font-semibold">Invoice No</th>
+                        <th class="text-center font-semibold">Customer Name</th>
+                        <th class="w-24 text-center font-semibold">Month</th>
+                        <th class="text-center font-semibold">Package</th>
+                        <th class="w-28 text-center font-semibold">Bill Amount</th>
+                        <th class="w-28 text-center font-semibold">Due Amount</th>
+                        <th class="w-20 text-center font-semibold">Status</th>
+                        <th class="w-12 no-sort text-center font-semibold">Action</th>
                     </tr>
                 </thead>
                 <tbody>
