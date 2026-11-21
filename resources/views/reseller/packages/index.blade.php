@@ -120,65 +120,59 @@
             <table class="saas-table">
                 <thead>
                     <tr>
-                        <th class="text-center font-semibold">Package</th>
-                        <th class="w-20 font-mono text-center font-semibold">Download</th>
-                        <th class="w-24 text-center font-semibold">Retail Rate</th>
-                        <th class="w-24 text-center font-semibold">Wholesale Cost</th>
-                        <th class="w-28 text-center font-semibold">Margin ({{ $commissionRate }}%)</th>
-                        <th class="w-20 font-mono text-center font-semibold">Subscribers</th>
-                        <th class="w-10 no-sort text-center font-semibold">Action</th>
+                        <th scope="col" class="text-center font-semibold">{{ __('Package Profile') }}</th>
+                        <th scope="col" class="text-center font-semibold">{{ __('Download') }}</th>
+                        <th scope="col" class="text-center font-semibold">{{ __('Upload') }}</th>
+                        <th scope="col" class="text-center font-semibold no-sort">{{ __('Validity') }}</th>
+                        <th scope="col" class="text-center font-semibold">{{ __('Retail Rate') }}</th>
+                        <th scope="col" class="text-center font-semibold">{{ __('Wholesale Cost') }}</th>
+                        <th scope="col" class="w-10 text-center font-semibold no-sort">{{ __('Action') }}</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($packages as $index => $pkg)
+                    @forelse($packages as $pkg)
                         @php
+                            $profileName = $pkg->name ?: ($pkg->mikrotik_profile ?: $pkg->package_name);
                             $retail = (float) $pkg->price;
-                            $margin = $reseller->calculateCommissionAmount($retail);
                             $cost = $reseller->calculateResellerCost($retail);
-                            $subs = $subscriberCounts->get($pkg->id);
-                            $activeSubs = $subs ? $subs->active_subscribers : 0;
                         @endphp
                         <tr>
-                            <!-- 2. Package (MikroTik Profile Name) -->
-                            <td class="font-mono font-bold text-cyan-800">
-                                <button type="button" class="hover:underline cursor-pointer font-mono font-bold" @click="fetchPackageDetails({{ $pkg->id }})">
-                                    {{ $pkg->name ?: ($pkg->mikrotik_profile ?: $pkg->package_name) }}
-                                </button>
+                            <td class="text-left font-semibold text-cyan-800">{{ $profileName }}</td>
+                            <td class="text-center font-mono text-blue-700" data-sort-value="{{ $pkg->download_speed }}">
+                                @if(filled($pkg->download_speed))
+                                    {{ is_numeric($pkg->download_speed) ? __(':speed Mbps', ['speed' => (float) $pkg->download_speed]) : $pkg->download_speed }}
+                                @else
+                                    &mdash;
+                                @endif
                             </td>
-
-                            <!-- 3. Download (M) -->
-                            <td class="text-center font-mono font-bold text-blue-700">
-                                {{ $pkg->download_speed ? $pkg->download_speed . 'M' : '—' }}
+                            <td class="text-center font-mono text-teal-700" data-sort-value="{{ $pkg->upload_speed }}">
+                                @if(filled($pkg->upload_speed))
+                                    {{ is_numeric($pkg->upload_speed) ? __(':speed Mbps', ['speed' => (float) $pkg->upload_speed]) : $pkg->upload_speed }}
+                                @else
+                                    &mdash;
+                                @endif
                             </td>
-
-                            <!-- 8. Retail Rate -->
-                            <td class="text-right font-mono font-bold text-slate-900">
+                            <td class="text-center font-mono text-slate-700">
+                                @if(filled($pkg->validity_days))
+                                    {{ is_numeric($pkg->validity_days) ? $pkg->validity_days . ' ' . __(ucfirst(strtolower($pkg->validity_unit ?: 'days'))) : $pkg->validity_days }}
+                                @else
+                                    &mdash;
+                                @endif
+                            </td>
+                            <td class="text-right font-mono font-bold text-slate-900" data-sort-value="{{ $retail }}">
                                 @currency($retail)
                             </td>
-
-                            <!-- 9. Wholesale Cost -->
-                            <td class="text-right font-mono font-semibold text-slate-700">
+                            <td class="text-right font-mono text-slate-700" data-sort-value="{{ $cost }}">
                                 @currency($cost)
                             </td>
-
-                            <!-- 10. Margin (Profit) -->
-                            <td class="text-right font-mono font-bold text-emerald-600">
-                                +@currency($margin)
-                            </td>
-
-                            <!-- 11. Subscribers -->
-                            <td class="text-center font-mono font-bold {{ $activeSubs > 0 ? 'text-emerald-700' : 'text-slate-400' }}">
-                                {{ $activeSubs }}
-                            </td>
-
-                            <!-- 12. Action (3-Dot Floating Trigger) -->
                             <td class="text-center">
                                 <button type="button" 
                                         @click.stop="toggleMenu({{ Js::from([
                                             'id' => $pkg->id,
-                                            'name' => $pkg->name ?: ($pkg->mikrotik_profile ?: $pkg->package_name),
+                                            'name' => $profileName,
                                             'speed' => $pkg->download_speed
                                         ]) }}, $event)" 
+                                        aria-label="{{ __('Package actions') }}"
                                         class="w-7 h-7 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition flex items-center justify-center mx-auto cursor-pointer">
                                     <i class="fas fa-ellipsis-v text-[10px]"></i>
                                 </button>
@@ -300,7 +294,7 @@
                         </div>
                         <div class="p-2 bg-slate-50 rounded-lg border border-slate-200/80">
                             <span class="text-[10px] text-slate-500 block">Validity</span>
-                            <span class="font-bold font-mono text-slate-800" x-text="(pkgData?.validity_days || 30) + ' Days'"></span>
+                            <span class="font-bold font-mono text-slate-800" x-text="pkgData?.validity_days == null ? '&mdash;' : (Number.isNaN(Number(pkgData.validity_days)) ? pkgData.validity_days : pkgData.validity_days + ' ' + (pkgData.validity_unit || @js(__('Days'))))"></span>
                         </div>
                     </div>
                 </div>
