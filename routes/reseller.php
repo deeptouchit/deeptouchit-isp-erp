@@ -16,6 +16,7 @@ use App\Http\Controllers\Reseller\ResellerStaffController;
 use App\Http\Controllers\Reseller\ResellerTicketController;
 use App\Http\Controllers\Tenant\Auth\TenantAuthController;
 use App\Http\Controllers\Tenant\Customer\TenantCoverageZoneController;
+use App\Http\Controllers\Tenant\Customer\TenantCustomerController;
 use App\Http\Middleware\EnsureResellerAdmin;
 use App\Http\Middleware\EnsureResellerUser;
 use Illuminate\Support\Facades\Route;
@@ -127,6 +128,8 @@ Route::middleware(['web'])->group(function () {
 
         // 3. Reseller Admin ONLY Protected Routes (Financials, Packages, Staff & Margins)
         Route::middleware([EnsureResellerAdmin::class])->group(function () {
+            Route::get('/reseller/customers/monthly-analytics', [TenantCustomerController::class, 'monthlyAnalytics'])
+                ->name('reseller.customers.monthly-analytics');
             // Customer Deletion
             Route::delete('/reseller/customers/{id}', [ResellerCustomerController::class, 'destroy'])->whereNumber('id')->name('reseller.customers.destroy');
 

@@ -140,6 +140,36 @@ class ResellerCustomerController extends Controller
             $query->where('online_status', $onlineStatus);
         }
 
+        $monthFilters = $request->validate([
+            'created_month' => 'sometimes|required|date_format:Y-m',
+            'recharged_month' => 'sometimes|required|date_format:Y-m',
+            'unpaid_month' => 'sometimes|required|date_format:Y-m',
+        ]);
+
+        foreach ($monthFilters as $filter => $month) {
+            $start = Carbon::createFromFormat('!Y-m', $month);
+            $end = $start->copy()->endOfMonth();
+
+            if ($filter === 'created_month') {
+                $query->whereBetween('created_at', [$start, $end]);
+                continue;
+            }
+
+            $paymentsInMonth = fn ($payments) => $payments
+                ->where('tenant_id', $tenantId)
+                ->where(fn ($payment) => $payment->where('reseller_id', $resellerId)->orWhereNull('reseller_id'))
+                ->where('status', 'completed')
+                ->whereBetween(DB::raw('COALESCE(paid_at, created_at)'), [$start, $end]);
+
+            if ($filter === 'recharged_month') {
+                $query->whereHas('payments', $paymentsInMonth);
+            } else {
+                $query->where('created_at', '<=', $end)
+                    ->whereNotIn('status', ['disabled', 'disconnected', 'archived'])
+                    ->whereDoesntHave('payments', $paymentsInMonth);
+            }
+        }
+
         $customers = $query->paginate($perPage)->withQueryString();
 
         // 2. Dropdown Datasets
@@ -206,6 +236,7 @@ class ResellerCustomerController extends Controller
             'onlineStatus',
             'perPage',
             'pageSizes',
+            'monthFilters',
             'currencySymbol'
         ));
     }

@@ -87,6 +87,7 @@ return [
             [
                 'title'    => 'Monthly Analytics',
                 'route'    => 'reseller.customers.monthly-analytics',
+                'roles'    => ['reseller_admin', 'reseller_owner', 'reseller_manager', 'admin', 'manager'],
                 'active'   => ['reseller.customers.monthly-analytics*'],
                 'keywords' => 'monthly analytics growth recharge new customers report cohorts trends cohorts billing month',
             ],

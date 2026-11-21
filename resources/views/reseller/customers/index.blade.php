@@ -164,6 +164,9 @@
     <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5"
          x-data="{ showMoreFilters: {{ $activeMoreCount ? 'true' : 'false' }} }">
         <form method="GET" action="{{ route('reseller.customers.index') }}" class="space-y-2.5">
+            @foreach($monthFilters as $filter => $month)
+                <input type="hidden" name="{{ $filter }}" value="{{ $month }}">
+            @endforeach
             <div class="flex flex-wrap items-center gap-2">
                 <div class="relative flex-1 min-w-[180px]">
                     <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-xs pointer-events-none"

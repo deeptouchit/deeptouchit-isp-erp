@@ -4126,13 +4126,19 @@ class TenantCustomerController extends Controller
      */
     public function monthlyAnalytics(Request $request)
     {
+        $user = $request->user();
+        $resellerPortal = $request->routeIs('reseller.customers.monthly-analytics');
+        if ($resellerPortal) {
+            abort_unless($user?->tenant && $user->reseller && (int) $user->reseller->tenant_id === (int) $user->tenant_id, 403);
+        }
         $tenant = $this->getTenant();
-        $user = Auth::user();
         $isResellerUser = $user && ($user->isResellerUser() || !empty($user->reseller_id));
         $userResellerId = $user?->reseller_id;
 
-        $currentYear = (int) date('Y');
-        $selectedYear = (int) $request->input('year', $currentYear);
+        $now = now();
+        $currentYear = $now->year;
+        $filters = $request->validate(['year' => 'sometimes|required|integer|between:1900,9999']);
+        $selectedYear = (int) ($filters['year'] ?? $currentYear);
         $isCurrentYear = ($selectedYear === $currentYear);
 
         if ($isResellerUser) {
@@ -4150,9 +4156,19 @@ class TenantCustomerController extends Controller
         $sortOrder = (string) $request->input('sort_order', 'newest');
 
         // Available years for dropdown
+        $isSqlite = (new TenantCustomer)->getConnection()->getDriverName() === 'sqlite';
+        $yearExpression = $isSqlite ? "strftime('%Y', created_at)" : 'YEAR(created_at)';
+        $customerMonthExpression = $isSqlite ? "strftime('%m', created_at)" : 'MONTH(created_at)';
+        $paidAt = 'COALESCE(paid_at, created_at)';
+        $paymentMonthExpression = $isSqlite ? "strftime('%m', {$paidAt})" : "MONTH({$paidAt})";
+        $yearStart = Carbon::create($selectedYear, 1, 1, 0, 0, 0);
+        $yearEnd = $yearStart->copy()->endOfYear();
+
         $years = TenantCustomer::where('tenant_id', $tenant->id)
-            ->selectRaw('DISTINCT YEAR(created_at) as yr')
+            ->when($isResellerUser, fn ($query) => $query->where('reseller_id', $userResellerId))
+            ->selectRaw("DISTINCT {$yearExpression} as yr")
             ->pluck('yr')
+            ->map(fn ($year) => (int) $year)
             ->merge([$currentYear, $currentYear - 1])
             ->filter()
             ->unique()
@@ -4184,11 +4200,11 @@ class TenantCustomerController extends Controller
             ->values();
 
         // Monthly breakdown for selectedYear
-        $maxMonth = $isCurrentYear ? (int) date('n') : 12;
+        $maxMonth = $isCurrentYear ? $now->month : 12;
 
         // Query 1: New customers per month
         $newCustomersQuery = TenantCustomer::where('tenant_id', $tenant->id)
-            ->whereYear('created_at', $selectedYear);
+            ->whereBetween('created_at', [$yearStart, $yearEnd]);
         if ($scope === 'isp') {
             $newCustomersQuery->whereNull('reseller_id');
         } elseif ($scope === 'reseller') {
@@ -4201,35 +4217,43 @@ class TenantCustomerController extends Controller
             $newCustomersQuery->where('zone', $zone);
         }
         $newCustomersMonthly = $newCustomersQuery
-            ->selectRaw('MONTH(created_at) as m, COUNT(*) as cnt')
+            ->selectRaw("{$customerMonthExpression} as m, COUNT(*) as cnt")
             ->groupBy('m')
-            ->pluck('cnt', 'm');
+            ->pluck('cnt', 'm')
+            ->mapWithKeys(fn ($count, $month) => [(int) $month => $count]);
 
         // Query 2: Payments per month (Recharged customers count & Total collection)
         $paymentsQuery = TenantCustomerPayment::where('tenant_id', $tenant->id)
             ->where('status', 'completed')
-            ->whereYear(DB::raw('COALESCE(paid_at, created_at)'), $selectedYear);
+            ->whereBetween(DB::raw($paidAt), [$yearStart, $yearEnd])
+            ->when($resellerPortal, fn ($query) => $query->whereHas('customer', fn ($customer) => $customer
+                ->where('tenant_id', $tenant->id)
+                ->where('reseller_id', $userResellerId)));
         if ($scope === 'isp') {
             $paymentsQuery->whereNull('reseller_id');
-        } elseif ($scope === 'reseller') {
+        } elseif ($scope === 'reseller' && !$resellerPortal) {
             $paymentsQuery->whereNotNull('reseller_id');
         }
-        if ($resellerId) {
+        if ($resellerPortal) {
+            $paymentsQuery->where(function ($payment) use ($resellerId) {
+                $payment->where('reseller_id', $resellerId)->orWhereNull('reseller_id');
+            });
+        } elseif ($resellerId) {
             $paymentsQuery->where('reseller_id', $resellerId);
         }
         if ($zone !== '') {
             $paymentsQuery->whereHas('customer', fn($cq) => $cq->where('zone', $zone));
         }
         $monthlyPayments = $paymentsQuery
-            ->selectRaw('
-                MONTH(COALESCE(paid_at, created_at)) as m,
+            ->selectRaw("
+                {$paymentMonthExpression} as m,
                 COUNT(DISTINCT customer_id) as recharged_count,
                 SUM(amount) as total_collection,
                 COUNT(*) as transaction_count
-            ')
+            ")
             ->groupBy('m')
             ->get()
-            ->keyBy('m');
+            ->keyBy(fn ($payment) => (int) $payment->m);
 
         $totalActiveSubscribers = TenantCustomer::where('tenant_id', $tenant->id)
             ->when($scope === 'isp', fn($q) => $q->whereNull('reseller_id'))
@@ -4382,6 +4406,7 @@ class TenantCustomerController extends Controller
 
         return view('tenant.customers.monthly_analytics', compact(
             'tenant',
+            'resellerPortal',
             'currencySymbol',
             'isResellerUser',
             'isCurrentYear',

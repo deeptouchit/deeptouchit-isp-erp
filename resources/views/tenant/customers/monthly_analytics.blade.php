@@ -1,4 +1,4 @@
-@extends('tenant.layouts.app')
+@extends($resellerPortal ? 'reseller.layouts.app' : 'tenant.layouts.app')
 
 @section('title', __('Monthly Analytics') . ' - ' . ($tenant->company_name ?? $tenant->name))
 
@@ -8,6 +8,8 @@
 
 @section('content')
 @php
+    $customerRoutePrefix = $resellerPortal ? 'reseller.customers.' : 'tenant.customers.';
+    $drilldownFilters = $resellerPortal ? ['zone' => $zone] : ['scope' => $scope, 'reseller_id' => $resellerId, 'zone' => $zone];
     $currSym = $currencySymbol ?? '৳';
     $currPos = $currencyPosition ?? 'left';
     $currDec = (int)($currencyDecimals ?? 2);
@@ -50,13 +52,13 @@
                 <span>{{ __('Export CSV') }}</span>
             </a>
 
-            <a href="{{ route('tenant.customers.bulk-payments') }}"
+            <a href="{{ route($customerRoutePrefix . 'bulk-payments') }}"
                class="px-3 py-1.5 rounded-lg bg-cyan-50 hover:bg-cyan-100 text-cyan-700 font-semibold text-xs border border-cyan-200 transition inline-flex items-center gap-1.5 shadow-2xs cursor-pointer">
                 <i class="fas fa-layer-group text-[10px]"></i>
                 <span>{{ __('Bulk Payments') }}</span>
             </a>
 
-            <a href="{{ route('tenant.customers.index') }}"
+            <a href="{{ route($customerRoutePrefix . 'index') }}"
                class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs border border-slate-200/80 transition inline-flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-users text-[10px]"></i>
                 <span>{{ __('All Customers') }}</span>
@@ -136,7 +138,7 @@
     <!-- 3. Search & Multi-Filter Toolbar (Customer-Standard 2-Tier System, Uniform h-[34px]) -->
     <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5"
          x-data='{!! json_encode(["showMoreFilters" => $isMoreOpen, "searchQuery" => $search ?? ""], JSON_HEX_APOS) !!}'>
-        <form method="GET" action="{{ route('tenant.customers.monthly-analytics') }}" class="space-y-2.5">
+        <form method="GET" action="{{ route($customerRoutePrefix . 'monthly-analytics') }}" class="space-y-2.5">
             <!-- Tier 1: Primary Filter Bar -->
             <div class="flex flex-col md:flex-row items-stretch md:items-center gap-2">
                 <!-- Live Search Month -->
@@ -229,7 +231,7 @@
                         <i class="fas fa-filter text-[10px]"></i>
                         <span>{{ __('Filter') }}</span>
                     </button>
-                    <a href="{{ route('tenant.customers.monthly-analytics') }}"
+                    <a href="{{ route($customerRoutePrefix . 'monthly-analytics') }}"
                        class="h-[34px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-0 px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer"
                        title="{{ __('Reset Filters') }}">
                         <i class="fas fa-rotate-left text-[10px]"></i>
@@ -329,9 +331,9 @@
 
                             $rowPayload = array_merge($r, [
                                 'collection_formatted' => $formatCurrency((float) $r['collection']),
-                                'new_url' => route('tenant.customers.index', ['created_month' => $r['month_key'], 'scope' => $scope, 'reseller_id' => $resellerId, 'zone' => $zone]),
-                                'recharged_url' => route('tenant.customers.index', ['recharged_month' => $r['month_key'], 'scope' => $scope, 'reseller_id' => $resellerId, 'zone' => $zone]),
-                                'unpaid_url' => route('tenant.customers.index', ['unpaid_month' => $r['month_key'], 'scope' => $scope, 'reseller_id' => $resellerId, 'zone' => $zone]),
+                                'new_url' => route($customerRoutePrefix . 'index', $drilldownFilters + ['created_month' => $r['month_key']]),
+                                'recharged_url' => route($customerRoutePrefix . 'index', $drilldownFilters + ['recharged_month' => $r['month_key']]),
+                                'unpaid_url' => route($customerRoutePrefix . 'index', $drilldownFilters + ['unpaid_month' => $r['month_key']]),
                             ]);
                         @endphp
                         <tr>
@@ -392,7 +394,7 @@
                                         <p class="text-[11px] text-slate-500 whitespace-normal">{{ __('Try adjusting the selected year, partner, zone, or filter criteria.') }}</p>
                                     </div>
                                     <div class="pt-1">
-                                        <a href="{{ route('tenant.customers.monthly-analytics') }}"
+                                        <a href="{{ route($customerRoutePrefix . 'monthly-analytics') }}"
                                            class="px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer">
                                             <i class="fas fa-rotate-left text-[10px]"></i>
                                             <span>{{ __('Reset Filters') }}</span>
