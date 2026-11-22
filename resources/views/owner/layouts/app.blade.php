@@ -10,7 +10,7 @@
     $unreadNotifsCount = $ownerUser ? $ownerUser->unreadNotifications()->count() : 0;
 @endphp
 
-<div class="min-h-screen flex flex-col bg-slate-100/70 text-slate-800 text-xs antialiased font-sans" 
+<div class="min-h-screen flex flex-col bg-slate-100/70 text-slate-800 text-xs antialiased" 
      x-data="{ 
         mobileSidebar: false, 
         filterQuery: '' 

@@ -31,7 +31,7 @@
 @endphp
 
 {{-- Application Container with Alpine.js Reactive State --}}
-<div class="min-h-screen flex flex-col bg-slate-100/70 text-slate-800 text-xs antialiased font-sans selection:bg-blue-600 selection:text-white" 
+<div class="min-h-screen flex flex-col bg-slate-100/70 text-slate-800 text-xs antialiased selection:bg-blue-600 selection:text-white" 
      x-data="{ 
         mobileSidebar: false, 
         sidebarCollapsed: document.documentElement.classList.contains('sidebar-collapsed'),
