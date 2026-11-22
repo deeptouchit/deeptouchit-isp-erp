@@ -254,7 +254,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="text-center py-8 text-slate-400 text-xs">
+                            <td colspan="8" class="text-center py-8 text-slate-400 text-xs">
                                 <i class="fas fa-users-gear text-3xl mb-2 block text-slate-300"></i>
                                 <span>{{ __('No staff members found matching your search.') }}</span>
                             </td>
