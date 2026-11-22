@@ -414,7 +414,7 @@ class MikrotikApiService
     }
 
     /**
-     * Read all active PPPoE byte counters in one RouterOS request.
+     * Read live PPPoE counters with two batched RouterOS queries.
      */
     public function getPppoeSessionBytes(TenantRouter $router): ?array
     {
@@ -423,26 +423,46 @@ class MikrotikApiService
                 return null;
             }
 
-            $this->writeCommand('/ppp/active/print', ['=stats=', '=.proplist=.id,name,session-id,bytes', '?service=pppoe']);
-            $rows = $this->readAll();
-            if (!isset($rows[array_key_last($rows)]['!done'])) {
+            $this->writeCommand('/interface/pppoe-server/print', ['=.proplist=name,user', '?running=true']);
+            $bindings = $this->readAll();
+            if (!isset($bindings[array_key_last($bindings)]['!done'])) {
+                return null;
+            }
+
+            $usernames = [];
+            foreach ($bindings as $row) {
+                $binding = $row['!re'] ?? [];
+                if (isset($binding['name'], $binding['user']) && $binding['user'] !== '') {
+                    $usernames[$binding['name']] = $binding['user'];
+                }
+            }
+            if ($usernames === []) {
+                return [];
+            }
+
+            $this->writeCommand('/interface/print', ['=.proplist=.id,name,rx-byte,tx-byte', '?type=pppoe-in']);
+            $interfaces = $this->readAll();
+            if (!isset($interfaces[array_key_last($interfaces)]['!done'])) {
                 return null;
             }
 
             $sessions = [];
-            foreach ($rows as $row) {
-                if (!isset($row['!re'])) {
+            foreach ($interfaces as $row) {
+                $interface = $row['!re'] ?? [];
+                $name = $interface['name'] ?? '';
+                if (!isset($usernames[$name])) {
                     continue;
                 }
-
-                $data = $row['!re'];
-                if (empty($data['name']) || empty($data['.id']) || !preg_match('/^(\d+)\/(\d+)$/D', $data['bytes'] ?? '', $bytes)) {
+                if (empty($interface['.id']) || !ctype_digit($interface['rx-byte'] ?? '') || !ctype_digit($interface['tx-byte'] ?? '')) {
                     return null;
                 }
 
-                // PPP reports transmitted bytes first, from the router's perspective.
-                $key = $data['.id'] . ':' . ($data['session-id'] ?? '');
-                $sessions[$key] = ['username' => $data['name'], 'download' => (int) $bytes[1], 'upload' => (int) $bytes[2]];
+                // From the router's perspective, TX goes to the customer and RX comes from them.
+                $sessions[$interface['.id'] . ':' . $name] = [
+                    'username' => $usernames[$name],
+                    'download' => (int) $interface['tx-byte'],
+                    'upload' => (int) $interface['rx-byte'],
+                ];
             }
 
             return $sessions;

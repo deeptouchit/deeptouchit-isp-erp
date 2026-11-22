@@ -19,6 +19,28 @@ class ResellerBandwidthTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_router_interface_counters_are_mapped_from_router_to_customer_direction(): void
+    {
+        $router = new TenantRouter(['ip_address' => '192.0.2.5']);
+        $api = \Mockery::mock(MikrotikApiService::class)->makePartial();
+        $api->shouldReceive('connect')->once()->andReturnTrue();
+        $api->shouldReceive('writeCommand')->once()->with('/interface/pppoe-server/print', ['=.proplist=name,user', '?running=true'])->ordered();
+        $api->shouldReceive('writeCommand')->once()->with('/interface/print', ['=.proplist=.id,name,rx-byte,tx-byte', '?type=pppoe-in'])->ordered();
+        $api->shouldReceive('readAll')->twice()->andReturn(
+            [['!re' => ['name' => 'static-binding', 'user' => 'customer']], ['!done' => []]],
+            [
+                ['!re' => ['.id' => '*1', 'name' => 'static-binding', 'rx-byte' => '250', 'tx-byte' => '900']],
+                ['!re' => ['.id' => '*2', 'name' => 'other-interface', 'rx-byte' => '500', 'tx-byte' => '700']],
+                ['!done' => []],
+            ]
+        );
+        $api->shouldReceive('disconnect')->once();
+
+        $this->assertSame([
+            '*1:static-binding' => ['username' => 'customer', 'download' => 900, 'upload' => 250],
+        ], $api->getPppoeSessionBytes($router));
+    }
+
     public function test_it_only_displays_provisioned_reseller_bandwidth(): void
     {
         [$tenant, $reseller, $user] = $this->resellerAccount();
