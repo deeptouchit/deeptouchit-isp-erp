@@ -6,10 +6,16 @@
                 <tr>
                     <th scope="col" class="w-10 text-center font-semibold no-sort">#</th>
                     <th scope="col" class="text-center font-semibold">{{ __('Customer ID') }}</th>
-                    <th scope="col" class="text-center font-semibold">{{ __('Customer Name') }}</th>
-                    <th scope="col" class="text-center font-semibold">{{ __('Package Profile') }}</th>
-                    <th scope="col" class="text-center font-semibold">{{ __('Due Amount') }}</th>
+                    <th scope="col" class="text-center font-semibold">{{ __('Live') }}</th>
                     <th scope="col" class="text-center font-semibold">{{ __('Status') }}</th>
+                    <th scope="col" class="text-center font-semibold">{{ __('Name') }}</th>
+                    <th scope="col" class="text-center font-semibold">{{ __('Mobile') }}</th>
+                    <th scope="col" class="text-center font-semibold">{{ __('PPPoE') }}</th>
+                    <th scope="col" class="text-center font-semibold">{{ __('Zone / Area') }}</th>
+                    <th scope="col" class="text-center font-semibold">{{ __('Package') }}</th>
+                    <th scope="col" class="text-center font-semibold">{{ __('Bill') }}</th>
+                    <th scope="col" class="text-center font-semibold">{{ __('Due Amount') }}</th>
+                    <th scope="col" class="text-center font-semibold">{{ __('Expiry Date') }}</th>
                     <th scope="col" class="w-10 text-center font-semibold no-sort">{{ __('Action') }}</th>
                 </tr>
             </thead>
@@ -18,10 +24,16 @@
                     <tr>
                         <td class="text-center font-mono">{{ ($offset ?? 0) + $loop->iteration }}</td>
                         <td class="text-center font-mono">{{ $customer->customer_id }}</td>
-                        <td class="text-left">{{ $customer->name }}</td>
-                        <td class="text-left">{{ $customer->package_display_name }}</td>
-                        <td class="text-right font-mono" data-sort-value="{{ $customer->due_amount }}">@currency($customer->due_amount)</td>
+                        <td class="text-center">{{ $customer->online_status === 'online' ? __('Online') : __('Offline') }}</td>
                         <td class="text-center">{{ __(ucfirst($customer->status)) }}</td>
+                        <td class="text-left">{{ $customer->name }}</td>
+                        <td class="text-center font-mono">{{ $customer->phone ?: '--' }}</td>
+                        <td class="text-center font-mono">{{ $customer->username ?: '--' }}</td>
+                        <td class="text-left">{{ $customer->zone ?: '--' }}</td>
+                        <td class="text-left">{{ $customer->package_display_name }}</td>
+                        <td class="text-right font-mono">@currency($customer->monthly_bill)</td>
+                        <td class="text-right font-mono" data-sort-value="{{ $customer->due_amount }}">@currency($customer->due_amount)</td>
+                        <td class="text-center font-mono">{{ $customer->expiry_date?->format('d M Y') ?? '--' }}</td>
                         <td class="text-center">
                             <button type="button" aria-label="{{ __('Action') }}" :aria-expanded="target === @js(route('reseller.customers.show', $customer->id))"
                                     @click.stop="const url = @js(route('reseller.customers.show', $customer->id));
@@ -38,7 +50,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="py-8 text-center">
+                        <td colspan="14" class="py-8 text-center">
                             <i class="fas fa-users text-cyan-600 mb-2" aria-hidden="true"></i>
                             <p class="font-semibold text-slate-700">{{ __('No assigned customers match your filters.') }}</p>
                             <a href="{{ route('reseller.customers.index') }}" class="mt-2 inline-block font-semibold text-cyan-700">{{ __('Assigned Customers') }}</a>
