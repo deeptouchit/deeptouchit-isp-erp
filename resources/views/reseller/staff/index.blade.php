@@ -186,7 +186,8 @@
                         <th scope="col" class="text-center font-semibold">{{ __('Staff Member') }}</th>
                         <th scope="col" class="text-center font-semibold w-28 font-mono">{{ __('Staff ID') }}</th>
                         <th scope="col" class="text-center font-semibold w-40">{{ __('Role') }}</th>
-                        <th scope="col" class="text-center font-semibold w-24  font-mono">{{ __('Email') }}</th>
+                        <th scope="col" class="text-center font-semibold w-24">{{ __('Email') }}</th>
+                        <th scope="col" class="text-center font-semibold w-32">{{ __('Mobile') }}</th>
                         <th scope="col" class="text-center font-semibold w-20">{{ __('Status') }}</th>
                         <th scope="col" class="text-center font-semibold w-10  no-sort">{{ __('Action') }}</th>
                     </tr>
@@ -218,15 +219,17 @@
                                 <span class="inline-block max-w-[16rem] truncate align-middle" title="{{ $staff->email }}">{{ $staff->email ?: __('N/A') }}</span>
                             </td>
 
+                            <td class="text-center text-slate-700">{{ $staff->phone ?: ($staff->mobile ?: __('N/A')) }}</td>
+
                             <!-- 7. Status -->
                             <td class="text-center">
                                 @if($staff->status === 'active')
-                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold font-mono bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                                         <i class="fas fa-circle text-[6px]"></i>
                                         <span>{{ __('Active') }}</span>
                                     </span>
                                 @else
-                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold font-mono bg-slate-100 text-slate-600 border border-slate-200">
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
                                         <i class="fas fa-pause text-[6px]"></i>
                                         <span>{{ __('Inactive') }}</span>
                                     </span>
