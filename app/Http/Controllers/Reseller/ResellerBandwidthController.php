@@ -4,13 +4,9 @@ namespace App\Http\Controllers\Reseller;
 
 use App\Http\Controllers\Controller;
 use App\Models\SupportTicket;
-use App\Models\Tenant;
 use App\Models\TenantActivityLog;
-use App\Models\TenantCustomer;
-use App\Models\TenantInternetPackage;
 use App\Models\TenantReseller;
 use App\Models\TenantResellerBandwidth;
-use App\Models\TenantRouter;
 use App\Models\TicketMessage;
 use App\Models\User;
 use App\Notifications\TicketActivityNotification;
@@ -18,9 +14,11 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use App\Services\NotificationScopeService;
+use App\Services\Network\MikrotikApiService;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -34,216 +32,123 @@ class ResellerBandwidthController extends Controller
     {
         $user = Auth::user();
         $reseller = $user->reseller;
-        if (!$reseller && $user->reseller_id) {
-            $reseller = TenantReseller::find($user->reseller_id);
-        }
-        if (!$reseller && $user->tenant_id) {
-            $reseller = TenantReseller::where('tenant_id', $user->tenant_id)->first();
-        }
-        if (!$reseller) {
-            $reseller = TenantReseller::first();
-        }
+        abort_unless($reseller && (int) $reseller->tenant_id === (int) $user->tenant_id, 403);
 
-        $tenant = $reseller?->tenant ?? ($user->tenant ?? Tenant::first());
-
-        return [$user, $reseller, $tenant];
+        return [$user, $reseller, $reseller->tenant];
     }
 
-    /**
-     * Display Wholesale Bandwidth Allocation & Real-Time Traffic Telemetry.
-     */
-    public function index(Request $request): View
+    private function allocation(TenantReseller $reseller): ?TenantResellerBandwidth
     {
-        [$user, $reseller, $tenant] = $this->getResellerData();
-        $resellerId = $reseller?->id;
-        $tenantId = $tenant?->id;
-
-        // 1. Resolve or Initialize Reseller Bandwidth Allocation
-        $bandwidth = null;
-        if ($resellerId) {
-            $bandwidth = TenantResellerBandwidth::where('tenant_id', $tenantId)
-                ->where('reseller_id', $resellerId)
-                ->with(['router'])
-                ->first();
-
-            // If not yet explicitly provisioned by tenant, create sensible baseline
-            if (!$bandwidth) {
-                $defaultRouter = TenantRouter::where('tenant_id', $tenantId)->first();
-                $bandwidth = TenantResellerBandwidth::create([
-                    'tenant_id' => $tenantId,
-                    'reseller_id' => $resellerId,
-                    'router_id' => $defaultRouter?->id,
-                    'interface_name' => 'ether1-wan',
-                    'vlan_id' => 100,
-                    'global_bandwidth_mbps' => 150.00,
-                    'bdix_bandwidth_mbps' => 150.00,
-                    'cdn_bandwidth_mbps' => 100.00,
-                    'ggc_bandwidth_mbps' => 50.00,
-                    'fna_bandwidth_mbps' => 50.00,
-                    'other_bandwidth_mbps' => 0.00,
-                    'total_bandwidth_mbps' => 500.00,
-                    'allocation_type' => 'DEDICATED_CIR',
-                    'rate_per_mbps' => 120.00,
-                    'monthly_bill_amount' => 60000.00,
-                    'mikrotik_queue_name' => 'subisp_' . strtolower($reseller->prefix ?? $reseller->code ?? 'p') . '_limit',
-                    'current_usage_mbps' => 334.50,
-                    'peak_usage_mbps' => 455.80,
-                    'status' => 'ACTIVE',
-                    'notes' => 'Baseline dedicated wholesale pipeline',
-                    'last_sync_at' => now(),
-                ]);
-            }
-        }
-
-        // 2. Retail Subscribers Bandwidth Query
-        $search = trim($request->input('search', ''));
-        $packageId = $request->input('package_id', 'all');
-        $status = $request->input('status', 'all');
-        $perPage = (int) $request->input('per_page', 20);
-        if (!in_array($perPage, [10, 20, 50, 100], true)) {
-            $perPage = 20;
-        }
-
-        $customerQuery = TenantCustomer::where('tenant_id', $tenantId)
-            ->where('reseller_id', $resellerId)
-            ->with(['package', 'router']);
-
-        if (!empty($search)) {
-            $customerQuery->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('customer_id', 'like', "%{$search}%")
-                  ->orWhere('username', 'like', "%{$search}%")
-                  ->orWhere('ip_address', 'like', "%{$search}%")
-                  ->orWhere('mobile', 'like', "%{$search}%");
-            });
-        }
-
-        if ($packageId !== 'all' && !empty($packageId)) {
-            $customerQuery->where('package_id', $packageId);
-        }
-
-        if ($status !== 'all' && !empty($status)) {
-            if ($status === 'online') {
-                $customerQuery->where('online_status', 'online');
-            } elseif ($status === 'offline') {
-                $customerQuery->where('online_status', 'offline');
-            } elseif ($status === 'active') {
-                $customerQuery->where('status', 'active');
-            } elseif ($status === 'due') {
-                $customerQuery->where('status', 'due');
-            } elseif ($status === 'expired') {
-                $customerQuery->where('status', 'expired');
-            }
-        }
-
-        $customers = $customerQuery->orderByDesc('id')->paginate($perPage)->withQueryString();
-
-        // Packages for dropdown
-        $packages = TenantInternetPackage::where('tenant_id', $tenantId)->orderBy('name')->get();
-
-        // 3. Compute 6 KPI Metric Cards & Real Metrics (AGENTS.md Rule 2.B)
-        $totalAllocatedMbps = (float) ($bandwidth?->total_bandwidth_mbps ?? 0);
-        
-        // Realistic ingress usage bounded by allocated total
-        $rawCurrentUsage = (float) ($bandwidth?->current_usage_mbps ?? 0);
-        $currentUsageMbps = ($rawCurrentUsage > 0 && $rawCurrentUsage <= $totalAllocatedMbps) 
-            ? $rawCurrentUsage 
-            : round($totalAllocatedMbps * 0.68, 2);
-
-        $rawPeak = (float) ($bandwidth?->peak_usage_mbps ?? 0);
-        $peakUsageMbps = ($rawPeak > 0 && $rawPeak <= $totalAllocatedMbps) 
-            ? $rawPeak 
-            : round($totalAllocatedMbps * 0.88, 2);
-
-        $globalMbps = (float) ($bandwidth?->global_bandwidth_mbps ?? 0);
-        $bdixCdnMbps = (float) (
-            ($bandwidth?->bdix_bandwidth_mbps ?? 0) +
-            ($bandwidth?->cdn_bandwidth_mbps ?? 0) +
-            ($bandwidth?->ggc_bandwidth_mbps ?? 0) +
-            ($bandwidth?->fna_bandwidth_mbps ?? 0) +
-            ($bandwidth?->other_bandwidth_mbps ?? 0)
-        );
-        $utilizationPercent = $totalAllocatedMbps > 0 ? round(($currentUsageMbps / $totalAllocatedMbps) * 100, 1) : 0.0;
-
-        // Total Subscribers Aggregations
-        $totalSubscribersCount = TenantCustomer::where('tenant_id', $tenantId)->where('reseller_id', $resellerId)->count();
-        $activeSubscribersCount = TenantCustomer::where('tenant_id', $tenantId)->where('reseller_id', $resellerId)->where('status', 'active')->count();
-        $onlineSessionsCount = TenantCustomer::where('tenant_id', $tenantId)->where('reseller_id', $resellerId)->where('online_status', 'online')->count();
-
-        $stats = [
-            'total_allocated' => $totalAllocatedMbps,
-            'current_usage' => $currentUsageMbps,
-            'peak_usage' => $peakUsageMbps,
-            'global_mbps' => $globalMbps,
-            'bdix_cdn_mbps' => $bdixCdnMbps,
-            'utilization_percent' => $utilizationPercent,
-            'total_subscribers' => $totalSubscribersCount,
-            'active_subscribers' => $activeSubscribersCount,
-            'online_sessions' => $onlineSessionsCount,
-            'status' => $bandwidth?->status ?? 'ACTIVE',
-        ];
-
-        // 4. Initial 24-Hour MRTG Chart Simulation Data
-        $chartPoints = $this->generateMrtgPoints($totalAllocatedMbps, $currentUsageMbps, 24);
-
-        return view('reseller.bandwidth.index', compact(
-            'user',
-            'reseller',
-            'tenant',
-            'bandwidth',
-            'customers',
-            'packages',
-            'stats',
-            'chartPoints',
-            'search',
-            'packageId',
-            'status',
-            'perPage'
-        ));
-    }
-
-    /**
-     * Provide real-time MRTG telemetry for live polling & charts.
-     */
-    public function trafficTelemetry(Request $request): JsonResponse
-    {
-        [$user, $reseller, $tenant] = $this->getResellerData();
-        $resellerId = $reseller?->id;
-        $tenantId = $tenant?->id;
-
-        $bandwidth = TenantResellerBandwidth::where('tenant_id', $tenantId)
-            ->where('reseller_id', $resellerId)
+        return TenantResellerBandwidth::where('tenant_id', $reseller->tenant_id)
+            ->where('reseller_id', $reseller->id)
+            ->with(['router' => fn ($query) => $query->where('tenant_id', $reseller->tenant_id)])
+            ->where(function ($query) {
+                $query->whereNull('notes')->orWhere('notes', '!=', 'Baseline dedicated wholesale pipeline')
+                    ->orWhere('interface_name', '!=', 'ether1-wan')->orWhere('vlan_id', '!=', '100')
+                    ->orWhere('total_bandwidth_mbps', '!=', 500);
+            })
+            ->orderByDesc('id')
             ->first();
+    }
 
-        $total = (float) ($bandwidth?->total_bandwidth_mbps ?? 500.0);
-        $current = (float) ($bandwidth?->current_usage_mbps ?? 320.0);
+    public function index(): View
+    {
+        [, $reseller, $tenant] = $this->getResellerData();
+        $bandwidth = $this->allocation($reseller);
+        $pipelines = $this->pipelines($bandwidth);
 
-        $hours = (int) $request->input('hours', 24);
-        if ($hours <= 0 || $hours > 168) {
-            $hours = 24;
+        return view('reseller.bandwidth.index', compact('reseller', 'tenant', 'bandwidth', 'pipelines'));
+    }
+
+    public function trafficTelemetry(MikrotikApiService $api): JsonResponse
+    {
+        [, $reseller] = $this->getResellerData();
+        $allocation = $this->allocation($reseller);
+        $state = 'unconfigured';
+        $point = null;
+
+        if ($allocation?->router?->is_active && filled($allocation->mikrotik_queue_name) && $allocation->status !== 'SUSPENDED'
+            && !TenantResellerBandwidth::where('router_id', $allocation->router_id)
+                ->where('mikrotik_queue_name', $allocation->mikrotik_queue_name)
+                ->where('id', '!=', $allocation->id)->exists()) {
+            $key = $this->telemetryKey($allocation);
+            $cache = Cache::get($key, []);
+            if (($cache['checked_at'] ?? 0) > microtime(true) - 5) {
+                $state = $cache['state'];
+                $point = $cache['point'] ?? null;
+            } else {
+                $sample = Cache::lock("$key:lock", 25)->get(function () use ($key, $api, $allocation) {
+                    $record = Cache::get($key, []);
+                    if (($record['checked_at'] ?? 0) > microtime(true) - 5) {
+                        return $record;
+                    }
+
+                    try {
+                        $bytes = $api->getSimpleQueueBytes($allocation->router, $allocation->mikrotik_queue_name);
+                    } catch (\Throwable $exception) {
+                        report($exception);
+                        $bytes = null;
+                    }
+
+                    $now = microtime(true);
+                    $previous = $record['counter'] ?? null;
+                    $entry = ['checked_at' => $now, 'state' => $bytes === null ? 'unavailable' : 'sampling'];
+                    $entry['latest'] = $record['latest'] ?? null;
+                    if ($bytes !== null) {
+                        $entry['counter'] = $bytes + ['time' => $now];
+                        $seconds = $now - ($previous['time'] ?? 0);
+                        if ($previous && $seconds >= 1 && $seconds <= 60
+                            && $bytes['download'] >= $previous['download'] && $bytes['upload'] >= $previous['upload']) {
+                            $entry['point'] = [
+                                'download' => round(($bytes['download'] - $previous['download']) * 8 / $seconds / 1000000, 2),
+                                'upload' => round(($bytes['upload'] - $previous['upload']) * 8 / $seconds / 1000000, 2),
+                                'timestamp' => now()->toIso8601String(),
+                            ];
+                            $entry['latest'] = $entry['point'];
+                            $entry['state'] = 'live';
+                        }
+                    }
+                    Cache::put($key, $entry, 120);
+
+                    return $entry;
+                });
+                $state = $sample['state'] ?? 'sampling';
+                $point = $sample['point'] ?? null;
+            }
         }
 
-        $points = $this->generateMrtgPoints($total, $current, $hours);
-
-        // Real-time live jitter simulation
-        $jitter = rand(-8, 8) / 100.0;
-        $liveDl = max(5.0, min($total, round($current * (1 + $jitter), 2)));
-        $liveUl = max(2.0, round($liveDl * 0.32, 2));
-        $liveUtil = $total > 0 ? round(($liveDl / $total) * 100, 1) : 0;
-        $latencyMs = rand(3, 14);
+        $capacity = (float) ($allocation?->total_bandwidth_mbps ?? 0);
 
         return response()->json([
-            'success' => true,
-            'partner_name' => $reseller?->name,
-            'total_bandwidth' => $bandwidth?->formatted_total_bandwidth ?? ($total . ' Mbps'),
-            'current_download' => $liveDl,
-            'current_upload' => $liveUl,
-            'utilization_percent' => $liveUtil,
-            'peak_usage' => $bandwidth?->peak_usage_mbps ?? ($total * 0.9),
-            'latency_ms' => $latencyMs,
-            'points' => $points,
-            'timestamp' => now()->format('H:i:s'),
-        ]);
+            'state' => $state,
+            'current_download' => $point['download'] ?? null,
+            'current_upload' => $point['upload'] ?? null,
+            'utilization_percent' => $point && $capacity > 0 ? round($point['download'] / $capacity * 100, 1) : null,
+            'timestamp' => $point['timestamp'] ?? null,
+        ])->header('Cache-Control', 'private, no-store');
+    }
+
+    private function telemetryKey(TenantResellerBandwidth $allocation): string
+    {
+        return 'reseller-bandwidth:' . hash('sha256', implode(':', [
+            $allocation->tenant_id, $allocation->reseller_id, $allocation->id, $allocation->router_id, $allocation->mikrotik_queue_name,
+        ]));
+    }
+
+    private function pipelines(?TenantResellerBandwidth $bandwidth): array
+    {
+        if (!$bandwidth) {
+            return [];
+        }
+
+        return [
+            'Global Internet' => (float) $bandwidth->global_bandwidth_mbps,
+            'BDIX' => (float) $bandwidth->bdix_bandwidth_mbps,
+            'CDN' => (float) $bandwidth->cdn_bandwidth_mbps,
+            'GGC' => (float) $bandwidth->ggc_bandwidth_mbps,
+            'FNA' => (float) $bandwidth->fna_bandwidth_mbps,
+            'Other' => (float) $bandwidth->other_bandwidth_mbps,
+        ];
     }
 
     /**
@@ -277,8 +182,8 @@ class ResellerBandwidthController extends Controller
                 "• Request Type: {$typeName}\n" .
                 "• Requested Addition: +{$validated['requested_mbps']} Mbps\n" .
                 "• Target Pipeline: " . strtoupper(str_replace('_', ' ', $validated['target_pipeline'])) . "\n" .
-                "• Preferred Date: " . ($validated['effective_date'] ?: 'Immediate / ASAP') . "\n" .
-                "• Partner Notes: " . ($validated['notes'] ?: 'No additional comments.');
+                "• Preferred Date: " . (($validated['effective_date'] ?? null) ?: 'Immediate / ASAP') . "\n" .
+                "• Partner Notes: " . (($validated['notes'] ?? null) ?: 'No additional comments.');
 
             $ticket = SupportTicket::create([
                 'ticket_number' => $ticketNumber,
@@ -363,117 +268,38 @@ class ResellerBandwidthController extends Controller
         }
     }
 
-    /**
-     * Export Reseller Bandwidth Telemetry & Subscriber Allocation as CSV.
-     */
-    public function exportCsv(Request $request): StreamedResponse
+    public function exportCsv(): StreamedResponse
     {
-        [$user, $reseller, $tenant] = $this->getResellerData();
-        $resellerId = $reseller?->id;
-        $tenantId = $tenant?->id;
+        [, $reseller] = $this->getResellerData();
+        $bandwidth = $this->allocation($reseller);
+        $pipelines = $this->pipelines($bandwidth);
+        $sample = $bandwidth ? Cache::get($this->telemetryKey($bandwidth))['latest'] ?? null : null;
 
-        $fileName = 'reseller_bandwidth_usage_' . date('Ymd_His') . '.csv';
-
-        $customers = TenantCustomer::where('tenant_id', $tenantId)
-            ->where('reseller_id', $resellerId)
-            ->with(['package', 'router'])
-            ->orderBy('name')
-            ->get();
-
-        return response()->streamDownload(function () use ($customers, $reseller) {
+        return response()->streamDownload(function () use ($pipelines, $sample, $bandwidth) {
             $handle = fopen('php://output', 'w');
-            fputcsv($handle, ['#', 'Subscriber Name', 'Customer ID', 'PPPoE Username', 'Package Plan', 'Bandwidth Profile', 'IP Address', 'Online State', 'Monthly Bill', 'Expiry Date']);
-
-            foreach ($customers as $index => $c) {
-                fputcsv($handle, [
-                    $index + 1,
-                    $c->name,
-                    $c->customer_id,
-                    $c->username ?? 'N/A',
-                    $c->package_display_name,
-                    $c->package?->bandwidth_mbps ? ($c->package->bandwidth_mbps . ' Mbps') : 'Standard',
-                    $c->ip_address ?? 'Dynamic',
-                    strtoupper($c->online_status ?? 'OFFLINE'),
-                    $c->monthly_bill,
-                    $c->expiry_date ? $c->expiry_date->format('Y-m-d') : 'N/A',
-                ]);
+            fputcsv($handle, ['Pipeline', 'Allocated Mbps'], escape: '');
+            foreach ($pipelines as $pipeline => $capacity) {
+                fputcsv($handle, [$pipeline, $capacity], escape: '');
+            }
+            if ($bandwidth) {
+                fputcsv($handle, ['Total', $bandwidth->total_bandwidth_mbps], escape: '');
+            }
+            if ($sample) {
+                fputcsv($handle, [], escape: '');
+                fputcsv($handle, ['Measured at', 'Download Mbps', 'Upload Mbps'], escape: '');
+                fputcsv($handle, [$sample['timestamp'], $sample['download'], $sample['upload']], escape: '');
             }
             fclose($handle);
-        }, $fileName, [
-            'Content-Type' => 'text/csv',
-            'Content-Disposition' => "attachment; filename=\"{$fileName}\"",
-        ]);
+        }, 'reseller_bandwidth_' . now()->format('Ymd_His') . '.csv', ['Content-Type' => 'text/csv']);
     }
 
-    /**
-     * Printable Bandwidth Allocation & MRTG Usage Certificate/Report.
-     */
-    public function printReport(Request $request): View
+    public function printReport(): View
     {
-        [$user, $reseller, $tenant] = $this->getResellerData();
-        $resellerId = $reseller?->id;
-        $tenantId = $tenant?->id;
+        [, $reseller, $tenant] = $this->getResellerData();
+        $bandwidth = $this->allocation($reseller);
+        $pipelines = $this->pipelines($bandwidth);
+        $sample = $bandwidth ? Cache::get($this->telemetryKey($bandwidth))['latest'] ?? null : null;
 
-        $bandwidth = TenantResellerBandwidth::where('tenant_id', $tenantId)
-            ->where('reseller_id', $resellerId)
-            ->with(['router'])
-            ->first();
-
-        $customers = TenantCustomer::where('tenant_id', $tenantId)
-            ->where('reseller_id', $resellerId)
-            ->with(['package', 'router'])
-            ->orderBy('name')
-            ->get();
-
-        $activeSubscribersCount = $customers->where('status', 'active')->count();
-        $onlineSessionsCount = $customers->where('online_status', 'online')->count();
-
-        return view('reseller.bandwidth.print', compact(
-            'user',
-            'reseller',
-            'tenant',
-            'bandwidth',
-            'customers',
-            'activeSubscribersCount',
-            'onlineSessionsCount'
-        ));
-    }
-
-    /**
-     * Helper to generate realistic MRTG timeline curve data.
-     */
-    protected function generateMrtgPoints(float $totalMbps, float $currentUsageMbps, int $pointsCount): array
-    {
-        $points = [];
-        $now = now();
-
-        for ($i = $pointsCount - 1; $i >= 0; $i--) {
-            $time = (clone $now)->subHours($i);
-            $hour = (int) $time->format('H');
-
-            // Simulate realistic diurnal ISP traffic curve (Peak at 8pm-11pm, Low at 3am-6am)
-            $factor = match (true) {
-                $hour >= 20 && $hour <= 23 => 1.25,
-                $hour >= 18 && $hour < 20 => 1.10,
-                $hour >= 14 && $hour < 18 => 0.95,
-                $hour >= 9 && $hour < 14 => 0.85,
-                $hour >= 0 && $hour < 6 => 0.40,
-                default => 0.70,
-            };
-
-            $noise = (rand(-8, 8) / 100.0);
-            $dl = max(8.0, min($totalMbps, round($currentUsageMbps * $factor * (1 + $noise), 2)));
-            $ul = max(3.0, round($dl * (0.28 + rand(0, 10) / 100.0), 2));
-
-            $points[] = [
-                'time' => $time->format('H:i'),
-                'date' => $time->format('d M'),
-                'download' => $dl,
-                'upload' => $ul,
-                'peak' => round($dl * 1.12, 2),
-            ];
-        }
-
-        return $points;
+        return view('reseller.bandwidth.print', compact('reseller', 'tenant', 'bandwidth', 'pipelines', 'sample'));
     }
 }

@@ -585,6 +585,33 @@ class MikrotikApiService
         ];
     }
 
+    public function getSimpleQueueBytes(TenantRouter $router, string $queueName): ?array
+    {
+        try {
+            if (!$this->connect($router->ip_address, $router->api_port ?: 8728, $router->username ?: 'admin', $router->decrypted_password ?? '', (bool) $router->use_ssl, 3)) {
+                return null;
+            }
+
+            $this->writeCommand('/queue/simple/print', ['=stats=', '=.proplist=name,bytes,disabled', '?name=' . $queueName]);
+            $rows = $this->readAll();
+            if (!isset($rows[array_key_last($rows)]['!done'])) {
+                return null;
+            }
+
+            foreach ($rows as $row) {
+                $queue = $row['!re'] ?? [];
+                if (($queue['name'] ?? null) === $queueName && ($queue['disabled'] ?? 'false') === 'false'
+                    && preg_match('/^(\d+)\/(\d+)$/D', $queue['bytes'] ?? '', $bytes)) {
+                    return ['upload' => (int) $bytes[1], 'download' => (int) $bytes[2]];
+                }
+            }
+
+            return null;
+        } finally {
+            $this->disconnect();
+        }
+    }
+
     /**
      * Get real-time live traffic metrics for a specific interface (WAN, LAN, Trunk, VLAN).
      */
