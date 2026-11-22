@@ -228,6 +228,19 @@ class TenantTicketController extends Controller
     /**
      * Show Support Ticket Conversation
      */
+    public function downloadAttachment(SupportTicket $ticket, int $attachment): \Symfony\Component\HttpFoundation\StreamedResponse
+    {
+        $tenant = $this->getTenant();
+        $user = auth()->user();
+        abort_if($ticket->tenant_id != $tenant->id && !$user?->isOwner(), 403);
+        abort_if($user && ($user->isCollector() || $user->isTechnician()) && $ticket->user_id !== $user->id, 403);
+
+        $file = TicketAttachment::whereHas('message', fn ($query) => $query
+            ->where('support_ticket_id', $ticket->id)->where('is_internal_note', false))->findOrFail($attachment);
+
+        return $file->download();
+    }
+
     public function show(SupportTicket $ticket): View
     {
         $tenant = $this->getTenant();
@@ -489,8 +502,8 @@ class TenantTicketController extends Controller
             // Delete associated attachment files from storage
             foreach ($ticket->messages as $msg) {
                 foreach ($msg->attachments as $att) {
-                    if ($att->file_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($att->file_path)) {
-                        \Illuminate\Support\Facades\Storage::disk('public')->delete($att->file_path);
+                    if ($att->file_path && \Illuminate\Support\Facades\Storage::disk($att->disk())->exists($att->file_path)) {
+                        \Illuminate\Support\Facades\Storage::disk($att->disk())->delete($att->file_path);
                     }
                     $att->delete();
                 }

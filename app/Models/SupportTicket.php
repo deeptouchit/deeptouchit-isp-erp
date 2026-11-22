@@ -37,6 +37,11 @@ class SupportTicket extends Model
         return $this->hasMany(TicketMessage::class)->where('is_internal_note', false)->orderBy('created_at', 'asc');
     }
 
+    public function latestPublicMessage()
+    {
+        return $this->hasOne(TicketMessage::class)->ofMany(['id' => 'max'], fn ($query) => $query->where('is_internal_note', false));
+    }
+
     public function latestMessage()
     {
         return $this->hasOne(TicketMessage::class)->latestOfMany();

@@ -130,7 +130,7 @@
                                     <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">{{ __('Attached Files:') }}</span>
                                     <div class="flex flex-wrap gap-2">
                                         @foreach($msg->attachments as $att)
-                                            <a href="{{ $att->url }}" target="_blank" class="flex items-center gap-2 p-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-white hover:border-blue-400 transition text-[11px] text-slate-700 max-w-xs">
+                                            <a href="{{ route('tenant.tickets.attachments.download', [$ticket->id, $att->id]) }}" target="_blank" class="flex items-center gap-2 p-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-white hover:border-blue-400 transition text-[11px] text-slate-700 max-w-xs">
                                                 @if($att->isImage())
                                                     <i class="fas fa-file-image text-blue-500"></i>
                                                 @else

@@ -527,6 +527,8 @@ Route::middleware(['web'])->group(function () {
             Route::get('/create', [TenantTicketController::class, 'create'])->name('create');
             Route::post('/', [TenantTicketController::class, 'store'])->name('store');
             Route::get('/{ticket}', [TenantTicketController::class, 'show'])->whereNumber('ticket')->name('show');
+            Route::get('/{ticket}/attachments/{attachment}', [TenantTicketController::class, 'downloadAttachment'])
+                ->whereNumber(['ticket', 'attachment'])->name('attachments.download');
             Route::post('/{ticket}/reply', [TenantTicketController::class, 'reply'])->whereNumber('ticket')->name('reply');
             Route::post('/{id}/close', [TenantTicketController::class, 'closeTicket'])->whereNumber('id')->name('close');
             Route::post('/{id}/reopen', [TenantTicketController::class, 'reopenTicket'])->whereNumber('id')->name('reopen');

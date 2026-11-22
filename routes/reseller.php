@@ -123,6 +123,8 @@ Route::middleware(['web'])->group(function () {
         Route::get('/reseller/tickets/export', [ResellerTicketController::class, 'exportCsv'])->name('reseller.tickets.export');
         Route::get('/reseller/tickets/print', [ResellerTicketController::class, 'printReport'])->name('reseller.tickets.print');
         Route::get('/reseller/tickets/{id}', [ResellerTicketController::class, 'show'])->whereNumber('id')->name('reseller.tickets.show');
+        Route::get('/reseller/tickets/{id}/attachments/{attachment}', [ResellerTicketController::class, 'downloadAttachment'])
+            ->whereNumber(['id', 'attachment'])->name('reseller.tickets.attachments.download');
         Route::post('/reseller/tickets/{id}/reply', [ResellerTicketController::class, 'reply'])->whereNumber('id')->name('reseller.tickets.reply');
         Route::post('/reseller/tickets/{id}/close', [ResellerTicketController::class, 'closeTicket'])->whereNumber('id')->name('reseller.tickets.close');
 

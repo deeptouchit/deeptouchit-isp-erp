@@ -1,6 +1,6 @@
 @extends('reseller.layouts.app')
 
-@section('title', 'Support Tickets - ' . ($reseller->name ?? 'Reseller Portal'))
+@section('title', __('Support Tickets'))
 
 @push('styles')
     {{-- Page-specific CSS --}}
@@ -8,7 +8,7 @@
 
 @section('content')
 <div class="space-y-3" x-data="ticketManager()" @scroll.window="activeMenu = null" @resize.window="activeMenu = null">
-    
+
     {{-- 1. TOP HEADER BAR (AGENTS.md Rule 2.A: Icon + Title + Action buttons ONLY) --}}
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-white p-3 rounded-xl border border-slate-200 shadow-xs">
         <div class="flex items-center gap-2.5">
@@ -18,15 +18,15 @@
             <h1 class="text-sm font-bold text-slate-800 tracking-tight">{{ __('Support Tickets') }}</h1>
         </div>
         <div class="flex items-center gap-2">
-            <a href="{{ route('reseller.tickets.print') }}" target="_blank" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200/80 transition flex items-center gap-1.5 cursor-pointer">
+            <a href="{{ route('reseller.tickets.print', $reportQuery) }}" target="_blank" rel="noopener" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200/80 transition flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-print text-slate-500 text-xs"></i>
                 <span>{{ __('Print Statement') }}</span>
             </a>
-            <a href="{{ route('reseller.tickets.export') }}" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200/80 transition flex items-center gap-1.5 cursor-pointer">
+            <a href="{{ route('reseller.tickets.export', $reportQuery) }}" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200/80 transition flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-file-csv text-slate-500 text-xs"></i>
                 <span>{{ __('Export CSV') }}</span>
             </a>
-            <button type="button" @click="openCreateModal = true" class="px-3.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-semibold shadow-xs transition flex items-center gap-1.5 cursor-pointer">
+            <button type="button" @click="openCreateModal = true" class="px-3.5 py-1.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-xs font-semibold shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                 <i class="fas fa-plus text-xs"></i>
                 <span>{{ __('Create Ticket') }}</span>
             </button>
@@ -35,7 +35,7 @@
 
     {{-- 2. KPI SUMMARY STRIP (Strictly 6 Cards - AGENTS.md Rule 2.B) --}}
     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
-        
+
         {{-- Card 1: Total Tickets --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
@@ -116,68 +116,64 @@
 
     </div>
 
-    {{-- 3. SEARCH & MULTI-FILTER TOOLBAR (AGENTS.md Rule 2.C) --}}
-    <div class="bg-white p-2.5 rounded-xl border border-slate-200 shadow-xs">
-        <form method="GET" action="{{ route('reseller.tickets.index') }}" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 items-center">
-            
-            <!-- Search Box -->
-            <div class="relative lg:col-span-2">
-                <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                <input type="text" 
-                       name="search" 
-                       value="{{ $search }}" 
-                       placeholder="Search ticket # or subject..." 
-                       class="w-full pl-8 pr-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:border-purple-500 shadow-2xs">
-            </div>
-
-            <!-- Department Filter -->
-            <div>
-                <select name="department" class="w-full py-1.5 px-2 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:border-purple-500 shadow-2xs">
-                    <option value="all" {{ $department === 'all' ? 'selected' : '' }}>All Departments</option>
-                    <option value="technical" {{ $department === 'technical' ? 'selected' : '' }}>Technical / NOC</option>
-                    <option value="billing" {{ $department === 'billing' ? 'selected' : '' }}>Billing &amp; Wallet</option>
-                    <option value="network" {{ $department === 'network' ? 'selected' : '' }}>Network &amp; Router</option>
-                    <option value="package" {{ $department === 'package' ? 'selected' : '' }}>Package &amp; Speed</option>
-                    <option value="general" {{ $department === 'general' ? 'selected' : '' }}>General Support</option>
-                </select>
-            </div>
-
-            <!-- Priority Filter -->
-            <div>
-                <select name="priority" class="w-full py-1.5 px-2 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:border-purple-500 shadow-2xs">
-                    <option value="all" {{ $priority === 'all' ? 'selected' : '' }}>All Priorities</option>
-                    <option value="urgent" {{ $priority === 'urgent' ? 'selected' : '' }}>Urgent</option>
-                    <option value="high" {{ $priority === 'high' ? 'selected' : '' }}>High</option>
-                    <option value="medium" {{ $priority === 'medium' ? 'selected' : '' }}>Medium</option>
-                    <option value="low" {{ $priority === 'low' ? 'selected' : '' }}>Low</option>
-                </select>
-            </div>
-
-            <!-- Status Filter -->
-            <div>
-                <select name="status" class="w-full py-1.5 px-2 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:border-purple-500 shadow-2xs">
-                    <option value="all" {{ $status === 'all' ? 'selected' : '' }}>All Status</option>
-                    <option value="open" {{ $status === 'open' ? 'selected' : '' }}>Open</option>
-                    <option value="in_progress" {{ $status === 'in_progress' ? 'selected' : '' }}>In Progress</option>
-                    <option value="answered" {{ $status === 'answered' ? 'selected' : '' }}>Answered</option>
-                    <option value="closed" {{ $status === 'closed' ? 'selected' : '' }}>Closed</option>
-                </select>
-            </div>
-
-            <!-- Strict Filter & Reset Sequence (AGENTS.md Rule 2.C) -->
-            <div class="flex items-center gap-1.5">
-                <button type="submit" class="w-1/2 bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs py-1.5 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer">
-                    <i class="fas fa-filter text-[10px]"></i>
-                    <span>Filter</span>
+    @php($moreCount = (int) ($priority !== 'all'))
+    <form method="GET" action="{{ route('reseller.tickets.index') }}"
+          x-data="{ showMoreFilters: @js($moreCount > 0), searchQuery: @js($search) }"
+          class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5">
+        <div class="flex flex-col md:flex-row items-stretch md:items-center gap-2">
+            <div class="relative flex-1 min-w-[200px]">
+                <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-xs pointer-events-none"
+                   :class="searchQuery ? 'text-cyan-600 font-bold' : 'text-slate-400'" aria-hidden="true"></i>
+                <input type="search" name="search" value="{{ $search }}" x-model="searchQuery" aria-label="{{ __('Search') }}"
+                       placeholder="{{ __('Search ticket number or subject') }}"
+                       class="h-[34px] w-full pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden">
+                <button type="button" x-show="searchQuery" x-cloak aria-label="{{ __('Clear Search') }}"
+                        @click="searchQuery = ''; $nextTick(() => $el.closest('form').requestSubmit())"
+                        class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700">
+                    <i class="fas fa-times" aria-hidden="true"></i>
                 </button>
-                <a href="{{ route('reseller.tickets.index') }}" class="w-1/2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-1.5 px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer">
-                    <i class="fas fa-rotate-left text-[10px]"></i>
-                    <span>Reset</span>
+            </div>
+            <select name="department" aria-label="{{ __('Department') }}" class="h-[34px] w-full md:w-36 px-2 rounded-lg border border-slate-200 bg-slate-50 text-xs">
+                <option value="all">{{ __('All Departments') }}</option>
+                @foreach($departments as $value => $label)
+                    <option value="{{ $value }}" @selected($department === $value)>{{ __($label) }}</option>
+                @endforeach
+            </select>
+            <select name="status" aria-label="{{ __('Status') }}" class="h-[34px] w-full md:w-32 px-2 rounded-lg border border-slate-200 bg-slate-50 text-xs">
+                @foreach(['all' => 'All Status', 'open' => 'Open Tickets', 'in_progress' => 'In Progress', 'answered' => 'Answered', 'resolved' => 'Resolved', 'closed' => 'Closed'] as $value => $label)
+                    <option value="{{ $value }}" @selected($status === $value)>{{ __($label) }}</option>
+                @endforeach
+            </select>
+            <select name="per_page" aria-label="{{ __('Rows per page') }}" onchange="this.form.requestSubmit()" class="h-[34px] w-full md:w-28 px-2 rounded-lg border border-slate-200 bg-slate-50 text-xs">
+                @foreach($pageSizes as $size)
+                    <option value="{{ $size }}" @selected($perPage === $size)>{{ __(':count / page', ['count' => $size]) }}</option>
+                @endforeach
+            </select>
+            <button type="button" @click="showMoreFilters = !showMoreFilters" :aria-expanded="showMoreFilters" aria-controls="ticket-more-filters"
+                    class="h-[34px] px-2.5 py-0 rounded-lg border border-slate-200 bg-slate-50 text-xs font-semibold flex items-center justify-center gap-1.5 whitespace-nowrap">
+                <i class="fas fa-sliders-h text-[10px]" aria-hidden="true"></i>{{ __('More Filters') }}
+                @if($moreCount)
+                    <span class="px-1.5 rounded-full bg-cyan-600 text-white text-[9px]">{{ $moreCount }}</span>
+                @endif
+                <i class="fas text-[9px]" :class="showMoreFilters ? 'fa-chevron-up text-cyan-600' : 'fa-chevron-down text-slate-400'" aria-hidden="true"></i>
+            </button>
+            <div class="flex items-center gap-1.5 flex-shrink-0 md:ml-auto">
+                <button type="submit" class="h-[34px] px-3 py-0 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-semibold flex items-center justify-center gap-1.5">
+                    <i class="fas fa-filter text-[10px]" aria-hidden="true"></i>{{ __('Filter') }}
+                </button>
+                <a href="{{ route('reseller.tickets.index') }}" class="h-[34px] px-2.5 py-0 rounded-lg border border-slate-200/80 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center justify-center gap-1">
+                    <i class="fas fa-rotate-left text-[10px]" aria-hidden="true"></i>{{ __('Reset') }}
                 </a>
             </div>
-
-        </form>
-    </div>
+        </div>
+        <div id="ticket-more-filters" x-show="showMoreFilters" x-cloak x-transition class="pt-2 border-t border-slate-100 flex flex-wrap items-center gap-2">
+            <select name="priority" aria-label="{{ __('Priority') }}" class="h-[34px] w-full sm:w-40 px-2 rounded-lg border border-slate-200 bg-slate-50 text-xs">
+                @foreach(['all' => 'All Priorities', 'urgent' => 'Urgent', 'high' => 'High', 'medium' => 'Medium', 'low' => 'Low'] as $value => $label)
+                    <option value="{{ $value }}" @selected($priority === $value)>{{ __($label) }}</option>
+                @endforeach
+            </select>
+        </div>
+    </form>
 
     {{-- 4. MASTER COMPACT TABLE (AGENTS.md Rule 2.D: Max 5-7 Minimal Columns) --}}
     <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
@@ -185,25 +181,25 @@
             <table class="saas-table">
                 <thead>
                     <tr>
-                        <th class="w-10 text-center">#</th>
-                        <th class="w-28">Ticket ID</th>
-                        <th>Subject</th>
-                        <th class="w-32">Department</th>
-                        <th class="w-24 text-center">Priority</th>
-                        <th class="w-24 text-center">Status</th>
-                        <th class="w-16 text-center no-sort">Action</th>
+                        <th scope="col" class="text-center font-semibold w-10 no-sort">#</th>
+                        <th scope="col" class="text-center font-semibold w-28">{{ __('Ticket ID') }}</th>
+                        <th scope="col" class="text-center font-semibold">{{ __('Subject') }}</th>
+                        <th scope="col" class="text-center font-semibold w-32">{{ __('Department') }}</th>
+                        <th scope="col" class="text-center font-semibold w-24">{{ __('Priority') }}</th>
+                        <th scope="col" class="text-center font-semibold w-24">{{ __('Status') }}</th>
+                        <th scope="col" class="text-center font-semibold w-16 no-sort">{{ __('Action') }}</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($tickets as $index => $ticket)
+                    @forelse($tickets as $ticket)
                         <tr>
                             <!-- 1. Index -->
                             <td class="text-center font-mono text-slate-500">
-                                {{ ($tickets->currentPage() - 1) * $tickets->perPage() + $index + 1 }}
+                                {{ $tickets->firstItem() + $loop->index }}
                             </td>
 
                             <!-- 2. Ticket ID -->
-                            <td class="font-mono font-bold text-purple-700">
+                            <td class="text-center font-mono font-bold text-cyan-700">
                                 <a href="{{ route('reseller.tickets.show', $ticket->id) }}" class="hover:underline">
                                     {{ $ticket->ticket_number }}
                                 </a>
@@ -217,40 +213,33 @@
                             </td>
 
                             <!-- 4. Department -->
-                            <td class="capitalize text-slate-600">
-                                {{ $ticket->department ?? 'General' }}
+                            <td class="text-left text-slate-600">
+                                {{ __($departments[$ticket->department] ?? ucfirst($ticket->department ?? 'general')) }}
                             </td>
 
                             <!-- 5. Priority -->
                             <td class="text-center">
-                                @if($ticket->priority === 'urgent')
-                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold font-mono bg-rose-50 text-rose-700 border border-rose-200">URGENT</span>
-                                @elseif($ticket->priority === 'high')
-                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold font-mono bg-amber-50 text-amber-700 border border-amber-200">HIGH</span>
-                                @elseif($ticket->priority === 'medium')
-                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold font-mono bg-blue-50 text-blue-700 border border-blue-200">MEDIUM</span>
-                                @else
-                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold font-mono bg-slate-50 text-slate-600 border border-slate-200">LOW</span>
-                                @endif
+                                <span class="px-2 py-0.5 rounded border text-[10px] font-semibold {{ $ticket->priority_badge_color }}">
+                                    {{ __(ucwords(str_replace('_', ' ', $ticket->priority))) }}
+                                </span>
                             </td>
 
                             <!-- 6. Status -->
                             <td class="text-center">
-                                @if($ticket->status === 'open')
-                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold font-mono bg-emerald-50 text-emerald-700 border border-emerald-200">OPEN</span>
-                                @elseif($ticket->status === 'in_progress')
-                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold font-mono bg-indigo-50 text-indigo-700 border border-indigo-200">IN PROGRESS</span>
-                                @elseif($ticket->status === 'answered')
-                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold font-mono bg-purple-50 text-purple-700 border border-purple-200">ANSWERED</span>
-                                @else
-                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold font-mono bg-slate-50 text-slate-600 border border-slate-200">CLOSED</span>
-                                @endif
+                                <span class="px-2 py-0.5 rounded border text-[10px] font-semibold {{ $ticket->status_badge_color }}">
+                                    {{ __(ucwords(str_replace('_', ' ', $ticket->status))) }}
+                                </span>
                             </td>
 
                             <!-- 7. Action: Global Floating 3-Dot Menu (AGENTS.md Rule 2.E) -->
                             <td class="text-center">
-                                <button type="button" 
-                                        @click="toggleMenu({{ json_encode($ticket) }}, $event)" 
+                                <button type="button"
+                                        @click.stop="toggleMenu(@js([
+                                            'id' => $ticket->id,
+                                            'showUrl' => route('reseller.tickets.show', $ticket->id),
+                                            'closeUrl' => $ticket->isOpen() ? route('reseller.tickets.close', $ticket->id) : null,
+                                        ]), $event)"
+                                        aria-label="{{ __('Ticket actions') }}"
                                         class="w-7 h-7 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition flex items-center justify-center mx-auto cursor-pointer">
                                     <i class="fas fa-ellipsis-v text-[10px]"></i>
                                 </button>
@@ -260,7 +249,8 @@
                         <tr>
                             <td colspan="7" class="text-center py-8 text-slate-400">
                                 <i class="fas fa-headset text-3xl mb-2 block text-slate-300"></i>
-                                <span>No support tickets found matching your query.</span>
+                                <p class="font-semibold text-slate-700">{{ __('No support tickets match your filters.') }}</p>
+                                <button type="button" @click="openCreateModal = true" class="mt-2 text-xs font-semibold text-cyan-700 hover:underline">{{ __('Create Ticket') }}</button>
                             </td>
                         </tr>
                     @endforelse
@@ -272,7 +262,7 @@
         @if($tickets->hasPages())
             <div class="px-4 py-2.5 bg-white border-t border-slate-200 flex items-center justify-between text-xs">
                 <div>
-                    Showing <span class="font-bold">{{ $tickets->firstItem() }}</span> to <span class="font-bold">{{ $tickets->lastItem() }}</span> of <span class="font-bold">{{ $tickets->total() }}</span> tickets
+                    {{ __('Showing :first to :last of :total tickets', ['first' => $tickets->firstItem(), 'last' => $tickets->lastItem(), 'total' => $tickets->total()]) }}
                 </div>
                 <div>
                     {{ $tickets->links() }}
@@ -282,28 +272,27 @@
     </div>
 
     {{-- 5. FLOATING 3-DOT ACTION MENU (AGENTS.md Rule 2.E) --}}
-    <div x-show="activeMenu" 
+    <div x-show="activeMenu"
          @click.outside="activeMenu = null"
          class="fixed z-50 bg-white rounded-xl border border-slate-200 shadow-xl py-1 w-44 text-xs space-y-0.5"
          :style="menuPos"
          style="display: none;"
          x-cloak>
-        <a :href="`/reseller/tickets/${activeMenu?.id}`" 
-           class="flex items-center gap-2 px-3 py-1.5 text-slate-700 hover:bg-slate-50 hover:text-purple-600 transition">
-            <i class="fas fa-comments w-4 text-purple-600"></i>
-            <span>View Thread</span>
+        <a :href="activeMenu?.showUrl" class="flex items-center gap-2 px-3 py-1.5 text-slate-700 hover:bg-slate-50 hover:text-cyan-600">
+            <i class="fas fa-comments w-4 text-cyan-600" aria-hidden="true"></i>{{ __('View Thread') }}
         </a>
-        <button type="button" 
-                @click="closeTicketAction(activeMenu?.id)" 
-                x-show="activeMenu?.status !== 'closed'"
-                class="w-full flex items-center gap-2 px-3 py-1.5 text-rose-600 hover:bg-rose-50 transition cursor-pointer text-left">
-            <i class="fas fa-check-circle w-4"></i>
-            <span>Close Ticket</span>
-        </button>
+        <form x-show="activeMenu?.closeUrl" :action="activeMenu?.closeUrl" method="POST"
+              @submit="if (!confirm(@js(__('Mark this support ticket as closed?')))) $event.preventDefault()">
+            @csrf
+            <button type="submit" class="w-full flex items-center gap-2 px-3 py-1.5 text-rose-600 hover:bg-rose-50 text-left">
+                <i class="fas fa-check-circle w-4" aria-hidden="true"></i>{{ __('Close Ticket') }}
+            </button>
+        </form>
     </div>
 
     {{-- 6. CREATE NEW TICKET MODAL (AGENTS.md Rule 3: Natural Soft Modal) --}}
-    <div x-show="openCreateModal" 
+    <div x-show="openCreateModal"
+         @keydown.escape.window="openCreateModal = false; activeMenu = null"
          x-transition:enter="transition ease-out duration-150"
          x-transition:enter-start="opacity-0"
          x-transition:enter-end="opacity-100"
@@ -313,10 +302,11 @@
          class="bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 fixed inset-0 z-50"
          style="display: none;"
          x-cloak>
-        
-        <div class="bg-white rounded-xl border border-slate-200/90 shadow-2xl w-full max-w-lg overflow-hidden" 
+
+        <div role="dialog" aria-modal="true" aria-labelledby="create-ticket-title"
+             class="bg-white rounded-xl border border-slate-200/90 shadow-2xl w-full max-w-xl max-h-[calc(100dvh-2rem)] overflow-y-auto"
              @click.outside="openCreateModal = false">
-            
+
             <!-- Soft Header -->
             <div class="bg-slate-50/80 border-b border-slate-200 px-4 py-3 flex items-center justify-between">
                 <div class="flex items-center gap-2.5">
@@ -324,11 +314,10 @@
                         <i class="fas fa-headset"></i>
                     </div>
                     <div>
-                        <h3 class="text-xs font-semibold text-slate-800">Open Support Ticket</h3>
-                        <p class="text-[10.5px] text-slate-500 font-normal">Direct escalation to host ISP network &amp; NOC team</p>
+                        <h3 id="create-ticket-title" class="text-xs font-semibold text-slate-800">{{ __('Open Support Ticket') }}</h3>
                     </div>
                 </div>
-                <button type="button" @click="openCreateModal = false" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center cursor-pointer">
+                <button type="button" @click="openCreateModal = false" aria-label="{{ __('Close') }}" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center cursor-pointer">
                     <i class="fas fa-times text-xs"></i>
                 </button>
             </div>
@@ -340,75 +329,78 @@
                     <!-- Subject -->
                     <div>
                         <label for="subject" class="block text-[11px] font-semibold text-slate-700 mb-1">
-                            Subject <span class="text-rose-500">*</span>
+                            {{ __('Subject') }} <span class="text-rose-500">*</span>
                         </label>
-                        <input type="text" 
-                               id="subject" 
-                               name="subject" 
-                               required 
-                               placeholder="e.g. Bandwidth latency issue at Agrabad POP" 
-                               class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-purple-500 shadow-2xs">
+                        <input type="text"
+                               id="subject"
+                               name="subject"
+                               required
+                               maxlength="255" value="{{ old('subject') }}"
+                               class="w-full border @error('subject') border-rose-400 bg-rose-50/30 @else bg-slate-50 border-slate-200 @enderror rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-cyan-500 shadow-2xs">
+                            @error('subject') <p class="mt-1 text-xs text-rose-700" role="alert">{{ $message }}</p> @enderror
                     </div>
 
                     <!-- Department & Priority -->
-                    <div class="grid grid-cols-2 gap-3">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <label for="modal_department" class="block text-[11px] font-semibold text-slate-700 mb-1">
-                                Department <span class="text-rose-500">*</span>
+                                {{ __('Department') }} <span class="text-rose-500">*</span>
                             </label>
-                            <select id="modal_department" name="department" required class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-purple-500 shadow-2xs">
-                                <option value="technical">Technical / NOC</option>
-                                <option value="billing">Billing &amp; Wallet</option>
-                                <option value="network">Network &amp; Router</option>
-                                <option value="package">Package &amp; Speed</option>
-                                <option value="general">General Support</option>
+                            <select id="modal_department" name="department" required class="w-full border @error('department') border-rose-400 bg-rose-50/30 @else bg-slate-50 border-slate-200 @enderror rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-cyan-500 shadow-2xs">
+                                @foreach(collect($departments)->only(['technical', 'billing', 'network', 'package', 'general']) as $value => $label)
+                                    <option value="{{ $value }}" @selected(old('department') === $value)>{{ __($label) }}</option>
+                                @endforeach
                             </select>
+                            @error('department') <p class="mt-1 text-xs text-rose-700" role="alert">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label for="modal_priority" class="block text-[11px] font-semibold text-slate-700 mb-1">
-                                Priority <span class="text-rose-500">*</span>
+                                {{ __('Priority') }} <span class="text-rose-500">*</span>
                             </label>
-                            <select id="modal_priority" name="priority" required class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-purple-500 shadow-2xs">
-                                <option value="medium">Medium</option>
-                                <option value="high">High</option>
-                                <option value="urgent">Urgent</option>
-                                <option value="low">Low</option>
+                            <select id="modal_priority" name="priority" required class="w-full border @error('priority') border-rose-400 bg-rose-50/30 @else bg-slate-50 border-slate-200 @enderror rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-cyan-500 shadow-2xs">
+                                <option value="medium" @selected(old('priority', 'medium') === 'medium')>{{ __('Medium') }}</option>
+                                <option value="high" @selected(old('priority', 'medium') === 'high')>{{ __('High') }}</option>
+                                <option value="urgent" @selected(old('priority', 'medium') === 'urgent')>{{ __('Urgent') }}</option>
+                                <option value="low" @selected(old('priority', 'medium') === 'low')>{{ __('Low') }}</option>
                             </select>
+                            @error('priority') <p class="mt-1 text-xs text-rose-700" role="alert">{{ $message }}</p> @enderror
                         </div>
                     </div>
 
                     <!-- Detailed Message -->
                     <div>
                         <label for="modal_message" class="block text-[11px] font-semibold text-slate-700 mb-1">
-                            Issue Description <span class="text-rose-500">*</span>
+                            {{ __('Issue Description') }} <span class="text-rose-500">*</span>
                         </label>
-                        <textarea id="modal_message" 
-                                  name="message" 
-                                  rows="4" 
-                                  required 
-                                  placeholder="Describe the technical or billing problem in detail..." 
-                                  class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-purple-500 shadow-2xs"></textarea>
+                        <textarea id="modal_message"
+                                  name="message"
+                                  rows="4"
+                                  required
+                                  maxlength="5000"
+                                  class="w-full border @error('message') border-rose-400 bg-rose-50/30 @else bg-slate-50 border-slate-200 @enderror rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-cyan-500 shadow-2xs">{{ old('message') }}</textarea>
+                            @error('message') <p class="mt-1 text-xs text-rose-700" role="alert">{{ $message }}</p> @enderror
                     </div>
 
                     <!-- File Attachment -->
                     <div>
                         <label for="modal_attachment" class="block text-[11px] font-semibold text-slate-700 mb-1">
-                            Attachment (Screenshot / Log)
+                            {{ __('Attachment (Screenshot / Log)') }}
                         </label>
-                        <input type="file" 
-                               id="modal_attachment" 
-                               name="attachment" 
-                               class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-purple-500 shadow-2xs file:mr-2 file:py-0.5 file:px-2 file:rounded file:border-0 file:text-[10px] file:font-semibold file:bg-purple-100 file:text-purple-700">
+                        <input type="file"
+                               id="modal_attachment"
+                               name="attachment" accept=".jpg,.jpeg,.png,.pdf,.txt,.log,.zip"
+                               class="w-full border @error('attachment') border-rose-400 bg-rose-50/30 @else bg-slate-50 border-slate-200 @enderror rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-cyan-500 shadow-2xs file:mr-2 file:py-0.5 file:px-2 file:rounded file:border-0 file:text-[10px] file:font-semibold file:bg-purple-100 file:text-purple-700">
+                            @error('attachment') <p class="mt-1 text-xs text-rose-700" role="alert">{{ $message }}</p> @enderror
                     </div>
                 </div>
 
                 <!-- Footer -->
                 <div class="px-4 py-2.5 bg-slate-50/80 border-t border-slate-200 flex items-center justify-end gap-2">
                     <button type="button" @click="openCreateModal = false" class="border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs px-3.5 py-1.5 rounded-lg transition cursor-pointer">
-                        Cancel
+                        {{ __('Cancel') }}
                     </button>
-                    <button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white font-medium text-xs px-4 py-1.5 rounded-lg shadow-xs transition cursor-pointer">
-                        Submit Ticket
+                    <button type="submit" class="bg-cyan-600 hover:bg-cyan-700 text-white font-medium text-xs px-4 py-1.5 rounded-lg shadow-xs transition cursor-pointer">
+                        {{ __('Submit Ticket') }}
                     </button>
                 </div>
             </form>
@@ -422,7 +414,7 @@
 <script>
 function ticketManager() {
     return {
-        openCreateModal: false,
+        openCreateModal: @js($errors->any() || (session()->has('error') && old('subject') !== null)),
         activeMenu: null,
         menuPos: {},
 
@@ -451,58 +443,6 @@ function ticketManager() {
                 right: `${right}px`,
                 left: 'auto'
             };
-        },
-
-        async closeTicketAction(id) {
-            if (!id) return;
-
-            if (typeof Swal !== 'undefined') {
-                const result = await Swal.fire({
-                    title: 'Close Support Ticket?',
-                    text: 'Are you sure you want to mark this support ticket as closed?',
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonText: '<i class="fas fa-check-double mr-1.5"></i> Yes, Mark as Closed',
-                    cancelButtonText: 'Cancel',
-                    reverseButtons: true,
-                    customClass: {
-                        confirmButton: 'bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs px-4 py-2 rounded-lg shadow-xs cursor-pointer mr-2',
-                        cancelButton: 'bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs px-4 py-2 rounded-lg border border-slate-200 cursor-pointer'
-                    },
-                    buttonsStyling: false
-                });
-                if (!result.isConfirmed) return;
-            } else {
-                if (!confirm('Are you sure you want to close this ticket?')) return;
-            }
-
-            try {
-                const response = await fetch(`/reseller/tickets/${id}/close`, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                        'Accept': 'application/json'
-                    }
-                });
-                const data = await response.json();
-                if (data.success) {
-                    if (typeof Swal !== 'undefined') {
-                        await Swal.fire({
-                            icon: 'success',
-                            title: 'Ticket Closed',
-                            text: data.message || 'Support ticket has been closed.',
-                            timer: 1500,
-                            showConfirmButton: false,
-                            toast: true,
-                            position: 'top-end'
-                        });
-                    }
-                    location.reload();
-                }
-            } catch (e) {
-                console.error('Network error closing ticket:', e);
-                location.reload();
-            }
         }
     };
 }
