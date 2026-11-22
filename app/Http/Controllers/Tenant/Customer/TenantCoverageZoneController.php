@@ -61,12 +61,13 @@ class TenantCoverageZoneController extends Controller
 
         // Query active staff for technician / staff assignment
         $staffQuery = User::where('tenant_id', $tenant->id)
-            ->where('role', '!=', 'owner')
-            ->where('status', 'active');
+            ->where('role', '!=', 'owner');
 
         if ($isResellerUser) {
             $staffQuery->where('reseller_id', $userResellerId)
                 ->where('role', 'reseller_collector');
+        } else {
+            $staffQuery->where('status', 'active');
         }
 
         $allStaff = $staffQuery->orderBy('name')->get();
