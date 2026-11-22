@@ -163,6 +163,26 @@
      x-data="customerActionBarManager({{ json_encode($actionConfig) }})"
      @keydown.escape.window="closeAllModals()">
 
+    @if($eligibleCollectors !== null)
+        <form method="POST" action="{{ route('reseller.customers.assign-collector', $customer->id) }}"
+              class="flex flex-wrap items-end gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 shadow-xs">
+            @csrf
+            <div class="w-full sm:w-56">
+                <label for="reseller-assigned-collector" class="text-xs font-medium text-slate-700 block mb-1">{{ __('Assigned Collector') }}</label>
+                <select id="reseller-assigned-collector" name="assigned_collector_id"
+                        class="w-full h-[34px] rounded-lg bg-slate-50 border border-slate-200 px-2 text-xs">
+                    <option value="">{{ __('Unassigned') }}</option>
+                    @foreach($eligibleCollectors as $collector)
+                        <option value="{{ $collector->id }}" @selected((int) old('assigned_collector_id', $customer->assigned_collector_id) === $collector->id)>{{ $collector->name }}</option>
+                    @endforeach
+                </select>
+                @error('assigned_collector_id') <p class="text-xs text-rose-700 mt-1" role="alert">{{ $message }}</p> @enderror
+            </div>
+            <button type="submit" class="h-[34px] rounded-lg bg-cyan-600 hover:bg-cyan-700 px-3 text-xs font-semibold text-white">{{ __('Save Assignment') }}</button>
+        </form>
+    @endif
+
+
     <!-- Toast Notification Banner -->
     <div x-show="toast.show" 
          x-transition:enter="transition ease-out duration-300 transform"

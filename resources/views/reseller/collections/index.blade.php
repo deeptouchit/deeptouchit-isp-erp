@@ -1,6 +1,6 @@
 @extends('reseller.layouts.app')
 
-@section('title', 'Collections - ' . ($tenant->company_name ?? $tenant->name ?? 'Reseller Portal'))
+@section('title', __($authUser->isResellerCollector() ? 'My Collections' : 'Collections'))
 
 @push('styles')
     {{-- Page-specific CSS --}}
@@ -15,10 +15,10 @@
             <div class="w-8 h-8 rounded-lg bg-cyan-50 text-cyan-600 border border-cyan-100 flex items-center justify-center text-sm shadow-2xs flex-shrink-0">
                 <i class="fas fa-receipt"></i>
             </div>
-            <h1 class="text-sm font-bold text-slate-800 tracking-tight">{{ __('Payment Collections & Receipts') }}</h1>
+            <h1 class="text-sm font-bold text-slate-800 tracking-tight">{{ __($authUser->isResellerCollector() ? 'My Collections' : 'Payment Collections & Receipts') }}</h1>
         </div>
         <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap sm:flex-nowrap justify-start sm:justify-end">
-            @if(Route::has('reseller.bulk-payments.index'))
+            @if($authUser->isResellerAdmin() && Route::has('reseller.bulk-payments.index'))
                 <a href="{{ route('reseller.bulk-payments.index') }}" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                     <i class="fas fa-layer-group text-xs"></i>
                     <span>{{ __('Bulk Payments') }}</span>
@@ -119,12 +119,12 @@
     </div>
 
     {{-- 3. COLLECTOR PERFORMANCE SUMMARY MATRIX --}}
-    @if(!empty($collectorMatrix) && count($collectorMatrix) > 0)
+    @if($authUser->isResellerAdmin() && count($collectorMatrix) > 0)
         <div class="bg-white p-2.5 rounded-xl border border-slate-200 shadow-xs space-y-2">
             <div class="flex items-center justify-between border-b border-slate-100 pb-1.5">
                 <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                     <i class="fas fa-users text-cyan-600 text-[11px]"></i>
-                    <span>Collector Performance Roster</span>
+                    <span>{{ __('Collector Performance Roster') }}</span>
                 </span>
                 <span class="text-[10.5px] text-slate-500 font-mono">Total Staff: {{ count($collectorMatrix) }}</span>
             </div>
@@ -187,30 +187,30 @@
                 <!-- Payment Method Filter -->
                 <div>
                     <select name="method" onchange="this.form.submit()" class="w-full h-[34px] py-0 px-2 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:border-cyan-500 shadow-2xs">
-                        <option value="all" {{ $method === 'all' ? 'selected' : '' }}>All Methods</option>
-                        <option value="cash" {{ $method === 'cash' ? 'selected' : '' }}>Cash in Hand</option>
-                        <option value="bangla_qr" {{ $method === 'bangla_qr' ? 'selected' : '' }}>Bangla QR</option>
+                        <option value="all" {{ $method === 'all' ? 'selected' : '' }}>{{ __('All Methods') }}</option>
+                        <option value="cash" {{ $method === 'cash' ? 'selected' : '' }}>{{ __('Cash in Hand') }}</option>
+                        <option value="bangla_qr" {{ $method === 'bangla_qr' ? 'selected' : '' }}>{{ __('Bangla QR') }}</option>
                         <option value="bkash" {{ $method === 'bkash' ? 'selected' : '' }}>bKash (MFS)</option>
-                        <option value="nagad" {{ $method === 'nagad' ? 'selected' : '' }}>Nagad (MFS)</option>
-                        <option value="rocket" {{ $method === 'rocket' ? 'selected' : '' }}>Rocket (MFS)</option>
-                        <option value="bank_transfer" {{ $method === 'bank_transfer' ? 'selected' : '' }}>Bank Transfer</option>
+                        <option value="nagad" {{ $method === 'nagad' ? 'selected' : '' }}>{{ __('Nagad (MFS)') }}</option>
+                        <option value="rocket" {{ $method === 'rocket' ? 'selected' : '' }}>{{ __('Rocket (MFS)') }}</option>
+                        <option value="bank_transfer" {{ $method === 'bank_transfer' ? 'selected' : '' }}>{{ __('Bank Transfer') }}</option>
                     </select>
                 </div>
                 <!-- Status Filter -->
                 <div>
                     <select name="status" onchange="this.form.submit()" class="w-full h-[34px] py-0 px-2 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:border-cyan-500 shadow-2xs">
-                        <option value="all" {{ ($status ?? 'all') === 'all' ? 'selected' : '' }}>All Statuses</option>
-                        <option value="paid" {{ ($status ?? '') === 'paid' ? 'selected' : '' }}>Paid / Settled</option>
-                        <option value="pending" {{ ($status ?? '') === 'pending' ? 'selected' : '' }}>Pending Approval</option>
+                        <option value="all" {{ ($status ?? 'all') === 'all' ? 'selected' : '' }}>{{ __('All Statuses') }}</option>
+                        <option value="paid" {{ ($status ?? '') === 'paid' ? 'selected' : '' }}>{{ __('Paid / Settled') }}</option>
+                        <option value="pending" {{ ($status ?? '') === 'pending' ? 'selected' : '' }}>{{ __('Pending Approval') }}</option>
                     </select>
                 </div>
                 <!-- Per Page -->
                 <div>
                     <select name="per_page" onchange="this.form.submit()" class="w-full h-[34px] py-0 px-2 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:border-cyan-500 shadow-2xs">
-                        <option value="10" {{ $perPage == 10 ? 'selected' : '' }}>Show 10 Rows</option>
-                        <option value="20" {{ $perPage == 20 ? 'selected' : '' }}>Show 20 Rows</option>
-                        <option value="50" {{ $perPage == 50 ? 'selected' : '' }}>Show 50 Rows</option>
-                        <option value="100" {{ $perPage == 100 ? 'selected' : '' }}>Show 100 Rows</option>
+                        <option value="10" {{ $perPage == 10 ? 'selected' : '' }}>{{ __('Show 10 Rows') }}</option>
+                        <option value="20" {{ $perPage == 20 ? 'selected' : '' }}>{{ __('Show 20 Rows') }}</option>
+                        <option value="50" {{ $perPage == 50 ? 'selected' : '' }}>{{ __('Show 50 Rows') }}</option>
+                        <option value="100" {{ $perPage == 100 ? 'selected' : '' }}>{{ __('Show 100 Rows') }}</option>
                     </select>
                 </div>
                 <button type="button" @click="showMoreFilters = !showMoreFilters" :aria-expanded="showMoreFilters"
@@ -226,29 +226,32 @@
                 <div class="flex items-center gap-1.5 md:ml-auto">
                     <button type="submit" class="bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs h-[34px] py-0 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer">
                         <i class="fas fa-filter text-[10px]"></i>
-                        <span>Filter</span>
+                        <span>{{ __('Filter') }}</span>
                     </button>
                     <a href="{{ route('reseller.collections.index') }}" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs h-[34px] py-0 px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1 cursor-pointer">
                         <i class="fas fa-rotate-left text-[10px]"></i>
-                        <span>Reset</span>
+                        <span>{{ __('Reset') }}</span>
                     </a>
                 </div>
             </div>
             <div x-show="showMoreFilters || filterPeriod === 'custom'" x-cloak x-transition
                  class="pt-2 border-t border-slate-100 flex flex-wrap items-center gap-2">
-                <!-- Collector Filter -->
-                <div>
-                    <select name="collector_id" onchange="this.form.submit()" class="w-full h-[34px] py-0 px-2 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:border-cyan-500 shadow-2xs">
-                        <option value="all" {{ $collectorId === 'all' ? 'selected' : '' }}>All Collectors</option>
-                        @foreach($collectors as $col)
-                            <option value="{{ $col->id }}" {{ $collectorId == $col->id ? 'selected' : '' }}>{{ $col->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
+                @if(!$authUser->isResellerCollector())
+                    <!-- Collector Filter -->
+                    <div>
+                        <select name="collector_id" onchange="this.form.submit()" class="w-full h-[34px] py-0 px-2 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:border-cyan-500 shadow-2xs">
+                            <option value="all" {{ $collectorId === 'all' ? 'selected' : '' }}>{{ __('All Collectors') }}</option>
+                            @foreach($collectors as $col)
+                                <option value="{{ $col->id }}" {{ $collectorId == $col->id ? 'selected' : '' }}>{{ $col->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                @endif
+
                 <!-- Date From (MD: 3 Cols) -->
                 <div class="w-full sm:w-40" x-show="filterPeriod === 'custom'">
                     <div class="relative">
-                        <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[9.5px] uppercase font-bold text-slate-400 pointer-events-none">From</span>
+                        <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[9.5px] uppercase font-bold text-slate-400 pointer-events-none">{{ __('From') }}</span>
                         <input type="date"
                                name="date_from"
                                x-model="filterDateFrom"
@@ -260,7 +263,7 @@
                 <!-- Date To (MD: 3 Cols) -->
                 <div class="w-full sm:w-40" x-show="filterPeriod === 'custom'">
                     <div class="relative">
-                        <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[9.5px] uppercase font-bold text-slate-400 pointer-events-none">To</span>
+                        <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[9.5px] uppercase font-bold text-slate-400 pointer-events-none">{{ __('To') }}</span>
                         <input type="date"
                                name="date_to"
                                x-model="filterDateTo"
@@ -278,15 +281,18 @@
             <table class="saas-table">
                 <thead>
                     <tr>
-                        <th class="w-10 text-center font-semibold">#</th>
-                        <th class="w-28 font-mono text-center font-semibold">Receipt #</th>
-                        <th class="text-center font-semibold">Subscriber</th>
-                        <th class="w-28 font-mono text-center font-semibold">Package</th>
-                        <th class="w-28 text-center font-semibold">Collector</th>
-                        <th class="w-24 text-center font-semibold">Method</th>
-                        <th class="w-28 text-center font-semibold">Amount</th>
-                        <th class="w-20 text-center font-semibold">Status</th>
-                        <th class="w-10 no-sort text-center font-semibold">Action</th>
+                        <th class="w-10 text-center font-semibold no-sort">#</th>
+                        <th class="w-28 font-mono text-center font-semibold">{{ __('Receipt #') }}</th>
+                        <th class="text-center font-semibold">{{ __('Subscriber') }}</th>
+                        @if(!$authUser->isResellerCollector())
+                            <th class="w-28 font-mono text-center font-semibold">{{ __('Package') }}</th>
+                            <th class="w-28 text-center font-semibold">{{ __('Collector') }}</th>
+                        @endif
+
+                        <th class="w-24 text-center font-semibold">{{ __('Method') }}</th>
+                        <th class="w-28 text-center font-semibold">{{ __('Amount') }}</th>
+                        <th class="w-20 text-center font-semibold">{{ __('Status') }}</th>
+                        <th class="w-10 no-sort text-center font-semibold">{{ __('Action') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -307,31 +313,24 @@
                             <!-- 3. Subscriber (Single Clean Field - No Concat) -->
                             <td class="font-medium text-slate-800">
                                 <button type="button" class="hover:text-cyan-700 cursor-pointer text-left font-semibold" @click="fetchReceiptDetails({{ $payment->id }})">
-                                    {{ $payment->customer?->name ?? 'Direct Subscriber' }}
+                                    {{ $payment->customer?->name ?? __('Direct Subscriber') }}
                                 </button>
                             </td>
 
-                            <!-- 4. Package Profile Name (AGENTS.md Rule 2.D) -->
-                            <td class="font-mono text-cyan-800">
-                                {{ $payment->customer?->package_display_name ?? $payment->customer?->package?->name ?? 'N/A' }}
-                            </td>
+                            @if(!$authUser->isResellerCollector())
+                                <!-- 4. Package Profile Name (AGENTS.md Rule 2.D) -->
+                                <td class="font-mono text-cyan-800">
+                                    {{ $payment->customer?->package_display_name ?? $payment->customer?->package?->name ?? 'N/A' }}
+                                </td>
 
-                            <!-- 5. Collector -->
-                            <td class="text-slate-700">
-                                {{ $payment->collector?->name ?? 'Office Counter' }}
-                            </td>
+                                <!-- 5. Collector -->
+                                <td class="text-slate-700">
+                                    {{ $payment->collector?->name ?? __('Office Counter') }}
+                                </td>
+                            @endif
 
-                            <!-- 6. Payment Method -->
                             <td class="text-center">
-                                @if(in_array(strtolower($payment->payment_method), ['bangla_qr', 'banglaqr']))
-                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold font-mono bg-teal-50 text-teal-700 border border-teal-200">BANGLA QR</span>
-                                @elseif(strtolower($payment->payment_method) === 'cash')
-                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold font-mono bg-emerald-50 text-emerald-700 border border-emerald-200">CASH</span>
-                                @elseif(in_array(strtolower($payment->payment_method), ['bkash', 'nagad', 'rocket']))
-                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold font-mono bg-pink-50 text-pink-700 border border-pink-200">{{ strtoupper($payment->payment_method) }}</span>
-                                @else
-                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold font-mono bg-blue-50 text-blue-700 border border-blue-200">BANK/POS</span>
-                                @endif
+                                <span class="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-semibold text-slate-700">{{ $payment->payment_method_name }}</span>
                             </td>
 
                             <!-- 7. Amount Paid -->
@@ -344,17 +343,17 @@
                                 @if(strtolower($payment->status) === 'pending')
                                     <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold font-mono bg-amber-50 text-amber-700 border border-amber-200" title="Pending Verification & Approval">
                                         <i class="fas fa-clock text-[8px]"></i>
-                                        <span>Pending</span>
+                                        <span>{{ __('Pending') }}</span>
                                     </span>
                                 @elseif(in_array(strtolower($payment->status), ['paid', 'completed', 'approved', 'active']))
                                     <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                                         <i class="fas fa-check-circle text-[8px]"></i>
-                                        <span>Paid</span>
+                                        <span>{{ __('Paid') }}</span>
                                     </span>
                                 @else
                                     <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-50 text-rose-700 border border-rose-200">
                                         <i class="fas fa-times-circle text-[8px]"></i>
-                                        <span>Rejected</span>
+                                        <span>{{ __('Rejected') }}</span>
                                     </span>
                                 @endif
                             </td>
@@ -362,7 +361,7 @@
                             <!-- 9. Action: Floating 3-Dot Button (AGENTS.md Rule 2.E) -->
                             <td class="text-center">
                                 <button type="button" 
-                                        @click.stop="toggleMenu({{ Js::from($payment) }}, $event)" 
+                                        @click.stop="toggleMenu({{ Js::from($payment->only(['id', 'status', 'invoice_no', 'amount'])) }}, $event)"
                                         class="w-7 h-7 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition flex items-center justify-center mx-auto cursor-pointer">
                                     <i class="fas fa-ellipsis-v text-[10px]"></i>
                                 </button>
@@ -370,9 +369,9 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="9" class="text-center py-8 text-slate-400">
+                            <td colspan="{{ $authUser->isResellerCollector() ? 7 : 9 }}" class="text-center py-8 text-slate-400">
                                 <i class="fas fa-receipt text-3xl mb-2 block text-slate-300"></i>
-                                <span>No collection slips found matching your filters.</span>
+                                <span>{{ __('No collection slips found matching your filters.') }}</span>
                             </td>
                         </tr>
                     @endforelse
@@ -384,7 +383,7 @@
         @if($payments->hasPages())
             <div class="px-4 py-2.5 bg-white border-t border-slate-200 flex items-center justify-between text-xs">
                 <div>
-                    Showing <span class="font-bold">{{ $payments->firstItem() }}</span> to <span class="font-bold">{{ $payments->lastItem() }}</span> of <span class="font-bold">{{ $payments->total() }}</span> collections
+                    {{ __('Showing') }} <span class="font-bold">{{ $payments->firstItem() }}</span> to <span class="font-bold">{{ $payments->lastItem() }}</span> of <span class="font-bold">{{ $payments->total() }}</span> collections
                 </div>
                 <div>
                     {{ $payments->links() }}
@@ -408,13 +407,13 @@
                         @click="const item = activeMenu; activeMenu = null; approvePayment(item)" 
                         class="w-full flex items-center gap-2 px-3 py-1.5 text-emerald-700 hover:bg-emerald-100 transition text-left cursor-pointer font-bold">
                     <i class="fas fa-check-circle w-4 text-emerald-600"></i>
-                    <span>Approve &amp; Activate</span>
+                    <span>{{ __('Approve & Activate') }}</span>
                 </button>
                 <button type="button" 
                         @click="const item = activeMenu; activeMenu = null; rejectPayment(item)" 
                         class="w-full flex items-center gap-2 px-3 py-1.5 text-rose-700 hover:bg-rose-100 transition text-left cursor-pointer font-semibold">
                     <i class="fas fa-times-circle w-4 text-rose-600"></i>
-                    <span>Reject Payment</span>
+                    <span>{{ __('Reject Payment') }}</span>
                 </button>
             </div>
         </template>
@@ -425,13 +424,13 @@
                     @click="fetchReceiptDetails(activeMenu?.id); activeMenu = null" 
                     class="w-full flex items-center gap-2 px-3 py-1.5 text-slate-700 hover:bg-slate-50 hover:text-cyan-600 transition text-left cursor-pointer">
                 <i class="fas fa-receipt w-4 text-cyan-600"></i>
-                <span>View Receipt</span>
+                <span>{{ __('View Receipt') }}</span>
             </button>
             <a :href="`/reseller/collections/${activeMenu?.id}/receipt`" 
                target="_blank"
                class="w-full flex items-center gap-2 px-3 py-1.5 text-slate-700 hover:bg-slate-50 hover:text-cyan-600 transition text-left cursor-pointer">
                 <i class="fas fa-print w-4 text-slate-500"></i>
-                <span>Print Receipt</span>
+                <span>{{ __('Print Receipt') }}</span>
             </a>
         </div>
     </div>
@@ -458,7 +457,7 @@
                         <i class="fas fa-receipt"></i>
                     </div>
                     <div>
-                        <h3 class="text-xs font-semibold text-slate-800">Money Receipt Voucher</h3>
+                        <h3 class="text-xs font-semibold text-slate-800">{{ __('Money Receipt Voucher') }}</h3>
                         <p class="text-[10.5px] text-slate-500 font-normal" x-text="receiptData?.receipt_no"></p>
                     </div>
                 </div>
@@ -478,28 +477,28 @@
                 <!-- Receipt Matrix Grid -->
                 <div class="grid grid-cols-2 gap-2 text-[11px]">
                     <div class="p-2 bg-slate-50 rounded-lg border border-slate-200/80">
-                        <span class="text-[9.5px] font-medium text-slate-500 block uppercase">Subscriber</span>
+                        <span class="text-[9.5px] font-medium text-slate-500 block uppercase">{{ __('Subscriber') }}</span>
                         <span class="font-bold text-slate-800 block" x-text="receiptData?.customer_name"></span>
                         <span class="text-[9.5px] font-mono text-cyan-800" x-text="'ID: ' + (receiptData?.customer_id || 'N/A')"></span>
                     </div>
                     <div class="p-2 bg-slate-50 rounded-lg border border-slate-200/80">
-                        <span class="text-[9.5px] font-medium text-slate-500 block uppercase">Billing Month</span>
+                        <span class="text-[9.5px] font-medium text-slate-500 block uppercase">{{ __('Billing Month') }}</span>
                         <span class="font-bold text-slate-800 block" x-text="receiptData?.billing_month"></span>
                         <span class="text-[9.5px] text-slate-500" x-text="receiptData?.package_name"></span>
                     </div>
                     <div class="p-2 bg-slate-50 rounded-lg border border-slate-200/80">
-                        <span class="text-[9.5px] font-medium text-slate-500 block uppercase">Payment Method</span>
+                        <span class="text-[9.5px] font-medium text-slate-500 block uppercase">{{ __('Payment Method') }}</span>
                         <span class="font-bold text-slate-800 block" x-text="receiptData?.payment_method"></span>
                     </div>
                     <div class="p-2 bg-slate-50 rounded-lg border border-slate-200/80">
-                        <span class="text-[9.5px] font-medium text-slate-500 block uppercase">Collector Staff</span>
+                        <span class="text-[9.5px] font-medium text-slate-500 block uppercase">{{ __('Collector Staff') }}</span>
                         <span class="font-bold text-slate-800 block" x-text="receiptData?.collector_name"></span>
                     </div>
                 </div>
 
                 <!-- Amount Box -->
                 <div class="p-3 bg-emerald-50/80 rounded-xl border border-emerald-200 text-center">
-                    <span class="text-[10px] uppercase font-bold text-emerald-700 block tracking-wider">Total Received Amount</span>
+                    <span class="text-[10px] uppercase font-bold text-emerald-700 block tracking-wider">{{ __('Total Received Amount') }}</span>
                     <span class="text-lg font-bold font-mono text-emerald-900 block" x-text="'{{ $currencySymbol ?? '৳' }}' + Number(receiptData?.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })"></span>
                     <span class="text-[10px] text-slate-500 font-mono mt-0.5 block" x-text="receiptData?.paid_at"></span>
                 </div>
@@ -511,10 +510,10 @@
                    target="_blank" 
                    class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200 transition flex items-center gap-1.5 cursor-pointer">
                     <i class="fas fa-print"></i>
-                    <span>Print Slip</span>
+                    <span>{{ __('Print Slip') }}</span>
                 </a>
                 <button type="button" @click="receiptData = null" class="border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs px-3.5 py-1.5 rounded-lg transition cursor-pointer">
-                    Close
+                    {{ __('Close') }}
                 </button>
             </div>
         </div>
@@ -622,7 +621,7 @@ function collectionManager() {
             if (typeof Swal !== 'undefined') {
                 const result = await Swal.fire({
                     title: 'Approve Payment & Activate Line?',
-                    html: `<div class="text-xs text-slate-600">Are you sure you want to approve receipt <b>${item.invoice_no}</b> ({{ $currencySymbol ?? '৳' }}${Number(item.amount).toFixed(2)})?<br><span class="text-slate-400 mt-1 block">Subscriber line will be activated immediately on MikroTik and validity extended.</span></div>`,
+                    html: `<div class="text-xs text-slate-600">Are you sure you want to approve receipt <b>${item.invoice_no}</b> ({{ $currencySymbol ?? '৳' }}${Number(item.amount).toFixed(2)})?<br><span class="text-slate-400 mt-1 block">{{ __('Subscriber line will be activated immediately on MikroTik and validity extended.') }}</span></div>`,
                     icon: 'question',
                     showCancelButton: true,
                     confirmButtonText: 'Yes, Approve & Activate',

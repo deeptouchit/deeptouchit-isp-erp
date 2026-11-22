@@ -23,9 +23,9 @@ class ResellerMonthlyAnalyticsTest extends TestCase
         Schema::table('tenant_customers', function (Blueprint $table) {
             $table->string('zone')->nullable();
         });
-        Schema::table('tenant_customer_payments', function (Blueprint $table) {
-            $table->unsignedBigInteger('reseller_id')->nullable();
-        });
+        if (!Schema::hasColumn('tenant_customer_payments', 'reseller_id')) {
+            Schema::table('tenant_customer_payments', fn (Blueprint $table) => $table->unsignedBigInteger('reseller_id')->nullable());
+        }
 
         $this->travelTo(now()->setDate(2026, 11, 21));
         $tenant = Tenant::create([

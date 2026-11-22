@@ -159,24 +159,27 @@ class TenantCoverageZoneController extends Controller
             });
         }
 
+            $collectorId = $isResellerUser && auth()->user()?->isResellerCollector() ? auth()->id() : null;
         $occupancyFilter = (string) $request->input('occupancy', '');
         if ($occupancyFilter === 'populated') {
-            $query->whereExists(function ($sub) use ($tenant, $isResellerUser, $userResellerId) {
+            $query->whereExists(function ($sub) use ($tenant, $isResellerUser, $userResellerId, $collectorId) {
                 $sub->select(DB::raw(1))
                     ->from('tenant_customers')
                     ->where('tenant_customers.tenant_id', $tenant->id)
                     ->when($isResellerUser, fn ($customers) => $customers->where('tenant_customers.reseller_id', $userResellerId))
+                    ->when($collectorId, fn ($customers) => $customers->where('tenant_customers.assigned_collector_id', $collectorId))
                     ->where(function ($match) {
                         $match->whereColumn('tenant_customers.zone_id', 'tenant_coverage_zones.id')
                               ->orWhereColumn('tenant_customers.zone', 'tenant_coverage_zones.name');
                     });
             });
         } elseif ($occupancyFilter === 'empty') {
-            $query->whereNotExists(function ($sub) use ($tenant, $isResellerUser, $userResellerId) {
+            $query->whereNotExists(function ($sub) use ($tenant, $isResellerUser, $userResellerId, $collectorId) {
                 $sub->select(DB::raw(1))
                     ->from('tenant_customers')
                     ->where('tenant_customers.tenant_id', $tenant->id)
                     ->when($isResellerUser, fn ($customers) => $customers->where('tenant_customers.reseller_id', $userResellerId))
+                    ->when($collectorId, fn ($customers) => $customers->where('tenant_customers.assigned_collector_id', $collectorId))
                     ->where(function ($match) {
                         $match->whereColumn('tenant_customers.zone_id', 'tenant_coverage_zones.id')
                               ->orWhereColumn('tenant_customers.zone', 'tenant_coverage_zones.name');
@@ -201,6 +204,7 @@ class TenantCoverageZoneController extends Controller
 
             $matchingCustomers = TenantCustomer::where('tenant_id', $tenant->id)
                 ->when($isResellerUser, fn ($customers) => $customers->where('reseller_id', $userResellerId))
+                ->when($collectorId, fn ($customers) => $customers->where('assigned_collector_id', $collectorId))
                 ->where(function ($q) use ($zoneIds, $zoneNames) {
                     $q->whereIn('zone_id', $zoneIds);
                     if (!empty($zoneNames)) {

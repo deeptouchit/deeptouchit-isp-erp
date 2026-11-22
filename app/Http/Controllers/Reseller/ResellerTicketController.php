@@ -47,7 +47,8 @@ class ResellerTicketController extends Controller
 
     private function scopedTickets(TenantReseller $reseller): Builder
     {
-        return SupportTicket::where('tenant_id', $reseller->tenant_id)->where('reseller_id', $reseller->id);
+        return SupportTicket::where('tenant_id', $reseller->tenant_id)->where('reseller_id', $reseller->id)
+            ->when(Auth::user()->isResellerCollector(), fn ($query) => $query->where('user_id', Auth::id()));
     }
 
     private function filters(Request $request): array

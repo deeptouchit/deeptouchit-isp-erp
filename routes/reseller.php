@@ -144,6 +144,8 @@ Route::middleware(['web'])->group(function () {
 
         // 3. Reseller Admin ONLY Protected Routes (Financials, Packages, Staff & Margins)
         Route::middleware([EnsureResellerAdmin::class])->group(function () {
+            Route::post('/reseller/customers/{id}/assign-collector', [ResellerCustomerController::class, 'assignCollector'])
+                ->whereNumber('id')->name('reseller.customers.assign-collector');
             Route::prefix('reseller/finance/expenses')->name('reseller.finance.expenses')->controller(TenantExpenseAccountController::class)->group(function () {
                 Route::get('/', 'index')->name('');
                 Route::post('/', 'store')->name('.store');

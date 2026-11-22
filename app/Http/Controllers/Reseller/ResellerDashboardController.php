@@ -45,6 +45,10 @@ class ResellerDashboardController extends Controller
      */
     public function index(Request $request): View
     {
+        if ($request->user()->isResellerCollector()) {
+            return app(ResellerCollectorController::class)->dashboard($request);
+        }
+
         [$authUser, $reseller, $tenant] = $this->getResellerData();
         $resellerId = $reseller?->id;
         $tenantId = $tenant?->id;

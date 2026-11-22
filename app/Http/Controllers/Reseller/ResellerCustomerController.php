@@ -63,6 +63,10 @@ class ResellerCustomerController extends Controller
      */
     public function index(Request $request): View
     {
+        if ($request->user()->isResellerCollector()) {
+            return app(ResellerCollectorController::class)->index($request);
+        }
+
         [$authUser, $reseller, $tenant] = $this->getResellerData();
         $resellerId = $reseller?->id;
         $tenantId = $tenant?->id;
@@ -448,6 +452,10 @@ class ResellerCustomerController extends Controller
      */
     public function show(Request $request, int $id): JsonResponse|View
     {
+        if ($request->user()->isResellerCollector()) {
+            return app(ResellerCollectorController::class)->show($request, $id);
+        }
+
         [$authUser, $reseller, $tenant] = $this->getResellerData();
         $tenantId = $tenant?->id;
         $resellerId = $reseller?->id;
@@ -520,7 +528,12 @@ class ResellerCustomerController extends Controller
 
         $currencySymbol = $tenant->currency_symbol ?? '৳';
 
+        $eligibleCollectors = $authUser->isResellerAdmin() && $reseller
+            ? $this->eligibleCollectors($tenantId, $resellerId)->orderBy('name')->get(['id', 'name'])
+            : null;
+
         return view('reseller.customers.show', compact(
+            'eligibleCollectors',
             'authUser',
             'reseller',
             'tenant',
@@ -532,6 +545,40 @@ class ResellerCustomerController extends Controller
             'activityLogs',
             'currencySymbol'
         ));
+    }
+
+    private function eligibleCollectors(int $tenantId, int $resellerId): \Illuminate\Database\Eloquent\Builder
+    {
+        return User::where('tenant_id', $tenantId)->where('reseller_id', $resellerId)
+            ->where('status', 'active')->whereIn('role', ['reseller_collector', 'collector', 'isp_collector']);
+    }
+
+    public function assignCollector(Request $request, int $id): RedirectResponse|JsonResponse
+    {
+        $actor = $request->user();
+        abort_unless($actor->isResellerAdmin() && $actor->reseller && (int) $actor->reseller->tenant_id === (int) $actor->tenant_id, 403);
+        $data = $request->validate(['assigned_collector_id' => ['present', 'nullable', 'integer']]);
+
+        DB::transaction(function () use ($actor, $id, $data) {
+            $customer = TenantCustomer::where('tenant_id', $actor->tenant_id)
+                ->where('reseller_id', $actor->reseller_id)->lockForUpdate()->findOrFail($id);
+            $collectorId = $data['assigned_collector_id'];
+            if ($collectorId && !$this->eligibleCollectors($actor->tenant_id, $actor->reseller_id)->whereKey($collectorId)->exists()) {
+                throw \Illuminate\Validation\ValidationException::withMessages(['assigned_collector_id' => __('Select an active collector from this reseller.')]);
+            }
+
+            $customer->update(['assigned_collector_id' => $collectorId]);
+            TenantActivityLog::create([
+                'tenant_id' => $actor->tenant_id, 'actor_type' => 'reseller', 'actor_id' => $actor->id,
+                'actor_name' => $actor->name, 'event_type' => 'reseller_collector_assignment',
+                'description' => "Collector assignment updated for customer #{$customer->id}.",
+                'metadata' => ['assigned_collector_id' => $collectorId],
+            ]);
+        });
+
+        return $request->expectsJson()
+            ? response()->json(['success' => true])
+            : back()->with('success', __('Collector assignment updated.'));
     }
 
     /**
@@ -1082,6 +1129,10 @@ class ResellerCustomerController extends Controller
      */
     public function payBill(Request $request, int $id): JsonResponse|RedirectResponse
     {
+        if ($request->user()->isResellerCollector()) {
+            return app(ResellerCollectorController::class)->collect($request, $id);
+        }
+
         [$authUser, $reseller, $tenant] = $this->getResellerData();
         $tenantId = $tenant?->id;
         $resellerId = $reseller?->id;
@@ -1732,6 +1783,10 @@ class ResellerCustomerController extends Controller
      */
     public function exportCsv(Request $request): StreamedResponse
     {
+        if ($request->user()->isResellerCollector()) {
+            return app(ResellerCollectorController::class)->export($request);
+        }
+
         [$authUser, $reseller, $tenant] = $this->getResellerData();
         $resellerId = $reseller?->id;
         $tenantId = $tenant?->id;
@@ -1917,6 +1972,10 @@ class ResellerCustomerController extends Controller
      */
     public function printReport(Request $request): View
     {
+        if ($request->user()->isResellerCollector()) {
+            return app(ResellerCollectorController::class)->print($request);
+        }
+
         [$authUser, $reseller, $tenant] = $this->getResellerData();
         $resellerId = $reseller?->id;
         $tenantId = $tenant?->id;

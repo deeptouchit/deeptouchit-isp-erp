@@ -60,6 +60,18 @@ class EnsureResellerUser
             ]);
         }
 
+        if ($user->isResellerCollector()) {
+            abort_unless($request->routeIs(
+                'reseller.index', 'reseller.dashboard', 'reseller.logout', 'reseller.notifications.*',
+                'reseller.customers.index', 'reseller.customers.show', 'reseller.customers.zones', 'reseller.customers.pay-bill',
+                'reseller.customers.payment', 'reseller.customers.export', 'reseller.customers.print',
+                'reseller.collections.index', 'reseller.collections.receipt', 'reseller.collections.export', 'reseller.collections.print',
+                'reseller.finance.cash-handover', 'reseller.finance.cash-handover.store',
+                'reseller.finance.cash-handover.collector-cash', 'reseller.finance.cash-handover.show',
+                'reseller.finance.cash-handover.export', 'reseller.tickets.*', 'reseller.profile', 'reseller.profile.update', 'reseller.profile.password',
+            ), 403);
+        }
+
         return $next($request);
     }
 }

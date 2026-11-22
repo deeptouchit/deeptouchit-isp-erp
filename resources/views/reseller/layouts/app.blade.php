@@ -87,6 +87,18 @@
             <i class="fas fa-chart-pie text-sm"></i>
             <span>{{ __('Home') }}</span>
         </a>
+        @if($authUser?->isResellerCollector())
+            <a href="{{ route('reseller.customers.index', ['status' => 'due']) }}"
+               class="flex flex-col items-center gap-0.5 py-1 px-2 text-[10px] font-medium {{ request()->routeIs('reseller.customers*') ? 'text-cyan-700 font-bold' : 'text-slate-500' }}">
+                <i class="fas fa-file-invoice-dollar text-sm" aria-hidden="true"></i>
+                <span>{{ __('Due') }}</span>
+            </a>
+            <a href="{{ route('reseller.collections.index') }}"
+               class="flex flex-col items-center gap-0.5 py-1 px-2 text-[10px] font-medium {{ request()->routeIs('reseller.collections*') ? 'text-cyan-700 font-bold' : 'text-slate-500' }}">
+                <i class="fas fa-receipt text-sm" aria-hidden="true"></i>
+                <span>{{ __('Collections') }}</span>
+            </a>
+        @else
         <a href="{{ route('reseller.customers.index') }}" 
            class="flex flex-col items-center gap-0.5 py-1 px-2 text-[10px] font-medium transition {{ request()->routeIs('reseller.customers*') ? 'text-purple-600 font-bold' : 'text-slate-500 hover:text-slate-800' }}">
             <i class="fas fa-users text-sm"></i>
@@ -97,6 +109,7 @@
             <i class="fas fa-wallet text-sm"></i>
             <span>{{ __('Wallet') }}</span>
         </a>
+        @endif
         <button type="button" 
                 @click="mobileSidebar = true" aria-controls="reseller-sidebar" :aria-expanded="mobileSidebar"
                 class="flex flex-col items-center gap-0.5 py-1 px-2 text-[10px] font-medium text-slate-500 hover:text-slate-800 transition cursor-pointer">
