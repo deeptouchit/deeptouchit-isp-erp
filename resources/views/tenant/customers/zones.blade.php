@@ -356,7 +356,7 @@
                                 'reseller_id' => $z->reseller_id ? (string)$z->reseller_id : '',
                                 'reseller_name' => $z->reseller?->name ?? __('HQ Direct'),
                                 'reseller_code' => $z->reseller?->code ?? '',
-                                'staff_id' => $z->staff_id ? (string)$z->staff_id : '',
+                                'staff_id' => ($z->staff_id ?: $z->assignedStaff?->id) ? (string)($z->staff_id ?: $z->assignedStaff?->id) : '',
                                 'staff_name' => $assignedStaffName,
                                 'staff_phone' => $assignedStaffPhone,
                                 'staff_role' => $assignedStaffRole ? __($assignedStaffRole) : '',
