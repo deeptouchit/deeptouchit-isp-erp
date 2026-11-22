@@ -12,7 +12,7 @@ Route::get('/login', fn() => redirect()->route('tenant.login'))->name('login');
 // Global Language / Locale Switcher Route
 Route::get('/locale/{lang}', function (string $lang) {
     if (in_array($lang, ['bn', 'en'])) {
-        session(['locale' => $lang]);
+        session(['locale' => $lang, 'locale_explicit' => true]);
     }
     return back();
 })->name('locale.switch');
