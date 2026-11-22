@@ -161,8 +161,8 @@ return [
         'active' => ['reseller.packages*', 'reseller.margins*'],
         'roles' => ['reseller_admin', 'reseller_owner', 'reseller_manager', 'admin', 'manager'],
         'children' => [
-            ['title' => 'Available Packages', 'route' => 'reseller.packages.index', 'active' => ['reseller.packages*']],
-            ['title' => 'Margin & Profit Rates', 'route' => 'reseller.margins.index', 'active' => ['reseller.margins*']],
+            ['title' => 'Available Packages', 'route' => 'reseller.packages.index', 'active' => ['reseller.packages*'], 'roles' => ['reseller_admin', 'reseller_owner', 'reseller_manager', 'admin', 'manager']],
+            ['title' => 'Margin & Profit Rates', 'route' => 'reseller.margins.index', 'active' => ['reseller.margins*'], 'roles' => ['reseller_admin', 'reseller_owner', 'admin']],
         ],
     ],
     [
