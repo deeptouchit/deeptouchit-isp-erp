@@ -7718,5 +7718,6 @@
     "Unable to upload the profile photo.": "প্রোফাইল ছবি আপলোড করা যায়নি।",
     "Profile updated.": "প্রোফাইল হালনাগাদ হয়েছে।",
     "Password changed.": "পাসওয়ার্ড পরিবর্তন হয়েছে।",
-    "The current password is incorrect.": "বর্তমান পাসওয়ার্ড সঠিক নয়।"
+    "The current password is incorrect.": "বর্তমান পাসওয়ার্ড সঠিক নয়।",
+    "Admin Name": "অ্যাডমিনের নাম"
 }

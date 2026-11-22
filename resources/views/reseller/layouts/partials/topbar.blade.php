@@ -530,7 +530,7 @@
                     <img src="{{ $authUser->avatar_url }}" alt="{{ $authUser->name ?? 'User' }}" class="w-7 h-7 rounded-full object-cover ring-1.5 ring-purple-200 shadow-xs">
                 @else
                     <div class="w-7 h-7 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
-                        {{ strtoupper(substr($authUser->name ?? 'R', 0, 1)) }}
+                        {{ mb_strtoupper(mb_substr(trim($authUser->name ?? ''), 0, 1, 'UTF-8'), 'UTF-8') ?: 'R' }}
                     </div>
                 @endif
                 <i class="fas fa-chevron-down text-[9px] text-slate-400 transition-transform" :class="profileOpen ? 'rotate-180' : ''"></i>
@@ -553,7 +553,7 @@
                         <img src="{{ $authUser->avatar_url }}" alt="{{ $authUser->name ?? 'User' }}" class="w-9 h-9 rounded-full object-cover ring-1.5 ring-purple-200 shadow-xs flex-shrink-0">
                     @else
                         <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 text-white flex items-center justify-center font-bold text-xs shadow-xs flex-shrink-0">
-                            {{ strtoupper(substr($authUser->name ?? 'R', 0, 1)) }}
+                            {{ mb_strtoupper(mb_substr(trim($authUser->name ?? ''), 0, 1, 'UTF-8'), 'UTF-8') ?: 'R' }}
                         </div>
                     @endif
                     <div class="min-w-0 flex-1">

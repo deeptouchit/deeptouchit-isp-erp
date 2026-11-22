@@ -67,7 +67,7 @@
             <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
                 <div class="min-w-0 pr-1">
                     <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Commission Rate') }}</span>
-                    <span class="text-[13px] font-bold font-mono text-purple-700 leading-tight block">
+                    <span class="text-[13px] font-bold text-purple-700 leading-tight block">
                         {{ $stats['commission_rate'] }}%
                     </span>
                 </div>
@@ -80,7 +80,7 @@
             <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
                 <div class="min-w-0 pr-1">
                     <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Billing Type') }}</span>
-                    <span class="text-[13px] font-bold font-mono text-slate-800 leading-tight block truncate">
+                    <span class="text-[13px] font-bold text-slate-800 leading-tight block truncate">
                         {{ $stats['billing_type'] }}
                     </span>
                 </div>
@@ -93,7 +93,7 @@
             <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
                 <div class="min-w-0 pr-1">
                     <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Total Customers') }}</span>
-                    <span class="text-[13px] font-bold font-mono text-emerald-600 leading-tight block">
+                    <span class="text-[13px] font-bold text-emerald-600 leading-tight block">
                         {{ number_format($stats['active_subscribers']) }}
                     </span>
                 </div>
@@ -106,7 +106,7 @@
             <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
                 <div class="min-w-0 pr-1">
                     <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Wallet Balance') }}</span>
-                    <span class="text-[13px] font-bold font-mono text-emerald-600 leading-tight block">
+                    <span class="text-[13px] font-bold text-emerald-600 leading-tight block">
                         @currency($stats['wallet_balance'] ?? ($stats['available_balance'] ?? 0))
                     </span>
                 </div>
@@ -119,7 +119,7 @@
             <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
                 <div class="min-w-0 pr-1">
                     <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Partner Code') }}</span>
-                    <span class="text-[13px] font-bold font-mono text-indigo-700 leading-tight block truncate">
+                    <span class="text-[13px] font-bold text-indigo-700 leading-tight block truncate">
                         {{ $stats['partner_code'] }}
                     </span>
                 </div>
@@ -132,7 +132,7 @@
             <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
                 <div class="min-w-0 pr-1">
                     <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Status') }}</span>
-                    <span class="text-[13px] font-bold font-mono text-teal-600 leading-tight block">
+                    <span class="text-[13px] font-bold text-teal-600 leading-tight block">
                         {{ $stats['status'] }}
                     </span>
                 </div>
@@ -146,7 +146,7 @@
             <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
                 <div class="min-w-0 pr-1">
                     <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Staff ID') }}</span>
-                    <span class="text-[13px] font-bold font-mono text-purple-700 leading-tight block truncate">
+                    <span class="text-[13px] font-bold text-purple-700 leading-tight block truncate">
                         {{ $stats['staff_id'] }}
                     </span>
                 </div>
@@ -159,7 +159,7 @@
             <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
                 <div class="min-w-0 pr-1">
                     <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Designation') }}</span>
-                    <span class="text-[13px] font-bold font-mono text-slate-800 leading-tight block truncate">
+                    <span class="text-[13px] font-bold text-slate-800 leading-tight block truncate">
                         {{ $stats['role_title'] }}
                     </span>
                 </div>
@@ -172,7 +172,7 @@
             <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
                 <div class="min-w-0 pr-1">
                     <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Mobile') }}</span>
-                    <span class="text-[13px] font-bold font-mono text-emerald-600 leading-tight block truncate">
+                    <span class="text-[13px] font-bold text-emerald-600 leading-tight block truncate">
                         {{ $stats['mobile'] }}
                     </span>
                 </div>
@@ -185,7 +185,7 @@
             <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
                 <div class="min-w-0 pr-1">
                     <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Email') }}</span>
-                    <span class="text-[13px] font-bold font-mono text-slate-700 leading-tight block truncate">
+                    <span class="text-[13px] font-bold text-slate-700 leading-tight block truncate">
                         {{ $stats['email'] }}
                     </span>
                 </div>
@@ -198,7 +198,7 @@
             <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
                 <div class="min-w-0 pr-1">
                     <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Joined') }}</span>
-                    <span class="text-[13px] font-bold font-mono text-indigo-700 leading-tight block truncate">
+                    <span class="text-[13px] font-bold text-indigo-700 leading-tight block truncate">
                         {{ $stats['joined_date'] }}
                     </span>
                 </div>
@@ -211,7 +211,7 @@
             <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
                 <div class="min-w-0 pr-1">
                     <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Status') }}</span>
-                    <span class="text-[13px] font-bold font-mono text-teal-600 leading-tight block">
+                    <span class="text-[13px] font-bold text-teal-600 leading-tight block">
                         {{ $stats['status'] }}
                     </span>
                 </div>
@@ -276,7 +276,7 @@
     </div>
 
     {{-- TAB 1: BUSINESS / PERSONAL PROFILE & CONTACT INFO --}}
-    <div x-show="activeTab === 'business' || activeTab === 'personal'" class="max-w-4xl mx-auto space-y-4">
+    <div x-show="activeTab === 'business' || activeTab === 'personal'" class="w-full space-y-4">
         <form id="profileForm" action="{{ route('reseller.profile.update') }}" method="POST" enctype="multipart/form-data" class="space-y-4">
             @csrf
             @method('PUT')
@@ -300,7 +300,7 @@
                         </template>
                         <template x-if="!avatarPreview && (!hasExistingAvatar || removeAvatarFlag)">
                             <div class="w-16 h-16 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 text-white flex items-center justify-center font-bold text-xl shadow-xs">
-                                {{ strtoupper(substr($user->name ?? 'U', 0, 1)) }}
+                                {{ mb_strtoupper(mb_substr(trim($user->name ?? ''), 0, 1, 'UTF-8'), 'UTF-8') ?: 'U' }}
                             </div>
                         </template>
 
@@ -363,7 +363,7 @@
                                name="user_email" autocomplete="email" maxlength="100"
                                value="{{ old('user_email', $user->email) }}"
                                required
-                               class="w-full border @error('user_email', 'profile') border-rose-400 ring-1 ring-rose-100 bg-rose-50/30 text-rose-900 @else bg-slate-50 border-slate-200 text-slate-800 @enderror rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-cyan-500 shadow-2xs font-mono">
+                               class="w-full border @error('user_email', 'profile') border-rose-400 ring-1 ring-rose-100 bg-rose-50/30 text-rose-900 @else bg-slate-50 border-slate-200 text-slate-800 @enderror rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-cyan-500 shadow-2xs">
                         @error('user_email', 'profile') <p class="mt-1 text-xs text-rose-700" role="alert">{{ $message }}</p> @enderror
                     </div>
 
@@ -376,7 +376,7 @@
                                 name="user_mobile" autocomplete="tel" maxlength="30" inputmode="tel"
                                 value="{{ old('user_mobile', $user->mobile ?? $user->phone) }}"
                                 placeholder="017xxxxxxxx"
-                                class="w-full border @error('user_mobile', 'profile') border-rose-400 ring-1 ring-rose-100 bg-rose-50/30 text-rose-900 @else bg-slate-50 border-slate-200 text-slate-800 @enderror rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-cyan-500 font-mono shadow-2xs">
+                                class="w-full border @error('user_mobile', 'profile') border-rose-400 ring-1 ring-rose-100 bg-rose-50/30 text-rose-900 @else bg-slate-50 border-slate-200 text-slate-800 @enderror rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-cyan-500 shadow-2xs">
                         @error('user_mobile', 'profile') <p class="mt-1 text-xs text-rose-700" role="alert">{{ $message }}</p> @enderror
                     </div>
                 </div>
@@ -397,7 +397,7 @@
                 <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-4">
                     <div class="flex items-center justify-between border-b border-slate-100 pb-3">
                         <h3 class="text-xs font-bold text-slate-800">{{ __('Business Information') }}</h3>
-                        <span class="px-2.5 py-0.5 rounded text-[10.5px] font-mono font-bold bg-purple-50 text-purple-700 border border-purple-200">
+                        <span class="px-2.5 py-0.5 rounded text-[10.5px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
                             {{ $reseller->code ?? __('N/A') }}
                         </span>
                     </div>
@@ -422,7 +422,7 @@
                             <input type="text"
                                    value="{{ $reseller->prefix ?? ($reseller->code ?? 'RES') }}"
                                    readonly
-                                   class="w-full bg-slate-100 border border-slate-200 text-slate-600 rounded-lg text-xs px-3 py-1.5 cursor-not-allowed font-mono font-bold shadow-2xs">
+                                   class="w-full bg-slate-100 border border-slate-200 text-slate-600 rounded-lg text-xs px-3 py-1.5 cursor-not-allowed font-bold shadow-2xs">
                         </div>
 
                         <!-- Contact Person -->
@@ -451,7 +451,7 @@
                                    value="{{ old('mobile', $reseller->mobile) }}"
                                    required
                                    placeholder="017xxxxxxxx"
-                                   class="w-full border @error('mobile', 'profile') border-rose-400 ring-1 ring-rose-100 bg-rose-50/30 text-rose-900 @else bg-slate-50 border-slate-200 text-slate-800 @enderror rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-cyan-500 font-mono shadow-2xs">
+                                   class="w-full border @error('mobile', 'profile') border-rose-400 ring-1 ring-rose-100 bg-rose-50/30 text-rose-900 @else bg-slate-50 border-slate-200 text-slate-800 @enderror rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-cyan-500 shadow-2xs">
                         @error('mobile', 'profile') <p class="mt-1 text-xs text-rose-700" role="alert">{{ $message }}</p> @enderror
                         </div>
 
@@ -514,7 +514,7 @@
             <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-4">
                 <div class="flex items-center justify-between border-b border-slate-100 pb-3">
                     <h3 class="text-xs font-bold text-slate-800">{{ __('Billing & Rate Details') }}</h3>
-                    <span class="px-2.5 py-0.5 rounded text-[10.5px] font-mono font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <span class="px-2.5 py-0.5 rounded text-[10.5px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                         {{ $stats['status'] }}
                     </span>
                 </div>
@@ -523,7 +523,7 @@
                     <!-- Commission Rate -->
                     <div class="p-3 bg-purple-50/50 rounded-lg border border-purple-100 space-y-1">
                         <span class="text-[10px] uppercase font-bold text-purple-700 block tracking-wider">{{ __('Commission Rate') }}</span>
-                        <span class="text-lg font-bold font-mono text-purple-900 block leading-tight">
+                        <span class="text-lg font-bold text-purple-900 block leading-tight">
                             {{ $stats['commission_rate'] }}%
                         </span>
                     </div>
@@ -531,7 +531,7 @@
                     <!-- Billing Type -->
                     <div class="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-1">
                         <span class="text-[10px] uppercase font-bold text-slate-600 block tracking-wider">{{ __('Billing Type') }}</span>
-                        <span class="text-base font-bold font-mono text-slate-800 block leading-tight">
+                        <span class="text-base font-bold text-slate-800 block leading-tight">
                             {{ $stats['billing_type'] }}
                         </span>
                     </div>
@@ -539,7 +539,7 @@
                     <!-- Credit Limit -->
                     <div class="p-3 bg-blue-50/50 rounded-lg border border-blue-100 space-y-1">
                         <span class="text-[10px] uppercase font-bold text-blue-700 block tracking-wider">{{ __('Credit Limit') }}</span>
-                        <span class="text-lg font-bold font-mono text-blue-900 block leading-tight">
+                        <span class="text-lg font-bold text-blue-900 block leading-tight">
                             @currency($reseller->credit_limit ?? 0)
                         </span>
                     </div>
@@ -547,7 +547,7 @@
                     <!-- Monthly Panel Subscription Charge -->
                     <div class="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-1">
                         <span class="text-[10px] uppercase font-bold text-slate-600 block tracking-wider">{{ __('Monthly Fee') }}</span>
-                        <span class="text-base font-bold font-mono text-slate-800 block leading-tight">
+                        <span class="text-base font-bold text-slate-800 block leading-tight">
                             @currency($reseller->monthly_panel_charge ?? 0)
                         </span>
                     </div>
@@ -555,7 +555,7 @@
                     <!-- Panel Expiry Date -->
                     <div class="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-1">
                         <span class="text-[10px] uppercase font-bold text-slate-600 block tracking-wider">{{ __('Expiry Date') }}</span>
-                        <span class="text-base font-bold font-mono text-slate-800 block leading-tight">
+                        <span class="text-base font-bold text-slate-800 block leading-tight">
                             {{ $reseller->panel_expiry_date ? $reseller->panel_expiry_date->format('d M, Y') : __('N/A') }}
                         </span>
                     </div>
@@ -563,7 +563,7 @@
                     <!-- Available Balance -->
                     <div class="p-3 bg-emerald-50/50 rounded-lg border border-emerald-100 space-y-1">
                         <span class="text-[10px] uppercase font-bold text-emerald-700 block tracking-wider">{{ __('Total Available Balance') }}</span>
-                        <span class="text-lg font-bold font-mono text-emerald-900 block leading-tight">
+                        <span class="text-lg font-bold text-emerald-900 block leading-tight">
                             @currency($stats['available_balance'])
                         </span>
                     </div>
@@ -594,7 +594,7 @@
                                name="current_password" autocomplete="current-password"
                                required
                                placeholder="••••••••••••"
-                               class="w-full border @error('current_password', 'password') border-rose-400 ring-1 ring-rose-100 bg-rose-50/30 text-rose-900 @else bg-slate-50 border-slate-200 text-slate-800 @enderror rounded-lg text-xs px-3 py-1.5 pr-8 focus:bg-white focus:border-cyan-500 shadow-2xs font-mono">
+                               class="w-full border @error('current_password', 'password') border-rose-400 ring-1 ring-rose-100 bg-rose-50/30 text-rose-900 @else bg-slate-50 border-slate-200 text-slate-800 @enderror rounded-lg text-xs px-3 py-1.5 pr-8 focus:bg-white focus:border-cyan-500 shadow-2xs">
                         <button type="button"
                                 @click="showCurrentPass = !showCurrentPass"
                                 class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs">
@@ -615,7 +615,7 @@
                                name="password" autocomplete="new-password" minlength="8"
                                required
                                placeholder="{{ __('Minimum 8 characters') }}"
-                               class="w-full border @error('password', 'password') border-rose-400 ring-1 ring-rose-100 bg-rose-50/30 text-rose-900 @else bg-slate-50 border-slate-200 text-slate-800 @enderror rounded-lg text-xs px-3 py-1.5 pr-8 focus:bg-white focus:border-cyan-500 shadow-2xs font-mono">
+                               class="w-full border @error('password', 'password') border-rose-400 ring-1 ring-rose-100 bg-rose-50/30 text-rose-900 @else bg-slate-50 border-slate-200 text-slate-800 @enderror rounded-lg text-xs px-3 py-1.5 pr-8 focus:bg-white focus:border-cyan-500 shadow-2xs">
                         <button type="button"
                                 @click="showNewPass = !showNewPass"
                                 class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs">
@@ -636,7 +636,7 @@
                                name="password_confirmation" autocomplete="new-password" minlength="8"
                                required
                                placeholder="{{ __('Confirm New Password') }}"
-                               class="w-full border @error('password_confirmation', 'password') border-rose-400 ring-1 ring-rose-100 bg-rose-50/30 text-rose-900 @else bg-slate-50 border-slate-200 text-slate-800 @enderror rounded-lg text-xs px-3 py-1.5 pr-8 focus:bg-white focus:border-cyan-500 shadow-2xs font-mono">
+                               class="w-full border @error('password_confirmation', 'password') border-rose-400 ring-1 ring-rose-100 bg-rose-50/30 text-rose-900 @else bg-slate-50 border-slate-200 text-slate-800 @enderror rounded-lg text-xs px-3 py-1.5 pr-8 focus:bg-white focus:border-cyan-500 shadow-2xs">
                         <button type="button"
                                 @click="showConfPass = !showConfPass"
                                 class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs">
@@ -672,17 +672,17 @@
 
                     <div>
                         <span class="text-[10px] text-slate-400 font-medium block uppercase tracking-wider">{{ __('Support Phone') }}</span>
-                        <span class="text-xs font-mono font-bold text-purple-700 block mt-0.5">{{ $tenant->support_hotline ?: ($tenant->phone ?? __('N/A')) }}</span>
+                        <span class="text-xs font-bold text-purple-700 block mt-0.5">{{ $tenant->support_hotline ?: ($tenant->phone ?? __('N/A')) }}</span>
                     </div>
 
                     <div>
                         <span class="text-[10px] text-slate-400 font-medium block uppercase tracking-wider">{{ __('Billing Phone') }}</span>
-                        <span class="text-xs font-mono font-bold text-slate-800 block mt-0.5">{{ $tenant->billing_phone ?: ($tenant->phone ?? __('N/A')) }}</span>
+                        <span class="text-xs font-bold text-slate-800 block mt-0.5">{{ $tenant->billing_phone ?: ($tenant->phone ?? __('N/A')) }}</span>
                     </div>
 
                     <div>
                         <span class="text-[10px] text-slate-400 font-medium block uppercase tracking-wider">{{ __('Support Email') }}</span>
-                        <span class="text-xs font-mono text-slate-800 block mt-0.5">{{ $tenant->email ?? __('N/A') }}</span>
+                        <span class="text-xs text-slate-800 block mt-0.5">{{ $tenant->email ?? __('N/A') }}</span>
                     </div>
 
                     <div>

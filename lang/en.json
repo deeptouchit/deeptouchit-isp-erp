@@ -7718,5 +7718,6 @@
     "Unable to upload the profile photo.": "Unable to upload the profile photo.",
     "Profile updated.": "Profile updated.",
     "Password changed.": "Password changed.",
-    "The current password is incorrect.": "The current password is incorrect."
+    "The current password is incorrect.": "The current password is incorrect.",
+    "Admin Name": "Admin Name"
 }

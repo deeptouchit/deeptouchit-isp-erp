@@ -20,7 +20,15 @@ class ResellerProfileTest extends TestCase
         [$tenant, $reseller, $admin] = $this->account();
         $this->actingAs($admin)->withSession(['locale' => 'en']);
         $this->get(route('reseller.profile'))->assertOk()->assertSee('Partner Profile')
-            ->assertSee('Login Email')->assertDontSee('noc@isp.com');
+            ->assertSee('Login Email')->assertDontSee('noc@isp.com')->assertSee('Admin Name');
+
+        $admin->update(['name' => 'আজাদ ইসলাম']);
+        $response = $this->withSession(['locale' => 'bn'])->get(route('reseller.profile'))->assertOk()
+            ->assertSee('অ্যাডমিনের নাম')
+            ->assertDontSee('Admin Name')
+            ->assertSee('class="w-full space-y-4"', false)
+            ->assertDontSee('�');
+        $this->assertMatchesRegularExpression('/text-xl shadow-xs">\s*আ\s*<\/div>/u', $response->getContent());
 
         $this->put(route('reseller.profile.update'), [
             'user_name' => 'Updated Admin', 'user_email' => 'new-login@example.com',
