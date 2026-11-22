@@ -376,12 +376,12 @@ function bandwidthMonitor() {
         },
 
         formatCount(value) {
-            return value == null \u2013 '\u2013' : this.readingsFormat.format(value);
+            return value == null ? '—' : this.readingsFormat.format(value);
         },
 
         peak(field) {
             const complete = this.points.filter(point => point.state === 'live');
-            return complete.length \u2013 Math.max(...complete.map(point => point[field])) : null;
+            return complete.length ? Math.max(...complete.map(point => point[field])) : null;
         },
 
         async refresh() {

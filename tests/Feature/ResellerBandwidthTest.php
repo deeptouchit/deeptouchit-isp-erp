@@ -144,7 +144,11 @@ class ResellerBandwidthTest extends TestCase
         $url = route('reseller.bandwidth.traffic');
         $this->actingAs($user)->withSession(['locale' => 'en']);
         $this->get(route('reseller.bandwidth.index'))->assertOk()
-            ->assertSee('Active PPPoE Sessions')->assertDontSee('Bandwidth Allocation')->assertDontSee('scope-one');
+            ->assertSee('Active PPPoE Sessions')
+            ->assertSee('function bandwidthMonitor()', false)
+            ->assertSee('return value == null ?', false)
+            ->assertSee('return complete.length ? Math.max', false)
+            ->assertDontSee('Bandwidth Allocation')->assertDontSee('scope-one');
         $this->getJson($url)->assertOk()->assertJsonPath('state', 'sampling')->assertJsonPath('active_sessions', 2)
             ->assertJsonPath('current_download', null);
 
