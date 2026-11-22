@@ -2,8 +2,8 @@
     @foreach($cards as [$label, $key, $icon, $money])
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between gap-2">
             <div class="min-w-0">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">{{ __($label) }}</span>
-                <span class="text-[13px] font-bold font-mono leading-tight block text-slate-800">
+                <span class="saas-kpi-label block truncate text-slate-500">{{ __($label) }}</span>
+                <span class="saas-kpi-value block text-slate-800">
                     @if($money)
                         @currency($stats[$key])
                     @else
