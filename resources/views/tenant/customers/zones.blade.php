@@ -643,7 +643,7 @@
                                 class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 text-slate-800 focus:bg-white focus:border-cyan-500 transition">
                             <option value="">-- {{ __('Unassigned') }} --</option>
                             <template x-for="s in filteredStaffList" :key="s.id">
-                                <option :value="s.id" x-text="(s.staff_id ? '[' + s.staff_id + '] ' : '') + s.name + ' (' + s.role_label + ')'"></option>
+                                <option :value="String(s.id)" :selected="String(s.id) === String(modal.form.staff_id)" x-text="(s.staff_id ? '[' + s.staff_id + '] ' : '') + s.name + ' (' + s.role_label + ')'"></option>
                             </template>
                         </select>
                     </div>
