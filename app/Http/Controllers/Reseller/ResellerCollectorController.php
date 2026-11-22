@@ -86,6 +86,7 @@ class ResellerCollectorController
         $stats = [
             'customers' => (clone $assigned)->count(),
             'due' => (clone $due)->count(),
+            'online' => (clone $assigned)->where('online_status', 'online')->count(),
             'today' => (clone $today)->sum('amount'),
             'receipts' => (clone $today)->count(),
             'cash' => (clone $paid)->where('payment_method', 'cash')->whereNull('handover_id')->sum('amount'),

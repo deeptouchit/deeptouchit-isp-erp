@@ -14,8 +14,8 @@
     @include('reseller.collector.kpis', ['cards' => [
         ['Assigned Customers', 'customers', 'fa-users', false],
         ['Due Customers', 'due', 'fa-file-invoice-dollar', false],
+        ['Online Customers', 'online', 'fa-wifi', false],
         ['Today Collection', 'today', 'fa-coins', true],
-        ['Receipts Today', 'receipts', 'fa-receipt', false],
         ['Cash to Hand Over', 'cash', 'fa-money-bill-wave', true],
         ['Pending Handovers', 'handovers', 'fa-vault', false],
     ]])
