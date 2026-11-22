@@ -18,11 +18,11 @@ class SetLocale
         // Allowed locales
         $allowedLocales = ['bn', 'en'];
 
-        // Determine locale from session, fallback to config or default 'bn'
-        $locale = Session::get('locale', config('app.locale', 'bn'));
+        // Determine locale from session, fallback to the project default English locale.
+        $locale = Session::get('locale', config('app.locale', 'en'));
 
         if (!in_array($locale, $allowedLocales)) {
-            $locale = 'bn';
+            $locale = 'en';
         }
 
         App::setLocale($locale);
