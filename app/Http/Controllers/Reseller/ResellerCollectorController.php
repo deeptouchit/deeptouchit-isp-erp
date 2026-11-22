@@ -30,7 +30,17 @@ class ResellerCollectorController
     {
         return TenantCustomer::where('tenant_id', $collector->tenant_id)
             ->where('reseller_id', $collector->reseller_id)
-            ->where('assigned_collector_id', $collector->id);
+            ->where(function (Builder $query) use ($collector) {
+                $query->where('assigned_collector_id', $collector->id)
+                    ->orWhereExists(function ($zone) use ($collector) {
+                        $zone->selectRaw('1')
+                            ->from('tenant_coverage_zones')
+                            ->whereColumn('tenant_coverage_zones.id', 'tenant_customers.zone_id')
+                            ->where('tenant_coverage_zones.tenant_id', $collector->tenant_id)
+                            ->where('tenant_coverage_zones.reseller_id', $collector->reseller_id)
+                            ->where('tenant_coverage_zones.staff_id', $collector->id);
+                    });
+            });
     }
 
     private function filteredCustomers(Request $request, array &$filters): Builder
