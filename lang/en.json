@@ -7789,5 +7789,11 @@
     "Office Counter": "Office Counter",
     "Save Assignment": "Save Assignment",
     "Collector assignment updated.": "Collector assignment updated.",
-    "Select an active collector from this reseller.": "Select an active collector from this reseller."
+    "Select an active collector from this reseller.": "Select an active collector from this reseller.",
+    "Collection Overview": "Collection Overview",
+    "Collected Today": "Collected Today",
+    "Cash Pending": "Cash Pending",
+    "Quick Actions": "Quick Actions",
+    "Receipts": "Receipts",
+    "Handover": "Handover"
 }
