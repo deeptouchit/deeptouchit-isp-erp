@@ -636,8 +636,8 @@
 
                     <div class="space-y-1">
                         <label class="block text-slate-700 font-semibold text-[11px] flex items-center justify-between">
-                            <span>{{ __('Assigned Field Technician / Staff') }}</span>
-                            <span class="text-[10px] text-cyan-600 font-normal">{{ __('From Staff Directory') }}</span>
+                            <span>{{ $resellerPortal ? __('Assigned Collector') : __('Assigned Field Technician / Staff') }}</span>
+                            <span class="text-[10px] text-cyan-600 font-normal">{{ $resellerPortal ? __('From Collector Directory') : __('From Staff Directory') }}</span>
                         </label>
                         <select x-model="modal.form.staff_id"
                                 @change="onStaffSelected()"

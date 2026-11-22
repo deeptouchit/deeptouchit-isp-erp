@@ -65,7 +65,8 @@ class TenantCoverageZoneController extends Controller
             ->where('status', 'active');
 
         if ($isResellerUser) {
-            $staffQuery->where('reseller_id', $userResellerId);
+            $staffQuery->where('reseller_id', $userResellerId)
+                ->where('role', 'reseller_collector');
         }
 
         $allStaff = $staffQuery->orderBy('name')->get();

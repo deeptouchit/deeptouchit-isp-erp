@@ -26,6 +26,7 @@ return [
                 'title'    => 'Coverage Zones',
                 'route'    => 'reseller.customers.zones',
                 'active'   => ['reseller.customers.zones*'],
+                'roles'    => ['reseller_admin', 'reseller_owner', 'reseller_manager', 'admin', 'manager'],
                 'keywords' => 'customer zones areas division district thana pop zone area mapping coverage location territory',
             ],
             [
