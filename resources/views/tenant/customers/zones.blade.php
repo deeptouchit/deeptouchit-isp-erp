@@ -569,7 +569,6 @@
                     </div>
                     <div>
                         <h3 class="text-xs font-semibold text-slate-800" x-text="modal.isEdit ? i18n.editCoverageZone : i18n.createCoverageZone"></h3>
-                        <p class="text-[10.5px] text-slate-500 font-normal">{{ __('Define area details, territory scope, and assigned technician') }}</p>
                     </div>
                 </div>
                 <button type="button"
@@ -656,8 +655,9 @@
                             </label>
                             <input type="text"
                                    x-model="modal.form.in_charge_phone"
+                                   :readonly="{{ $resellerPortal ? 'true' : 'false' }}"
                                    placeholder="{{ __('01712-345678') }}"
-                                   class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 text-slate-800 font-mono focus:bg-white focus:border-cyan-500 transition">
+                                   class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 text-slate-800 font-mono focus:bg-white focus:border-cyan-500 transition {{ $resellerPortal ? 'cursor-not-allowed opacity-80' : '' }}">
                         </div>
 
                         <div class="space-y-1">
@@ -666,8 +666,9 @@
                             </label>
                             <input type="text"
                                    x-model="modal.form.in_charge_name"
+                                   :readonly="{{ $resellerPortal ? 'true' : 'false' }}"
                                    placeholder="{{ __('Md. Rafiqul Islam') }}"
-                                   class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 text-slate-800 focus:bg-white focus:border-cyan-500 transition">
+                                   class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 text-slate-800 focus:bg-white focus:border-cyan-500 transition {{ $resellerPortal ? 'cursor-not-allowed opacity-80' : '' }}">
                         </div>
                     </div>
 
