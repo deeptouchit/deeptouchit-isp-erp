@@ -2,6 +2,7 @@
 
 @section('body')
 @php
+    app()->setLocale('en');
     $ownerUser = auth()->user();
     $globalSettings = \App\Models\Setting::whereNull('tenant_id')->pluck('value', 'key')->toArray();
     $appLogo = $globalSettings['app_logo'] ?? null;
