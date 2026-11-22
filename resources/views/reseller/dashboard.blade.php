@@ -42,8 +42,8 @@
         {{-- Card 1: Today's Collection --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __("Today's Collection") }}</span>
-                <span class="text-[13px] font-bold font-mono text-emerald-600 leading-tight block truncate">
+                <span class="saas-kpi-label text-slate-500 block truncate">{{ __("Today's Collection") }}</span>
+                <span class="saas-kpi-value font-mono text-emerald-600 block truncate">
                     @currency($stats['today_collections'])
                 </span>
             </div>
@@ -55,8 +55,8 @@
         {{-- Card 2: This Month's Collection --}}
         <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="min-w-0 pr-1">
-                <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __("This Month Collections") }}</span>
-                <span class="text-[13px] font-bold font-mono text-purple-700 leading-tight block truncate">
+                <span class="saas-kpi-label text-slate-500 block truncate">{{ __("This Month Collections") }}</span>
+                <span class="saas-kpi-value font-mono text-purple-700 block truncate">
                     @currency($stats['this_month_collections'])
                 </span>
             </div>
