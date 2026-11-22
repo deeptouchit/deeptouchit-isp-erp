@@ -222,6 +222,8 @@ Route::middleware(['web'])->group(function () {
             Route::put('/reseller/staff/{id}', [ResellerStaffController::class, 'update'])->whereNumber('id')->name('reseller.staff.update');
             Route::delete('/reseller/staff/{id}', [ResellerStaffController::class, 'destroy'])->whereNumber('id')->name('reseller.staff.destroy');
             Route::post('/reseller/staff/{id}/toggle-status', [ResellerStaffController::class, 'toggleStatus'])->whereNumber('id')->name('reseller.staff.toggle-status');
+            Route::post('/reseller/staff/{id}/reset-password', [ResellerStaffController::class, 'resetPassword'])
+                ->whereNumber('id')->middleware('throttle:6,1')->name('reseller.staff.reset-password');
             Route::get('/reseller/staff/export', [ResellerStaffController::class, 'exportCsv'])->name('reseller.staff.export');
             Route::get('/reseller/staff/print', [ResellerStaffController::class, 'printReport'])->name('reseller.staff.print');
         });
