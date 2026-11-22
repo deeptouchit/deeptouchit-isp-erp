@@ -33,7 +33,7 @@
                         <td class="text-left">{{ $customer->package_display_name }}</td>
                         <td class="text-right font-mono">@currency($customer->monthly_bill)</td>
                         <td class="text-right font-mono" data-sort-value="{{ $customer->due_amount }}">@currency($customer->due_amount)</td>
-                        <td class="text-center font-mono">{{ $customer->expiry_date?->format('d M Y') ?? '--' }}</td>
+                        <td class="text-center">{{ $customer->expiry_date?->format('d M Y') ?? '--' }}</td>
                         <td class="text-center">
                             <button type="button" aria-label="{{ __('Action') }}" :aria-expanded="target === @js(route('reseller.customers.show', $customer->id))"
                                     @click.stop="const url = @js(route('reseller.customers.show', $customer->id));

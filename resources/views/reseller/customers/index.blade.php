@@ -369,10 +369,10 @@
                                     @currency($customer->due_amount)
                                 </td>
                             @endif
-                            <td class="text-center font-mono text-slate-600" data-sort-value="{{ $customer->expiry_date?->format('Y-m-d') }}">
+                            <td class="text-center text-slate-600" data-sort-value="{{ $customer->expiry_date?->format('Y-m-d') }}">
                                 {{ $customer->expiry_date?->format('d M Y') ?? '?' }}
                             </td>
-                            <td class="text-center font-mono" data-sort-value="{{ $expiryBadge['days'] ?? 99999 }}">
+                            <td class="text-center" data-sort-value="{{ $expiryBadge['days'] ?? 99999 }}">
                                 @if($expiryBadge['state'] === 'none')
                                     <span class="text-slate-400">?</span>
                                 @else
