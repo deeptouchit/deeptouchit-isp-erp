@@ -9,6 +9,7 @@ use App\Models\TenantCustomer;
 use App\Models\TenantCustomerInvoice;
 use App\Models\TenantCustomerPayment;
 use App\Models\TenantInternetPackage;
+use App\Models\TenantCoverageZone;
 use App\Models\TenantReseller;
 use App\Models\TenantResellerWalletTransaction;
 use App\Models\TenantRouter;
@@ -63,10 +64,6 @@ class ResellerCustomerController extends Controller
      */
     public function index(Request $request): View
     {
-        if ($request->user()->isResellerCollector()) {
-            return app(ResellerCollectorController::class)->index($request);
-        }
-
         [$authUser, $reseller, $tenant] = $this->getResellerData();
         $resellerId = $reseller?->id;
         $tenantId = $tenant?->id;
@@ -87,6 +84,20 @@ class ResellerCustomerController extends Controller
             ->where('reseller_id', $resellerId)
             ->with(['package', 'router'])
             ->latest('id');
+
+        if ($request->user()->isResellerCollector()) {
+            $collectorId = $request->user()->id;
+            $query->where(function ($scope) use ($collectorId, $tenantId, $resellerId) {
+                $scope->where('assigned_collector_id', $collectorId)
+                    ->orWhereExists(function ($zone) use ($collectorId, $tenantId, $resellerId) {
+                        $zone->selectRaw('1')->from('tenant_coverage_zones')
+                            ->whereColumn('tenant_coverage_zones.id', 'tenant_customers.zone_id')
+                            ->where('tenant_coverage_zones.tenant_id', $tenantId)
+                            ->where('tenant_coverage_zones.reseller_id', $resellerId)
+                            ->where('tenant_coverage_zones.staff_id', $collectorId);
+                    });
+            });
+        }
 
         // Search Filter
         if (!empty($search)) {
@@ -198,6 +209,20 @@ class ResellerCustomerController extends Controller
         // 3. Compute Strictly 6 KPI Summary Cards (AGENTS.md Rule 2.B)
         $kpiBase = TenantCustomer::where('tenant_id', $tenantId)
             ->where('reseller_id', $resellerId);
+
+        if ($request->user()->isResellerCollector()) {
+            $collectorId = $request->user()->id;
+            $kpiBase->where(function ($scope) use ($collectorId, $tenantId, $resellerId) {
+                $scope->where('assigned_collector_id', $collectorId)
+                    ->orWhereExists(function ($zone) use ($collectorId, $tenantId, $resellerId) {
+                        $zone->selectRaw('1')->from('tenant_coverage_zones')
+                            ->whereColumn('tenant_coverage_zones.id', 'tenant_customers.zone_id')
+                            ->where('tenant_coverage_zones.tenant_id', $tenantId)
+                            ->where('tenant_coverage_zones.reseller_id', $resellerId)
+                            ->where('tenant_coverage_zones.staff_id', $collectorId);
+                    });
+            });
+        }
 
         $totalSubscribers = (int) (clone $kpiBase)->count();
         $activeSubscribers = (int) (clone $kpiBase)->where('status', 'active')->count();
@@ -452,10 +477,6 @@ class ResellerCustomerController extends Controller
      */
     public function show(Request $request, int $id): JsonResponse|View
     {
-        if ($request->user()->isResellerCollector()) {
-            return app(ResellerCollectorController::class)->show($request, $id);
-        }
-
         [$authUser, $reseller, $tenant] = $this->getResellerData();
         $tenantId = $tenant?->id;
         $resellerId = $reseller?->id;
@@ -464,6 +485,18 @@ class ResellerCustomerController extends Controller
             ->where('reseller_id', $resellerId)
             ->with(['package', 'router', 'payments' => fn($q) => $q->latest()->take(5)])
             ->findOrFail($id);
+
+        if ($request->user()->isResellerCollector()) {
+            abort_unless(
+                (int) $customer->assigned_collector_id === (int) $request->user()->id
+                || TenantCoverageZone::where('tenant_id', $tenantId)
+                    ->where('reseller_id', $resellerId)
+                    ->where('staff_id', $request->user()->id)
+                    ->where('id', $customer->zone_id)
+                    ->exists(),
+                404
+            );
+        }
 
         if ($request->wantsJson() || $request->ajax() || str_contains($request->header('Accept', ''), 'json')) {
             return response()->json([
