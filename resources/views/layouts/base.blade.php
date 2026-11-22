@@ -264,6 +264,24 @@
     {{-- Page Specific Style Hooks --}}
     @yield('page_style')
     @stack('styles')
+    <style>
+        :root {
+            --app-font: "Baloo Da 2", "Hind Siliguri", "Source Sans 3", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+        html, body, body button, body input, body select, body textarea {
+            font-family: var(--app-font) !important;
+        }
+        body .font-sans {
+            font-family: inherit !important;
+        }
+        .saas-kpi-label { font-size: 10px !important; line-height: 1.15 !important; font-weight: 500 !important; }
+        .saas-kpi-value { font-size: 13px !important; line-height: 1.15 !important; font-weight: 700 !important; }
+        .saas-table th, .saas-table td { font-size: 11px !important; line-height: 1.25 !important; }
+        .saas-table th:not(.font-mono), .saas-table td:not(.font-mono),
+        .saas-table th:not(.font-mono) *, .saas-table td:not(.font-mono) * {
+            font-family: inherit !important;
+        }
+    </style>
 </head>
 <body class="h-full antialiased text-slate-800 bg-slate-50 selection:bg-blue-600 selection:text-white">
 
