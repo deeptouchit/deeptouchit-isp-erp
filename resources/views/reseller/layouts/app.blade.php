@@ -31,16 +31,31 @@
 
 {{-- Application Container with Alpine.js Reactive State --}}
 <div class="min-h-screen flex flex-col bg-slate-100/70 text-slate-800 text-xs antialiased font-sans selection:bg-purple-600 selection:text-white" 
-     x-data="{ 
-        mobileSidebar: false, 
-        filterQuery: '' 
-     }">
+     x-data="{
+        mobileSidebar: false,
+        sidebarCollapsed: document.documentElement.classList.contains('sidebar-collapsed'),
+        filterQuery: '',
+        isDesktop() {
+            return window.matchMedia('(min-width: 1024px)').matches;
+        },
+        toggleSidebar() {
+            if (!this.isDesktop()) return;
+            this.sidebarCollapsed = !this.sidebarCollapsed;
+            document.documentElement.classList.toggle('sidebar-collapsed', this.sidebarCollapsed);
+            if (this.sidebarCollapsed) this.filterQuery = '';
+            try {
+                localStorage.setItem('isp_sidebar_collapsed', this.sidebarCollapsed ? '1' : '0');
+            } catch {}
+        }
+     }"
+     @keydown.window.ctrl.b="if (isDesktop()) { $event.preventDefault(); toggleSidebar(); }"
+     @keydown.escape.window="mobileSidebar = false">
 
     {{-- Left Navigation Sidebar Partial --}}
     @include('reseller.layouts.partials.sidebar')
 
     {{-- Main Workspace Viewport (Offset 60 on Desktop for Fixed Sidebar) --}}
-    <div class="lg:pl-60 flex flex-col flex-1 min-h-screen">
+    <div class="main-viewport flex flex-col flex-1 min-h-screen">
         
         {{-- Professional Sticky Topbar --}}
         @include('reseller.layouts.partials.topbar')
@@ -83,7 +98,7 @@
             <span>{{ __('Wallet') }}</span>
         </a>
         <button type="button" 
-                @click="mobileSidebar = true" 
+                @click="mobileSidebar = true" aria-controls="reseller-sidebar" :aria-expanded="mobileSidebar"
                 class="flex flex-col items-center gap-0.5 py-1 px-2 text-[10px] font-medium text-slate-500 hover:text-slate-800 transition cursor-pointer">
             <i class="fas fa-bars text-sm"></i>
             <span>{{ __('Menu') }}</span>

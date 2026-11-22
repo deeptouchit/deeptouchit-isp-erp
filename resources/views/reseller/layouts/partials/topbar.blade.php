@@ -19,10 +19,17 @@
     <!-- Left Section: Mobile Drawer Toggle & Wallet Balance Badge -->
     <div class="flex items-center gap-2.5 sm:gap-3.5">
         <button type="button" 
-                @click="mobileSidebar = true" 
+                @click="mobileSidebar = true" aria-controls="reseller-sidebar" :aria-expanded="mobileSidebar"
                 class="lg:hidden p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition cursor-pointer" 
-                title="Toggle Menu">
+                title="{{ __('Toggle Menu') }}" aria-label="{{ __('Toggle Menu') }}">
             <i class="fas fa-bars text-sm"></i>
+        </button>
+
+        <button type="button" @click="toggleSidebar()" aria-controls="reseller-sidebar" :aria-expanded="!sidebarCollapsed"
+                :title="sidebarCollapsed ? @js(__('Expand Sidebar (Ctrl+B)')) : @js(__('Collapse Sidebar (Ctrl+B)'))"
+                :aria-label="sidebarCollapsed ? @js(__('Expand Sidebar (Ctrl+B)')) : @js(__('Collapse Sidebar (Ctrl+B)'))"
+                class="hidden lg:flex w-8 h-8 items-center justify-center rounded-lg border border-slate-200/90 bg-white text-slate-600 hover:text-cyan-700 hover:border-cyan-300/80 hover:bg-cyan-50/40 transition cursor-pointer shadow-2xs flex-shrink-0">
+            <i class="fas text-xs" :class="sidebarCollapsed ? 'fa-bars text-cyan-600' : 'fa-bars-staggered'" aria-hidden="true"></i>
         </button>
 
         <!-- Wallet Balance Badge in Top Header (Reseller Admin Only) -->
