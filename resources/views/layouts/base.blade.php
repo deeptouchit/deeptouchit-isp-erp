@@ -274,6 +274,9 @@
         body .font-sans {
             font-family: inherit !important;
         }
+        body .font-mono {
+            font-family: inherit !important;
+        }
         .saas-kpi-label { font-size: 10px !important; line-height: 1.15 !important; font-weight: 500 !important; }
         .saas-kpi-value { font-size: 13px !important; line-height: 1.15 !important; font-weight: 700 !important; }
         .saas-table th, .saas-table td { font-size: 11px !important; line-height: 1.25 !important; }
