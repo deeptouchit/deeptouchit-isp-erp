@@ -1,6 +1,6 @@
 @extends('reseller.layouts.app')
 
-@section('title', ($isResellerAdmin ? 'Partner Profile - ' . ($reseller->name ?? 'Reseller Portal') : 'My Profile - ' . $user->name))
+@section('title', $isResellerAdmin ? __('Partner Profile') : __('My Profile'))
 
 @push('styles')
     {{-- Page-specific CSS --}}
@@ -8,7 +8,7 @@
 
 @section('content')
 <div class="space-y-3" x-data="profileManager()">
-    
+
     {{-- 1. TOP HEADER BAR (AGENTS.md Rule 2.A: Icon + Title + Action buttons ONLY) --}}
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-white p-3 rounded-xl border border-slate-200 shadow-xs">
         <div class="flex items-center gap-2.5">
@@ -19,7 +19,7 @@
         </div>
         <div class="flex items-center gap-2">
             @if($isResellerAdmin)
-                <a href="{{ route('reseller.profile.certificate') }}" target="_blank" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200/80 transition flex items-center gap-1.5 cursor-pointer">
+                <a href="{{ route('reseller.profile.certificate') }}" target="_blank" rel="noopener" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200/80 transition flex items-center gap-1.5 cursor-pointer">
                     <i class="fas fa-certificate text-purple-600 text-xs"></i>
                     <span>{{ __('Authorization Certificate') }}</span>
                 </a>
@@ -28,10 +28,6 @@
                     <span>{{ __('Export CSV') }}</span>
                 </a>
             @endif
-            <button type="button" @click="submitProfileForm()" class="px-3.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-semibold shadow-xs transition flex items-center gap-1.5 cursor-pointer">
-                <i class="fas fa-save text-xs"></i>
-                <span>{{ __('Save Changes') }}</span>
-            </button>
         </div>
     </div>
 
@@ -122,7 +118,7 @@
             {{-- Card 5: Partner Code / Prefix --}}
             <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
                 <div class="min-w-0 pr-1">
-                    <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Partner Code</span>
+                    <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Partner Code') }}</span>
                     <span class="text-[13px] font-bold font-mono text-indigo-700 leading-tight block truncate">
                         {{ $stats['partner_code'] }}
                     </span>
@@ -135,7 +131,7 @@
             {{-- Card 6: Account Status --}}
             <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
                 <div class="min-w-0 pr-1">
-                    <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Status</span>
+                    <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Status') }}</span>
                     <span class="text-[13px] font-bold font-mono text-teal-600 leading-tight block">
                         {{ $stats['status'] }}
                     </span>
@@ -149,7 +145,7 @@
             {{-- Card 1: Staff ID --}}
             <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
                 <div class="min-w-0 pr-1">
-                    <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Staff ID</span>
+                    <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Staff ID') }}</span>
                     <span class="text-[13px] font-bold font-mono text-purple-700 leading-tight block truncate">
                         {{ $stats['staff_id'] }}
                     </span>
@@ -162,7 +158,7 @@
             {{-- Card 2: Role --}}
             <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
                 <div class="min-w-0 pr-1">
-                    <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Designation</span>
+                    <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Designation') }}</span>
                     <span class="text-[13px] font-bold font-mono text-slate-800 leading-tight block truncate">
                         {{ $stats['role_title'] }}
                     </span>
@@ -175,7 +171,7 @@
             {{-- Card 3: Mobile --}}
             <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
                 <div class="min-w-0 pr-1">
-                    <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Mobile</span>
+                    <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Mobile') }}</span>
                     <span class="text-[13px] font-bold font-mono text-emerald-600 leading-tight block truncate">
                         {{ $stats['mobile'] }}
                     </span>
@@ -188,7 +184,7 @@
             {{-- Card 4: Email --}}
             <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
                 <div class="min-w-0 pr-1">
-                    <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Email</span>
+                    <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Email') }}</span>
                     <span class="text-[13px] font-bold font-mono text-slate-700 leading-tight block truncate">
                         {{ $stats['email'] }}
                     </span>
@@ -201,7 +197,7 @@
             {{-- Card 5: Joined Date --}}
             <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
                 <div class="min-w-0 pr-1">
-                    <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Joined</span>
+                    <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Joined') }}</span>
                     <span class="text-[13px] font-bold font-mono text-indigo-700 leading-tight block truncate">
                         {{ $stats['joined_date'] }}
                     </span>
@@ -214,7 +210,7 @@
             {{-- Card 6: Status --}}
             <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
                 <div class="min-w-0 pr-1">
-                    <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">Status</span>
+                    <span class="text-[9px] font-medium uppercase tracking-wider text-slate-500 block truncate">{{ __('Status') }}</span>
                     <span class="text-[13px] font-bold font-mono text-teal-600 leading-tight block">
                         {{ $stats['status'] }}
                     </span>
@@ -229,58 +225,58 @@
     {{-- 3. TAB NAVIGATION STRIP --}}
     <div class="flex items-center gap-1.5 border-b border-slate-200 pb-1 bg-white p-2 rounded-xl border shadow-2xs">
         @if($isResellerAdmin)
-            <button type="button" 
-                    @click="activeTab = 'business'" 
-                    :class="activeTab === 'business' ? 'bg-purple-600 text-white font-bold shadow-2xs' : 'bg-slate-50 hover:bg-slate-100 text-slate-600 font-medium'"
+            <button type="button"
+                    @click="activeTab = 'business'" :aria-pressed="activeTab === 'business'"
+                    :class="activeTab === 'business' ? 'bg-cyan-600 text-white font-bold shadow-2xs' : 'bg-slate-50 hover:bg-slate-100 text-slate-600 font-medium'"
                     class="px-3.5 py-1.5 rounded-lg text-xs transition cursor-pointer flex items-center gap-1.5">
                 <i class="fas fa-building text-[11px]"></i>
-                <span>1. Business Details</span>
+                <span>{{ __('Business Details') }}</span>
             </button>
 
-            <button type="button" 
-                    @click="activeTab = 'financial'" 
-                    :class="activeTab === 'financial' ? 'bg-purple-600 text-white font-bold shadow-2xs' : 'bg-slate-50 hover:bg-slate-100 text-slate-600 font-medium'"
+            <button type="button"
+                    @click="activeTab = 'financial'" :aria-pressed="activeTab === 'financial'"
+                    :class="activeTab === 'financial' ? 'bg-cyan-600 text-white font-bold shadow-2xs' : 'bg-slate-50 hover:bg-slate-100 text-slate-600 font-medium'"
                     class="px-3.5 py-1.5 rounded-lg text-xs transition cursor-pointer flex items-center gap-1.5">
                 <i class="fas fa-file-invoice text-[11px]"></i>
-                <span>2. Billing &amp; Rates</span>
+                <span>{{ __('Billing & Rates') }}</span>
             </button>
 
-            <button type="button" 
-                    @click="activeTab = 'security'" 
-                    :class="activeTab === 'security' ? 'bg-purple-600 text-white font-bold shadow-2xs' : 'bg-slate-50 hover:bg-slate-100 text-slate-600 font-medium'"
+            <button type="button"
+                    @click="activeTab = 'security'" :aria-pressed="activeTab === 'security'"
+                    :class="activeTab === 'security' ? 'bg-cyan-600 text-white font-bold shadow-2xs' : 'bg-slate-50 hover:bg-slate-100 text-slate-600 font-medium'"
                     class="px-3.5 py-1.5 rounded-lg text-xs transition cursor-pointer flex items-center gap-1.5">
                 <i class="fas fa-lock text-[11px]"></i>
-                <span>3. Security</span>
+                <span>{{ __('Security') }}</span>
             </button>
 
-            <button type="button" 
-                    @click="activeTab = 'upstream'" 
-                    :class="activeTab === 'upstream' ? 'bg-purple-600 text-white font-bold shadow-2xs' : 'bg-slate-50 hover:bg-slate-100 text-slate-600 font-medium'"
+            <button type="button"
+                    @click="activeTab = 'upstream'" :aria-pressed="activeTab === 'upstream'"
+                    :class="activeTab === 'upstream' ? 'bg-cyan-600 text-white font-bold shadow-2xs' : 'bg-slate-50 hover:bg-slate-100 text-slate-600 font-medium'"
                     class="px-3.5 py-1.5 rounded-lg text-xs transition cursor-pointer flex items-center gap-1.5">
                 <i class="fas fa-network-wired text-[11px]"></i>
-                <span>4. ISP Info</span>
+                <span>{{ __('ISP Info') }}</span>
             </button>
         @else
-            <button type="button" 
-                    @click="activeTab = 'personal'" 
-                    :class="activeTab === 'personal' ? 'bg-purple-600 text-white font-bold shadow-2xs' : 'bg-slate-50 hover:bg-slate-100 text-slate-600 font-medium'"
+            <button type="button"
+                    @click="activeTab = 'personal'" :aria-pressed="activeTab === 'personal'"
+                    :class="activeTab === 'personal' ? 'bg-cyan-600 text-white font-bold shadow-2xs' : 'bg-slate-50 hover:bg-slate-100 text-slate-600 font-medium'"
                     class="px-3.5 py-1.5 rounded-lg text-xs transition cursor-pointer flex items-center gap-1.5">
                 <i class="fas fa-user-circle text-[11px]"></i>
-                <span>1. Personal Profile</span>
+                <span>{{ __('Personal Profile') }}</span>
             </button>
 
-            <button type="button" 
-                    @click="activeTab = 'security'" 
-                    :class="activeTab === 'security' ? 'bg-purple-600 text-white font-bold shadow-2xs' : 'bg-slate-50 hover:bg-slate-100 text-slate-600 font-medium'"
+            <button type="button"
+                    @click="activeTab = 'security'" :aria-pressed="activeTab === 'security'"
+                    :class="activeTab === 'security' ? 'bg-cyan-600 text-white font-bold shadow-2xs' : 'bg-slate-50 hover:bg-slate-100 text-slate-600 font-medium'"
                     class="px-3.5 py-1.5 rounded-lg text-xs transition cursor-pointer flex items-center gap-1.5">
                 <i class="fas fa-lock text-[11px]"></i>
-                <span>2. Security</span>
+                <span>{{ __('Security') }}</span>
             </button>
         @endif
     </div>
 
     {{-- TAB 1: BUSINESS / PERSONAL PROFILE & CONTACT INFO --}}
-    <div x-show="activeTab === 'business' || activeTab === 'personal'" class="space-y-4">
+    <div x-show="activeTab === 'business' || activeTab === 'personal'" class="max-w-4xl mx-auto space-y-4">
         <form id="profileForm" action="{{ route('reseller.profile.update') }}" method="POST" enctype="multipart/form-data" class="space-y-4">
             @csrf
             @method('PUT')
@@ -288,8 +284,8 @@
             <!-- User Profile & Avatar Card -->
             <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-4">
                 <div class="border-b border-slate-100 pb-3 flex items-center justify-between">
-                    <h3 class="text-xs font-bold text-slate-800">{{ $isResellerAdmin ? 'User Profile & Picture' : 'Personal Profile & Avatar' }}</h3>
-                    <span class="text-[10.5px] text-slate-400 font-medium">Avatar &amp; Login Information</span>
+                    <h3 class="text-xs font-bold text-slate-800">{{ __('Personal Profile') }}</h3>
+                    <span class="text-[10.5px] text-slate-400 font-medium">{{ __('Avatar & Login Information') }}</span>
                 </div>
 
                 <!-- Avatar Upload Section -->
@@ -297,7 +293,7 @@
                     <div class="relative group flex-shrink-0">
                         <!-- Image Preview or Initials -->
                         <template x-if="avatarPreview">
-                            <img :src="avatarPreview" alt="Avatar Preview" class="w-16 h-16 rounded-full object-cover ring-2 ring-purple-400 shadow-xs">
+                            <img :src="avatarPreview" alt="{{ __('Avatar Preview') }}" class="w-16 h-16 rounded-full object-cover ring-2 ring-purple-400 shadow-xs">
                         </template>
                         <template x-if="!avatarPreview && hasExistingAvatar && !removeAvatarFlag">
                             <img src="{{ $user->avatar_url }}" alt="{{ $user->name }}" class="w-16 h-16 rounded-full object-cover ring-2 ring-purple-300 shadow-xs">
@@ -309,35 +305,37 @@
                         </template>
 
                         <!-- Camera overlay badge -->
-                        <label for="avatar_input" class="absolute -bottom-0.5 -right-0.5 w-6 h-6 rounded-full bg-purple-600 hover:bg-purple-700 text-white flex items-center justify-center text-[10px] ring-2 ring-white shadow cursor-pointer transition">
+                        <label for="avatar_input" class="absolute -bottom-0.5 -right-0.5 w-6 h-6 rounded-full bg-cyan-600 hover:bg-cyan-700 text-white flex items-center justify-center text-[10px] ring-2 ring-white shadow cursor-pointer transition">
                             <i class="fas fa-camera"></i>
                         </label>
                     </div>
 
                     <div class="space-y-1.5 text-center sm:text-left flex-1 min-w-0">
                         <div class="flex items-center gap-2 justify-center sm:justify-start">
-                            <label for="avatar_input" class="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-semibold shadow-xs transition flex items-center gap-1.5 cursor-pointer">
+                            <label for="avatar_input" class="px-3 py-1.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-xs font-semibold shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                                 <i class="fas fa-upload text-[10px]"></i>
-                                <span>Upload Photo</span>
+                                <span>{{ __('Upload Photo') }}</span>
                             </label>
 
-                            <button type="button" 
-                                    x-show="avatarPreview || (hasExistingAvatar && !removeAvatarFlag)" 
-                                    @click="removeAvatar()" 
+                            <button type="button"
+                                    x-show="avatarPreview || (hasExistingAvatar && !removeAvatarFlag)"
+                                    @click="removeAvatar()"
                                     class="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer">
                                 <i class="fas fa-trash-can text-[10px]"></i>
-                                <span>Remove</span>
+                                <span>{{ __('Remove') }}</span>
                             </button>
                         </div>
-                        <input type="file" 
-                               id="avatar_input" 
-                               name="avatar" 
-                               accept="image/jpeg,image/png,image/jpg,image/webp" 
-                               @change="handleAvatarChange($event)" 
+                        <input type="file"
+                               id="avatar_input" x-ref="avatarInput"
+                               name="avatar"
+                               accept="image/jpeg,image/png,image/jpg,image/webp"
+                               @change="handleAvatarChange($event)"
                                class="hidden">
+                        <p x-show="avatarError" x-text="avatarError" x-cloak role="alert" class="mt-1 text-xs text-rose-700"></p>
+                        @error('avatar', 'profile') <p role="alert" class="mt-1 text-xs text-rose-700">{{ $message }}</p> @enderror
                         <input type="hidden" name="remove_avatar" :value="removeAvatarFlag ? '1' : '0'">
                         <p class="text-[10.5px] text-slate-500">
-                            Allowed formats: JPG, PNG, WEBP. Maximum file size: 2MB.
+                            {{ __('JPG, PNG or WebP. Maximum 2 MB and 4096 x 4096 pixels.') }}
                         </p>
                     </div>
                 </div>
@@ -345,47 +343,50 @@
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
                     <div>
                         <label for="user_name" class="block text-[11px] font-semibold text-slate-700 mb-1">
-                            {{ $isResellerAdmin ? 'Admin Name' : 'Full Name' }} <span class="text-rose-500">*</span>
+                            {{ __($isResellerAdmin ? 'Admin Name' : 'Full Name') }} <span class="text-rose-500">*</span>
                         </label>
-                        <input type="text" 
-                               id="user_name" 
-                               name="user_name" 
-                               value="{{ old('user_name', $user->name) }}" 
-                               required 
-                               class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-purple-500 shadow-2xs">
+                        <input type="text"
+                               id="user_name"
+                               name="user_name" autocomplete="name" maxlength="100"
+                               value="{{ old('user_name', $user->name) }}"
+                               required
+                               class="w-full border @error('user_name', 'profile') border-rose-400 ring-1 ring-rose-100 bg-rose-50/30 text-rose-900 @else bg-slate-50 border-slate-200 text-slate-800 @enderror rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-cyan-500 shadow-2xs">
+                        @error('user_name', 'profile') <p class="mt-1 text-xs text-rose-700" role="alert">{{ $message }}</p> @enderror
                     </div>
 
                     <div>
                         <label for="user_email" class="block text-[11px] font-semibold text-slate-700 mb-1">
-                            Login Email <span class="text-rose-500">*</span>
+                            {{ __('Login Email') }} <span class="text-rose-500">*</span>
                         </label>
-                        <input type="email" 
-                               id="user_email" 
-                               name="user_email" 
-                               value="{{ old('user_email', $user->email) }}" 
-                               required 
-                               class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-purple-500 shadow-2xs font-mono">
+                        <input type="email"
+                               id="user_email"
+                               name="user_email" autocomplete="email" maxlength="100"
+                               value="{{ old('user_email', $user->email) }}"
+                               required
+                               class="w-full border @error('user_email', 'profile') border-rose-400 ring-1 ring-rose-100 bg-rose-50/30 text-rose-900 @else bg-slate-50 border-slate-200 text-slate-800 @enderror rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-cyan-500 shadow-2xs font-mono">
+                        @error('user_email', 'profile') <p class="mt-1 text-xs text-rose-700" role="alert">{{ $message }}</p> @enderror
                     </div>
 
                     <div>
                         <label for="user_mobile" class="block text-[11px] font-semibold text-slate-700 mb-1">
-                            User Mobile
+                            {{ __('User Mobile') }}
                         </label>
-                        <input type="text" 
-                                id="user_mobile" 
-                                name="user_mobile" 
-                                value="{{ old('user_mobile', $user->mobile ?? $user->phone) }}" 
-                                placeholder="017xxxxxxxx" 
-                                class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-purple-500 font-mono shadow-2xs">
+                        <input type="text"
+                                id="user_mobile"
+                                name="user_mobile" autocomplete="tel" maxlength="30" inputmode="tel"
+                                value="{{ old('user_mobile', $user->mobile ?? $user->phone) }}"
+                                placeholder="017xxxxxxxx"
+                                class="w-full border @error('user_mobile', 'profile') border-rose-400 ring-1 ring-rose-100 bg-rose-50/30 text-rose-900 @else bg-slate-50 border-slate-200 text-slate-800 @enderror rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-cyan-500 font-mono shadow-2xs">
+                        @error('user_mobile', 'profile') <p class="mt-1 text-xs text-rose-700" role="alert">{{ $message }}</p> @enderror
                     </div>
                 </div>
 
                 @if(!$isResellerAdmin)
                     <!-- Save Button for Staff / Collector -->
-                    <div class="pt-2 flex justify-end">
-                        <button type="submit" class="px-5 py-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
+                    <div class="pt-2 flex justify-center">
+                        <button type="submit" class="px-5 py-2 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                             <i class="fas fa-check text-xs"></i>
-                            <span>Save Profile</span>
+                            <span>{{ __('Save Profile') }}</span>
                         </button>
                     </div>
                 @endif
@@ -395,9 +396,9 @@
                 <!-- Business Details Card (Admin Only) -->
                 <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-4">
                     <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-                        <h3 class="text-xs font-bold text-slate-800">Business Information</h3>
+                        <h3 class="text-xs font-bold text-slate-800">{{ __('Business Information') }}</h3>
                         <span class="px-2.5 py-0.5 rounded text-[10.5px] font-mono font-bold bg-purple-50 text-purple-700 border border-purple-200">
-                            {{ $reseller->code ?? 'PARTNER' }}
+                            {{ $reseller->code ?? __('N/A') }}
                         </span>
                     </div>
 
@@ -405,96 +406,101 @@
                         <!-- Partner Name (Read-Only) -->
                         <div>
                             <label class="block text-[11px] font-semibold text-slate-700 mb-1">
-                                Partner Name
+                                {{ __('Partner Name') }}
                             </label>
-                            <input type="text" 
-                                   value="{{ $reseller->name ?? '' }}" 
-                                   readonly 
+                            <input type="text"
+                                   value="{{ $reseller->name ?? '' }}"
+                                   readonly
                                    class="w-full bg-slate-100 border border-slate-200 text-slate-600 rounded-lg text-xs px-3 py-1.5 cursor-not-allowed font-medium shadow-2xs">
                         </div>
 
                         <!-- Partner Prefix (Read-Only) -->
                         <div>
                             <label class="block text-[11px] font-semibold text-slate-700 mb-1">
-                                Username Prefix
+                                {{ __('Username Prefix') }}
                             </label>
-                            <input type="text" 
-                                   value="{{ $reseller->prefix ?? ($reseller->code ?? 'RES') }}" 
-                                   readonly 
+                            <input type="text"
+                                   value="{{ $reseller->prefix ?? ($reseller->code ?? 'RES') }}"
+                                   readonly
                                    class="w-full bg-slate-100 border border-slate-200 text-slate-600 rounded-lg text-xs px-3 py-1.5 cursor-not-allowed font-mono font-bold shadow-2xs">
                         </div>
 
                         <!-- Contact Person -->
                         <div>
                             <label for="contact_person" class="block text-[11px] font-semibold text-slate-700 mb-1">
-                                Contact Person <span class="text-rose-500">*</span>
+                                {{ __('Contact Person') }} <span class="text-rose-500">*</span>
                             </label>
-                            <input type="text" 
-                                   id="contact_person" 
-                                   name="contact_person" 
-                                   value="{{ old('contact_person', $reseller->contact_person) }}" 
-                                   required 
-                                   placeholder="Contact Person Name" 
-                                   class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-purple-500 shadow-2xs">
+                            <input type="text"
+                                   id="contact_person"
+                                   name="contact_person" maxlength="150"
+                                   value="{{ old('contact_person', $reseller->contact_person) }}"
+                                   required
+                                   placeholder="{{ __('Contact Person Name') }}"
+                                   class="w-full border @error('contact_person', 'profile') border-rose-400 ring-1 ring-rose-100 bg-rose-50/30 text-rose-900 @else bg-slate-50 border-slate-200 text-slate-800 @enderror rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-cyan-500 shadow-2xs">
+                        @error('contact_person', 'profile') <p class="mt-1 text-xs text-rose-700" role="alert">{{ $message }}</p> @enderror
                         </div>
 
                         <!-- Mobile -->
                         <div>
                             <label for="mobile" class="block text-[11px] font-semibold text-slate-700 mb-1">
-                                Mobile Number <span class="text-rose-500">*</span>
+                                {{ __('Mobile Number') }} <span class="text-rose-500">*</span>
                             </label>
-                            <input type="text" 
-                                   id="mobile" 
-                                   name="mobile" 
-                                   value="{{ old('mobile', $reseller->mobile) }}" 
-                                   required 
-                                   placeholder="017xxxxxxxx" 
-                                   class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-purple-500 font-mono shadow-2xs">
+                            <input type="text"
+                                   id="mobile"
+                                   name="mobile" maxlength="30" inputmode="tel"
+                                   value="{{ old('mobile', $reseller->mobile) }}"
+                                   required
+                                   placeholder="017xxxxxxxx"
+                                   class="w-full border @error('mobile', 'profile') border-rose-400 ring-1 ring-rose-100 bg-rose-50/30 text-rose-900 @else bg-slate-50 border-slate-200 text-slate-800 @enderror rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-cyan-500 font-mono shadow-2xs">
+                        @error('mobile', 'profile') <p class="mt-1 text-xs text-rose-700" role="alert">{{ $message }}</p> @enderror
                         </div>
 
                         <!-- Email -->
                         <div>
                             <label for="email" class="block text-[11px] font-semibold text-slate-700 mb-1">
-                                Email Address
+                                {{ __('Email Address') }}
                             </label>
-                            <input type="email" 
-                                   id="email" 
-                                   name="email" 
-                                   value="{{ old('email', $reseller->email) }}" 
-                                   placeholder="partner@isp.com" 
-                                   class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-purple-500 shadow-2xs">
+                            <input type="email"
+                                   id="email"
+                                   name="email" maxlength="100"
+                                   value="{{ old('email', $reseller->email) }}"
+                                   placeholder="partner@isp.com"
+                                   class="w-full border @error('email', 'profile') border-rose-400 ring-1 ring-rose-100 bg-rose-50/30 text-rose-900 @else bg-slate-50 border-slate-200 text-slate-800 @enderror rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-cyan-500 shadow-2xs">
+                        @error('email', 'profile') <p class="mt-1 text-xs text-rose-700" role="alert">{{ $message }}</p> @enderror
                         </div>
 
                         <!-- Location / Address -->
                         <div class="sm:col-span-2 md:col-span-3">
                             <label for="address" class="block text-[11px] font-semibold text-slate-700 mb-1">
-                                Office Address
+                                {{ __('Office Address') }}
                             </label>
-                            <textarea id="address" 
-                                      name="address" 
-                                      rows="2" 
-                                      placeholder="Full office address..." 
-                                      class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-purple-500 shadow-2xs">{{ old('address', $reseller->address) }}</textarea>
+                            <textarea id="address"
+                                      name="address" maxlength="500"
+                                      rows="2"
+                                      placeholder="{{ __('Full office address...') }}"
+                                      class="w-full border @error('address', 'profile') border-rose-400 ring-1 ring-rose-100 bg-rose-50/30 text-rose-900 @else bg-slate-50 border-slate-200 text-slate-800 @enderror rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-cyan-500 shadow-2xs">{{ old('address', $reseller->address) }}</textarea>
+                        @error('address', 'profile') <p class="mt-1 text-xs text-rose-700" role="alert">{{ $message }}</p> @enderror
                         </div>
 
                         <!-- Notes -->
                         <div class="sm:col-span-2 md:col-span-3">
                             <label for="notes" class="block text-[11px] font-semibold text-slate-700 mb-1">
-                                Notes
+                                {{ __('Notes') }}
                             </label>
-                            <textarea id="notes" 
-                                      name="notes" 
-                                      rows="2" 
-                                      placeholder="Coverage areas or special notes..." 
-                                      class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-purple-500 shadow-2xs">{{ old('notes', $reseller->notes) }}</textarea>
+                            <textarea id="notes"
+                                      name="notes" maxlength="1000"
+                                      rows="2"
+                                      placeholder="{{ __('Coverage areas or special notes...') }}"
+                                      class="w-full border @error('notes', 'profile') border-rose-400 ring-1 ring-rose-100 bg-rose-50/30 text-rose-900 @else bg-slate-50 border-slate-200 text-slate-800 @enderror rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-cyan-500 shadow-2xs">{{ old('notes', $reseller->notes) }}</textarea>
+                        @error('notes', 'profile') <p class="mt-1 text-xs text-rose-700" role="alert">{{ $message }}</p> @enderror
                         </div>
                     </div>
 
                     <!-- Submit Button Inside Business Card -->
-                    <div class="pt-2 flex justify-end">
-                        <button type="submit" class="px-5 py-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
+                    <div class="pt-2 flex justify-center">
+                        <button type="submit" class="px-5 py-2 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                             <i class="fas fa-check text-xs"></i>
-                            <span>Save Profile</span>
+                            <span>{{ __('Save Profile') }}</span>
                         </button>
                     </div>
                 </div>
@@ -507,16 +513,16 @@
         <div x-show="activeTab === 'financial'" class="space-y-4" style="display: none;">
             <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-4">
                 <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-                    <h3 class="text-xs font-bold text-slate-800">Billing &amp; Rate Details</h3>
+                    <h3 class="text-xs font-bold text-slate-800">{{ __('Billing & Rate Details') }}</h3>
                     <span class="px-2.5 py-0.5 rounded text-[10.5px] font-mono font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                        Active
+                        {{ $stats['status'] }}
                     </span>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5">
                     <!-- Commission Rate -->
                     <div class="p-3 bg-purple-50/50 rounded-lg border border-purple-100 space-y-1">
-                        <span class="text-[10px] uppercase font-bold text-purple-700 block tracking-wider">Commission Rate</span>
+                        <span class="text-[10px] uppercase font-bold text-purple-700 block tracking-wider">{{ __('Commission Rate') }}</span>
                         <span class="text-lg font-bold font-mono text-purple-900 block leading-tight">
                             {{ $stats['commission_rate'] }}%
                         </span>
@@ -524,7 +530,7 @@
 
                     <!-- Billing Type -->
                     <div class="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-1">
-                        <span class="text-[10px] uppercase font-bold text-slate-600 block tracking-wider">Billing Type</span>
+                        <span class="text-[10px] uppercase font-bold text-slate-600 block tracking-wider">{{ __('Billing Type') }}</span>
                         <span class="text-base font-bold font-mono text-slate-800 block leading-tight">
                             {{ $stats['billing_type'] }}
                         </span>
@@ -532,7 +538,7 @@
 
                     <!-- Credit Limit -->
                     <div class="p-3 bg-blue-50/50 rounded-lg border border-blue-100 space-y-1">
-                        <span class="text-[10px] uppercase font-bold text-blue-700 block tracking-wider">Credit Limit</span>
+                        <span class="text-[10px] uppercase font-bold text-blue-700 block tracking-wider">{{ __('Credit Limit') }}</span>
                         <span class="text-lg font-bold font-mono text-blue-900 block leading-tight">
                             @currency($reseller->credit_limit ?? 0)
                         </span>
@@ -540,7 +546,7 @@
 
                     <!-- Monthly Panel Subscription Charge -->
                     <div class="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-1">
-                        <span class="text-[10px] uppercase font-bold text-slate-600 block tracking-wider">Monthly Fee</span>
+                        <span class="text-[10px] uppercase font-bold text-slate-600 block tracking-wider">{{ __('Monthly Fee') }}</span>
                         <span class="text-base font-bold font-mono text-slate-800 block leading-tight">
                             @currency($reseller->monthly_panel_charge ?? 0)
                         </span>
@@ -548,15 +554,15 @@
 
                     <!-- Panel Expiry Date -->
                     <div class="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-1">
-                        <span class="text-[10px] uppercase font-bold text-slate-600 block tracking-wider">Expiry Date</span>
+                        <span class="text-[10px] uppercase font-bold text-slate-600 block tracking-wider">{{ __('Expiry Date') }}</span>
                         <span class="text-base font-bold font-mono text-slate-800 block leading-tight">
-                            {{ $reseller->panel_expiry_date ? $reseller->panel_expiry_date->format('d M, Y') : 'Lifetime' }}
+                            {{ $reseller->panel_expiry_date ? $reseller->panel_expiry_date->format('d M, Y') : __('N/A') }}
                         </span>
                     </div>
 
                     <!-- Available Balance -->
                     <div class="p-3 bg-emerald-50/50 rounded-lg border border-emerald-100 space-y-1">
-                        <span class="text-[10px] uppercase font-bold text-emerald-700 block tracking-wider">Total Available Balance</span>
+                        <span class="text-[10px] uppercase font-bold text-emerald-700 block tracking-wider">{{ __('Total Available Balance') }}</span>
                         <span class="text-lg font-bold font-mono text-emerald-900 block leading-tight">
                             @currency($stats['available_balance'])
                         </span>
@@ -570,8 +576,8 @@
     <div x-show="activeTab === 'security'" class="space-y-4" style="display: none;">
         <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-4">
             <div class="border-b border-slate-100 pb-3 flex items-center justify-between">
-                <h3 class="text-xs font-bold text-slate-800">Change Password</h3>
-                <span class="text-[10.5px] text-slate-400 font-medium">Update account login credentials</span>
+                <h3 class="text-xs font-bold text-slate-800">{{ __('Change Password') }}</h3>
+
             </div>
 
             <form action="{{ route('reseller.profile.password') }}" method="POST" class="max-w-xl space-y-4">
@@ -580,67 +586,70 @@
                 <!-- Current Password -->
                 <div>
                     <label for="current_password" class="block text-[11px] font-semibold text-slate-700 mb-1">
-                        Current Password <span class="text-rose-500">*</span>
+                        {{ __('Current Password') }} <span class="text-rose-500">*</span>
                     </label>
                     <div class="relative">
-                        <input :type="showCurrentPass ? 'text' : 'password'" 
-                               id="current_password" 
-                               name="current_password" 
-                               required 
-                               placeholder="••••••••••••" 
-                               class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 pr-8 focus:bg-white focus:border-purple-500 shadow-2xs font-mono">
-                        <button type="button" 
-                                @click="showCurrentPass = !showCurrentPass" 
+                        <input :type="showCurrentPass ? 'text' : 'password'"
+                               id="current_password"
+                               name="current_password" autocomplete="current-password"
+                               required
+                               placeholder="••••••••••••"
+                               class="w-full border @error('current_password', 'password') border-rose-400 ring-1 ring-rose-100 bg-rose-50/30 text-rose-900 @else bg-slate-50 border-slate-200 text-slate-800 @enderror rounded-lg text-xs px-3 py-1.5 pr-8 focus:bg-white focus:border-cyan-500 shadow-2xs font-mono">
+                        <button type="button"
+                                @click="showCurrentPass = !showCurrentPass"
                                 class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs">
                             <i :class="showCurrentPass ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
                         </button>
                     </div>
+                        @error('current_password', 'password') <p class="mt-1 text-xs text-rose-700" role="alert">{{ $message }}</p> @enderror
                 </div>
 
                 <!-- New Password -->
                 <div>
                     <label for="password" class="block text-[11px] font-semibold text-slate-700 mb-1">
-                        New Password <span class="text-rose-500">*</span>
+                        {{ __('New Password') }} <span class="text-rose-500">*</span>
                     </label>
                     <div class="relative">
-                        <input :type="showNewPass ? 'text' : 'password'" 
-                               id="password" 
-                               name="password" 
-                               required 
-                               placeholder="Minimum 6 characters" 
-                               class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 pr-8 focus:bg-white focus:border-purple-500 shadow-2xs font-mono">
-                        <button type="button" 
-                                @click="showNewPass = !showNewPass" 
+                        <input :type="showNewPass ? 'text' : 'password'"
+                               id="password"
+                               name="password" autocomplete="new-password" minlength="8"
+                               required
+                               placeholder="{{ __('Minimum 8 characters') }}"
+                               class="w-full border @error('password', 'password') border-rose-400 ring-1 ring-rose-100 bg-rose-50/30 text-rose-900 @else bg-slate-50 border-slate-200 text-slate-800 @enderror rounded-lg text-xs px-3 py-1.5 pr-8 focus:bg-white focus:border-cyan-500 shadow-2xs font-mono">
+                        <button type="button"
+                                @click="showNewPass = !showNewPass"
                                 class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs">
                             <i :class="showNewPass ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
                         </button>
                     </div>
+                        @error('password', 'password') <p class="mt-1 text-xs text-rose-700" role="alert">{{ $message }}</p> @enderror
                 </div>
 
                 <!-- Confirm New Password -->
                 <div>
                     <label for="password_confirmation" class="block text-[11px] font-semibold text-slate-700 mb-1">
-                        Confirm New Password <span class="text-rose-500">*</span>
+                        {{ __('Confirm New Password') }} <span class="text-rose-500">*</span>
                     </label>
                     <div class="relative">
-                        <input :type="showConfPass ? 'text' : 'password'" 
-                               id="password_confirmation" 
-                               name="password_confirmation" 
-                               required 
-                               placeholder="Re-type new password" 
-                               class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 pr-8 focus:bg-white focus:border-purple-500 shadow-2xs font-mono">
-                        <button type="button" 
-                                @click="showConfPass = !showConfPass" 
+                        <input :type="showConfPass ? 'text' : 'password'"
+                               id="password_confirmation"
+                               name="password_confirmation" autocomplete="new-password" minlength="8"
+                               required
+                               placeholder="{{ __('Confirm New Password') }}"
+                               class="w-full border @error('password_confirmation', 'password') border-rose-400 ring-1 ring-rose-100 bg-rose-50/30 text-rose-900 @else bg-slate-50 border-slate-200 text-slate-800 @enderror rounded-lg text-xs px-3 py-1.5 pr-8 focus:bg-white focus:border-cyan-500 shadow-2xs font-mono">
+                        <button type="button"
+                                @click="showConfPass = !showConfPass"
                                 class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs">
                             <i :class="showConfPass ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
                         </button>
                     </div>
+                        @error('password_confirmation', 'password') <p class="mt-1 text-xs text-rose-700" role="alert">{{ $message }}</p> @enderror
                 </div>
 
                 <div class="pt-2">
-                    <button type="submit" class="px-5 py-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
+                    <button type="submit" class="px-5 py-2 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                         <i class="fas fa-key text-xs"></i>
-                        <span>Update Password</span>
+                        <span>{{ __('Update Password') }}</span>
                     </button>
                 </div>
             </form>
@@ -652,38 +661,38 @@
         <div x-show="activeTab === 'upstream'" class="space-y-4" style="display: none;">
             <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-4">
                 <div class="border-b border-slate-100 pb-3">
-                    <h3 class="text-xs font-bold text-slate-800">ISP Information</h3>
+                    <h3 class="text-xs font-bold text-slate-800">{{ __('ISP Information') }}</h3>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5">
                     <div>
-                        <span class="text-[10px] text-slate-400 font-medium block uppercase tracking-wider">ISP Company</span>
+                        <span class="text-[10px] text-slate-400 font-medium block uppercase tracking-wider">{{ __('ISP Company') }}</span>
                         <span class="text-xs font-bold text-slate-800 block mt-0.5">{{ $tenant->company_name ?? ($tenant->name ?? 'ISP Provider') }}</span>
                     </div>
 
                     <div>
-                        <span class="text-[10px] text-slate-400 font-medium block uppercase tracking-wider">Support Phone</span>
-                        <span class="text-xs font-mono font-bold text-purple-700 block mt-0.5">{{ $tenant->support_hotline ?: ($tenant->phone ?? 'N/A') }}</span>
+                        <span class="text-[10px] text-slate-400 font-medium block uppercase tracking-wider">{{ __('Support Phone') }}</span>
+                        <span class="text-xs font-mono font-bold text-purple-700 block mt-0.5">{{ $tenant->support_hotline ?: ($tenant->phone ?? __('N/A')) }}</span>
                     </div>
 
                     <div>
-                        <span class="text-[10px] text-slate-400 font-medium block uppercase tracking-wider">Billing Phone</span>
-                        <span class="text-xs font-mono font-bold text-slate-800 block mt-0.5">{{ $tenant->billing_phone ?: ($tenant->phone ?? 'N/A') }}</span>
+                        <span class="text-[10px] text-slate-400 font-medium block uppercase tracking-wider">{{ __('Billing Phone') }}</span>
+                        <span class="text-xs font-mono font-bold text-slate-800 block mt-0.5">{{ $tenant->billing_phone ?: ($tenant->phone ?? __('N/A')) }}</span>
                     </div>
 
                     <div>
-                        <span class="text-[10px] text-slate-400 font-medium block uppercase tracking-wider">Support Email</span>
-                        <span class="text-xs font-mono text-slate-800 block mt-0.5">{{ $tenant->email ?? 'noc@isp.com' }}</span>
+                        <span class="text-[10px] text-slate-400 font-medium block uppercase tracking-wider">{{ __('Support Email') }}</span>
+                        <span class="text-xs font-mono text-slate-800 block mt-0.5">{{ $tenant->email ?? __('N/A') }}</span>
                     </div>
 
                     <div>
-                        <span class="text-[10px] text-slate-400 font-medium block uppercase tracking-wider">BTRC License</span>
-                        <span class="text-xs font-bold text-slate-800 block mt-0.5">{{ $tenant->btrc_license_no ?: 'Verified License' }}</span>
+                        <span class="text-[10px] text-slate-400 font-medium block uppercase tracking-wider">{{ __('BTRC License') }}</span>
+                        <span class="text-xs font-bold text-slate-800 block mt-0.5">{{ $tenant->btrc_license_no ?: __('N/A') }}</span>
                     </div>
 
                     <div>
-                        <span class="text-[10px] text-slate-400 font-medium block uppercase tracking-wider">Office Address</span>
-                        <span class="text-xs text-slate-700 block mt-0.5">{{ $tenant->address ?? 'N/A' }}</span>
+                        <span class="text-[10px] text-slate-400 font-medium block uppercase tracking-wider">{{ __('Office Address') }}</span>
+                        <span class="text-xs text-slate-700 block mt-0.5">{{ $tenant->address ?? __('N/A') }}</span>
                     </div>
                 </div>
             </div>
@@ -697,40 +706,41 @@
 <script>
 function profileManager() {
     return {
-        activeTab: '{{ $errors->has("current_password") || $errors->has("password") ? "security" : ($isResellerAdmin ? "business" : "personal") }}',
+        activeTab: @js($errors->password->any() ? 'security' : ($isResellerAdmin ? 'business' : 'personal')),
         avatarPreview: null,
         hasExistingAvatar: @json(!empty($user->avatar)),
-        removeAvatarFlag: false,
+        removeAvatarFlag: @js((bool) old('remove_avatar', false)),
+        avatarError: '',
         showCurrentPass: false,
         showNewPass: false,
         showConfPass: false,
-        handleAvatarChange(e) {
-            const file = e.target.files[0];
-            if (file) {
-                if (file.size > 2 * 1024 * 1024) {
-                    alert('ছবি সর্বোচ্চ ২ মেগাবাইট (2MB) হতে পারবে।');
-                    e.target.value = '';
-                    return;
-                }
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    this.avatarPreview = event.target.result;
-                    this.removeAvatarFlag = false;
-                };
-                reader.readAsDataURL(file);
+        handleAvatarChange(event) {
+            this.clearPreview();
+            this.avatarError = '';
+            const file = event.target.files[0];
+            if (!file) return;
+
+            if (file.size > 2 * 1024 * 1024) {
+                this.avatarError = @js(__('Profile photo must be 2 MB or smaller.'));
+                event.target.value = '';
+                return;
             }
+
+            this.avatarPreview = URL.createObjectURL(file);
+            this.removeAvatarFlag = false;
         },
         removeAvatar() {
-            this.avatarPreview = null;
+            this.clearPreview();
+            this.avatarError = '';
             this.removeAvatarFlag = true;
-            const input = document.getElementById('avatar_input');
-            if (input) input.value = '';
+            this.$refs.avatarInput.value = '';
         },
-        submitProfileForm() {
-            const form = document.getElementById('profileForm');
-            if (form) {
-                form.submit();
-            }
+        clearPreview() {
+            if (this.avatarPreview) URL.revokeObjectURL(this.avatarPreview);
+            this.avatarPreview = null;
+        },
+        destroy() {
+            this.clearPreview();
         }
     };
 }

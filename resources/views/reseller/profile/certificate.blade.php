@@ -41,7 +41,7 @@
         <a href="{{ route('reseller.profile') }}" class="px-3.5 py-1.5 rounded-lg bg-white border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-50 transition shadow-xs flex items-center gap-1.5">
             ← {{ __('Back to Profile') }}
         </a>
-        <button onclick="window.print()" class="px-4 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold shadow-xs transition flex items-center gap-1.5 cursor-pointer">
+        <button onclick="window.print()" class="px-4 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-semibold shadow-xs transition flex items-center gap-1.5 cursor-pointer">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
             {{ __('Print Official Certificate') }}
         </button>
@@ -57,10 +57,10 @@
         <!-- Issuer Header -->
         <div class="text-center pb-6 border-b-2 border-purple-100 relative z-10">
             <h2 class="text-lg sm:text-xl font-extrabold text-purple-900 tracking-wide uppercase">
-                {{ $tenant->company_name ?? ($tenant->name ?? 'ISP Management Network') }}
+                {{ $tenant->company_name ?? ($tenant->name ?? __('ISP Management Network')) }}
             </h2>
             <p class="text-xs text-slate-500 font-mono mt-0.5">
-                {{ __('License / Registration') }}: {{ $tenant->btrc_license_no ?: __('Nationwide Internet Service Provider') }}
+                {{ __('License / Registration') }}: {{ $tenant->btrc_license_no ?: __('N/A') }}
             </p>
         </div>
 
@@ -81,27 +81,27 @@
             <div class="my-6 p-6 rounded-xl bg-purple-50/50 border border-purple-200/80 max-w-2xl mx-auto space-y-2 text-left">
                 <div class="flex justify-between border-b border-purple-100/80 pb-2 text-xs">
                     <span class="text-slate-500 font-medium">{{ __('Partner Name') }}:</span>
-                    <span class="font-bold text-slate-900 text-sm">{{ $reseller->name ?? 'N/A' }}</span>
+                    <span class="font-bold text-slate-900 text-sm">{{ $reseller->name ?? __('N/A') }}</span>
                 </div>
                 <div class="flex justify-between border-b border-purple-100/80 pb-2 text-xs">
                     <span class="text-slate-500 font-medium">{{ __('Partner Code') }}:</span>
-                    <span class="font-bold font-mono text-purple-800">{{ $reseller->code ?? 'N/A' }}</span>
+                    <span class="font-bold font-mono text-purple-800">{{ $reseller->code ?? __('N/A') }}</span>
                 </div>
                 <div class="flex justify-between border-b border-purple-100/80 pb-2 text-xs">
                     <span class="text-slate-500 font-medium">{{ __('Client Prefix') }}:</span>
-                    <span class="font-bold font-mono text-slate-800">{{ $reseller->prefix ?? ($reseller->code ?? 'RES') }}</span>
+                    <span class="font-bold font-mono text-slate-800">{{ $reseller->prefix ?? ($reseller->code ?? __('N/A')) }}</span>
                 </div>
                 <div class="flex justify-between border-b border-purple-100/80 pb-2 text-xs">
                     <span class="text-slate-500 font-medium">{{ __('Authorized Contact Person') }}:</span>
-                    <span class="font-bold text-slate-800">{{ $reseller->contact_person ?? 'N/A' }}</span>
+                    <span class="font-bold text-slate-800">{{ $reseller->contact_person ?? __('N/A') }}</span>
                 </div>
                 <div class="flex justify-between border-b border-purple-100/80 pb-2 text-xs">
                     <span class="text-slate-500 font-medium">{{ __('Registered Contact Number') }}:</span>
-                    <span class="font-mono text-slate-800">{{ $reseller->mobile ?? 'N/A' }}</span>
+                    <span class="font-mono text-slate-800">{{ $reseller->mobile ?? __('N/A') }}</span>
                 </div>
                 <div class="flex justify-between text-xs pt-1">
                     <span class="text-slate-500 font-medium">{{ __('Current Status') }}:</span>
-                    <span class="font-bold font-mono text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded text-[11px]">{{ strtoupper($reseller->status ?? 'ACTIVE') }}</span>
+                    <span class="font-bold font-mono text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded text-[11px]">{{ __(ucfirst($reseller->status ?? 'active')) }}</span>
                 </div>
             </div>
 
@@ -120,13 +120,13 @@
             <div>
                 <div class="w-40 border-b border-slate-400 mx-auto mb-1.5 h-10"></div>
                 <span class="font-bold text-purple-900 block">{{ __('Managing Director / Carrier ISP') }}</span>
-                <span class="text-[10px] text-slate-500">{{ $tenant->company_name ?? 'Host ISP HQ' }}</span>
+                <span class="text-[10px] text-slate-500">{{ $tenant->company_name ?? __('Host ISP HQ') }}</span>
             </div>
         </div>
 
         <!-- Footer Verification Code -->
         <div class="mt-8 pt-3 border-t border-slate-100 flex items-center justify-between text-[10px] font-mono text-slate-400">
-            <span>{{ __('Doc Ref') }}: CERT-{{ $reseller->code ?? '001' }}-{{ date('Y') }}</span>
+            <span>{{ __('Doc Ref') }}: CERT-{{ $reseller->code ?? $reseller->id }}-{{ date('Y') }}</span>
             <span>{{ __('Issue Date') }}: {{ date('F d, Y') }}</span>
         </div>
 
