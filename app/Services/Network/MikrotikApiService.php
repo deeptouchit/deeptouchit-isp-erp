@@ -414,6 +414,44 @@ class MikrotikApiService
     }
 
     /**
+     * Read all active PPPoE byte counters in one RouterOS request.
+     */
+    public function getPppoeSessionBytes(TenantRouter $router): ?array
+    {
+        try {
+            if (!$this->connect($router->ip_address, $router->api_port ?: 8728, $router->username ?: 'admin', $router->decrypted_password ?? '', (bool) $router->use_ssl, 3)) {
+                return null;
+            }
+
+            $this->writeCommand('/ppp/active/print', ['=stats=', '=.proplist=.id,name,session-id,bytes', '?service=pppoe']);
+            $rows = $this->readAll();
+            if (!isset($rows[array_key_last($rows)]['!done'])) {
+                return null;
+            }
+
+            $sessions = [];
+            foreach ($rows as $row) {
+                if (!isset($row['!re'])) {
+                    continue;
+                }
+
+                $data = $row['!re'];
+                if (empty($data['name']) || empty($data['.id']) || !preg_match('/^(\d+)\/(\d+)$/D', $data['bytes'] ?? '', $bytes)) {
+                    return null;
+                }
+
+                // PPP reports transmitted bytes first, from the router's perspective.
+                $key = $data['.id'] . ':' . ($data['session-id'] ?? '');
+                $sessions[$key] = ['username' => $data['name'], 'download' => (int) $bytes[1], 'upload' => (int) $bytes[2]];
+            }
+
+            return $sessions;
+        } finally {
+            $this->disconnect();
+        }
+    }
+
+    /**
      * Fetch active PPPoE client sessions from router.
      */
     public function getActivePppoe(TenantRouter $router): array

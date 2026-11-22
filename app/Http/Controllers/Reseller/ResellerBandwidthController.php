@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use App\Services\NotificationScopeService;
 use App\Services\Network\MikrotikApiService;
+use App\Services\Network\ResellerSessionTraffic;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -51,19 +52,42 @@ class ResellerBandwidthController extends Controller
             ->first();
     }
 
+    private function isWholesale(TenantReseller $reseller, ?TenantResellerBandwidth $allocation): bool
+    {
+        return match ($reseller->billing_type) {
+            'BANDWIDTH_WHOLESALE' => true,
+            'PREPAID_WALLET', 'POSTPAID_MONTHLY' => false,
+            default => $allocation !== null,
+        };
+    }
+
+    private function sessionTelemetryKey(TenantReseller $reseller): string
+    {
+        return "reseller-session-telemetry:{$reseller->tenant_id}:{$reseller->id}";
+    }
+
     public function index(): View
     {
         [, $reseller, $tenant] = $this->getResellerData();
         $bandwidth = $this->allocation($reseller);
+        $wholesale = $this->isWholesale($reseller, $bandwidth);
+        $bandwidth = $wholesale ? $bandwidth : null;
         $pipelines = $this->pipelines($bandwidth);
 
-        return view('reseller.bandwidth.index', compact('reseller', 'tenant', 'bandwidth', 'pipelines'));
+        return view('reseller.bandwidth.index', compact('reseller', 'tenant', 'bandwidth', 'pipelines', 'wholesale'));
     }
 
-    public function trafficTelemetry(MikrotikApiService $api): JsonResponse
+    public function trafficTelemetry(MikrotikApiService $api, ResellerSessionTraffic $sessionTraffic): JsonResponse
     {
         [, $reseller] = $this->getResellerData();
         $allocation = $this->allocation($reseller);
+        if (!$this->isWholesale($reseller, $allocation)) {
+            $sample = $sessionTraffic->measure($reseller);
+            Cache::put($this->sessionTelemetryKey($reseller), $sample, 120);
+
+            return $this->telemetryResponse($sample['state'], $sample['point'], sessions: $sample['sessions']);
+        }
+
         $state = 'unconfigured';
         $point = null;
 
@@ -117,10 +141,14 @@ class ResellerBandwidthController extends Controller
             }
         }
 
-        $capacity = (float) ($allocation?->total_bandwidth_mbps ?? 0);
+        return $this->telemetryResponse($state, $point, (float) ($allocation?->total_bandwidth_mbps ?? 0));
+    }
 
+    private function telemetryResponse(string $state, ?array $point, float $capacity = 0, ?int $sessions = null): JsonResponse
+    {
         return response()->json([
             'state' => $state,
+            'active_sessions' => $sessions,
             'current_download' => $point['download'] ?? null,
             'current_upload' => $point['upload'] ?? null,
             'utilization_percent' => $point && $capacity > 0 ? round($point['download'] / $capacity * 100, 1) : null,
@@ -157,6 +185,7 @@ class ResellerBandwidthController extends Controller
     public function requestUpgrade(Request $request): JsonResponse|RedirectResponse
     {
         [$user, $reseller, $tenant] = $this->getResellerData();
+        abort_unless($this->isWholesale($reseller, $this->allocation($reseller)), 403);
 
         $validated = $request->validate([
             'upgrade_type' => ['required', 'string', 'in:additional_capacity,change_cir_ratio,emergency_boost,temporary_addon'],
@@ -272,12 +301,22 @@ class ResellerBandwidthController extends Controller
     {
         [, $reseller] = $this->getResellerData();
         $bandwidth = $this->allocation($reseller);
+        $wholesale = $this->isWholesale($reseller, $bandwidth);
+        $bandwidth = $wholesale ? $bandwidth : null;
         $pipelines = $this->pipelines($bandwidth);
-        $sample = $bandwidth ? Cache::get($this->telemetryKey($bandwidth))['latest'] ?? null : null;
+        $sessionSample = !$wholesale ? Cache::get($this->sessionTelemetryKey($reseller)) : null;
+        $sample = $bandwidth
+            ? (Cache::get($this->telemetryKey($bandwidth))['latest'] ?? null)
+            : ($sessionSample['point'] ?? null);
 
-        return response()->streamDownload(function () use ($pipelines, $sample, $bandwidth) {
+        return response()->streamDownload(function () use ($pipelines, $sample, $bandwidth, $wholesale, $sessionSample) {
             $handle = fopen('php://output', 'w');
-            fputcsv($handle, ['Pipeline', 'Allocated Mbps'], escape: '');
+            if ($wholesale) {
+                fputcsv($handle, ['Pipeline', 'Allocated Mbps'], escape: '');
+            } else {
+                fputcsv($handle, ['Telemetry source', 'Measurement state', 'Active PPPoE sessions'], escape: '');
+                fputcsv($handle, ['Customer PPPoE sessions', $sessionSample['state'] ?? 'unavailable', $sessionSample['sessions'] ?? null], escape: '');
+            }
             foreach ($pipelines as $pipeline => $capacity) {
                 fputcsv($handle, [$pipeline, $capacity], escape: '');
             }
@@ -297,9 +336,14 @@ class ResellerBandwidthController extends Controller
     {
         [, $reseller, $tenant] = $this->getResellerData();
         $bandwidth = $this->allocation($reseller);
+        $wholesale = $this->isWholesale($reseller, $bandwidth);
+        $bandwidth = $wholesale ? $bandwidth : null;
         $pipelines = $this->pipelines($bandwidth);
-        $sample = $bandwidth ? Cache::get($this->telemetryKey($bandwidth))['latest'] ?? null : null;
+        $sessionSample = !$wholesale ? Cache::get($this->sessionTelemetryKey($reseller)) : null;
+        $sample = $bandwidth
+            ? (Cache::get($this->telemetryKey($bandwidth))['latest'] ?? null)
+            : ($sessionSample['point'] ?? null);
 
-        return view('reseller.bandwidth.print', compact('reseller', 'tenant', 'bandwidth', 'pipelines', 'sample'));
+        return view('reseller.bandwidth.print', compact('reseller', 'tenant', 'bandwidth', 'pipelines', 'sample', 'wholesale', 'sessionSample'));
     }
 }

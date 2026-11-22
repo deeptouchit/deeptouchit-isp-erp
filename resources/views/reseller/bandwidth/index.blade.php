@@ -15,18 +15,26 @@
             </button>
             <a href="{{ route('reseller.bandwidth.export') }}" class="h-[34px] px-3 rounded-lg border border-slate-200 bg-slate-50 inline-flex items-center gap-1.5"><i class="fas fa-file-csv" aria-hidden="true"></i>{{ __('Export CSV') }}</a>
             <a href="{{ route('reseller.bandwidth.print') }}" target="_blank" rel="noopener" class="h-[34px] px-3 rounded-lg border border-slate-200 bg-slate-50 inline-flex items-center gap-1.5"><i class="fas fa-print" aria-hidden="true"></i>{{ __('Print') }}</a>
-            <button type="button" @click="openUpgradeModal = true" class="h-[34px] px-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white"><i class="fas fa-bolt" aria-hidden="true"></i> {{ __('Request Bandwidth Upgrade') }}</button>
+            @if($wholesale)
+                <button type="button" @click="openUpgradeModal = true" class="h-[34px] px-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white"><i class="fas fa-bolt" aria-hidden="true"></i> {{ __('Request Bandwidth Upgrade') }}</button>
+            @endif
         </div>
     </div>
 
     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
         @foreach([
-            ['Allocated Bandwidth', 'fa-layer-group', $bandwidth?->formatted_total_bandwidth, null],
+            $wholesale
+                ? ['Allocated Bandwidth', 'fa-layer-group', $bandwidth?->formatted_total_bandwidth, null]
+                : ['Billing Model', 'fa-layer-group', __('Per-Customer Packages'), null],
             ['Download Speed', 'fa-arrow-down', null, "formatSpeed(reading.current_download)"],
             ['Upload Speed', 'fa-arrow-up', null, "formatSpeed(reading.current_upload)"],
-            ['Utilization', 'fa-gauge-high', null, "reading.utilization_percent === null ? '—' : readingsFormat.format(reading.utilization_percent) + '%'"],
-            ['Peak Download', 'fa-chart-line', null, "formatSpeed(peakDownload())"],
-            ['Line Status', 'fa-network-wired', $bandwidth?->status_badge['label'], null],
+            $wholesale
+                ? ['Utilization', 'fa-gauge-high', null, "reading.utilization_percent === null ? '—' : readingsFormat.format(reading.utilization_percent) + '%'"]
+                : ['Active PPPoE Sessions', 'fa-users', null, 'formatCount(reading.active_sessions)'],
+            ['Peak Download', 'fa-chart-line', null, "formatSpeed(peak('current_download'))"],
+            $wholesale
+                ? ['Line Status', 'fa-network-wired', $bandwidth?->status_badge['label'], null]
+                : ['Peak Upload', 'fa-chart-line', null, "formatSpeed(peak('current_upload'))"],
         ] as [$label, $icon, $value, $binding])
             <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between gap-2">
                 <div class="min-w-0">
@@ -56,6 +64,7 @@
         <canvas x-ref="chart" class="block w-full h-52" role="img" aria-label="{{ __('Live Bandwidth Traffic') }}"></canvas>
     </section>
 
+    @if($wholesale)
     @php
         $allocationRows = collect($pipelines)->map(fn ($mbps, $pipeline) => ['label' => __($pipeline), 'mbps' => $mbps]);
         $allocatedTotal = (float) ($bandwidth?->total_bandwidth_mbps ?? 0);
@@ -282,6 +291,7 @@
             </form>
         </div>
     </div>
+    @endif
 </div>
 @endsection
 
@@ -323,7 +333,7 @@ function bandwidthMonitor() {
     const endpoint = @js(route('reseller.bandwidth.traffic'));
     const locale = @js(app()->getLocale());
     const timeFormat = new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    const emptyReading = { current_download: null, current_upload: null, utilization_percent: null, timestamp: null };
+    const emptyReading = { active_sessions: null, current_download: null, current_upload: null, utilization_percent: null, timestamp: null };
     let timer;
     let request;
 
@@ -335,6 +345,8 @@ function bandwidthMonitor() {
             'sampling' => __('Collecting router measurements'),
             'live' => __('Live'),
             'unavailable' => __('Router telemetry unavailable'),
+            'partial' => __('Partial traffic measurement'),
+            'unsupported' => __('Live measurement requires PPPoE sessions'),
             'unconfigured' => __('Live telemetry is not configured'),
         ]),
         reading: emptyReading,
@@ -363,8 +375,13 @@ function bandwidthMonitor() {
             return value === null ? '—' : @js(__(':speed Mbps')).replace(':speed', this.readingsFormat.format(value));
         },
 
-        peakDownload() {
-            return this.points.length ? Math.max(...this.points.map(point => point.current_download)) : null;
+        formatCount(value) {
+            return value == null \u2013 '\u2013' : this.readingsFormat.format(value);
+        },
+
+        peak(field) {
+            const complete = this.points.filter(point => point.state === 'live');
+            return complete.length \u2013 Math.max(...complete.map(point => point[field])) : null;
         },
 
         async refresh() {
@@ -392,7 +409,7 @@ function bandwidthMonitor() {
                 this.reading = emptyReading;
             } finally {
                 this.loading = false;
-                if (!request.signal.aborted) timer = setTimeout(() => this.refresh(), this.state === 'live' || this.state === 'sampling' ? 6000 : 15000);
+                if (!request.signal.aborted) timer = setTimeout(() => this.refresh(), ['live', 'sampling', 'partial'].includes(this.state) ? 6000 : 15000);
             }
         },
 

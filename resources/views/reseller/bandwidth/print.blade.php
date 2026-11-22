@@ -27,8 +27,16 @@
                 @endforeach
             </tbody>
         </table>
-    @else
+    @elseif($wholesale)
         <p>{{ __('No bandwidth allocation configured.') }}</p>
+    @else
+        <p>{{ __('Per-Customer Packages') }}</p>
+        @if(isset($sessionSample['sessions']))
+            <p>{{ __('Active PPPoE Sessions') }}: {{ $sessionSample['sessions'] }}</p>
+        @endif
+        @if(($sessionSample['state'] ?? null) === 'partial')
+            <p>{{ __('Partial traffic measurement') }}</p>
+        @endif
     @endif
     @if($sample)
         <h2>{{ __('Latest Bandwidth Measurement') }}</h2>

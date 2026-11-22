@@ -7631,5 +7631,10 @@
     "Unallocated": "Unallocated",
     "Minimum Bandwidth (Mbps)": "Minimum Bandwidth (Mbps)",
     "Capacity Share": "Capacity Share",
-    "No pipelines match your filters.": "No pipelines match your filters."
+    "No pipelines match your filters.": "No pipelines match your filters.",
+    "Per-Customer Packages": "Per-Customer Packages",
+    "Active PPPoE Sessions": "Active PPPoE Sessions",
+    "Peak Upload": "Peak Upload",
+    "Partial traffic measurement": "Partial traffic measurement",
+    "Live measurement requires PPPoE sessions": "Live measurement requires PPPoE sessions"
 }

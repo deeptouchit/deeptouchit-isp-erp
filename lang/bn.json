@@ -7631,5 +7631,10 @@
     "Unallocated": "বরাদ্দ নেই",
     "Minimum Bandwidth (Mbps)": "সর্বনিম্ন ব্যান্ডউইথ (এমবিপিএস)",
     "Capacity Share": "মোট বরাদ্দের অংশ",
-    "No pipelines match your filters.": "এই ফিল্টারে কোনো ব্যান্ডউইথ বিভাগ পাওয়া যায়নি।"
+    "No pipelines match your filters.": "এই ফিল্টারে কোনো ব্যান্ডউইথ বিভাগ পাওয়া যায়নি।",
+    "Per-Customer Packages": "গ্রাহক-প্যাকেজভিত্তিক",
+    "Active PPPoE Sessions": "সক্রিয় PPPoE সেশন",
+    "Peak Upload": "সর্বোচ্চ আপলোড",
+    "Partial traffic measurement": "আংশিক ট্রাফিক পরিমাপ",
+    "Live measurement requires PPPoE sessions": "লাইভ পরিমাপের জন্য PPPoE সেশন প্রয়োজন"
 }
