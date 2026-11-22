@@ -70,3 +70,30 @@
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
 }
+
+/* Unified application typography contract */
+@layer components {
+    .font-sans {
+        font-family: inherit !important;
+    }
+
+    .saas-kpi-label {
+        @apply text-[10px] font-medium tracking-wide leading-tight;
+    }
+
+    .saas-kpi-value {
+        @apply text-[13px] font-bold leading-tight;
+    }
+
+    .saas-table th,
+    .saas-table td {
+        @apply text-[11px] leading-tight;
+    }
+
+    .saas-table th:not(.font-mono),
+    .saas-table td:not(.font-mono),
+    .saas-table th:not(.font-mono) *,
+    .saas-table td:not(.font-mono) * {
+        font-family: inherit;
+    }
+}
