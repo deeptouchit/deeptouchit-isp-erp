@@ -7625,5 +7625,11 @@
     "Target Pipeline": "Target Pipeline",
     "Temporary Festive Add-On": "Temporary Festive Add-On",
     "Total Combined Pool": "Total Combined Pool",
-    "Upgrade Type": "Upgrade Type"
+    "Upgrade Type": "Upgrade Type",
+    "Search pipelines": "Search pipelines",
+    "All Pipelines": "All Pipelines",
+    "Unallocated": "Unallocated",
+    "Minimum Bandwidth (Mbps)": "Minimum Bandwidth (Mbps)",
+    "Capacity Share": "Capacity Share",
+    "No pipelines match your filters.": "No pipelines match your filters."
 }

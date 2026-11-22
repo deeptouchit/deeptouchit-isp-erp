@@ -56,45 +56,114 @@
         <canvas x-ref="chart" class="block w-full h-52" role="img" aria-label="{{ __('Live Bandwidth Traffic') }}"></canvas>
     </section>
 
-    <section class="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden" aria-labelledby="bandwidth-allocation-heading">
-        <div class="flex flex-wrap items-center justify-between gap-2 p-3 border-b border-slate-100">
-            <h2 id="bandwidth-allocation-heading" class="text-xs font-bold text-slate-800">{{ __('Bandwidth Allocation') }}</h2>
-            @if($bandwidth)
-                <span class="text-xs text-slate-600">{{ $bandwidth->allocation_type_badge['label'] }} · <strong>@currency($bandwidth->monthly_bill_amount)</strong> / {{ __('Month') }}</span>
-            @endif
-        </div>
-        <div class="overflow-x-auto">
-            <table class="saas-table">
-                <thead>
-                    <tr>
-                        <th scope="col" class="w-10 text-center font-semibold no-sort">#</th>
-                        <th scope="col" class="text-center font-semibold">{{ __('Pipeline') }}</th>
-                        <th scope="col" class="text-center font-semibold">{{ __('Allocated Bandwidth') }}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($pipelines as $pipeline => $mbps)
+    @php
+        $allocationRows = collect($pipelines)->map(fn ($mbps, $pipeline) => ['label' => __($pipeline), 'mbps' => $mbps]);
+        $allocatedTotal = (float) ($bandwidth?->total_bandwidth_mbps ?? 0);
+    @endphp
+    <div class="space-y-3" x-data="allocationFilters(@js($allocationRows))">
+        @if($bandwidth)
+            <form @submit.prevent="apply()" @reset.prevent="reset()"
+                  class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5"
+                  aria-controls="bandwidth-allocation-table">
+                <div class="flex flex-col md:flex-row items-stretch md:items-center gap-2">
+                    <div class="relative flex-1 min-w-[200px]">
+                        <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-xs pointer-events-none" :class="draft.search ? 'text-cyan-600 font-bold' : 'text-slate-400'" aria-hidden="true"></i>
+                        <input type="search" x-model="draft.search" aria-label="{{ __('Search pipelines') }}" placeholder="{{ __('Search pipelines') }}"
+                               class="h-[34px] w-full pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden">
+                        <button type="button" x-show="draft.search" x-cloak aria-label="{{ __('Clear Search') }}"
+                                @click="draft.search = ''; apply()" class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700">
+                            <i class="fas fa-times" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                    <select x-model="draft.pipeline" aria-label="{{ __('Pipeline') }}" class="h-[34px] w-full md:w-36 px-2 rounded-lg border border-slate-200 bg-slate-50 text-xs">
+                        <option value="">{{ __('All Pipelines') }}</option>
+                        @foreach(array_keys($pipelines) as $pipeline)
+                            <option value="{{ $pipeline }}">{{ __($pipeline) }}</option>
+                        @endforeach
+                    </select>
+                    <select x-model="draft.status" aria-label="{{ __('Status') }}" class="h-[34px] w-full md:w-36 px-2 rounded-lg border border-slate-200 bg-slate-50 text-xs">
+                        <option value="">{{ __('All Status') }}</option>
+                        <option value="allocated">{{ __('Allocated') }}</option>
+                        <option value="unallocated">{{ __('Unallocated') }}</option>
+                    </select>
+                    <button type="button" @click="showMoreFilters = !showMoreFilters" :aria-expanded="showMoreFilters" aria-controls="bandwidth-more-filters"
+                            class="h-[34px] py-0 px-2.5 rounded-lg border border-slate-200 bg-slate-50 text-xs font-semibold flex items-center justify-center gap-1.5 whitespace-nowrap">
+                        <i class="fas fa-sliders-h text-[10px]" aria-hidden="true"></i>{{ __('More Filters') }}
+                        <span x-show="applied.minimum" x-cloak class="px-1.5 rounded-full bg-cyan-600 text-white text-[9px]">1</span>
+                        <i class="fas text-[9px]" :class="showMoreFilters ? 'fa-chevron-up text-cyan-600' : 'fa-chevron-down text-slate-400'" aria-hidden="true"></i>
+                    </button>
+                    <div class="flex items-center gap-1.5 flex-shrink-0 md:ml-auto">
+                        <button type="submit" class="h-[34px] bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-0 px-3 rounded-lg shadow-xs flex items-center justify-center gap-1.5"><i class="fas fa-filter text-[10px]" aria-hidden="true"></i>{{ __('Filter') }}</button>
+                        <button type="reset" class="h-[34px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-0 px-2.5 rounded-lg border border-slate-200/80 flex items-center justify-center gap-1"><i class="fas fa-rotate-left text-[10px]" aria-hidden="true"></i>{{ __('Reset') }}</button>
+                    </div>
+                </div>
+                <div id="bandwidth-more-filters" x-show="showMoreFilters" x-cloak x-transition class="pt-2 border-t border-slate-100 flex flex-wrap items-center gap-2">
+                    <label for="bandwidth-minimum" class="text-xs font-medium text-slate-600">{{ __('Minimum Bandwidth (Mbps)') }}</label>
+                    <input id="bandwidth-minimum" type="number" min="0" step="0.01" x-model="draft.minimum"
+                           class="h-[34px] w-32 px-2 rounded-lg border border-slate-200 bg-slate-50 text-xs">
+                </div>
+            </form>
+        @endif
+
+        <section class="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden" aria-labelledby="bandwidth-allocation-heading">
+            <div class="flex flex-wrap items-center justify-between gap-2 p-3 border-b border-slate-100">
+                <h2 id="bandwidth-allocation-heading" class="text-xs font-bold text-slate-800">{{ __('Bandwidth Allocation') }}</h2>
+                @if($bandwidth)
+                    <span class="text-xs text-slate-600">{{ $bandwidth->allocation_type_badge['label'] }} · <strong>@currency($bandwidth->monthly_bill_amount)</strong> / {{ __('Month') }}</span>
+                @endif
+            </div>
+            <div class="overflow-x-auto">
+                <table id="bandwidth-allocation-table" class="saas-table">
+                    <thead>
                         <tr>
-                            <td class="text-center font-mono">{{ $loop->iteration }}</td>
-                            <td class="text-left">{{ __($pipeline) }}</td>
-                            <td class="text-center font-mono" data-sort-value="{{ $mbps }}">{{ __(':speed Mbps', ['speed' => number_format($mbps, 2)]) }}</td>
+                            <th scope="col" class="w-10 text-center font-semibold no-sort">#</th>
+                            <th scope="col" class="text-center font-semibold">{{ __('Pipeline') }}</th>
+                            <th scope="col" class="text-center font-semibold">{{ __('Allocated Bandwidth') }}</th>
+                            <th scope="col" class="text-center font-semibold">{{ __('Capacity Share') }}</th>
+                            <th scope="col" class="text-center font-semibold">{{ __('Status') }}</th>
                         </tr>
-                    @empty
-                        <tr>
-                            <td colspan="3" class="text-center py-8">
-                                <i class="fas fa-network-wired text-cyan-600 mb-2" aria-hidden="true"></i>
-                                <p class="font-semibold text-slate-700">{{ __('No bandwidth allocation configured.') }}</p>
-                                <button type="button" @click="openUpgradeModal = true" class="mt-2 text-xs font-semibold text-cyan-700 hover:underline">{{ __('Request Bandwidth Upgrade') }}</button>
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-    </section>
+                    </thead>
+                    <tbody>
+                        @forelse($pipelines as $pipeline => $mbps)
+                            @php($share = $allocatedTotal > 0 ? $mbps / $allocatedTotal * 100 : null)
+                            <tr x-show="matches(@js($pipeline))">
+                                <td class="text-center font-mono">{{ $loop->iteration }}</td>
+                                <td class="text-left">{{ __($pipeline) }}</td>
+                                <td class="text-center font-mono" data-sort-value="{{ $mbps }}">{{ __(':speed Mbps', ['speed' => number_format($mbps, 2)]) }}</td>
+                                <td class="text-center font-mono" data-sort-value="{{ $share }}">{{ $share === null ? '?' : number_format($share, 1) . '%' }}</td>
+                                <td class="text-center">
+                                    <span class="inline-flex px-1.5 py-0.5 rounded-md border text-[10px] font-semibold {{ $mbps > 0 ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-slate-50 text-slate-600' }}">
+                                        {{ $mbps > 0 ? __('Allocated') : __('Unallocated') }}
+                                    </span>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="5" class="text-center py-8">
+                                    <i class="fas fa-network-wired text-cyan-600 mb-2" aria-hidden="true"></i>
+                                    <p class="font-semibold text-slate-700">{{ __('No bandwidth allocation configured.') }}</p>
+                                    <button type="button" @click="openUpgradeModal = true" class="mt-2 text-xs font-semibold text-cyan-700 hover:underline">{{ __('Request Bandwidth Upgrade') }}</button>
+                                </td>
+                            </tr>
+                        @endforelse
+                        @if($bandwidth)
+                            <tr x-show="!hasMatches()" x-cloak>
+                                <td colspan="5" class="text-center py-8">
+                                    <i class="fas fa-magnifying-glass text-slate-400 mb-2" aria-hidden="true"></i>
+                                    <p class="font-semibold text-slate-700">{{ __('No pipelines match your filters.') }}</p>
+                                    <button type="button" @click="reset()" class="mt-2 text-xs font-semibold text-cyan-700 hover:underline">{{ __('Reset') }}</button>
+                                </td>
+                            </tr>
+                        @endif
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
 
     {{-- 7. REQUEST BANDWIDTH UPGRADE MODAL (AGENTS.md Rule 3: Natural Soft Modal) --}}
     <div x-show="openUpgradeModal"
+         @keydown.escape.window="openUpgradeModal = false"
          x-transition:enter="transition ease-out duration-150"
          x-transition:enter-start="opacity-0"
          x-transition:enter-end="opacity-100"
@@ -105,20 +174,21 @@
          style="display: none;"
          x-cloak>
 
-        <div class="bg-white rounded-xl border border-slate-200/90 shadow-2xl w-full max-w-lg overflow-hidden"
+        <div role="dialog" aria-modal="true" aria-labelledby="bandwidth-upgrade-title"
+             class="bg-white rounded-xl border border-slate-200/90 shadow-2xl w-full max-w-xl max-h-[calc(100dvh-2rem)] overflow-y-auto"
              @click.outside="openUpgradeModal = false">
 
             <!-- Soft Header -->
             <div class="bg-slate-50/80 border-b border-slate-200 px-4 py-3 flex items-center justify-between">
                 <div class="flex items-center gap-2.5">
-                    <div class="w-7 h-7 rounded-lg bg-purple-50 text-purple-600 border border-purple-100 flex items-center justify-center text-xs flex-shrink-0">
+                    <div class="w-7 h-7 rounded-lg bg-cyan-50 text-cyan-600 border border-cyan-100 flex items-center justify-center text-xs flex-shrink-0">
                         <i class="fas fa-bolt"></i>
                     </div>
                     <div>
-                        <h3 class="text-xs font-semibold text-slate-800">{{ __('Request Bandwidth Upgrade') }}</h3>
+                        <h3 id="bandwidth-upgrade-title" class="text-xs font-semibold text-slate-800">{{ __('Request Bandwidth Upgrade') }}</h3>
                     </div>
                 </div>
-                <button type="button" @click="openUpgradeModal = false" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center cursor-pointer">
+                <button type="button" @click="openUpgradeModal = false" aria-label="{{ __('Close') }}" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition flex items-center justify-center cursor-pointer">
                     <i class="fas fa-times text-xs"></i>
                 </button>
             </div>
@@ -135,16 +205,16 @@
                         </ul>
                     @endif
                     <!-- Upgrade Type & Requested Mbps -->
-                    <div class="grid grid-cols-2 gap-3">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <label for="upgrade_type" class="block text-[11px] font-semibold text-slate-700 mb-1">
                                 {{ __('Upgrade Type') }} <span class="text-rose-500">*</span>
                             </label>
-                            <select id="upgrade_type" name="upgrade_type" required class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-purple-500 shadow-2xs">
-                                <option value="additional_capacity">{{ __('Permanent Capacity (+Mbps)') }}</option>
-                                <option value="emergency_boost">{{ __('Emergency 24H Boost') }}</option>
-                                <option value="change_cir_ratio">{{ __('Increase CIR 1:1 Ratio') }}</option>
-                                <option value="temporary_addon">{{ __('Temporary Festive Add-On') }}</option>
+                            <select id="upgrade_type" name="upgrade_type" required class="w-full border rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-cyan-500 @error('upgrade_type') border-rose-400 ring-1 ring-rose-100 bg-rose-50/30 text-rose-900 @else bg-slate-50 border-slate-200 text-slate-800 @enderror">
+                                <option value="additional_capacity" @selected(old('upgrade_type') === 'additional_capacity')>{{ __('Permanent Capacity (+Mbps)') }}</option>
+                                <option value="emergency_boost" @selected(old('upgrade_type') === 'emergency_boost')>{{ __('Emergency 24H Boost') }}</option>
+                                <option value="change_cir_ratio" @selected(old('upgrade_type') === 'change_cir_ratio')>{{ __('Increase CIR 1:1 Ratio') }}</option>
+                                <option value="temporary_addon" @selected(old('upgrade_type') === 'temporary_addon')>{{ __('Temporary Festive Add-On') }}</option>
                             </select>
                         </div>
                         <div>
@@ -155,24 +225,25 @@
                                    id="requested_mbps"
                                    name="requested_mbps"
                                    min="5"
-                                   step="5"
-                                   value="50"
+                                   step="0.01"
+                                   max="50000"
+                                   value="{{ old('requested_mbps', 50) }}"
                                    required
-                                   class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-purple-500 shadow-2xs">
+                                   class="w-full border rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-cyan-500 @error('requested_mbps') border-rose-400 ring-1 ring-rose-100 bg-rose-50/30 text-rose-900 @else bg-slate-50 border-slate-200 text-slate-800 @enderror">
                         </div>
                     </div>
 
                     <!-- Target Pipeline & Effective Date -->
-                    <div class="grid grid-cols-2 gap-3">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <label for="target_pipeline" class="block text-[11px] font-semibold text-slate-700 mb-1">
                                 {{ __('Target Pipeline') }} <span class="text-rose-500">*</span>
                             </label>
-                            <select id="target_pipeline" name="target_pipeline" required class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-purple-500 shadow-2xs">
-                                <option value="total_pool">{{ __('Total Combined Pool') }}</option>
-                                <option value="global_internet">{{ __('Global Internet CIR') }}</option>
-                                <option value="bdix_local">{{ __('BDIX National Exchange') }}</option>
-                                <option value="cdn_cache">{{ __('CDN & Video Cache') }}</option>
+                            <select id="target_pipeline" name="target_pipeline" required class="w-full border rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-cyan-500 @error('target_pipeline') border-rose-400 ring-1 ring-rose-100 bg-rose-50/30 text-rose-900 @else bg-slate-50 border-slate-200 text-slate-800 @enderror">
+                                <option value="total_pool" @selected(old('target_pipeline') === 'total_pool')>{{ __('Total Combined Pool') }}</option>
+                                <option value="global_internet" @selected(old('target_pipeline') === 'global_internet')>{{ __('Global Internet CIR') }}</option>
+                                <option value="bdix_local" @selected(old('target_pipeline') === 'bdix_local')>{{ __('BDIX National Exchange') }}</option>
+                                <option value="cdn_cache" @selected(old('target_pipeline') === 'cdn_cache')>{{ __('CDN & Video Cache') }}</option>
                             </select>
                         </div>
                         <div>
@@ -182,8 +253,8 @@
                             <input type="date"
                                    id="effective_date"
                                    name="effective_date"
-                                   value="{{ date('Y-m-d') }}"
-                                   class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-purple-500 shadow-2xs">
+                                   value="{{ old('effective_date', now()->toDateString()) }}"
+                                   class="w-full border rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-cyan-500 @error('effective_date') border-rose-400 ring-1 ring-rose-100 bg-rose-50/30 text-rose-900 @else bg-slate-50 border-slate-200 text-slate-800 @enderror">
                         </div>
                     </div>
 
@@ -194,8 +265,8 @@
                         </label>
                         <textarea id="upgrade_notes"
                                   name="notes"
-                                  rows="3"
-                                  class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-purple-500 shadow-2xs"></textarea>
+                                  rows="3" maxlength="1000"
+                                  class="w-full border rounded-lg text-xs px-3 py-1.5 focus:bg-white focus:border-cyan-500 @error('notes') border-rose-400 ring-1 ring-rose-100 bg-rose-50/30 text-rose-900 @else bg-slate-50 border-slate-200 text-slate-800 @enderror">{{ old('notes') }}</textarea>
                     </div>
                 </div>
 
@@ -204,7 +275,7 @@
                     <button type="button" @click="openUpgradeModal = false" class="border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-xs px-3.5 py-1.5 rounded-lg transition cursor-pointer">
                         {{ __('Cancel') }}
                     </button>
-                    <button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white font-medium text-xs px-4 py-1.5 rounded-lg shadow-xs transition cursor-pointer">
+                    <button type="submit" class="bg-cyan-600 hover:bg-cyan-700 text-white font-medium text-xs px-4 py-1.5 rounded-lg shadow-xs transition cursor-pointer">
                         {{ __('Submit Upgrade Request') }}
                     </button>
                 </div>
@@ -216,6 +287,38 @@
 
 @push('scripts')
 <script>
+function allocationFilters(pipelines) {
+    const empty = { search: '', pipeline: '', status: '', minimum: '' };
+    return {
+        draft: { ...empty },
+        applied: { ...empty },
+        showMoreFilters: false,
+
+        apply() {
+            this.applied = { ...this.draft };
+        },
+
+        reset() {
+            this.draft = { ...empty };
+            this.apply();
+        },
+
+        matches(pipeline) {
+            const { label, mbps } = pipelines[pipeline];
+            const { search, pipeline: selected, status, minimum } = this.applied;
+            const term = search.trim().toLocaleLowerCase();
+            return (!selected || selected === pipeline)
+                && (!term || label.toLocaleLowerCase().includes(term) || pipeline.toLocaleLowerCase().includes(term))
+                && (!status || (status === 'allocated' ? mbps > 0 : mbps <= 0))
+                && (!minimum || mbps >= Number(minimum));
+        },
+
+        hasMatches() {
+            return Object.keys(pipelines).some(pipeline => this.matches(pipeline));
+        }
+    };
+}
+
 function bandwidthMonitor() {
     const endpoint = @js(route('reseller.bandwidth.traffic'));
     const locale = @js(app()->getLocale());

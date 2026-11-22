@@ -7625,5 +7625,11 @@
     "Target Pipeline": "নির্বাচিত ব্যান্ডউইথ বিভাগ",
     "Temporary Festive Add-On": "উৎসবের জন্য সাময়িক বৃদ্ধি",
     "Total Combined Pool": "সমন্বিত ব্যান্ডউইথ",
-    "Upgrade Type": "বৃদ্ধির ধরন"
+    "Upgrade Type": "বৃদ্ধির ধরন",
+    "Search pipelines": "ব্যান্ডউইথ বিভাগ খুঁজুন",
+    "All Pipelines": "সব ব্যান্ডউইথ বিভাগ",
+    "Unallocated": "বরাদ্দ নেই",
+    "Minimum Bandwidth (Mbps)": "সর্বনিম্ন ব্যান্ডউইথ (এমবিপিএস)",
+    "Capacity Share": "মোট বরাদ্দের অংশ",
+    "No pipelines match your filters.": "এই ফিল্টারে কোনো ব্যান্ডউইথ বিভাগ পাওয়া যায়নি।"
 }
