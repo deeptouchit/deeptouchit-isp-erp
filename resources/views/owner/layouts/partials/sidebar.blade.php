@@ -123,6 +123,7 @@
         </div>
 
         <!-- 3. Main Menu: Carrier Network Engines (Collapsible Sub-menu) -->
+        @if(in_array('network.view', config('owner_capabilities', []), true))
         @php
             $isNetworkActive = request()->routeIs('owner.network-engines*');
         @endphp
@@ -160,6 +161,7 @@
                 </a>
             </div>
         </div>
+        @endif
 
         <!-- 4. Main Menu: Billing & Finance (Collapsible Sub-menu) -->
         @php

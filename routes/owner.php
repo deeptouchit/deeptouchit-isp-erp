@@ -196,14 +196,22 @@ Route::prefix('owner')->name('owner.')->group(function () {
 
         // 14. Carrier Network Engines & Infrastructure Hub
         Route::prefix('network-engines')->name('network-engines.')->group(function () {
-            Route::get('/', [OwnerNetworkEngineController::class, 'index'])->name('index');
-            Route::get('/settings', [OwnerNetworkEngineController::class, 'settings'])->name('settings');
-            Route::post('/settings', [OwnerNetworkEngineController::class, 'updateSettings'])->name('settings.update');
-            Route::get('/audit-logs', [OwnerNetworkEngineController::class, 'auditLogs'])->name('audit-logs');
-            Route::post('/generate-script', [OwnerNetworkEngineController::class, 'generateScript'])->name('generate-script');
-            Route::post('/probe-device', [OwnerNetworkEngineController::class, 'probeDevice'])->name('probe-device');
-            Route::post('/test-readiness', [OwnerNetworkEngineController::class, 'testReadiness'])->name('test-readiness');
-            Route::post('/generate-keypair', [OwnerNetworkEngineController::class, 'generateKeypair'])->name('generate-keypair');
+            Route::get('/', [OwnerNetworkEngineController::class, 'index'])
+                ->middleware('owner.capability:network.view')->name('index');
+            Route::get('/settings', [OwnerNetworkEngineController::class, 'settings'])
+                ->middleware('owner.capability:network.view')->name('settings');
+            Route::post('/settings', [OwnerNetworkEngineController::class, 'updateSettings'])
+                ->middleware(['owner.capability:network.manage', 'throttle:10,1'])->name('settings.update');
+            Route::get('/audit-logs', [OwnerNetworkEngineController::class, 'auditLogs'])
+                ->middleware('owner.capability:network.view')->name('audit-logs');
+            Route::post('/generate-script', [OwnerNetworkEngineController::class, 'generateScript'])
+                ->middleware(['owner.capability:network.manage', 'throttle:5,1'])->name('generate-script');
+            Route::post('/probe-device', [OwnerNetworkEngineController::class, 'probeDevice'])
+                ->middleware(['owner.capability:network.manage', 'throttle:10,1'])->name('probe-device');
+            Route::post('/test-readiness', [OwnerNetworkEngineController::class, 'testReadiness'])
+                ->middleware(['owner.capability:network.view', 'throttle:5,1'])->name('test-readiness');
+            Route::post('/generate-keypair', [OwnerNetworkEngineController::class, 'generateKeypair'])
+                ->middleware(['owner.capability:network.manage', 'throttle:5,1'])->name('generate-keypair');
         });
 
         // 14. Financial Revenue & Income Report

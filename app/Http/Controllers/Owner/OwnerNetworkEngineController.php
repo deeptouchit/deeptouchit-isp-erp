@@ -129,13 +129,21 @@ class OwnerNetworkEngineController extends Controller
     public function probeDevice(Request $request)
     {
         $validated = $request->validate([
-            'target_ip' => ['required', 'string'],
+            'target_ip' => ['required', 'ip'],
             'target_port' => ['required', 'integer', 'min:1', 'max:65535'],
             'device_type' => ['required', 'string'],
             'device_name' => ['nullable', 'string'],
         ]);
 
         $ip = trim($validated['target_ip']);
+        $blockedProbeAddresses = [
+            '0.0.0.0', '127.0.0.1', '169.254.169.254', '::1', '::',
+        ];
+        if (in_array($ip, $blockedProbeAddresses, true)
+            || filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)
+                && (str_starts_with($ip, '127.') || str_starts_with($ip, '169.254.'))) {
+            abort(422, 'This address cannot be probed.');
+        }
         $port = (int) $validated['target_port'];
         $timeout = 2.0; // 2 seconds socket timeout
         $start = microtime(true);
@@ -188,16 +196,10 @@ class OwnerNetworkEngineController extends Controller
             ->pluck('value', 'key')
             ->toArray();
 
-        // Safely decrypt vault secrets for form presentation and modification
-        foreach (['network_radius_default_secret', 'network_wireguard_server_privkey'] as $secKey) {
-            if (!empty($settings[$secKey])) {
-                try {
-                    $settings[$secKey] = Crypt::decryptString($settings[$secKey]);
-                } catch (\Exception $e) {
-                    // Raw/unencrypted fallback
-                }
-            }
-        }
+        // Never expose encrypted secrets back to the browser.
+        $settings['network_radius_default_secret'] = null;
+        $settings['network_wireguard_server_privkey'] = null;
+        $settings['network_olt_default_snmp_community'] = null;
 
         return view('owner.network-engines.settings', compact('settings'));
     }
@@ -253,6 +255,11 @@ class OwnerNetworkEngineController extends Controller
         ]);
 
         foreach ($validated as $key => $value) {
+            if (in_array($key, ['network_radius_default_secret', 'network_wireguard_server_privkey', 'network_olt_default_snmp_community'], true)
+                && blank($value)) {
+                continue;
+            }
+
             // Check if secret key needs encryption
             if (in_array($key, ['network_radius_default_secret', 'network_wireguard_server_privkey']) && !empty($value)) {
                 if (!str_starts_with($value, 'eyJ')) {

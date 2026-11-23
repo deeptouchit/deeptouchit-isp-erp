@@ -407,7 +407,7 @@
                             <div>
                                 <label class="block font-semibold text-slate-700 mb-1">Default SNMP Read Community</label>
                                 <div class="relative">
-                                    <input :type="showSnmpCommunity ? 'text' : 'password'" name="network_olt_default_snmp_community" value="{{ old('network_olt_default_snmp_community', $settings['network_olt_default_snmp_community'] ?? 'public_somitysoft') }}" class="w-full py-1.5 pl-2.5 pr-8 rounded-lg border border-slate-200 bg-white text-slate-800 text-xs focus:ring-1 focus:ring-blue-500 font-mono shadow-2xs">
+                                    <input :type="showSnmpCommunity ? 'text' : 'password'" name="network_olt_default_snmp_community" value="{{ old('network_olt_default_snmp_community', $settings['network_olt_default_snmp_community'] ?? '') }}" placeholder="Enter or keep existing community" class="w-full py-1.5 pl-2.5 pr-8 rounded-lg border border-slate-200 bg-white text-slate-800 text-xs focus:ring-1 focus:ring-blue-500 font-mono shadow-2xs">
                                     <button type="button" @click="showSnmpCommunity = !showSnmpCommunity" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer">
                                         <i :class="showSnmpCommunity ? 'fas fa-eye-slash' : 'fas fa-eye'" class="text-[11px]"></i>
                                     </button>
