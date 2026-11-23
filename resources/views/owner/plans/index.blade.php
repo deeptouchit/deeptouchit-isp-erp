@@ -290,6 +290,7 @@
                                     <div x-show="activeMenu === plan.id" x-cloak :style="menuPos" @click.outside="activeMenu = null" class="fixed z-50 w-44 rounded-lg border border-slate-200 bg-white p-1 text-xs shadow-lg">
                                         <button type="button" @click="activeMenu = null; openDetailsModal(plan)" class="flex w-full items-center gap-2 rounded-md px-2 py-1.5 hover:bg-slate-50"><i class="fas fa-eye fa-fw"></i> View Details</button>
                                         <button type="button" @click="activeMenu = null; openEditModal(plan)" class="flex w-full items-center gap-2 rounded-md px-2 py-1.5 hover:bg-slate-50"><i class="fas fa-edit fa-fw"></i> Edit Configuration</button>
+                                        <button type="button" @click="activeMenu = null; confirmDeletePlan(plan)" class="flex w-full items-center gap-2 rounded-md border-t border-slate-100 px-2 py-1.5 text-rose-700 hover:bg-rose-50"><i class="fas fa-trash-alt fa-fw"></i> Delete Plan</button>
                                     </div>
                                 </template>
                             </td>
@@ -662,3 +663,37 @@
 
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    function confirmDeletePlan(plan) {
+        Swal.fire({
+            title: 'Delete Pricing Plan?',
+            html: '<p class="text-left text-xs text-slate-600">This will permanently delete <strong>' + String(plan.name).replace(/[&<>"']/g, function (char) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[char]; }) + '</strong>.</p>',
+            icon: 'warning',
+            iconColor: '#e11d48',
+            showCancelButton: true,
+            confirmButtonColor: '#e11d48',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: '<i class="fas fa-trash-alt mr-1"></i> Yes, Delete Plan',
+            cancelButtonText: 'Cancel',
+            reverseButtons: true,
+            customClass: {
+                popup: 'rounded-2xl shadow-2xl border border-slate-200',
+                title: 'text-sm font-bold text-slate-900',
+                confirmButton: 'rounded-lg text-xs font-bold px-4 py-2 shadow-xs',
+                cancelButton: 'rounded-lg text-xs font-semibold px-4 py-2 bg-slate-100 text-slate-700 border-0'
+            }
+        }).then(function (result) {
+            if (!result.isConfirmed) return;
+
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/owner/plans/' + plan.id;
+            form.innerHTML = '<input type="hidden" name="_token" value="{{ csrf_token() }}"><input type="hidden" name="_method" value="DELETE">';
+            document.body.appendChild(form);
+            form.submit();
+        });
+    }
+</script>
+@endpush
