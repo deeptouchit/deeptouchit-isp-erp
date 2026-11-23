@@ -22,7 +22,7 @@
     activeMenu: null,
     menuPos: {},
     
-    plansList: {{ $plans->toJson() }},
+    plansList: @js($plans),
 
     get filteredPlans() {
         let result = this.plansList.filter(p => {
@@ -73,7 +73,12 @@
         const rect = event.currentTarget.getBoundingClientRect();
         const top = Math.round(rect.bottom) + 2;
         const above = top + 170 > window.innerHeight;
-        this.menuPos = { top: above ? 'auto' : \`\${top}px\`, bottom: above ? \`\${Math.max(10, window.innerHeight - Math.round(rect.top) + 2)}px\` : 'auto', right: \`\${Math.max(10, window.innerWidth - rect.right)}px\`, left: 'auto' };
+        this.menuPos = {
+            top: above ? 'auto' : (top + 'px'),
+            bottom: above ? (Math.max(10, window.innerHeight - Math.round(rect.top) + 2) + 'px') : 'auto',
+            right: (Math.max(10, window.innerWidth - rect.right) + 'px'),
+            left: 'auto'
+        };
         this.activeMenu = id;
     },
 
