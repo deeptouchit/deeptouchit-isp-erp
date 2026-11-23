@@ -24,13 +24,13 @@ Route::get('/locale/{lang}', function (string $lang) {
 // Load Dedicated Platform Owner Routes
 require __DIR__.'/owner.php';
 
-// Load Customer Portal Routes
-require __DIR__.'/customer.php';
-
 // Load ISP Tenant Routes (Billing, Subscriptions, Support Tickets)
 require __DIR__.'/tenant.php';
 
 // Load ISP Reseller / Sub-ISP Partner Routes
 require __DIR__.'/reseller.php';
+
+// Load Customer Portal Routes last so /{tenant}/... cannot shadow fixed platform routes.
+require __DIR__.'/customer.php';
 
 
