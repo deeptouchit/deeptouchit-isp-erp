@@ -919,6 +919,17 @@ class TenantCustomerController extends Controller
         return back()->with('success', 'Customer Portal password reset to the last 6 digits of the mobile number.');
     }
 
+    public function portalLogin(int $id): RedirectResponse
+    {
+        $tenant = $this->getTenant();
+        $customer = TenantCustomer::where('tenant_id', $tenant->id)->where('status', '!=', 'disabled')->findOrFail($id);
+        $account = TenantCustomerAccount::where('tenant_id', $tenant->id)->where('customer_id', $customer->id)->where('status', 'active')->firstOrFail();
+
+        Auth::guard('customer')->login($account);
+
+        return redirect()->route('customer.portal.clean.dashboard', ['tenant' => $tenant->slug]);
+    }
+
     /**
      * Show Edit Customer form page.
      */

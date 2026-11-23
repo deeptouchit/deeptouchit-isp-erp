@@ -343,6 +343,7 @@ Route::middleware(['web'])->group(function () {
             Route::get('/export', [TenantCustomerController::class, 'exportCsv'])->name('export');
             Route::get('/{customer}', [TenantCustomerController::class, 'show'])->whereNumber('customer')->name('show');
             Route::post('/{customer}/portal-password/reset', [TenantCustomerController::class, 'resetPortalPassword'])->whereNumber('customer')->name('portal-password.reset');
+            Route::post('/{customer}/portal-login', [TenantCustomerController::class, 'portalLogin'])->whereNumber('customer')->name('portal-login');
             Route::get('/{customer}/edit', [TenantCustomerController::class, 'edit'])->whereNumber('customer')->name('edit');
             Route::put('/{customer}', [TenantCustomerController::class, 'update'])->whereNumber('customer')->name('update');
             Route::delete('/{customer}', [TenantCustomerController::class, 'destroy'])->whereNumber('customer')->name('destroy');

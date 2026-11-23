@@ -210,9 +210,12 @@
                 @endif
 
                 <!-- Customer Portal -->
-                <a href="{{ route('customer.portal.clean.login', ['tenant' => $tenant->slug]) }}" target="_blank" rel="noopener" class="btn-hdr bg-cyan-600 text-white" data-title="{{ __('Open Customer Portal') }}">
-                    <i class="fas fa-mobile-screen-button"></i>
-                </a>
+                <form method="POST" action="{{ route('reseller.customers.portal-login', $customer->id) }}" target="_blank" class="inline">
+                    @csrf
+                    <button type="submit" class="btn-hdr bg-cyan-600 text-white" data-title="{{ __('Login to Customer Portal') }}">
+                        <i class="fas fa-mobile-screen-button"></i>
+                    </button>
+                </form>
                 @if(!auth()->user()?->isResellerCollector())
                 <form method="POST" action="{{ route('reseller.customers.portal-password.reset', $customer->id) }}" class="inline" data-portal-password-reset>
                     @csrf

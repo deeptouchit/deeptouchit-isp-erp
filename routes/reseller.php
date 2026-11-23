@@ -79,6 +79,7 @@ Route::middleware(['web'])->group(function () {
         Route::get('/reseller/customers/print', [ResellerCustomerController::class, 'printReport'])->name('reseller.customers.print');
         Route::get('/reseller/customers/{id}', [ResellerCustomerController::class, 'show'])->whereNumber('id')->name('reseller.customers.show');
         Route::post('/reseller/customers/{id}/portal-password/reset', [ResellerCustomerController::class, 'resetPortalPassword'])->whereNumber('id')->name('reseller.customers.portal-password.reset');
+        Route::post('/reseller/customers/{id}/portal-login', [ResellerCustomerController::class, 'portalLogin'])->whereNumber('id')->name('reseller.customers.portal-login');
         Route::get('/reseller/customers/{id}/edit', [ResellerCustomerController::class, 'edit'])->whereNumber('id')->name('reseller.customers.edit');
         Route::put('/reseller/customers/{id}', [ResellerCustomerController::class, 'update'])->whereNumber('id')->name('reseller.customers.update');
         Route::post('/reseller/customers/{id}/toggle-status', [ResellerCustomerController::class, 'toggleStatus'])->whereNumber('id')->name('reseller.customers.toggle-status');

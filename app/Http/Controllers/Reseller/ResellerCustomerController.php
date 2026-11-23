@@ -606,6 +606,20 @@ class ResellerCustomerController extends Controller
         return back()->with('success', 'Customer Portal password reset to the last 6 digits of the mobile number.');
     }
 
+    public function portalLogin(int $id): RedirectResponse
+    {
+        [$authUser, $reseller, $tenant] = $this->getResellerData();
+        $customer = TenantCustomer::where('tenant_id', $tenant->id)
+            ->where('reseller_id', $reseller->id)
+            ->where('status', '!=', 'disabled')
+            ->findOrFail($id);
+        $account = TenantCustomerAccount::where('tenant_id', $tenant->id)->where('customer_id', $customer->id)->where('status', 'active')->firstOrFail();
+
+        Auth::guard('customer')->login($account);
+
+        return redirect()->route('customer.portal.clean.dashboard', ['tenant' => $tenant->slug]);
+    }
+
     private function eligibleCollectors(int $tenantId, int $resellerId): \Illuminate\Database\Eloquent\Builder
     {
         return User::where('tenant_id', $tenantId)->where('reseller_id', $resellerId)
