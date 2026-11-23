@@ -261,7 +261,7 @@
 
                             <!-- 7. Actions (Cleanly Aligned Center) -->
                             <td class="px-3.5 py-2.5 text-center">
-                                <div class="flex items-center justify-center gap-1.5">
+                                <div class="flex items-center justify-center gap-1.5 flex-nowrap whitespace-nowrap">
                                     
                                     <!-- Details Button -->
                                     <a href="{{ route('owner.tenants.show', $tenant) }}" 

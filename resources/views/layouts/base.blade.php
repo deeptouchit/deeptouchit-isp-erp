@@ -271,6 +271,11 @@
         html, body, body button, body input, body select, body textarea {
             font-family: var(--app-font) !important;
         }
+        i.fas, i.far, i.fab, i.fa-solid, i.fa-regular, i.fa-brands {
+            font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands" !important;
+            font-weight: 900;
+            font-style: normal;
+        }
         body .font-sans {
             font-family: inherit !important;
         }
