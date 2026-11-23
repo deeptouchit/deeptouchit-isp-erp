@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
 class OwnerTicketController extends Controller
 {
@@ -31,6 +32,7 @@ class OwnerTicketController extends Controller
                 ->whereIn('status', ['open', 'in_progress', 'answered'])
                 ->count(),
             'resolved' => SupportTicket::whereIn('status', ['resolved', 'closed'])->count(),
+            'departments' => SupportTicket::query()->whereNotNull('department')->distinct('department')->count('department'),
         ];
 
         // Search Filter
@@ -94,9 +96,10 @@ class OwnerTicketController extends Controller
     public function reply(Request $request, SupportTicket $ticket)
     {
         $request->validate([
-            'message' => 'required|string',
+            'message' => 'required|string|max:10000',
             'is_internal_note' => 'nullable|boolean',
-            'attachments.*' => 'nullable|file|max:10240', // 10MB max
+            'attachments' => ['nullable', 'array', 'max:5'],
+            'attachments.*' => 'file|max:10240|mimes:jpg,jpeg,png,gif,webp,pdf,txt,csv,log,zip',
         ]);
 
         $isInternal = $request->boolean('is_internal_note');
@@ -138,18 +141,20 @@ class OwnerTicketController extends Controller
                     ->whereIn('role', ['isp_admin', 'admin', 'tenant_owner'])
                     ->get();
 
-                if ($tenantUsers->isNotEmpty()) {
-                    Notification::send($tenantUsers, new TicketReplyNotification($ticket, $message, 'tenant'));
-                }
             }
 
             DB::commit();
+
+            if (!$isInternal && $tenantUsers->isNotEmpty()) {
+                Notification::send($tenantUsers, new TicketReplyNotification($ticket, $message, 'tenant'));
+            }
 
             $msgText = $isInternal ? 'Internal note added successfully.' : 'Reply sent to tenant successfully.';
             return back()->with('success', $msgText);
         } catch (\Throwable $e) {
             DB::rollBack();
-            return back()->with('error', 'Failed to submit response: ' . $e->getMessage());
+            Log::error('Owner ticket reply failed', ['ticket_id' => $ticket->id, 'user_id' => auth()->id(), 'exception' => $e]);
+            return back()->with('error', 'Failed to submit response. Please try again.');
         }
     }
 
@@ -166,18 +171,24 @@ class OwnerTicketController extends Controller
             $data['closed_at'] = now();
         }
 
-        $ticket->update($data);
+        DB::transaction(function () use ($ticket, $data): void {
+            $ticket = SupportTicket::query()->lockForUpdate()->findOrFail($ticket->id);
+            $ticket->update($data + ['last_reply_at' => now()]);
+        });
 
         return back()->with('success', "Ticket status updated to " . ucfirst(str_replace('_', ' ', $request->status)));
     }
 
     public function updatePriority(Request $request, SupportTicket $ticket)
     {
-        $request->validate([
+        $validated = $request->validate([
             'priority' => 'required|in:low,medium,high,urgent',
         ]);
 
-        $ticket->update(['priority' => $request->priority]);
+        DB::transaction(function () use ($ticket, $validated): void {
+            $ticket = SupportTicket::query()->lockForUpdate()->findOrFail($ticket->id);
+            $ticket->update(['priority' => $validated['priority']]);
+        });
 
         return back()->with('success', "Priority updated to " . ucfirst($request->priority));
     }

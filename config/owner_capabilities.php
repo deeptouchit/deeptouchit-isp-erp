@@ -11,5 +11,5 @@ return [
     'gateways.view', 'gateways.manage', 'gateways.test',
     'backups.view', 'backups.manage',
     'network.view', 'network.manage',
-    'reports.view', 'activity-logs.view', 'tickets.manage', 'settings.manage',
+    'reports.view', 'activity-logs.view', 'tickets.view', 'tickets.manage', 'settings.manage',
 ];

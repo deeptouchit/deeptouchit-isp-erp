@@ -247,11 +247,16 @@ Route::prefix('owner')->name('owner.')->group(function () {
         Route::post('/settings', [OwnerSettingController::class, 'update'])->name('settings.update');
 
         // 17. Helpdesk & Support Tickets
-        Route::get('/tickets', [OwnerTicketController::class, 'index'])->name('tickets.index');
-        Route::get('/tickets/{ticket}', [OwnerTicketController::class, 'show'])->name('tickets.show');
-        Route::post('/tickets/{ticket}/reply', [OwnerTicketController::class, 'reply'])->name('tickets.reply');
-        Route::post('/tickets/{ticket}/status', [OwnerTicketController::class, 'updateStatus'])->name('tickets.status');
-        Route::post('/tickets/{ticket}/priority', [OwnerTicketController::class, 'updatePriority'])->name('tickets.priority');
+        Route::get('/tickets', [OwnerTicketController::class, 'index'])
+            ->middleware('owner.capability:tickets.view')->name('tickets.index');
+        Route::get('/tickets/{ticket}', [OwnerTicketController::class, 'show'])
+            ->middleware('owner.capability:tickets.view')->name('tickets.show');
+        Route::post('/tickets/{ticket}/reply', [OwnerTicketController::class, 'reply'])
+            ->middleware(['owner.capability:tickets.manage', 'throttle:20,1'])->name('tickets.reply');
+        Route::post('/tickets/{ticket}/status', [OwnerTicketController::class, 'updateStatus'])
+            ->middleware('owner.capability:tickets.manage')->name('tickets.status');
+        Route::post('/tickets/{ticket}/priority', [OwnerTicketController::class, 'updatePriority'])
+            ->middleware('owner.capability:tickets.manage')->name('tickets.priority');
         Route::delete('/tickets/{ticket}', [OwnerTicketController::class, 'destroy'])
             ->middleware('owner.capability:tickets.manage')
             ->name('tickets.destroy');

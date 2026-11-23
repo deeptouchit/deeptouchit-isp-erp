@@ -2,6 +2,18 @@
 
 @section('page-title', 'Support Tickets & Helpdesk')
 
+@push('styles')
+<style>
+    .owner-ticket-table.saas-table td { white-space: nowrap; }
+    .owner-ticket-table.saas-table td > div { display: inline-flex; vertical-align: middle; }
+    .owner-ticket-table.saas-table td > div + div { margin-left: .35rem; }
+    .owner-ticket-filter select, .owner-ticket-filter input, .owner-ticket-filter button { height: 34px; }
+    .owner-ticket-filter > div:first-child { flex: 1 1 220px; min-width: 200px; }
+    .owner-ticket-filter > div:not(:first-child) { flex: 0 0 auto; }
+    .owner-ticket-filter select { width: auto; min-width: 130px; }
+</style>
+@endpush
+
 @section('content')
 <div class="space-y-4" x-data="{
     statusModalOpen: false,
@@ -17,7 +29,7 @@
 
 
     <!-- KPI Metrics Grid -->
-    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
         <!-- 1. Total Tickets -->
         <div class="p-3 rounded-xl bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div>
@@ -72,24 +84,32 @@
                 <i class="fas fa-circle-check"></i>
             </div>
         </div>
+
+        <!-- 6. Departments -->
+        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
+            <div><span class="text-[9px] font-medium text-slate-500 uppercase tracking-wider block truncate">Departments</span><span class="text-[13px] font-bold font-mono leading-tight block text-indigo-700">{{ number_format($stats['departments']) }}</span></div>
+            <div class="w-6 h-6 rounded-md bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center justify-center text-[10px] flex-shrink-0"><i class="fas fa-layer-group"></i></div>
+        </div>
     </div>
 
     <!-- Filters & Search Toolbar -->
-    <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-xs">
-        <form action="{{ route('owner.tickets.index') }}" method="GET" class="flex flex-col lg:flex-row gap-2.5 items-stretch lg:items-center justify-between">
+    <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs">
+        <form action="{{ route('owner.tickets.index') }}" method="GET" x-data="{ showMoreFilters: {{ request()->filled('tenant_id') || request()->filled('priority') ? 'true' : 'false' }}, searchQuery: @js(request('search', '')) }" class="owner-ticket-filter flex flex-col md:flex-row items-stretch md:items-center gap-2">
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 flex-1">
                 <!-- Search Input -->
                 <div class="relative lg:col-span-2">
-                    <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-[11px]"></i>
+                    <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px]" :class="searchQuery ? 'text-cyan-600 font-bold' : 'text-slate-400'"></i>
                     <input type="text" 
                            name="search" 
+                           x-model="searchQuery"
                            value="{{ request('search') }}" 
                            placeholder="Search Ticket ID, Subject, Tenant..." 
-                           class="w-full pl-8 pr-2.5 py-1.5 text-xs rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition">
+                           class="w-full h-[34px] pl-8 pr-7 text-xs rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-cyan-500 focus:border-cyan-500 transition">
+                    <button type="button" x-show="searchQuery" x-cloak @click="searchQuery = ''; $nextTick(() => $el.closest('form').submit())" class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-600"><i class="fas fa-times text-[10px]"></i></button>
                 </div>
 
                 <!-- Tenant Filter -->
-                <select name="tenant_id" class="text-xs rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500">
+                <select name="tenant_id" x-show="showMoreFilters" x-cloak class="text-xs rounded-lg border border-slate-200 bg-slate-50 px-2 py-0 focus:bg-white focus:outline-none focus:ring-1 focus:ring-cyan-500">
                     <option value="">All ISP Tenants</option>
                     @foreach($tenants as $t)
                         <option value="{{ $t->id }}" {{ request('tenant_id') == $t->id ? 'selected' : '' }}>
@@ -110,7 +130,7 @@
                 </select>
 
                 <!-- Priority Filter -->
-                <select name="priority" class="text-xs rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500">
+                <select name="priority" x-show="showMoreFilters" x-cloak class="text-xs rounded-lg border border-slate-200 bg-slate-50 px-2 py-0 focus:bg-white focus:outline-none focus:ring-1 focus:ring-cyan-500">
                     <option value="">All Priorities</option>
                     <option value="urgent" {{ request('priority') == 'urgent' ? 'selected' : '' }}>🔴 Urgent</option>
                     <option value="high" {{ request('priority') == 'high' ? 'selected' : '' }}>🟠 High</option>
@@ -121,16 +141,13 @@
 
             <!-- Action Buttons -->
             <div class="flex items-center gap-1.5 flex-shrink-0">
-                <button type="submit" class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs transition shadow-xs flex items-center gap-1.5">
+                <button type="button" @click="showMoreFilters = !showMoreFilters" class="h-[34px] py-0 px-2.5 rounded-lg border border-slate-200 bg-white text-slate-700 text-xs font-semibold flex items-center gap-1.5"><i class="fas" :class="showMoreFilters ? 'fa-chevron-up text-cyan-600' : 'fa-chevron-down text-slate-400'"></i><span>More Filters</span></button>
+                <button type="submit" class="h-[34px] py-0 px-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs transition shadow-xs flex items-center gap-1.5">
                     <i class="fas fa-filter text-[10px]"></i>
                     <span>Apply Filter</span>
                 </button>
 
-                @if(request()->anyFilled(['search', 'tenant_id', 'status', 'priority', 'department']))
-                    <a href="{{ route('owner.tickets.index') }}" class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold text-xs transition" title="Clear Filters">
-                        <i class="fas fa-rotate-left"></i>
-                    </a>
-                @endif
+                <a href="{{ route('owner.tickets.index') }}" class="h-[34px] py-0 px-2.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs transition flex items-center gap-1 border border-slate-200/80" title="Clear Filters"><i class="fas fa-rotate-left text-[10px]"></i><span>Reset</span></a>
             </div>
         </form>
     </div>
@@ -138,16 +155,10 @@
     <!-- Tickets Table Card -->
     <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
         <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs border-collapse">
+            <table class="saas-table owner-ticket-table">
                 <thead>
                     <tr class="bg-slate-50/80 border-b border-slate-200 text-slate-500 font-semibold uppercase tracking-wider text-[10px]">
-                        <th class="py-2.5 px-3">Ticket ID</th>
-                        <th class="py-2.5 px-3">ISP Tenant</th>
-                        <th class="py-2.5 px-3">Subject & Category</th>
-                        <th class="py-2.5 px-3">Priority</th>
-                        <th class="py-2.5 px-3">Status</th>
-                        <th class="py-2.5 px-3">Last Activity</th>
-                        <th class="py-2.5 px-3 text-right">Actions</th>
+                        <th class="text-center">Ticket ID</th><th class="text-center">ISP Tenant</th><th class="text-center">Subject</th><th class="text-center">Priority</th><th class="text-center">Status</th><th class="text-center">Last Activity</th><th class="no-sort text-center">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 text-slate-700">
