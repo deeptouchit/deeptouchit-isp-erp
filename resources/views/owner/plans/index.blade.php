@@ -82,6 +82,14 @@
         this.activeMenu = id;
     },
 
+    resetFilters() {
+        this.searchQuery = '';
+        this.statusFilter = 'all';
+        this.showMoreFilters = false;
+        this.sortColumn = 'sort_order';
+        this.sortAsc = true;
+    },
+
     openDetailsModal(plan) {
         this.selectedPlan = plan;
         this.detailsModalOpen = true;
@@ -189,7 +197,7 @@
             <button type="button" @click="showMoreFilters = !showMoreFilters" class="h-[34px] py-0 px-3 rounded-lg border border-slate-200 bg-slate-50 text-slate-700 text-xs font-semibold flex items-center justify-center gap-1.5"><i class="fas" :class="showMoreFilters ? 'fa-chevron-up text-cyan-600' : 'fa-chevron-down text-slate-400'"></i> More Filters</button>
             <div class="flex items-center gap-1.5 md:ml-auto">
                 <button type="button" class="h-[34px] bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-0 px-3 rounded-lg shadow-xs flex items-center justify-center gap-1.5"><i class="fas fa-filter text-[10px]"></i><span>Filter</span></button>
-                <button type="button" @click="searchQuery = ''; statusFilter = 'all'; showMoreFilters = false" class="h-[34px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-0 px-2.5 rounded-lg border border-slate-200/80 flex items-center justify-center gap-1"><i class="fas fa-rotate-left text-[10px]"></i><span>Reset</span></button>
+                <button type="button" @click.prevent="resetFilters()" class="h-[34px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-0 px-2.5 rounded-lg border border-slate-200/80 flex items-center justify-center gap-1"><i class="fas fa-rotate-left text-[10px]"></i><span>Reset</span></button>
             </div>
         </div>
         <div x-show="showMoreFilters" x-cloak x-transition class="pt-2 border-t border-slate-100 flex flex-wrap items-center gap-2">
