@@ -78,6 +78,7 @@ class OwnerUserController extends Controller
             'reseller_technician' => 'Sub-ISP Technician',
             'reseller_collector' => 'Sub-ISP Collector',
         ];
+        $ownerCapabilities = config('owner_capabilities', []);
 
         return view('owner.users.index', compact(
             'users',
@@ -88,7 +89,8 @@ class OwnerUserController extends Controller
             'resellers',
             'activeUsers',
             'tenants',
-            'rolesList'
+            'rolesList',
+            'ownerCapabilities'
         ));
     }
 
@@ -134,6 +136,8 @@ class OwnerUserController extends Controller
             'role' => ['required', Rule::in($this->allowedRoles())],
             'status' => ['required', 'in:active,inactive,suspended'],
             'password' => ['nullable', 'string', 'min:6'],
+            'owner_capabilities' => ['nullable', 'array'],
+            'owner_capabilities.*' => ['string', Rule::in(config('owner_capabilities', []))],
         ]);
 
         if ($user->id === Auth::id() && ($validated['status'] !== 'active' || $validated['role'] !== $user->role)) {
@@ -152,6 +156,9 @@ class OwnerUserController extends Controller
             unset($validated['password']);
         }
 
+        $validated['owner_capabilities'] = $user->isOwner()
+            ? array_values(array_unique($validated['owner_capabilities'] ?? []))
+            : null;
         $user->update($validated);
 
         $this->auditService->log(

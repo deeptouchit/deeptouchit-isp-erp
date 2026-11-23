@@ -16,9 +16,13 @@ use App\Services\Billing\InvoiceService;
 use App\Services\Billing\RenewalService;
 use App\Services\Billing\SubscriptionService;
 use App\Services\Billing\SuspensionService;
+use App\Services\Billing\InvoiceSettlementService;
+use App\Services\Security\IdempotencyService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
@@ -203,6 +207,13 @@ class OwnerBillingController extends Controller
      */
     public function store(Request $request)
     {
+        $idempotency = app(IdempotencyService::class);
+        $idempotencyScope = 'owner.billing.invoice.create';
+        if ($previous = $idempotency->begin($request, $idempotencyScope)) {
+            return redirect()->route('owner.billing.index', ['tab' => 'invoices'])
+                ->with('success', $previous->response_body['message'] ?? 'Invoice request already processed.');
+        }
+
         $validated = $request->validate([
             'tenant_id' => ['required', 'exists:tenants,id'],
             'saas_plan_id' => ['nullable', 'exists:saas_plans,id'],
@@ -221,35 +232,40 @@ class OwnerBillingController extends Controller
 
         // Generate Unique Invoice Number
         $invoicePrefix = Setting::get('invoice_prefix', 'INV-');
-        $invoiceNo = $invoicePrefix . date('Ym') . '-' . strtoupper(Str::random(4)) . rand(10, 99);
+        do {
+            $invoiceNo = $invoicePrefix . date('Ym') . '-' . strtoupper(Str::random(6));
+        } while (SaasInvoice::where('invoice_no', $invoiceNo)->exists());
         $isPaid = $validated['status'] === 'paid';
         $paidAt = $isPaid ? (!empty($validated['paid_at']) ? Carbon::parse($validated['paid_at']) : now()) : null;
 
-        $invoice = SaasInvoice::create([
-            'tenant_id' => $tenant->id,
-            'saas_plan_id' => $planId,
-            'tenant_subscription_id' => $tenant->activeSubscription?->id,
-            'invoice_no' => $invoiceNo,
-            'amount' => $validated['amount'],
-            'subtotal' => $validated['amount'],
-            'paid_amount' => $isPaid ? $validated['amount'] : 0,
-            'due_amount' => $isPaid ? 0 : $validated['amount'],
-            'status' => $validated['status'],
-            'payment_method' => $validated['payment_method'] ?? 'Manual',
-            'trx_id' => $validated['trx_id'] ?? null,
-            'due_date' => $validated['due_date'] ?? now()->addDays(7)->format('Y-m-d'),
-            'paid_at' => $paidAt,
-            'period_start' => now()->toDateString(),
-            'period_end' => now()->addMonth()->toDateString(),
-        ]);
+        $invoice = DB::transaction(function () use ($tenant, $planId, $invoiceNo, $validated, $isPaid, $paidAt, $plan) {
+            $invoice = SaasInvoice::create([
+                'tenant_id' => $tenant->id,
+                'saas_plan_id' => $planId,
+                'tenant_subscription_id' => $tenant->activeSubscription?->id,
+                'invoice_no' => $invoiceNo,
+                'amount' => $validated['amount'],
+                'subtotal' => $validated['amount'],
+                'paid_amount' => $isPaid ? $validated['amount'] : 0,
+                'due_amount' => $isPaid ? 0 : $validated['amount'],
+                'status' => $validated['status'],
+                'payment_method' => $validated['payment_method'] ?? 'Manual',
+                'trx_id' => $validated['trx_id'] ?? null,
+                'due_date' => $validated['due_date'] ?? now()->addDays(7)->format('Y-m-d'),
+                'paid_at' => $paidAt,
+                'period_start' => now()->toDateString(),
+                'period_end' => now()->addMonth()->toDateString(),
+            ]);
 
-        // Add line item
-        $invoice->items()->create([
-            'description' => ($plan->name ?? 'Standard Plan') . ' Subscription',
-            'quantity' => 1,
-            'unit_price' => $validated['amount'],
-            'total_price' => $validated['amount'],
-        ]);
+            $invoice->items()->create([
+                'description' => ($plan?->name ?? 'Standard Plan') . ' Subscription',
+                'quantity' => 1,
+                'unit_price' => $validated['amount'],
+                'total_price' => $validated['amount'],
+            ]);
+
+            return $invoice;
+        });
 
         // If requested, extend tenant's validity by 1 month
         if ($isPaid && $request->filled('auto_extend_tenant')) {
@@ -266,7 +282,9 @@ class OwnerBillingController extends Controller
             }
         }
 
-        return redirect()->route('owner.billing.index', ['tab' => 'invoices'])->with('success', "Invoice #{$invoice->invoice_no} created successfully.");
+        $message = "Invoice #{$invoice->invoice_no} created successfully.";
+        $idempotency->complete($request, $idempotencyScope, ['invoice_id' => $invoice->id, 'message' => $message], 302);
+        return redirect()->route('owner.billing.index', ['tab' => 'invoices'])->with('success', $message);
     }
 
     /**
@@ -280,7 +298,13 @@ class OwnerBillingController extends Controller
         $reminderService = app(BillingReminderService::class);
 
         // 1. Generate Invoices
-        $invoicesCreated = $invService->processUpcomingInvoices();
+        $lock = Cache::lock('owner:billing-engine', 300);
+        if (! $lock->get()) {
+            return back()->with('error', 'Billing engine is already running. Please try again after it finishes.');
+        }
+
+        try {
+            $invoicesCreated = $invService->processUpcomingInvoices();
 
         // 2. Process Auto Renewals
         $renewalsProcessed = $renewalService->processDueAutoRenewals();
@@ -291,9 +315,12 @@ class OwnerBillingController extends Controller
         // 4. Send Reminders
         $remindersCount = $reminderService->dispatchAllReminders();
 
-        $message = "Billing Engine executed successfully! Generated {$invoicesCreated} invoices, processed {$renewalsProcessed} renewals, evaluated {$suspendedCount} suspensions, and queued {$remindersCount} reminders.";
+            $message = "Billing Engine executed successfully! Generated {$invoicesCreated} invoices, processed {$renewalsProcessed} renewals, evaluated {$suspendedCount} suspensions, and queued {$remindersCount} reminders.";
 
-        return back()->with('success', $message);
+            return back()->with('success', $message);
+        } finally {
+            $lock->release();
+        }
     }
 
     /**
@@ -376,18 +403,8 @@ class OwnerBillingController extends Controller
      */
     public function toggleStatus(SaasInvoice $invoice)
     {
-        $newStatus = $invoice->status === 'paid' ? 'unpaid' : 'paid';
-        $paidAt = $newStatus === 'paid' ? now() : null;
-
-        $invoice->update([
-            'status' => $newStatus,
-            'paid_at' => $paidAt,
-            'due_amount' => $newStatus === 'paid' ? 0 : $invoice->amount,
-            'paid_amount' => $newStatus === 'paid' ? $invoice->amount : 0,
-        ]);
-
-        $statusLabel = $newStatus === 'paid' ? 'marked as Paid' : 'marked as Unpaid';
-        return back()->with('success', "Invoice #{$invoice->invoice_no} has been {$statusLabel}.");
+        $invoice = app(InvoiceSettlementService::class)->settle($invoice, auth()->id());
+        return back()->with('success', "Invoice #{$invoice->invoice_no} has been settled and recorded in the ledger.");
     }
 
     /**
@@ -419,7 +436,9 @@ class OwnerBillingController extends Controller
         $amount = (float)$validated['amount'];
         $paidAt = $isPaid ? (!empty($validated['paid_at']) ? Carbon::parse($validated['paid_at']) : ($invoice->paid_at ?: now())) : null;
 
-        $invoice->update([
+        DB::transaction(function () use ($invoice, $validated, $isPaid, $amount, $paidAt) {
+            $invoice = SaasInvoice::query()->lockForUpdate()->findOrFail($invoice->id);
+            $invoice->update([
             'amount' => $amount,
             'subtotal' => $amount,
             'status' => $validated['status'],
@@ -429,7 +448,8 @@ class OwnerBillingController extends Controller
             'trx_id' => $validated['trx_id'] ?? $invoice->trx_id,
             'paid_amount' => $isPaid ? $amount : 0,
             'due_amount' => $isPaid ? 0 : $amount,
-        ]);
+            ]);
+        });
 
         if ($request->input('redirect_to') === 'show') {
             return redirect()->route('owner.invoices.show', $invoice)
@@ -595,9 +615,9 @@ class OwnerBillingController extends Controller
         Config::set('mail.mailers.smtp.timeout', $timeout);
         Config::set('mail.mailers.smtp.stream', [
             'ssl' => [
-                'allow_self_signed' => true,
-                'verify_peer' => false,
-                'verify_peer_name' => false,
+                'allow_self_signed' => false,
+                'verify_peer' => true,
+                'verify_peer_name' => true,
             ],
         ]);
         Config::set('mail.from.address', $billingEmail);

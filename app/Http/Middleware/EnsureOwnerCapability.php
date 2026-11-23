@@ -17,6 +17,11 @@ class EnsureOwnerCapability
         $capabilities = config('owner_capabilities', []);
         abort_unless(in_array($capability, $capabilities, true), 403);
 
+        // A null capability set preserves legacy full-owner access during rollout;
+        // once assigned, the database set becomes the source of truth.
+        $assigned = $user->owner_capabilities;
+        abort_unless($assigned === null || in_array($capability, $assigned, true), 403);
+
         return $next($request);
     }
 }

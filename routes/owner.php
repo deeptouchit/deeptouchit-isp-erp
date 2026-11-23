@@ -108,32 +108,49 @@ Route::prefix('owner')->name('owner.')->group(function () {
             ->name('users.impersonate');
 
         // 4. Invoices & Billing
-        Route::get('/billing', [OwnerBillingController::class, 'index'])->name('billing.index');
-        Route::get('/invoices', [OwnerBillingController::class, 'index'])->name('invoices.index');
-        Route::get('/invoices/{invoice}', [OwnerBillingController::class, 'show'])->name('invoices.show');
-        Route::get('/invoices/{invoice}/print', [OwnerBillingController::class, 'printInvoice'])->name('invoices.print');
-        Route::post('/invoices/{invoice}/send-email', [OwnerBillingController::class, 'sendInvoiceEmail'])->name('invoices.send-email');
-        Route::post('/billing/invoices', [OwnerBillingController::class, 'store'])->name('billing.store');
-        Route::put('/billing/invoices/{invoice}', [OwnerBillingController::class, 'update'])->name('billing.update');
-        Route::post('/billing/invoices/{invoice}/toggle-status', [OwnerBillingController::class, 'toggleStatus'])->name('billing.toggle-status');
+        Route::get('/billing', [OwnerBillingController::class, 'index'])
+            ->middleware('owner.capability:billing.view')->name('billing.index');
+        Route::get('/invoices', [OwnerBillingController::class, 'index'])
+            ->middleware('owner.capability:billing.view')->name('invoices.index');
+        Route::get('/invoices/{invoice}', [OwnerBillingController::class, 'show'])
+            ->middleware('owner.capability:billing.view')->name('invoices.show');
+        Route::get('/invoices/{invoice}/print', [OwnerBillingController::class, 'printInvoice'])
+            ->middleware('owner.capability:billing.view')->name('invoices.print');
+        Route::post('/invoices/{invoice}/send-email', [OwnerBillingController::class, 'sendInvoiceEmail'])
+            ->middleware(['owner.capability:billing.manage', 'throttle:10,1'])->name('invoices.send-email');
+        Route::post('/billing/invoices', [OwnerBillingController::class, 'store'])
+            ->middleware('owner.capability:billing.manage')->name('billing.store');
+        Route::put('/billing/invoices/{invoice}', [OwnerBillingController::class, 'update'])
+            ->middleware('owner.capability:billing.manage')->name('billing.update');
+        Route::post('/billing/invoices/{invoice}/toggle-status', [OwnerBillingController::class, 'toggleStatus'])
+            ->middleware('owner.capability:billing.manage')->name('billing.toggle-status');
         Route::delete('/billing/invoices/{invoice}', [OwnerBillingController::class, 'destroy'])
             ->middleware('owner.capability:billing.manage')
             ->name('billing.destroy');
-        Route::post('/billing/run-engine', [OwnerBillingController::class, 'runEngine'])->name('billing.run-engine');
+        Route::post('/billing/run-engine', [OwnerBillingController::class, 'runEngine'])
+            ->middleware(['owner.capability:billing.run-engine', 'throttle:2,1'])->name('billing.run-engine');
 
         // 5. Dedicated Tenant Subscriptions
-        Route::get('/subscriptions', [OwnerSubscriptionController::class, 'index'])->name('subscriptions.index');
-        Route::post('/subscriptions', [OwnerSubscriptionController::class, 'store'])->name('subscriptions.store');
-        Route::post('/subscriptions/{subscription}/renew', [OwnerSubscriptionController::class, 'renew'])->name('subscriptions.renew');
-        Route::post('/subscriptions/{subscription}/status', [OwnerSubscriptionController::class, 'updateStatus'])->name('subscriptions.status');
-        Route::post('/billing/subscriptions/{subscription}/renew', [OwnerSubscriptionController::class, 'renew'])->name('billing.subscriptions.renew');
-        Route::post('/billing/subscriptions/{subscription}/status', [OwnerSubscriptionController::class, 'updateStatus'])->name('billing.subscriptions.status');
+        Route::get('/subscriptions', [OwnerSubscriptionController::class, 'index'])
+            ->middleware('owner.capability:subscriptions.view')->name('subscriptions.index');
+        Route::post('/subscriptions', [OwnerSubscriptionController::class, 'store'])
+            ->middleware('owner.capability:subscriptions.manage')->name('subscriptions.store');
+        Route::post('/subscriptions/{subscription}/renew', [OwnerSubscriptionController::class, 'renew'])
+            ->middleware('owner.capability:subscriptions.manage')->name('subscriptions.renew');
+        Route::post('/subscriptions/{subscription}/status', [OwnerSubscriptionController::class, 'updateStatus'])
+            ->middleware('owner.capability:subscriptions.manage')->name('subscriptions.status');
+        Route::post('/billing/subscriptions/{subscription}/renew', [OwnerSubscriptionController::class, 'renew'])
+            ->middleware('owner.capability:subscriptions.manage')->name('billing.subscriptions.renew');
+        Route::post('/billing/subscriptions/{subscription}/status', [OwnerSubscriptionController::class, 'updateStatus'])
+            ->middleware('owner.capability:subscriptions.manage')->name('billing.subscriptions.status');
 
         // 6. Dedicated Settled Payments
-        Route::get('/payments', [OwnerPaymentController::class, 'index'])->name('payments.index');
+        Route::get('/payments', [OwnerPaymentController::class, 'index'])
+            ->middleware('owner.capability:payments.view')->name('payments.index');
 
         // 7. Dedicated Gateway Transactions
-        Route::get('/transactions', [OwnerTransactionController::class, 'index'])->name('transactions.index');
+        Route::get('/transactions', [OwnerTransactionController::class, 'index'])
+            ->middleware('owner.capability:transactions.view')->name('transactions.index');
 
         // 8. Dedicated Tenant Wallets
         Route::get('/wallets', [OwnerWalletController::class, 'index'])->name('wallets.index');

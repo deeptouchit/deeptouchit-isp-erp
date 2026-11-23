@@ -2,6 +2,10 @@
 
 @section('page-title', 'Billing & Invoices')
 
+@push('styles')
+<style>.owner-finance-table.saas-table td { white-space: nowrap; } .owner-finance-table.saas-table td > div { display: inline-flex; vertical-align: middle; } .owner-finance-table.saas-table td > div + div { margin-left: .35rem; } .owner-finance-table.saas-table th:nth-child(1), .owner-finance-table.saas-table td:nth-child(1), .owner-finance-table.saas-table th:nth-child(6), .owner-finance-table.saas-table td:nth-child(6) { display: none; }</style>
+@endpush
+
 @section('content')
 <div class="space-y-4" 
      @scroll.window="activeMenuInvoice = null" 
@@ -146,7 +150,7 @@
 
     <!-- Filter & Search Matrix -->
     <div class="p-3.5 rounded-xl bg-white border border-slate-200 shadow-xs">
-        <form action="{{ route('owner.billing.index') }}" method="GET" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2.5">
+        <form action="{{ route('owner.billing.index') }}" method="GET" x-data="{ showMoreFilters: {{ request()->filled('tenant_id') || request()->filled('payment_method') ? 'true' : 'false' }} }" class="space-y-2.5">
             
             <div class="lg:col-span-2">
                 <div class="relative">
@@ -159,7 +163,7 @@
                 </div>
             </div>
 
-            <div>
+            <div x-show="showMoreFilters" x-cloak class="pt-2 border-t border-slate-100">
                 <select name="tenant_id" class="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition">
                     <option value="">All ISP Tenants</option>
                     @foreach($tenants as $t)
@@ -179,7 +183,7 @@
                 </select>
             </div>
 
-            <div>
+            <div x-show="showMoreFilters" x-cloak>
                 <select name="payment_method" class="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition">
                     <option value="">All Methods</option>
                     <option value="bkash" {{ request('payment_method') === 'bkash' ? 'selected' : '' }}>bKash</option>
@@ -190,7 +194,8 @@
                 </select>
             </div>
 
-            <div class="flex items-center gap-1.5">
+            <div class="flex items-center gap-1.5 flex-shrink-0 md:ml-auto">
+                <button type="button" @click="showMoreFilters = !showMoreFilters" class="h-[34px] py-0 px-2.5 rounded-lg border border-slate-200 bg-white text-slate-700 text-xs font-semibold flex items-center gap-1.5"><i class="fas" :class="showMoreFilters ? 'fa-chevron-up text-cyan-600' : 'fa-chevron-down text-slate-400'"></i><span>More Filters</span></button>
                 <button type="submit" class="flex-1 py-1.5 px-3 rounded-lg bg-slate-800 hover:bg-slate-900 text-white font-semibold text-xs transition flex items-center justify-center gap-1.5 shadow-xs">
                     <i class="fas fa-filter text-[10px]"></i>
                     <span>Filter</span>
@@ -206,7 +211,7 @@
     <!-- Invoices Table -->
     <div class="rounded-xl bg-white border border-slate-200 overflow-hidden shadow-xs">
         <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs text-slate-700 whitespace-nowrap border-collapse">
+            <table class="saas-table owner-finance-table">
                 <thead class="bg-slate-50 text-slate-600 uppercase tracking-wider text-[10px] border-b border-slate-200 font-bold select-none text-center">
                     <tr>
                         <th class="px-2.5 py-1.5 border-r border-slate-200 text-center w-10">#</th>

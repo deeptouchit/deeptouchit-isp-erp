@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Owner;
 
 use App\Http\Controllers\Controller;
 use App\Models\SaasInvoice;
+use App\Models\PaymentTransaction;
 use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -62,79 +63,31 @@ class OwnerPaymentGatewayController extends Controller
         $paidInvoicesTotal = SaasInvoice::where('status', 'paid')->sum('amount');
         $paidInvoicesCount = SaasInvoice::where('status', 'paid')->count();
 
-        // Sample / Live Audit Transactions
-        $auditLogs = [
-            [
-                'trx_id' => 'TRX-BK7849201',
-                'tenant' => 'CyberNet Broadband Ltd',
-                'plan' => 'Enterprise Pro (Unlimited)',
-                'gateway' => 'bKash Tokenized',
-                'gateway_code' => 'bkash',
-                'amount' => 4500.00,
-                'fee' => 67.50,
-                'net' => 4432.50,
-                'currency' => 'BDT',
-                'status' => 'success',
-                'mode' => 'live',
-                'timestamp' => now()->subMinutes(14)->format('M d, Y - h:i A'),
-            ],
-            [
-                'trx_id' => 'TRX-NG9918234',
-                'tenant' => 'Metro Fiber Optics Ltd',
-                'plan' => 'Growth Tier (1,000 Users)',
-                'gateway' => 'Nagad PGW',
-                'gateway_code' => 'nagad',
-                'amount' => 2800.00,
-                'fee' => 42.00,
-                'net' => 2758.00,
-                'currency' => 'BDT',
-                'status' => 'success',
-                'mode' => 'live',
-                'timestamp' => now()->subHours(2)->format('M d, Y - h:i A'),
-            ],
-            [
-                'trx_id' => 'TRX-SSL3381920',
-                'tenant' => 'SpeedX ISP Network',
-                'plan' => 'Starter Tier (300 Users)',
-                'gateway' => 'SSLCommerz',
-                'gateway_code' => 'sslcommerz',
-                'amount' => 1500.00,
-                'fee' => 37.50,
-                'net' => 1462.50,
-                'currency' => 'BDT',
-                'status' => 'success',
-                'mode' => 'sandbox',
-                'timestamp' => now()->subHours(6)->format('M d, Y - h:i A'),
-            ],
-            [
-                'trx_id' => 'TRX-STP4410294',
-                'tenant' => 'HyperLink Telecom Ltd',
-                'plan' => 'Enterprise Pro (Annual)',
-                'gateway' => 'Stripe Card',
-                'gateway_code' => 'stripe',
-                'amount' => 48000.00,
-                'fee' => 1392.00,
-                'net' => 46608.00,
-                'currency' => 'BDT',
-                'status' => 'success',
-                'mode' => 'live',
-                'timestamp' => now()->subDay()->format('M d, Y - h:i A'),
-            ],
-            [
-                'trx_id' => 'TRX-BNK1029384',
-                'tenant' => 'Global Connect Online',
-                'plan' => 'Growth Tier (1,000 Users)',
-                'gateway' => 'Bank Wire / Offline',
-                'gateway_code' => 'bank',
-                'amount' => 2800.00,
-                'fee' => 0.00,
-                'net' => 2800.00,
-                'currency' => 'BDT',
-                'status' => 'success',
-                'mode' => 'manual',
-                'timestamp' => now()->subDays(2)->format('M d, Y - h:i A'),
-            ],
-        ];
+        // Real gateway transaction audit data; never show fabricated production records.
+        $auditLogs = PaymentTransaction::withoutWalletCheckouts()
+            ->with(['tenant', 'invoice.plan'])
+            ->latest()
+            ->limit(10)
+            ->get()
+            ->map(function (PaymentTransaction $transaction) {
+                $fee = (float) data_get($transaction->gateway_response, 'fee', 0);
+                return [
+                    'trx_id' => $transaction->transaction_reference,
+                    'tenant' => $transaction->tenant?->company_name ?? $transaction->tenant?->name ?? '—',
+                    'plan' => $transaction->invoice?->plan?->name ?? '—',
+                    'gateway' => $transaction->gateway ?: 'Online',
+                    'gateway_code' => strtolower((string) $transaction->gateway),
+                    'amount' => (float) $transaction->amount,
+                    'fee' => $fee,
+                    'net' => max(0, (float) $transaction->amount - $fee),
+                    'currency' => $settings['currency_code'] ?? 'BDT',
+                    'status' => $transaction->status,
+                    'mode' => data_get($transaction->gateway_response, 'mode', 'live'),
+                    'timestamp' => optional($transaction->created_at)->format('M d, Y - h:i A'),
+                ];
+            })
+            ->values()
+            ->all();
 
         return view('owner.payment-gateways.index', compact(
             'settings',

@@ -853,13 +853,13 @@
                                     </span>
                                 </td>
                                 <td class="py-2.5 px-3 text-right font-mono font-bold text-slate-800">
-                                    ৳ {{ number_format($log['amount'], 2) }}
+                                    @currency($log['amount'])
                                 </td>
                                 <td class="py-2.5 px-3 text-right font-mono text-slate-500 text-[11px]">
-                                    -৳ {{ number_format($log['fee'], 2) }}
+                                    -@currency($log['fee'])
                                 </td>
                                 <td class="py-2.5 px-3 text-right font-mono font-bold text-emerald-600">
-                                    ৳ {{ number_format($log['net'], 2) }}
+                                    @currency($log['net'])
                                 </td>
                                 <td class="py-2.5 px-3 text-center">
                                     <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">

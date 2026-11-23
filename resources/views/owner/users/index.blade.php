@@ -199,6 +199,7 @@
                                 'status' => $u->status ?? 'active',
                                 'status_label' => $u->status_badge['label'] ?? ucfirst($u->status),
                                 'status_class' => $u->status_badge['class'] ?? 'bg-slate-100 text-slate-700',
+                                'owner_capabilities' => $u->owner_capabilities ?? [],
                                 'created_at' => $u->created_at ? $u->created_at->format('d M, Y h:i A') : 'N/A',
                                 'updated_at' => $u->updated_at ? $u->updated_at->format('d M, Y h:i A') : 'N/A',
                                 'is_self' => $u->id === auth()->id(),
@@ -646,6 +647,19 @@
                                 <option value="inactive">Inactive</option>
                                 <option value="suspended">Suspended</option>
                             </select>
+                        </div>
+                    </div>
+
+                    <!-- Optional Password Change -->
+                    <div x-show="selectedUser?.role === 'owner' || selectedUser?.role === 'super_admin'" class="space-y-1 pt-1 border-t border-slate-100">
+                        <label class="text-[11px] font-semibold text-slate-700">Owner Capabilities</label>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5 max-h-32 overflow-y-auto p-2 rounded-lg border border-slate-200 bg-slate-50">
+                            @foreach($ownerCapabilities as $capability)
+                                <label class="flex items-center gap-1.5 text-[10px] text-slate-700 whitespace-nowrap">
+                                    <input type="checkbox" name="owner_capabilities[]" value="{{ $capability }}" x-model="selectedUser.owner_capabilities" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                                    <span>{{ $capability }}</span>
+                                </label>
+                            @endforeach
                         </div>
                     </div>
 

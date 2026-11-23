@@ -6,7 +6,7 @@ return [
     'users.view', 'users.create', 'users.update', 'users.delete', 'users.reset-password', 'users.impersonate',
     'billing.view', 'billing.manage', 'billing.run-engine',
     'subscriptions.view', 'subscriptions.manage',
-    'payments.view', 'wallets.manage',
+    'payments.view', 'transactions.view', 'wallets.manage',
     'automation.view', 'automation.dispatch',
     'gateways.view', 'gateways.manage', 'gateways.test',
     'backups.view', 'backups.manage',
