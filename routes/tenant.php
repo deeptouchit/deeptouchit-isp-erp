@@ -66,6 +66,9 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware(['web'])->group(function () {
 
+    // Friendly alias for the ISP tenant portal entry point.
+    Route::get('/tenant', fn() => redirect('/admin'))->name('tenant.alias');
+
     // 1. Guest Authentication Routes
     Route::middleware('guest')->group(function () {
         Route::get('/admin/login', [TenantAuthController::class, 'showLoginForm'])->name('tenant.login');

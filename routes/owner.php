@@ -33,6 +33,8 @@ use Illuminate\Support\Facades\Route;
 | Domain / URL: https://somitysoft.com/owner/*
 */
 
+Route::get('/owner', fn() => redirect()->route('owner.login'))->name('owner.index');
+
 Route::prefix('owner')->name('owner.')->group(function () {
     
     // Guest Owner Authentication Routes
