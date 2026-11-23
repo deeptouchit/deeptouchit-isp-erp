@@ -90,11 +90,25 @@
             </button>
 
             <!-- Sub-menu Items -->
+            
             <div x-show="open || (filterQuery && filterQuery.trim() !== '')" class="pl-2.5 pr-0.5 space-y-1">
+               
+                <a href="{{ route('owner.plans.index') }}" 
+                   x-show="!filterQuery || 'plans packages subscription pricing tiers'.includes(filterQuery.toLowerCase())"
+                   class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ request()->routeIs('owner.plans*') ? 'border-blue-200 bg-blue-50/80 text-blue-600 font-bold border-l-4 border-l-blue-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
+                    SaaS Plans
+                </a>
+               
                 <a href="{{ route('owner.tenants.index') }}" 
                    x-show="!filterQuery || 'tenants isp companies organizations clients'.includes(filterQuery.toLowerCase())"
                    class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ request()->routeIs('owner.tenants*') ? 'border-blue-200 bg-blue-50/80 text-blue-600 font-bold border-l-4 border-l-blue-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
                     ISP Tenants
+                </a>
+
+                <a href="{{ route('owner.wallets.index') }}" 
+                   x-show="!filterQuery || 'wallets advance credits prepaid balance topup'.includes(filterQuery.toLowerCase())"
+                   class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ request()->routeIs('owner.wallets*') ? 'border-blue-200 bg-blue-50/80 text-blue-600 font-bold border-l-4 border-l-blue-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
+                    Tenant Wallets
                 </a>
 
                 <a href="{{ route('owner.users.index') }}" 
@@ -103,17 +117,8 @@
                     User Management
                 </a>
 
-                <a href="{{ route('owner.plans.index') }}" 
-                   x-show="!filterQuery || 'plans packages subscription pricing tiers'.includes(filterQuery.toLowerCase())"
-                   class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ request()->routeIs('owner.plans*') ? 'border-blue-200 bg-blue-50/80 text-blue-600 font-bold border-l-4 border-l-blue-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
-                    SaaS Plans
-                </a>
 
-                <a href="{{ route('owner.wallets.index') }}" 
-                   x-show="!filterQuery || 'wallets advance credits prepaid balance topup'.includes(filterQuery.toLowerCase())"
-                   class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ request()->routeIs('owner.wallets*') ? 'border-blue-200 bg-blue-50/80 text-blue-600 font-bold border-l-4 border-l-blue-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
-                    Tenant Wallets
-                </a>
+   
             </div>
         </div>
 
