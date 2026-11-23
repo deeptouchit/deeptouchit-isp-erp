@@ -189,9 +189,9 @@
                 <div class="flex flex-wrap items-center gap-2 flex-1 min-w-[260px]">
                     <div class="relative flex-1 max-w-sm">
                         <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                        <input type="text" name="router_search" value="{{ request('router_search') }}" placeholder="Search router name, IP, model, tenant..." class="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-slate-200 bg-white focus:ring-1 focus:ring-blue-500 shadow-xs">
+                        <input type="text" name="router_search" value="{{ request('router_search') }}" placeholder="Search router name, IP, model, tenant..." class="w-full h-[34px] pl-8 pr-3 text-xs rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:border-cyan-500 focus:outline-hidden shadow-xs">
                     </div>
-                    <select name="router_status" onchange="this.form.submit()" class="py-1.5 px-2.5 text-xs rounded-lg border border-slate-200 bg-white text-slate-700 focus:ring-1 focus:ring-blue-500 shadow-xs">
+                    <select name="router_status" class="h-[34px] py-0 px-2.5 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 focus:border-cyan-500 shadow-xs">
                         <option value="">All Statuses</option>
                         <option value="online" {{ request('router_status') == 'online' ? 'selected' : '' }}>Online</option>
                         <option value="offline" {{ request('router_status') == 'offline' ? 'selected' : '' }}>Offline</option>
@@ -200,7 +200,9 @@
                     </select>
                 </div>
                 <div class="flex items-center gap-2">
-                    <button type="button" @click="probeModal = true" class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition border border-slate-200 flex items-center gap-1.5 cursor-pointer">
+                    <button type="submit" class="h-[34px] py-0 px-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs shadow-xs flex items-center gap-1.5"><i class="fas fa-filter text-[10px]"></i><span>Filter</span></button>
+                    <a href="{{ route('owner.network-engines.index') }}" class="h-[34px] py-0 px-2.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs border border-slate-200/80 flex items-center gap-1"><i class="fas fa-rotate-left text-[10px]"></i><span>Reset</span></a>
+                    <button type="button" @click="probeModal = true" class="h-[34px] py-0 px-2.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition border border-slate-200 flex items-center gap-1.5 cursor-pointer">
                         <i class="fas fa-satellite-dish text-slate-500 text-[10px]"></i>
                         <span>TCP Probe</span>
                     </button>
@@ -339,9 +341,9 @@
                 <div class="flex flex-wrap items-center gap-2 flex-1 min-w-[260px]">
                     <div class="relative flex-1 max-w-sm">
                         <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                        <input type="text" name="olt_search" value="{{ request('olt_search') }}" placeholder="Search OLT name, IP, brand, tenant..." class="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-slate-200 bg-white focus:ring-1 focus:ring-blue-500 shadow-xs">
+                        <input type="text" name="olt_search" value="{{ request('olt_search') }}" placeholder="Search OLT name, IP, brand, tenant..." class="w-full h-[34px] pl-8 pr-3 text-xs rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:border-cyan-500 focus:outline-hidden shadow-xs">
                     </div>
-                    <select name="olt_brand" onchange="this.form.submit()" class="py-1.5 px-2.5 text-xs rounded-lg border border-slate-200 bg-white text-slate-700 focus:ring-1 focus:ring-blue-500 shadow-xs">
+                    <select name="olt_brand" class="h-[34px] py-0 px-2.5 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 focus:border-cyan-500 shadow-xs">
                         <option value="">All Brands</option>
                         <option value="vsol" {{ request('olt_brand') == 'vsol' ? 'selected' : '' }}>V-SOL</option>
                         <option value="bdcom" {{ request('olt_brand') == 'bdcom' ? 'selected' : '' }}>BDCOM</option>
@@ -351,7 +353,9 @@
                     </select>
                 </div>
                 <div class="flex items-center gap-2">
-                    <button type="button" @click="probeModal = true; probeData.type = 'olt'; probeData.port = 23;" class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition border border-slate-200 flex items-center gap-1.5 cursor-pointer">
+                    <button type="submit" class="h-[34px] py-0 px-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs shadow-xs flex items-center gap-1.5"><i class="fas fa-filter text-[10px]"></i><span>Filter</span></button>
+                    <a href="{{ route('owner.network-engines.index') }}" class="h-[34px] py-0 px-2.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs border border-slate-200/80 flex items-center gap-1"><i class="fas fa-rotate-left text-[10px]"></i><span>Reset</span></a>
+                    <button type="button" @click="probeModal = true; probeData.type = 'olt'; probeData.port = 23;" class="h-[34px] py-0 px-2.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition border border-slate-200 flex items-center gap-1.5 cursor-pointer">
                         <i class="fas fa-satellite-dish text-slate-500 text-[10px]"></i>
                         <span>Probe Port</span>
                     </button>

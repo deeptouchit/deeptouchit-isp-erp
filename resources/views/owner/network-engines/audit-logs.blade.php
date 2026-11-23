@@ -108,12 +108,12 @@
                 <!-- Search Input -->
                 <div class="relative lg:col-span-2">
                     <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Search device, action, IP, command..." class="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-slate-200 bg-white focus:ring-1 focus:ring-blue-500 shadow-2xs">
+                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Search device, action, IP, command..." class="w-full h-[34px] pl-8 pr-3 text-xs rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:border-cyan-500 focus:outline-hidden shadow-2xs">
                 </div>
 
                 <!-- Device Type -->
                 <div>
-                    <select name="device_type" onchange="this.form.submit()" class="w-full py-1.5 px-2.5 text-xs rounded-lg border border-slate-200 bg-white text-slate-700 focus:ring-1 focus:ring-blue-500 shadow-2xs">
+                    <select name="device_type" class="w-full h-[34px] py-0 px-2.5 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 focus:border-cyan-500 shadow-2xs">
                         <option value="">All Device Types</option>
                         <option value="router" {{ request('device_type') == 'router' ? 'selected' : '' }}>MikroTik Router</option>
                         <option value="olt" {{ request('device_type') == 'olt' ? 'selected' : '' }}>OLT PON Device</option>
@@ -126,7 +126,7 @@
 
                 <!-- Status -->
                 <div>
-                    <select name="status" onchange="this.form.submit()" class="w-full py-1.5 px-2.5 text-xs rounded-lg border border-slate-200 bg-white text-slate-700 focus:ring-1 focus:ring-blue-500 shadow-2xs">
+                    <select name="status" class="w-full h-[34px] py-0 px-2.5 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 focus:border-cyan-500 shadow-2xs">
                         <option value="">All Statuses</option>
                         <option value="success" {{ request('status') == 'success' ? 'selected' : '' }}>Success</option>
                         <option value="failed" {{ request('status') == 'failed' ? 'selected' : '' }}>Failed</option>
@@ -136,7 +136,7 @@
 
                 <!-- Tenant Filter -->
                 <div>
-                    <select name="tenant_id" onchange="this.form.submit()" class="w-full py-1.5 px-2.5 text-xs rounded-lg border border-slate-200 bg-white text-slate-700 focus:ring-1 focus:ring-blue-500 shadow-2xs">
+                    <select name="tenant_id" class="w-full h-[34px] py-0 px-2.5 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 focus:border-cyan-500 shadow-2xs">
                         <option value="">All Tenants</option>
                         @foreach($tenants as $t)
                             <option value="{{ $t->id }}" {{ request('tenant_id') == $t->id ? 'selected' : '' }}>{{ $t->company_name }}</option>
@@ -149,12 +149,12 @@
             <div class="flex flex-wrap items-center justify-between gap-2.5 pt-1 border-t border-slate-100 text-xs">
                 <div class="flex flex-wrap items-center gap-2">
                     <span class="text-[11px] font-semibold text-slate-500">Date Range:</span>
-                    <input type="date" name="date_from" value="{{ request('date_from') }}" class="py-1 px-2 rounded-lg border border-slate-200 text-xs text-slate-700 bg-white shadow-2xs">
+                    <input type="date" name="date_from" value="{{ request('date_from') }}" class="h-[34px] py-0 px-2 rounded-lg border border-slate-200 text-xs text-slate-700 bg-slate-50 shadow-2xs">
                     <span class="text-slate-400">to</span>
-                    <input type="date" name="date_to" value="{{ request('date_to') }}" class="py-1 px-2 rounded-lg border border-slate-200 text-xs text-slate-700 bg-white shadow-2xs">
+                    <input type="date" name="date_to" value="{{ request('date_to') }}" class="h-[34px] py-0 px-2 rounded-lg border border-slate-200 text-xs text-slate-700 bg-slate-50 shadow-2xs">
                     
                     @if(!empty($actionTypes))
-                        <select name="action_filter" onchange="this.form.submit()" class="py-1 px-2 text-xs rounded-lg border border-slate-200 bg-white text-slate-700 shadow-2xs">
+                        <select name="action_filter" class="h-[34px] py-0 px-2 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 shadow-2xs">
                             <option value="">All Action Types</option>
                             @foreach($actionTypes as $act)
                                 <option value="{{ $act }}" {{ request('action_filter') == $act ? 'selected' : '' }}>{{ $act }}</option>
@@ -162,8 +162,8 @@
                         </select>
                     @endif
 
-                    <button type="submit" class="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs transition shadow-2xs cursor-pointer">
-                        Filter
+                    <button type="submit" class="h-[34px] py-0 px-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs transition shadow-2xs cursor-pointer flex items-center gap-1.5">
+                        <i class="fas fa-filter text-[10px]"></i><span>Filter</span>
                     </button>
                 </div>
 
@@ -171,12 +171,7 @@
                     <div class="text-[11px] text-slate-500 font-mono">
                         Showing {{ $logs->firstItem() ?? 0 }}-{{ $logs->lastItem() ?? 0 }} of {{ $logs->total() }} events
                     </div>
-                    @if(request()->hasAny(['search', 'device_type', 'status', 'tenant_id', 'date_from', 'date_to', 'action_filter']))
-                        <a href="{{ route('owner.network-engines.audit-logs') }}" class="px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold transition border border-slate-200 flex items-center gap-1">
-                            <i class="fas fa-times text-[10px]"></i>
-                            <span>Reset</span>
-                        </a>
-                    @endif
+                    <a href="{{ route('owner.network-engines.audit-logs') }}" class="h-[34px] py-0 px-2.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition border border-slate-200/80 flex items-center gap-1"><i class="fas fa-rotate-left text-[10px]"></i><span>Reset</span></a>
                 </div>
             </div>
         </form>

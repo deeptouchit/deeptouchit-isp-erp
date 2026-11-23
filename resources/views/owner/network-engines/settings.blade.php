@@ -78,7 +78,6 @@
                         Carrier Grade
                     </span>
                 </div>
-                <p class="text-[11px] text-slate-500 mt-0.5">Platform-wide defaults for FreeRADIUS AAA, WireGuard Gateway, MikroTik API & OLT SNMP drivers</p>
             </div>
         </div>
 
