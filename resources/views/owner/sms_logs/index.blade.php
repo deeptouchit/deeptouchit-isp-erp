@@ -93,8 +93,6 @@
                         <option value="{{ $t->id }}" {{ request('tenant_id') == $t->id ? 'selected' : '' }}>{{ $t->name }}</option>
                     @endforeach
                 </select>
-            </div>
-
             <!-- Status -->
             <div>
                 <select name="status" class="w-full sm:w-auto sm:min-w-[160px] h-[34px] px-2 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:ring-1 focus:ring-emerald-500">
@@ -103,6 +101,7 @@
                     <option value="sent" {{ request('status') == 'sent' ? 'selected' : '' }}>Sent</option>
                     <option value="failed" {{ request('status') == 'failed' ? 'selected' : '' }}>Failed</option>
                 </select>
+            </div>
             </div>
 
             <!-- Filter Buttons -->

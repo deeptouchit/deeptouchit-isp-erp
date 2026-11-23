@@ -64,8 +64,6 @@
                         <option value="{{ $t->id }}" {{ request('tenant_id') == $t->id ? 'selected' : '' }}>{{ $t->name }}</option>
                     @endforeach
                 </select>
-            </div>
-
             <!-- Event Type -->
             <div>
                 <select name="event_type" class="w-full sm:w-auto sm:min-w-[180px] h-[34px] px-2 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:ring-1 focus:ring-purple-500">
@@ -79,6 +77,7 @@
                     <option value="service_suspended" {{ request('event_type') == 'service_suspended' ? 'selected' : '' }}>Service Suspended</option>
                     <option value="service_restored" {{ request('event_type') == 'service_restored' ? 'selected' : '' }}>Service Restored</option>
                 </select>
+            </div>
             </div>
 
             <!-- Filter Buttons -->
