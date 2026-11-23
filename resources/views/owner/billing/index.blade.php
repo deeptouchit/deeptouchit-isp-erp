@@ -3,7 +3,7 @@
 @section('page-title', 'Billing & Invoices')
 
 @push('styles')
-<style>.owner-finance-table.saas-table td { white-space: nowrap; } .owner-finance-table.saas-table td > div { display: inline-flex; vertical-align: middle; } .owner-finance-table.saas-table td > div + div { margin-left: .35rem; } .owner-finance-table.saas-table th:nth-child(1), .owner-finance-table.saas-table td:nth-child(1), .owner-finance-table.saas-table th:nth-child(6), .owner-finance-table.saas-table td:nth-child(6) { display: none; } .owner-finance-filter select, .owner-finance-filter input, .owner-finance-filter button { height: 34px; }</style>
+<style>.owner-finance-table.saas-table td { white-space: nowrap; } .owner-finance-table.saas-table td > div { display: inline-flex; vertical-align: middle; } .owner-finance-table.saas-table td > div + div { margin-left: .35rem; } .owner-finance-table.saas-table th:nth-child(1), .owner-finance-table.saas-table td:nth-child(1), .owner-finance-table.saas-table th:nth-child(6), .owner-finance-table.saas-table td:nth-child(6) { display: none; } .owner-finance-filter select, .owner-finance-filter input, .owner-finance-filter button { height: 34px; } .owner-finance-filter > div:first-child { flex: 1 1 220px; min-width: 200px; } .owner-finance-filter > div:not(:first-child) { flex: 0 0 auto; } .owner-finance-filter select { width: auto !important; min-width: 130px; }</style>
 @endpush
 
 @section('content')
@@ -150,7 +150,7 @@
 
     <!-- Filter & Search Matrix -->
     <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs">
-        <form action="{{ route('owner.billing.index') }}" method="GET" x-data="{ showMoreFilters: {{ request()->filled('tenant_id') || request()->filled('payment_method') ? 'true' : 'false' }}, searchQuery: @js(request('search', '')) }" class="owner-finance-filter space-y-2.5">
+        <form action="{{ route('owner.billing.index') }}" method="GET" x-data="{ showMoreFilters: {{ request()->filled('tenant_id') || request()->filled('payment_method') ? 'true' : 'false' }}, searchQuery: @js(request('search', '')) }" class="owner-finance-filter flex flex-col md:flex-row items-stretch md:items-center gap-2">
             
             <div class="lg:col-span-2">
                 <div class="relative">

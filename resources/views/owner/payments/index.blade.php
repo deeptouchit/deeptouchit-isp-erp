@@ -3,7 +3,7 @@
 @section('page-title', 'Settled Payments & Revenue Ledger')
 
 @push('styles')
-<style>.owner-finance-table.saas-table td { white-space: nowrap; } .owner-finance-table.saas-table td > div { display: inline-flex; vertical-align: middle; } .owner-finance-table.saas-table td > div + div { margin-left: .35rem; } .owner-finance-table.saas-table th:nth-child(6), .owner-finance-table.saas-table td:nth-child(6) { display: none; } .owner-finance-filter select, .owner-finance-filter input, .owner-finance-filter button { height: 34px; }</style>
+<style>.owner-finance-table.saas-table td { white-space: nowrap; } .owner-finance-table.saas-table td > div { display: inline-flex; vertical-align: middle; } .owner-finance-table.saas-table td > div + div { margin-left: .35rem; } .owner-finance-table.saas-table th:nth-child(6), .owner-finance-table.saas-table td:nth-child(6) { display: none; } .owner-finance-filter select, .owner-finance-filter input, .owner-finance-filter button { height: 34px; } .owner-finance-filter > div:first-child { flex: 1 1 220px; min-width: 200px; } .owner-finance-filter > div:not(:first-child) { flex: 0 0 auto; } .owner-finance-filter select { width: auto !important; min-width: 130px; }</style>
 @endpush
 
 @section('content')
@@ -71,7 +71,7 @@
 
     <!-- Filters -->
     <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs">
-        <form action="{{ route('owner.payments.index') }}" method="GET" x-data="{ showMoreFilters: {{ request()->filled('tenant_id') || request()->filled('payment_method') ? 'true' : 'false' }}, searchQuery: @js(request('search', '')) }" class="owner-finance-filter space-y-2.5">
+        <form action="{{ route('owner.payments.index') }}" method="GET" x-data="{ showMoreFilters: {{ request()->filled('tenant_id') || request()->filled('payment_method') ? 'true' : 'false' }}, searchQuery: @js(request('search', '')) }" class="owner-finance-filter flex flex-col md:flex-row items-stretch md:items-center gap-2">
             <div class="lg:col-span-2">
                 <div class="relative"><i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px]" :class="searchQuery ? 'text-cyan-600 font-bold' : 'text-slate-400'"></i><input type="text" name="search" x-model="searchQuery" value="{{ request('search') }}" placeholder="Invoice #, Trx ID, Tenant name, Phone..." class="w-full h-[34px] pl-8 pr-7 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 text-xs focus:bg-white focus:ring-1 focus:ring-cyan-500 focus:border-cyan-500"><button type="button" x-show="searchQuery" x-cloak @click="searchQuery = ''; $nextTick(() => $el.closest('form').submit())" class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-600"><i class="fas fa-times text-[10px]"></i></button></div>
             </div>
