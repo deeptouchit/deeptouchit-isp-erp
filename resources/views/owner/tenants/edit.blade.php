@@ -74,6 +74,15 @@
                     </div>
 
                     <div>
+                        <label class="block text-[11px] font-semibold text-slate-600 mb-1">Domain Mode</label>
+                        <select name="domain_mode" class="w-full px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 text-xs">
+                            @foreach(['platform' => 'Platform subdomain only', 'custom' => 'Custom domain only', 'both' => 'Both (custom primary + platform fallback)'] as $mode => $label)
+                                <option value="{{ $mode }}" {{ old('domain_mode', $tenant->domain_mode ?? 'platform') === $mode ? 'selected' : '' }}>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div>
                         <label class="block text-[11px] font-semibold text-slate-600 mb-1">Hotline / Phone *</label>
                         <input type="text" name="phone" value="{{ old('phone', $tenant->phone) }}" required class="w-full px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 text-xs">
                         @error('phone')<p class="text-rose-500 text-[10px] mt-0.5">{{ $message }}</p>@enderror

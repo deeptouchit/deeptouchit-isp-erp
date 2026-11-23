@@ -58,6 +58,15 @@
                     </div>
 
                     <div>
+                        <label class="block text-[11px] font-semibold text-slate-600 mb-1">Domain Mode</label>
+                        <select name="domain_mode" class="w-full px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 text-xs">
+                            <option value="platform">Platform subdomain only</option>
+                            <option value="custom">Custom domain only</option>
+                            <option value="both">Both (custom primary + platform fallback)</option>
+                        </select>
+                    </div>
+
+                    <div>
                         <label class="block text-[11px] font-semibold text-slate-600 mb-1">Hotline / Phone Number *</label>
                         <input type="text" name="phone" value="{{ old('phone') }}" required placeholder="017XXXXXXXX" class="w-full px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 text-xs">
                         @error('phone')<p class="text-rose-500 text-[10px] mt-0.5">{{ $message }}</p>@enderror

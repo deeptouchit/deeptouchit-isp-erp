@@ -15,6 +15,8 @@ class Tenant extends Model
     protected $casts = [
         'mail_enabled' => 'boolean',
         'subscription_expires_at' => 'datetime',
+        'domain_verified_at' => 'datetime',
+        'ssl_expires_at' => 'datetime',
         'wallet_balance' => 'float',
     ];
 

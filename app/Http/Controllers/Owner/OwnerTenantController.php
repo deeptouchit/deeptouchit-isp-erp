@@ -142,6 +142,9 @@ class OwnerTenantController extends Controller
             'company_name' => ['required', 'string', 'max:255'],
             'slug' => ['required', 'string', 'alpha_dash', 'max:50', 'unique:tenants,slug'],
             'domain' => ['nullable', 'string', 'max:255', 'unique:tenants,domain'],
+            'custom_domain' => ['nullable', 'string', 'max:255', 'unique:tenants,custom_domain', 'regex:/^[a-z0-9.-]+$/i'],
+            'domain_mode' => ['nullable', 'in:platform,custom,both'],
+            'primary_domain' => ['nullable', 'in:platform,custom'],
             'phone' => ['required', 'string', 'max:20'],
             'email' => ['required', 'email', 'max:255', 'unique:tenants,email'],
             'address' => ['nullable', 'string'],
@@ -164,6 +167,10 @@ class OwnerTenantController extends Controller
                 'company_name' => $validated['company_name'],
                 'slug' => strtolower($validated['slug']),
                 'domain' => !empty($validated['domain']) ? strtolower(trim($validated['domain'])) : null,
+                'custom_domain' => !empty($validated['custom_domain'] ?? $validated['domain'] ?? null) ? strtolower(trim($validated['custom_domain'] ?? $validated['domain'])) : null,
+                'domain_mode' => $validated['domain_mode'] ?? 'platform',
+                'primary_domain' => $validated['primary_domain'] ?? 'platform',
+                'domain_status' => !empty($validated['custom_domain']) ? 'pending' : 'not_configured',
                 'phone' => $validated['phone'],
                 'email' => $validated['email'],
                 'address' => $validated['address'] ?? null,
@@ -285,6 +292,9 @@ class OwnerTenantController extends Controller
             'company_name' => ['required', 'string', 'max:255'],
             'slug' => ['required', 'string', 'alpha_dash', 'max:50', 'unique:tenants,slug,' . $tenant->id],
             'domain' => ['nullable', 'string', 'max:255', 'unique:tenants,domain,' . $tenant->id],
+            'custom_domain' => ['nullable', 'string', 'max:255', 'unique:tenants,custom_domain,' . $tenant->id, 'regex:/^[a-z0-9.-]+$/i'],
+            'domain_mode' => ['nullable', 'in:platform,custom,both'],
+            'primary_domain' => ['nullable', 'in:platform,custom'],
             'phone' => ['required', 'string', 'max:20'],
             'email' => ['required', 'email', 'max:255', 'unique:tenants,email,' . $tenant->id],
             'address' => ['nullable', 'string'],
@@ -296,12 +306,17 @@ class OwnerTenantController extends Controller
 
         $oldStatus = $tenant->status;
         $oldPlanId = $tenant->saas_plan_id;
+        $before = $tenant->only(['name', 'company_name', 'slug', 'domain', 'custom_domain', 'domain_mode', 'primary_domain', 'domain_status', 'status', 'saas_plan_id', 'subscription_expires_at']);
 
         $tenant->update([
             'name' => $validated['name'],
             'company_name' => $validated['company_name'],
             'slug' => strtolower($validated['slug']),
             'domain' => !empty($validated['domain']) ? strtolower(trim($validated['domain'])) : null,
+            'custom_domain' => !empty($validated['custom_domain'] ?? $validated['domain'] ?? null) ? strtolower(trim($validated['custom_domain'] ?? $validated['domain'])) : null,
+            'domain_mode' => $validated['domain_mode'] ?? 'platform',
+            'primary_domain' => $validated['primary_domain'] ?? 'platform',
+            'domain_status' => !empty($validated['custom_domain'] ?? $validated['domain'] ?? null) ? ($tenant->custom_domain === ($validated['custom_domain'] ?? $validated['domain'] ?? null) ? $tenant->domain_status : 'pending') : 'not_configured',
             'phone' => $validated['phone'],
             'email' => $validated['email'],
             'address' => $validated['address'] ?? null,
@@ -316,7 +331,7 @@ class OwnerTenantController extends Controller
             $tenant,
             'tenant_updated',
             "Updated profile information for '{$tenant->name}'.",
-            ['old_status' => $oldStatus, 'new_status' => $validated['status'], 'plan_changed' => ($oldPlanId != $validated['saas_plan_id'])]
+            ['before' => $before, 'after' => $tenant->only(['name', 'company_name', 'slug', 'domain', 'custom_domain', 'domain_mode', 'primary_domain', 'domain_status', 'status', 'saas_plan_id', 'subscription_expires_at']), 'old_status' => $oldStatus, 'new_status' => $validated['status'], 'plan_changed' => ($oldPlanId != $validated['saas_plan_id'])]
         );
 
         return redirect()->route('owner.tenants.index')->with('success', "Tenant '{$tenant->name}' profile updated successfully.");
