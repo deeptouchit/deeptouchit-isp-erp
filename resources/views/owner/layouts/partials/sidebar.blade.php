@@ -148,12 +148,6 @@
                     Fleet Overview
                 </a>
 
-                <a href="{{ route('owner.network-engines.settings') }}" 
-                   x-show="!filterQuery || 'infrastructure vault settings radius wireguard snmp timeouts'.includes(filterQuery.toLowerCase())"
-                   class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ request()->routeIs('owner.network-engines.settings') ? 'border-blue-200 bg-blue-50/80 text-blue-600 font-bold border-l-4 border-l-blue-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">
-                    Infrastructure & Vault
-                </a>
-
                 <a href="{{ route('owner.network-engines.audit-logs') }}" 
                    x-show="!filterQuery || 'network audit trail logs coa reboot reset vlan history'.includes(filterQuery.toLowerCase())"
                    class="block px-2.5 py-1.5 rounded-lg border transition text-[11px] shadow-2xs {{ request()->routeIs('owner.network-engines.audit-logs') ? 'border-blue-200 bg-blue-50/80 text-blue-600 font-bold border-l-4 border-l-blue-600' : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-medium' }}">

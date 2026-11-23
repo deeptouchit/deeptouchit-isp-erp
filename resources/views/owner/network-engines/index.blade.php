@@ -2,6 +2,14 @@
 
 @section('page-title', 'Carrier Network Engines Hub')
 
+@push('styles')
+<style>
+    .network-engines-table.saas-table td > div { display: inline-flex; vertical-align: middle; }
+    .network-engines-table.saas-table td > div + div { margin-left: .35rem; }
+    .network-engines-table.saas-table td { white-space: nowrap; }
+</style>
+@endpush
+
 @section('content')
 <div class="space-y-3" x-data="{ 
     scriptModal: false, 
@@ -91,7 +99,7 @@
     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
         
         <!-- Metric 1: MikroTik Router Fleet -->
-        <div class="p-3.5 rounded-xl bg-white border border-slate-200 shadow-xs flex items-center justify-between">
+        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5">
                 <span class="text-[10.5px] font-medium text-slate-500 uppercase tracking-wider block">MikroTik Routers</span>
                 <span class="text-lg font-extrabold text-slate-900 tracking-tight font-mono">{{ number_format($totalRouters) }}</span>
@@ -99,13 +107,13 @@
                     {{ $onlineRouters }} Online • {{ $offlineRouters }} Offline
                 </span>
             </div>
-            <div class="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-sm border border-blue-100 flex-shrink-0">
+            <div class="w-6 h-6 rounded-md bg-blue-50 text-blue-600 flex items-center justify-center text-[10px] border border-blue-100 flex-shrink-0">
                 <i class="fas fa-server"></i>
             </div>
         </div>
 
         <!-- Metric 2: OLT Hardware & PON Capacity -->
-        <div class="p-3.5 rounded-xl bg-white border border-slate-200 shadow-xs flex items-center justify-between">
+        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5">
                 <span class="text-[10.5px] font-medium text-purple-700 uppercase tracking-wider block">OLT PON Hardware</span>
                 <span class="text-lg font-extrabold text-purple-700 tracking-tight font-mono">{{ number_format($totalOlts) }}</span>
@@ -113,13 +121,13 @@
                     {{ number_format($totalOnus) }} ONUs • {{ $totalPonPorts }} PON Ports
                 </span>
             </div>
-            <div class="w-9 h-9 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center text-sm border border-purple-100 flex-shrink-0">
+            <div class="w-6 h-6 rounded-md bg-purple-50 text-purple-600 flex items-center justify-center text-[10px] border border-purple-100 flex-shrink-0">
                 <i class="fas fa-microchip"></i>
             </div>
         </div>
 
         <!-- Metric 3: AAA FreeRADIUS Cluster -->
-        <div class="p-3.5 rounded-xl bg-white border border-slate-200 shadow-xs flex items-center justify-between">
+        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5">
                 <span class="text-[10.5px] font-medium text-emerald-700 uppercase tracking-wider block">FreeRADIUS AAA</span>
                 <span class="text-lg font-extrabold text-emerald-700 tracking-tight font-mono">Port 3799</span>
@@ -127,13 +135,13 @@
                     {{ $settings['network_radius_master_host'] ?? 'Not configured' }}
                 </span>
             </div>
-            <div class="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm border border-emerald-100 flex-shrink-0">
+            <div class="w-6 h-6 rounded-md bg-emerald-50 text-emerald-600 flex items-center justify-center text-[10px] border border-emerald-100 flex-shrink-0">
                 <i class="fas fa-key"></i>
             </div>
         </div>
 
         <!-- Metric 4: WireGuard VPN Mesh -->
-        <div class="p-3.5 rounded-xl bg-white border border-slate-200 shadow-xs flex items-center justify-between">
+        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5">
                 <span class="text-[10.5px] font-medium text-amber-700 uppercase tracking-wider block">WireGuard Tunnel</span>
                 <span class="text-lg font-extrabold text-amber-700 tracking-tight font-mono">{{ $settings['network_wireguard_subnet_pool'] ?? 'Not configured' }}</span>
@@ -141,7 +149,7 @@
                     NAT/CGNAT Mesh Traversal
                 </span>
             </div>
-            <div class="w-9 h-9 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-sm border border-amber-100 flex-shrink-0">
+            <div class="w-6 h-6 rounded-md bg-amber-50 text-amber-600 flex items-center justify-center text-[10px] border border-amber-100 flex-shrink-0">
                 <i class="fas fa-shield-virus"></i>
             </div>
         </div>
@@ -214,7 +222,7 @@
 
             <!-- Routers Table -->
             <div class="overflow-x-auto border border-slate-200 rounded-lg">
-            <table class="saas-table">
+            <table class="saas-table network-engines-table">
                     <thead class="bg-slate-50 text-[10.5px] font-bold text-slate-500 uppercase tracking-wider">
                         <tr>
                             <th class="text-center">Router Name / Tenant</th>
@@ -367,7 +375,7 @@
 
             <!-- OLT Table -->
             <div class="overflow-x-auto border border-slate-200 rounded-lg">
-            <table class="saas-table">
+            <table class="saas-table network-engines-table">
                     <thead class="bg-slate-50 text-[10.5px] font-bold text-slate-500 uppercase tracking-wider">
                         <tr>
                             <th class="text-center">OLT Name / Tenant</th>
@@ -469,7 +477,7 @@
             </div>
 
             <div class="overflow-x-auto border border-slate-200 rounded-lg">
-                <table class="saas-table">
+                <table class="saas-table network-engines-table">
                     <thead class="bg-slate-50 text-[10.5px] font-bold text-slate-500 uppercase tracking-wider">
                         <tr>
                             <th class="text-center">Timestamp</th>

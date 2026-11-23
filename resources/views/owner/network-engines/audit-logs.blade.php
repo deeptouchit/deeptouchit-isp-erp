@@ -2,6 +2,14 @@
 
 @section('page-title', 'Immutable Network Audit Trail')
 
+@push('styles')
+<style>
+    .network-audit-table.saas-table td > div { display: inline-flex; vertical-align: middle; }
+    .network-audit-table.saas-table td > div + div { margin-left: .35rem; }
+    .network-audit-table.saas-table td { white-space: nowrap; }
+</style>
+@endpush
+
 @section('content')
 <div class="space-y-3" x-data="{ 
     payloadModal: false, 
@@ -49,19 +57,19 @@
     <!-- Top 4-Card Summary Metrics Strip -->
     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
         <!-- Metric 1: Total Events Recorded -->
-        <div class="p-3.5 rounded-xl bg-white border border-slate-200 shadow-xs flex items-center justify-between">
+        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5">
                 <span class="text-[10.5px] font-medium text-slate-500 uppercase tracking-wider block">Total Ledger Entries</span>
                 <span class="text-lg font-extrabold text-slate-900 tracking-tight font-mono">{{ number_format($totalCount) }}</span>
                 <span class="text-[10px] text-slate-400 block">Immutable log stream</span>
             </div>
-            <div class="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-sm border border-blue-100 flex-shrink-0">
+            <div class="w-6 h-6 rounded-md bg-blue-50 text-blue-600 flex items-center justify-center text-[10px] border border-blue-100 flex-shrink-0">
                 <i class="fas fa-shield-halved"></i>
             </div>
         </div>
 
         <!-- Metric 2: Successful Executions -->
-        <div class="p-3.5 rounded-xl bg-white border border-slate-200 shadow-xs flex items-center justify-between">
+        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5">
                 <span class="text-[10.5px] font-medium text-emerald-700 uppercase tracking-wider block">Success Operations</span>
                 <span class="text-lg font-extrabold text-emerald-700 tracking-tight font-mono">{{ number_format($successCount) }}</span>
@@ -69,31 +77,31 @@
                     {{ $totalCount > 0 ? round(($successCount / $totalCount) * 100, 1) : 100 }}% Pass Rate
                 </span>
             </div>
-            <div class="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm border border-emerald-100 flex-shrink-0">
+            <div class="w-6 h-6 rounded-md bg-emerald-50 text-emerald-600 flex items-center justify-center text-[10px] border border-emerald-100 flex-shrink-0">
                 <i class="fas fa-check-circle"></i>
             </div>
         </div>
 
         <!-- Metric 3: Failed / Refused Actions -->
-        <div class="p-3.5 rounded-xl bg-white border border-slate-200 shadow-xs flex items-center justify-between">
+        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5">
                 <span class="text-[10.5px] font-medium text-rose-700 uppercase tracking-wider block">Failed / Exceptions</span>
                 <span class="text-lg font-extrabold text-rose-700 tracking-tight font-mono">{{ number_format($failedCount) }}</span>
                 <span class="text-[10px] text-slate-400 block">Action errors & refusals</span>
             </div>
-            <div class="w-9 h-9 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center text-sm border border-rose-100 flex-shrink-0">
+            <div class="w-6 h-6 rounded-md bg-rose-50 text-rose-600 flex items-center justify-center text-[10px] border border-rose-100 flex-shrink-0">
                 <i class="fas fa-circle-xmark"></i>
             </div>
         </div>
 
         <!-- Metric 4: Distinct Devices Interacted -->
-        <div class="p-3.5 rounded-xl bg-white border border-slate-200 shadow-xs flex items-center justify-between">
+        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5">
                 <span class="text-[10.5px] font-medium text-purple-700 uppercase tracking-wider block">Targeted Hardware</span>
                 <span class="text-lg font-extrabold text-purple-700 tracking-tight font-mono">{{ number_format($distinctDevicesCount) }}</span>
                 <span class="text-[10px] text-slate-400 block">Routers, OLTs & Hubs</span>
             </div>
-            <div class="w-9 h-9 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center text-sm border border-purple-100 flex-shrink-0">
+            <div class="w-6 h-6 rounded-md bg-purple-50 text-purple-600 flex items-center justify-center text-[10px] border border-purple-100 flex-shrink-0">
                 <i class="fas fa-server"></i>
             </div>
         </div>
@@ -180,7 +188,7 @@
     <!-- Audit Logs Ledger Table -->
     <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
         <div class="overflow-x-auto">
-            <table class="saas-table">
+            <table class="saas-table network-audit-table">
                 <thead class="bg-slate-50 text-[10.5px] font-bold text-slate-500 uppercase tracking-wider">
                     <tr>
                         <th class="text-center">Date & Time</th>
