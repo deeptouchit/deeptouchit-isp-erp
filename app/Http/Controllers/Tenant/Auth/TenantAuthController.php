@@ -120,7 +120,7 @@ class TenantAuthController extends Controller
         $tenant = $user->tenant ?? ($user->tenant_id ? Tenant::find($user->tenant_id) : null);
 
         // Check if ISP Tenant Company is suspended
-        if ($tenant && method_exists($tenant, 'isSuspended') && $tenant->isSuspended()) {
+        if ($tenant && method_exists($tenant, 'isSuspended') && ($tenant->isSuspended() || $tenant->isSubscriptionExpired())) {
             RateLimiter::clear($this->throttleKey($request));
             $request->session()->regenerate();
             return redirect()->route('tenant.billing.suspended')->with('warning', 'আপনার আইএসপি কোম্পানির সাবস্ক্রিপশন সাময়িকভাবে স্থগিত রয়েছে। বিল পরিশোধ করুন।');

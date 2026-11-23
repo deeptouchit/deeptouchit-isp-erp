@@ -20,6 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             \App\Http\Middleware\CheckSaasMaintenanceMode::class,
             \App\Http\Middleware\SetLocale::class,
+            \App\Http\Middleware\CheckTenantSubscription::class,
         ]);
         $middleware->alias([
             'permission' => \App\Http\Middleware\CheckTenantPermission::class,

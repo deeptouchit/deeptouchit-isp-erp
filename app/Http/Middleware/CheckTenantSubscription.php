@@ -22,7 +22,7 @@ class CheckTenantSubscription
                 \App\Services\Tenancy\TenantContext::setTenant($tenant);
             }
 
-            if ($tenant && $tenant->isSuspended()) {
+            if ($tenant && ($tenant->isSuspended() || $tenant->isSubscriptionExpired())) {
                 // Allow access to billing portal, payments, and logout
                 $allowedRoutes = [
                     'tenant.billing*',

@@ -39,7 +39,7 @@ class EnsureTenantUser
         $tenant = $user->tenant;
 
         // If Tenant is suspended, only allow access to billing settlement routes and logout
-        if ($tenant->isSuspended()) {
+        if ($tenant->isSuspended() || $tenant->isSubscriptionExpired()) {
             if (!$request->routeIs('tenant.billing.*') && !$request->routeIs('tenant.logout')) {
                 return redirect()->route('tenant.billing.suspended');
             }

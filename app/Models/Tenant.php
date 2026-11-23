@@ -90,6 +90,12 @@ class Tenant extends Model
         return $this->status === 'suspended';
     }
 
+    public function isSubscriptionExpired(): bool
+    {
+        return $this->subscription_expires_at !== null
+            && $this->subscription_expires_at->isPast();
+    }
+
     public function isActive(): bool
     {
         return $this->status === 'active';
