@@ -20,7 +20,7 @@ class SetLocale
 
         // Determine locale from session, fallback to the project default English locale.
         $locale = Session::get('locale');
-        if (!$locale || !Session::get('locale_explicit', false)) {
+        if (!$locale || !Session::get('locale_explicit_at')) {
             $locale = config('app.locale', 'en');
         }
 
