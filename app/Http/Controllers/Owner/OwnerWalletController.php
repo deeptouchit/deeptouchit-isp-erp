@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Tenant;
 use App\Models\TenantWallet;
 use App\Models\TenantWalletTransaction;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -20,7 +21,7 @@ class OwnerWalletController extends Controller
         $totalBalance = (float) TenantWallet::sum('balance');
         $walletsWithBalanceCount = TenantWallet::where('balance', '>', 0)->count();
 
-        $query = TenantWallet::with(['tenant', 'transactions' => fn($q) => $q->latest()->take(5)]);
+        $query = TenantWallet::with('tenant')->withCount('transactions');
 
         if ($request->filled('search')) {
             $search = trim($request->search);
@@ -32,11 +33,25 @@ class OwnerWalletController extends Controller
             });
         }
 
-        $wallets = $query->orderByDesc('balance')->paginate(15)->withQueryString();
+        if ($request->filled('status')) {
+            $query->whereHas('tenant', function ($t) use ($request) {
+                if ($request->status === 'expired') {
+                    $t->whereNotNull('subscription_expires_at')->where('subscription_expires_at', '<', now());
+                } else {
+                    $t->where('status', $request->status);
+                }
+            });
+        }
+
+        $perPage = min(max((int) $request->input('per_page', 15), 15), 100);
+        $wallets = $query->orderByDesc('balance')->paginate($perPage)->withQueryString();
         $tenants = Tenant::orderBy('name')->get();
 
         // Recent Wallet Transactions Audit
         $recentTransactions = TenantWalletTransaction::with(['tenant', 'wallet'])->latest()->limit(15)->get();
+        $ledgerEntriesCount = TenantWalletTransaction::count();
+        $currencyCode = Setting::whereNull('tenant_id')->where('key', 'currency_code')->value('value');
+        $currencySymbol = Setting::whereNull('tenant_id')->where('key', 'currency_symbol')->value('value');
 
         return view('owner.wallets.index', compact(
             'wallets',
@@ -45,6 +60,7 @@ class OwnerWalletController extends Controller
             'totalWalletsCount',
             'totalBalance',
             'walletsWithBalanceCount'
+            , 'currencyCode', 'currencySymbol', 'ledgerEntriesCount'
         ));
     }
 
@@ -61,7 +77,7 @@ class OwnerWalletController extends Controller
 
         $wallet = TenantWallet::firstOrCreate(
             ['tenant_id' => $tenant->id],
-            ['balance' => 0, 'currency' => 'BDT']
+            ['balance' => 0, 'currency' => Setting::whereNull('tenant_id')->where('key', 'currency_code')->value('value')]
         );
 
         $amount = (float) $validated['amount'];

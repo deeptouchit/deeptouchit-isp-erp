@@ -3,11 +3,12 @@
 @section('page-title', 'Tenant Wallets & Advance Ledger')
 
 @section('content')
-<div class="space-y-4" x-data="{
+<div class="space-y-3" x-data="{
     walletModalOpen: false,
     selectedTenantId: '',
     selectedTenantName: '',
     selectedBalance: '',
+    showMoreFilters: {{ request()->filled('status') ? 'true' : 'false' }},
 
     openWalletAdjust(tenantId, tenantName, balance) {
         this.selectedTenantId = tenantId;
@@ -20,20 +21,17 @@
 
     <!-- Top Header Bar -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
-        <div>
             <div class="flex items-center gap-2">
                 <h2 class="text-sm font-bold text-slate-900 tracking-tight">ISP Tenant Prepaid Wallets</h2>
                 <span class="px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200 text-[10px] font-bold font-mono">
                     {{ $totalWalletsCount }} Wallets
                 </span>
             </div>
-            <p class="text-[11px] text-slate-500 mt-0.5">Manage prepaid tenant balances, advance deposit credits, manual debit charges, and ledger records</p>
-        </div>
     </div>
 
-    <!-- 3 Key Wallet Metrics Strip -->
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div class="p-3.5 bg-white rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
+    <!-- KPI Summary Strip -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+        <div class="px-2.5 py-1.5 bg-white rounded-lg border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5">
                 <span class="text-[10px] font-bold text-emerald-600 uppercase tracking-wider block">Total Held Credits</span>
                 <span class="text-lg font-extrabold text-emerald-700 tracking-tight font-mono">@currency($totalBalance)</span>
@@ -44,7 +42,7 @@
             </div>
         </div>
 
-        <div class="p-3.5 bg-white rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
+        <div class="px-2.5 py-1.5 bg-white rounded-lg border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5">
                 <span class="text-[10px] font-bold text-purple-600 uppercase tracking-wider block">Funded Wallets</span>
                 <span class="text-lg font-extrabold text-purple-700 tracking-tight font-mono">{{ $walletsWithBalanceCount }}</span>
@@ -55,7 +53,7 @@
             </div>
         </div>
 
-        <div class="p-3.5 bg-white rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
+        <div class="px-2.5 py-1.5 bg-white rounded-lg border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5">
                 <span class="text-[10px] font-bold text-blue-600 uppercase tracking-wider block">Total Tenant Wallets</span>
                 <span class="text-lg font-extrabold text-slate-900 tracking-tight font-mono">{{ $totalWalletsCount }}</span>
@@ -65,6 +63,20 @@
                 <i class="fas fa-building-columns"></i>
             </div>
         </div>
+        <div class="px-2.5 py-1.5 bg-white rounded-lg border border-slate-200 shadow-xs"><span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Average Balance</span><span class="text-[13px] font-bold font-mono leading-tight block">@currency($totalWalletsCount ? $totalBalance / $totalWalletsCount : 0)</span></div>
+        <div class="px-2.5 py-1.5 bg-white rounded-lg border border-slate-200 shadow-xs"><span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Zero Balance</span><span class="text-[13px] font-bold font-mono leading-tight block text-slate-700">{{ $totalWalletsCount - $walletsWithBalanceCount }}</span></div>
+        <div class="px-2.5 py-1.5 bg-white rounded-lg border border-slate-200 shadow-xs"><span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Ledger Entries</span><span class="text-[13px] font-bold font-mono leading-tight block">{{ $ledgerEntriesCount }}</span></div>
+    </div>
+
+    <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5">
+        <form method="GET" action="{{ route('owner.wallets.index') }}" class="flex flex-col md:flex-row items-stretch md:items-center gap-2">
+            <div class="relative flex-1 min-w-[200px]"><i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-[11px]"></i><input name="search" value="{{ request('search') }}" placeholder="Search tenant, email or phone..." class="w-full h-[34px] pl-8 pr-3 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden"></div>
+            <select name="status" class="h-[34px] md:w-36 px-2.5 py-0 rounded-lg border border-slate-200 bg-slate-50 text-xs"><option value="">All Statuses</option><option value="active" @selected(request('status') === 'active')>Active</option><option value="suspended" @selected(request('status') === 'suspended')>Suspended</option><option value="expired" @selected(request('status') === 'expired')>Expired</option></select>
+            <select name="per_page" class="h-[34px] md:w-28 px-2.5 py-0 rounded-lg border border-slate-200 bg-slate-50 text-xs"><option value="15">15 / page</option><option value="30" @selected(request('per_page') == 30)>30 / page</option><option value="50" @selected(request('per_page') == 50)>50 / page</option><option value="100" @selected(request('per_page') == 100)>100 / page</option></select>
+            <button type="button" @click="showMoreFilters = !showMoreFilters" class="h-[34px] py-0 px-3 rounded-lg border border-slate-200 bg-slate-50 text-xs font-semibold"><i class="fas" :class="showMoreFilters ? 'fa-chevron-up' : 'fa-chevron-down'"></i> More Filters</button>
+            <div class="flex items-center gap-1.5 md:ml-auto"><button class="h-[34px] bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-0 px-3 rounded-lg shadow-xs"><i class="fas fa-filter text-[10px]"></i> Filter</button><a href="{{ route('owner.wallets.index') }}" class="h-[34px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-0 px-2.5 rounded-lg border border-slate-200/80 flex items-center gap-1"><i class="fas fa-rotate-left text-[10px]"></i> Reset</a></div>
+        </form>
+        <div x-show="showMoreFilters" x-cloak x-transition class="pt-2 border-t border-slate-100 text-[10px] text-slate-500">Filter wallets by tenant status and balance. Use the action button to record a credit or debit.</div>
     </div>
 
     <!-- Wallets Table -->
@@ -75,7 +87,7 @@
         </div>
 
         <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs text-slate-700 whitespace-nowrap border-collapse">
+            <table class="saas-table">
                 <thead class="bg-slate-50 text-slate-600 uppercase tracking-wider text-[10px] border-b border-slate-200 font-bold text-center">
                     <tr>
                         <th class="px-3 py-2.5 border-r border-slate-200">ISP Organization</th>
@@ -102,10 +114,10 @@
                                 @currency($w->balance)
                             </td>
                             <td class="px-3.5 py-2.5 border-r border-slate-200 font-mono text-center uppercase font-bold text-slate-500">
-                                {{ $w->currency ?? 'BDT' }}
+                                {{ $w->currency ?? $currencyCode }}
                             </td>
                             <td class="px-3.5 py-2.5 border-r border-slate-200 text-xs">
-                                <span class="text-[11px] text-slate-500 font-mono">{{ count($w->transactions) }} adjustments recorded</span>
+                                <span class="text-[11px] text-slate-500 font-mono">{{ $w->transactions_count }} adjustments</span>
                             </td>
                             <td class="px-3.5 py-2.5 text-center">
                                 <button type="button" 
@@ -141,7 +153,7 @@
         </div>
 
         <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs text-slate-700 whitespace-nowrap border-collapse">
+            <table class="saas-table">
                 <thead class="bg-slate-50 text-slate-600 uppercase tracking-wider text-[10px] border-b border-slate-200 font-bold text-center">
                     <tr>
                         <th class="px-3 py-2.5 border-r border-slate-200">Date</th>
@@ -223,7 +235,7 @@
                 <div class="p-5 space-y-3.5">
                     <div>
                         <span class="text-[10.5px] font-semibold text-slate-600 block mb-1">Current Balance:</span>
-                        <div class="p-2 rounded-lg bg-slate-50 border border-slate-200 text-emerald-700 font-mono font-extrabold text-sm" x-text="'৳ ' + Number(selectedBalance || 0).toLocaleString()">
+                        <div class="p-2 rounded-lg bg-slate-50 border border-slate-200 text-emerald-700 font-mono font-extrabold text-sm" x-text="'{{ $currencySymbol }} ' + Number(selectedBalance || 0).toLocaleString()">
                         </div>
                     </div>
 
