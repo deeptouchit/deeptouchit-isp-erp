@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Tenant;
 use App\Models\TenantActivityLog;
 use App\Models\TenantCustomer;
+use App\Models\TenantCustomerAccount;
 use App\Models\TenantCustomerInvoice;
 use App\Models\TenantCustomerPayment;
 use App\Models\TenantInternetPackage;
@@ -578,6 +579,27 @@ class ResellerCustomerController extends Controller
             'activityLogs',
             'currencySymbol'
         ));
+    }
+
+    public function resetPortalPassword(int $id): RedirectResponse
+    {
+        [$authUser, $reseller, $tenant] = $this->getResellerData();
+        $customer = TenantCustomer::where('tenant_id', $tenant->id)
+            ->where('reseller_id', $reseller->id)
+            ->findOrFail($id);
+        $digits = preg_replace('/\D+/', '', (string) $customer->phone);
+        abort_if(strlen($digits) < 6, 422, 'Customer mobile number must contain at least 6 digits.');
+
+        $account = TenantCustomerAccount::firstOrNew(['customer_id' => $customer->id]);
+        $account->fill([
+            'tenant_id' => $tenant->id,
+            'login_identifier' => $customer->email ?: $customer->customer_id,
+            'password' => substr($digits, -6),
+            'status' => 'active',
+            'force_password_change' => true,
+        ])->save();
+
+        return back()->with('success', 'Customer Portal password reset to the last 6 digits of the mobile number.');
     }
 
     private function eligibleCollectors(int $tenantId, int $resellerId): \Illuminate\Database\Eloquent\Builder

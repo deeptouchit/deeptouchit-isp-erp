@@ -212,6 +212,19 @@
                 </button>
                 @endif
 
+                <!-- Customer Portal -->
+                <a href="{{ route('customer.portal.clean.login', ['tenant' => $tenant->slug]) }}" target="_blank" rel="noopener" class="btn-hdr bg-cyan-600 text-white" data-title="{{ __('Open Customer Portal') }}">
+                    <i class="fas fa-mobile-screen-button"></i>
+                </a>
+                @if(!$authUser?->isCollector())
+                <form method="POST" action="{{ route('tenant.customers.portal-password.reset', $customer->id) }}" class="inline" onsubmit="return confirm('{{ __('Reset Portal Password to the last 6 mobile digits?') }}')">
+                    @csrf
+                    <button type="submit" class="btn-hdr bg-amber-500 text-white" data-title="{{ __('Reset Portal Password') }}">
+                        <i class="fas fa-key"></i>
+                    </button>
+                </form>
+                @endif
+
                 <!-- 3. RX/TX (Real-time Graphical Bandwidth) -->
                 <button type="button" 
                         @click="openRxtxModal()" 
@@ -289,6 +302,11 @@
 
             </div>
         </div>
+    </div>
+
+    <div class="mt-2 flex items-center justify-center gap-2 text-[10px] text-slate-500">
+        <span class="font-semibold text-slate-600">{{ __('Portal Login ID') }}:</span>
+        <span class="font-mono text-cyan-700">{{ $customer->email ?: $customer->customer_id }}</span>
     </div>
 
     <!-- Main 2-Section Grid Layout (Left: 3 Cards in 12 Cols | Right: 1 Card in 12 Cols) -->
