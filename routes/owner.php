@@ -61,12 +61,12 @@ Route::prefix('owner')->name('owner.')->group(function () {
         Route::post('/plans/seed-defaults', [OwnerPlanController::class, 'seedDefaults'])->name('plans.seed-defaults');
 
         // 3. Tenant Management
-        Route::resource('tenants', OwnerTenantController::class)
-            ->except(['destroy', 'create', 'store', 'edit', 'update'])
-            ->middleware('owner.capability:tenants.view');
         Route::get('/tenants/create', [OwnerTenantController::class, 'create'])
             ->middleware('owner.capability:tenants.create')
             ->name('tenants.create');
+        Route::resource('tenants', OwnerTenantController::class)
+            ->except(['destroy', 'create', 'store', 'edit', 'update'])
+            ->middleware('owner.capability:tenants.view');
         Route::post('/tenants', [OwnerTenantController::class, 'store'])
             ->middleware('owner.capability:tenants.create')
             ->name('tenants.store');
