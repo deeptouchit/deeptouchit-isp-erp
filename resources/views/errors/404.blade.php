@@ -16,23 +16,23 @@
         if ($isOwner) {
             $homeUrl = route('owner.dashboard');
             $homeLabel = 'Owner Dashboard';
-            $actionUrl = route('owner.tenants.index');
-            $actionLabel = 'Manage ISPs';
+            $actionUrl = $homeUrl;
+            $actionLabel = 'Go to dashboard';
         } elseif ($isReseller) {
             $homeUrl = route('reseller.dashboard');
             $homeLabel = 'Reseller Dashboard';
-            $actionUrl = route('reseller.customers.index');
-            $actionLabel = 'Customers';
+            $actionUrl = $homeUrl;
+            $actionLabel = 'Go to dashboard';
         } elseif ($isCustomerPortal && $portalTenant) {
             $homeUrl = route('customer.portal.clean.dashboard', ['tenant' => $portalTenant->slug]);
             $homeLabel = 'Customer Home';
-            $actionUrl = route('customer.portal.clean.login', ['tenant' => $portalTenant->slug]);
-            $actionLabel = 'Customer Login';
+            $actionUrl = $homeUrl;
+            $actionLabel = 'Go to home';
         } elseif ($isTenant) {
             $homeUrl = route('tenant.dashboard');
             $homeLabel = 'Tenant Dashboard';
-            $actionUrl = route('tenant.staff.index');
-            $actionLabel = 'Employees';
+            $actionUrl = $homeUrl;
+            $actionLabel = 'Go to dashboard';
         } else {
             $homeUrl = auth()->check() ? route('tenant.dashboard') : route('login');
             $homeLabel = auth()->check() ? 'Dashboard' : 'Sign in';
@@ -46,24 +46,23 @@
 </head>
 <body class="bg-slate-50 text-slate-800 flex items-center justify-center min-h-screen p-4 antialiased font-sans">
     <div class="max-w-md w-full bg-white rounded-2xl shadow-xl border border-slate-200 p-6 text-center space-y-4">
-        <div class="w-14 h-14 mx-auto rounded-2xl bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center justify-center text-2xl font-bold">
-            <i class="fas fa-compass"></i>
+        <div class="w-16 h-16 mx-auto rounded-2xl bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center justify-center text-2xl font-bold shadow-sm">
+            <i class="fas fa-map-signs"></i>
         </div>
-        <div>
-            <span class="text-xs font-bold text-indigo-600 uppercase tracking-widest">HTTP 404 Error</span>
-            <h1 class="text-xl font-extrabold text-slate-900 mt-1">Page or Resource Not Found</h1>
-            <p class="text-xs text-slate-500 mt-1.5 leading-relaxed">
-                <span class="font-medium text-slate-700">{{ request()->path() }}</span> does not exist or may have been moved.
+        <div class="space-y-2">
+            <h1 class="text-2xl font-extrabold tracking-tight text-slate-900">Page not found</h1>
+            <p class="text-sm text-slate-500 leading-relaxed">
+                We couldn’t find the page you’re looking for. It may have been moved or is no longer available.
             </p>
         </div>
-        <div class="pt-2 flex items-center justify-center gap-2">
-            <a href="{{ $actionUrl }}" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs transition inline-flex items-center gap-2 shadow-xs">
-                <i class="fas fa-compass text-[11px]"></i>
+        <div class="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-2">
+            <a href="{{ $actionUrl }}" class="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm transition inline-flex items-center justify-center gap-2 shadow-sm">
+                <i class="fas fa-house text-xs"></i>
                 <span>{{ $actionLabel }}</span>
             </a>
-            <a href="{{ $homeUrl }}" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs transition inline-flex items-center gap-2">
-                <i class="fas fa-arrow-left text-[11px]"></i>
-                <span>{{ $homeLabel }}</span>
+            <a href="{{ url()->previous() !== url()->current() ? url()->previous() : $homeUrl }}" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm transition inline-flex items-center justify-center gap-2 border border-slate-200">
+                <i class="fas fa-arrow-left text-xs"></i>
+                <span>Go back</span>
             </a>
         </div>
     </div>
