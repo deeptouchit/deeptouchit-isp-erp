@@ -12,6 +12,7 @@ use App\Models\TenantWallet;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
 
 class OwnerDashboardController extends Controller
@@ -62,7 +63,7 @@ class OwnerDashboardController extends Controller
         // 4. Wallet & SMS Metrics
         $totalWalletBalance = TenantWallet::sum('balance') ?? 0;
         $totalSmsSent = \App\Models\SmsLog::where('status', '!=', 'failed')->count();
-        $smsBalanceInfo = \App\Services\SmsService::getBalance();
+        $smsBalanceInfo = Cache::remember('owner.dashboard.sms_balance', 120, fn () => \App\Services\SmsService::getBalance());
 
         // 5. Recent Tenants & Invoices
         $recentTenants = Tenant::with(['plan'])->latest()->take(6)->get();
@@ -75,18 +76,28 @@ class OwnerDashboardController extends Controller
         $chartRevenue = [];
         $chartTenants = [];
 
+        $chartStart = now()->subMonths(5)->startOfMonth();
+        $chartInvoices = SaasInvoice::where('status', 'paid')
+            ->where('created_at', '>=', $chartStart)
+            ->get(['created_at', 'amount']);
+        $chartTenantRows = Tenant::where('created_at', '>=', $chartStart)
+            ->get(['created_at']);
+        $runningTenantCount = Tenant::where('created_at', '<', $chartStart)->count();
+
         for ($i = 5; $i >= 0; $i--) {
             $month = now()->subMonths($i);
             $monthLabel = $month->format('M Y');
             $chartLabels[] = $monthLabel;
 
-            $rev = SaasInvoice::where('status', 'paid')
-                ->whereBetween('created_at', [$month->copy()->startOfMonth(), $month->copy()->endOfMonth()])
+            $rev = $chartInvoices
+                ->filter(fn ($invoice) => $invoice->created_at->isSameMonth($month))
                 ->sum('amount');
             $chartRevenue[] = (float)$rev;
 
-            $tenantsCount = Tenant::where('created_at', '<=', $month->copy()->endOfMonth())->count();
-            $chartTenants[] = $tenantsCount;
+            $runningTenantCount += $chartTenantRows
+                ->filter(fn ($tenant) => $tenant->created_at->isSameMonth($month))
+                ->count();
+            $chartTenants[] = $runningTenantCount;
         }
 
         return view('owner.dashboard', compact(
