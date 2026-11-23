@@ -64,7 +64,6 @@
     <!-- Navigation Menu Container -->
     <div class="flex-1 overflow-y-auto p-2 space-y-1 scrollbar-thin">
         
-        @if(false)
         <!-- 1. Top Standalone Menu: Dashboard -->
         <a href="{{ route('owner.dashboard') }}" 
            x-show="!filterQuery || 'dashboard overview stats home analytics'.includes(filterQuery.toLowerCase())"
@@ -123,8 +122,6 @@
             </div>
         </div>
 
-        @endif
-
         <!-- 3. Main Menu: Carrier Network Engines (Collapsible Sub-menu) -->
         @if(in_array('network.view', config('owner_capabilities', []), true))
         @php
@@ -166,7 +163,6 @@
         </div>
         @endif
 
-        @if(false)
         <!-- 4. Main Menu: Billing & Finance (Collapsible Sub-menu) -->
         @php
             $isBillingActive = request()->routeIs('owner.billing*', 'owner.invoices*', 'owner.subscriptions*', 'owner.payments*', 'owner.transactions*');
@@ -337,7 +333,6 @@
             </div>
         </div>
 
-        @endif
     </div>
 
     <!-- Sidebar User Footer -->
