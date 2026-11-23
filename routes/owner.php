@@ -68,7 +68,7 @@ Route::prefix('owner')->name('owner.')->group(function () {
         Route::post('/tenants/{tenant}/toggle-status', [OwnerTenantController::class, 'toggleStatus'])->name('tenants.toggle-status');
         Route::post('/tenants/{tenant}/extend-subscription', [OwnerTenantController::class, 'extendSubscription'])->name('tenants.extend-subscription');
         Route::post('/tenants/{tenant}/impersonate', [OwnerTenantController::class, 'impersonate'])
-            ->middleware('owner.capability:tenants.impersonate')
+            ->middleware(['owner.capability:tenants.impersonate', 'throttle:10,1'])
             ->name('tenants.impersonate');
 
         // 3.1 Global User Management & Password Control
@@ -79,9 +79,11 @@ Route::prefix('owner')->name('owner.')->group(function () {
             ->middleware('owner.capability:users.delete')
             ->name('users.destroy');
         Route::post('/users/{user}/toggle-status', [OwnerUserController::class, 'toggleStatus'])->name('users.toggle-status');
-        Route::post('/users/{user}/reset-password', [OwnerUserController::class, 'resetPassword'])->name('users.reset-password');
+        Route::post('/users/{user}/reset-password', [OwnerUserController::class, 'resetPassword'])
+            ->middleware(['owner.capability:users.reset-password', 'throttle:10,1'])
+            ->name('users.reset-password');
         Route::post('/users/{user}/impersonate', [OwnerUserController::class, 'impersonate'])
-            ->middleware('owner.capability:users.impersonate')
+            ->middleware(['owner.capability:users.impersonate', 'throttle:10,1'])
             ->name('users.impersonate');
 
         // 4. Invoices & Billing
@@ -120,25 +122,31 @@ Route::prefix('owner')->name('owner.')->group(function () {
         // 9. Dedicated Automation & Cron Control Hub
         Route::get('/automation', [OwnerAutomationController::class, 'index'])->name('automation.index');
         Route::post('/automation/policy', [OwnerAutomationController::class, 'updatePolicy'])->name('automation.policy.update');
-        Route::post('/automation/dispatch/{task}', [OwnerAutomationController::class, 'dispatchTask'])->name('automation.dispatch');
+        Route::post('/automation/dispatch/{task}', [OwnerAutomationController::class, 'dispatchTask'])
+            ->middleware(['owner.capability:automation.dispatch', 'throttle:10,1'])
+            ->name('automation.dispatch');
         Route::post('/automation/failed-jobs/{id}/retry', [OwnerAutomationController::class, 'retryFailedJob'])->name('automation.failed-jobs.retry');
         Route::post('/automation/failed-jobs/retry-all', [OwnerAutomationController::class, 'retryAllFailedJobs'])->name('automation.failed-jobs.retry-all');
         Route::delete('/automation/failed-jobs/{id}', [OwnerAutomationController::class, 'deleteFailedJob'])
             ->middleware('owner.capability:automation.dispatch')
             ->name('automation.failed-jobs.delete');
         Route::post('/automation/failed-jobs/flush', [OwnerAutomationController::class, 'flushAllFailedJobs'])
-            ->middleware('owner.capability:automation.dispatch')
+            ->middleware(['owner.capability:automation.dispatch', 'throttle:10,1'])
             ->name('automation.failed-jobs.flush');
 
         // 10. Payment Gateways (PGW) - Dedicated Menu
         Route::get('/payment-gateways', [OwnerPaymentGatewayController::class, 'index'])->name('payment-gateways.index');
         Route::post('/payment-gateways', [OwnerPaymentGatewayController::class, 'update'])->name('payment-gateways.update');
-        Route::post('/payment-gateways/test', [OwnerPaymentGatewayController::class, 'test'])->name('payment-gateways.test');
+        Route::post('/payment-gateways/test', [OwnerPaymentGatewayController::class, 'test'])
+            ->middleware(['owner.capability:gateways.test', 'throttle:10,1'])
+            ->name('payment-gateways.test');
 
         // 11. SMS Gateways - Dedicated Menu
         Route::get('/sms-gateways', [OwnerSmsGatewayController::class, 'index'])->name('sms-gateways.index');
         Route::post('/sms-gateways', [OwnerSmsGatewayController::class, 'update'])->name('sms-gateways.update');
-        Route::post('/sms-gateways/test', [OwnerSmsGatewayController::class, 'test'])->name('sms-gateways.test');
+        Route::post('/sms-gateways/test', [OwnerSmsGatewayController::class, 'test'])
+            ->middleware(['owner.capability:settings.manage', 'throttle:10,1'])
+            ->name('sms-gateways.test');
         Route::get('/sms-gateways/balance', [OwnerSmsGatewayController::class, 'checkBalance'])->name('sms-gateways.balance');
 
         // 12. Mail & SMTP - Dedicated Menu
@@ -149,18 +157,20 @@ Route::prefix('owner')->name('owner.')->group(function () {
         // 13. Security & Backup - Dedicated Menu
         Route::get('/security-backup', [OwnerSecurityBackupController::class, 'index'])->name('security-backup.index');
         Route::post('/security-backup', [OwnerSecurityBackupController::class, 'update'])->name('security-backup.update');
-        Route::post('/security-backup/trigger', [OwnerSecurityBackupController::class, 'triggerBackup'])->name('security-backup.trigger');
+        Route::post('/security-backup/trigger', [OwnerSecurityBackupController::class, 'triggerBackup'])
+            ->middleware(['owner.capability:backups.manage', 'throttle:5,1'])
+            ->name('security-backup.trigger');
         Route::post('/security-backup/test-restore/{filename}', [OwnerSecurityBackupController::class, 'testRestore'])
-            ->middleware('owner.capability:backups.manage')
+            ->middleware(['owner.capability:backups.manage', 'throttle:5,1'])
             ->name('security-backup.test-restore');
         Route::post('/security-backup/upload-offsite/{filename}', [OwnerSecurityBackupController::class, 'uploadOffsite'])
-            ->middleware('owner.capability:backups.manage')
+            ->middleware(['owner.capability:backups.manage', 'throttle:5,1'])
             ->name('security-backup.upload-offsite');
         Route::get('/security-backup/download/{filename}', [OwnerSecurityBackupController::class, 'downloadBackup'])
             ->middleware('owner.capability:backups.view')
             ->name('security-backup.download');
         Route::post('/security-backup/delete/{filename}', [OwnerSecurityBackupController::class, 'deleteBackup'])
-            ->middleware('owner.capability:backups.manage')
+            ->middleware(['owner.capability:backups.manage', 'throttle:5,1'])
             ->name('security-backup.delete');
 
         // 14. Carrier Network Engines & Infrastructure Hub
@@ -208,5 +218,6 @@ Route::prefix('owner')->name('owner.')->group(function () {
 
     // Leave Impersonation
     Route::post('/leave-impersonation', [OwnerTenantController::class, 'leaveImpersonation'])
+        ->middleware('throttle:10,1')
         ->name('impersonate.leave');
 });
