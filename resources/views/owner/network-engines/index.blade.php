@@ -169,11 +169,6 @@
                     <span class="px-1.5 py-0.2 rounded-full bg-slate-100 text-slate-700 text-[10px] font-mono">{{ $totalOlts }}</span>
                 </button>
 
-                <button type="button" @click="activeTab = 'topology'" :class="activeTab === 'topology' ? 'bg-white text-blue-600 border-slate-200 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900 border-transparent font-medium'" class="px-3 py-1.5 rounded-lg border text-xs transition flex items-center gap-1.5 cursor-pointer">
-                    <i class="fas fa-diagram-project text-[11px]"></i>
-                    <span>5-Engine Flow Topology</span>
-                </button>
-
                 <button type="button" @click="activeTab = 'audit'" :class="activeTab === 'audit' ? 'bg-white text-blue-600 border-slate-200 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900 border-transparent font-medium'" class="px-3 py-1.5 rounded-lg border text-xs transition flex items-center gap-1.5 cursor-pointer">
                     <i class="fas fa-clock-rotate-left text-[11px]"></i>
                     <span>Audit Stream</span>
@@ -458,76 +453,6 @@
                     {{ $olts->links() }}
                 </div>
             @endif
-        </div>
-
-        <!-- TAB 3: 5-ENGINE FLOW TOPOLOGY -->
-        <div x-show="activeTab === 'topology'" class="p-5 space-y-4" style="display: none;">
-            <div class="max-w-3xl mx-auto space-y-4">
-                <div class="border-b border-slate-200 pb-2">
-                    <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Enterprise 5-Engine Connectivity Topology</h3>
-                    <p class="text-[11px] text-slate-500">Overview of how the Cloud SaaS Engine connects securely with client ISP private networks</p>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                    
-                    <!-- Engine 1 & 2 -->
-                    <div class="p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 space-y-2">
-                        <div class="flex items-center gap-2 text-blue-700 font-bold text-xs">
-                            <span class="w-5 h-5 rounded-md bg-blue-100 flex items-center justify-center text-[10px]">1</span>
-                            <span>RouterOS Core Engine</span>
-                        </div>
-                        <p class="text-[11px] text-slate-600 leading-relaxed">
-                            Communicates with MikroTik via API socket (Port 8728) or SSL (Port 8729). Periodically checks CPU load, memory utilization, and synchronizes subscriber queues.
-                        </p>
-                    </div>
-
-                    <div class="p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 space-y-2">
-                        <div class="flex items-center gap-2 text-emerald-700 font-bold text-xs">
-                            <span class="w-5 h-5 rounded-md bg-emerald-100 flex items-center justify-center text-[10px]">2</span>
-                            <span>FreeRADIUS AAA Engine</span>
-                        </div>
-                        <p class="text-[11px] text-slate-600 leading-relaxed">
-                            Authenticates PPPoE subscribers directly from the cloud database. Receives 5-minute interim accounting and transmits RFC 3576 CoA/PoD packets (Port 3799) to disconnect or rate-limit overdue users.
-                        </p>
-                    </div>
-
-                    <!-- Engine 3 & 4 -->
-                    <div class="p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 space-y-2">
-                        <div class="flex items-center gap-2 text-purple-700 font-bold text-xs">
-                            <span class="w-5 h-5 rounded-md bg-purple-100 flex items-center justify-center text-[10px]">3</span>
-                            <span>OLT PON Access Engine</span>
-                        </div>
-                        <p class="text-[11px] text-slate-600 leading-relaxed">
-                            Interrogates V-SOL, BDCOM, Huawei, and ZTE hardware via SNMP v2c (Port 161). Automatically checks Optical Power (dBm) and triggers alerts if fiber degradation or Loss of Signal (LOS) occurs.
-                        </p>
-                    </div>
-
-                    <div class="p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 space-y-2">
-                        <div class="flex items-center gap-2 text-amber-700 font-bold text-xs">
-                            <span class="w-5 h-5 rounded-md bg-amber-100 flex items-center justify-center text-[10px]">4</span>
-                            <span>WireGuard NAT Mesh Engine</span>
-                        </div>
-                        <p class="text-[11px] text-slate-600 leading-relaxed">
-                            Provides point-to-point encrypted tunnels (UDP 51820) so routers behind private NAT/CGNAT can communicate with the SaaS platform without requiring dedicated public real IPs.
-                        </p>
-                    </div>
-
-                </div>
-
-                <!-- Engine 5: Automation -->
-                <div class="p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 flex items-center justify-between">
-                    <div>
-                        <div class="flex items-center gap-2 text-rose-700 font-bold text-xs">
-                            <span class="w-5 h-5 rounded-md bg-rose-100 flex items-center justify-center text-[10px]">5</span>
-                            <span>Monitoring & Automation Engine (Async Queues)</span>
-                        </div>
-                        <p class="text-[11px] text-slate-600 mt-1">
-                            Heavy background scans (SNMP Walk, bulk ping, CoA triggers) execute asynchronously in dedicated Laravel Queue workers with zero web latency.
-                        </p>
-                    </div>
-                </div>
-
-            </div>
         </div>
 
         <!-- TAB 4: NOC AUDIT STREAM -->
