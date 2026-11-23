@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use App\Models\TenantCustomerAccount;
 
 return [
 
@@ -42,6 +43,10 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+        'customer' => [
+            'driver' => 'session',
+            'provider' => 'customer_accounts',
+        ],
     ],
 
     /*
@@ -65,6 +70,10 @@ return [
         'users' => [
             'driver' => 'eloquent',
             'model' => env('AUTH_MODEL', User::class),
+        ],
+        'customer_accounts' => [
+            'driver' => 'eloquent',
+            'model' => TenantCustomerAccount::class,
         ],
 
         // 'users' => [

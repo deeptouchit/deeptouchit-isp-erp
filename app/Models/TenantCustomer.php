@@ -39,6 +39,11 @@ class TenantCustomer extends Model
         return $this->belongsTo(Tenant::class);
     }
 
+    public function portalAccount()
+    {
+        return $this->hasOne(TenantCustomerAccount::class, 'customer_id');
+    }
+
     public function reseller(): BelongsTo
     {
         return $this->belongsTo(TenantReseller::class);
