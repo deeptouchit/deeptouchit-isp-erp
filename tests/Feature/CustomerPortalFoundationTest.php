@@ -7,6 +7,7 @@ use App\Models\TenantCustomer;
 use App\Models\TenantCustomerAccount;
 use App\Models\TenantCustomerInvoice;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
@@ -37,6 +38,34 @@ class CustomerPortalFoundationTest extends TestCase
         ])->assertRedirect(route('customer.portal.clean.dashboard', $tenant));
 
         $this->assertAuthenticated('customer');
+    }
+
+    public function test_customer_id_or_email_can_login_with_mobile_suffix_portal_password(): void
+    {
+        $tenant = $this->createTenant('mobile-password-isp');
+        $customer = $this->createCustomer($tenant, 'portal-customer', '01712-345678', 'pppoe-secret');
+        TenantCustomerAccount::create([
+            'tenant_id' => $tenant->id,
+            'customer_id' => $customer->id,
+            'login_identifier' => $customer->customer_id,
+            'password' => '345678',
+            'status' => 'active',
+            'force_password_change' => true,
+        ]);
+
+        $this->post(route('customer.portal.clean.login.submit', $tenant), [
+            'login_identifier' => $customer->customer_id,
+            'password' => '345678',
+        ])->assertRedirect(route('customer.portal.clean.dashboard', $tenant));
+
+        Auth::guard('customer')->logout();
+
+        $customer->email = 'portal@example.com';
+        $customer->save();
+        $this->post(route('customer.portal.clean.login.submit', $tenant), [
+            'login_identifier' => 'portal@example.com',
+            'password' => '345678',
+        ])->assertRedirect(route('customer.portal.clean.dashboard', $tenant));
     }
 
     public function test_customer_cannot_use_another_tenants_login_identifier(): void

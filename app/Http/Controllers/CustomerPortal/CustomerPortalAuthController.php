@@ -4,8 +4,10 @@ namespace App\Http\Controllers\CustomerPortal;
 
 use App\Http\Controllers\Controller;
 use App\Models\Tenant;
+use App\Models\TenantCustomerAccount;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
 class CustomerPortalAuthController extends Controller
@@ -22,14 +24,22 @@ class CustomerPortalAuthController extends Controller
             'password' => ['required', 'string', 'max:255'],
         ]);
 
+        $identifier = trim($credentials['login_identifier']);
+        $account = TenantCustomerAccount::query()
+            ->where('tenant_id', $tenant->id)
+            ->where('status', 'active')
+            ->where(function ($query) use ($identifier): void {
+                $query->where('login_identifier', $identifier)
+                    ->orWhereHas('customer', function ($customerQuery) use ($identifier): void {
+                        $customerQuery->where('customer_id', $identifier)->orWhere('email', $identifier);
+                    });
+            })
+            ->first();
         $guard = Auth::guard('customer');
-        $authenticated = $guard->attempt([
-            'tenant_id' => $tenant->id,
-            'login_identifier' => trim($credentials['login_identifier']),
-            'status' => 'active',
-            'password' => $credentials['password'],
-        ], $request->boolean('remember'));
-        $account = $guard->user();
+        $authenticated = $account && Hash::check($credentials['password'], $account->password);
+        if ($authenticated) {
+            $guard->login($account, $request->boolean('remember'));
+        }
 
         if (!$authenticated || !$account || !$account->isActive()) {
             $guard->logout();

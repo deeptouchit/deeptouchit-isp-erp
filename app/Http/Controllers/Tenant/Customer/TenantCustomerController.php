@@ -7,6 +7,7 @@ use App\Models\Tenant;
 use App\Models\TenantActivityLog;
 use App\Models\TenantCoverageZone;
 use App\Models\TenantCustomer;
+use App\Models\TenantCustomerAccount;
 use App\Models\TenantCustomerInvoice;
 use App\Models\TenantCustomerPayment;
 use App\Models\TenantInternetPackage;
@@ -557,6 +558,8 @@ class TenantCustomerController extends Controller
             'remarks' => $validated['remarks'] ?? null,
         ]);
 
+        $this->syncCustomerPortalAccount($tenant, $customer);
+
         // Automated Opening Subscription Invoice Generation (Package Rate Only - No Hardware/Setup Surcharges)
         $hasInvoice = false;
         $invoiceNo = null;
@@ -1037,6 +1040,8 @@ class TenantCustomerController extends Controller
         $customer->remarks = $validated['remarks'] ?? $customer->remarks;
 
         $customer->save();
+
+        $this->syncCustomerPortalAccount($tenant, $customer);
 
         // Sync updated attributes to MikroTik & FreeRADIUS
         try {
@@ -4424,5 +4429,35 @@ class TenantCustomerController extends Controller
             'rows',
             'kpis'
         ));
+    }
+
+    private function syncCustomerPortalAccount(Tenant $tenant, TenantCustomer $customer): void
+    {
+        $account = TenantCustomerAccount::where('customer_id', $customer->id)->first();
+        $identifier = $customer->email ?: $customer->customer_id;
+        $mobileDigits = preg_replace('/\D+/', '', (string) $customer->phone);
+        $temporaryPassword = strlen($mobileDigits) >= 6 ? substr($mobileDigits, -6) : null;
+
+        if (!$account) {
+            if (!$temporaryPassword) {
+                return;
+            }
+
+            TenantCustomerAccount::create([
+                'tenant_id' => $tenant->id,
+                'customer_id' => $customer->id,
+                'login_identifier' => $identifier,
+                'password' => $temporaryPassword,
+                'status' => 'active',
+                'force_password_change' => true,
+            ]);
+
+            return;
+        }
+
+        $account->forceFill([
+            'tenant_id' => $tenant->id,
+            'login_identifier' => $identifier,
+        ])->save();
     }
 }

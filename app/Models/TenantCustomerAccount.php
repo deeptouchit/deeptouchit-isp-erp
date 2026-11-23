@@ -19,6 +19,7 @@ class TenantCustomerAccount extends Authenticatable
             'verified_at' => 'datetime',
             'last_login_at' => 'datetime',
             'password' => 'hashed',
+            'force_password_change' => 'boolean',
         ];
     }
 
