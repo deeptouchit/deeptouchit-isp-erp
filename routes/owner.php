@@ -150,9 +150,15 @@ Route::prefix('owner')->name('owner.')->group(function () {
         Route::get('/security-backup', [OwnerSecurityBackupController::class, 'index'])->name('security-backup.index');
         Route::post('/security-backup', [OwnerSecurityBackupController::class, 'update'])->name('security-backup.update');
         Route::post('/security-backup/trigger', [OwnerSecurityBackupController::class, 'triggerBackup'])->name('security-backup.trigger');
-        Route::post('/security-backup/test-restore/{filename}', [OwnerSecurityBackupController::class, 'testRestore'])->name('security-backup.test-restore');
-        Route::post('/security-backup/upload-offsite/{filename}', [OwnerSecurityBackupController::class, 'uploadOffsite'])->name('security-backup.upload-offsite');
-        Route::get('/security-backup/download/{filename}', [OwnerSecurityBackupController::class, 'downloadBackup'])->name('security-backup.download');
+        Route::post('/security-backup/test-restore/{filename}', [OwnerSecurityBackupController::class, 'testRestore'])
+            ->middleware('owner.capability:backups.manage')
+            ->name('security-backup.test-restore');
+        Route::post('/security-backup/upload-offsite/{filename}', [OwnerSecurityBackupController::class, 'uploadOffsite'])
+            ->middleware('owner.capability:backups.manage')
+            ->name('security-backup.upload-offsite');
+        Route::get('/security-backup/download/{filename}', [OwnerSecurityBackupController::class, 'downloadBackup'])
+            ->middleware('owner.capability:backups.view')
+            ->name('security-backup.download');
         Route::post('/security-backup/delete/{filename}', [OwnerSecurityBackupController::class, 'deleteBackup'])
             ->middleware('owner.capability:backups.manage')
             ->name('security-backup.delete');

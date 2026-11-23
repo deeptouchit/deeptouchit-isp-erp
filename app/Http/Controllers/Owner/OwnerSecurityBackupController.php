@@ -112,6 +112,9 @@ class OwnerSecurityBackupController extends Controller
     {
         $request = $request ?? request();
         $type = $request->input('backup_type', 'database');
+        if (!in_array($type, ['database', 'full'], true)) {
+            return back()->with('error', 'Unsupported backup type requested.');
+        }
         $backupDir = storage_path('app/backups');
 
         if (!File::exists($backupDir)) {
@@ -244,9 +247,9 @@ class OwnerSecurityBackupController extends Controller
      */
     public function testRestore(Request $request, $filename)
     {
-        $filePath = storage_path('app/backups/' . basename($filename));
+        $filePath = $this->approvedBackupPath($filename);
 
-        if (!File::exists($filePath)) {
+        if (!$filePath) {
             return back()->with('error', 'Target backup file not found.');
         }
 
@@ -264,9 +267,9 @@ class OwnerSecurityBackupController extends Controller
      */
     public function uploadOffsite(Request $request, $filename)
     {
-        $filePath = storage_path('app/backups/' . basename($filename));
+        $filePath = $this->approvedBackupPath($filename);
 
-        if (!File::exists($filePath)) {
+        if (!$filePath) {
             return back()->with('error', 'Target backup file not found.');
         }
 
@@ -281,9 +284,9 @@ class OwnerSecurityBackupController extends Controller
 
     public function downloadBackup($filename)
     {
-        $filePath = storage_path('app/backups/' . basename($filename));
+        $filePath = $this->approvedBackupPath($filename);
 
-        if (!File::exists($filePath)) {
+        if (!$filePath) {
             return back()->with('error', 'Backup file could not be found.');
         }
 
@@ -292,15 +295,40 @@ class OwnerSecurityBackupController extends Controller
 
     public function deleteBackup(Request $request, $filename)
     {
-        $filePath = storage_path('app/backups/' . basename($filename));
+        $filePath = $this->approvedBackupPath($filename);
 
-        if (File::exists($filePath)) {
+        if ($filePath) {
             File::delete($filePath);
-            $this->securityLogService->logBackupEvent(basename($filename), 'deleted');
+            $this->securityLogService->logBackupEvent(basename($filePath), 'deleted');
             return back()->with('success', 'Backup snapshot removed successfully.');
         }
 
         return back()->with('error', 'Unable to delete the backup file.');
+    }
+
+    /**
+     * Resolve a backup filename only when it is a regular SQL file inside the approved directory.
+     * Rejects traversal, encoded traversal, absolute paths and symlink escapes.
+     */
+    private function approvedBackupPath(string $filename): ?string
+    {
+        $decoded = rawurldecode($filename);
+        if ($decoded !== $filename || !preg_match('/\A[a-zA-Z0-9][a-zA-Z0-9._-]*\.sql\z/D', $filename)) {
+            return null;
+        }
+
+        $backupDir = realpath(storage_path('app/backups'));
+        if (!$backupDir) {
+            return null;
+        }
+
+        $candidate = realpath($backupDir . DIRECTORY_SEPARATOR . $filename);
+        if (!$candidate || !is_file($candidate)) {
+            return null;
+        }
+
+        $prefix = rtrim($backupDir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+        return strncmp($candidate, $prefix, strlen($prefix)) === 0 ? $candidate : null;
     }
 
     private function formatSizeUnits($bytes)
