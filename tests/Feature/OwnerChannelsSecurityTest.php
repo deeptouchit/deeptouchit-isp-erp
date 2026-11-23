@@ -12,6 +12,8 @@ class OwnerChannelsSecurityTest extends TestCase
         $this->assertRouteMiddleware('owner.payment-gateways.index', 'owner.capability:gateways.view');
         $this->assertRouteMiddleware('owner.sms-gateways.index', 'owner.capability:sms.view');
         $this->assertRouteMiddleware('owner.mail-settings.index', 'owner.capability:mail.view');
+        $this->assertRouteMiddleware('owner.activity-logs.index', 'owner.capability:activity-logs.view');
+        $this->assertRouteMiddleware('owner.sms-logs.index', 'owner.capability:sms.view');
     }
 
     public function test_channel_mutation_and_test_routes_are_protected_and_unique(): void

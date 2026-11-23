@@ -3,7 +3,7 @@
 @section('page-title', 'SMS Delivery & Cost Logs')
 
 @section('content')
-<div class="space-y-4">
+<div class="space-y-3" x-data="{ showMoreFilters: {{ request()->hasAny(['sms_type', 'tenant_id']) ? 'true' : 'false' }}, searchQuery: @js(request('search', '')) }">
 
     <!-- Top Banner & Summary Header -->
     <div class="bg-white rounded-xl border border-slate-200/80 shadow-xs p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -18,7 +18,6 @@
                         {{ number_format($totalSmsCount) }} Total SMS
                     </span>
                 </div>
-                <p class="text-[11px] text-slate-500 mt-0.5">Real-time SMS dispatch audit trail, character count, part calculation, carrier billing rates, and delivery statuses.</p>
             </div>
         </div>
 
@@ -35,8 +34,8 @@
     </div>
 
     <!-- Analytics Metric Cards Strip -->
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div class="p-3.5 bg-white rounded-xl border border-slate-200/80 shadow-xs flex items-center justify-between">
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+        <div class="p-2.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div>
                 <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Dispatched</span>
                 <span class="text-base font-extrabold text-slate-800 font-mono">{{ number_format($totalSmsCount) }} SMS</span>
@@ -45,6 +44,9 @@
                 <i class="fas fa-paper-plane"></i>
             </div>
         </div>
+
+        <div class="p-2.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between"><div><span class="text-[9px] font-medium uppercase tracking-wider block">Providers</span><span class="text-[13px] font-bold font-mono">Live</span></div><span class="w-6 h-6 rounded-md text-[10px] border flex items-center justify-center bg-cyan-50 text-cyan-600 border-cyan-100"><i class="fas fa-tower-broadcast"></i></span></div>
+        <div class="p-2.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between"><div><span class="text-[9px] font-medium uppercase tracking-wider block">Ledger</span><span class="text-[13px] font-bold font-mono">Active</span></div><span class="w-6 h-6 rounded-md text-[10px] border flex items-center justify-center bg-slate-50 text-slate-600 border-slate-100"><i class="fas fa-shield-halved"></i></span></div>
 
         <div class="p-3.5 bg-white rounded-xl border border-slate-200/80 shadow-xs flex items-center justify-between">
             <div>
@@ -78,15 +80,13 @@
     </div>
 
     <!-- Filters Strip -->
-    <div class="bg-white rounded-xl border border-slate-200/80 shadow-xs p-3">
-        <form action="{{ route('owner.sms-logs.index') }}" method="GET" class="grid grid-cols-1 sm:grid-cols-5 gap-2.5 text-xs">
+    <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5">
+        <form action="{{ route('owner.sms-logs.index') }}" method="GET" class="space-y-2.5">
             <!-- Search -->
-            <div class="sm:col-span-2">
-                <input type="text" name="search" value="{{ request('search') }}" placeholder="Search phone, message text, gateway..." class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs focus:ring-1 focus:ring-emerald-500">
-            </div>
+            <div class="flex flex-col md:flex-row items-stretch md:items-center gap-2"><div class="relative flex-1 min-w-[200px]"><i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-[10px]"></i><input x-model="searchQuery" type="search" name="search" value="{{ request('search') }}" placeholder="Search phone, gateway..." class="w-full h-[34px] pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-emerald-500 focus:outline-hidden"></div><select name="per_page" class="w-full md:w-28 h-[34px] px-2 rounded-lg border border-slate-200 bg-slate-50 text-xs"><option value="25">25 / page</option><option value="50" @selected(request('per_page') == 50)>50 / page</option><option value="100" @selected(request('per_page') == 100)>100 / page</option></select><button type="button" @click="showMoreFilters = !showMoreFilters" class="h-[34px] py-0 px-3 rounded-lg border border-slate-200 bg-white text-slate-700 font-semibold text-xs flex items-center gap-1.5 whitespace-nowrap"><i class="fas" :class="showMoreFilters ? 'fa-chevron-up text-emerald-600' : 'fa-chevron-down text-slate-400'"></i><span>More Filters</span><span class="px-1 rounded bg-emerald-50 text-emerald-700">{{ request()->hasAny(['sms_type', 'tenant_id']) ? 2 : 0 }}</span></button><div class="flex items-center gap-1.5 flex-shrink-0 md:ml-auto"><button type="submit" class="h-[34px] bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs py-0 px-3 rounded-lg shadow-xs flex items-center gap-1.5"><i class="fas fa-filter text-[10px]"></i><span>Filter</span></button><a href="{{ route('owner.sms-logs.index') }}" class="h-[34px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-0 px-2.5 rounded-lg border border-slate-200/80 flex items-center gap-1"><i class="fas fa-rotate-left text-[10px]"></i><span>Reset</span></a></div></div>
 
             <!-- Tenant Filter -->
-            <div>
+            <div x-show="showMoreFilters" x-cloak x-transition class="pt-2 border-t border-slate-100 flex flex-wrap items-center gap-2">
                 <select name="tenant_id" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs focus:ring-1 focus:ring-emerald-500">
                     <option value="">All ISP Tenants</option>
                     @foreach($tenants as $t)
@@ -106,17 +106,6 @@
             </div>
 
             <!-- Filter Buttons -->
-            <div class="flex items-center gap-2">
-                <button type="submit" class="w-full py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs shadow-xs transition flex items-center justify-center gap-1.5">
-                    <i class="fas fa-filter text-[10px]"></i>
-                    <span>Apply Filter</span>
-                </button>
-                @if(request()->hasAny(['search', 'tenant_id', 'status', 'sms_type']))
-                    <a href="{{ route('owner.sms-logs.index') }}" class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold">
-                        Reset
-                    </a>
-                @endif
-            </div>
         </form>
     </div>
 
@@ -131,26 +120,19 @@
         </div>
 
         <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse text-xs">
+            <table class="saas-table">
                 <thead>
                     <tr class="border-b border-slate-100 bg-slate-50/40 text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                        <th class="py-2.5 px-4">Recipient Phone</th>
-                        <th class="py-2.5 px-4">ISP Tenant</th>
-                        <th class="py-2.5 px-4">Event Type & Message Body</th>
-                        <th class="py-2.5 px-4">Gateway</th>
-                        <th class="py-2.5 px-4">Parts & Rate</th>
-                        <th class="py-2.5 px-4">Total Cost</th>
-                        <th class="py-2.5 px-4">Status</th>
-                        <th class="py-2.5 px-4 text-right">Dispatched At</th>
+                        <th class="text-center">Recipient</th><th class="text-center">ISP Tenant</th><th class="text-center">Event Type</th><th class="text-center">Gateway</th><th class="text-center">Cost</th><th class="text-center">Status</th><th class="text-center">Dispatched At</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 text-slate-700 font-mono">
                     @forelse($logs as $log)
-                    <tr class="hover:bg-slate-50/80 transition text-[11px]">
-                        <td class="py-2.5 px-4 font-bold text-slate-900">
+                    <tr>
+                        <td class="text-center font-bold text-slate-900">
                             {{ $log->recipient_phone }}
                         </td>
-                        <td class="py-2.5 px-4 font-sans font-semibold text-slate-800">
+                        <td class="text-left font-sans font-semibold text-slate-800">
                             @if($log->tenant)
                                 <a href="{{ route('owner.tenants.show', $log->tenant) }}" class="text-blue-600 hover:underline">
                                     {{ $log->tenant->name }}
@@ -159,25 +141,16 @@
                                 <span class="text-slate-400">System Direct</span>
                             @endif
                         </td>
-                        <td class="py-2.5 px-4 font-sans max-w-sm">
-                            <span class="font-bold text-slate-800 text-[10px] uppercase block">
-                                {{ str_replace('_', ' ', $log->sms_type) }}
-                            </span>
-                            <span class="text-[10.5px] text-slate-600 truncate block font-mono" title="{{ $log->message_body }}">
-                                {{ Str::limit($log->message_body, 50) }}
-                            </span>
+                        <td class="text-center font-sans uppercase">
+                            {{ str_replace('_', ' ', $log->sms_type) }}
                         </td>
-                        <td class="py-2.5 px-4 text-[10.5px] text-slate-600">
+                        <td class="text-center text-slate-600">
                             {{ $log->gateway_name }}
                         </td>
-                        <td class="py-2.5 px-4 text-[10.5px]">
-                            <span class="text-slate-800">{{ $log->parts_count }} Part(s)</span>
-                            <span class="text-slate-400 text-[10px] block">({{ $log->character_count }} chars)</span>
-                        </td>
-                        <td class="py-2.5 px-4 font-bold text-emerald-700">
+                        <td class="text-right font-bold text-emerald-700">
                             @currency($log->total_cost)
                         </td>
-                        <td class="py-2.5 px-4">
+                        <td class="text-center">
                             @if($log->status === 'delivered')
                                 <span class="inline-flex items-center px-2 py-0.5 rounded text-[9.5px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                                     <i class="fas fa-check-circle text-[8px] mr-1"></i> Delivered
@@ -192,13 +165,13 @@
                                 </span>
                             @endif
                         </td>
-                        <td class="py-2.5 px-4 text-right text-[10.5px] text-slate-400">
+                        <td class="text-center text-slate-400">
                             {{ $log->created_at ? $log->created_at->format('d M, h:i A') : '—' }}
                         </td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="8" class="py-8 text-center text-slate-400 font-sans text-xs">
+                        <td colspan="7" class="py-8 text-center text-slate-400 font-sans text-xs">
                             No SMS transmission logs found.
                         </td>
                     </tr>

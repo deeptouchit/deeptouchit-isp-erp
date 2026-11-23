@@ -245,10 +245,12 @@ Route::prefix('owner')->name('owner.')->group(function () {
         Route::get('/reports/revenue', [OwnerRevenueReportController::class, 'index'])->name('reports.revenue');
 
         // 15. Tenant Activity & Audit Logs
-        Route::get('/activity-logs', [OwnerActivityLogController::class, 'index'])->name('activity-logs.index');
+        Route::get('/activity-logs', [OwnerActivityLogController::class, 'index'])
+            ->middleware('owner.capability:activity-logs.view')->name('activity-logs.index');
 
         // 16. SMS Consumption & Delivery Logs
-        Route::get('/sms-logs', [OwnerSmsLogController::class, 'index'])->name('sms-logs.index');
+        Route::get('/sms-logs', [OwnerSmsLogController::class, 'index'])
+            ->middleware('owner.capability:sms.view')->name('sms-logs.index');
 
         // 16. General Platform Settings
         Route::get('/settings', [OwnerSettingController::class, 'index'])->name('settings.index');

@@ -14,6 +14,12 @@ class OwnerActivityLogController extends Controller
      */
     public function index(Request $request)
     {
+        $request->validate([
+            'search' => ['nullable', 'string', 'max:100'],
+            'event_type' => ['nullable', 'string', 'max:80'],
+            'tenant_id' => ['nullable', 'integer', 'exists:tenants,id'],
+            'per_page' => ['nullable', 'integer', 'in:15,20,30,50,100'],
+        ]);
         $query = TenantActivityLog::with('tenant');
 
         if ($request->filled('search')) {
@@ -37,7 +43,7 @@ class OwnerActivityLogController extends Controller
             $query->where('tenant_id', $request->tenant_id);
         }
 
-        $logs = $query->latest()->paginate(20)->withQueryString();
+        $logs = $query->latest()->paginate($request->integer('per_page', 20))->withQueryString();
 
         $totalLogsCount = TenantActivityLog::count();
         $tenants = Tenant::orderBy('name')->get();

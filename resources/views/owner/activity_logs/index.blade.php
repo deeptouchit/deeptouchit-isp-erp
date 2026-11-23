@@ -3,7 +3,7 @@
 @section('page-title', 'Tenant Activity & Audit Logs')
 
 @section('content')
-<div class="space-y-4">
+<div class="space-y-3" x-data="{ showMoreFilters: {{ request()->hasAny(['event_type', 'tenant_id']) ? 'true' : 'false' }}, searchQuery: @js(request('search', '')) }">
 
     <!-- Top Banner & Summary Header -->
     <div class="bg-white rounded-xl border border-slate-200/80 shadow-xs p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -18,7 +18,6 @@
                         {{ number_format($totalLogsCount) }} Total Events
                     </span>
                 </div>
-                <p class="text-[11px] text-slate-500 mt-0.5">Real-time security auditing, impersonations, wallet adjustments, and automated lifecycle state transitions.</p>
             </div>
         </div>
 
@@ -30,16 +29,35 @@
         </div>
     </div>
 
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+        @foreach([
+            ['Events', number_format($totalLogsCount), 'fa-list-check', 'purple'],
+            ['Today', number_format($logs->total()), 'fa-calendar-day', 'blue'],
+            ['Filtered', $logs->hasPages() ? 'Paged' : 'All', 'fa-filter', 'cyan'],
+            ['Tenants', number_format($tenants->count()), 'fa-building', 'emerald'],
+            ['Audit', 'Active', 'fa-shield-halved', 'amber'],
+            ['Access', 'Owner', 'fa-user-shield', 'slate'],
+        ] as [$label, $value, $icon, $color])
+            <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center gap-2">
+                <span class="w-6 h-6 rounded-md text-[10px] border flex items-center justify-center flex-shrink-0 bg-{{ $color }}-50 text-{{ $color }}-600 border-{{ $color }}-100"><i class="fas {{ $icon }}"></i></span>
+                <span class="min-w-0"><span class="text-[9px] font-medium uppercase tracking-wider block truncate">{{ $label }}</span><span class="text-[13px] font-bold font-mono leading-tight block truncate">{{ $value }}</span></span>
+            </div>
+        @endforeach
+    </div>
+
     <!-- Filters Strip -->
-    <div class="bg-white rounded-xl border border-slate-200/80 shadow-xs p-3">
-        <form action="{{ route('owner.activity-logs.index') }}" method="GET" class="grid grid-cols-1 sm:grid-cols-4 gap-2.5 text-xs">
+    <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5">
+        <form action="{{ route('owner.activity-logs.index') }}" method="GET" class="space-y-2.5">
             <!-- Search -->
-            <div>
-                <input type="text" name="search" value="{{ request('search') }}" placeholder="Search description, actor, IP..." class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs focus:ring-1 focus:ring-purple-500">
+            <div class="flex flex-col md:flex-row items-stretch md:items-center gap-2">
+                <div class="relative flex-1 min-w-[200px]"><i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-[10px]"></i><input x-model="searchQuery" type="search" name="search" value="{{ request('search') }}" placeholder="Search description, actor, IP..." class="w-full h-[34px] pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-purple-500 focus:outline-hidden"></div>
+                <select name="per_page" class="w-full md:w-28 flex-shrink-0 h-[34px] px-2 rounded-lg border border-slate-200 bg-slate-50 text-xs"><option value="20">20 / page</option><option value="30" @selected(request('per_page') == 30)>30 / page</option><option value="50" @selected(request('per_page') == 50)>50 / page</option><option value="100" @selected(request('per_page') == 100)>100 / page</option></select>
+                <button type="button" @click="showMoreFilters = !showMoreFilters" class="h-[34px] py-0 px-3 rounded-lg border border-slate-200 bg-white text-slate-700 font-semibold text-xs flex items-center gap-1.5 whitespace-nowrap"><i class="fas" :class="showMoreFilters ? 'fa-chevron-up text-purple-600' : 'fa-chevron-down text-slate-400'"></i><span>More Filters</span><span class="px-1 rounded bg-purple-50 text-purple-700">{{ request()->hasAny(['event_type', 'tenant_id']) ? 2 : 0 }}</span></button>
+                <div class="flex items-center gap-1.5 flex-shrink-0 md:ml-auto"><button type="submit" class="h-[34px] bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs py-0 px-3 rounded-lg shadow-xs flex items-center gap-1.5"><i class="fas fa-filter text-[10px]"></i><span>Filter</span></button><a href="{{ route('owner.activity-logs.index') }}" class="h-[34px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-0 px-2.5 rounded-lg border border-slate-200/80 flex items-center gap-1"><i class="fas fa-rotate-left text-[10px]"></i><span>Reset</span></a></div>
             </div>
 
             <!-- Tenant Filter -->
-            <div>
+            <div x-show="showMoreFilters" x-cloak x-transition class="pt-2 border-t border-slate-100 flex flex-wrap items-center gap-2">
                 <select name="tenant_id" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs focus:ring-1 focus:ring-purple-500">
                     <option value="">All ISP Tenants</option>
                     @foreach($tenants as $t)
@@ -64,38 +82,23 @@
             </div>
 
             <!-- Filter Buttons -->
-            <div class="flex items-center gap-2">
-                <button type="submit" class="w-full py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs shadow-xs transition flex items-center justify-center gap-1.5">
-                    <i class="fas fa-filter text-[10px]"></i>
-                    <span>Apply Filter</span>
-                </button>
-                @if(request()->hasAny(['search', 'tenant_id', 'event_type']))
-                    <a href="{{ route('owner.activity-logs.index') }}" class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold">
-                        Reset
-                    </a>
-                @endif
-            </div>
         </form>
     </div>
 
     <!-- Logs Table -->
     <div class="bg-white rounded-xl border border-slate-200/80 shadow-xs divide-y divide-slate-100 overflow-hidden">
         <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse text-xs">
+            <table class="saas-table">
                 <thead>
                     <tr class="border-b border-slate-100 bg-slate-50/40 text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                        <th class="py-2.5 px-4">Event & Description</th>
-                        <th class="py-2.5 px-4">ISP Tenant</th>
-                        <th class="py-2.5 px-4">Actor</th>
-                        <th class="py-2.5 px-4">IP & Client</th>
-                        <th class="py-2.5 px-4 text-right">Timestamp</th>
+                        <th class="text-center">Event</th><th class="text-center">ISP Tenant</th><th class="text-center">Actor</th><th class="text-center">IP Address</th><th class="text-center">Timestamp</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 text-slate-700">
                     @forelse($logs as $log)
                     <tr class="hover:bg-slate-50/80 transition">
-                        <td class="py-2.5 px-4">
-                            <div class="flex items-start gap-2.5">
+                        <td class="text-left">
+                            <div class="flex items-center gap-2 flex-nowrap whitespace-nowrap">
                                 <div class="w-6 h-6 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center flex-shrink-0 text-[10px] mt-0.5 border border-purple-100">
                                     @if(str_contains($log->event_type, 'created'))
                                         <i class="fas fa-plus"></i>
@@ -111,15 +114,10 @@
                                         <i class="fas fa-bolt"></i>
                                     @endif
                                 </div>
-                                <div>
-                                    <span class="font-bold text-slate-900 block text-xs">{{ $log->description }}</span>
-                                    <span class="px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 font-mono text-[9.5px] uppercase font-bold">
-                                        {{ str_replace('_', ' ', $log->event_type) }}
-                                    </span>
-                                </div>
+                                <span class="font-bold text-slate-900 truncate">{{ $log->event_type }}</span>
                             </div>
                         </td>
-                        <td class="py-2.5 px-4 font-sans font-semibold text-slate-800">
+                        <td class="text-left font-sans font-semibold text-slate-800">
                             @if($log->tenant)
                                 <a href="{{ route('owner.tenants.show', $log->tenant) }}" class="text-blue-600 hover:underline">
                                     {{ $log->tenant->name }}
@@ -128,15 +126,11 @@
                                 <span class="text-slate-400">System Platform</span>
                             @endif
                         </td>
-                        <td class="py-2.5 px-4">
-                            <span class="font-bold text-slate-800 block text-[11px]">{{ $log->actor_name ?: 'System' }}</span>
-                            <span class="text-[9.5px] text-slate-400 uppercase font-mono">{{ $log->actor_type }}</span>
+                        <td class="text-left">
+                            <span class="font-bold text-slate-800">{{ $log->actor_name ?: 'System' }}</span>
                         </td>
-                        <td class="py-2.5 px-4 font-mono text-[10.5px] text-slate-600">
-                            <span class="block text-slate-800">{{ $log->ip_address ?: '127.0.0.1' }}</span>
-                            <span class="text-[9px] text-slate-400 block truncate max-w-xs font-sans">{{ Str::limit($log->user_agent, 30) }}</span>
-                        </td>
-                        <td class="py-2.5 px-4 text-right text-[10.5px] text-slate-400 font-mono">
+                        <td class="text-center font-mono text-slate-600">{{ $log->ip_address ?: 'Unknown' }}</td>
+                        <td class="text-center text-slate-400 font-mono">
                             {{ $log->created_at ? $log->created_at->format('d M, h:i A') : '—' }}
                         </td>
                     </tr>
