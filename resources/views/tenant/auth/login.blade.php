@@ -1,6 +1,6 @@
 @extends('layouts.base')
 
-@section('title', ($tenant ? $tenant->company_name : 'ISP Management System') . ' | Portal Login')
+@section('title', ($tenant?->company_name ?: ($globalSettings['app_name'] ?? 'ISP Management System')) . ' | Portal Login')
 
 @section('body')
 <div class="min-h-screen flex items-center justify-center bg-slate-100/70 p-4 text-slate-800 antialiased selection:bg-blue-600 selection:text-white">
@@ -18,9 +18,15 @@
         
         <!-- Brand Header Logo & Title -->
         <div class="text-center mb-5">
-            @if($tenant && !empty($tenant->logo))
+            @php
+                $loginLogo = $tenant?->logo ?: ($globalSettings['app_logo'] ?? null);
+                if ($loginLogo && !str_starts_with($loginLogo, '/') && !str_starts_with($loginLogo, 'http://') && !str_starts_with($loginLogo, 'https://')) {
+                    $loginLogo = asset('storage/' . ltrim($loginLogo, '/'));
+                }
+            @endphp
+            @if($loginLogo)
                 <div class="mb-2 flex justify-center">
-                    <img src="{{ $tenant->logo }}" alt="{{ $tenant->company_name }}" class="h-10 max-w-[180px] object-contain">
+                    <img src="{{ $loginLogo }}" alt="{{ $tenant?->company_name ?: ($globalSettings['app_name'] ?? 'ISP Management System') }}" class="h-10 max-w-[180px] object-contain" onerror="this.closest('div').replaceChildren(Object.assign(document.createElement('i'), {className: 'fas fa-network-wired text-cyan-600 text-2xl'}));">
                 </div>
             @else
                 <div class="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-cyan-600 shadow-xs mb-2 text-white">
@@ -29,10 +35,10 @@
             @endif
 
             <h1 class="text-lg font-bold text-slate-900 tracking-tight">
-                {{ $tenant ? $tenant->company_name : 'ISP Management System' }}
+                {{ $tenant?->company_name ?: ($globalSettings['app_name'] ?? 'ISP Management System') }}
             </h1>
             <p class="text-[11px] text-slate-500 mt-0.5">
-                Single Unified Portal Login (ISP Admin, Reseller & Staff)
+                {{ $globalSettings['login_screen_subtitle'] ?? $globalSettings['app_tagline'] ?? 'Single Unified Portal Login (ISP Admin, Reseller & Staff)' }}
             </p>
         </div>
 
@@ -238,9 +244,11 @@
 
         </div>
 
-        <div class="mt-4 text-center text-[10.5px] text-slate-400">
-            Powered by SomitySoft Enterprise ISP Management Engine
-        </div>
+        @if(($globalSettings['show_developer_credit'] ?? '1') === '1')
+            <a href="{{ $globalSettings['footer_developer_url'] ?? 'https://somitysoft.com' }}" target="_blank" rel="noopener noreferrer" class="mt-4 block text-center text-[10.5px] text-slate-400 hover:text-blue-600 transition">
+                {{ $globalSettings['footer_developed_by'] ?? 'Developed with care by SomitySoft Technologies' }}
+            </a>
+        @endif
 
     </div>
 
