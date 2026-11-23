@@ -58,7 +58,7 @@
 
             <!-- Tenant Filter -->
             <div x-show="showMoreFilters" x-cloak x-transition class="pt-2 border-t border-slate-100 flex flex-wrap items-center gap-2">
-                <select name="tenant_id" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs focus:ring-1 focus:ring-purple-500">
+                <select name="tenant_id" class="w-full sm:w-auto sm:min-w-[180px] h-[34px] px-2 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:ring-1 focus:ring-purple-500">
                     <option value="">All ISP Tenants</option>
                     @foreach($tenants as $t)
                         <option value="{{ $t->id }}" {{ request('tenant_id') == $t->id ? 'selected' : '' }}>{{ $t->name }}</option>
@@ -68,7 +68,7 @@
 
             <!-- Event Type -->
             <div>
-                <select name="event_type" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs focus:ring-1 focus:ring-purple-500">
+                <select name="event_type" class="w-full sm:w-auto sm:min-w-[180px] h-[34px] px-2 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:ring-1 focus:ring-purple-500">
                     <option value="">All Event Types</option>
                     <option value="tenant_created" {{ request('event_type') == 'tenant_created' ? 'selected' : '' }}>Tenant Created</option>
                     <option value="tenant_updated" {{ request('event_type') == 'tenant_updated' ? 'selected' : '' }}>Tenant Updated</option>
