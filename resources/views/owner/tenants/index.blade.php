@@ -3,7 +3,7 @@
 @section('page-title', 'ISP Tenants Management')
 
 @section('content')
-<div class="space-y-4" x-data="{
+<div class="space-y-3" x-data="{
     // Extend Validity Modal State
     extendModalOpen: false,
     extendTenant: null,
@@ -28,7 +28,6 @@
                     {{ $totalTenants }} Organizations
                 </span>
             </div>
-            <p class="text-[11px] text-slate-500 mt-0.5">Manage client ISP organizations, subscriptions, licenses, and admin access</p>
         </div>
 
         <div class="flex items-center gap-2">
@@ -40,14 +39,13 @@
     </div>
 
     <!-- Top Statistics Strip -->
-    <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
         
         <!-- Metric 1: Total Tenants -->
-        <div class="p-3.5 rounded-xl bg-white border border-slate-200 shadow-xs flex items-center justify-between">
+        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5">
                 <span class="text-[10.5px] font-medium text-slate-500 uppercase tracking-wider block">Total Tenants</span>
-                <span class="text-lg font-extrabold text-slate-900 tracking-tight font-mono">{{ number_format($totalTenants) }}</span>
-                <span class="text-[10px] text-slate-400 block">Registered Organizations</span>
+                <span class="text-[13px] font-bold text-slate-900 leading-tight block">{{ number_format($totalTenants) }}</span>
             </div>
             <div class="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-sm border border-blue-100 flex-shrink-0">
                 <i class="fas fa-building"></i>
@@ -55,13 +53,10 @@
         </div>
 
         <!-- Metric 2: Active Subscriptions -->
-        <div class="p-3.5 rounded-xl bg-white border border-slate-200 shadow-xs flex items-center justify-between">
+        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5">
                 <span class="text-[10.5px] font-medium text-emerald-700 uppercase tracking-wider block">Active Licenses</span>
-                <span class="text-lg font-extrabold text-emerald-700 tracking-tight font-mono">{{ number_format($activeTenants) }}</span>
-                <span class="text-[10px] text-emerald-600 block">
-                    {{ $totalTenants > 0 ? round(($activeTenants / $totalTenants) * 100) : 0 }}% Healthy Status
-                </span>
+                <span class="text-[13px] font-bold text-emerald-700 leading-tight block">{{ number_format($activeTenants) }}</span>
             </div>
             <div class="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm border border-emerald-100 flex-shrink-0">
                 <i class="fas fa-check-double"></i>
@@ -69,11 +64,11 @@
         </div>
 
         <!-- Metric 3: Expired / Suspended -->
-        <div class="p-3.5 rounded-xl bg-white border border-slate-200 shadow-xs flex items-center justify-between">
+        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5">
                 <span class="text-[10.5px] font-medium text-rose-700 uppercase tracking-wider block">Suspended / Expired</span>
                 <div class="flex items-center gap-1.5">
-                    <span class="text-lg font-extrabold text-rose-700 tracking-tight font-mono">{{ number_format($suspendedTenants + $expiredTenants) }}</span>
+                    <span class="text-[13px] font-bold text-rose-700 leading-tight block">{{ number_format($suspendedTenants + $expiredTenants) }}</span>
                     @if(($suspendedTenants + $expiredTenants) > 0)
                         <span class="px-1.5 py-0.2 rounded bg-rose-100 text-rose-800 text-[9.5px] font-bold">Action Needed</span>
                     @endif
@@ -86,10 +81,10 @@
         </div>
 
         <!-- Metric 4: Estimated MRR -->
-        <div class="p-3.5 rounded-xl bg-white border border-slate-200 shadow-xs flex items-center justify-between">
+        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5">
                 <span class="text-[10.5px] font-medium text-purple-700 uppercase tracking-wider block">Estimated MRR</span>
-                <span class="text-lg font-extrabold text-purple-700 tracking-tight font-mono">@currency($estimatedMrr)</span>
+                <span class="text-[13px] font-bold text-purple-700 leading-tight block">@currency($estimatedMrr)</span>
                 <span class="text-[10px] text-slate-400 block">Monthly Platform Run-Rate</span>
             </div>
             <div class="w-9 h-9 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center text-sm border border-purple-100 flex-shrink-0">
@@ -97,10 +92,12 @@
             </div>
         </div>
 
+        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between"><div><span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Expiring Soon</span><span class="text-[13px] font-bold text-amber-700 leading-tight block">{{ number_format($tenants->filter(fn($t) => $t->subscription_expires_at && $t->subscription_expires_at->isBetween(now(), now()->addDays(7)))->count()) }}</span></div><i class="fas fa-clock w-6 h-6 rounded-md text-[10px] border border-amber-100 bg-amber-50 text-amber-600 flex items-center justify-center"></i></div>
+        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between"><div><span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">MRR Currency</span><span class="text-[13px] font-bold text-cyan-700 leading-tight block">{{ $currencyCode ?? 'BDT' }}</span></div><i class="fas fa-coins w-6 h-6 rounded-md text-[10px] border border-cyan-100 bg-cyan-50 text-cyan-600 flex items-center justify-center"></i></div>
     </div>
 
     <!-- Filter & Search Bar -->
-    <div class="p-3.5 rounded-xl bg-white border border-slate-200 shadow-xs">
+    <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5" x-data="{ showMoreFilters: {{ request()->filled('status') || request()->filled('plan_id') ? 'true' : 'false' }}, searchQuery: @js(request('search', '')) }">
         <form action="{{ route('owner.tenants.index') }}" method="GET" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5">
             
             <!-- Search Keyword -->
@@ -111,13 +108,13 @@
                            name="search" 
                            value="{{ request('search') }}" 
                            placeholder="Search company, domain, email, phone..." 
-                           class="w-full pl-7 pr-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition placeholder:text-slate-400">
+                           x-model="searchQuery" class="w-full h-[34px] pl-7 pr-3 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 text-xs focus:outline-none focus:ring-1 focus:ring-cyan-500 focus:border-cyan-500 transition placeholder:text-slate-400">
                 </div>
             </div>
 
             <!-- SaaS Plan Filter -->
             <div>
-                <select name="plan_id" class="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition">
+                <select name="plan_id" class="w-full h-[34px] px-2.5 py-0 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 text-xs focus:outline-none focus:ring-1 focus:ring-cyan-500">
                     <option value="">All Plans</option>
                     @foreach($plans as $plan)
                         <option value="{{ $plan->id }}" {{ request('plan_id') == $plan->id ? 'selected' : '' }}>
@@ -129,7 +126,7 @@
 
             <!-- Status Filter -->
             <div>
-                <select name="status" class="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition">
+                <select name="status" class="w-full h-[34px] px-2.5 py-0 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 text-xs focus:outline-none focus:ring-1 focus:ring-cyan-500">
                     <option value="">All Statuses</option>
                     <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>Active</option>
                     <option value="suspended" {{ request('status') === 'suspended' ? 'selected' : '' }}>Suspended</option>
@@ -140,12 +137,13 @@
 
             <!-- Filter Action Buttons -->
             <div class="flex items-center gap-1.5">
-                <button type="submit" class="flex-1 py-1.5 px-3 rounded-lg bg-slate-800 hover:bg-slate-900 text-white font-semibold text-xs transition flex items-center justify-center gap-1.5 shadow-xs">
+                    <button type="submit" class="flex-1 h-[34px] py-0 px-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs transition flex items-center justify-center gap-1.5 shadow-xs">
                     <i class="fas fa-filter text-[10px]"></i>
                     <span>Filter</span>
                 </button>
-                <a href="{{ route('owner.tenants.index') }}" title="Reset Filters" class="py-1.5 px-2.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold transition flex items-center justify-center">
+                <a href="{{ route('owner.tenants.index') }}" title="Reset Filters" class="h-[34px] py-0 px-2.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition flex items-center justify-center gap-1">
                     <i class="fas fa-rotate-left text-[11px]"></i>
+                    <span>Reset</span>
                 </a>
             </div>
 
@@ -155,7 +153,7 @@
     <!-- Essential Clean High-Density Administrative Matrix Table -->
     <div class="rounded-xl bg-white border border-slate-200 overflow-hidden shadow-xs">
         <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs text-slate-700 whitespace-nowrap border-collapse">
+            <table class="saas-table">
                 <thead class="bg-slate-50 text-slate-600 uppercase tracking-wider text-[10.5px] border-b border-slate-200 font-bold select-none text-center">
                     <tr>
                         <th class="px-3 py-2.5 border-r border-slate-200 text-center w-12">#</th>
