@@ -327,6 +327,7 @@ class OwnerTenantController extends Controller
      */
     public function extendSubscription(Request $request, Tenant $tenant)
     {
+        $before = $tenant->only(['status', 'subscription_expires_at']);
         $request->validate([
             'extension_type' => ['required', 'in:1_month,3_months,6_months,1_year,custom_date'],
             'custom_date' => ['nullable', 'date', 'required_if:extension_type,custom_date'],
@@ -372,7 +373,7 @@ class OwnerTenantController extends Controller
             $tenant,
             'subscription_extended',
             "Extended subscription validity until " . $newExpiry->format('d M, Y') . " ({$request->extension_type}).",
-            ['previous_expiry' => $currentExpiry->toDateString(), 'new_expiry' => $newExpiry->toDateString()]
+            ['before' => $before, 'after' => ['status' => $tenant->status, 'subscription_expires_at' => $newExpiry->toDateString()]]
         );
 
         return back()->with('success', "Subscription for '{$tenant->name}' extended until " . $newExpiry->format('d M, Y') . '.');
@@ -383,18 +384,25 @@ class OwnerTenantController extends Controller
      */
     public function destroy(Tenant $tenant)
     {
+        $activeUsers = $tenant->users()->where('status', 'active')->count();
+        $invoiceCount = $tenant->invoices()->count();
+
+        if ($activeUsers > 0 || $invoiceCount > 0) {
+            return back()->with('error', "Tenant '{$tenant->name}' cannot be deleted while it has {$activeUsers} active user(s) and {$invoiceCount} invoice(s). Suspend or archive dependencies first.");
+        }
+
         $tenantName = $tenant->name;
+        $before = $tenant->only(['id', 'name', 'company_name', 'status', 'saas_plan_id', 'subscription_expires_at']);
         
         // Log prior to deletion
         $this->auditService->log(
             $tenant->id,
             'tenant_deleted',
             "Permanently removed ISP Tenant '{$tenantName}' and all associated records."
+            , ['before' => $before, 'result' => 'soft_deleted']
         );
 
         DB::transaction(function () use ($tenant) {
-            $tenant->users()->delete();
-            $tenant->invoices()->delete();
             $tenant->delete();
         });
 
@@ -406,14 +414,15 @@ class OwnerTenantController extends Controller
      */
     public function toggleStatus(Tenant $tenant)
     {
+        $before = $tenant->only(['status']);
         $newStatus = $tenant->status === 'active' ? 'suspended' : 'active';
         $tenant->update(['status' => $newStatus]);
 
         $this->auditService->log(
             $tenant,
             'status_toggled',
-            "Changed tenant status from '{$tenant->status}' to '{$newStatus}'.",
-            ['status' => $newStatus]
+            "Changed tenant status from '{$before['status']}' to '{$newStatus}'.",
+            ['before' => $before, 'after' => ['status' => $newStatus]]
         );
 
         $msg = $newStatus === 'active' ? "Tenant '{$tenant->name}' is now active." : "Tenant '{$tenant->name}' has been suspended.";

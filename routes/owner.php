@@ -61,12 +61,30 @@ Route::prefix('owner')->name('owner.')->group(function () {
         Route::post('/plans/seed-defaults', [OwnerPlanController::class, 'seedDefaults'])->name('plans.seed-defaults');
 
         // 3. Tenant Management
-        Route::resource('tenants', OwnerTenantController::class)->except(['destroy']);
+        Route::resource('tenants', OwnerTenantController::class)
+            ->except(['destroy', 'create', 'store', 'edit', 'update'])
+            ->middleware('owner.capability:tenants.view');
+        Route::get('/tenants/create', [OwnerTenantController::class, 'create'])
+            ->middleware('owner.capability:tenants.create')
+            ->name('tenants.create');
+        Route::post('/tenants', [OwnerTenantController::class, 'store'])
+            ->middleware('owner.capability:tenants.create')
+            ->name('tenants.store');
+        Route::get('/tenants/{tenant}/edit', [OwnerTenantController::class, 'edit'])
+            ->middleware('owner.capability:tenants.update')
+            ->name('tenants.edit');
+        Route::put('/tenants/{tenant}', [OwnerTenantController::class, 'update'])
+            ->middleware('owner.capability:tenants.update')
+            ->name('tenants.update');
         Route::delete('/tenants/{tenant}', [OwnerTenantController::class, 'destroy'])
             ->middleware('owner.capability:tenants.delete')
             ->name('tenants.destroy');
-        Route::post('/tenants/{tenant}/toggle-status', [OwnerTenantController::class, 'toggleStatus'])->name('tenants.toggle-status');
-        Route::post('/tenants/{tenant}/extend-subscription', [OwnerTenantController::class, 'extendSubscription'])->name('tenants.extend-subscription');
+        Route::post('/tenants/{tenant}/toggle-status', [OwnerTenantController::class, 'toggleStatus'])
+            ->middleware('owner.capability:tenants.update')
+            ->name('tenants.toggle-status');
+        Route::post('/tenants/{tenant}/extend-subscription', [OwnerTenantController::class, 'extendSubscription'])
+            ->middleware('owner.capability:subscriptions.manage')
+            ->name('tenants.extend-subscription');
         Route::post('/tenants/{tenant}/impersonate', [OwnerTenantController::class, 'impersonate'])
             ->middleware(['owner.capability:tenants.impersonate', 'throttle:10,1'])
             ->name('tenants.impersonate');
