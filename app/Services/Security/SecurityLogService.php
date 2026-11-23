@@ -37,6 +37,9 @@ class SecurityLogService
             }
         }
 
+        $safeDetails = $this->redactSensitiveData($details);
+        $safeDetails['_result'] = $safeDetails['_result'] ?? $status;
+
         return SecurityAuditLog::create([
             'event_type' => $eventType,
             'severity' => in_array($severity, ['info', 'warning', 'critical', 'alert']) ? $severity : 'info',
@@ -48,7 +51,7 @@ class SecurityLogService
             'request_url' => $url,
             'user_agent' => substr($userAgent, 0, 500),
             'description' => $description,
-            'details' => $details,
+            'details' => $safeDetails,
             'status' => $status,
         ]);
     }
@@ -127,5 +130,26 @@ class SecurityLogService
             actorType: auth()->check() ? 'owner' : 'system',
             status: $passed ? 'resolved' : 'alerted'
         );
+    }
+
+    /**
+     * Prevent credentials and tokens from entering the audit JSON payload.
+     */
+    private function redactSensitiveData(array $data): array
+    {
+        $sensitive = ['password', 'secret', 'token', 'api_key', 'private_key', 'client_secret', 'authorization'];
+
+        foreach ($data as $key => $value) {
+            $normalizedKey = strtolower((string) $key);
+            $isSensitive = collect($sensitive)->contains(fn ($needle) => str_contains($normalizedKey, $needle));
+
+            if ($isSensitive) {
+                $data[$key] = '[REDACTED]';
+            } elseif (is_array($value)) {
+                $data[$key] = $this->redactSensitiveData($value);
+            }
+        }
+
+        return $data;
     }
 }
