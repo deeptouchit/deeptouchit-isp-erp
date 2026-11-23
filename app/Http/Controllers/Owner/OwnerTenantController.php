@@ -448,10 +448,15 @@ class OwnerTenantController extends Controller
         // Store owner session info for quick reversal and expiry/audit controls.
         session([
             'impersonator_id' => Auth::id(),
+            'impersonation_initiator_id' => Auth::id(),
             'impersonated_tenant_id' => $tenant->id,
             'impersonated_tenant_name' => $tenant->company_name ?: $tenant->name,
+            'impersonated_target_id' => $adminUser->id,
+            'impersonated_target_type' => 'user',
             'impersonation_type' => 'tenant',
             'impersonation_started_at' => now()->toIso8601String(),
+            'impersonation_ip' => request()->ip(),
+            'impersonation_user_agent' => request()->userAgent(),
         ]);
 
         Auth::login($adminUser);
@@ -465,15 +470,41 @@ class OwnerTenantController extends Controller
     {
         if (session()->has('impersonator_id')) {
             $ownerId = session('impersonator_id');
+            $tenant = session('impersonated_tenant_id')
+                ? Tenant::find(session('impersonated_tenant_id'))
+                : null;
             $owner = User::find($ownerId);
+
+            if ($tenant) {
+                $this->auditService->log(
+                    $tenant,
+                    'impersonation_ended',
+                    "Owner ended impersonation session for target user ID " . (string) session('impersonated_target_id', 'unknown') . ".",
+                    [
+                        'initiator_id' => session('impersonation_initiator_id', $ownerId),
+                        'target_id' => session('impersonated_target_id'),
+                        'target_type' => session('impersonated_target_type'),
+                        'started_at' => session('impersonation_started_at'),
+                        'ip' => session('impersonation_ip'),
+                        'user_agent' => session('impersonation_user_agent'),
+                        'ended_at' => now()->toIso8601String(),
+                    ]
+                );
+            }
+
             session()->forget([
                 'impersonator_id',
+                'impersonation_initiator_id',
                 'impersonated_tenant_id',
                 'impersonated_tenant_name',
                 'impersonated_user_id',
                 'impersonated_user_name',
+                'impersonated_target_id',
+                'impersonated_target_type',
                 'impersonation_type',
                 'impersonation_started_at',
+                'impersonation_ip',
+                'impersonation_user_agent',
             ]);
 
             if ($owner) {

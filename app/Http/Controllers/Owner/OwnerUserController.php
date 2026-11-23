@@ -269,11 +269,16 @@ class OwnerUserController extends Controller
 
         session([
             'impersonator_id' => Auth::id(),
+            'impersonation_initiator_id' => Auth::id(),
             'impersonated_user_id' => $user->id,
             'impersonated_user_name' => $user->name,
             'impersonated_tenant_id' => $user->tenant_id,
+            'impersonated_target_id' => $user->id,
+            'impersonated_target_type' => 'user',
             'impersonation_type' => 'user',
             'impersonation_started_at' => now()->toIso8601String(),
+            'impersonation_ip' => request()->ip(),
+            'impersonation_user_agent' => request()->userAgent(),
         ]);
 
         Auth::login($user);
