@@ -41,7 +41,7 @@ class CustomerPortalAuthController extends Controller
         $request->session()->regenerate();
         $account->forceFill(['last_login_at' => now()])->save();
 
-        return redirect()->route('customer.portal.dashboard', ['tenant' => $tenant->slug]);
+        return redirect()->route('customer.portal.clean.dashboard', ['tenant' => $tenant->slug]);
     }
 
     public function logout(Request $request, Tenant $tenant)
@@ -50,6 +50,6 @@ class CustomerPortalAuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('customer.portal.login', ['tenant' => $tenant->slug]);
+        return redirect()->route('customer.portal.clean.login', ['tenant' => $tenant->slug]);
     }
 }

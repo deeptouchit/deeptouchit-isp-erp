@@ -9,6 +9,17 @@ Route::get('/', function () {
 // Top-level generic /login redirecting to ISP Tenant Portal Login
 Route::get('/login', fn() => redirect()->route('tenant.login'))->name('login');
 
+// Canonical customer-facing URL: /{tenant-slug}/login
+Route::prefix('{tenant:slug}')->name('customer.portal.clean.')->group(function () {
+    Route::get('/login', [\App\Http\Controllers\CustomerPortal\CustomerPortalAuthController::class, 'showLogin'])->name('login');
+    Route::post('/login', [\App\Http\Controllers\CustomerPortal\CustomerPortalAuthController::class, 'login'])->middleware('throttle:5,1')->name('login.submit');
+    Route::middleware([\App\Http\Middleware\EnsureCustomerAccount::class, \App\Http\Middleware\CustomerPortalNoStore::class])->group(function () {
+        Route::get('/', function (\App\Models\Tenant $tenant) {
+            return view('customer-portal.dashboard', compact('tenant'));
+        })->name('dashboard');
+    });
+});
+
 Route::prefix('portal/{tenant:slug}')->name('customer.portal.')->group(function () {
     Route::get('/manifest.webmanifest', function (\App\Models\Tenant $tenant) {
         return response()->json([

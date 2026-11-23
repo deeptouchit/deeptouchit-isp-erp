@@ -4,7 +4,7 @@
 <body class="min-h-screen bg-slate-100 flex items-center justify-center p-4">
 <main class="w-full max-w-sm bg-white rounded-2xl border border-slate-200 shadow-xl p-5">
     <div class="text-center mb-5"><h1 class="text-lg font-bold text-slate-900">{{ $tenant->company_name ?? $tenant->name }}</h1><p class="text-xs text-slate-500">Customer Portal</p></div>
-    <form method="POST" action="{{ route('customer.portal.login.submit', ['tenant' => $tenant->slug]) }}" class="space-y-3">
+    <form method="POST" action="{{ route('customer.portal.clean.login.submit', ['tenant' => $tenant->slug]) }}" class="space-y-3">
         @csrf
         <div><label class="block text-xs font-semibold text-slate-700 mb-1">Phone or Email</label><input name="login_identifier" value="{{ old('login_identifier') }}" required autocomplete="username" class="w-full h-10 px-3 rounded-lg border border-slate-200 bg-slate-50 text-sm focus:bg-white focus:border-cyan-500 focus:outline-none"></div>
         <div><label class="block text-xs font-semibold text-slate-700 mb-1">Portal Password</label><input type="password" name="password" required autocomplete="current-password" class="w-full h-10 px-3 rounded-lg border border-slate-200 bg-slate-50 text-sm focus:bg-white focus:border-cyan-500 focus:outline-none"></div>

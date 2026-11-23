@@ -26,15 +26,15 @@ class CustomerPortalFoundationTest extends TestCase
             'status' => 'active',
         ]);
 
-        $this->post(route('customer.portal.login.submit', $tenant), [
+        $this->post(route('customer.portal.clean.login.submit', $tenant), [
             'login_identifier' => '01700000000',
             'password' => 'pppoe-secret',
         ])->assertSessionHasErrors('login_identifier');
 
-        $this->post(route('customer.portal.login.submit', $tenant), [
+        $this->post(route('customer.portal.clean.login.submit', $tenant), [
             'login_identifier' => '01700000000',
             'password' => 'portal-secret',
-        ])->assertRedirect(route('customer.portal.dashboard', $tenant));
+        ])->assertRedirect(route('customer.portal.clean.dashboard', $tenant));
 
         $this->assertAuthenticated('customer');
     }
