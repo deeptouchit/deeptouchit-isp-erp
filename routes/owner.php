@@ -54,12 +54,17 @@ Route::prefix('owner')->name('owner.')->group(function () {
         Route::get('/plans', [OwnerPlanController::class, 'index'])->name('plans.index');
         Route::post('/plans', [OwnerPlanController::class, 'store'])->name('plans.store');
         Route::put('/plans/{plan}', [OwnerPlanController::class, 'update'])->name('plans.update');
-        Route::delete('/plans/{plan}', [OwnerPlanController::class, 'destroy'])->name('plans.destroy');
+        Route::delete('/plans/{plan}', [OwnerPlanController::class, 'destroy'])
+            ->middleware('owner.capability:subscriptions.manage')
+            ->name('plans.destroy');
         Route::post('/plans/{plan}/toggle', [OwnerPlanController::class, 'toggle'])->name('plans.toggle');
         Route::post('/plans/seed-defaults', [OwnerPlanController::class, 'seedDefaults'])->name('plans.seed-defaults');
 
         // 3. Tenant Management
-        Route::resource('tenants', OwnerTenantController::class);
+        Route::resource('tenants', OwnerTenantController::class)->except(['destroy']);
+        Route::delete('/tenants/{tenant}', [OwnerTenantController::class, 'destroy'])
+            ->middleware('owner.capability:tenants.delete')
+            ->name('tenants.destroy');
         Route::post('/tenants/{tenant}/toggle-status', [OwnerTenantController::class, 'toggleStatus'])->name('tenants.toggle-status');
         Route::post('/tenants/{tenant}/extend-subscription', [OwnerTenantController::class, 'extendSubscription'])->name('tenants.extend-subscription');
         Route::post('/tenants/{tenant}/impersonate', [OwnerTenantController::class, 'impersonate'])
@@ -70,7 +75,9 @@ Route::prefix('owner')->name('owner.')->group(function () {
         Route::get('/users', [OwnerUserController::class, 'index'])->name('users.index');
         Route::post('/users', [OwnerUserController::class, 'store'])->name('users.store');
         Route::put('/users/{user}', [OwnerUserController::class, 'update'])->name('users.update');
-        Route::delete('/users/{user}', [OwnerUserController::class, 'destroy'])->name('users.destroy');
+        Route::delete('/users/{user}', [OwnerUserController::class, 'destroy'])
+            ->middleware('owner.capability:users.delete')
+            ->name('users.destroy');
         Route::post('/users/{user}/toggle-status', [OwnerUserController::class, 'toggleStatus'])->name('users.toggle-status');
         Route::post('/users/{user}/reset-password', [OwnerUserController::class, 'resetPassword'])->name('users.reset-password');
         Route::post('/users/{user}/impersonate', [OwnerUserController::class, 'impersonate'])
@@ -86,7 +93,9 @@ Route::prefix('owner')->name('owner.')->group(function () {
         Route::post('/billing/invoices', [OwnerBillingController::class, 'store'])->name('billing.store');
         Route::put('/billing/invoices/{invoice}', [OwnerBillingController::class, 'update'])->name('billing.update');
         Route::post('/billing/invoices/{invoice}/toggle-status', [OwnerBillingController::class, 'toggleStatus'])->name('billing.toggle-status');
-        Route::delete('/billing/invoices/{invoice}', [OwnerBillingController::class, 'destroy'])->name('billing.destroy');
+        Route::delete('/billing/invoices/{invoice}', [OwnerBillingController::class, 'destroy'])
+            ->middleware('owner.capability:billing.manage')
+            ->name('billing.destroy');
         Route::post('/billing/run-engine', [OwnerBillingController::class, 'runEngine'])->name('billing.run-engine');
 
         // 5. Dedicated Tenant Subscriptions
@@ -114,8 +123,12 @@ Route::prefix('owner')->name('owner.')->group(function () {
         Route::post('/automation/dispatch/{task}', [OwnerAutomationController::class, 'dispatchTask'])->name('automation.dispatch');
         Route::post('/automation/failed-jobs/{id}/retry', [OwnerAutomationController::class, 'retryFailedJob'])->name('automation.failed-jobs.retry');
         Route::post('/automation/failed-jobs/retry-all', [OwnerAutomationController::class, 'retryAllFailedJobs'])->name('automation.failed-jobs.retry-all');
-        Route::delete('/automation/failed-jobs/{id}', [OwnerAutomationController::class, 'deleteFailedJob'])->name('automation.failed-jobs.delete');
-        Route::post('/automation/failed-jobs/flush', [OwnerAutomationController::class, 'flushAllFailedJobs'])->name('automation.failed-jobs.flush');
+        Route::delete('/automation/failed-jobs/{id}', [OwnerAutomationController::class, 'deleteFailedJob'])
+            ->middleware('owner.capability:automation.dispatch')
+            ->name('automation.failed-jobs.delete');
+        Route::post('/automation/failed-jobs/flush', [OwnerAutomationController::class, 'flushAllFailedJobs'])
+            ->middleware('owner.capability:automation.dispatch')
+            ->name('automation.failed-jobs.flush');
 
         // 10. Payment Gateways (PGW) - Dedicated Menu
         Route::get('/payment-gateways', [OwnerPaymentGatewayController::class, 'index'])->name('payment-gateways.index');
@@ -140,7 +153,9 @@ Route::prefix('owner')->name('owner.')->group(function () {
         Route::post('/security-backup/test-restore/{filename}', [OwnerSecurityBackupController::class, 'testRestore'])->name('security-backup.test-restore');
         Route::post('/security-backup/upload-offsite/{filename}', [OwnerSecurityBackupController::class, 'uploadOffsite'])->name('security-backup.upload-offsite');
         Route::get('/security-backup/download/{filename}', [OwnerSecurityBackupController::class, 'downloadBackup'])->name('security-backup.download');
-        Route::post('/security-backup/delete/{filename}', [OwnerSecurityBackupController::class, 'deleteBackup'])->name('security-backup.delete');
+        Route::post('/security-backup/delete/{filename}', [OwnerSecurityBackupController::class, 'deleteBackup'])
+            ->middleware('owner.capability:backups.manage')
+            ->name('security-backup.delete');
 
         // 14. Carrier Network Engines & Infrastructure Hub
         Route::prefix('network-engines')->name('network-engines.')->group(function () {
@@ -175,7 +190,9 @@ Route::prefix('owner')->name('owner.')->group(function () {
         Route::post('/tickets/{ticket}/reply', [OwnerTicketController::class, 'reply'])->name('tickets.reply');
         Route::post('/tickets/{ticket}/status', [OwnerTicketController::class, 'updateStatus'])->name('tickets.status');
         Route::post('/tickets/{ticket}/priority', [OwnerTicketController::class, 'updatePriority'])->name('tickets.priority');
-        Route::delete('/tickets/{ticket}', [OwnerTicketController::class, 'destroy'])->name('tickets.destroy');
+        Route::delete('/tickets/{ticket}', [OwnerTicketController::class, 'destroy'])
+            ->middleware('owner.capability:tickets.manage')
+            ->name('tickets.destroy');
 
         // 18. Live Header Notifications
         Route::get('/notifications', [OwnerNotificationController::class, 'unreadList'])->name('notifications.index');
