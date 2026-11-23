@@ -34,7 +34,7 @@
         <div class="flex items-center gap-2">
             <a href="{{ route('owner.tenants.create') }}" class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-xs transition flex items-center gap-1.5">
                 <i class="fas fa-plus-circle text-[11px]"></i>
-                <span>Provision ISP Tenant</span>
+                <span>Create Tenant</span>
             </a>
         </div>
     </div>
