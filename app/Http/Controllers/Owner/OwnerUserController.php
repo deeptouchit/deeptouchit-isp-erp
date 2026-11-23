@@ -102,7 +102,7 @@ class OwnerUserController extends Controller
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'phone' => ['nullable', 'string', 'max:30'],
             'tenant_id' => ['nullable', 'exists:tenants,id'],
-            'role' => ['required', 'string', 'max:50'],
+            'role' => ['required', Rule::in($this->allowedRoles())],
             'status' => ['required', 'in:active,inactive,suspended'],
             'password' => ['required', 'string', 'min:6'],
         ]);
@@ -131,10 +131,20 @@ class OwnerUserController extends Controller
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
             'phone' => ['nullable', 'string', 'max:30'],
             'tenant_id' => ['nullable', 'exists:tenants,id'],
-            'role' => ['required', 'string', 'max:50'],
+            'role' => ['required', Rule::in($this->allowedRoles())],
             'status' => ['required', 'in:active,inactive,suspended'],
             'password' => ['nullable', 'string', 'min:6'],
         ]);
+
+        if ($user->id === Auth::id() && ($validated['status'] !== 'active' || $validated['role'] !== $user->role)) {
+            return back()->with('error', 'You cannot disable or demote your own owner account.');
+        }
+        if ($this->isProtectedOwner($user) && $validated['role'] !== $user->role && $this->activeOwnerCount() <= 1) {
+            return back()->with('error', 'The last active super-admin cannot be demoted.');
+        }
+        if ($this->isProtectedOwner($user) && $validated['status'] !== 'active' && $this->activeOwnerCount() <= 1) {
+            return back()->with('error', 'The last active super-admin cannot be disabled.');
+        }
 
         if (!empty($validated['password'])) {
             $validated['password'] = Hash::make($validated['password']);
@@ -197,6 +207,10 @@ class OwnerUserController extends Controller
             return back()->with('error', $msg);
         }
 
+        if ($user->status === 'active' && $this->isProtectedOwner($user) && $this->activeOwnerCount() <= 1) {
+            return back()->with('error', 'The last active super-admin cannot be disabled.');
+        }
+
         $newStatus = $user->status === 'active' ? 'inactive' : 'active';
         $user->update(['status' => $newStatus]);
 
@@ -229,6 +243,10 @@ class OwnerUserController extends Controller
             return back()->with('error', 'You cannot delete your own active super admin account.');
         }
 
+        if ($this->isProtectedOwner($user) && $this->activeOwnerCount() <= 1) {
+            return back()->with('error', 'The last active super-admin cannot be deleted.');
+        }
+
         $userName = $user->name;
         $userEmail = $user->email;
         $tenantId = $user->tenant_id;
@@ -243,6 +261,27 @@ class OwnerUserController extends Controller
         $user->delete();
 
         return redirect()->route('owner.users.index')->with('success', "User '{$userName}' ({$userEmail}) was removed successfully.");
+    }
+
+    private function allowedRoles(): array
+    {
+        return [
+            'owner', 'super_admin', 'isp_admin', 'isp_manager', 'isp_technician',
+            'isp_collector', 'technician', 'collector', 'reseller_admin',
+            'reseller_manager', 'reseller_technician', 'reseller_collector',
+        ];
+    }
+
+    private function isProtectedOwner(User $user): bool
+    {
+        return in_array($user->role, ['owner', 'super_admin'], true);
+    }
+
+    private function activeOwnerCount(): int
+    {
+        return User::whereIn('role', ['owner', 'super_admin'])
+            ->where('status', 'active')
+            ->count();
     }
 
     /**
