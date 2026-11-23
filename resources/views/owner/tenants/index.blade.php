@@ -3,20 +3,8 @@
 @section('page-title', 'ISP Tenants Management')
 
 @section('content')
-<div class="space-y-3" x-data="{
-    // Extend Validity Modal State
-    extendModalOpen: false,
-    extendTenant: null,
-    extendType: '1_month',
-    customDate: '',
-
-    openExtend(tenant) {
-        this.extendTenant = tenant;
-        this.extendType = '1_month';
-        this.customDate = '';
-        this.extendModalOpen = true;
-    }
-}">
+<div class="space-y-3" x-data="tenantDirectory()"
+     @scroll.window.capture="activeMenu = null" @resize.window="activeMenu = null" @keydown.escape.window="activeMenu = null">
 
 
     <!-- Top Compact Header Bar -->
@@ -154,186 +142,102 @@
     <div class="rounded-xl bg-white border border-slate-200 overflow-hidden shadow-xs">
         <div class="overflow-x-auto">
             <table class="saas-table">
-                <thead class="bg-slate-50 text-slate-600 uppercase tracking-wider text-[10.5px] border-b border-slate-200 font-bold select-none text-center">
+                <thead>
                     <tr>
-                        <th class="px-3 py-2.5 border-r border-slate-200 text-center w-12">#</th>
-                        <th class="px-3.5 py-2.5 border-r border-slate-200 text-center">ISP Organization</th>
-                        <th class="px-3.5 py-2.5 border-r border-slate-200 text-center">Plan</th>
-                        <th class="px-3.5 py-2.5 border-r border-slate-200 text-center">Contact</th>
-                        <th class="px-3.5 py-2.5 border-r border-slate-200 text-center">Expiry</th>
-                        <th class="px-3.5 py-2.5 border-r border-slate-200 text-center">Status</th>
-                        <th class="px-3.5 py-2.5 text-center">Actions</th>
+                        <th class="w-12 text-center font-semibold">#</th>
+                        <th class="text-center font-semibold">Name</th>
+                        <th class="text-center font-semibold">Address</th>
+                        <th class="text-center font-semibold">Phone</th>
+                        <th class="text-center font-semibold">Package</th>
+                        <th class="text-center font-semibold">Expiry</th>
+                        <th class="text-center font-semibold">Status</th>
+                        <th class="no-sort text-center font-semibold">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-200 bg-white">
+                <tbody>
                     @forelse ($tenants as $tenant)
                         @php
-                            $expiryDate = $tenant->subscription_expires_at ? \Carbon\Carbon::parse($tenant->subscription_expires_at) : null;
-                            $isExpired = $expiryDate ? $expiryDate->isPast() : false;
-                            $daysLeft = $expiryDate ? ceil(now()->floatDiffInDays($expiryDate, false)) : null;
+                            $expiryDate = $tenant->subscription_expires_at;
+                            $isActive = $tenant->status === 'active';
+                            $isExpired = $expiryDate?->isPast();
+                            $extendData = [
+                                'name' => $tenant->name,
+                                'current_expiry' => $expiryDate?->format('Y-m-d'),
+                                'action_url' => route('owner.tenants.extend-subscription', $tenant),
+                            ];
                         @endphp
-                        <tr class="hover:bg-slate-50/80 transition">
-                            
-                            <!-- 1. Index Column -->
-                            <td class="px-3 py-2.5 border-r border-slate-200 text-center font-mono text-slate-400 text-[11px] font-semibold">
+                        <tr>
+                            <td class="text-center font-mono">
                                 {{ ($tenants->currentPage() - 1) * $tenants->perPage() + $loop->iteration }}
                             </td>
+                            <td class="text-left">
+                                <a href="{{ route('owner.tenants.show', $tenant) }}" class="font-semibold text-slate-900 hover:text-cyan-700">{{ $tenant->name }}</a>
+                            </td>
+                            <td class="text-left">
+                                <span class="block max-w-xs truncate" title="{{ $tenant->address }}">{{ $tenant->address ?: '—' }}</span>
+                            </td>
+                            <td class="text-center font-mono">{{ $tenant->phone ?: '—' }}</td>
+                            <td class="text-left">{{ $tenant->plan->name ?? 'P1' }}</td>
+                            <td class="text-center font-mono">{{ $expiryDate?->format('d M, Y') ?? 'Lifetime' }}</td>
+                            <td class="text-center">
+                                @if (!$isActive)
+                                    <span class="rounded-full bg-rose-50 px-2 py-0.5 font-semibold text-rose-700">Suspended</span>
+                                @elseif ($isExpired)
+                                    <span class="rounded-full bg-amber-50 px-2 py-0.5 font-semibold text-amber-700">Expired</span>
+                                @else
+                                    <span class="rounded-full bg-emerald-50 px-2 py-0.5 font-semibold text-emerald-700">Active</span>
+                                @endif
+                            </td>
+                            <td class="text-center">
+                                <button type="button" @click="toggleMenu({{ $tenant->id }}, $event)"
+                                        :aria-expanded="activeMenu === {{ $tenant->id }}"
+                                        aria-controls="tenant-actions-{{ $tenant->id }}" aria-label="Actions for {{ $tenant->name }}"
+                                        class="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100">
+                                    <i class="fas fa-ellipsis-v text-[10px]" aria-hidden="true"></i>
+                                </button>
 
-                            <!-- 2. ISP Organization -->
-                            <td class="px-3.5 py-2.5 border-r border-slate-200">
-                                <div class="flex items-center gap-2.5">
-                                    <div class="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-extrabold text-xs shadow-2xs flex-shrink-0">
-                                        {{ strtoupper(substr($tenant->name, 0, 1)) }}
-                                    </div>
-                                    <div class="leading-tight">
-                                        <a href="{{ route('owner.tenants.show', $tenant) }}" class="font-bold text-slate-900 hover:text-blue-600 transition block">
-                                            {{ $tenant->name }}
+                                <template x-teleport="body">
+                                    <div id="tenant-actions-{{ $tenant->id }}" x-show="activeMenu === {{ $tenant->id }}" x-cloak
+                                         :style="menuPos" @click.outside="if (activeMenu === {{ $tenant->id }} && !$event.target.closest('[aria-controls=tenant-actions-{{ $tenant->id }}]')) activeMenu = null"
+                                         class="fixed z-50 w-48 rounded-lg border border-slate-200 bg-white p-1 text-xs shadow-lg">
+                                        <a href="{{ route('owner.tenants.show', $tenant) }}" class="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-slate-50">
+                                            <i class="fas fa-eye fa-fw" aria-hidden="true"></i> View Details
                                         </a>
-                                        <span class="text-[10.5px] text-slate-400 font-mono block">
-                                            {{ $tenant->slug }}.somitysoft.com
-                                        </span>
-                                    </div>
-                                </div>
-                            </td>
-
-                            <!-- 3. Plan Badge -->
-                            <td class="px-3.5 py-2.5 border-r border-slate-200 text-center">
-                                <span class="px-2.5 py-1 rounded-md bg-purple-50 text-purple-700 border border-purple-200 font-bold text-[11px] inline-block">
-                                    {{ $tenant->plan->name ?? 'P1' }}
-                                </span>
-                            </td>
-
-                            <!-- 4. Contact -->
-                            <td class="px-3.5 py-2.5 border-r border-slate-200 text-center">
-                                <div class="leading-tight">
-                                    <span class="font-semibold text-slate-800 block text-[11px]">{{ $tenant->phone }}</span>
-                                    <span class="text-[10px] text-slate-400">{{ $tenant->email }}</span>
-                                </div>
-                            </td>
-
-                            <!-- 5. Expiry & Validity -->
-                            <td class="px-3.5 py-2.5 border-r border-slate-200 text-center">
-                                @if($expiryDate)
-                                    <div class="space-y-0.5">
-                                        <span class="font-semibold text-slate-800 text-[11px] block font-mono">
-                                            {{ $expiryDate->format('d M, Y') }}
-                                        </span>
-                                        @if($isExpired)
-                                            <span class="inline-flex items-center px-1.5 py-0.2 rounded text-[9.5px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
-                                                Expired
-                                            </span>
-                                        @elseif($daysLeft <= 7)
-                                            <span class="inline-flex items-center px-1.5 py-0.2 rounded text-[9.5px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
-                                                {{ $daysLeft }}d left
-                                            </span>
-                                        @else
-                                            <span class="inline-flex items-center px-1.5 py-0.2 rounded text-[9.5px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                                {{ $daysLeft }}d left
-                                            </span>
-                                        @endif
-                                    </div>
-                                @else
-                                    <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-semibold text-[10px]">
-                                        Lifetime
-                                    </span>
-                                @endif
-                            </td>
-
-                            <!-- 6. Status -->
-                            <td class="px-3.5 py-2.5 border-r border-slate-200 text-center">
-                                @if ($tenant->status === 'active' && !$isExpired)
-                                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10.5px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                        Active
-                                    </span>
-                                @elseif($tenant->status === 'active' && $isExpired)
-                                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10.5px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                                        Expired
-                                    </span>
-                                @else
-                                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10.5px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
-                                        Suspended
-                                    </span>
-                                @endif
-                            </td>
-
-                            <!-- 7. Actions (Cleanly Aligned Center) -->
-                            <td class="px-3.5 py-2.5 text-center">
-                                <div class="flex items-center justify-center gap-1.5 flex-nowrap whitespace-nowrap">
-                                    
-                                    <!-- Details Button -->
-                                    <a href="{{ route('owner.tenants.show', $tenant) }}" 
-                                       title="View Full Details"
-                                       class="inline-flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-600 hover:text-white border border-blue-200 font-bold text-[11px] transition shadow-2xs">
-                                        <i class="fas fa-eye text-[10px]"></i>
-                                        <span>Details</span>
-                                    </a>
-
-                                    <!-- 1-Click Login Impersonate -->
-                                    <form method="POST" action="{{ route('owner.tenants.impersonate', $tenant) }}" class="inline">
-                                        @csrf
-                                        <button type="submit" title="Login as ISP Administrator"
-                                       class="inline-flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white border border-emerald-200 font-bold text-[11px] transition shadow-2xs">
-                                        <i class="fas fa-sign-in-alt text-[10px]"></i>
-                                        <span>Login</span>
+                                        <form method="POST" action="{{ route('owner.tenants.impersonate', $tenant) }}">
+                                            @csrf
+                                            <button type="submit" class="flex w-full items-center gap-2 rounded-md px-2 py-1.5 hover:bg-slate-50">
+                                                <i class="fas fa-sign-in-alt fa-fw" aria-hidden="true"></i> Login as Administrator
+                                            </button>
+                                        </form>
+                                        <button type="button" @click="activeMenu = null; openExtend(@js($extendData))" class="flex w-full items-center gap-2 rounded-md px-2 py-1.5 hover:bg-slate-50">
+                                            <i class="fas fa-calendar-plus fa-fw" aria-hidden="true"></i> Extend Subscription
                                         </button>
-                                    </form>
-
-                                    <!-- Quick Extend Validity Button -->
-                                    <button type="button" 
-                                            @click="openExtend({{ json_encode([
-                                                'id' => $tenant->id,
-                                                'name' => $tenant->name,
-                                                'current_expiry' => $tenant->subscription_expires_at ? \Carbon\Carbon::parse($tenant->subscription_expires_at)->format('Y-m-d') : '',
-                                                'action_url' => route('owner.tenants.extend-subscription', $tenant)
-                                            ]) }})"
-                                            title="Extend Subscription Validity" 
-                                            class="w-7 h-7 rounded-lg bg-purple-50 hover:bg-purple-600 hover:text-white text-purple-700 border border-purple-200 transition text-[11px] flex items-center justify-center shadow-2xs">
-                                        <i class="fas fa-calendar-plus"></i>
-                                    </button>
-
-                                    <!-- Edit Link -->
-                                    <a href="{{ route('owner.tenants.edit', $tenant) }}" 
-                                       title="Edit Settings" 
-                                       class="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition text-[11px] flex items-center justify-center border border-slate-200 shadow-2xs">
-                                        <i class="fas fa-pencil-alt"></i>
-                                    </a>
-
-                                    <!-- Toggle Status Form -->
-                                    <form action="{{ route('owner.tenants.toggle-status', $tenant) }}" method="POST" class="inline">
-                                        @csrf
-                                        <button type="submit" 
-                                                title="{{ $tenant->status === 'active' ? 'Suspend Account' : 'Activate Account' }}" 
-                                                class="w-7 h-7 rounded-lg {{ $tenant->status === 'active' ? 'bg-amber-50 text-amber-600 hover:bg-amber-600 hover:text-white border border-amber-200' : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white border border-emerald-200' }} transition text-[11px] flex items-center justify-center shadow-2xs">
-                                            <i class="fas {{ $tenant->status === 'active' ? 'fa-ban' : 'fa-check' }}"></i>
-                                        </button>
-                                    </form>
-
-                                    <!-- Delete Tenant Button with SweetAlert2 Confirmation -->
-                                    <button type="button" 
-                                            onclick="confirmDeleteTenant({{ $tenant->id }}, '{{ addslashes($tenant->name) }}')"
-                                            title="Delete Tenant & Purge All Associated Data" 
-                                            class="w-7 h-7 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white border border-rose-200 transition text-[11px] flex items-center justify-center shadow-2xs">
-                                        <i class="fas fa-trash-alt"></i>
-                                    </button>
-
-                                    <!-- Hidden Delete Form -->
-                                    <form id="delete-tenant-form-{{ $tenant->id }}" 
-                                          action="{{ route('owner.tenants.destroy', $tenant) }}" 
-                                          method="POST" 
-                                          class="hidden">
-                                        @csrf
-                                        @method('DELETE')
-                                    </form>
-
-                                </div>
+                                        <a href="{{ route('owner.tenants.edit', $tenant) }}" class="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-slate-50">
+                                            <i class="fas fa-pencil-alt fa-fw" aria-hidden="true"></i> Edit Tenant
+                                        </a>
+                                        <form method="POST" action="{{ route('owner.tenants.toggle-status', $tenant) }}">
+                                            @csrf
+                                            <button type="submit" class="flex w-full items-center gap-2 rounded-md px-2 py-1.5 hover:bg-slate-50">
+                                                <i class="fas fa-fw {{ $isActive ? 'fa-ban' : 'fa-check' }}" aria-hidden="true"></i>
+                                                {{ $isActive ? 'Suspend Tenant' : 'Activate Tenant' }}
+                                            </button>
+                                        </form>
+                                        <form method="POST" action="{{ route('owner.tenants.destroy', $tenant) }}"
+                                              @submit.prevent="activeMenu = null; confirmDeleteTenant($el, @js($tenant->name))"
+                                              class="border-t border-slate-100">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-rose-700 hover:bg-rose-50">
+                                                <i class="fas fa-trash-alt fa-fw" aria-hidden="true"></i> Delete Tenant
+                                            </button>
+                                        </form>
+                                    </div>
+                                </template>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="px-4 py-12 text-center text-slate-400 text-xs">
+                            <td colspan="8" class="px-4 py-12 text-center text-slate-400 text-xs">
                                 <div class="flex flex-col items-center justify-center space-y-2">
                                     <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 text-lg">
                                         <i class="fas fa-building"></i>
@@ -479,12 +383,51 @@
 <!-- SweetAlert2 Confirmation Script -->
 @push('scripts')
 <script>
-    function confirmDeleteTenant(tenantId, tenantName) {
+    function tenantDirectory() {
+        return {
+            activeMenu: null,
+            menuPos: {},
+            extendModalOpen: false,
+            extendTenant: null,
+            extendType: '1_month',
+            customDate: '',
+
+            toggleMenu(id, event) {
+                if (this.activeMenu === id) {
+                    this.activeMenu = null;
+                    return;
+                }
+
+                const rect = event.currentTarget.getBoundingClientRect();
+                const right = Math.max(10, window.innerWidth - rect.right);
+                const top = Math.round(rect.bottom) + 2;
+                const opensAbove = top + 200 > window.innerHeight;
+
+                this.menuPos = {
+                    top: opensAbove ? 'auto' : `${top}px`,
+                    bottom: opensAbove ? `${Math.max(10, window.innerHeight - Math.round(rect.top) + 2)}px` : 'auto',
+                    right: `${right}px`,
+                };
+                this.activeMenu = id;
+            },
+
+            openExtend(tenant) {
+                this.extendTenant = tenant;
+                this.extendType = '1_month';
+                this.customDate = '';
+                this.extendModalOpen = true;
+            },
+        };
+    }
+
+    function confirmDeleteTenant(form, tenantName) {
+        const name = document.createElement('span');
+        name.textContent = tenantName;
         Swal.fire({
             title: 'Delete ISP Organization?',
             html: `
                 <div class="text-left text-xs space-y-2 mt-2">
-                    <p class="text-slate-700">Are you sure you want to completely remove <strong>"${tenantName}"</strong>?</p>
+                    <p class="text-slate-700">Are you sure you want to completely remove <strong>"${name.innerHTML}"</strong>?</p>
                     <div class="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-[11.5px] leading-relaxed">
                         <i class="fas fa-exclamation-triangle mr-1 text-rose-600"></i>
                         <strong>High Impact Action:</strong> This will permanently erase the ISP organization, associated admin accounts, customer databases, billing records, and all related settings.
@@ -507,7 +450,7 @@
             }
         }).then((result) => {
             if (result.isConfirmed) {
-                document.getElementById('delete-tenant-form-' + tenantId).submit();
+                form.submit();
             }
         });
     }

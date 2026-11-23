@@ -286,7 +286,8 @@
         .saas-kpi-value { font-size: 13px !important; line-height: 1.15 !important; font-weight: 700 !important; }
         .saas-table th, .saas-table td { font-size: 11px !important; line-height: 1.25 !important; }
         .saas-table th:not(.font-mono), .saas-table td:not(.font-mono),
-        .saas-table th:not(.font-mono) *, .saas-table td:not(.font-mono) * {
+        .saas-table th:not(.font-mono) :not(:where(.fa, .fas, .far, .fab, .fa-solid, .fa-regular, .fa-brands)),
+        .saas-table td:not(.font-mono) :not(:where(.fa, .fas, .far, .fab, .fa-solid, .fa-regular, .fa-brands)) {
             font-family: inherit !important;
         }
     </style>
