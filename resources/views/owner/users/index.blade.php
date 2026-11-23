@@ -106,19 +106,19 @@
     </div>
 
     <!-- 3. Search & Multi-Filter Toolbar -->
-    <div class="bg-white p-2 rounded-lg border border-slate-200 shadow-xs">
-        <form action="{{ route('owner.users.index') }}" method="GET" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2">
+    <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs">
+        <form action="{{ route('owner.users.index') }}" method="GET" class="flex flex-col md:flex-row items-stretch md:items-center gap-2">
             
             <!-- Search Keyword -->
-            <div class="relative lg:col-span-2">
+            <div class="relative flex-1 min-w-[200px]">
                 <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
                 <input type="text" name="search" value="{{ request('search') }}" placeholder="Search by name, email, phone..." 
-                       class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs pl-8 pr-3 py-1.5 focus:bg-white focus:border-blue-500 focus:outline-none transition">
+                       class="w-full h-[34px] bg-slate-50 border border-slate-200 rounded-lg text-xs pl-8 pr-3 focus:bg-white focus:border-cyan-500 focus:outline-none transition">
             </div>
 
             <!-- Organization / Tenant Filter -->
             <div>
-                <select name="tenant_id" class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 py-1.5 focus:bg-white focus:border-blue-500 focus:outline-none transition">
+                <select name="tenant_id" class="w-full h-[34px] bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 py-0 focus:bg-white focus:border-cyan-500 focus:outline-none transition">
                     <option value="">All Organizations</option>
                     <option value="none" {{ request('tenant_id') === 'none' ? 'selected' : '' }}>Platform Global (No Tenant)</option>
                     @foreach($tenants as $tenant)
@@ -131,7 +131,7 @@
 
             <!-- Role Filter -->
             <div>
-                <select name="role" class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 py-1.5 focus:bg-white focus:border-blue-500 focus:outline-none transition">
+                <select name="role" class="w-full h-[34px] bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 py-0 focus:bg-white focus:border-cyan-500 focus:outline-none transition">
                     <option value="">All Roles</option>
                     @foreach($rolesList as $key => $label)
                         <option value="{{ $key }}" {{ request('role') === $key ? 'selected' : '' }}>{{ $label }}</option>
@@ -141,7 +141,7 @@
 
             <!-- Status Filter -->
             <div>
-                <select name="status" class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 py-1.5 focus:bg-white focus:border-blue-500 focus:outline-none transition">
+                <select name="status" class="w-full h-[34px] bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 py-0 focus:bg-white focus:border-cyan-500 focus:outline-none transition">
                     <option value="">All Statuses</option>
                     <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>Active</option>
                     <option value="inactive" {{ request('status') === 'inactive' ? 'selected' : '' }}>Inactive</option>
@@ -150,24 +150,20 @@
             </div>
 
             <!-- Action & Per Page Buttons -->
-            <div class="flex items-center gap-1.5">
-                <select name="per_page" class="w-20 bg-slate-50 border border-slate-200 rounded-lg text-xs px-2 py-1.5 focus:bg-white focus:border-blue-500 focus:outline-none transition">
+            <div class="flex items-center gap-1.5 md:ml-auto">
+                <select name="per_page" class="w-24 h-[34px] bg-slate-50 border border-slate-200 rounded-lg text-xs px-2 py-0 focus:bg-white focus:border-cyan-500 focus:outline-none transition">
                     <option value="10" {{ request('per_page') == 10 ? 'selected' : '' }}>10</option>
                     <option value="20" {{ request('per_page', 20) == 20 ? 'selected' : '' }}>20</option>
                     <option value="50" {{ request('per_page') == 50 ? 'selected' : '' }}>50</option>
                     <option value="100" {{ request('per_page') == 100 ? 'selected' : '' }}>100</option>
                 </select>
 
-                <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs py-1.5 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1">
+                <button type="submit" class="h-[34px] bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-0 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1">
                     <i class="fas fa-filter text-[10px]"></i>
                     <span>Filter</span>
                 </button>
 
-                @if(request()->hasAny(['search', 'tenant_id', 'role', 'status', 'per_page']))
-                    <a href="{{ route('owner.users.index') }}" title="Reset Filters" class="bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs py-1.5 px-2.5 rounded-lg transition flex items-center justify-center">
-                        <i class="fas fa-rotate-left text-[11px]"></i>
-                    </a>
-                @endif
+                <a href="{{ route('owner.users.index') }}" title="Reset Filters" class="h-[34px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1"><i class="fas fa-rotate-left text-[10px]"></i><span>Reset</span></a>
             </div>
 
         </form>
@@ -180,14 +176,12 @@
                 <thead>
                     <tr>
                         <th class="w-10 text-center">#</th>
-                        <th>Name</th>
-                        <th>Email Address</th>
-                        <th>Phone</th>
-                        <th>Organization / Tenant</th>
-                        <th>Role</th>
+                        <th class="text-center">Name</th>
+                        <th class="text-center">Organization / Tenant</th>
+                        <th class="text-center">Role</th>
                         <th class="text-center">Status</th>
-                        <th>Created Date</th>
-                        <th class="actions-col no-sort">Actions</th>
+                        <th class="text-center">Created Date</th>
+                        <th class="actions-col no-sort text-center">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -221,17 +215,7 @@
                                 {{ $u->name }}
                             </td>
 
-                            <!-- 3. Email Address -->
-                            <td class="font-mono text-slate-700">
-                                {{ $u->email }}
-                            </td>
-
-                            <!-- 4. Phone -->
-                            <td class="font-mono text-slate-600">
-                                {{ $u->phone ?: '—' }}
-                            </td>
-
-                            <!-- 5. Organization / Tenant -->
+                            <!-- 3. Organization / Tenant -->
                             <td>
                                 @if($u->tenant)
                                     <span class="text-slate-800 font-medium">{{ $u->tenant->company_name ?: $u->tenant->name }}</span>
@@ -240,7 +224,7 @@
                                 @endif
                             </td>
 
-                            <!-- 6. Role -->
+                            <!-- 4. Role -->
                             <td>
                                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10.5px] font-semibold border {{ $u->role_badge['class'] ?? 'bg-slate-100 text-slate-700 border-slate-200' }}">
                                     <i class="fas {{ $u->role_badge['icon'] ?? 'fa-user' }} text-[9.5px]"></i>
@@ -248,7 +232,7 @@
                                 </span>
                             </td>
 
-                            <!-- 7. Status -->
+                            <!-- 5. Status -->
                             <td class="text-center">
                                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border {{ $u->status_badge['class'] ?? 'bg-slate-100 text-slate-700 border-slate-200' }}">
                                     <i class="fas {{ $u->status_badge['icon'] ?? 'fa-circle' }} text-[8px]"></i>
@@ -256,12 +240,12 @@
                                 </span>
                             </td>
 
-                            <!-- 8. Created Date -->
-                            <td class="font-mono text-slate-500 text-[11px]">
+                            <!-- 6. Created Date -->
+                            <td class="text-center font-mono text-slate-500 text-[11px]">
                                 {{ $u->created_at ? $u->created_at->format('d M, Y') : '—' }}
                             </td>
 
-                            <!-- 9. Actions (Global 3-Dot Floating Action Menu ONLY) -->
+                            <!-- 7. Actions (Global 3-Dot Floating Action Menu ONLY) -->
                             <td class="actions-col text-center">
                                 <button type="button" 
                                         @click="toggleMenu({{ json_encode($userJson) }}, $event)" 
@@ -273,7 +257,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="9" class="py-8 text-center text-slate-400">
+                            <td colspan="7" class="py-8 text-center text-slate-400">
                                 <i class="fas fa-user-slash text-2xl mb-1.5 block text-slate-300"></i>
                                 <span class="text-xs font-medium">No users found matching the selected filters.</span>
                             </td>
