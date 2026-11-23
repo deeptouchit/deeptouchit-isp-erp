@@ -217,7 +217,7 @@
                     <i class="fas fa-mobile-screen-button"></i>
                 </a>
                 @if(!$authUser?->isCollector())
-                <form method="POST" action="{{ route('tenant.customers.portal-password.reset', $customer->id) }}" class="inline" onsubmit="return confirm('{{ __('Reset Portal Password to the last 6 mobile digits?') }}')">
+                <form method="POST" action="{{ route('tenant.customers.portal-password.reset', $customer->id) }}" class="inline" data-portal-password-reset>
                     @csrf
                     <button type="submit" class="btn-hdr bg-amber-500 text-white" data-title="{{ __('Reset Portal Password') }}">
                         <i class="fas fa-key"></i>
@@ -2995,5 +2995,43 @@ function customerActionBarManager(config) {
     };
 }
 window.customerActionBarManager = customerActionBarManager;
+
+document.querySelectorAll('[data-portal-password-reset]').forEach((form) => {
+    form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const result = await Swal.fire({
+            title: 'Reset Portal Password',
+            html: '<p class="text-xs text-slate-500 mb-3">Set a custom password or leave blank to use the last 6 mobile digits.</p><input id="portal-password" type="password" class="swal2-input" placeholder="New portal password"><input id="portal-password-confirmation" type="password" class="swal2-input" placeholder="Confirm password">',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Reset password',
+            cancelButtonText: 'Cancel',
+            focusConfirm: false,
+            preConfirm: () => {
+                const password = document.getElementById('portal-password').value;
+                const confirmation = document.getElementById('portal-password-confirmation').value;
+                if (password && password.length < 6) {
+                    Swal.showValidationMessage('Password must be at least 6 characters.');
+                    return false;
+                }
+                if (password !== confirmation) {
+                    Swal.showValidationMessage('Passwords do not match.');
+                    return false;
+                }
+                return password;
+            }
+        });
+        if (!result.isConfirmed) return;
+        if (result.value) {
+            const input = document.createElement('input');
+            input.type = 'hidden'; input.name = 'portal_password'; input.value = result.value;
+            form.appendChild(input);
+            const confirmation = document.createElement('input');
+            confirmation.type = 'hidden'; confirmation.name = 'portal_password_confirmation'; confirmation.value = result.value;
+            form.appendChild(confirmation);
+        }
+        form.submit();
+    });
+});
 </script>
 @endpush

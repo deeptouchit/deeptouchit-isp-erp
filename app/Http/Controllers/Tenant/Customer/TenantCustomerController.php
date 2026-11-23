@@ -896,18 +896,22 @@ class TenantCustomerController extends Controller
         return view('tenant.customers.show', compact('tenant', 'currencySymbol', 'customer', 'onu', 'allPackages', 'allResellers', 'allRouters', 'recentPayments', 'recentSessions', 'activityLogs'));
     }
 
-    public function resetPortalPassword(int $id): RedirectResponse
+    public function resetPortalPassword(Request $request, int $id): RedirectResponse
     {
         $tenant = $this->getTenant();
         $customer = TenantCustomer::where('tenant_id', $tenant->id)->findOrFail($id);
         $digits = preg_replace('/\D+/', '', (string) $customer->phone);
         abort_if(strlen($digits) < 6, 422, 'Customer mobile number must contain at least 6 digits.');
 
+        $validated = $request->validate([
+            'portal_password' => ['nullable', 'string', 'min:6', 'max:72', 'confirmed'],
+        ]);
+        $password = $validated['portal_password'] ?? substr($digits, -6);
         $account = TenantCustomerAccount::firstOrNew(['customer_id' => $customer->id]);
         $account->fill([
             'tenant_id' => $tenant->id,
             'login_identifier' => $customer->email ?: $customer->customer_id,
-            'password' => substr($digits, -6),
+            'password' => $password,
             'status' => 'active',
             'force_password_change' => true,
         ])->save();
