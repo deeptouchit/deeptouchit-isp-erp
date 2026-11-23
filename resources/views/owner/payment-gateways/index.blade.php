@@ -527,7 +527,7 @@
                     </div>
                     <div>
                         <label class="block text-[10.5px] font-semibold text-slate-600 mb-1">Account Number *</label>
-                        <input type="text" name="bank_account_number" value="{{ $settings['bank_account_number'] ?? '2050394819283740' }}" class="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 bg-slate-50 font-mono font-bold">
+                        <input type="text" name="bank_account_number" value="{{ $settings['bank_account_number'] ?? '' }}" class="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 bg-slate-50 font-mono font-bold">
                     </div>
                     <div>
                         <label class="block text-[10.5px] font-semibold text-slate-600 mb-1">Branch & Routing No</label>
@@ -819,30 +819,28 @@
             </div>
 
             <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs">
+                <table class="saas-table">
                     <thead>
                         <tr class="bg-slate-50/80 text-slate-500 text-[10.5px] font-semibold uppercase tracking-wider border-b border-slate-200">
-                            <th class="py-2.5 px-3">Transaction ID</th>
-                            <th class="py-2.5 px-3">Tenant & Plan</th>
-                            <th class="py-2.5 px-3">Channel / Gateway</th>
-                            <th class="py-2.5 px-3 text-right">Gross Amount</th>
-                            <th class="py-2.5 px-3 text-right">Fee (Surcharge)</th>
-                            <th class="py-2.5 px-3 text-right">Net Settlement</th>
-                            <th class="py-2.5 px-3 text-center">Status</th>
-                            <th class="py-2.5 px-3 text-right">Date & Time</th>
+                            <th class="text-center">Transaction ID</th>
+                            <th class="text-center">Tenant</th>
+                            <th class="text-center">Gateway</th>
+                            <th class="text-center">Gross Amount</th>
+                            <th class="text-center">Net Settlement</th>
+                            <th class="text-center">Status</th>
+                            <th class="text-center">Date & Time</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
                         @foreach($auditLogs as $log)
-                            <tr class="hover:bg-slate-50/60 transition">
-                                <td class="py-2.5 px-3 font-mono font-bold text-slate-800 text-[11px]">
+                            <tr>
+                                <td class="text-center font-mono font-bold text-slate-800">
                                     {{ $log['trx_id'] }}
                                 </td>
-                                <td class="py-2.5 px-3">
-                                    <span class="font-bold text-slate-800 block text-xs">{{ $log['tenant'] }}</span>
-                                    <span class="text-[10px] text-slate-400 block">{{ $log['plan'] }}</span>
+                                <td class="text-left font-semibold text-slate-800">
+                                    {{ $log['tenant'] }}
                                 </td>
-                                <td class="py-2.5 px-3">
+                                <td class="text-center">
                                     <span class="px-2 py-0.5 rounded text-[10px] font-bold 
                                         {{ $log['gateway_code'] === 'bkash' ? 'bg-pink-50 text-pink-700 border border-pink-200' : '' }}
                                         {{ $log['gateway_code'] === 'nagad' ? 'bg-orange-50 text-orange-700 border border-orange-200' : '' }}
@@ -852,21 +850,18 @@
                                         {{ $log['gateway'] }}
                                     </span>
                                 </td>
-                                <td class="py-2.5 px-3 text-right font-mono font-bold text-slate-800">
+                                <td class="text-right font-mono font-bold text-slate-800">
                                     @currency($log['amount'])
                                 </td>
-                                <td class="py-2.5 px-3 text-right font-mono text-slate-500 text-[11px]">
-                                    -@currency($log['fee'])
-                                </td>
-                                <td class="py-2.5 px-3 text-right font-mono font-bold text-emerald-600">
+                                <td class="text-right font-mono font-bold text-emerald-600">
                                     @currency($log['net'])
                                 </td>
-                                <td class="py-2.5 px-3 text-center">
+                                <td class="text-center">
                                     <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                                         Success
                                     </span>
                                 </td>
-                                <td class="py-2.5 px-3 text-right text-[10.5px] text-slate-500 whitespace-nowrap font-mono">
+                                <td class="text-center text-slate-500 whitespace-nowrap font-mono">
                                     {{ $log['timestamp'] }}
                                 </td>
                             </tr>

@@ -173,24 +173,32 @@ Route::prefix('owner')->name('owner.')->group(function () {
             ->name('automation.failed-jobs.flush');
 
         // 10. Payment Gateways (PGW) - Dedicated Menu
-        Route::get('/payment-gateways', [OwnerPaymentGatewayController::class, 'index'])->name('payment-gateways.index');
-        Route::post('/payment-gateways', [OwnerPaymentGatewayController::class, 'update'])->name('payment-gateways.update');
+        Route::get('/payment-gateways', [OwnerPaymentGatewayController::class, 'index'])
+            ->middleware('owner.capability:gateways.view')->name('payment-gateways.index');
+        Route::post('/payment-gateways', [OwnerPaymentGatewayController::class, 'update'])
+            ->middleware('owner.capability:gateways.manage')->name('payment-gateways.update');
         Route::post('/payment-gateways/test', [OwnerPaymentGatewayController::class, 'test'])
             ->middleware(['owner.capability:gateways.test', 'throttle:10,1'])
             ->name('payment-gateways.test');
 
         // 11. SMS Gateways - Dedicated Menu
-        Route::get('/sms-gateways', [OwnerSmsGatewayController::class, 'index'])->name('sms-gateways.index');
-        Route::post('/sms-gateways', [OwnerSmsGatewayController::class, 'update'])->name('sms-gateways.update');
+        Route::get('/sms-gateways', [OwnerSmsGatewayController::class, 'index'])
+            ->middleware('owner.capability:sms.view')->name('sms-gateways.index');
+        Route::post('/sms-gateways', [OwnerSmsGatewayController::class, 'update'])
+            ->middleware('owner.capability:sms.manage')->name('sms-gateways.update');
         Route::post('/sms-gateways/test', [OwnerSmsGatewayController::class, 'test'])
-            ->middleware(['owner.capability:settings.manage', 'throttle:10,1'])
+            ->middleware(['owner.capability:sms.test', 'throttle:10,1'])
             ->name('sms-gateways.test');
-        Route::get('/sms-gateways/balance', [OwnerSmsGatewayController::class, 'checkBalance'])->name('sms-gateways.balance');
+        Route::get('/sms-gateways/balance', [OwnerSmsGatewayController::class, 'checkBalance'])
+            ->middleware(['owner.capability:sms.test', 'throttle:10,1'])->name('sms-gateways.balance');
 
         // 12. Mail & SMTP - Dedicated Menu
-        Route::get('/mail-settings', [OwnerMailSettingController::class, 'index'])->name('mail-settings.index');
-        Route::post('/mail-settings', [OwnerMailSettingController::class, 'update'])->name('mail-settings.update');
-        Route::post('/mail-settings/test', [OwnerMailSettingController::class, 'test'])->name('mail-settings.test');
+        Route::get('/mail-settings', [OwnerMailSettingController::class, 'index'])
+            ->middleware('owner.capability:mail.view')->name('mail-settings.index');
+        Route::post('/mail-settings', [OwnerMailSettingController::class, 'update'])
+            ->middleware('owner.capability:mail.manage')->name('mail-settings.update');
+        Route::post('/mail-settings/test', [OwnerMailSettingController::class, 'test'])
+            ->middleware(['owner.capability:mail.test', 'throttle:5,1'])->name('mail-settings.test');
 
         // 13. Security & Backup - Dedicated Menu
         Route::get('/security-backup', [OwnerSecurityBackupController::class, 'index'])->name('security-backup.index');

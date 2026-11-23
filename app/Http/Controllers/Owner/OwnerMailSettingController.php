@@ -8,6 +8,7 @@ use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Validation\Rule;
 
 class OwnerMailSettingController extends Controller
 {
@@ -32,7 +33,18 @@ class OwnerMailSettingController extends Controller
      */
     public function update(Request $request)
     {
-        $inputs = $request->except(['_token']);
+        $inputs = $request->validate([
+            'mail_host' => ['required', 'string', 'max:255'],
+            'mail_mailer' => ['required', Rule::in(['smtp'])],
+            'mail_port' => ['required', 'integer', 'between:1,65535'],
+            'mail_encryption' => ['required', Rule::in(['ssl', 'tls', 'none'])],
+            'mail_timeout' => ['nullable', 'integer', 'between:1,120'],
+            'mail_username' => ['nullable', 'email', 'max:255'],
+            'mail_password' => ['nullable', 'string', 'max:500'],
+            'billing_email' => ['required', 'email', 'max:255'],
+            'mail_from_name' => ['required', 'string', 'max:255'],
+            'mail_reply_to' => ['nullable', 'email', 'max:255'],
+        ]);
 
         $checkboxKeys = ['mail_verify_peer'];
         foreach ($checkboxKeys as $key) {
@@ -87,9 +99,9 @@ class OwnerMailSettingController extends Controller
         Config::set('mail.mailers.smtp.timeout', (int)($settings['mail_timeout'] ?? 15));
         Config::set('mail.mailers.smtp.stream', [
             'ssl' => [
-                'allow_self_signed' => true,
-                'verify_peer' => false,
-                'verify_peer_name' => false,
+                'allow_self_signed' => false,
+                'verify_peer' => true,
+                'verify_peer_name' => true,
             ],
         ]);
         Config::set('mail.from.address', $fromAddress);
@@ -111,9 +123,8 @@ class OwnerMailSettingController extends Controller
             return back()->with('success', "Test email successfully delivered to '{$request->test_email}' in {$latency}ms via {$host}:{$port} ({$encryption}).");
         } catch (\Throwable $e) {
             $latency = round((microtime(true) - $startTime) * 1000);
-            $errorMessage = $e->getMessage();
-
-            return back()->with('error', "SMTP Dispatch Failed ({$latency}ms): {$errorMessage}");
+            report($e);
+            return back()->with('error', "SMTP dispatch failed ({$latency}ms). Check the mail configuration and server logs.");
         }
     }
 }

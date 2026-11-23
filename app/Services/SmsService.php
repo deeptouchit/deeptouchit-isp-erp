@@ -8,6 +8,11 @@ use Illuminate\Support\Facades\Log;
 
 class SmsService
 {
+    public static function supportedProviders(): array
+    {
+        return ['bulksmsbd', 'greenweb', 'mim_sms', 'onnorokom', 'elitbuzz', 'ssl_wireless', 'custom_http'];
+    }
+
     /**
      * Send single or comma-separated SMS.
      *
@@ -41,7 +46,7 @@ class SmsService
             switch ($provider) {
                 case 'bulksmsbd':
                     // Official BulkSMS BD API Implementation
-                    $url = "http://bulksmsbd.net/api/smsapi";
+                    $url = "https://bulksmsbd.net/api/smsapi";
                     $data = [
                         "api_key" => $apiKey,
                         "senderid" => $senderId,
@@ -54,7 +59,8 @@ class SmsService
                     curl_setopt($ch, CURLOPT_POST, 1);
                     curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
                     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+                    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+                    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
                     curl_setopt($ch, CURLOPT_TIMEOUT, 15);
                     $responseBody = curl_exec($ch);
                     $curlError = curl_error($ch);
@@ -71,13 +77,13 @@ class SmsService
                     } elseif (is_string($responseBody) && str_contains(strtolower($responseBody), 'success')) {
                         $isSuccess = true;
                     } elseif (empty($apiKey)) {
-                        $isSuccess = true;
-                        $responseBody = 'Simulated Dispatch: (API Key not configured)';
+                        $isSuccess = false;
+                        $responseBody = 'SMS API key is not configured.';
                     }
                     break;
 
                 case 'greenweb':
-                    $url = "http://api.greenweb.com.bd/api.php";
+                    $url = "https://api.greenweb.com.bd/api.php";
                     $response = Http::timeout(15)->asForm()->post($url, [
                         'token' => $apiKey,
                         'to' => $formattedNumbers,
@@ -139,8 +145,8 @@ class SmsService
                         $responseBody = $response->body();
                         $isSuccess = $response->successful();
                     } else {
-                        $responseBody = 'Simulated Dispatch: Provider ' . $provider;
-                        $isSuccess = true;
+                        $responseBody = 'Custom SMS provider URL is not configured.';
+                        $isSuccess = false;
                     }
                     break;
             }
@@ -182,7 +188,7 @@ class SmsService
 
         if ($provider === 'bulksmsbd') {
             // Official BulkSMS BD Bulk Many API
-            $url = "http://bulksmsbd.net/api/smsapimany";
+            $url = "https://bulksmsbd.net/api/smsapimany";
             $formattedMessages = array_map(function ($item) {
                 return [
                     'to' => self::formatNumber($item['to']),
@@ -201,7 +207,8 @@ class SmsService
             curl_setopt($ch, CURLOPT_POST, 1);
             curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
             curl_setopt($ch, CURLOPT_TIMEOUT, 30);
             $response = curl_exec($ch);
             curl_close($ch);
@@ -254,12 +261,13 @@ class SmsService
         try {
             if ($provider === 'bulksmsbd') {
                 // Official BulkSMS BD Balance API: http://bulksmsbd.net/api/getBalanceApi?api_key=...
-                $url = "http://bulksmsbd.net/api/getBalanceApi?api_key=" . urlencode($apiKey);
+                $url = "https://bulksmsbd.net/api/getBalanceApi?api_key=" . urlencode($apiKey);
                 
                 $ch = curl_init();
                 curl_setopt($ch, CURLOPT_URL, $url);
                 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+                curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+                curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
                 curl_setopt($ch, CURLOPT_TIMEOUT, 10);
                 $response = curl_exec($ch);
                 $curlError = curl_error($ch);

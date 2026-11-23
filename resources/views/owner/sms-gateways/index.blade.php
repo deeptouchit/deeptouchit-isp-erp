@@ -525,41 +525,37 @@
             </div>
 
             <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse text-xs">
+                <table class="saas-table">
                     <thead>
                         <tr class="border-b border-slate-100 bg-slate-50/40 text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                            <th class="py-2.5 px-4">Recipient Phone</th>
-                            <th class="py-2.5 px-4">ISP Tenant</th>
-                            <th class="py-2.5 px-4">Event Type & Content Snippet</th>
-                            <th class="py-2.5 px-4">Gateway</th>
-                            <th class="py-2.5 px-4">Parts & Cost</th>
-                            <th class="py-2.5 px-4">Status</th>
-                            <th class="py-2.5 px-4 text-right">Dispatched At</th>
+                            <th class="text-center">Recipient</th>
+                            <th class="text-center">ISP Tenant</th>
+                            <th class="text-center">Event Type</th>
+                            <th class="text-center">Gateway</th>
+                            <th class="text-center">Cost</th>
+                            <th class="text-center">Status</th>
+                            <th class="text-center">Dispatched At</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 text-slate-700 font-mono">
                         @forelse($realSmsLogs as $log)
-                        <tr class="hover:bg-slate-50/80 transition text-[11px]">
-                            <td class="py-2.5 px-4 font-bold text-slate-900">
+                        <tr>
+                            <td class="text-center font-bold text-slate-900">
                                 {{ $log->recipient_phone }}
                             </td>
-                            <td class="py-2.5 px-4 font-sans font-semibold text-slate-800">
+                            <td class="text-left font-sans font-semibold text-slate-800">
                                 {{ $log->tenant->name ?? 'System / Direct' }}
                             </td>
-                            <td class="py-2.5 px-4 font-sans">
-                                <span class="font-bold text-slate-800 text-[10.5px] uppercase block">{{ str_replace('_', ' ', $log->sms_type) }}</span>
-                                <span class="text-[10.5px] text-slate-500 truncate max-w-xs block font-mono" title="{{ $log->message_body }}">
-                                    {{ Str::limit($log->message_body, 45) }}
-                                </span>
+                            <td class="text-center font-sans uppercase">
+                                {{ str_replace('_', ' ', $log->sms_type) }}
                             </td>
-                            <td class="py-2.5 px-4 text-[10.5px] text-slate-600">
+                            <td class="text-center text-slate-600">
                                 {{ $log->gateway_name }}
                             </td>
-                            <td class="py-2.5 px-4 text-[10.5px]">
-                                <span class="text-slate-800">{{ $log->parts_count }} Part(s)</span>
-                                <span class="text-emerald-700 font-bold block">@currency($log->total_cost)</span>
+                            <td class="text-right font-mono font-bold text-emerald-700">
+                                @currency($log->total_cost)
                             </td>
-                            <td class="py-2.5 px-4">
+                            <td class="text-center">
                                 @if($log->status === 'delivered')
                                     <span class="inline-flex items-center px-2 py-0.5 rounded text-[9.5px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                                         <i class="fas fa-check-circle text-[8px] mr-1"></i> Delivered
@@ -574,7 +570,7 @@
                                     </span>
                                 @endif
                             </td>
-                            <td class="py-2.5 px-4 text-right text-[10.5px] text-slate-400">
+                            <td class="text-center text-slate-400">
                                 {{ $log->created_at ? $log->created_at->format('d M, h:i A') : '—' }}
                             </td>
                         </tr>

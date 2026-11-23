@@ -8,6 +8,7 @@ use App\Models\PaymentTransaction;
 use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Validation\Rule;
 
 class OwnerPaymentGatewayController extends Controller
 {
@@ -102,7 +103,30 @@ class OwnerPaymentGatewayController extends Controller
 
     public function update(Request $request)
     {
-        $inputs = $request->except(['_token']);
+        $allowedKeys = [
+            'bkash_mode', 'bkash_status', 'bkash_app_key', 'bkash_app_secret', 'bkash_username', 'bkash_password', 'bkash_fee_percent',
+            'nagad_mode', 'nagad_status', 'nagad_merchant_id', 'nagad_public_key', 'nagad_private_key', 'nagad_fee_percent',
+            'ssl_mode', 'ssl_status', 'ssl_store_id', 'ssl_store_password', 'ssl_fee_percent',
+            'aamarpay_mode', 'aamarpay_status', 'aamarpay_store_id', 'aamarpay_signature_key', 'aamarpay_fee_percent',
+            'shurjopay_mode', 'shurjopay_status', 'shurjopay_username', 'shurjopay_password', 'shurjopay_prefix', 'shurjopay_fee_percent',
+            'stripe_mode', 'stripe_status', 'stripe_publishable_key', 'stripe_secret_key', 'stripe_webhook_secret', 'stripe_currency', 'stripe_fee_percent',
+            'bank_status', 'bank_name', 'bank_account_name', 'bank_account_number', 'bank_routing_number', 'bank_instructions',
+            'mfs_manual_status', 'mfs_bkash_personal', 'mfs_nagad_personal', 'mfs_rocket_personal', 'mfs_upay_personal',
+            'currency_code', 'currency_symbol', 'pgw_grace_period_days', 'pgw_auto_activate_license', 'pgw_pass_fee_to_tenant',
+            'pgw_email_receipt_tenant', 'pgw_sms_receipt_tenant', 'pgw_sandbox_mode',
+        ];
+        $inputs = $request->only($allowedKeys);
+        $request->validate([
+            'bkash_mode' => ['nullable', Rule::in(['sandbox', 'live'])],
+            'nagad_mode' => ['nullable', Rule::in(['sandbox', 'live'])],
+            'ssl_mode' => ['nullable', Rule::in(['sandbox', 'live'])],
+            'aamarpay_mode' => ['nullable', Rule::in(['sandbox', 'live'])],
+            'shurjopay_mode' => ['nullable', Rule::in(['sandbox', 'live'])],
+            'stripe_mode' => ['nullable', Rule::in(['test', 'live'])],
+            'currency_code' => ['nullable', 'string', 'size:3'],
+            'currency_symbol' => ['nullable', 'string', 'max:8'],
+            'pgw_grace_period_days' => ['nullable', 'integer', 'between:0,365'],
+        ]);
 
         // Checkbox states to handle
         $checkboxes = [
@@ -139,8 +163,8 @@ class OwnerPaymentGatewayController extends Controller
     public function test(Request $request)
     {
         $request->validate([
-            'gateway' => 'required|string',
-            'amount' => 'required|numeric|min:1',
+            'gateway' => ['required', Rule::in(['bkash', 'nagad', 'sslcommerz', 'aamarpay', 'shurjopay', 'stripe'])],
+            'amount' => ['required', 'numeric', 'min:1', 'max:999999999.99'],
         ]);
 
         $gateway = $request->input('gateway');
@@ -176,17 +200,9 @@ class OwnerPaymentGatewayController extends Controller
                     $result['mode'] = $mode;
 
                     if (empty($appKey) || empty($appSecret)) {
-                        $result['success'] = true;
-                        $result['status_code'] = 200;
-                        $result['message'] = 'bKash Credentials verified (Simulated Token Grant API).';
-                        $result['details'] = [
-                            'statusCode' => '0000',
-                            'statusMessage' => 'Successful Tokenized API Handshake',
-                            'id_token' => 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.simulated_bkash_grant_token...',
-                            'token_type' => 'Bearer',
-                            'expires_in' => 3600,
-                            'checkout_url' => 'https://sandbox.bka.sh/checkout?paymentID=SIM_' . strtoupper(uniqid()),
-                        ];
+                        $result['success'] = false;
+                        $result['status_code'] = 422;
+                        $result['message'] = 'bKash credentials are not configured; no live test was performed.';
                     } else {
                         $response = Http::timeout(10)->withHeaders([
                             'username' => $settings['bkash_username'] ?? '',
@@ -211,15 +227,9 @@ class OwnerPaymentGatewayController extends Controller
                     
                     $result['endpoint'] = $url;
                     $result['mode'] = $mode;
-                    $result['success'] = true;
-                    $result['status_code'] = 200;
-                    $result['message'] = 'Nagad PGW Public/Private Key verification passed.';
-                    $result['details'] = [
-                        'status' => 'Success',
-                        'paymentReferenceId' => 'NAGAD_' . strtoupper(uniqid()),
-                        'callBackUrl' => url('/api/payment/nagad/callback'),
-                        'orderId' => 'ORD-' . rand(10000, 99999),
-                    ];
+                    $result['success'] = false;
+                    $result['status_code'] = 501;
+                    $result['message'] = 'Nagad live verification is not configured; no successful handshake was recorded.';
                     break;
 
                 case 'sslcommerz':
@@ -235,14 +245,9 @@ class OwnerPaymentGatewayController extends Controller
                     $result['mode'] = $mode;
 
                     if (empty($storeId) || empty($storePass)) {
-                        $result['success'] = true;
-                        $result['status_code'] = 200;
-                        $result['message'] = 'SSLCommerz session initialization simulated successfully.';
-                        $result['details'] = [
-                            'status' => 'SUCCESS',
-                            'sessionkey' => 'SIMULATED_SESSION_' . md5(uniqid()),
-                            'GatewayPageURL' => 'https://sandbox.sslcommerz.com/EasyCheckout/testpg_' . md5(uniqid()),
-                        ];
+                        $result['success'] = false;
+                        $result['status_code'] = 422;
+                        $result['message'] = 'SSLCommerz credentials are not configured; no live test was performed.';
                     } else {
                         $postData = [
                             'store_id' => $storeId,
@@ -280,30 +285,18 @@ class OwnerPaymentGatewayController extends Controller
                     
                     $result['endpoint'] = $url;
                     $result['mode'] = $mode;
-                    $result['success'] = true;
-                    $result['status_code'] = 200;
-                    $result['message'] = 'AamarPay payment gateway request generated.';
-                    $result['details'] = [
-                        'result' => 'true',
-                        'payment_url' => 'https://sandbox.aamarpay.com/paynow?track=' . uniqid(),
-                    ];
+                    $result['success'] = false;
+                    $result['status_code'] = 501;
+                    $result['message'] = 'AamarPay live verification is not configured; no payment request was generated.';
                     break;
 
                 case 'stripe':
                     $mode = $settings['stripe_mode'] ?? 'test';
                     $result['endpoint'] = 'https://api.stripe.com/v1/payment_intents';
                     $result['mode'] = $mode;
-                    $result['success'] = true;
-                    $result['status_code'] = 200;
-                    $result['message'] = 'Stripe PaymentIntent created with Client Secret.';
-                    $result['details'] = [
-                        'id' => 'pi_' . bin2hex(random_bytes(12)),
-                        'object' => 'payment_intent',
-                        'amount' => $amount * 100,
-                        'currency' => strtolower($settings['stripe_currency'] ?? 'usd'),
-                        'status' => 'requires_payment_method',
-                        'client_secret' => 'pi_' . bin2hex(random_bytes(12)) . '_secret_' . bin2hex(random_bytes(10)),
-                    ];
+                    $result['success'] = false;
+                    $result['status_code'] = 501;
+                    $result['message'] = 'Stripe live verification is not configured; no PaymentIntent was created.';
                     break;
 
                 default:
@@ -314,7 +307,9 @@ class OwnerPaymentGatewayController extends Controller
         } catch (\Throwable $e) {
             $result['success'] = false;
             $result['status_code'] = 500;
-            $result['message'] = 'Exception: ' . $e->getMessage();
+            report($e);
+            $result['message'] = 'Gateway test failed. Check the server logs for details.';
+            $result['details'] = [];
         }
 
         $result['latency_ms'] = round((microtime(true) - $startTime) * 1000);

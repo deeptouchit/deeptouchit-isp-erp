@@ -9,6 +9,7 @@ return [
     'payments.view', 'transactions.view', 'wallets.manage',
     'automation.view', 'automation.dispatch',
     'gateways.view', 'gateways.manage', 'gateways.test',
+    'sms.view', 'sms.manage', 'sms.test', 'mail.view', 'mail.manage', 'mail.test',
     'backups.view', 'backups.manage',
     'network.view', 'network.manage',
     'reports.view', 'activity-logs.view', 'tickets.view', 'tickets.manage', 'settings.manage',

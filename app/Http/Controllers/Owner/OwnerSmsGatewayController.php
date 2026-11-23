@@ -8,6 +8,7 @@ use App\Models\SmsLog;
 use App\Services\Sms\SmsTrackerService;
 use App\Services\SmsService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class OwnerSmsGatewayController extends Controller
 {
@@ -56,7 +57,13 @@ class OwnerSmsGatewayController extends Controller
         $deliveredSmsCount = SmsLog::where('status', 'delivered')->count();
         $failedSmsCount = SmsLog::where('status', 'failed')->count();
 
-        $balanceInfo = SmsService::getBalance();
+        // Do not call an external provider during a normal page render.
+        // Balance is fetched only through the protected, throttled action.
+        $balanceInfo = [
+            'success' => false,
+            'formatted' => 'Use Check Balance to fetch live balance',
+            'balance' => null,
+        ];
 
         return view('owner.sms-gateways.index', compact(
             'settings',
@@ -73,6 +80,9 @@ class OwnerSmsGatewayController extends Controller
     {
         $request = $request ?? request();
         $provider = $request->input('provider');
+        if ($provider !== null && ! in_array($provider, SmsService::supportedProviders(), true)) {
+            abort(422, 'Unsupported SMS provider.');
+        }
         $balanceInfo = SmsService::getBalance($provider);
 
         if ($request->wantsJson() || $request->ajax()) {
@@ -88,7 +98,18 @@ class OwnerSmsGatewayController extends Controller
 
     public function update(Request $request)
     {
-        $inputs = $request->except(['_token']);
+        $inputs = $request->validate([
+            'sms_provider' => ['nullable', Rule::in(SmsService::supportedProviders())],
+            'sms_sender_id' => ['nullable', 'string', 'max:20'],
+            'sms_api_key' => ['nullable', 'string', 'max:255'],
+            'sms_api_secret' => ['nullable', 'string', 'max:255'],
+            'sms_client_id' => ['nullable', 'string', 'max:255'],
+            'sms_custom_url' => ['nullable', 'url:http,https', 'max:1000'],
+            'sms_rate_per_part' => ['nullable', 'numeric', 'min:0', 'max:100000'],
+            'sms_template_invoice' => ['nullable', 'string', 'max:1000'],
+            'sms_template_payment' => ['nullable', 'string', 'max:1000'],
+            'sms_template_otp' => ['nullable', 'string', 'max:1000'],
+        ]);
 
         // Checkbox event triggers handling
         $checkboxKeys = [
@@ -118,8 +139,9 @@ class OwnerSmsGatewayController extends Controller
     public function test(Request $request)
     {
         $request->validate([
-            'test_phone' => ['required', 'string'],
+            'test_phone' => ['required', 'regex:/^(?:\+?880|0)1[3-9]\d{8}(?:\s*,\s*(?:\+?880|0)1[3-9]\d{8})*$/'],
             'test_message' => ['required', 'string', 'max:500'],
+            'test_provider' => ['nullable', Rule::in(SmsService::supportedProviders())],
         ]);
 
         $settings = Setting::getGroup('sms');
