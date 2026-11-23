@@ -242,12 +242,14 @@
                                 </span>
                             @endif
 
-                            <a href="{{ route('owner.tenants.impersonate', $tenant) }}" 
-                               title="1-Click Login as ISP Admin" 
+                            <form method="POST" action="{{ route('owner.tenants.impersonate', $tenant) }}" class="inline">
+                                @csrf
+                                <button type="submit" title="1-Click Login as ISP Admin"
                                class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition font-semibold text-[9.5px]">
                                 <i class="fas fa-sign-in-alt text-[8px]"></i>
                                 <span>Admin</span>
-                            </a>
+                                </button>
+                            </form>
                         </div>
                     </div>
                 @empty

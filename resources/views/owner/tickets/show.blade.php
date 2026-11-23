@@ -288,11 +288,14 @@
 
                     <!-- Impersonate Action -->
                     <div class="pt-2">
-                        <a href="{{ route('owner.tenants.impersonate', $ticket->tenant_id) }}" 
+                        <form method="POST" action="{{ route('owner.tenants.impersonate', $ticket->tenant_id) }}">
+                            @csrf
+                            <button type="submit"
                            class="w-full py-1.5 px-3 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs flex items-center justify-center gap-1.5 transition">
                             <i class="fas fa-right-to-bracket text-blue-600"></i>
                             <span>Login As This Tenant (Impersonate)</span>
-                        </a>
+                            </button>
+                        </form>
                     </div>
                 </div>
             </div>

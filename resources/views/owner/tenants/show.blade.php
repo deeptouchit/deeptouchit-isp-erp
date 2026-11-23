@@ -66,11 +66,14 @@
         <div class="flex items-center gap-2 flex-wrap">
             
             <!-- 1-Click Login / Impersonate -->
-            <a href="{{ route('owner.tenants.impersonate', $tenant) }}" 
+            <form method="POST" action="{{ route('owner.tenants.impersonate', $tenant) }}" class="inline">
+                @csrf
+                <button type="submit"
                class="px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-xs transition flex items-center gap-1.5">
                 <i class="fas fa-sign-in-alt text-[11px]"></i>
                 <span>Login as ISP Admin</span>
-            </a>
+                </button>
+            </form>
 
             <!-- Quick Extend Validity -->
             <button type="button" 
@@ -551,11 +554,14 @@
                     </div>
 
                     <div class="pt-2">
-                        <a href="{{ route('owner.tenants.impersonate', $tenant) }}" 
+                        <form method="POST" action="{{ route('owner.tenants.impersonate', $tenant) }}">
+                            @csrf
+                            <button type="submit"
                            class="w-full py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-xs transition flex items-center justify-center gap-1.5">
                             <i class="fas fa-sign-in-alt text-[10px]"></i>
                             <span>Launch ISP Admin Console</span>
-                        </a>
+                            </button>
+                        </form>
                     </div>
                 </div>
             </div>

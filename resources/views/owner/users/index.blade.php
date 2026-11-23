@@ -319,11 +319,14 @@
             </button>
 
             <template x-if="!activeMenu?.is_self">
-                <a :href="'{{ url('owner/users') }}/' + activeMenu?.id + '/impersonate'" 
+                <form method="POST" :action="'{{ url('owner/users') }}/' + activeMenu?.id + '/impersonate'"
                    class="w-full px-3 py-1.5 text-left text-slate-700 hover:bg-slate-50 hover:text-indigo-600 flex items-center gap-2 transition">
+                    @csrf
+                    <button type="submit" class="flex items-center gap-2 w-full text-left">
                     <i class="fas fa-right-to-bracket w-4 text-indigo-500 text-[11px]"></i>
                     <span>Login As User</span>
-                </a>
+                    </button>
+                </form>
             </template>
         </div>
 

@@ -274,12 +274,14 @@
                                     </a>
 
                                     <!-- 1-Click Login Impersonate -->
-                                    <a href="{{ route('owner.tenants.impersonate', $tenant) }}" 
-                                       title="Login as ISP Administrator" 
+                                    <form method="POST" action="{{ route('owner.tenants.impersonate', $tenant) }}" class="inline">
+                                        @csrf
+                                        <button type="submit" title="Login as ISP Administrator"
                                        class="inline-flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white border border-emerald-200 font-bold text-[11px] transition shadow-2xs">
                                         <i class="fas fa-sign-in-alt text-[10px]"></i>
                                         <span>Login</span>
-                                    </a>
+                                        </button>
+                                    </form>
 
                                     <!-- Quick Extend Validity Button -->
                                     <button type="button" 

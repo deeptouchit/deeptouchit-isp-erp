@@ -18,10 +18,13 @@
         </div>
         
         <div class="flex items-center gap-2">
-            <a href="{{ route('owner.tenants.impersonate', $tenant) }}" class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition flex items-center gap-1.5">
+            <form method="POST" action="{{ route('owner.tenants.impersonate', $tenant) }}" class="inline">
+                @csrf
+                <button type="submit" class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition flex items-center gap-1.5">
                 <i class="fas fa-sign-in-alt text-[10px]"></i>
                 <span>Login as Admin</span>
-            </a>
+                </button>
+            </form>
             <a href="{{ route('owner.tenants.index') }}" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition flex items-center gap-1.5">
                 <i class="fas fa-arrow-left text-[10px]"></i>
                 <span>Back</span>

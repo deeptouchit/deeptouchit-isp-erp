@@ -62,7 +62,9 @@ Route::prefix('owner')->name('owner.')->group(function () {
         Route::resource('tenants', OwnerTenantController::class);
         Route::post('/tenants/{tenant}/toggle-status', [OwnerTenantController::class, 'toggleStatus'])->name('tenants.toggle-status');
         Route::post('/tenants/{tenant}/extend-subscription', [OwnerTenantController::class, 'extendSubscription'])->name('tenants.extend-subscription');
-        Route::get('/tenants/{tenant}/impersonate', [OwnerTenantController::class, 'impersonate'])->name('tenants.impersonate');
+        Route::post('/tenants/{tenant}/impersonate', [OwnerTenantController::class, 'impersonate'])
+            ->middleware('owner.capability:tenants.impersonate')
+            ->name('tenants.impersonate');
 
         // 3.1 Global User Management & Password Control
         Route::get('/users', [OwnerUserController::class, 'index'])->name('users.index');
@@ -71,7 +73,9 @@ Route::prefix('owner')->name('owner.')->group(function () {
         Route::delete('/users/{user}', [OwnerUserController::class, 'destroy'])->name('users.destroy');
         Route::post('/users/{user}/toggle-status', [OwnerUserController::class, 'toggleStatus'])->name('users.toggle-status');
         Route::post('/users/{user}/reset-password', [OwnerUserController::class, 'resetPassword'])->name('users.reset-password');
-        Route::get('/users/{user}/impersonate', [OwnerUserController::class, 'impersonate'])->name('users.impersonate');
+        Route::post('/users/{user}/impersonate', [OwnerUserController::class, 'impersonate'])
+            ->middleware('owner.capability:users.impersonate')
+            ->name('users.impersonate');
 
         // 4. Invoices & Billing
         Route::get('/billing', [OwnerBillingController::class, 'index'])->name('billing.index');
