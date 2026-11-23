@@ -28,11 +28,10 @@ class TenantAuthController extends Controller
         if ($slug) {
             $tenant = Tenant::where('slug', strtolower($slug))->first();
         }
-        if (!$tenant) {
-            $tenant = Tenant::first();
-        }
-
-        return view('tenant.auth.login', compact('tenant'));
+        return view('tenant.auth.login', [
+            'tenant' => $tenant,
+            'isTenantSpecific' => (bool) $slug,
+        ]);
     }
 
     /**

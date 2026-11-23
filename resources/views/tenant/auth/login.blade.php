@@ -1,6 +1,6 @@
 @extends('layouts.base')
 
-@section('title', ($tenant?->company_name ?: ($globalSettings['app_name'] ?? 'ISP Management System')) . ' | Portal Login')
+@section('title', (($isTenantSpecific ?? false) && $tenant?->company_name ? $tenant->company_name : ($globalSettings['app_name'] ?? 'ISP Management System')) . ' | Portal Login')
 
 @section('body')
 <div class="min-h-screen flex items-center justify-center bg-slate-100/70 p-4 text-slate-800 antialiased selection:bg-blue-600 selection:text-white">
@@ -19,14 +19,14 @@
         <!-- Brand Header Logo & Title -->
         <div class="text-center mb-5">
             @php
-                $loginLogo = $tenant?->logo ?: ($globalSettings['app_logo'] ?? null);
+                $loginLogo = (($isTenantSpecific ?? false) && $tenant?->logo) ? $tenant->logo : ($globalSettings['app_logo'] ?? null);
                 if ($loginLogo && !str_starts_with($loginLogo, '/') && !str_starts_with($loginLogo, 'http://') && !str_starts_with($loginLogo, 'https://')) {
                     $loginLogo = asset('storage/' . ltrim($loginLogo, '/'));
                 }
             @endphp
             @if($loginLogo)
                 <div class="mb-2 flex justify-center">
-                    <img src="{{ $loginLogo }}" alt="{{ $tenant?->company_name ?: ($globalSettings['app_name'] ?? 'ISP Management System') }}" class="h-10 max-w-[180px] object-contain" onerror="this.closest('div').replaceChildren(Object.assign(document.createElement('i'), {className: 'fas fa-network-wired text-cyan-600 text-2xl'}));">
+                    <img src="{{ $loginLogo }}" alt="{{ (($isTenantSpecific ?? false) && $tenant?->company_name) ? $tenant->company_name : ($globalSettings['app_name'] ?? 'ISP Management System') }}" class="h-10 max-w-[180px] object-contain" onerror="this.closest('div').replaceChildren(Object.assign(document.createElement('i'), {className: 'fas fa-network-wired text-cyan-600 text-2xl'}));">
                 </div>
             @else
                 <div class="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-cyan-600 shadow-xs mb-2 text-white">
@@ -35,7 +35,7 @@
             @endif
 
             <h1 class="text-lg font-bold text-slate-900 tracking-tight">
-                {{ $tenant?->company_name ?: ($globalSettings['app_name'] ?? 'ISP Management System') }}
+                {{ (($isTenantSpecific ?? false) && $tenant?->company_name) ? $tenant->company_name : ($globalSettings['app_name'] ?? 'ISP Management System') }}
             </h1>
             <p class="text-[11px] text-slate-500 mt-0.5">
                 {{ $globalSettings['login_screen_subtitle'] ?? $globalSettings['app_tagline'] ?? 'Single Unified Portal Login (ISP Admin, Reseller & Staff)' }}
