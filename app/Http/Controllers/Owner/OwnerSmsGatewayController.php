@@ -20,7 +20,13 @@ class OwnerSmsGatewayController extends Controller
 
     public function index(Request $request)
     {
-        $settings = Setting::whereNull('tenant_id')->pluck('value', 'key')->toArray();
+        $settings = Setting::getGroup('sms');
+
+        foreach (config('secure_settings.keys', []) as $secureKey) {
+            if (array_key_exists($secureKey, $settings) && $settings[$secureKey] !== '') {
+                $settings[$secureKey] = '••••••••••••';
+            }
+        }
 
         // Live Database SMS Logs with filtering
         $query = SmsLog::with('tenant');
@@ -99,6 +105,10 @@ class OwnerSmsGatewayController extends Controller
         }
 
         foreach ($inputs as $key => $value) {
+            if (Setting::isSecureKey($key) && ($value === '' || $value === '••••••••••••')) {
+                unset($inputs[$key]);
+                continue;
+            }
             Setting::set($key, (string)$value, 'sms', null);
         }
 
@@ -112,7 +122,7 @@ class OwnerSmsGatewayController extends Controller
             'test_message' => ['required', 'string', 'max:500'],
         ]);
 
-        $settings = Setting::whereNull('tenant_id')->pluck('value', 'key')->toArray();
+        $settings = Setting::getGroup('sms');
         $provider = $request->input('test_provider', $settings['sms_provider'] ?? 'bulksmsbd');
         $phone = $request->test_phone;
         $message = $request->test_message;

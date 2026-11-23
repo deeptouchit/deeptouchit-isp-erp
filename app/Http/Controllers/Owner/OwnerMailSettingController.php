@@ -16,7 +16,13 @@ class OwnerMailSettingController extends Controller
      */
     public function index()
     {
-        $settings = Setting::whereNull('tenant_id')->pluck('value', 'key')->toArray();
+        $settings = Setting::getGroup('smtp');
+
+        foreach (config('secure_settings.keys', []) as $secureKey) {
+            if (array_key_exists($secureKey, $settings) && $settings[$secureKey] !== '') {
+                $settings[$secureKey] = '••••••••••••';
+            }
+        }
 
         return view('owner.mail-settings.index', compact('settings'));
     }
@@ -34,6 +40,10 @@ class OwnerMailSettingController extends Controller
         }
 
         foreach ($inputs as $key => $value) {
+            if (Setting::isSecureKey($key) && ($value === '' || $value === '••••••••••••')) {
+                unset($inputs[$key]);
+                continue;
+            }
             Setting::set($key, (string)$value, 'smtp', null);
         }
 
@@ -49,7 +59,7 @@ class OwnerMailSettingController extends Controller
             'test_email' => ['required', 'email'],
         ]);
 
-        $settings = Setting::whereNull('tenant_id')->pluck('value', 'key')->toArray();
+        $settings = Setting::getGroup('smtp');
 
         $startTime = microtime(true);
         $mailer = $settings['mail_mailer'] ?? 'smtp';

@@ -12,7 +12,7 @@ class OwnerPaymentGatewayController extends Controller
 {
     public function index()
     {
-        $settings = Setting::whereNull('tenant_id')->pluck('value', 'key')->toArray();
+        $settings = Setting::getGroup('payment_gateways');
 
         // Calculate dynamic payment statistics
         $activeGatewaysCount = 0;
@@ -49,6 +49,12 @@ class OwnerPaymentGatewayController extends Controller
                 $liveCount++;
             } else {
                 $sandboxCount++;
+            }
+        }
+
+        foreach (config('secure_settings.keys', []) as $secureKey) {
+            if (array_key_exists($secureKey, $settings) && $settings[$secureKey] !== '') {
+                $settings[$secureKey] = '••••••••••••';
             }
         }
 
@@ -167,6 +173,10 @@ class OwnerPaymentGatewayController extends Controller
         }
 
         foreach ($inputs as $key => $value) {
+            if (Setting::isSecureKey($key) && ($value === '' || $value === '••••••••••••')) {
+                unset($inputs[$key]);
+                continue;
+            }
             Setting::set($key, (string)$value, 'payment_gateways', null);
         }
 
@@ -182,7 +192,7 @@ class OwnerPaymentGatewayController extends Controller
 
         $gateway = $request->input('gateway');
         $amount = (float)$request->input('amount');
-        $settings = Setting::whereNull('tenant_id')->pluck('value', 'key')->toArray();
+        $settings = Setting::getGroup('payment_gateways');
 
         $startTime = microtime(true);
         $result = [
