@@ -3,7 +3,7 @@
 @section('page-title', 'SaaS Subscription Pricing Plans')
 
 @section('content')
-<div class="space-y-4" x-data="{ 
+<div class="space-y-3" x-data="{ 
     searchQuery: '',
     statusFilter: 'all',
     sortColumn: 'sort_order',
@@ -18,6 +18,9 @@
     editModalOpen: false,
     detailsModalOpen: false,
     selectedPlan: null,
+    showMoreFilters: false,
+    activeMenu: null,
+    menuPos: {},
     
     plansList: {{ $plans->toJson() }},
 
@@ -63,6 +66,15 @@
             this.sortColumn = column;
             this.sortAsc = true;
         }
+    },
+
+    toggleMenu(id, event) {
+        if (this.activeMenu === id) { this.activeMenu = null; return; }
+        const rect = event.currentTarget.getBoundingClientRect();
+        const top = Math.round(rect.bottom) + 2;
+        const above = top + 170 > window.innerHeight;
+        this.menuPos = { top: above ? 'auto' : \`\${top}px\`, bottom: above ? \`\${Math.max(10, window.innerHeight - Math.round(rect.top) + 2)}px\` : 'auto', right: \`\${Math.max(10, window.innerWidth - rect.right)}px\`, left: 'auto' };
+        this.activeMenu = id;
     },
 
     openDetailsModal(plan) {
@@ -114,7 +126,7 @@
         this.editData.action_url = '/owner/plans/' + plan.id;
         this.editModalOpen = true;
     }
-}">
+}" @scroll.window="activeMenu = null" @resize.window="activeMenu = null" @keydown.escape.window="activeMenu = null">
 
     <!-- Top Header Bar -->
     <div class="bg-white rounded-xl border border-slate-200/80 shadow-xs p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -122,14 +134,11 @@
             <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-sm font-bold">
                 <i class="fas fa-layer-group"></i>
             </div>
-            <div>
-                <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2">
                     <h2 class="text-sm font-bold text-slate-800">SaaS Subscription Pricing Plans</h2>
                     <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                         {{ $activePlansCount }} Active
                     </span>
-                </div>
-                <p class="text-[11px] text-slate-500">Tier capacity limits, OTC onboarding fees & standard/premium monthly rates</p>
             </div>
         </div>
 
@@ -149,27 +158,44 @@
         </div>
     </div>
 
-    <!-- Search & Filter Controls -->
-    <div class="bg-white rounded-xl border border-slate-200/80 shadow-xs p-2 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-        <div class="relative flex-1 max-w-sm">
-            <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-            <input type="text" x-model="searchQuery" placeholder="Filter by Tier Code (P1, P8...), Plan Name, or Capacity..." class="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700">
-        </div>
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs"><span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Total Plans</span><span class="text-[13px] font-bold font-mono leading-tight block">{{ $plans->count() }}</span></div>
+        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs"><span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Active Plans</span><span class="text-[13px] font-bold font-mono leading-tight block text-emerald-700">{{ $activePlansCount }}</span></div>
+        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs"><span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Subscribers</span><span class="text-[13px] font-bold font-mono leading-tight block">{{ $totalSubscribers }}</span></div>
+        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs"><span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Starting Price</span><span class="text-[13px] font-bold font-mono leading-tight block">@currency($minPrice)</span></div>
+        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs"><span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Top Price</span><span class="text-[13px] font-bold font-mono leading-tight block">@currency($maxPrice)</span></div>
+        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs"><span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Popular Plan</span><span class="text-[13px] font-bold leading-tight block truncate">{{ $popularPlan->name ?? '—' }}</span></div>
+    </div>
 
-        <div class="flex items-center gap-2">
-            <span class="text-[11px] font-semibold text-slate-400">Status:</span>
-            <select x-model="statusFilter" class="px-2.5 py-1 text-xs rounded-lg border border-slate-200 bg-slate-50 font-semibold text-slate-700">
+    <!-- Search & Filter Controls -->
+    <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5">
+        <div class="flex flex-col md:flex-row items-stretch md:items-center gap-2">
+            <div class="relative flex-1 min-w-[200px]">
+                <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px]" :class="searchQuery ? 'text-cyan-600 font-bold' : 'text-slate-400'"></i>
+                <input type="text" x-model="searchQuery" placeholder="Search plan code, name or capacity..." class="w-full h-[34px] pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden">
+                <button type="button" x-show="searchQuery" x-cloak @click="searchQuery = ''" class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-600"><i class="fas fa-times"></i></button>
+            </div>
+            <select x-model="statusFilter" class="h-[34px] md:w-36 px-2.5 py-0 text-xs rounded-lg border border-slate-200 bg-slate-50 font-semibold text-slate-700">
                 <option value="all">All Tiers</option>
                 <option value="active">Active Only</option>
                 <option value="inactive">Disabled Only</option>
             </select>
+            <select class="h-[34px] md:w-28 px-2.5 py-0 text-xs rounded-lg border border-slate-200 bg-slate-50 font-semibold text-slate-700"><option>All Plans</option></select>
+            <button type="button" @click="showMoreFilters = !showMoreFilters" class="h-[34px] py-0 px-3 rounded-lg border border-slate-200 bg-slate-50 text-slate-700 text-xs font-semibold flex items-center justify-center gap-1.5"><i class="fas" :class="showMoreFilters ? 'fa-chevron-up text-cyan-600' : 'fa-chevron-down text-slate-400'"></i> More Filters</button>
+            <div class="flex items-center gap-1.5 md:ml-auto">
+                <button type="button" class="h-[34px] bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-0 px-3 rounded-lg shadow-xs flex items-center justify-center gap-1.5"><i class="fas fa-filter text-[10px]"></i><span>Filter</span></button>
+                <button type="button" @click="searchQuery = ''; statusFilter = 'all'; showMoreFilters = false" class="h-[34px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-0 px-2.5 rounded-lg border border-slate-200/80 flex items-center justify-center gap-1"><i class="fas fa-rotate-left text-[10px]"></i><span>Reset</span></button>
+            </div>
+        </div>
+        <div x-show="showMoreFilters" x-cloak x-transition class="pt-2 border-t border-slate-100 flex flex-wrap items-center gap-2">
+            <span class="text-[10px] text-slate-500 font-medium">Use the table headers to sort plans by name, capacity, price, or subscribers.</span>
         </div>
     </div>
 
     <!-- High-Density Administrative Matrix Table with Column/Row Borders and Sortable Headers -->
     <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
         <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs border-collapse">
+            <table class="saas-table">
                 <thead>
                     <tr class="bg-slate-100/90 text-slate-700 text-[11px] font-bold uppercase tracking-wider border-b border-slate-200 select-none">
                         <!-- Sortable Index / SL -->
@@ -181,7 +207,7 @@
                         </th>
 
                         <!-- Sortable Plan Name -->
-                        <th @click="sortBy('name')" class="py-2.5 px-3 border-r border-slate-200 cursor-pointer hover:bg-slate-200/80 transition whitespace-nowrap">
+                        <th @click="sortBy('name')" class="py-2.5 px-3 border-r border-slate-200 text-center cursor-pointer hover:bg-slate-200/80 transition whitespace-nowrap">
                             <div class="flex items-center justify-between gap-1.5">
                                 <span>Plan Name</span>
                                 <i class="fas text-[9px]" :class="sortColumn === 'name' ? (sortAsc ? 'fa-arrow-up text-blue-600' : 'fa-arrow-down text-blue-600') : 'fa-sort text-slate-400'"></i>
@@ -189,42 +215,18 @@
                         </th>
 
                         <!-- Sortable Customer Capacity -->
-                        <th @click="sortBy('customer_limit')" class="py-2.5 px-3 border-r border-slate-200 text-right cursor-pointer hover:bg-slate-200/80 transition whitespace-nowrap">
+                        <th @click="sortBy('customer_limit')" class="py-2.5 px-3 border-r border-slate-200 text-center cursor-pointer hover:bg-slate-200/80 transition whitespace-nowrap">
                             <div class="flex items-center justify-end gap-1.5">
                                 <span>Customer Cap</span>
                                 <i class="fas text-[9px]" :class="sortColumn === 'customer_limit' ? (sortAsc ? 'fa-arrow-up text-blue-600' : 'fa-arrow-down text-blue-600') : 'fa-sort text-slate-400'"></i>
                             </div>
                         </th>
 
-                        <!-- Sortable OTC Charge -->
-                        <th @click="sortBy('otc_charge')" class="py-2.5 px-3 border-r border-slate-200 text-right cursor-pointer hover:bg-slate-200/80 transition whitespace-nowrap">
-                            <div class="flex items-center justify-end gap-1.5">
-                                <span>OTC Charge</span>
-                                <i class="fas text-[9px]" :class="sortColumn === 'otc_charge' ? (sortAsc ? 'fa-arrow-up text-blue-600' : 'fa-arrow-down text-blue-600') : 'fa-sort text-slate-400'"></i>
-                            </div>
-                        </th>
-
                         <!-- Sortable Standard Monthly -->
-                        <th @click="sortBy('monthly_price')" class="py-2.5 px-3 border-r border-slate-200 text-right cursor-pointer hover:bg-slate-200/80 transition whitespace-nowrap">
+                        <th @click="sortBy('monthly_price')" class="py-2.5 px-3 border-r border-slate-200 text-center cursor-pointer hover:bg-slate-200/80 transition whitespace-nowrap">
                             <div class="flex items-center justify-end gap-1.5">
                                 <span>Standard / Mo</span>
                                 <i class="fas text-[9px]" :class="sortColumn === 'monthly_price' ? (sortAsc ? 'fa-arrow-up text-blue-600' : 'fa-arrow-down text-blue-600') : 'fa-sort text-slate-400'"></i>
-                            </div>
-                        </th>
-
-                        <!-- Sortable Premium Monthly -->
-                        <th @click="sortBy('premium_monthly_price')" class="py-2.5 px-3 border-r border-slate-200 text-right cursor-pointer hover:bg-slate-200/80 transition whitespace-nowrap">
-                            <div class="flex items-center justify-end gap-1.5">
-                                <span>Premium / Mo</span>
-                                <i class="fas text-[9px]" :class="sortColumn === 'premium_monthly_price' ? (sortAsc ? 'fa-arrow-up text-blue-600' : 'fa-arrow-down text-blue-600') : 'fa-sort text-slate-400'"></i>
-                            </div>
-                        </th>
-
-                        <!-- Sortable Subscribed Tenants -->
-                        <th @click="sortBy('tenants_count')" class="py-2.5 px-3 border-r border-slate-200 text-center cursor-pointer hover:bg-slate-200/80 transition whitespace-nowrap">
-                            <div class="flex items-center justify-center gap-1.5">
-                                <span>Subscribers</span>
-                                <i class="fas text-[9px]" :class="sortColumn === 'tenants_count' ? (sortAsc ? 'fa-arrow-up text-blue-600' : 'fa-arrow-down text-blue-600') : 'fa-sort text-slate-400'"></i>
                             </div>
                         </th>
 
@@ -234,8 +236,8 @@
                         </th>
 
                         <!-- Actions Column -->
-                        <th class="py-2.5 px-3 text-right whitespace-nowrap">
-                            <span>Actions</span>
+                        <th class="py-2.5 px-3 text-center whitespace-nowrap">
+                            <span>Action</span>
                         </th>
                     </tr>
                 </thead>
@@ -258,27 +260,9 @@
                                 <span x-text="Number(plan.customer_limit).toLocaleString() + ' Users'"></span>
                             </td>
 
-                            <!-- OTC Charge Cell -->
-                            <td class="py-2 px-3 border-r border-slate-200 text-right font-mono font-semibold text-slate-700 whitespace-nowrap">
-                                <span x-text="formatCurrency(plan.otc_charge)"></span>
-                            </td>
-
                             <!-- Standard Monthly Price Cell -->
                             <td class="py-2 px-3 border-r border-slate-200 text-right font-mono font-extrabold text-slate-900 whitespace-nowrap">
                                 <span x-text="formatCurrency(plan.monthly_price)"></span>
-                            </td>
-
-                            <!-- Premium Monthly Price Cell -->
-                            <td class="py-2 px-3 border-r border-slate-200 text-right font-mono font-extrabold text-indigo-700 whitespace-nowrap">
-                                <span x-text="formatCurrency(plan.premium_monthly_price || (plan.monthly_price * 1.2))"></span>
-                            </td>
-
-                            <!-- Subscribers Cell -->
-                            <td class="py-2 px-3 border-r border-slate-200 text-center font-mono font-bold text-slate-800 whitespace-nowrap">
-                                <span class="px-2 py-0.5 rounded-full text-[11px]"
-                                      :class="(plan.tenants_count > 0) ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold' : 'bg-slate-100 text-slate-400'"
-                                      x-text="(plan.tenants_count || 0) + ' ISPs'">
-                                </span>
                             </td>
 
                             <!-- Status Cell -->
@@ -293,20 +277,16 @@
                             </td>
 
                             <!-- Actions Cell (Details + Edit + Delete) -->
-                            <td class="py-2 px-3 text-right whitespace-nowrap">
-                                <div class="flex items-center justify-end gap-1">
-                                    <!-- View Details Button -->
-                                    <button type="button" @click="openDetailsModal(plan)" class="px-2 py-1 rounded bg-blue-50 hover:bg-blue-100 text-blue-700 text-[11px] font-semibold border border-blue-200 transition flex items-center gap-1" title="View Full Plan Details">
-                                        <i class="fas fa-eye text-[10px]"></i>
-                                        <span>Details</span>
-                                    </button>
-
-                                    <!-- Edit Button -->
-                                    <button type="button" @click="openEditModal(plan)" class="px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-semibold border border-slate-200 transition flex items-center gap-1" title="Edit Plan">
-                                        <i class="fas fa-edit text-slate-500 text-[10px]"></i>
-                                        <span>Edit</span>
-                                    </button>
-                                </div>
+                            <td class="py-2 px-3 text-center whitespace-nowrap">
+                                <button type="button" @click="toggleMenu(plan.id, $event)" class="w-7 h-7 rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 inline-flex items-center justify-center" aria-label="Plan actions">
+                                    <i class="fas fa-ellipsis-v text-[10px]"></i>
+                                </button>
+                                <template x-teleport="body">
+                                    <div x-show="activeMenu === plan.id" x-cloak :style="menuPos" @click.outside="activeMenu = null" class="fixed z-50 w-44 rounded-lg border border-slate-200 bg-white p-1 text-xs shadow-lg">
+                                        <button type="button" @click="activeMenu = null; openDetailsModal(plan)" class="flex w-full items-center gap-2 rounded-md px-2 py-1.5 hover:bg-slate-50"><i class="fas fa-eye fa-fw"></i> View Details</button>
+                                        <button type="button" @click="activeMenu = null; openEditModal(plan)" class="flex w-full items-center gap-2 rounded-md px-2 py-1.5 hover:bg-slate-50"><i class="fas fa-edit fa-fw"></i> Edit Configuration</button>
+                                    </div>
+                                </template>
                             </td>
 
                         </tr>
