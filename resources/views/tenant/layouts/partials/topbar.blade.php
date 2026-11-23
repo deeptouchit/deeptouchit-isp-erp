@@ -187,12 +187,15 @@
     <div class="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
 
         @if(session()->has('impersonator_id'))
-            <a href="{{ route('owner.impersonate.leave') }}"
+            <form method="POST" action="{{ route('owner.impersonate.leave') }}" class="inline">
+                @csrf
+                <button type="submit"
                class="h-8 px-2.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-bold text-[11px] shadow-xs flex items-center gap-1.5 transition cursor-pointer">
                 <i class="fas fa-sign-out-alt text-[10px]"></i>
                 <span class="hidden sm:inline">{{ __('Exit Impersonation') }}</span>
                 <span class="sm:hidden">{{ __('Exit') }}</span>
-            </a>
+                </button>
+            </form>
         @endif
 
         <!-- Segmented Bilingual Switcher (বাংলা / EN) -->

@@ -250,6 +250,10 @@ class OwnerUserController extends Controller
      */
     public function impersonate(User $user)
     {
+        if (session()->has('impersonator_id')) {
+            return back()->with('error', 'End the current impersonation session before starting another one.');
+        }
+
         if ($user->id === Auth::id()) {
             return back()->with('info', 'You are already logged in as this user.');
         }
@@ -261,11 +265,15 @@ class OwnerUserController extends Controller
             ['target_user_id' => $user->id, 'target_role' => $user->role]
         );
 
+        session()->regenerate();
+
         session([
             'impersonator_id' => Auth::id(),
             'impersonated_user_id' => $user->id,
             'impersonated_user_name' => $user->name,
             'impersonated_tenant_id' => $user->tenant_id,
+            'impersonation_type' => 'user',
+            'impersonation_started_at' => now()->toIso8601String(),
         ]);
 
         Auth::login($user);

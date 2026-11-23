@@ -184,5 +184,6 @@ Route::prefix('owner')->name('owner.')->group(function () {
     });
 
     // Leave Impersonation
-    Route::get('/leave-impersonation', [OwnerTenantController::class, 'leaveImpersonation'])->name('impersonate.leave');
+    Route::post('/leave-impersonation', [OwnerTenantController::class, 'leaveImpersonation'])
+        ->name('impersonate.leave');
 });

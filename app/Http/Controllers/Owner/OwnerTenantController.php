@@ -425,6 +425,10 @@ class OwnerTenantController extends Controller
      */
     public function impersonate(Tenant $tenant)
     {
+        if (session()->has('impersonator_id')) {
+            return back()->with('error', 'End the current impersonation session before starting another one.');
+        }
+
         $adminUser = $tenant->users()->where('role', 'isp_admin')->first() ?? $tenant->users()->first();
         if (!$adminUser) {
             return back()->with('error', 'No ISP administrator user found for this tenant.');
@@ -438,11 +442,16 @@ class OwnerTenantController extends Controller
             ['admin_user_id' => $adminUser->id]
         );
 
-        // Store owner session info for quick reversal
+        // Rotate the session before switching identities to prevent session fixation.
+        session()->regenerate();
+
+        // Store owner session info for quick reversal and expiry/audit controls.
         session([
             'impersonator_id' => Auth::id(),
             'impersonated_tenant_id' => $tenant->id,
             'impersonated_tenant_name' => $tenant->company_name ?: $tenant->name,
+            'impersonation_type' => 'tenant',
+            'impersonation_started_at' => now()->toIso8601String(),
         ]);
 
         Auth::login($adminUser);
@@ -457,7 +466,15 @@ class OwnerTenantController extends Controller
         if (session()->has('impersonator_id')) {
             $ownerId = session('impersonator_id');
             $owner = User::find($ownerId);
-            session()->forget(['impersonator_id', 'impersonated_tenant_id', 'impersonated_tenant_name']);
+            session()->forget([
+                'impersonator_id',
+                'impersonated_tenant_id',
+                'impersonated_tenant_name',
+                'impersonated_user_id',
+                'impersonated_user_name',
+                'impersonation_type',
+                'impersonation_started_at',
+            ]);
 
             if ($owner) {
                 Auth::login($owner);
