@@ -46,7 +46,9 @@ Route::prefix('owner')->name('owner.')->group(function () {
         Route::post('/logout', [OwnerAuthController::class, 'logout'])->name('logout');
         
         // 1. Dashboard Overview
-        Route::get('/dashboard', [OwnerDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/dashboard', [OwnerDashboardController::class, 'index'])
+            ->middleware('owner.capability:dashboard.view')
+            ->name('dashboard');
 
         // 2. SaaS Subscription Plans
         Route::get('/plans', [OwnerPlanController::class, 'index'])->name('plans.index');

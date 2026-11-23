@@ -24,6 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'permission' => \App\Http\Middleware\CheckTenantPermission::class,
             'role' => \App\Http\Middleware\CheckTenantRole::class,
+            'owner.capability' => \App\Http\Middleware\EnsureOwnerCapability::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
