@@ -3,7 +3,7 @@
 @section('page-title', 'Edit Tenant: ' . $tenant->name)
 
 @section('content')
-<div class="max-w-4xl mx-auto space-y-4">
+<div class="w-full max-w-7xl mx-auto space-y-4">
 
     <!-- Top Bar -->
     <div class="flex items-center justify-between bg-white p-4 rounded-xl border border-slate-200 shadow-xs">

@@ -3,7 +3,7 @@
 @section('page-title', 'Provision New ISP Tenant')
 
 @section('content')
-<div class="max-w-4xl mx-auto space-y-4">
+<div class="w-full max-w-7xl mx-auto space-y-4" x-data="{ showAdminPassword: false }">
 
     <!-- Top Navigation Header -->
     <div class="flex items-center justify-between bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
@@ -142,7 +142,12 @@
 
                     <div>
                         <label class="block text-[11px] font-semibold text-slate-600 mb-1">Secure Password *</label>
-                        <input type="password" name="admin_password" required placeholder="Minimum 6 characters" class="w-full px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 text-xs">
+                        <div class="relative">
+                            <input :type="showAdminPassword ? 'text' : 'password'" name="admin_password" required minlength="6" autocomplete="new-password" placeholder="Minimum 6 characters" class="w-full px-3 py-1.5 pr-9 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 text-xs focus:bg-white focus:border-blue-500 focus:outline-hidden">
+                            <button type="button" @click="showAdminPassword = !showAdminPassword" class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-600" :aria-label="showAdminPassword ? 'Hide password' : 'Show password'">
+                                <i :class="showAdminPassword ? 'fas fa-eye-slash' : 'fas fa-eye'" class="text-[11px]"></i>
+                            </button>
+                        </div>
                         @error('admin_password')<p class="text-rose-500 text-[10px] mt-0.5">{{ $message }}</p>@enderror
                     </div>
                 </div>
