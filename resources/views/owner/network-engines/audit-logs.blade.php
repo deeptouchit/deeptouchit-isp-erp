@@ -3,7 +3,7 @@
 @section('page-title', 'Immutable Network Audit Trail')
 
 @section('content')
-<div class="space-y-4" x-data="{ 
+<div class="space-y-3" x-data="{ 
     payloadModal: false, 
     selectedPayload: null,
     copiedText: false,
@@ -27,7 +27,6 @@
                         Tamper-Proof Ledger
                     </span>
                 </div>
-                <p class="text-[11px] text-slate-500 mt-0.5">Forensic audit logs for Router reboots, OLT commands, FreeRADIUS CoA disconnections & Vault changes</p>
             </div>
         </div>
 
@@ -48,7 +47,7 @@
     </div>
 
     <!-- Top 4-Card Summary Metrics Strip -->
-    <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
         <!-- Metric 1: Total Events Recorded -->
         <div class="p-3.5 rounded-xl bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5">
@@ -98,6 +97,8 @@
                 <i class="fas fa-server"></i>
             </div>
         </div>
+        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs"><span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Success Rate</span><span class="text-[13px] font-bold font-mono leading-tight block text-emerald-700">{{ $totalCount > 0 ? number_format(($successCount / $totalCount) * 100, 1) : '0.0' }}%</span></div>
+        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs"><span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Device Types</span><span class="text-[13px] font-bold font-mono leading-tight block text-purple-700">{{ count($actionTypes) }}</span></div>
     </div>
 
     <!-- Filters & Forensic Search Bar -->
@@ -184,16 +185,16 @@
     <!-- Audit Logs Ledger Table -->
     <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
         <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs text-slate-700 divide-y divide-slate-200">
+            <table class="saas-table">
                 <thead class="bg-slate-50 text-[10.5px] font-bold text-slate-500 uppercase tracking-wider">
                     <tr>
-                        <th class="px-3.5 py-2.5">Date & Time</th>
-                        <th class="px-3.5 py-2.5">Target & Scope</th>
-                        <th class="px-3.5 py-2.5">Action Executed</th>
-                        <th class="px-3.5 py-2.5">Status</th>
-                        <th class="px-3.5 py-2.5">Operator / Origin</th>
-                        <th class="px-3.5 py-2.5">Response / Output</th>
-                        <th class="px-3.5 py-2.5 text-right">Forensic Trace</th>
+                        <th class="text-center">Date & Time</th>
+                        <th class="text-center">Target & Scope</th>
+                        <th class="text-center">Action Executed</th>
+                        <th class="text-center">Status</th>
+                        <th class="text-center">Operator / Origin</th>
+                        <th class="text-center">Response / Output</th>
+                        <th class="no-sort text-center">Forensic Trace</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 bg-white">

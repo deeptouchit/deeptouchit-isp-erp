@@ -3,7 +3,7 @@
 @section('page-title', 'Carrier Network Engines Hub')
 
 @section('content')
-<div class="space-y-4" x-data="{ 
+<div class="space-y-3" x-data="{ 
     scriptModal: false, 
     probeModal: false,
     activeTab: 'routers', 
@@ -64,7 +64,6 @@
                         5-Engines Core
                     </span>
                 </div>
-                <p class="text-[11px] text-slate-500 mt-0.5">Manage MikroTik routers, OLT PON access, FreeRADIUS AAA & WireGuard mesh</p>
             </div>
         </div>
 
@@ -89,7 +88,7 @@
     @endif
 
     <!-- Top Statistics 4-Card Strip (Matching Tenants/Automation Standard Sequence) -->
-    <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
         
         <!-- Metric 1: MikroTik Router Fleet -->
         <div class="p-3.5 rounded-xl bg-white border border-slate-200 shadow-xs flex items-center justify-between">
@@ -125,7 +124,7 @@
                 <span class="text-[10.5px] font-medium text-emerald-700 uppercase tracking-wider block">FreeRADIUS AAA</span>
                 <span class="text-lg font-extrabold text-emerald-700 tracking-tight font-mono">Port 3799</span>
                 <span class="text-[10px] text-slate-400 block font-mono">
-                    {{ $settings['network_radius_master_host'] ?? '10.50.0.1' }}
+                    {{ $settings['network_radius_master_host'] ?? 'Not configured' }}
                 </span>
             </div>
             <div class="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm border border-emerald-100 flex-shrink-0">
@@ -137,7 +136,7 @@
         <div class="p-3.5 rounded-xl bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5">
                 <span class="text-[10.5px] font-medium text-amber-700 uppercase tracking-wider block">WireGuard Tunnel</span>
-                <span class="text-lg font-extrabold text-amber-700 tracking-tight font-mono">10.50.0.0/16</span>
+                <span class="text-lg font-extrabold text-amber-700 tracking-tight font-mono">{{ $settings['network_wireguard_subnet_pool'] ?? 'Not configured' }}</span>
                 <span class="text-[10px] text-slate-400 block">
                     NAT/CGNAT Mesh Traversal
                 </span>
@@ -146,6 +145,9 @@
                 <i class="fas fa-shield-virus"></i>
             </div>
         </div>
+
+        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs"><span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Online ONUs</span><span class="text-[13px] font-bold font-mono leading-tight block text-emerald-700">{{ number_format($onlineOnus) }}</span><span class="text-[9px] text-slate-400 block">{{ number_format($healthyOnus) }} healthy</span></div>
+        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs"><span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">LOS Alerts</span><span class="text-[13px] font-bold font-mono leading-tight block text-rose-700">{{ number_format($losOnus) }}</span><span class="text-[9px] text-slate-400 block">Optical signal loss</span></div>
 
     </div>
 
@@ -215,16 +217,16 @@
 
             <!-- Routers Table -->
             <div class="overflow-x-auto border border-slate-200 rounded-lg">
-                <table class="w-full text-left text-xs text-slate-700 divide-y divide-slate-200">
+            <table class="saas-table">
                     <thead class="bg-slate-50 text-[10.5px] font-bold text-slate-500 uppercase tracking-wider">
                         <tr>
-                            <th class="px-3.5 py-2.5">Router Name / Tenant</th>
-                            <th class="px-3.5 py-2.5">Hardware & ROS</th>
-                            <th class="px-3.5 py-2.5">Connection Mode</th>
-                            <th class="px-3.5 py-2.5">Management IP & Port</th>
-                            <th class="px-3.5 py-2.5">CPU Load & RAM</th>
-                            <th class="px-3.5 py-2.5">Status & Handshake</th>
-                            <th class="px-3.5 py-2.5 text-right">Actions</th>
+                            <th class="text-center">Router Name / Tenant</th>
+                            <th class="text-center">Hardware & ROS</th>
+                            <th class="text-center">Connection Mode</th>
+                            <th class="text-center">Management IP & Port</th>
+                            <th class="text-center">CPU Load & RAM</th>
+                            <th class="text-center">Status & Handshake</th>
+                            <th class="no-sort text-center">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 bg-white">
@@ -366,16 +368,16 @@
 
             <!-- OLT Table -->
             <div class="overflow-x-auto border border-slate-200 rounded-lg">
-                <table class="w-full text-left text-xs text-slate-700 divide-y divide-slate-200">
+            <table class="saas-table">
                     <thead class="bg-slate-50 text-[10.5px] font-bold text-slate-500 uppercase tracking-wider">
                         <tr>
-                            <th class="px-3.5 py-2.5">OLT Name / Tenant</th>
-                            <th class="px-3.5 py-2.5">Brand & Model</th>
-                            <th class="px-3.5 py-2.5">Management IP & SNMP</th>
-                            <th class="px-3.5 py-2.5">PON Ports</th>
-                            <th class="px-3.5 py-2.5">ONU Capacity & Health</th>
-                            <th class="px-3.5 py-2.5">Status & Sync</th>
-                            <th class="px-3.5 py-2.5 text-right">Actions</th>
+                            <th class="text-center">OLT Name / Tenant</th>
+                            <th class="text-center">Brand & Model</th>
+                            <th class="text-center">Management IP & SNMP</th>
+                            <th class="text-center">PON Ports</th>
+                            <th class="text-center">ONU Capacity & Health</th>
+                            <th class="text-center">Status & Sync</th>
+                            <th class="no-sort text-center">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 bg-white">
@@ -538,15 +540,15 @@
             </div>
 
             <div class="overflow-x-auto border border-slate-200 rounded-lg">
-                <table class="w-full text-left text-xs text-slate-700 divide-y divide-slate-200">
+                <table class="saas-table">
                     <thead class="bg-slate-50 text-[10.5px] font-bold text-slate-500 uppercase tracking-wider">
                         <tr>
-                            <th class="px-3 py-2">Timestamp</th>
-                            <th class="px-3 py-2">Device Type / Target</th>
-                            <th class="px-3 py-2">Action Executed</th>
-                            <th class="px-3 py-2">Operator / IP</th>
-                            <th class="px-3 py-2">Status</th>
-                            <th class="px-3 py-2">Response Summary</th>
+                            <th class="text-center">Timestamp</th>
+                            <th class="text-center">Device Type / Target</th>
+                            <th class="text-center">Action Executed</th>
+                            <th class="text-center">Operator / IP</th>
+                            <th class="text-center">Status</th>
+                            <th class="text-center">Response Summary</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 bg-white">
