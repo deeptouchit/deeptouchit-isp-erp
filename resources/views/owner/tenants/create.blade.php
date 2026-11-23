@@ -52,9 +52,10 @@
                     </div>
 
                     <div>
-                        <label class="block text-[11px] font-semibold text-slate-600 mb-1">Custom Domain (Optional)</label>
-                        <input type="text" name="domain" value="{{ old('domain') }}" placeholder="billing.speednet.com" class="w-full px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 text-xs font-mono">
-                        @error('domain')<p class="text-rose-500 text-[10px] mt-0.5">{{ $message }}</p>@enderror
+                        <label class="block text-[11px] font-semibold text-slate-600 mb-1">ISP Custom Domain (Optional)</label>
+                        <input type="text" name="custom_domain" value="{{ old('custom_domain', old('domain')) }}" placeholder="tithidigital.com or portal.tithidigital.com" class="w-full px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 text-xs font-mono">
+                        <p class="text-[10px] text-slate-400 mt-1">Point DNS A/CNAME to this platform before verification.</p>
+                        @error('custom_domain')<p class="text-rose-500 text-[10px] mt-0.5">{{ $message }}</p>@enderror
                     </div>
 
                     <div>

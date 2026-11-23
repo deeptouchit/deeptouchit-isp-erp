@@ -161,13 +161,15 @@ class OwnerTenantController extends Controller
         $expiresAt = $isTrial ? now()->addDays($trialDays) : now()->addMonths($durationMonths);
         $initialStatus = $isTrial ? 'trial' : 'active';
 
-        DB::transaction(function () use ($validated, $expiresAt, $durationMonths, $isTrial, $trialDays, $initialStatus) {
+        $customDomain = $validated['custom_domain'] ?? $validated['domain'] ?? null;
+
+        DB::transaction(function () use ($validated, $customDomain, $expiresAt, $durationMonths, $isTrial, $trialDays, $initialStatus) {
             $tenant = Tenant::create([
                 'name' => $validated['name'],
                 'company_name' => $validated['company_name'],
                 'slug' => strtolower($validated['slug']),
-                'domain' => !empty($validated['domain']) ? strtolower(trim($validated['domain'])) : null,
-                'custom_domain' => !empty($validated['custom_domain'] ?? $validated['domain'] ?? null) ? strtolower(trim($validated['custom_domain'] ?? $validated['domain'])) : null,
+                'domain' => $customDomain ? strtolower(trim($customDomain)) : null,
+                'custom_domain' => $customDomain ? strtolower(trim($customDomain)) : null,
                 'domain_mode' => $validated['domain_mode'] ?? 'platform',
                 'primary_domain' => $validated['primary_domain'] ?? 'platform',
                 'domain_status' => !empty($validated['custom_domain']) ? 'pending' : 'not_configured',
@@ -306,17 +308,18 @@ class OwnerTenantController extends Controller
 
         $oldStatus = $tenant->status;
         $oldPlanId = $tenant->saas_plan_id;
+        $customDomain = $validated['custom_domain'] ?? $validated['domain'] ?? null;
         $before = $tenant->only(['name', 'company_name', 'slug', 'domain', 'custom_domain', 'domain_mode', 'primary_domain', 'domain_status', 'status', 'saas_plan_id', 'subscription_expires_at']);
 
         $tenant->update([
             'name' => $validated['name'],
             'company_name' => $validated['company_name'],
             'slug' => strtolower($validated['slug']),
-            'domain' => !empty($validated['domain']) ? strtolower(trim($validated['domain'])) : null,
-            'custom_domain' => !empty($validated['custom_domain'] ?? $validated['domain'] ?? null) ? strtolower(trim($validated['custom_domain'] ?? $validated['domain'])) : null,
+            'domain' => $customDomain ? strtolower(trim($customDomain)) : null,
+            'custom_domain' => $customDomain ? strtolower(trim($customDomain)) : null,
             'domain_mode' => $validated['domain_mode'] ?? 'platform',
             'primary_domain' => $validated['primary_domain'] ?? 'platform',
-            'domain_status' => !empty($validated['custom_domain'] ?? $validated['domain'] ?? null) ? ($tenant->custom_domain === ($validated['custom_domain'] ?? $validated['domain'] ?? null) ? $tenant->domain_status : 'pending') : 'not_configured',
+            'domain_status' => $customDomain ? ($tenant->custom_domain === $customDomain ? $tenant->domain_status : 'pending') : 'not_configured',
             'phone' => $validated['phone'],
             'email' => $validated['email'],
             'address' => $validated['address'] ?? null,
@@ -335,6 +338,32 @@ class OwnerTenantController extends Controller
         );
 
         return redirect()->route('owner.tenants.index')->with('success', "Tenant '{$tenant->name}' profile updated successfully.");
+    }
+
+    public function verifyDomain(Tenant $tenant)
+    {
+        $domain = strtolower(trim((string) ($tenant->custom_domain ?: $tenant->domain)));
+        if (!$domain) {
+            return back()->with('error', 'No custom domain is configured for this tenant.');
+        }
+
+        $resolved = gethostbynamel($domain) ?: [];
+        $expectedIp = (string) config('app.server_ip', env('APP_SERVER_IP', request()->server('SERVER_ADDR', '')));
+        $verified = $expectedIp !== '' && in_array($expectedIp, $resolved, true);
+
+        $tenant->update([
+            'domain_status' => $verified ? 'verified' : 'pending',
+            'domain_verified_at' => $verified ? now() : null,
+        ]);
+
+        $this->auditService->log(
+            $tenant,
+            $verified ? 'domain_verified' : 'domain_verification_failed',
+            "Custom domain '{$domain}' DNS verification " . ($verified ? 'succeeded.' : 'failed.'),
+            ['domain' => $domain, 'resolved_ips' => $resolved, 'expected_ip' => $expectedIp, 'result' => $verified ? 'verified' : 'pending']
+        );
+
+        return back()->with($verified ? 'success' : 'error', $verified ? 'Custom domain verified successfully.' : 'DNS does not point to the configured application server yet.');
     }
 
     /**

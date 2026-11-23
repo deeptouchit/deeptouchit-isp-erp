@@ -68,9 +68,16 @@
                     </div>
 
                     <div>
-                        <label class="block text-[11px] font-semibold text-slate-600 mb-1">Custom Domain (Optional)</label>
-                        <input type="text" name="domain" value="{{ old('domain', $tenant->domain) }}" placeholder="billing.speednet.com" class="w-full px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 text-xs font-mono">
-                        @error('domain')<p class="text-rose-500 text-[10px] mt-0.5">{{ $message }}</p>@enderror
+                        <label class="block text-[11px] font-semibold text-slate-600 mb-1">ISP Custom Domain (Optional)</label>
+                        <input type="text" name="custom_domain" value="{{ old('custom_domain', $tenant->custom_domain ?: $tenant->domain) }}" placeholder="tithidigital.com or portal.tithidigital.com" class="w-full px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 text-xs font-mono">
+                        <p class="text-[10px] text-slate-400 mt-1">DNS must point to this platform before verification.</p>
+                        @error('custom_domain')<p class="text-rose-500 text-[10px] mt-0.5">{{ $message }}</p>@enderror
+                        @if($tenant->custom_domain ?: $tenant->domain)
+                            <div class="mt-1.5 flex items-center gap-2">
+                                <span class="text-[10px] font-semibold {{ ($tenant->domain_status ?? 'pending') === 'verified' ? 'text-emerald-600' : 'text-amber-600' }}">{{ ucfirst($tenant->domain_status ?? 'pending') }}</span>
+                                <button type="submit" form="verify-domain-form" class="text-[10px] text-blue-600 hover:text-blue-700 font-semibold">Verify DNS</button>
+                            </div>
+                        @endif
                     </div>
 
                     <div>
@@ -154,6 +161,12 @@
             </div>
 
         </form>
+
+    @if($tenant->custom_domain ?: $tenant->domain)
+        <form id="verify-domain-form" method="POST" action="{{ route('owner.tenants.verify-domain', $tenant) }}" class="hidden">
+            @csrf
+        </form>
+    @endif
     </div>
 
 </div>

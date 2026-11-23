@@ -76,6 +76,9 @@ Route::prefix('owner')->name('owner.')->group(function () {
         Route::put('/tenants/{tenant}', [OwnerTenantController::class, 'update'])
             ->middleware('owner.capability:tenants.update')
             ->name('tenants.update');
+        Route::post('/tenants/{tenant}/verify-domain', [OwnerTenantController::class, 'verifyDomain'])
+            ->middleware(['owner.capability:tenants.update', 'throttle:10,1'])
+            ->name('tenants.verify-domain');
         Route::delete('/tenants/{tenant}', [OwnerTenantController::class, 'destroy'])
             ->middleware('owner.capability:tenants.delete')
             ->name('tenants.destroy');
