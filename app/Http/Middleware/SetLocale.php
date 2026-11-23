@@ -6,6 +6,7 @@ use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Session;
+use App\Models\Setting;
 use Symfony\Component\HttpFoundation\Response;
 
 class SetLocale
@@ -19,7 +20,7 @@ class SetLocale
         $allowedLocales = ['bn', 'en'];
 
         // Determine locale from session, fallback to the project default English locale.
-        $locale = Session::get('locale');
+        $locale = Session::get('locale') ?: Setting::get('app_locale', config('app.locale', 'en'));
         if (!$locale || !Session::get('locale_explicit_at')) {
             $locale = config('app.locale', 'en');
         }

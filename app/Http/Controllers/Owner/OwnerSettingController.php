@@ -11,7 +11,12 @@ class OwnerSettingController extends Controller
 {
     public function index()
     {
-        $settings = Setting::whereNull('tenant_id')->pluck('value', 'key')->toArray();
+        $settings = Setting::whereNull('tenant_id')
+            ->get(['key', 'value'])
+            ->mapWithKeys(fn (Setting $setting) => [
+                $setting->key => Setting::get($setting->key, $setting->value),
+            ])
+            ->toArray();
 
         return view('owner.settings.index', compact('settings'));
     }

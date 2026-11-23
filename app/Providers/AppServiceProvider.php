@@ -40,7 +40,7 @@ class AppServiceProvider extends ServiceProvider
         // 1. Dynamic System Timezone Boot
         try {
             if (Schema::hasTable('settings')) {
-                $timezone = Setting::whereNull('tenant_id')->where('key', 'app_timezone')->value('value');
+                $timezone = Setting::get('app_timezone');
                 if ($timezone) {
                     config(['app.timezone' => $timezone]);
                     date_default_timezone_set($timezone);
@@ -56,7 +56,12 @@ class AppServiceProvider extends ServiceProvider
             try {
                 if (Schema::hasTable('settings')) {
                     if ($cachedSettings === null) {
-                        $globalSettings = Setting::whereNull('tenant_id')->pluck('value', 'key')->toArray();
+                        $globalSettings = Setting::whereNull('tenant_id')
+                            ->get(['key', 'value'])
+                            ->mapWithKeys(fn (Setting $setting) => [
+                                $setting->key => Setting::get($setting->key, $setting->value),
+                            ])
+                            ->toArray();
                         $currencySymbol = $globalSettings['currency_symbol'] ?? '৳';
                         $currencyCode = $globalSettings['currency_code'] ?? 'BDT';
                         $currencyPosition = $globalSettings['currency_position'] ?? 'left';
