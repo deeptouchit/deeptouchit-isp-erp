@@ -70,12 +70,13 @@
         {{-- Dynamic SaaS Compact Footer --}}
         <footer class="bg-white border-t border-slate-200 px-4 sm:px-6 py-2.5 flex flex-col sm:flex-row items-center justify-between gap-1.5 text-[11px] text-slate-500">
             <div>
-                &copy; {{ date('Y') }} <span class="font-medium text-slate-700">{{ $reseller ? $reseller->name : ($tenant->company_name ?? 'Reseller Portal') }}</span>. All rights reserved.
+                {{ $globalSettings['footer_copyright_text'] ?? ('© ' . date('Y') . ' ' . ($reseller?->name ?: ($tenant?->company_name ?? 'Reseller Portal')) . '. All rights reserved.') }}
             </div>
-            <div class="text-[10.5px] font-mono text-slate-400 flex items-center gap-1.5">
-                <span>Partner with</span>
-                <span class="font-semibold text-slate-600">{{ $tenant->company_name ?? 'SomitySoft Network' }}</span>
-            </div>
+            @if(($globalSettings['show_developer_credit'] ?? '1') === '1')
+                <a href="{{ $globalSettings['footer_developer_url'] ?? 'https://somitysoft.com' }}" target="_blank" rel="noopener noreferrer" class="text-[10.5px] text-slate-400 hover:text-purple-600 transition">
+                    {{ $globalSettings['footer_developed_by'] ?? 'Developed with care by SomitySoft Technologies' }}
+                </a>
+            @endif
         </footer>
 
     </div>
