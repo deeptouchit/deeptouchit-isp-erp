@@ -3,7 +3,7 @@
 @section('page-title', 'Settled Payments & Revenue Ledger')
 
 @push('styles')
-<style>.owner-finance-table.saas-table td { white-space: nowrap; } .owner-finance-table.saas-table td > div { display: inline-flex; vertical-align: middle; } .owner-finance-table.saas-table td > div + div { margin-left: .35rem; } .owner-finance-table.saas-table th:nth-child(6), .owner-finance-table.saas-table td:nth-child(6) { display: none; }</style>
+<style>.owner-finance-table.saas-table td { white-space: nowrap; } .owner-finance-table.saas-table td > div { display: inline-flex; vertical-align: middle; } .owner-finance-table.saas-table td > div + div { margin-left: .35rem; } .owner-finance-table.saas-table th:nth-child(6), .owner-finance-table.saas-table td:nth-child(6) { display: none; } .owner-finance-filter select, .owner-finance-filter input, .owner-finance-filter button { height: 34px; }</style>
 @endpush
 
 @section('content')
@@ -70,10 +70,10 @@
     </div>
 
     <!-- Filters -->
-    <div class="p-3.5 rounded-xl bg-white border border-slate-200 shadow-xs">
-        <form action="{{ route('owner.payments.index') }}" method="GET" x-data="{ showMoreFilters: {{ request()->filled('tenant_id') || request()->filled('payment_method') ? 'true' : 'false' }} }" class="space-y-2.5">
+    <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs">
+        <form action="{{ route('owner.payments.index') }}" method="GET" x-data="{ showMoreFilters: {{ request()->filled('tenant_id') || request()->filled('payment_method') ? 'true' : 'false' }}, searchQuery: @js(request('search', '')) }" class="owner-finance-filter space-y-2.5">
             <div class="lg:col-span-2">
-                <input type="text" name="search" value="{{ request('search') }}" placeholder="Invoice #, Trx ID, Tenant name, Phone..." class="w-full px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 text-xs focus:ring-1 focus:ring-blue-500">
+                <div class="relative"><i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px]" :class="searchQuery ? 'text-cyan-600 font-bold' : 'text-slate-400'"></i><input type="text" name="search" x-model="searchQuery" value="{{ request('search') }}" placeholder="Invoice #, Trx ID, Tenant name, Phone..." class="w-full h-[34px] pl-8 pr-7 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 text-xs focus:bg-white focus:ring-1 focus:ring-cyan-500 focus:border-cyan-500"><button type="button" x-show="searchQuery" x-cloak @click="searchQuery = ''; $nextTick(() => $el.closest('form').submit())" class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-600"><i class="fas fa-times text-[10px]"></i></button></div>
             </div>
             <div x-show="showMoreFilters" x-cloak class="pt-2 border-t border-slate-100">
                 <select name="tenant_id" class="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 text-xs focus:ring-1 focus:ring-blue-500">
@@ -95,12 +95,12 @@
             </div>
             <div class="flex items-center gap-1.5 flex-shrink-0 md:ml-auto">
                 <button type="button" @click="showMoreFilters = !showMoreFilters" class="h-[34px] py-0 px-2.5 rounded-lg border border-slate-200 bg-white text-slate-700 text-xs font-semibold flex items-center gap-1.5"><i class="fas" :class="showMoreFilters ? 'fa-chevron-up text-cyan-600' : 'fa-chevron-down text-slate-400'"></i><span>More Filters</span></button>
-                <button type="submit" class="flex-1 py-1.5 px-3 rounded-lg bg-slate-800 hover:bg-slate-900 text-white font-semibold text-xs transition flex items-center justify-center gap-1.5 shadow-xs">
+                <button type="submit" class="h-[34px] py-0 px-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs transition flex items-center justify-center gap-1.5 shadow-xs">
                     <i class="fas fa-filter text-[10px]"></i>
                     <span>Filter</span>
                 </button>
-                <a href="{{ route('owner.payments.index') }}" title="Reset" class="py-1.5 px-2.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold flex items-center justify-center">
-                    <i class="fas fa-rotate-left"></i>
+                <a href="{{ route('owner.payments.index') }}" title="Reset" class="h-[34px] py-0 px-2.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center justify-center gap-1 border border-slate-200/80">
+                    <i class="fas fa-rotate-left text-[10px]"></i><span>Reset</span>
                 </a>
             </div>
         </form>
