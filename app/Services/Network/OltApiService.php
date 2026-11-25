@@ -261,8 +261,12 @@ class OltApiService
         $quoted = preg_quote($label, '/');
         if (preg_match("/<li>\\s*<span>{$quoted}<a>.*?<\\/a><\\/span>(.*?)<\\/li>/is", $html, $m)) {
             $value = trim(html_entity_decode(strip_tags($m[1])));
-            $value = preg_replace('/[\\x00-\\x1F\\x7F]/u', '', $value) ?? $value;
-            $value = @iconv('UTF-8', 'UTF-8//IGNORE', $value) ?: $value;
+            $value = preg_replace('/[\\x00-\\x1F\\x7F]/', '', $value) ?? $value;
+            if (function_exists('mb_check_encoding') && !mb_check_encoding($value, 'UTF-8')) {
+                $value = @iconv('ISO-8859-1', 'UTF-8//IGNORE', $value) ?: '';
+            } else {
+                $value = @iconv('UTF-8', 'UTF-8//IGNORE', $value) ?: '';
+            }
             return $value !== '' ? $value : null;
         }
         return null;
