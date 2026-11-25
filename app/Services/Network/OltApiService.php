@@ -1367,9 +1367,11 @@ class OltApiService
                 }
             }
 
-            // Prune unlisted ONUs
-            if (!empty($syncedOnuDbIds)) {
-                // Preserve inventory until removal is explicitly confirmed.
+            // Prune stale inventory only when both inventory endpoints returned complete data.
+            if ($inventoryComplete && !empty($syncedOnuDbIds)) {
+                TenantOnu::where('olt_id', $olt->id)
+                    ->whereNotIn('id', $syncedOnuDbIds)
+                    ->delete();
             }
 
             $offlineCount = max(0, $syncedCount - $onlineCount);
