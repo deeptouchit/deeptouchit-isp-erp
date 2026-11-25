@@ -832,7 +832,7 @@ class OltApiService
                     $isOnline = $status === 'online';
                     $name = $this->legacyCgiField($onuHtml, 'ONU Name') ?: "ONU {$ponId}:{$onuId}";
                     $mac = $this->legacyCgiField($onuHtml, 'ONU MACAddr');
-                    if (!$mac) {
+                    if (!$mac || in_array(strtolower(trim($mac)), ['---', '--', 'n/a', 'na', 'unknown', 'none'], true)) {
                         continue;
                     }
                     $onuKey = "0/{$ponId}:{$onuId}";
