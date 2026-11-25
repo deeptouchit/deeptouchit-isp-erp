@@ -238,6 +238,34 @@ class OltApiService
         }
     }
 
+    protected function legacyCgiRequest(string $ip, int $port, string $cookieToken, string $path): ?string
+    {
+        try {
+            $cookies = base64_decode($cookieToken, true);
+            if (!$cookies) return null;
+
+            $response = Http::withoutRedirecting()
+                ->withHeaders(['User-Agent' => 'Mozilla/5.0', 'Cookie' => $cookies])
+                ->timeout(8)
+                ->get("http://{$ip}:{$port}/cgi/{$path}");
+
+            return $response->successful() ? $response->body() : null;
+        } catch (Exception $e) {
+            Log::warning("Legacy CGI OLT request failed for {$ip}:{$port}: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    protected function legacyCgiField(string $html, string $label): ?string
+    {
+        $quoted = preg_quote($label, '/');
+        if (preg_match("/<li>\\s*<span>{$quoted}<a>.*?<\\/a><\\/span>(.*?)<\\/li>/is", $html, $m)) {
+            $value = trim(html_entity_decode(strip_tags($m[1])));
+            return $value !== '' ? $value : null;
+        }
+        return null;
+    }
+
     /**
      * Driver 2: HSGQ / VSOL JSON Login (/userlogin?form=login)
      */
@@ -770,11 +798,63 @@ class OltApiService
         $syncedOnuDbIds = [];
 
         if ($driver === 'legacy_cgi') {
+            $cookieToken = $this->getToken($ip, $port, $username, $password);
+            $indexHtml = $cookieToken ? $this->legacyCgiRequest($ip, $port, $cookieToken, 'index.php') : null;
+            $syncedCount = 0;
+            $onlineCount = 0;
+
+            if ($indexHtml) {
+                preg_match_all('/page=onu(?:&amp;|&)id=(\d+)(?:&amp;|&)oid=(\d+)/i', $indexHtml, $matches, PREG_SET_ORDER);
+                foreach ($matches as $match) {
+                    $ponId = (int) $match[1];
+                    $onuId = (int) $match[2];
+                    $onuHtml = $this->legacyCgiRequest($ip, $port, $cookieToken, "index.php?page=onu&isajax=1&tab=gene&id={$ponId}&oid={$onuId}&runtab=1");
+                    if (!$onuHtml) continue;
+
+                    $status = strtolower((string) $this->legacyCgiField($onuHtml, 'OnLineStatus'));
+                    $isOnline = $status === 'online';
+                    $name = $this->legacyCgiField($onuHtml, 'ONU Name') ?: "ONU {$ponId}:{$onuId}";
+                    $mac = $this->legacyCgiField($onuHtml, 'ONU MACAddr');
+                    $model = $this->legacyCgiField($onuHtml, 'DeviceType');
+                    $hardware = $this->legacyCgiField($onuHtml, 'HWRev');
+                    $firmware = $this->legacyCgiField($onuHtml, 'FWRev');
+                    $rxRaw = $this->legacyCgiField($onuHtml, 'RxPower(dBm)');
+                    $txRaw = $this->legacyCgiField($onuHtml, 'TxPower(dBm)');
+                    $range = $this->legacyCgiField($onuHtml, 'LinkRangeValue(m)');
+                    $rx = is_numeric($rxRaw) && (float) $rxRaw > 0 ? round(10 * log10((float) $rxRaw) - 40, 2) : null;
+                    $tx = is_numeric($txRaw) && (float) $txRaw > 0 ? round(10 * log10((float) $txRaw) - 40, 2) : null;
+
+                    TenantOnu::updateOrCreate(
+                        ['olt_id' => $olt->id, 'pon_port' => "0/{$ponId}", 'onu_id' => $onuId],
+                        [
+                            'tenant_id' => $olt->tenant_id,
+                            'name' => $name,
+                            'mac_address' => $mac,
+                            'vendor' => 'EPON OLT',
+                            'model' => $model,
+                            'hardware_version' => $hardware,
+                            'software_version' => $firmware,
+                            'status' => $isOnline ? 'online' : 'offline',
+                            'running_state' => $isOnline ? 1 : 0,
+                            'rx_power_dbm' => $rx,
+                            'tx_power_dbm' => $tx,
+                            'distance_m' => is_numeric($range) ? (int) $range : null,
+                            'last_online_at' => $isOnline ? now() : null,
+                        ]
+                    );
+                    $syncedCount++;
+                    if ($isOnline) $onlineCount++;
+                }
+            }
+
             $olt->update([
                 'status' => 'online',
                 'vendor' => $olt->vendor ?: 'EPON OLT',
                 'model' => $olt->model ?: 'EPON OLT',
                 'total_pon_ports' => $olt->total_pon_ports ?: 4,
+                'total_onus_count' => $syncedCount,
+                'online_onus_count' => $onlineCount,
+                'offline_onus_count' => max(0, $syncedCount - $onlineCount),
                 'last_ping_at' => now(),
                 'last_sync_at' => now(),
                 'last_error' => null,
@@ -782,11 +862,11 @@ class OltApiService
 
             return [
                 'success' => true,
-                'message' => __('OLT connection verified. Legacy CGI ONU discovery is not enabled yet.'),
-                'total_onus' => $olt->total_onus_count ?? 0,
-                'online_onus' => $olt->online_onus_count ?? 0,
-                'offline_onus' => $olt->offline_onus_count ?? 0,
-                'synced_count' => 0,
+                'message' => __('OLT and ONU synchronization completed successfully.'),
+                'total_onus' => $syncedCount,
+                'online_onus' => $onlineCount,
+                'offline_onus' => max(0, $syncedCount - $onlineCount),
+                'synced_count' => $syncedCount,
                 'latency_ms' => round((microtime(true) - $start) * 1000, 1),
             ];
         }
