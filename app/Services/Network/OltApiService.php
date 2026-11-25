@@ -1012,9 +1012,11 @@ class OltApiService
                 }
             }
 
-            // Prune unlisted ONUs
-            if (!empty($syncedOnuDbIds)) {
-                // Missing rows may be caused by a partial hardware response. Preserve inventory.
+            // Prune stale inventory only when the OLT returned a complete response.
+            if ($inventoryComplete && !empty($syncedOnuDbIds)) {
+                TenantOnu::where('olt_id', $olt->id)
+                    ->whereNotIn('id', $syncedOnuDbIds)
+                    ->delete();
             }
 
             $offlineCount = max(0, $syncedCount - $onlineCount);
