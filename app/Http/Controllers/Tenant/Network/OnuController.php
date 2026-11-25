@@ -433,6 +433,35 @@ class OnuController extends Controller
         ]);
     }
 
+    /**
+     * Delete selected offline ONU inventory records only.
+     */
+    public function bulkDeleteOffline(Request $request)
+    {
+        $tenant = Auth::user()?->tenant;
+        if (!$tenant) {
+            return response()->json(['success' => false, 'message' => __('Unauthorized')], 401);
+        }
+
+        $validated = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer', 'distinct'],
+        ]);
+
+        $query = TenantOnu::where('tenant_id', $tenant->id)
+            ->whereIn('id', $validated['ids'])
+            ->where('status', '!=', 'online');
+
+        $deleted = $query->count();
+        $query->delete();
+
+        return response()->json([
+            'success' => true,
+            'deleted' => $deleted,
+            'message' => trans_choice(':count offline ONU record deleted successfully.|:count offline ONU records deleted successfully.', $deleted, ['count' => $deleted]),
+        ]);
+    }
+
     private function audit(Request $request, TenantOnu $onu, string $event, bool $success): void
     {
         \App\Models\TenantActivityLog::create([

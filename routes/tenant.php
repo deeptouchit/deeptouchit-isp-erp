@@ -153,6 +153,7 @@ Route::middleware(['web'])->group(function () {
             Route::get('/onu/operations/{operation}', [OnuController::class, 'operationStatus'])->middleware('permission:network.olts_onus')->name('onu.operation-status');
             Route::post('/onu/sync-all', [OnuController::class, 'syncAll'])->middleware('permission:network.olts_onus')->middleware('permission:network.configure')->name('onu.sync-all');
             Route::post('/onu/auto-link', [OnuController::class, 'autoLink'])->middleware('permission:network.olts_onus')->middleware('permission:network.configure')->name('onu.auto-link');
+            Route::delete('/onu/bulk-delete-offline', [OnuController::class, 'bulkDeleteOffline'])->middleware('permission:network.olts_onus')->middleware('permission:network.delete')->name('onu.bulk-delete-offline');
             Route::get('/onu/{onu}', [OnuController::class, 'show'])->middleware('permission:network.olts_onus')->name('onu.show');
             Route::put('/onu/{onu}', [OnuController::class, 'update'])->middleware(['permission:network.olts_onus', 'permission:network.configure', 'throttle:20,1'])->name('onu.update');
             Route::post('/onu/{onu}/reboot', [OnuController::class, 'reboot'])->middleware(['permission:network.olts_onus', 'permission:network.reboot', 'throttle:6,1'])->name('onu.reboot');

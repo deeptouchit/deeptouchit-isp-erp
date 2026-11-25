@@ -83,6 +83,20 @@
                 <span x-text="linkingClients ? i18n.linking : i18n.autoLinkClients"></span>
             </button>
 
+            <button type="button"
+                    @click="toggleAllOffline()" x-show="canDelete"
+                    class="h-[34px] px-3 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs shadow-2xs transition inline-flex items-center justify-center gap-1.5 cursor-pointer">
+                <i class="fas fa-check-double text-rose-500 text-[11px]"></i>
+                <span x-text="allOfflineSelected ? i18n.clearSelection : i18n.selectOffline"></span>
+            </button>
+
+            <button type="button"
+                    @click="confirmBulkDelete()" x-show="canDelete && selectedIds.length"
+                    class="h-[34px] px-3 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs shadow-xs transition inline-flex items-center justify-center gap-1.5 cursor-pointer">
+                <i class="fas fa-trash-can text-[11px]"></i>
+                <span x-text="i18n.deleteSelected + ' (' + selectedIds.length + ')'" ></span>
+            </button>
+
             <!-- Link to OLT Gateways -->
             <a href="{{ route('tenant.network.olt') }}" 
                class="h-[34px] px-3.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold text-xs shadow-2xs transition inline-flex items-center justify-center gap-1.5 cursor-pointer">
@@ -355,6 +369,9 @@
             <table class="saas-table">
                 <thead>
                     <tr>
+                        <th class="w-10 text-center font-semibold no-sort">
+                            <input type="checkbox" x-show="canDelete" @change="toggleAllOffline()" :checked="allOfflineSelected" class="rounded border-slate-300 text-rose-600 focus:ring-rose-500">
+                        </th>
                         <th class="w-10 text-center font-semibold">#</th>
                         <th class="text-center font-semibold">{{ __('Client / ONU Name') }}</th>
                         <th class="text-center font-semibold">{{ __('Area') }}</th>
@@ -419,6 +436,11 @@
                             ];
                         @endphp
                         <tr>
+                            <td class="text-center whitespace-nowrap">
+                                @if($onu->status !== 'online')
+                                    <input type="checkbox" x-show="canDelete" value="{{ $onu->id }}" x-model="selectedIds" class="rounded border-slate-300 text-rose-600 focus:ring-rose-500">
+                                @endif
+                            </td>
                             <!-- 1. Serial # (Center Align) -->
                             <td class="text-center font-mono text-slate-400 whitespace-nowrap">
                                 {{ $onus->firstItem() + $index }}
@@ -575,7 +597,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="12" class="py-10 text-center">
+                            <td colspan="13" class="py-10 text-center">
                                 <div class="max-w-md mx-auto space-y-2.5">
                                     <div class="w-10 h-10 rounded-xl bg-cyan-50 text-cyan-600 mx-auto flex items-center justify-center text-base border border-cyan-100 shadow-xs">
                                         <i class="fas fa-satellite-dish"></i>
@@ -979,12 +1001,23 @@
 function onuManager() {
     return {
         canConfigure: @js(auth()->user()->hasPermission('network.configure')),
+        canDelete: @js(auth()->user()->hasPermission('network.delete')),
+        selectedIds: [],
+        offlineIds: @js($onus->getCollection()->where('status', '!=', 'online')->pluck('id')->values()),
         canReboot: @js(auth()->user()->hasPermission('network.reboot')),
         i18n: {
             syncingOlts: @js(__('Syncing OLTs...')),
             syncFromOlts: @js(__('Sync from OLTs')),
             linking: @js(__('Linking...')),
             autoLinkClients: @js(__('Auto-Link Clients')),
+            selectOffline: @js(__('Select Offline')),
+            clearSelection: @js(__('Clear Selection')),
+            deleteSelected: @js(__('Delete Selected')),
+            bulkDeleteTitle: @js(__('Delete Selected Offline ONUs?')),
+            bulkDeleteText: @js(__('Only offline ONU records will be removed. Online ONUs will be protected.')),
+            confirmDelete: @js(__('Delete Offline ONUs')),
+            deleteSuccess: @js(__('Offline ONU records deleted successfully.')),
+            deleteFailed: @js(__('Could not delete offline ONU records.')),
             onuMac: @js(__('ONU MAC')),
             routerMac: @js(__('Router MAC')),
             macAddress: @js(__('MAC address')),
@@ -1072,6 +1105,58 @@ function onuManager() {
         activeMenuOnu: null,
         menuPos: { top: '0px', bottom: 'auto', right: '0px', left: 'auto' },
         toast: { show: false, message: '', type: 'success' },
+
+        get allOfflineSelected() {
+            return this.offlineIds.length > 0 && this.offlineIds.every(id => this.selectedIds.includes(String(id)) || this.selectedIds.includes(id));
+        },
+
+        toggleAllOffline() {
+            if (this.allOfflineSelected) {
+                this.selectedIds = [];
+                return;
+            }
+            this.selectedIds = [...this.offlineIds];
+        },
+
+        confirmBulkDelete() {
+            if (!this.selectedIds.length) return;
+            const run = () => this.bulkDeleteOffline();
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: this.i18n.bulkDeleteTitle,
+                    text: this.i18n.bulkDeleteText,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#e11d48',
+                    cancelButtonColor: '#64748b',
+                    confirmButtonText: this.i18n.confirmDelete,
+                    cancelButtonText: this.i18n.cancel,
+                    reverseButtons: true
+                }).then(result => { if (result.isConfirmed) run(); });
+            } else if (confirm(this.i18n.bulkDeleteText)) {
+                run();
+            }
+        },
+
+        async bulkDeleteOffline() {
+            try {
+                const response = await fetch('{{ route('tenant.network.onu.bulk-delete-offline') }}', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({ ids: this.selectedIds })
+                });
+                const data = await response.json();
+                if (!response.ok || !data.success) throw new Error(data.message || this.i18n.deleteFailed);
+                this.showToast(data.message || this.i18n.deleteSuccess, 'success');
+                setTimeout(() => window.location.reload(), 700);
+            } catch (error) {
+                this.showToast(error.message || this.i18n.deleteFailed, 'error');
+            }
+        },
 
         manageModal: {
             open: false,
