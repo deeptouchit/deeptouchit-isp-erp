@@ -818,6 +818,7 @@ class OltApiService
             $indexHtml = $cookieToken ? $this->legacyCgiRequest($ip, $port, $cookieToken, 'index.php') : null;
             $syncedCount = 0;
             $onlineCount = 0;
+            $seenOnuKeys = [];
 
             if ($indexHtml) {
                 preg_match_all('/page=onu(?:&amp;|&)id=(\d+)(?:&amp;|&)oid=(\d+)/i', $indexHtml, $matches, PREG_SET_ORDER);
@@ -831,6 +832,14 @@ class OltApiService
                     $isOnline = $status === 'online';
                     $name = $this->legacyCgiField($onuHtml, 'ONU Name') ?: "ONU {$ponId}:{$onuId}";
                     $mac = $this->legacyCgiField($onuHtml, 'ONU MACAddr');
+                    if (!$mac) {
+                        continue;
+                    }
+                    $onuKey = "0/{$ponId}:{$onuId}";
+                    if (isset($seenOnuKeys[$onuKey])) {
+                        continue;
+                    }
+                    $seenOnuKeys[$onuKey] = true;
                     $model = $this->legacyCgiField($onuHtml, 'DeviceType');
                     $hardware = $this->legacyCgiField($onuHtml, 'HWRev');
                     $firmware = $this->legacyCgiField($onuHtml, 'FWRev');
@@ -871,6 +880,19 @@ class OltApiService
                     if ($isOnline) $onlineCount++;
                 }
             }
+
+            TenantOnu::where('olt_id', $olt->id)->get()
+                ->groupBy(fn (TenantOnu $existing) => "{$existing->pon_port}:{$existing->onu_id}")
+                ->each(function ($records, string $key) use ($seenOnuKeys): void {
+                    $keep = true;
+                    foreach ($records as $existing) {
+                        if (!isset($seenOnuKeys[$key]) || !$keep) {
+                            $existing->delete();
+                            continue;
+                        }
+                        $keep = false;
+                    }
+                });
 
             $olt->update([
                 'status' => 'online',
