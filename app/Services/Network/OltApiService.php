@@ -261,6 +261,8 @@ class OltApiService
         $quoted = preg_quote($label, '/');
         if (preg_match("/<li>\\s*<span>{$quoted}<a>.*?<\\/a><\\/span>(.*?)<\\/li>/is", $html, $m)) {
             $value = trim(html_entity_decode(strip_tags($m[1])));
+            $value = preg_replace('/[\\x00-\\x1F\\x7F]/u', '', $value) ?? $value;
+            $value = @iconv('UTF-8', 'UTF-8//IGNORE', $value) ?: $value;
             return $value !== '' ? $value : null;
         }
         return null;
