@@ -268,6 +268,16 @@ class OltApiService
         return null;
     }
 
+    protected function legacyCgiInputValue(string $html, string $field): ?string
+    {
+        $quoted = preg_quote($field, '/');
+        if (preg_match("/<input[^>]+name=[\\\"']{$quoted}[\\\"'][^>]+value=[\\\"']?([^\\\"' >]+)/i", $html, $m)) {
+            $value = trim(html_entity_decode($m[1]));
+            return $value !== '' ? $value : null;
+        }
+        return null;
+    }
+
     /**
      * Driver 2: HSGQ / VSOL JSON Login (/userlogin?form=login)
      */
@@ -820,11 +830,19 @@ class OltApiService
                     $model = $this->legacyCgiField($onuHtml, 'DeviceType');
                     $hardware = $this->legacyCgiField($onuHtml, 'HWRev');
                     $firmware = $this->legacyCgiField($onuHtml, 'FWRev');
-                    $rxRaw = $this->legacyCgiField($onuHtml, 'RxPower(dBm)');
-                    $txRaw = $this->legacyCgiField($onuHtml, 'TxPower(dBm)');
+                    $rxRaw = $this->legacyCgiInputValue($onuHtml, 'r_power');
+                    $txRaw = $this->legacyCgiInputValue($onuHtml, 's_power');
                     $range = $this->legacyCgiField($onuHtml, 'LinkRangeValue(m)');
                     $rx = is_numeric($rxRaw) && (float) $rxRaw > 0 ? round(10 * log10((float) $rxRaw) - 40, 2) : null;
                     $tx = is_numeric($txRaw) && (float) $txRaw > 0 ? round(10 * log10((float) $txRaw) - 40, 2) : null;
+
+                    $routerMac = null;
+                    for ($uniPort = 1; $uniPort <= 4 && !$routerMac; $uniPort++) {
+                        $macHtml = $this->legacyCgiRequest($ip, $port, $cookieToken, "index.php?page=onu&isajax=1&tab=macport&id={$ponId}&oid={$onuId}&runtab=1&pId={$uniPort}");
+                        if ($macHtml && preg_match('/(?:[0-9A-F]{2}[:-]){5}[0-9A-F]{2}/i', $macHtml, $macMatch)) {
+                            $routerMac = strtoupper(str_replace('-', ':', $macMatch[0]));
+                        }
+                    }
 
                     TenantOnu::updateOrCreate(
                         ['olt_id' => $olt->id, 'pon_port' => "0/{$ponId}", 'onu_id' => $onuId],
@@ -832,6 +850,7 @@ class OltApiService
                             'tenant_id' => $olt->tenant_id,
                             'name' => $name,
                             'mac_address' => $mac,
+                            'router_mac' => $routerMac,
                             'vendor' => 'EPON OLT',
                             'model' => $model,
                             'hardware_version' => $hardware,
