@@ -821,10 +821,10 @@ class OltApiService
             $seenOnuKeys = [];
 
             if ($indexHtml) {
-                preg_match_all('/page=onu(?:&amp;|&)id=(\d+)(?:&amp;|&)oid=(\d+)/i', $indexHtml, $matches, PREG_SET_ORDER);
+                preg_match_all('/<li\\s+id=onu(\\d+)(?:(?!<li\\s+id=onu).)*?page=onu(?:&amp;|&)id=(\\d+)(?:&amp;|&)oid=\\1/i', $indexHtml, $matches, PREG_SET_ORDER);
                 foreach ($matches as $match) {
-                    $ponId = (int) $match[1];
-                    $onuId = (int) $match[2];
+                    $onuId = (int) $match[1];
+                    $ponId = (int) $match[2];
                     $onuHtml = $this->legacyCgiRequest($ip, $port, $cookieToken, "index.php?page=onu&isajax=1&tab=gene&id={$ponId}&oid={$onuId}&runtab=1");
                     if (!$onuHtml) continue;
 
