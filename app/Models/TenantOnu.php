@@ -28,6 +28,28 @@ class TenantOnu extends Model
         'wifi_password' => 'encrypted',
     ];
 
+    public function setMacAddressAttribute($value): void
+    {
+        $this->attributes['mac_address'] = $this->canonicalMac($value);
+    }
+
+    public function setRouterMacAttribute($value): void
+    {
+        $this->attributes['router_mac'] = $this->canonicalMac($value);
+    }
+
+    private function canonicalMac($value): ?string
+    {
+        $value = trim((string) $value);
+        $hex = preg_replace('/[^a-fA-F0-9]/', '', $value);
+
+        if (strlen($hex) !== 12 || !ctype_xdigit($hex)) {
+            return $value !== '' ? strtoupper($value) : null;
+        }
+
+        return strtoupper(implode(':', str_split($hex, 2)));
+    }
+
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class);
