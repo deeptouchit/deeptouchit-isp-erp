@@ -28,6 +28,16 @@ class OltApiService
 
         $knownDriver = Cache::get($driverKey);
 
+        // 0. Legacy lighttpd CGI OLTs (login.php + cookie session, commonly port 8085)
+        if ($knownDriver === 'legacy_cgi' || $port === 8085) {
+            $token = $this->attemptLegacyCgiLogin($ip, $port, $username, $password);
+            if ($token) {
+                Cache::put($driverKey, 'legacy_cgi', now()->addDays(7));
+                Cache::put($cacheKey, $token, now()->addMinutes(15));
+                return $token;
+            }
+        }
+
         // 1. UniMars / CoreLink (Port 8084 style)
         if ($knownDriver === 'unimars') {
             $token = $this->attemptUniMarsLogin($ip, $port, $username, $password);
@@ -190,6 +200,42 @@ class OltApiService
             }
         }
         return null;
+    }
+
+    /**
+     * Legacy EPON/FD1108-style web login: POST /cgi/login.php and retain cookies.
+     */
+    protected function attemptLegacyCgiLogin(string $ip, int $port, string $username, string $password): ?string
+    {
+        try {
+            $base = "http://{$ip}:{$port}";
+            $response = Http::withoutRedirecting()
+                ->withHeaders([
+                    'User-Agent' => 'Mozilla/5.0',
+                    'Expect' => '',
+                ])
+                ->timeout(8)
+                ->asForm()
+                ->post("{$base}/cgi/login.php", [
+                    'username' => $username,
+                    'passwd' => $password,
+                    'setLang' => 'en',
+                ]);
+
+            if ($response->failed()) {
+                return null;
+            }
+
+            $cookies = collect($response->cookies()->toArray())
+                ->map(fn (array $cookie) => ($cookie['Name'] ?? '') . '=' . ($cookie['Value'] ?? ''))
+                ->filter()
+                ->implode('; ');
+
+            return $cookies !== '' ? base64_encode($cookies) : null;
+        } catch (Exception $e) {
+            Log::warning("Legacy CGI OLT login failed for {$ip}:{$port}: " . $e->getMessage());
+            return null;
+        }
     }
 
     /**
@@ -521,6 +567,18 @@ class OltApiService
         $driverKey = "olt_driver_{$ip}_{$port}";
         $driver = Cache::get($driverKey);
 
+        if ($driver === 'legacy_cgi') {
+            return [
+                'success' => true,
+                'message' => 'Connected successfully to legacy CGI OLT Web Interface.',
+                'latency_ms' => round((microtime(true) - $start) * 1000, 1),
+                'device_info' => [
+                    'model' => 'EPON OLT',
+                    'pon_ports' => 4,
+                ],
+            ];
+        }
+
         // 1. UniMars / CoreLink
         if ($driver === 'unimars' || str_contains(strtolower($vendor), 'core') || str_contains(strtolower($vendor), 'mars')) {
             $sysInfo = $this->fetchUniMarsSystemInfo($ip, $port, $username, $password);
@@ -710,6 +768,28 @@ class OltApiService
         $driverKey = "olt_driver_{$ip}_{$port}";
         $driver = Cache::get($driverKey);
         $syncedOnuDbIds = [];
+
+        if ($driver === 'legacy_cgi') {
+            $olt->update([
+                'status' => 'online',
+                'vendor' => $olt->vendor ?: 'EPON OLT',
+                'model' => $olt->model ?: 'EPON OLT',
+                'total_pon_ports' => $olt->total_pon_ports ?: 4,
+                'last_ping_at' => now(),
+                'last_sync_at' => now(),
+                'last_error' => null,
+            ]);
+
+            return [
+                'success' => true,
+                'message' => __('OLT connection verified. Legacy CGI ONU discovery is not enabled yet.'),
+                'total_onus' => $olt->total_onus_count ?? 0,
+                'online_onus' => $olt->online_onus_count ?? 0,
+                'offline_onus' => $olt->offline_onus_count ?? 0,
+                'synced_count' => 0,
+                'latency_ms' => round((microtime(true) - $start) * 1000, 1),
+            ];
+        }
 
         // =========================================================================
         // 1. UniMars / CoreLink Driver Sync
