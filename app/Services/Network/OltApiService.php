@@ -1260,7 +1260,36 @@ class OltApiService
 
             // The base-info endpoint contains identity only. Firmware uses this
             // separate inventory endpoint for actual per-ONU state and optics.
-            $stateResponse = $this->getHsgqEndpoint($ip, $port, $username, $password, 'onu_allow_list?t=' . now()->timestamp);
+            // HSGQ firmware families expose live ONU state through different
+            // endpoints. Try the known variants and use the first response
+            // that contains addressable ONU state rows.
+            $stateResponse = null;
+            $stateEndpoints = [
+                'onu_allow_list?t=' . now()->timestamp,
+                'onu_allow_list?form=table&t=' . now()->timestamp,
+                'onu_allow_list?form=base-info&t=' . now()->timestamp,
+                'onumgmt?form=status&t=' . now()->timestamp,
+                'onumgmt?form=state&t=' . now()->timestamp,
+                'onumgmt?form=online&t=' . now()->timestamp,
+                'onu_status?form=table&t=' . now()->timestamp,
+            ];
+            foreach ($stateEndpoints as $stateEndpoint) {
+                $candidate = $this->getHsgqEndpoint($ip, $port, $username, $password, $stateEndpoint);
+                $candidateRows = is_array($candidate) && is_array($candidate['data'] ?? null)
+                    ? $candidate['data']
+                    : [];
+                $hasAddressableRows = collect($candidateRows)->contains(function ($row): bool {
+                    if (!is_array($row)) return false;
+                    $port = $row['port_id'] ?? ($row['pon_id'] ?? ($row['pon'] ?? ($row['port'] ?? ($row['pon_port'] ?? null))));
+                    $onu = $row['onu_id'] ?? ($row['onu'] ?? ($row['onu_index'] ?? ($row['onu_no'] ?? null)));
+                    return $port !== null && $onu !== null;
+                });
+                if ($hasAddressableRows) {
+                    $stateResponse = $candidate;
+                    break;
+                }
+            }
+            $stateResponse ??= ['data' => []];
             $states = [];
             foreach (($stateResponse['data'] ?? []) as $state) {
                 $statePort = $state['port_id'] ?? ($state['pon_id'] ?? ($state['pon'] ?? ($state['port'] ?? ($state['pon_port'] ?? null))));
