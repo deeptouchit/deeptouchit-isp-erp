@@ -1582,6 +1582,7 @@ class OltApiService
         }
         $syncedCount = 0;
         $onlineCount = 0;
+        $syncedOnuDbIds = [];
 
         // Fetch learned Router MAC table from C-Data FDB (epon_mac_address_get)
         $cdataLearned = [];
@@ -1734,9 +1735,13 @@ class OltApiService
             }
         }
 
-        // Prune unlisted ONUs
-        if (!empty($syncedOnuDbIds)) {
-            // Preserve inventory until removal is explicitly confirmed.
+        // The DN/C-Data ONU list is the authoritative inventory when every
+        // configured PON returned a valid response. Remove records that no
+        // longer exist on the OLT, but never prune after a partial failure.
+        if ($inventoryComplete && !empty($syncedOnuDbIds)) {
+            TenantOnu::where('olt_id', $olt->id)
+                ->whereNotIn('id', $syncedOnuDbIds)
+                ->delete();
         }
 
         $offlineCount = max(0, $syncedCount - $onlineCount);
