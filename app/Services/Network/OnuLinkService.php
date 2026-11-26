@@ -55,8 +55,18 @@ class OnuLinkService
                 }
                 $customer = $customers[$customerId];
                 $route = $onu->pon_port.':'.$onu->onu_id;
-                if ($customer->olt_id && ($customer->olt_id != $onu->olt_id || ($customer->pon_port && $customer->pon_port !== $route))) {
-                    continue;
+                $hasExactRouterMatch = $onu->router_mac
+                    && $customer->mac_address
+                    && $this->normalize($onu->router_mac) === $this->normalize($customer->mac_address);
+
+                // A unique learned router MAC is authoritative when a
+                // customer was moved from another OLT. Detach the stale ONU
+                // binding before assigning the customer to the new route.
+                if ($hasExactRouterMatch && $customer->olt_id && ($customer->olt_id != $onu->olt_id || $customer->pon_port !== $route)) {
+                    TenantOnu::where('tenant_id', $tenantId)
+                        ->where('customer_id', $customer->id)
+                        ->where('id', '!=', $onu->id)
+                        ->update(['customer_id' => null, 'pppoe_username' => null]);
                 }
                 $onu->updateQuietly([
                     'customer_id' => $customer->id,
