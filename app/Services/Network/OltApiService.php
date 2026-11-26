@@ -1263,8 +1263,10 @@ class OltApiService
             $stateResponse = $this->getHsgqEndpoint($ip, $port, $username, $password, 'onu_allow_list?t=' . now()->timestamp);
             $states = [];
             foreach (($stateResponse['data'] ?? []) as $state) {
-                if (isset($state['port_id'], $state['onu_id'])) {
-                    $states[$state['port_id'] . ':' . $state['onu_id']] = $state;
+                $statePort = $state['port_id'] ?? ($state['pon_id'] ?? ($state['pon'] ?? ($state['port'] ?? ($state['pon_port'] ?? null))));
+                $stateOnu = $state['onu_id'] ?? ($state['onu'] ?? ($state['onu_index'] ?? ($state['onu_no'] ?? null)));
+                if ($statePort !== null && $stateOnu !== null) {
+                    $states[((int) $statePort) . ':' . ((int) $stateOnu)] = $state;
                 }
             }
 
@@ -1309,9 +1311,16 @@ class OltApiService
                     if ($onuId <= 0) continue;
 
                     $state = $states[$portId . ':' . $onuId] ?? [];
-                    $deviceState = strtolower((string) ($state['status'] ?? 'unknown'));
-                    $isOnline = in_array($deviceState, ['online', 'up', '1'], true);
-                    $stateKnown = $isOnline || in_array($deviceState, ['offline', 'down', '0'], true);
+                    $rawStatus = $state['status'] ?? ($raw['status'] ?? ($raw['state'] ?? ($raw['online'] ?? null)));
+                    $deviceState = strtolower(trim((string) $rawStatus));
+                    $deviceState = str_replace(['_', '-'], ' ', $deviceState);
+                    $isOnline = in_array($deviceState, ['online', 'up', '1', 'active', 'authorized', 'working', 'ok', 'run', 'running'], true)
+                        || str_contains($deviceState, 'online')
+                        || str_contains($deviceState, 'authorized');
+                    $isOffline = in_array($deviceState, ['offline', 'down', '0', 'inactive', 'unauthorized', 'los', 'dying gasp'], true)
+                        || str_contains($deviceState, 'offline')
+                        || str_contains($deviceState, 'los');
+                    $stateKnown = $isOnline || $isOffline;
 
                     if ($isOnline) $onlineCount++;
 
