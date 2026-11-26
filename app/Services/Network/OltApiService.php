@@ -1262,14 +1262,15 @@ class OltApiService
             }
 
             // Prune unlisted ONUs so DB matches hardware active list
-            if (!empty($syncedOnuDbIds)) {
-                // Preserve inventory when a PON query fails or returns incomplete data.
+            if ($inventoryComplete && !empty($syncedOnuDbIds)) {
+                TenantOnu::where('olt_id', $olt->id)
+                    ->whereNotIn('id', $syncedOnuDbIds)
+                    ->delete();
             }
 
             // VSOL's onustatusinfo.html returns registered/online ONUs only;
             // keep offline inventory rows from the database in the total.
-            $inventoryTotal = TenantOnu::where('olt_id', $olt->id)->count();
-            $totalOnuCount = max($inventoryTotal, $syncedCount);
+            $totalOnuCount = TenantOnu::where('olt_id', $olt->id)->count();
             $offlineCount = max(0, $totalOnuCount - $onlineCount);
             $oltModel = !empty($deviceModel) ? "VSOL {$deviceModel} (V1600D4)" : 'VSOL V1600D4';
 
