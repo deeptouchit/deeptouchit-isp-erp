@@ -907,6 +907,18 @@ class OltApiService
                 'last_error' => null,
             ]);
 
+            // HSGQ exposes authoritative per-PON online/offline totals here,
+            // while the ONU inventory endpoint does not include live state.
+            $ponStatusResponse = $this->getHsgqEndpoint($ip, $port, $username, $password, 'board?info=pon');
+            $reportedOnlineCount = null;
+            $reportedTotalCount = null;
+            if (is_array($ponStatusResponse['data'] ?? null)) {
+                $reportedOnlineCount = collect($ponStatusResponse['data'])
+                    ->sum(fn ($pon) => (int) ($pon['online'] ?? 0));
+                $reportedTotalCount = collect($ponStatusResponse['data'])
+                    ->sum(fn ($pon) => (int) ($pon['online'] ?? 0) + (int) ($pon['offline'] ?? 0));
+            }
+
             return [
                 'success' => true,
                 'message' => __('OLT and ONU synchronization completed successfully.'),
@@ -1412,9 +1424,11 @@ class OltApiService
                     ->delete();
             }
 
-            $offlineCount = max(0, $syncedCount - $onlineCount);
+            $onlineCount = $reportedOnlineCount ?? $onlineCount;
+            $totalCount = $reportedTotalCount ?: $syncedCount;
+            $offlineCount = max(0, $totalCount - $onlineCount);
             $olt->update([
-                'total_onus_count' => $syncedCount,
+                'total_onus_count' => $totalCount,
                 'online_onus_count' => $onlineCount,
                 'offline_onus_count' => $offlineCount,
                 'last_sync_at' => now(),

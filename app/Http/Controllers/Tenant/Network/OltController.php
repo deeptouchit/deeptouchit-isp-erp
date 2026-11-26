@@ -34,15 +34,7 @@ class OltController extends Controller
 
         $query = TenantOlt::where('tenant_id', $tenant->id)
             ->with(['router'])
-            ->withCount([
-                'onus',
-                'onus as online_onus_count' => function ($q) {
-                    $q->where('status', 'online');
-                },
-                'onus as offline_onus_count' => function ($q) {
-                    $q->where('status', '!=', 'online');
-                },
-            ]);
+            ->withCount('onus');
 
         // Search Keyword
         if ($request->filled('search')) {
@@ -113,9 +105,14 @@ class OltController extends Controller
         $offlineOlts = $totalOlts - $onlineOlts;
 
         $filteredOltIds = (clone $metricBase)->pluck('id');
-        $totalOnus = TenantOnu::whereIn('olt_id', $filteredOltIds)->count();
-        $onlineOnus = TenantOnu::whereIn('olt_id', $filteredOltIds)->where('status', 'online')->count();
-        $offlineOnus = max(0, $totalOnus - $onlineOnus);
+        $oltMetrics = TenantOlt::whereIn('id', $filteredOltIds)
+            ->selectRaw('COALESCE(SUM(total_onus_count), 0) as total_onus')
+            ->selectRaw('COALESCE(SUM(online_onus_count), 0) as online_onus')
+            ->selectRaw('COALESCE(SUM(offline_onus_count), 0) as offline_onus')
+            ->first();
+        $totalOnus = (int) ($oltMetrics->total_onus ?? 0);
+        $onlineOnus = (int) ($oltMetrics->online_onus ?? 0);
+        $offlineOnus = (int) ($oltMetrics->offline_onus ?? max(0, $totalOnus - $onlineOnus));
         $warningOnus = TenantOnu::whereIn('olt_id', $filteredOltIds)
             ->whereNotNull('rx_power_dbm')
             ->where('rx_power_dbm', '>=', -26.0)
