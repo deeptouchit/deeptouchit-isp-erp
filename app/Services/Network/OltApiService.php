@@ -838,16 +838,22 @@ class OltApiService
                     PREG_SET_ORDER
                 )) {
                     foreach ($onuRows as $row) {
-                        $clean = array_map(fn ($value) => trim(strip_tags(html_entity_decode($value))), array_slice($row, 1));
+                        $clean = array_map(function ($value): string {
+                            $value = trim(strip_tags(html_entity_decode($value)));
+                            $value = preg_replace('/[\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F\\x7F]/', '', $value) ?? $value;
+                            return @iconv('UTF-8', 'UTF-8//IGNORE', $value) ?: '';
+                        }, array_slice($row, 1));
                         $key = "0/{$clean[1]}:{$clean[2]}";
+                        $rxRaw = is_numeric($clean[8]) ? (float) $clean[8] : 0.0;
+                        $txRaw = is_numeric($clean[9]) ? (float) $clean[9] : 0.0;
                         $legacyOnuRows[$key] = [
                             'status' => strtolower($clean[3]),
                             'mac_address' => strtoupper(str_replace('-', ':', $clean[4])),
                             'model' => $clean[5],
                             'hardware_version' => $clean[6],
                             'software_version' => $clean[7],
-                            'rx_power_dbm' => is_numeric($clean[8]) ? (float) $clean[8] : null,
-                            'tx_power_dbm' => is_numeric($clean[9]) ? (float) $clean[9] : null,
+                            'rx_power_dbm' => $rxRaw > 0 ? round(10 * log10($rxRaw) - 40, 2) : null,
+                            'tx_power_dbm' => $txRaw > 0 ? round(10 * log10($txRaw) - 40, 2) : null,
                         ];
                     }
                 }
