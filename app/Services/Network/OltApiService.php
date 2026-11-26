@@ -1270,12 +1270,30 @@ class OltApiService
                     ->sum(fn ($pon) => (int) ($pon['online'] ?? 0) + (int) ($pon['offline'] ?? 0));
             }
 
+            // HSGQ returns the actual per-ONU telemetry from the port-scoped
+            // allow-list endpoint, not from the global allow-list endpoint.
+            $liveOnuRows = [];
+            foreach (($ponStatusResponse['data'] ?? []) as $pon) {
+                $portId = (int) ($pon['port_id'] ?? 0);
+                if ($portId < 1) continue;
+                $portResponse = $this->getHsgqEndpoint(
+                    $ip,
+                    $port,
+                    $username,
+                    $password,
+                    'onu_allow_list?port_id=' . $portId . '&t=' . now()->timestamp
+                );
+                if (is_array($portResponse['data'] ?? null)) {
+                    $liveOnuRows = array_merge($liveOnuRows, $portResponse['data']);
+                }
+            }
+
             // The base-info endpoint contains identity only. Firmware uses this
             // separate inventory endpoint for actual per-ONU state and optics.
             // HSGQ firmware families expose live ONU state through different
             // endpoints. Try the known variants and use the first response
             // that contains addressable ONU state rows.
-            $stateResponse = null;
+            $stateResponse = $liveOnuRows !== [] ? ['data' => $liveOnuRows] : null;
             $stateEndpoints = [
                 'onu_allow_list?t=' . now()->timestamp,
                 'onu_allow_list?form=table&t=' . now()->timestamp,
