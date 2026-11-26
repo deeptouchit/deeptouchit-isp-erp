@@ -277,11 +277,7 @@ class OltController extends Controller
         }
 
         $olt = TenantOlt::where('tenant_id', $tenant->id)
-            ->withCount([
-                'onus',
-                'onus as online_onus_count' => fn($q) => $q->where('status', 'online'),
-                'onus as offline_onus_count' => fn($q) => $q->where('status', '!=', 'online'),
-            ])
+            ->withCount('onus')
             ->findOrFail($id);
 
         $selectedPon = $request->query('pon', 'all');
@@ -294,6 +290,30 @@ class OltController extends Controller
             ->groupBy('pon_port')
             ->orderBy('pon_port')
             ->get();
+
+        // HSGQ exposes authoritative live PON totals separately from ONU
+        // inventory, whose per-ONU status may be unavailable on some firmware.
+        if (str_contains(strtolower((string) $olt->vendor), 'hsgq')
+            || str_contains(strtolower((string) $olt->model), 'hsgq')) {
+            $ponResponse = $this->oltApiService->getHsgqEndpoint(
+                $olt->ip_address,
+                (int) ($olt->web_port ?: 80),
+                $olt->web_username,
+                $olt->decrypted_web_password,
+                'board?info=pon'
+            );
+
+            if (is_array($ponResponse['data'] ?? null)) {
+                $ponStats = collect($ponResponse['data'])->map(function (array $pon) {
+                    $total = (int) ($pon['online'] ?? 0) + (int) ($pon['offline'] ?? 0);
+                    return (object) [
+                        'pon_port' => '0/' . (int) ($pon['port_id'] ?? 0),
+                        'total' => $total,
+                        'online_count' => (int) ($pon['online'] ?? 0),
+                    ];
+                });
+            }
+        }
 
         $totalPorts = (int) ($olt->total_pon_ports ?: ($olt->pon_ports_count ?: max($ponStats->count(), 4)));
         if ($totalPorts < 1) {
@@ -360,9 +380,9 @@ class OltController extends Controller
             ];
         }
 
-        $totalOnus = $olt->onus_count;
-        $onlineOnus = $olt->online_onus_count;
-        $offlineOnus = $olt->offline_onus_count;
+        $totalOnus = (int) ($olt->total_onus_count ?: $olt->onus_count);
+        $onlineOnus = (int) $olt->online_onus_count;
+        $offlineOnus = (int) $olt->offline_onus_count;
         $onlinePortsCount = collect($ponList)->where('is_online', true)->count();
 
         return view('tenant.network.olt_show', compact(
