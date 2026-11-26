@@ -819,6 +819,34 @@ class OltApiService
             $syncedCount = 0;
             $onlineCount = 0;
             $seenOnuKeys = [];
+            $legacyRouterMacs = [];
+
+            // Legacy EPON OLTs expose learned router MACs in the BPON MAC
+            // table. Prefer the untagged (VID 0) MAC for each ONU and fall
+            // back to the first learned MAC when no untagged entry exists.
+            if ($cookieToken) {
+                $macListHtml = $this->legacyCgiRequest(
+                    $ip,
+                    $port,
+                    $cookieToken,
+                    'index.php?page=bpon&isajax=1&tab=onumaclist&runtab=1&random=' . round(microtime(true) * 1000)
+                );
+                if ($macListHtml && preg_match_all(
+                    '/<tr>\s*<td>\s*\d+\s*<\/td>\s*<td>\s*EPON0\/(\d+):(\d+)\s*<\/td>\s*<td>\s*((?:[0-9A-F]{2}[:-]){5}[0-9A-F]{2})\s*<\/td>\s*<td>\s*(\d+)\s*<\/td>/i',
+                    $macListHtml,
+                    $macRows,
+                    PREG_SET_ORDER
+                )) {
+                    foreach ($macRows as $macRow) {
+                        $key = "0/{$macRow[1]}:{$macRow[2]}";
+                        $mac = strtoupper(str_replace('-', ':', $macRow[3]));
+                        $vid = (int) $macRow[4];
+                        if (!isset($legacyRouterMacs[$key]) || $vid === 0) {
+                            $legacyRouterMacs[$key] = $mac;
+                        }
+                    }
+                }
+            }
 
             if ($indexHtml) {
                 preg_match_all('/<li\\s+id=onu(\\d+)(?:(?!<li\\s+id=onu).)*?page=onu(?:&amp;|&)id=(\\d+)(?:&amp;|&)oid=\\1/i', $indexHtml, $matches, PREG_SET_ORDER);
@@ -849,7 +877,7 @@ class OltApiService
                     $rx = is_numeric($rxRaw) && (float) $rxRaw > 0 ? round(10 * log10((float) $rxRaw) - 40, 2) : null;
                     $tx = is_numeric($txRaw) && (float) $txRaw > 0 ? round(10 * log10((float) $txRaw) - 40, 2) : null;
 
-                    $routerMac = null;
+                    $routerMac = $legacyRouterMacs["0/{$ponId}:{$onuId}"] ?? null;
                     for ($uniPort = 1; $uniPort <= 4 && !$routerMac; $uniPort++) {
                         $macHtml = $this->legacyCgiRequest($ip, $port, $cookieToken, "index.php?page=onu&isajax=1&tab=macport&id={$ponId}&oid={$onuId}&runtab=1&pId={$uniPort}");
                         if ($macHtml && preg_match('/(?:[0-9A-F]{2}[:-]){5}[0-9A-F]{2}/i', $macHtml, $macMatch)) {
