@@ -50,8 +50,17 @@ class OnuLinkService
                     continue;
                 }
                 $customerId = $proposals[$onu->id] ?? null;
+                $exactRouterCustomers = $onu->router_mac
+                    ? $customers->filter(fn ($customer) => $customer->mac_address
+                        && $this->normalize($customer->mac_address) === $this->normalize($onu->router_mac))
+                    : collect();
+                if ($exactRouterCustomers->count() === 1) {
+                    $customerId = $exactRouterCustomers->keys()->first();
+                }
                 if (! $customerId || count($claims[$customerId]) !== 1) {
-                    continue;
+                    if (!$customerId || $exactRouterCustomers->count() !== 1) {
+                        continue;
+                    }
                 }
                 $customer = $customers[$customerId];
                 $route = $onu->pon_port.':'.$onu->onu_id;
