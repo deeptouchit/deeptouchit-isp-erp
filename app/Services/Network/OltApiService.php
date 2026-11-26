@@ -1086,11 +1086,7 @@ class OltApiService
                     ->delete();
             }
 
-            // VSOL's onustatusinfo.html returns registered/online ONUs only;
-            // keep offline inventory rows from the database in the total.
-            $inventoryTotal = TenantOnu::where('olt_id', $olt->id)->count();
-            $totalOnuCount = max($inventoryTotal, $syncedCount);
-            $offlineCount = max(0, $totalOnuCount - $onlineCount);
+            $offlineCount = max(0, $syncedCount - $onlineCount);
 
             $olt->update([
                 'status' => 'online',
@@ -1270,7 +1266,11 @@ class OltApiService
                 // Preserve inventory when a PON query fails or returns incomplete data.
             }
 
-            $offlineCount = max(0, $syncedCount - $onlineCount);
+            // VSOL's onustatusinfo.html returns registered/online ONUs only;
+            // keep offline inventory rows from the database in the total.
+            $inventoryTotal = TenantOnu::where('olt_id', $olt->id)->count();
+            $totalOnuCount = max($inventoryTotal, $syncedCount);
+            $offlineCount = max(0, $totalOnuCount - $onlineCount);
             $oltModel = !empty($deviceModel) ? "VSOL {$deviceModel} (V1600D4)" : 'VSOL V1600D4';
 
             $olt->update([
@@ -1286,7 +1286,7 @@ class OltApiService
                 'cpu_load' => $cpuLoad ?? $olt->cpu_load,
                 'memory_usage' => $memUsage ?? $olt->memory_usage,
                 'temperature' => $olt->temperature,
-                'total_onus_count' => $syncedCount,
+                'total_onus_count' => $totalOnuCount,
                 'online_onus_count' => $onlineCount,
                 'offline_onus_count' => $offlineCount,
                 'last_ping_at' => now(),
@@ -1299,7 +1299,7 @@ class OltApiService
             return [
                 'success' => true,
                 'message' => $inventoryComplete ? __('ONU operation completed.') : __('Some devices could not be synchronized.'),
-                'total_onus' => $syncedCount,
+                'total_onus' => $totalOnuCount,
                 'online_onus' => $onlineCount,
                 'offline_onus' => $offlineCount,
                 'synced_count' => $syncedCount,
