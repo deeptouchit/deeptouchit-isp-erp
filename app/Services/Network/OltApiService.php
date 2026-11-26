@@ -907,18 +907,6 @@ class OltApiService
                 'last_error' => null,
             ]);
 
-            // HSGQ exposes authoritative per-PON online/offline totals here,
-            // while the ONU inventory endpoint does not include live state.
-            $ponStatusResponse = $this->getHsgqEndpoint($ip, $port, $username, $password, 'board?info=pon');
-            $reportedOnlineCount = null;
-            $reportedTotalCount = null;
-            if (is_array($ponStatusResponse['data'] ?? null)) {
-                $reportedOnlineCount = collect($ponStatusResponse['data'])
-                    ->sum(fn ($pon) => (int) ($pon['online'] ?? 0));
-                $reportedTotalCount = collect($ponStatusResponse['data'])
-                    ->sum(fn ($pon) => (int) ($pon['online'] ?? 0) + (int) ($pon['offline'] ?? 0));
-            }
-
             return [
                 'success' => true,
                 'message' => __('OLT and ONU synchronization completed successfully.'),
@@ -1269,6 +1257,18 @@ class OltApiService
                 'last_sync_at' => now(),
                 'last_error' => null,
             ]);
+
+            // HSGQ exposes authoritative per-PON online/offline totals here,
+            // while the ONU inventory endpoint does not include live state.
+            $ponStatusResponse = $this->getHsgqEndpoint($ip, $port, $username, $password, 'board?info=pon');
+            $reportedOnlineCount = null;
+            $reportedTotalCount = null;
+            if (is_array($ponStatusResponse['data'] ?? null)) {
+                $reportedOnlineCount = collect($ponStatusResponse['data'])
+                    ->sum(fn ($pon) => (int) ($pon['online'] ?? 0));
+                $reportedTotalCount = collect($ponStatusResponse['data'])
+                    ->sum(fn ($pon) => (int) ($pon['online'] ?? 0) + (int) ($pon['offline'] ?? 0));
+            }
 
             // The base-info endpoint contains identity only. Firmware uses this
             // separate inventory endpoint for actual per-ONU state and optics.
