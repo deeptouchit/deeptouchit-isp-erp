@@ -820,6 +820,38 @@ class OltApiService
             $onlineCount = 0;
             $seenOnuKeys = [];
             $legacyRouterMacs = [];
+            $legacyOnuRows = [];
+
+            // The BPON ONU list is the authoritative legacy source for
+            // per-ONU status, MAC and optical telemetry.
+            if ($cookieToken) {
+                $onuListHtml = $this->legacyCgiRequest(
+                    $ip,
+                    $port,
+                    $cookieToken,
+                    'index.php?page=bpon&isajax=1&tab=onulist&runtab=1&random=' . round(microtime(true) * 1000)
+                );
+                if ($onuListHtml && preg_match_all(
+                    '/<tr>\s*<td[^>]*>(EPON0\/(\d+):(\d+))<\/td>\s*<td[^>]*>(.*?)<\/td>\s*<td[^>]*>(.*?)<\/td>\s*<td[^>]*>(.*?)<\/td>\s*<td[^>]*>(.*?)<\/td>\s*<td[^>]*>(.*?)<\/td>\s*<td[^>]*>(.*?)<\/td>\s*<td[^>]*>(.*?)<\/td>\s*<td[^>]*>(.*?)<\/td>/is',
+                    $onuListHtml,
+                    $onuRows,
+                    PREG_SET_ORDER
+                )) {
+                    foreach ($onuRows as $row) {
+                        $clean = array_map(fn ($value) => trim(strip_tags(html_entity_decode($value))), array_slice($row, 1));
+                        $key = "0/{$clean[1]}:{$clean[2]}";
+                        $legacyOnuRows[$key] = [
+                            'status' => strtolower($clean[3]),
+                            'mac_address' => strtoupper(str_replace('-', ':', $clean[4])),
+                            'model' => $clean[5],
+                            'hardware_version' => $clean[6],
+                            'software_version' => $clean[7],
+                            'rx_power_dbm' => is_numeric($clean[8]) ? (float) $clean[8] : null,
+                            'tx_power_dbm' => is_numeric($clean[9]) ? (float) $clean[9] : null,
+                        ];
+                    }
+                }
+            }
 
             // Legacy EPON OLTs expose learned router MACs in the BPON MAC
             // table. Prefer the untagged (VID 0) MAC for each ONU and fall
@@ -856,10 +888,11 @@ class OltApiService
                     $onuHtml = $this->legacyCgiRequest($ip, $port, $cookieToken, "index.php?page=onu&isajax=1&tab=gene&id={$ponId}&oid={$onuId}&runtab=1");
                     if (!$onuHtml) continue;
 
-                    $status = strtolower((string) $this->legacyCgiField($onuHtml, 'OnLineStatus'));
+                    $liveRow = $legacyOnuRows["0/{$ponId}:{$onuId}"] ?? [];
+                    $status = $liveRow['status'] ?? strtolower((string) $this->legacyCgiField($onuHtml, 'OnLineStatus'));
                     $isOnline = $status === 'online';
                     $name = $this->legacyCgiField($onuHtml, 'ONU Name') ?: "ONU {$ponId}:{$onuId}";
-                    $mac = $this->legacyCgiField($onuHtml, 'ONU MACAddr');
+                    $mac = $liveRow['mac_address'] ?? $this->legacyCgiField($onuHtml, 'ONU MACAddr');
                     if (!$mac || in_array(strtolower(trim($mac)), ['---', '--', 'n/a', 'na', 'unknown', 'none'], true)) {
                         continue;
                     }
@@ -893,13 +926,13 @@ class OltApiService
                             'mac_address' => $mac,
                             'router_mac' => $routerMac,
                             'vendor' => 'EPON OLT',
-                            'model' => $model,
-                            'hardware_version' => $hardware,
-                            'software_version' => $firmware,
+                            'model' => $liveRow['model'] ?? $model,
+                            'hardware_version' => $liveRow['hardware_version'] ?? $hardware,
+                            'software_version' => $liveRow['software_version'] ?? $firmware,
                             'status' => $isOnline ? 'online' : 'offline',
                             'running_state' => $isOnline ? 1 : 0,
-                            'rx_power_dbm' => $rx,
-                            'tx_power_dbm' => $tx,
+                            'rx_power_dbm' => $liveRow['rx_power_dbm'] ?? $rx,
+                            'tx_power_dbm' => $liveRow['tx_power_dbm'] ?? $tx,
                             'distance_m' => is_numeric($range) ? (int) $range : null,
                             'last_online_at' => $isOnline ? now() : null,
                         ]
