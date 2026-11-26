@@ -1285,20 +1285,22 @@ class OltApiService
                 'onumgmt?form=online&t=' . now()->timestamp,
                 'onu_status?form=table&t=' . now()->timestamp,
             ];
-            foreach ($stateEndpoints as $stateEndpoint) {
-                $candidate = $this->getHsgqEndpoint($ip, $port, $username, $password, $stateEndpoint);
-                $candidateRows = is_array($candidate) && is_array($candidate['data'] ?? null)
-                    ? $candidate['data']
-                    : [];
-                $hasAddressableRows = collect($candidateRows)->contains(function ($row): bool {
-                    if (!is_array($row)) return false;
-                    $port = $row['port_id'] ?? ($row['pon_id'] ?? ($row['pon'] ?? ($row['port'] ?? ($row['pon_port'] ?? null))));
-                    $onu = $row['onu_id'] ?? ($row['onu'] ?? ($row['onu_index'] ?? ($row['onu_no'] ?? null)));
-                    return $port !== null && $onu !== null;
-                });
-                if ($hasAddressableRows) {
-                    $stateResponse = $candidate;
-                    break;
+            if ($reportedOnlineCount === null) {
+                foreach ($stateEndpoints as $stateEndpoint) {
+                    $candidate = $this->getHsgqEndpoint($ip, $port, $username, $password, $stateEndpoint);
+                    $candidateRows = is_array($candidate) && is_array($candidate['data'] ?? null)
+                        ? $candidate['data']
+                        : [];
+                    $hasAddressableRows = collect($candidateRows)->contains(function ($row): bool {
+                        if (!is_array($row)) return false;
+                        $port = $row['port_id'] ?? ($row['pon_id'] ?? ($row['pon'] ?? ($row['port'] ?? ($row['pon_port'] ?? null))));
+                        $onu = $row['onu_id'] ?? ($row['onu'] ?? ($row['onu_index'] ?? ($row['onu_no'] ?? null)));
+                        return $port !== null && $onu !== null;
+                    });
+                    if ($hasAddressableRows) {
+                        $stateResponse = $candidate;
+                        break;
+                    }
                 }
             }
             $stateResponse ??= ['data' => []];
