@@ -1086,7 +1086,11 @@ class OltApiService
                     ->delete();
             }
 
-            $offlineCount = max(0, $syncedCount - $onlineCount);
+            // VSOL's onustatusinfo.html returns registered/online ONUs only;
+            // keep offline inventory rows from the database in the total.
+            $inventoryTotal = TenantOnu::where('olt_id', $olt->id)->count();
+            $totalOnuCount = max($inventoryTotal, $syncedCount);
+            $offlineCount = max(0, $totalOnuCount - $onlineCount);
 
             $olt->update([
                 'status' => 'online',
@@ -1097,7 +1101,7 @@ class OltApiService
                 'mac_address' => $sysInfo['mac'] ?? $olt->mac_address,
                 'uptime' => $uptimeStr ?? $olt->uptime,
                 'total_pon_ports' => $olt->total_pon_ports ?: $olt->pon_ports_count,
-                'total_onus_count' => $syncedCount,
+                'total_onus_count' => $totalOnuCount,
                 'online_onus_count' => $onlineCount,
                 'offline_onus_count' => $offlineCount,
                 'last_ping_at' => now(),
@@ -1110,7 +1114,7 @@ class OltApiService
             return [
                 'success' => true,
                 'message' => $inventoryComplete ? __('ONU operation completed.') : __('Some devices could not be synchronized.'),
-                'total_onus' => $syncedCount,
+                'total_onus' => $totalOnuCount,
                 'online_onus' => $onlineCount,
                 'offline_onus' => $offlineCount,
                 'synced_count' => $syncedCount,
