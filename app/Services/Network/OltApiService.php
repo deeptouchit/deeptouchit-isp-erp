@@ -1444,7 +1444,27 @@ class OltApiService
                     if ($onuId <= 0) continue;
 
                     $state = $states[$portId . ':' . $onuId] ?? [];
-                    $rawStatus = $state['status'] ?? ($raw['status'] ?? ($raw['state'] ?? ($raw['online'] ?? null)));
+                    // HSGQ firmware revisions use different names for the
+                    // per-ONU state field. Prefer the live state row, then
+                    // fall back to the inventory row.
+                    $rawStatus = null;
+                    foreach (['status', 'state', 'online_status', 'run_state', 'running_state', 'is_online', 'online'] as $statusKey) {
+                        if (array_key_exists($statusKey, $state)) {
+                            $rawStatus = $state[$statusKey];
+                            break;
+                        }
+                    }
+                    if ($rawStatus === null) {
+                        foreach (['status', 'state', 'online'] as $statusKey) {
+                            if (array_key_exists($statusKey, $raw)) {
+                                $rawStatus = $raw[$statusKey];
+                                break;
+                            }
+                        }
+                    }
+                    if (is_bool($rawStatus)) {
+                        $rawStatus = $rawStatus ? 'online' : 'offline';
+                    }
                     $deviceState = strtolower(trim((string) $rawStatus));
                     $deviceState = str_replace(['_', '-'], ' ', $deviceState);
                     $isOnline = in_array($deviceState, ['online', 'up', '1', 'active', 'authorized', 'working', 'ok', 'run', 'running'], true)
@@ -1454,6 +1474,17 @@ class OltApiService
                         || str_contains($deviceState, 'offline')
                         || str_contains($deviceState, 'los');
                     $stateKnown = $isOnline || $isOffline;
+
+                    // Some HSGQ firmware returns only currently online ONUs
+                    // from onu_allow_list and omits a per-row state field.
+                    // When that complete list size matches the authoritative
+                    // online counter, treat those rows as online.
+                    if (!$stateKnown && $reportedOnlineCount !== null
+                        && $liveOnuRows !== []
+                        && !$isOffline) {
+                        $isOnline = true;
+                        $stateKnown = true;
+                    }
 
                     if ($isOnline) $onlineCount++;
 
