@@ -40,14 +40,30 @@ class SyncTenantOnus implements ShouldQueue
         try {
             $this->status(['state' => 'running', 'success' => true]);
             $failed = 0;
+            $failedDevices = [];
             if (! $this->linkOnly) {
                 foreach (TenantOlt::where('tenant_id', $this->tenantId)->get() as $olt) {
                     try {
                         $result = $api->syncOlt($olt);
-                        $failed += empty($result['success']) ? 1 : 0;
+                        if (empty($result['success'])) {
+                            $failed++;
+                            $failedDevices[] = [
+                                'id' => $olt->id,
+                                'name' => $olt->name,
+                                'message' => $result['message'] ?? __('Synchronization failed.'),
+                            ];
+                        }
                     } catch (Throwable $e) {
                         $failed++;
-                        Log::warning('OLT sync failed', ['olt_id' => $olt->id]);
+                        $failedDevices[] = [
+                            'id' => $olt->id,
+                            'name' => $olt->name,
+                            'message' => __('Unexpected synchronization error.'),
+                        ];
+                        Log::warning('OLT sync failed', [
+                            'olt_id' => $olt->id,
+                            'exception' => get_class($e),
+                        ]);
                     }
                 }
             }
@@ -56,7 +72,10 @@ class SyncTenantOnus implements ShouldQueue
             $this->status([
                 'state' => $failed || $exit ? 'partial' : 'completed',
                 'success' => ! $failed && ! $exit,
-                'message' => $failed || $exit ? __('Some devices could not be synchronized.') : __('ONU operation completed.'),
+                'message' => $failed || $exit
+                    ? __('Some devices could not be synchronized.')
+                    : __('ONU operation completed.'),
+                'failed_devices' => $failedDevices,
                 'total_onus' => (clone $query)->count(),
                 'online_onus' => (clone $query)->where('status', 'online')->count(),
                 'linked_onus' => (clone $query)->whereNotNull('customer_id')->count(),
