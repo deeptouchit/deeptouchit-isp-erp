@@ -193,10 +193,13 @@
     </div>
 
     <!-- High-Density Administrative Matrix Table with Column/Row Borders and Sortable Headers -->
-    <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="saas-table">
-                <thead>
+    <x-owner.table-shell
+        :has-rows="$plans->isNotEmpty()"
+        empty-title="No pricing plans found"
+        empty-message="Create a pricing plan or sync the standard plan matrix."
+        empty-icon="fa-layer-group"
+    >
+        <x-slot:head>
                     <tr class="bg-slate-100/90 text-slate-700 text-[11px] font-bold uppercase tracking-wider border-b border-slate-200 select-none">
                         <!-- Sortable Index / SL -->
                         <th @click="sortBy('sort_order')" class="py-2.5 px-3 border-r border-slate-200 cursor-pointer hover:bg-slate-200/80 transition whitespace-nowrap text-center w-12">
@@ -240,8 +243,8 @@
                             <span>Action</span>
                         </th>
                     </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-200">
+        </x-slot:head>
+        <x-slot:body>
                     <template x-for="(plan, index) in filteredPlans" :key="plan.id">
                         <tr class="hover:bg-slate-50 transition" :class="plan.is_popular ? 'bg-amber-50/20' : ''">
                             
@@ -292,10 +295,8 @@
 
                         </tr>
                     </template>
-                </tbody>
-            </table>
-        </div>
-    </div>
+        </x-slot:body>
+    </x-owner.table-shell>
 
     <!-- 1. VIEW DETAILS MODAL -->
     <div x-show="detailsModalOpen" style="display: none;" class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
