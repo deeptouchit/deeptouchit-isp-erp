@@ -1004,3 +1004,41 @@ if (isset($response['GatewayPageURL'])) {
     <div x-show="showGatewayDetails" x-cloak class="fixed inset-0 z-50 bg-slate-900/40 flex items-center justify-center p-4"><div @click.outside="showGatewayDetails=null" class="bg-white rounded-xl border border-slate-200 shadow-2xl w-full max-w-md overflow-hidden"><div class="px-4 py-3 bg-slate-50 border-b flex justify-between"><h3 class="text-sm font-bold">Gateway Details</h3><button type="button" @click="showGatewayDetails=null">&times;</button></div><div class="p-4 grid grid-cols-2 gap-2 text-xs"><div class="p-2 bg-slate-50 rounded-lg">Gateway<br><b x-text="showGatewayDetails?.name"></b></div><div class="p-2 bg-slate-50 rounded-lg">Mode<br><b x-text="showGatewayDetails?.mode"></b></div><div class="p-2 bg-slate-50 rounded-lg">Fee<br><b x-text="(showGatewayDetails?.fee || 0) + '%' "></b></div><div class="p-2 bg-slate-50 rounded-lg">Status<br><b x-text="showGatewayDetails?.is_active ? 'Active' : 'Inactive'"></b></div></div></div></div>
 </div>
 @endsection
+@push('styles')
+<style>
+    .gateway-action-menu { width: 176px; padding: 6px; }
+    .gateway-action-menu button { display:flex; align-items:center; gap:8px; width:100%; min-height:30px; padding:6px 8px; border-radius:6px; text-align:left; font-size:10px; line-height:1.25; }
+    .gateway-action-menu button i { width:14px; flex:0 0 14px; text-align:center; }
+</style>
+@endpush
+@push('scripts')
+<script>
+(function () {
+    function closeGatewayMenus(except) {
+        document.querySelectorAll('.gateway-action[open]').forEach(function (details) {
+            if (details !== except) details.removeAttribute('open');
+        });
+    }
+    document.addEventListener('click', function (event) {
+        const summary = event.target.closest('.gateway-action > summary');
+        if (!summary) return;
+        event.preventDefault();
+        const details = summary.parentElement;
+        closeGatewayMenus(details);
+        details.setAttribute('open', '');
+        const menu = details.querySelector('.gateway-action-menu');
+        const rect = summary.getBoundingClientRect();
+        const height = Math.min(210, menu.scrollHeight || 170);
+        const top = rect.bottom + 2;
+        menu.style.position = 'fixed';
+        menu.style.right = Math.max(10, window.innerWidth - rect.right) + 'px';
+        menu.style.left = 'auto';
+        menu.style.top = top + height <= window.innerHeight - 10 ? top + 'px' : 'auto';
+        menu.style.bottom = top + height <= window.innerHeight - 10 ? 'auto' : Math.max(10, window.innerHeight - rect.top + 2) + 'px';
+        menu.style.zIndex = '60';
+    });
+    window.addEventListener('scroll', function () { closeGatewayMenus(null); }, { passive: true });
+    window.addEventListener('resize', function () { closeGatewayMenus(null); });
+})();
+</script>
+@endpush
