@@ -15,23 +15,12 @@
 @section('content')
 <div class="space-y-3" x-data="userManager()" @scroll.window="activeMenu = null" @resize.window="activeMenu = null">
 
-    <!-- 1. Top Header Bar (Strictly Icon + Title + Action Button ONLY) -->
-    <div class="flex items-center justify-between bg-white px-3.5 py-2.5 rounded-xl border border-slate-200 shadow-xs">
-        <div class="flex items-center gap-2">
-            <div class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center text-xs flex-shrink-0">
-                <i class="fas fa-users-gear"></i>
-            </div>
-            <h1 class="text-xs sm:text-sm font-bold text-slate-800 tracking-tight">Global User Management</h1>
-            <span class="px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-bold font-mono">
-                {{ $totalUsers }} Users
-            </span>
-        </div>
-        <div class="flex items-center gap-2">
+    <!-- Page-specific user action; page title is provided by the global Owner header. -->
+    <div class="flex justify-end items-center gap-2 flex-wrap">
             <button type="button" @click="openCreate()" class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-xs transition flex items-center gap-1.5">
                 <i class="fas fa-plus text-[10px]"></i>
                 <span>Add User</span>
             </button>
-        </div>
     </div>
 
     <!-- Global KPI Cards -->

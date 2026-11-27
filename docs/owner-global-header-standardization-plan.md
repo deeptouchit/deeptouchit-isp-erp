@@ -107,13 +107,27 @@ Owner panel-এর সব পেজে Dashboard-এর মতো একই glob
 - Legacy labels-এর জন্য প্রয়োজনীয় accessible compatibility text রাখা হয়েছে; কোনো visual duplicate header রাখা হয়নি।
 - Blade cache, selected Owner tests এবং diff check সফল হয়েছে।
 
-### Task 5 — Responsive ও accessibility hardening `[ ]`
+#### Task 4.6 — User management correction `[x]`
+
+- User Management page-এর অবশিষ্ট duplicate body header সরানো হয়েছে।
+- Add User action compact page-specific toolbar-এ রাখা হয়েছে।
+- Mail Settings-এর পুরোনো header comment marker সরানো হয়েছে।
+- Static duplicate-header audit-এ কোনো legacy header marker অবশিষ্ট নেই।
+
+### Task 5 — Responsive ও accessibility hardening `[x]`
 
 - Desktop, tablet এবং mobile viewport-এ overflow, truncation ও alignment যাচাই করা।
 - অতিরিক্ত গোলাকার/pill UI বাদ দিয়ে consistent `rounded-lg` visual language প্রয়োগ করা।
 - 320px থেকে বড় mobile viewport-এ header ভাঙে না বা horizontal scroll তৈরি করে না—এটি যাচাই করা।
 - Button-এর accessible label, focus state এবং keyboard interaction নিশ্চিত করা।
 - Notification/profile dropdown header-এর বাইরে clip না হওয়ার নিশ্চয়তা দেওয়া।
+
+#### Completed Hardening
+
+- Global header action-এ minimum 36px touch target যুক্ত হয়েছে।
+- Header links/buttons-এ keyboard-visible focus ring যুক্ত হয়েছে।
+- Mobile title truncation, compact spacing এবং action overflow protection যুক্ত হয়েছে।
+- Static duplicate-header audit, Blade cache, production Vite build এবং selected Owner tests সফল হয়েছে।
 
 ### Task 6 — Visual consistency validation `[ ]`
 

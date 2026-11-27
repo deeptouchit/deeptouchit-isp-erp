@@ -149,6 +149,16 @@
         @apply flex-nowrap whitespace-nowrap;
     }
 
+    .owner-global-header a,
+    .owner-global-header button {
+        @apply min-h-9;
+    }
+
+    .owner-global-header a:focus-visible,
+    .owner-global-header button:focus-visible {
+        @apply outline-none ring-2 ring-blue-500 ring-offset-2 ring-offset-white;
+    }
+
     @media (max-width: 767px) {
         .owner-global-header {
             @apply gap-2 px-3;
@@ -156,6 +166,10 @@
 
         .owner-global-header-title {
             @apply max-w-[calc(100vw-120px)];
+        }
+
+        .owner-global-header > div:last-child {
+            @apply gap-1;
         }
     }
 
