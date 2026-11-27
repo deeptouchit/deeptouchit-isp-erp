@@ -31,10 +31,21 @@ class OwnerSmsGatewayController extends Controller
             ->selectRaw('gateway_name, COUNT(*) as total')
             ->groupBy('gateway_name')
             ->pluck('total', 'gateway_name');
+        $normalizedSmsCounts = $gatewaySmsCounts->mapWithKeys(
+            fn ($count, $name) => [strtolower(preg_replace('/[^a-z0-9]+/i', '', (string) $name)) => (int) $count]
+        );
         $totalGatewayBalance = (float) $gateways->sum(fn (OwnerSmsGateway $gateway) => (float) ($gateway->last_balance ?? 0));
 
         foreach ($gateways as $gateway) {
-            $gateway->sms_count = (int) ($gatewaySmsCounts[$gateway->name] ?? $gatewaySmsCounts[strtoupper(str_replace('_', ' ', $gateway->provider))] ?? 0);
+            $gatewayNames = [
+                $gateway->name,
+                $gateway->provider,
+                strtoupper(str_replace('_', ' ', $gateway->provider)),
+            ];
+            $gateway->sms_count = collect($gatewayNames)
+                ->map(fn ($name) => strtolower(preg_replace('/[^a-z0-9]+/i', '', (string) $name)))
+                ->map(fn ($name) => $normalizedSmsCounts[$name] ?? 0)
+                ->max();
         }
 
         foreach (config('secure_settings.keys', []) as $secureKey) {
