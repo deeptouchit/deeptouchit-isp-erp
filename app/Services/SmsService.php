@@ -267,8 +267,18 @@ class SmsService
 
         try {
             if ($provider === 'bulksmsbd') {
-                // Official BulkSMS BD Balance API: http://bulksmsbd.net/api/getBalanceApi?api_key=...
-                $url = ($gateway?->balance_api_url ?: "https://bulksmsbd.net/api/getBalanceApi") . (str_contains($gateway?->balance_api_url ?? '', '?') ? '&' : '?') . "api_key=" . urlencode($apiKey);
+                // The gateway stores only the endpoint; credentials are appended server-side.
+                $url = $gateway?->balance_api_url ?: 'https://bulksmsbd.net/api/getBalanceApi';
+                $urlParts = parse_url($url);
+                $query = [];
+                parse_str($urlParts['query'] ?? '', $query);
+                if (! array_key_exists('api_key', $query)) {
+                    $query['api_key'] = $apiKey;
+                }
+                $url = ($urlParts['scheme'] ?? 'https') . '://' . ($urlParts['host'] ?? '')
+                    . (isset($urlParts['port']) ? ':' . $urlParts['port'] : '')
+                    . ($urlParts['path'] ?? '')
+                    . ($query ? '?' . http_build_query($query) : '');
                 
                 $ch = curl_init();
                 curl_setopt($ch, CURLOPT_URL, $url);
