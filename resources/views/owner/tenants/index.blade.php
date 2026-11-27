@@ -85,10 +85,8 @@
     </div>
 
     <!-- Essential Clean High-Density Administrative Matrix Table -->
-    <div class="rounded-xl bg-white border border-slate-200 overflow-hidden shadow-xs">
-        <div class="overflow-x-auto">
-            <table class="saas-table">
-                <thead>
+    <x-owner.table-shell :has-rows="$tenants->isNotEmpty()" empty-title="No ISP Tenants Found" empty-message="No tenants matched your query. Clear filters or provision a new ISP organization." empty-icon="fa-building">
+        <x-slot:head>
                     <tr>
                         <th class="w-12 text-center font-semibold">#</th>
                         <th class="text-center font-semibold">Name</th>
@@ -99,9 +97,9 @@
                         <th class="text-center font-semibold">Status</th>
                         <th class="no-sort text-center font-semibold">Actions</th>
                     </tr>
-                </thead>
-                <tbody>
-                    @forelse ($tenants as $tenant)
+        </x-slot:head>
+        <x-slot:body>
+                    @foreach ($tenants as $tenant)
                         @php
                             $expiryDate = $tenant->subscription_expires_at;
                             $isActive = $tenant->status === 'active';
@@ -181,36 +179,17 @@
                                 </template>
                             </td>
                         </tr>
-                    @empty
-                        <tr>
-                            <td colspan="8" class="px-4 py-12 text-center text-slate-400 text-xs">
-                                <div class="flex flex-col items-center justify-center space-y-2">
-                                    <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 text-lg">
-                                        <i class="fas fa-building"></i>
-                                    </div>
-                                    <span class="font-bold text-slate-700 text-sm">No ISP Tenants Found</span>
-                                    <p class="text-[11px] text-slate-400 max-w-sm">No tenants matched your query. Clear filters or provision a new ISP organization.</p>
-                                    <a href="{{ route('owner.tenants.create') }}" class="mt-2 px-3 py-1.5 rounded-lg bg-blue-600 text-white font-semibold text-xs transition">
-                                        + Provision New Tenant
-                                    </a>
-                                </div>
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Table Footer / Pagination -->
-        <div class="px-4 py-3 border-t border-slate-200 bg-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-600">
+                    @endforeach
+        </x-slot:body>
+        <x-slot:pagination>
             <div>
                 Showing <span class="font-bold text-slate-800">{{ $tenants->firstItem() ?? 0 }}</span> to <span class="font-bold text-slate-800">{{ $tenants->lastItem() ?? 0 }}</span> of <span class="font-bold text-slate-800">{{ $tenants->total() }}</span> ISP Tenants
             </div>
             <div>
                 {{ $tenants->links() }}
             </div>
-        </div>
-    </div>
+        </x-slot:pagination>
+    </x-owner.table-shell>
 
     <!-- ========================================== -->
     <!-- Quick Extend Subscription Modal            -->

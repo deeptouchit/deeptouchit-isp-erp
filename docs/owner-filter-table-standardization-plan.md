@@ -153,6 +153,14 @@ Document print view, create/edit form এবং detail-only page এই scope-�
 - Tenants, Users, Plans, Wallets এবং Subscriptions migrate করা।
 - Filter query preservation, pagination এবং existing CRUD/modal actions যাচাই করা।
 
+#### Task 4.1 — Tenants table-shell migration `[x]`
+
+- Tenants master table `x-owner.table-shell` component-এ migrate করা হয়েছে।
+- Existing columns, three-dot actions, tenant pagination এবং modal behavior অক্ষত রাখা হয়েছে।
+- Empty state component-এর natural empty-state contract-এ নেওয়া হয়েছে।
+- Blade cache ও tenant management regression test সফল হয়েছে।
+- Tenants filter এখনো legacy page markup-এ আছে; Task 4.1-এর filter migration পরবর্তী focused step হিসেবে থাকবে।
+
 ### Task 5 — Owner page migration batch 2 `[ ]`
 
 - Billing, Payments, Transactions এবং Revenue migrate করা।
