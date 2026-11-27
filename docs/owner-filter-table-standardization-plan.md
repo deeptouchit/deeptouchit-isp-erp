@@ -7,6 +7,7 @@
 - Remaining focused work: normalize compressed SMS Gateway inner markup, reconcile any remaining filter-toolbar deviations, and complete full-suite validation.
 - Full `php artisan test --no-coverage` was started but produced no output and was stopped; targeted Owner regression validation remains successful.
 - Coverage audit exception: `owner/invoices/print.blade.php`, `owner/invoices/show.blade.php` and `owner/tenants/show.blade.php` contain detail/print tables, not master listing tables, so they remain outside the shared listing shell scope.
+- Owner route validation passed with `php artisan route:list --path=owner`: 111 routes resolved successfully.
 
 ## লক্ষ্য
 
