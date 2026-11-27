@@ -161,13 +161,20 @@ Owner panel-এর সব পেজে Dashboard-এর মতো একই glob
 - Duplicate-header static audit returned `DUPLICATE_HEADER_MARKERS_NONE`.
 - `git diff --check` completed without errors.
 
-### Task 8 — Documentation ও deployment `[ ]`
+### Task 8 — Documentation ও deployment `[x]`
 
 - এই plan-এর প্রতিটি সম্পন্ন task `[x]` করা।
 - পরিবর্তিত file scope review করা।
 - Unrelated user changes stage না করা।
 - Scoped commit তৈরি করা এবং অনুমোদিত workflow অনুযায়ী remote push করা।
 - Commit hash ও validation result নথিভুক্ত করা।
+
+#### Deployment Result
+
+- Scoped commits completed without staging unrelated deleted or untracked files.
+- `main` pushed successfully to GitHub.
+- Remote `main` verified at `05dcb032438de4d8361c211e7a148b7600fa63a1`.
+- Unrelated worktree changes remain untouched and unstaged.
 
 ## Acceptance Criteria
 
