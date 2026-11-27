@@ -28,16 +28,14 @@
         <x-owner.kpi-card title="Ledger Entries" :value="$ledgerEntriesCount" icon="fa-list-ol" theme="slate" />
     </div>
 
-    <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5">
-        <form method="GET" action="{{ route('owner.wallets.index') }}" class="flex flex-col md:flex-row items-stretch md:items-center gap-2">
-            <div class="relative flex-1 min-w-[200px]"><i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-[11px]"></i><input name="search" value="{{ request('search') }}" placeholder="Search tenant, email or phone..." class="w-full h-[34px] pl-8 pr-3 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden"></div>
+    <x-owner.filter-toolbar action="{{ route('owner.wallets.index') }}" reset-url="{{ route('owner.wallets.index') }}" form-id="owner-wallets-filter" :show-more-open="request()->filled('status')" :active-more-count="request()->filled('status') ? 1 : 0" :search-value="request('search', '')">
+        <x-slot:primary>
+            <div class="relative flex-1 min-w-[200px]"><i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px]" :class="searchQuery ? 'text-cyan-600 font-bold' : 'text-slate-400'"></i><input name="search" x-model="searchQuery" value="{{ request('search') }}" placeholder="Search tenant, email or phone..." class="w-full h-[34px] pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden"></div>
             <select name="status" class="h-[34px] md:w-36 px-2.5 py-0 rounded-lg border border-slate-200 bg-slate-50 text-xs"><option value="">All Statuses</option><option value="active" @selected(request('status') === 'active')>Active</option><option value="suspended" @selected(request('status') === 'suspended')>Suspended</option><option value="expired" @selected(request('status') === 'expired')>Expired</option></select>
             <select name="per_page" class="h-[34px] md:w-28 px-2.5 py-0 rounded-lg border border-slate-200 bg-slate-50 text-xs"><option value="15">15 / page</option><option value="30" @selected(request('per_page') == 30)>30 / page</option><option value="50" @selected(request('per_page') == 50)>50 / page</option><option value="100" @selected(request('per_page') == 100)>100 / page</option></select>
-            <button type="button" @click="showMoreFilters = !showMoreFilters" class="h-[34px] py-0 px-3 rounded-lg border border-slate-200 bg-slate-50 text-xs font-semibold"><i class="fas" :class="showMoreFilters ? 'fa-chevron-up' : 'fa-chevron-down'"></i> More Filters</button>
-            <div class="flex items-center gap-1.5 md:ml-auto"><button class="h-[34px] bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-0 px-3 rounded-lg shadow-xs"><i class="fas fa-filter text-[10px]"></i> Filter</button><a href="{{ route('owner.wallets.index') }}" class="h-[34px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-0 px-2.5 rounded-lg border border-slate-200/80 flex items-center gap-1"><i class="fas fa-rotate-left text-[10px]"></i> Reset</a></div>
-        </form>
-        <div x-show="showMoreFilters" x-cloak x-transition class="pt-2 border-t border-slate-100 text-[10px] text-slate-500">Filter wallets by tenant status and balance. Use the action button to record a credit or debit.</div>
-    </div>
+        </x-slot:primary>
+        <x-slot:secondary><span class="text-[11px] text-slate-500">Filter wallets by tenant status and balance. Use the action button to record a credit or debit.</span></x-slot:secondary>
+    </x-owner.filter-toolbar>
 
     <!-- Wallets Table -->
     <x-owner.table-shell
