@@ -13,7 +13,7 @@
         <div class="px-4 py-3 bg-slate-50/80 border-b border-slate-200 flex justify-between"><div><h2 class="text-xs font-bold text-slate-800">Configured gateways</h2><span class="text-[10px] text-slate-500">Balance and delivery usage by gateway.</span></div><span class="text-[10px] text-slate-500">{{ $gateways->count() }} records</span></div>
         <div class="overflow-visible"><table class="saas-table"><thead><tr><th class="text-center">#</th><th class="text-center">Gateway</th><th class="text-center">Provider</th><th class="text-center">Sender ID</th><th class="text-center">Balance</th><th class="text-center">Per SMS</th><th class="text-center">Total SMS</th><th class="text-center">Status</th><th class="text-center no-sort">Action</th></tr></thead><tbody>
         @forelse($gateways as $gateway)
-            <tr><td class="text-center font-mono text-slate-400">{{ $loop->iteration }}</td><td class="text-left font-semibold">{{ $gateway->name }}</td><td class="text-center font-mono uppercase">{{ $gateway->provider }}</td><td class="text-center font-mono">{{ $gateway->sender_id ?: '—' }}</td><td class="text-right font-mono">{{ $gateway->last_balance !== null ? number_format((float)$gateway->last_balance,2) : '—' }}</td><td class="text-right font-mono">{{ number_format((float)$gateway->rate_per_part,4) }}</td><td class="text-right font-mono">{{ number_format($gateway->sms_count) }}</td><td class="text-center">@if($gateway->is_active)<span class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-semibold">Active</span>@else<span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200 text-[10px] font-semibold">Inactive</span>@endif</td><td class="text-center"><details class="relative inline-block"><summary class="list-none cursor-pointer w-7 h-7 rounded-lg hover:bg-slate-100 text-slate-500 flex items-center justify-center"><i class="fas fa-ellipsis-v text-[11px]"></i></summary><div class="absolute right-0 z-20 mt-1 w-40 p-1.5 bg-white border border-slate-200 rounded-lg shadow-xl text-left"><button type="button" @click="openEdit({{ Js::from(['id'=>$gateway->id,'name'=>$gateway->name,'provider'=>$gateway->provider,'sender_id'=>$gateway->sender_id,'custom_url'=>$gateway->custom_url,'is_active'=>$gateway->is_active,'action'=>route('owner.sms-gateways.gateway.update',$gateway)]) }});$el.closest('details').open=false" class="w-full px-2 py-1.5 text-left text-[10px] hover:bg-slate-50"><i class="fas fa-pen w-4 text-cyan-600"></i>Edit</button>@if(!$gateway->is_active)<form method="POST" action="{{ route('owner.sms-gateways.gateway.activate',$gateway) }}">@csrf<button class="w-full px-2 py-1.5 text-left text-[10px] text-emerald-700 hover:bg-emerald-50"><i class="fas fa-toggle-on w-4"></i>Activate</button></form>@else<span class="block px-2 py-1.5 text-[10px] text-slate-400"><i class="fas fa-toggle-on w-4"></i>Active now</span>@endif<form method="POST" action="{{ route('owner.sms-gateways.gateway.delete',$gateway) }}">@csrf @method('DELETE')<button type="button" onclick="confirmGatewayDelete(event,this)" class="w-full px-2 py-1.5 text-left text-[10px] text-rose-700 hover:bg-rose-50"><i class="fas fa-trash w-4"></i>Delete</button></form></div></details></td></tr>
+            <tr><td class="text-center font-mono text-slate-400">{{ $loop->iteration }}</td><td class="text-left font-semibold">{{ $gateway->name }}</td><td class="text-center font-mono uppercase">{{ $gateway->provider }}</td><td class="text-center font-mono">{{ $gateway->sender_id ?: '—' }}</td><td class="text-right font-mono">{{ $gateway->last_balance !== null ? number_format((float)$gateway->last_balance,2) : '—' }}</td><td class="text-right font-mono">{{ number_format((float)$gateway->rate_per_part,4) }}</td><td class="text-right font-mono">{{ number_format($gateway->sms_count) }}</td><td class="text-center">@if($gateway->is_active)<span class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-semibold">Active</span>@else<span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200 text-[10px] font-semibold">Inactive</span>@endif</td><td class="text-center"><details class="gateway-action relative inline-block"><summary class="list-none cursor-pointer w-7 h-7 rounded-lg hover:bg-slate-100 text-slate-500 flex items-center justify-center"><i class="fas fa-ellipsis-v text-[11px]"></i></summary><div class="gateway-action-menu fixed z-[60] w-44 p-1.5 bg-white border border-slate-200 rounded-xl shadow-xl text-left"><button type="button" onclick="showGatewayDetails(this)" class="gateway-action-item text-slate-700 hover:bg-slate-50"><i class="fas fa-circle-info text-blue-600"></i><span>Details</span></button><button type="button" @click="openEdit({{ Js::from(['id'=>$gateway->id,'name'=>$gateway->name,'provider'=>$gateway->provider,'sender_id'=>$gateway->sender_id,'custom_url'=>$gateway->custom_url,'is_active'=>$gateway->is_active,'action'=>route('owner.sms-gateways.gateway.update',$gateway)]) }});$el.closest('details').open=false" class="gateway-action-item text-slate-700 hover:bg-slate-50"><i class="fas fa-pen text-cyan-600"></i><span>Edit</span></button>@if(!$gateway->is_active)<form method="POST" action="{{ route('owner.sms-gateways.gateway.activate',$gateway) }}">@csrf<button class="gateway-action-item text-emerald-700 hover:bg-emerald-50"><i class="fas fa-toggle-on"></i><span>Activate</span></button></form>@else<form method="POST" action="{{ route('owner.sms-gateways.gateway.deactivate',$gateway) }}">@csrf<button class="gateway-action-item text-amber-700 hover:bg-amber-50"><i class="fas fa-toggle-off"></i><span>Deactivate</span></button></form>@endif<form method="POST" action="{{ route('owner.sms-gateways.gateway.delete',$gateway) }}">@csrf @method('DELETE')<button type="button" onclick="confirmGatewayDelete(event,this)" class="gateway-action-item text-rose-700 hover:bg-rose-50"><i class="fas fa-trash"></i><span>Delete</span></button></form></div></details></td></tr>
         @empty<tr><td colspan="9" class="text-center py-10 text-xs text-slate-500">No SMS gateway configured yet.</td></tr>@endforelse
         </tbody></table></div>
     </section>
@@ -45,5 +45,34 @@ document.querySelectorAll('details').forEach(function (details) {
         }
     }
 });
+</script>
+<style>
+    .gateway-action-menu { width: 176px; min-width: 176px; padding: 6px; }
+    .gateway-action-item { display: flex; width: 100%; min-height: 30px; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 6px; text-align: left; font-size: 10px; line-height: 1.25; }
+    .gateway-action-item > i { width: 14px; flex: 0 0 14px; text-align: center; }
+    .gateway-action-item span { flex: 1 1 auto; white-space: nowrap; }
+</style>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.gateway-action-menu').forEach(function (menu) {
+        const detailButtons = [...menu.querySelectorAll('button')].filter(function (button) {
+            return button.textContent.trim() === 'Details';
+        });
+        detailButtons.forEach(function (button, index) {
+            if (index > 0) button.remove();
+        });
+    });
+});
+function showGatewayDetails(button) {
+    const cells = button.closest('tr')?.querySelectorAll('td') || [];
+    if (window.Swal) {
+        Swal.fire({
+            title: cells[1]?.innerText || 'Gateway details',
+            html: '<div style="text-align:left;font-size:12px;line-height:1.8"><b>Provider:</b> ' + (cells[2]?.innerText || '—') + '<br><b>Sender ID:</b> ' + (cells[3]?.innerText || '—') + '<br><b>Balance:</b> ' + (cells[4]?.innerText || '—') + '<br><b>Per SMS:</b> ' + (cells[5]?.innerText || '—') + '<br><b>Total SMS:</b> ' + (cells[6]?.innerText || '—') + '<br><b>Status:</b> ' + (cells[7]?.innerText || '—') + '</div>',
+            confirmButtonText: 'Close'
+        });
+    }
+    button.closest('details')?.removeAttribute('open');
+}
 </script>
 @endsection
