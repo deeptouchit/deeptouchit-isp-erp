@@ -35,13 +35,14 @@ class OwnerMailSettingController extends Controller
     {
         $inputs = $request->validate([
             'mail_host' => ['required', 'string', 'max:255'],
-            'mail_mailer' => ['required', Rule::in(['smtp'])],
+            'mail_mailer' => ['required', Rule::in(['smtp', 'sendmail'])],
             'mail_port' => ['required', 'integer', 'between:1,65535'],
             'mail_encryption' => ['required', Rule::in(['ssl', 'tls', 'none'])],
             'mail_timeout' => ['nullable', 'integer', 'between:1,120'],
-            'mail_username' => ['nullable', 'email', 'max:255'],
+            'mail_username' => ['nullable', 'string', 'max:255'],
             'mail_password' => ['nullable', 'string', 'max:500'],
             'billing_email' => ['required', 'email', 'max:255'],
+            'mail_from_address' => ['nullable', 'email', 'max:255'],
             'mail_from_name' => ['required', 'string', 'max:255'],
             'mail_reply_to' => ['nullable', 'email', 'max:255'],
         ]);
@@ -97,11 +98,12 @@ class OwnerMailSettingController extends Controller
         Config::set('mail.mailers.smtp.username', !empty($username) ? $username : null);
         Config::set('mail.mailers.smtp.password', !empty($password) ? $password : null);
         Config::set('mail.mailers.smtp.timeout', (int)($settings['mail_timeout'] ?? 15));
+        $verifyPeer = ($settings['mail_verify_peer'] ?? '1') === '1';
         Config::set('mail.mailers.smtp.stream', [
             'ssl' => [
-                'allow_self_signed' => false,
-                'verify_peer' => true,
-                'verify_peer_name' => true,
+                'allow_self_signed' => ! $verifyPeer,
+                'verify_peer' => $verifyPeer,
+                'verify_peer_name' => $verifyPeer,
             ],
         ]);
         Config::set('mail.from.address', $fromAddress);
