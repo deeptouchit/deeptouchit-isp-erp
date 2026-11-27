@@ -129,11 +129,24 @@ Document print view, create/edit form এবং detail-only page এই scope-�
 - Page-specific filter fields slots-এ থাকবে; shared component কোনো existing query parameter বা backend contract hardcode করবে না।
 - Blade view cache সফল হয়েছে।
 
-### Task 3 — Shared table contract `[ ]`
+### Task 3 — Shared table contract `[x]`
 
 - `.saas-table` header/body/empty/pagination structure standardize করা।
 - Column alignment, nowrap, currency formatting, date/status badge এবং `no-sort` rule প্রয়োগ করা।
 - Global three-dot action menu positioning ও clipping protection যাচাই করা।
+
+#### Contract Implemented
+
+- Reusable component তৈরি হয়েছে: `resources/views/components/owner/table-shell.blade.php`।
+- Component বাধ্যতামূলকভাবে `.saas-table`, natural-height overflow container, compact empty state এবং optional pagination footer প্রদান করে।
+- Named slots:
+  - `head` — centered table header cells
+  - `body` বা default slot — page-specific rows
+  - `emptyAction` — empty state-এর relevant action
+  - `pagination` — server-side paginator output
+- Shared CSS contract `owner-table-shell`, `owner-table-empty` এবং `owner-table-pagination` যুক্ত হয়েছে।
+- Component কোনো column, query parameter বা backend model hardcode করে না।
+- Blade cache ও production Vite build সফল হয়েছে।
 
 ### Task 4 — Owner page migration batch 1 `[ ]`
 

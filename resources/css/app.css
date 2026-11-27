@@ -149,6 +149,19 @@
         @apply flex-nowrap whitespace-nowrap;
     }
 
+    /* Owner master table contract: natural height, compact empty state and shared pagination rhythm. */
+    .owner-table-shell {
+        @apply w-full;
+    }
+
+    .owner-table-empty {
+        @apply text-center align-middle;
+    }
+
+    .owner-table-pagination {
+        @apply flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-[11px] text-slate-600;
+    }
+
     .owner-global-header a,
     .owner-global-header button {
         @apply min-h-9;
