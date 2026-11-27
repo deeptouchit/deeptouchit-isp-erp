@@ -160,9 +160,13 @@
             </form>
 
             <!-- Routers Table -->
-            <div class="overflow-x-auto border border-slate-200 rounded-lg">
-            <table class="saas-table network-engines-table">
-                    <thead class="bg-slate-50 text-[10.5px] font-bold text-slate-500 uppercase tracking-wider">
+            <x-owner.table-shell
+                :has-rows="$routers->isNotEmpty()"
+                empty-title="No routers found"
+                empty-message="Connected MikroTik routers will appear here."
+                empty-icon="fa-server"
+            >
+                    <x-slot:head>
                         <tr>
                             <th class="text-center">Router Name / Tenant</th>
                             <th class="text-center">Hardware & ROS</th>
@@ -172,9 +176,9 @@
                             <th class="text-center">Status & Handshake</th>
                             <th class="no-sort text-center">Actions</th>
                         </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-100 bg-white">
-                        @forelse($routers as $router)
+                    </x-slot:head>
+                    <x-slot:body>
+                        @foreach($routers as $router)
                             <tr class="hover:bg-slate-50/80 transition">
                                 <td class="px-3.5 py-2.5">
                                     <div class="font-bold text-slate-900">{{ $router->name }}</div>
@@ -253,26 +257,9 @@
                                     </div>
                                 </td>
                             </tr>
-                        @empty
-                            <tr>
-                                <td colspan="7" class="px-4 py-10 text-center text-slate-500 text-xs">
-                                    <div class="w-12 h-12 rounded-xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-2.5 text-lg">
-                                        <i class="fas fa-server"></i>
-                                    </div>
-                                    <div class="font-bold text-slate-800 text-sm">No MikroTik Routers Connected</div>
-                                    <p class="text-[11px] text-slate-400 max-w-sm mx-auto mt-1">
-                                        When ISP tenants register their core routers or run the 1-Click Bootstrap Script, their live telemetry and connection status will appear here.
-                                    </p>
-                                    <button type="button" @click="scriptModal = true" class="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-xs transition cursor-pointer">
-                                        <i class="fas fa-terminal text-[10px]"></i>
-                                        <span>Generate 1-Click Bootstrap Script</span>
-                                    </button>
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
+                        @endforeach
+                    </x-slot:body>
+            </x-owner.table-shell>
 
             @if($routers->hasPages())
                 <div class="pt-2">
