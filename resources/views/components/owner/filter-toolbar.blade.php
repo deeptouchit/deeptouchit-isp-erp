@@ -6,6 +6,7 @@
     'searchValue' => '',
     'resetUrl' => null,
     'formId' => null,
+    'showMoreButton' => true,
 ])
 
 <div class="owner-filter-toolbar bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5"
@@ -17,6 +18,7 @@
         <div class="owner-filter-primary flex flex-col md:flex-row items-stretch md:items-center gap-2">
             {{ $primary }}
 
+            @if($showMoreButton)
             <button type="button"
                     @click="showMoreFilters = !showMoreFilters"
                     :aria-expanded="showMoreFilters.toString()"
@@ -29,6 +31,7 @@
                 @endif
                 <i class="fas text-[9px]" :class="showMoreFilters ? 'fa-chevron-up text-cyan-600' : 'fa-chevron-down text-slate-400'" aria-hidden="true"></i>
             </button>
+            @endif
 
             <div class="owner-filter-submit flex items-center gap-1.5 flex-shrink-0 md:ml-auto">
                 @isset($actions)
@@ -46,6 +49,7 @@
             </div>
         </div>
 
+        @if($showMoreButton)
         <div id="{{ $formId ? $formId . '-more-filters' : 'owner-more-filters' }}"
              x-show="showMoreFilters"
              :aria-hidden="(!showMoreFilters).toString()"
@@ -54,5 +58,6 @@
              class="owner-filter-secondary pt-2 border-t border-slate-100 flex flex-wrap items-center gap-2">
             {{ $secondary }}
         </div>
+        @endif
     </form>
 </div>
