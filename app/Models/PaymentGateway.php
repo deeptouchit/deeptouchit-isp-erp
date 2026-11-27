@@ -20,6 +20,14 @@ class PaymentGateway extends Model
         'is_active',
         'icon',
         'instructions',
+        'api_url',
+        'callback_url',
+        'success_url',
+        'fail_url',
+        'cancel_url',
+        'webhook_url',
+        'last_test_status',
+        'last_tested_at',
     ];
 
     protected $casts = [
@@ -29,6 +37,7 @@ class PaymentGateway extends Model
         'max_amount' => 'decimal:2',
         'is_active' => 'boolean',
         'sort_order' => 'integer',
+        'last_tested_at' => 'datetime',
     ];
 
     public function getWebhookUrlAttribute(): string

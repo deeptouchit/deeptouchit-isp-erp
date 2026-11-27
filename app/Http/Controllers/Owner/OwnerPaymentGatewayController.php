@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Owner;
 use App\Http\Controllers\Controller;
 use App\Models\SaasInvoice;
 use App\Models\PaymentTransaction;
+use App\Models\PaymentGateway;
 use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -145,6 +146,22 @@ class OwnerPaymentGatewayController extends Controller
             'currency_symbol' => ['nullable', 'string', 'max:8'],
             'pgw_grace_period_days' => ['nullable', 'integer', 'between:0,365'],
         ]);
+
+        $gatewayRegistry = PaymentGateway::query()->orderBy('sort_order')->get()->map(function (PaymentGateway $gateway) use ($settings) {
+            $statusKey = $gateway->slug === 'sslcommerz' ? 'ssl_status' : $gateway->slug . '_status';
+            return [
+                'key' => $gateway->slug,
+                'name' => $gateway->name,
+                'mode' => $gateway->mode,
+                'fee' => (float) $gateway->fee_value,
+                'is_active' => ($settings[$statusKey] ?? ($gateway->is_active ? '1' : '0')) === '1',
+                'category' => $gateway->category,
+                'last_test_status' => $gateway->last_test_status,
+                'last_tested_at' => $gateway->last_tested_at,
+                'api_url' => $gateway->api_url,
+                'webhook_url' => $gateway->webhook_url,
+            ];
+        });
 
         // Checkbox states to handle
         $checkboxes = [
