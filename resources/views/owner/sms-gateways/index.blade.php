@@ -104,17 +104,27 @@
             </div>
             <span class="text-[10px] font-semibold text-slate-500">{{ $gateways->count() }} configured</span>
         </div>
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 p-3 border-b border-slate-100 bg-white">
+            <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs"><span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Total gateways</span><span class="text-[13px] font-bold font-mono leading-tight block text-slate-800">{{ $gateways->count() }}</span></div>
+            <div class="px-2.5 py-1.5 rounded-lg bg-emerald-50/60 border border-emerald-200 shadow-xs"><span class="text-[9px] font-medium uppercase tracking-wider block truncate text-emerald-700">Active gateway</span><span class="text-[13px] font-bold leading-tight block text-emerald-800 truncate">{{ $activeGateway?->name ?? 'Not set' }}</span></div>
+            <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs"><span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Providers</span><span class="text-[13px] font-bold font-mono leading-tight block text-slate-800">{{ $gateways->pluck('provider')->unique()->count() }}</span></div>
+            <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs"><span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Configured keys</span><span class="text-[13px] font-bold font-mono leading-tight block text-slate-800">{{ $gateways->filter(fn($gateway) => !empty($gateway->credentials['api_key'] ?? null))->count() }}</span></div>
+            <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs"><span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">SMS sent</span><span class="text-[13px] font-bold font-mono leading-tight block text-slate-800">{{ number_format($totalSmsCount) }}</span></div>
+            <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs"><span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Failed</span><span class="text-[13px] font-bold font-mono leading-tight block text-rose-700">{{ number_format($failedSmsCount) }}</span></div>
+        </div>
         <div class="overflow-x-auto">
             <table class="saas-table">
                 <thead><tr>
-                    <th class="text-center">Gateway</th><th class="text-center">Provider</th><th class="text-center">Sender ID</th><th class="text-center">Status</th><th class="text-center no-sort">Actions</th>
+                    <th class="w-10 text-center">#</th><th class="text-center">Gateway</th><th class="text-center">Provider</th><th class="text-center">Sender ID</th><th class="text-center">Balance</th><th class="text-center">Status</th><th class="text-center no-sort">Actions</th>
                 </tr></thead>
                 <tbody>
                 @forelse($gateways as $gateway)
                     <tr>
-                        <td class="text-left font-semibold">{{ $gateway->name }}</td>
+                        <td class="text-center font-mono text-slate-400">{{ $loop->iteration }}</td>
+                        <td class="text-left font-semibold"><span class="inline-flex items-center gap-1.5"><span class="w-6 h-6 rounded-md {{ $gateway->is_active ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-slate-50 text-slate-400 border-slate-200' }} border flex items-center justify-center"><i class="fas fa-tower-broadcast text-[10px]"></i></span>{{ $gateway->name }}</span></td>
                         <td class="text-center font-mono text-xs uppercase">{{ $gateway->provider }}</td>
                         <td class="text-center font-mono">{{ $gateway->sender_id ?: '—' }}</td>
+                        <td class="text-right font-mono">{{ $gateway->last_balance !== null ? number_format((float) $gateway->last_balance, 2) : '—' }}</td>
                         <td class="text-center">
                             @if($gateway->is_active)
                                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-semibold"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Active</span>
@@ -146,7 +156,7 @@
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="5" class="text-center py-8 text-xs text-slate-500">No SMS gateway configured yet.</td></tr>
+                    <tr><td colspan="7" class="text-center py-8 text-xs text-slate-500"><i class="fas fa-tower-broadcast text-slate-300 text-lg block mb-1"></i>No SMS gateway configured yet.</td></tr>
                 @endforelse
                 </tbody>
             </table>
