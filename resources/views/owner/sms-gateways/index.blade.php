@@ -77,4 +77,24 @@ function showGatewayDetails(button) {
     button.closest('details')?.removeAttribute('open');
 }
 </script>
+<script>
+window.smsGatewayEditFields = @json($gateways->mapWithKeys(fn ($gateway) => [$gateway->id => [
+    'sms_api_url' => $gateway->sms_api_url,
+    'balance_api_url' => $gateway->balance_api_url,
+    'rate_per_part' => $gateway->rate_per_part,
+]]));
+
+const originalGatewayPage = window.gatewayPage;
+if (typeof originalGatewayPage === 'function') {
+    window.gatewayPage = function () {
+        const page = originalGatewayPage();
+        const originalOpenEdit = page.openEdit;
+        page.openEdit = function (gateway) {
+            const fields = window.smsGatewayEditFields?.[gateway.id] || {};
+            originalOpenEdit.call(this, { ...gateway, ...fields });
+        };
+        return page;
+    };
+}
+</script>
 @endpush
