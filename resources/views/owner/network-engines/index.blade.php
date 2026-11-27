@@ -96,66 +96,22 @@
     @endif
 
     <!-- Top Statistics 4-Card Strip (Matching Tenants/Automation Standard Sequence) -->
-    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+    <div class="owner-kpi-grid">
         
         <!-- Metric 1: MikroTik Router Fleet -->
-        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
-            <div class="space-y-0.5">
-                <span class="text-[10.5px] font-medium text-slate-500 uppercase tracking-wider block">MikroTik Routers</span>
-                <span class="text-lg font-extrabold text-slate-900 tracking-tight font-mono">{{ number_format($totalRouters) }}</span>
-                <span class="text-[10px] text-slate-400 block">
-                    {{ $onlineRouters }} Online • {{ $offlineRouters }} Offline
-                </span>
-            </div>
-            <div class="w-6 h-6 rounded-md bg-blue-50 text-blue-600 flex items-center justify-center text-[10px] border border-blue-100 flex-shrink-0">
-                <i class="fas fa-server"></i>
-            </div>
-        </div>
+        <x-owner.kpi-card title="MikroTik Routers" :value="number_format($totalRouters)" icon="fa-server" theme="blue" :meta="$onlineRouters . ' Online · ' . $offlineRouters . ' Offline'" />
 
         <!-- Metric 2: OLT Hardware & PON Capacity -->
-        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
-            <div class="space-y-0.5">
-                <span class="text-[10.5px] font-medium text-purple-700 uppercase tracking-wider block">OLT PON Hardware</span>
-                <span class="text-lg font-extrabold text-purple-700 tracking-tight font-mono">{{ number_format($totalOlts) }}</span>
-                <span class="text-[10px] text-slate-400 block">
-                    {{ number_format($totalOnus) }} ONUs • {{ $totalPonPorts }} PON Ports
-                </span>
-            </div>
-            <div class="w-6 h-6 rounded-md bg-purple-50 text-purple-600 flex items-center justify-center text-[10px] border border-purple-100 flex-shrink-0">
-                <i class="fas fa-microchip"></i>
-            </div>
-        </div>
+        <x-owner.kpi-card title="OLT PON Hardware" :value="number_format($totalOlts)" icon="fa-microchip" theme="purple" :meta="number_format($totalOnus) . ' ONUs · ' . $totalPonPorts . ' PON Ports'" />
 
         <!-- Metric 3: AAA FreeRADIUS Cluster -->
-        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
-            <div class="space-y-0.5">
-                <span class="text-[10.5px] font-medium text-emerald-700 uppercase tracking-wider block">FreeRADIUS AAA</span>
-                <span class="text-lg font-extrabold text-emerald-700 tracking-tight font-mono">Port 3799</span>
-                <span class="text-[10px] text-slate-400 block font-mono">
-                    {{ $settings['network_radius_master_host'] ?? 'Not configured' }}
-                </span>
-            </div>
-            <div class="w-6 h-6 rounded-md bg-emerald-50 text-emerald-600 flex items-center justify-center text-[10px] border border-emerald-100 flex-shrink-0">
-                <i class="fas fa-key"></i>
-            </div>
-        </div>
+        <x-owner.kpi-card title="FreeRADIUS AAA" value="Port 3799" icon="fa-key" theme="emerald" :meta="$settings['network_radius_master_host'] ?? 'Not configured'" />
 
         <!-- Metric 4: WireGuard VPN Mesh -->
-        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
-            <div class="space-y-0.5">
-                <span class="text-[10.5px] font-medium text-amber-700 uppercase tracking-wider block">WireGuard Tunnel</span>
-                <span class="text-lg font-extrabold text-amber-700 tracking-tight font-mono">{{ $settings['network_wireguard_subnet_pool'] ?? 'Not configured' }}</span>
-                <span class="text-[10px] text-slate-400 block">
-                    NAT/CGNAT Mesh Traversal
-                </span>
-            </div>
-            <div class="w-6 h-6 rounded-md bg-amber-50 text-amber-600 flex items-center justify-center text-[10px] border border-amber-100 flex-shrink-0">
-                <i class="fas fa-shield-virus"></i>
-            </div>
-        </div>
+        <x-owner.kpi-card title="WireGuard Tunnel" :value="$settings['network_wireguard_subnet_pool'] ?? 'Not configured'" icon="fa-shield-virus" theme="amber" meta="NAT/CGNAT Mesh Traversal" />
 
-        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs"><span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Online ONUs</span><span class="text-[13px] font-bold font-mono leading-tight block text-emerald-700">{{ number_format($onlineOnus) }}</span><span class="text-[9px] text-slate-400 block">{{ number_format($healthyOnus) }} healthy</span></div>
-        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs"><span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">LOS Alerts</span><span class="text-[13px] font-bold font-mono leading-tight block text-rose-700">{{ number_format($losOnus) }}</span><span class="text-[9px] text-slate-400 block">Optical signal loss</span></div>
+        <x-owner.kpi-card title="Online ONUs" :value="number_format($onlineOnus)" icon="fa-wifi" theme="emerald" :meta="number_format($healthyOnus) . ' healthy'" />
+        <x-owner.kpi-card title="LOS Alerts" :value="number_format($losOnus)" icon="fa-triangle-exclamation" theme="rose" meta="Optical signal loss" />
 
     </div>
 

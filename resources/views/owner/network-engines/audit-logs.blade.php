@@ -54,59 +54,17 @@
         </div>
     </div>
 
-    <!-- Top 4-Card Summary Metrics Strip -->
-    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
-        <!-- Metric 1: Total Events Recorded -->
-        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
-            <div class="space-y-0.5">
-                <span class="text-[10.5px] font-medium text-slate-500 uppercase tracking-wider block">Total Ledger Entries</span>
-                <span class="text-lg font-extrabold text-slate-900 tracking-tight font-mono">{{ number_format($totalCount) }}</span>
-                <span class="text-[10px] text-slate-400 block">Immutable log stream</span>
-            </div>
-            <div class="w-6 h-6 rounded-md bg-blue-50 text-blue-600 flex items-center justify-center text-[10px] border border-blue-100 flex-shrink-0">
-                <i class="fas fa-shield-halved"></i>
-            </div>
-        </div>
+    <!-- Global KPI Cards -->
+    <div class="owner-kpi-grid">
+        <x-owner.kpi-card title="Total Ledger Entries" :value="number_format($totalCount)" icon="fa-shield-halved" theme="blue" meta="Immutable log stream" />
 
-        <!-- Metric 2: Successful Executions -->
-        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
-            <div class="space-y-0.5">
-                <span class="text-[10.5px] font-medium text-emerald-700 uppercase tracking-wider block">Success Operations</span>
-                <span class="text-lg font-extrabold text-emerald-700 tracking-tight font-mono">{{ number_format($successCount) }}</span>
-                <span class="text-[10px] text-emerald-600 block font-semibold">
-                    {{ $totalCount > 0 ? round(($successCount / $totalCount) * 100, 1) : 100 }}% Pass Rate
-                </span>
-            </div>
-            <div class="w-6 h-6 rounded-md bg-emerald-50 text-emerald-600 flex items-center justify-center text-[10px] border border-emerald-100 flex-shrink-0">
-                <i class="fas fa-check-circle"></i>
-            </div>
-        </div>
+        <x-owner.kpi-card title="Success Operations" :value="number_format($successCount)" icon="fa-check-circle" theme="emerald" :meta="($totalCount > 0 ? round(($successCount / $totalCount) * 100, 1) : 100) . '% Pass Rate'" />
 
-        <!-- Metric 3: Failed / Refused Actions -->
-        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
-            <div class="space-y-0.5">
-                <span class="text-[10.5px] font-medium text-rose-700 uppercase tracking-wider block">Failed / Exceptions</span>
-                <span class="text-lg font-extrabold text-rose-700 tracking-tight font-mono">{{ number_format($failedCount) }}</span>
-                <span class="text-[10px] text-slate-400 block">Action errors & refusals</span>
-            </div>
-            <div class="w-6 h-6 rounded-md bg-rose-50 text-rose-600 flex items-center justify-center text-[10px] border border-rose-100 flex-shrink-0">
-                <i class="fas fa-circle-xmark"></i>
-            </div>
-        </div>
+        <x-owner.kpi-card title="Failed / Exceptions" :value="number_format($failedCount)" icon="fa-circle-xmark" theme="rose" meta="Action errors & refusals" />
 
-        <!-- Metric 4: Distinct Devices Interacted -->
-        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
-            <div class="space-y-0.5">
-                <span class="text-[10.5px] font-medium text-purple-700 uppercase tracking-wider block">Targeted Hardware</span>
-                <span class="text-lg font-extrabold text-purple-700 tracking-tight font-mono">{{ number_format($distinctDevicesCount) }}</span>
-                <span class="text-[10px] text-slate-400 block">Routers, OLTs & Hubs</span>
-            </div>
-            <div class="w-6 h-6 rounded-md bg-purple-50 text-purple-600 flex items-center justify-center text-[10px] border border-purple-100 flex-shrink-0">
-                <i class="fas fa-server"></i>
-            </div>
-        </div>
-        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs"><span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Success Rate</span><span class="text-[13px] font-bold font-mono leading-tight block text-emerald-700">{{ $totalCount > 0 ? number_format(($successCount / $totalCount) * 100, 1) : '0.0' }}%</span></div>
-        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs"><span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Device Types</span><span class="text-[13px] font-bold font-mono leading-tight block text-purple-700">{{ count($actionTypes) }}</span></div>
+        <x-owner.kpi-card title="Targeted Hardware" :value="number_format($distinctDevicesCount)" icon="fa-server" theme="purple" meta="Routers, OLTs & Hubs" />
+        <x-owner.kpi-card title="Success Rate" :value="($totalCount > 0 ? number_format(($successCount / $totalCount) * 100, 1) : '0.0') . '%'" icon="fa-chart-line" theme="emerald" />
+        <x-owner.kpi-card title="Device Types" :value="count($actionTypes)" icon="fa-layer-group" theme="slate" />
     </div>
 
     <!-- Filters & Forensic Search Bar -->

@@ -96,56 +96,12 @@
         </div>
     </div>
 
-    <!-- 4 Key Financial Metrics Strip -->
-    <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-        <div class="p-3.5 rounded-xl bg-white border border-slate-200 shadow-xs flex items-center justify-between">
-            <div class="space-y-0.5">
-                <span class="text-[10px] font-bold text-emerald-600 uppercase tracking-wider block">Total Realized Revenue</span>
-                <span class="text-lg font-extrabold text-emerald-700 tracking-tight font-mono">@currency($totalRevenue)</span>
-                <span class="text-[10px] text-slate-400 block">All-time Paid Invoices</span>
-            </div>
-            <div class="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm border border-emerald-100 flex-shrink-0">
-                <i class="fas fa-sack-dollar"></i>
-            </div>
-        </div>
-
-        <div class="p-3.5 rounded-xl bg-white border border-slate-200 shadow-xs flex items-center justify-between">
-            <div class="space-y-0.5">
-                <span class="text-[10px] font-bold text-blue-600 uppercase tracking-wider block">This Month's Realized</span>
-                <span class="text-lg font-extrabold text-blue-700 tracking-tight font-mono">@currency($thisMonthRevenue)</span>
-                <span class="text-[10px] text-blue-600 font-semibold block">{{ date('F Y') }} Collection</span>
-            </div>
-            <div class="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-sm border border-blue-100 flex-shrink-0">
-                <i class="fas fa-calendar-check"></i>
-            </div>
-        </div>
-
-        <div class="p-3.5 rounded-xl bg-white border border-slate-200 shadow-xs flex items-center justify-between">
-            <div class="space-y-0.5">
-                <span class="text-[10px] font-bold text-amber-600 uppercase tracking-wider block">Pending Receivables</span>
-                <div class="flex items-center gap-1.5">
-                    <span class="text-lg font-extrabold text-amber-700 tracking-tight font-mono">@currency($pendingRevenue)</span>
-                    @if($overdueCount > 0)
-                        <span class="px-1.5 py-0.2 rounded bg-rose-100 text-rose-800 text-[9.5px] font-bold">{{ $overdueCount }} Overdue</span>
-                    @endif
-                </div>
-                <span class="text-[10px] text-slate-400 block">Uncollected Subscription Dues</span>
-            </div>
-            <div class="w-9 h-9 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-sm border border-amber-100 flex-shrink-0">
-                <i class="fas fa-hourglass-half"></i>
-            </div>
-        </div>
-
-        <div class="p-3.5 rounded-xl bg-white border border-slate-200 shadow-xs flex items-center justify-between">
-            <div class="space-y-0.5">
-                <span class="text-[10px] font-bold text-purple-600 uppercase tracking-wider block">Estimated Platform MRR</span>
-                <span class="text-lg font-extrabold text-purple-700 tracking-tight font-mono">@currency($estimatedMrr)</span>
-                <span class="text-[10px] text-slate-400 block">Active Recurring Run-Rate</span>
-            </div>
-            <div class="w-9 h-9 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center text-sm border border-purple-100 flex-shrink-0">
-                <i class="fas fa-chart-line"></i>
-            </div>
-        </div>
+    <!-- Global KPI Cards -->
+    <div class="owner-kpi-grid">
+        <x-owner.kpi-card title="Total Realized Revenue" :value="currency($totalRevenue)" icon="fa-sack-dollar" theme="emerald" meta="All-time Paid Invoices" />
+        <x-owner.kpi-card title="This Month's Realized" :value="currency($thisMonthRevenue)" icon="fa-calendar-check" theme="blue" :meta="date('F Y') . ' Collection'" />
+        <x-owner.kpi-card title="Pending Receivables" :value="currency($pendingRevenue)" icon="fa-hourglass-half" theme="amber" :meta="($overdueCount > 0 ? $overdueCount . ' Overdue · ' : '') . 'Uncollected Subscription Dues'" />
+        <x-owner.kpi-card title="Estimated Platform MRR" :value="currency($estimatedMrr)" icon="fa-chart-line" theme="purple" meta="Active Recurring Run-Rate" />
     </div>
 
     <!-- Filter & Search Matrix -->
@@ -482,7 +438,7 @@
                             <select name="saas_plan_id" class="w-full px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 text-xs focus:ring-1 focus:ring-blue-500">
                                 <option value="">Tenant's Active Plan</option>
                                 @foreach($plans as $p)
-                                    <option value="{{ $p->id }}">{{ $p->name }} ({{ $currencySymbol ?? '৳' }}{{ number_format($p->monthly_price) }})</option>
+                                    <option value="{{ $p->id }}">{{ $p->name }} (@currency($p->monthly_price))</option>
                                 @endforeach
                             </select>
                         </div>

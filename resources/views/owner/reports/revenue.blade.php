@@ -31,57 +31,12 @@
         </div>
     </div>
 
-    <!-- 4 High-Density KPI Cards -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-2">
-        
-        <!-- Period Collected Income -->
-        <div class="p-2.5 rounded-lg bg-white border border-slate-200/90 shadow-2xs flex items-center justify-between">
-            <div class="min-w-0">
-                <span class="text-[9.5px] font-bold text-slate-500 uppercase tracking-wider block">Period Income</span>
-                <h3 class="text-sm font-bold text-emerald-600 font-mono tracking-tight mt-0.5">@currency($totalCollectedIncome)</h3>
-                <span class="text-[9.5px] text-slate-400 block truncate">{{ $totalInvoicesCount }} Invoices Processed</span>
-            </div>
-            <div class="w-7 h-7 rounded-md bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs border border-emerald-100 flex-shrink-0">
-                <i class="fas fa-coins text-[11px]"></i>
-            </div>
-        </div>
-
-        <!-- Estimated MRR -->
-        <div class="p-2.5 rounded-lg bg-white border border-slate-200/90 shadow-2xs flex items-center justify-between">
-            <div class="min-w-0">
-                <span class="text-[9.5px] font-bold text-slate-500 uppercase tracking-wider block">Current MRR</span>
-                <h3 class="text-sm font-bold text-slate-900 font-mono tracking-tight mt-0.5">@currency($currentMrr)</h3>
-                <span class="text-[9.5px] text-blue-600 font-medium block truncate">Monthly Subscription Run</span>
-            </div>
-            <div class="w-7 h-7 rounded-md bg-blue-50 text-blue-600 flex items-center justify-center text-xs border border-blue-100 flex-shrink-0">
-                <i class="fas fa-arrow-trend-up text-[11px]"></i>
-            </div>
-        </div>
-
-        <!-- Lifetime Revenue -->
-        <div class="p-2.5 rounded-lg bg-white border border-slate-200/90 shadow-2xs flex items-center justify-between">
-            <div class="min-w-0">
-                <span class="text-[9.5px] font-bold text-slate-500 uppercase tracking-wider block">Lifetime Collected</span>
-                <h3 class="text-sm font-bold text-slate-900 font-mono tracking-tight mt-0.5">@currency($lifetimeIncome)</h3>
-                <span class="text-[9.5px] text-slate-500 font-medium block truncate">Gross Platform Income</span>
-            </div>
-            <div class="w-7 h-7 rounded-md bg-purple-50 text-purple-600 flex items-center justify-center text-xs border border-purple-100 flex-shrink-0">
-                <i class="fas fa-vault text-[11px]"></i>
-            </div>
-        </div>
-
-        <!-- Outstanding Receivables -->
-        <div class="p-2.5 rounded-lg bg-white border border-slate-200/90 shadow-2xs flex items-center justify-between">
-            <div class="min-w-0">
-                <span class="text-[9.5px] font-bold text-slate-500 uppercase tracking-wider block">Outstanding Due</span>
-                <h3 class="text-sm font-bold text-rose-600 font-mono tracking-tight mt-0.5">@currency($totalOutstandingDue)</h3>
-                <span class="text-[9.5px] text-slate-400 block truncate">Unpaid & Overdue</span>
-            </div>
-            <div class="w-7 h-7 rounded-md bg-rose-50 text-rose-600 flex items-center justify-center text-xs border border-rose-100 flex-shrink-0">
-                <i class="fas fa-clock text-[11px]"></i>
-            </div>
-        </div>
-
+    <!-- Global KPI Cards -->
+    <div class="owner-kpi-grid">
+        <x-owner.kpi-card title="Period Income" :value="currency($totalCollectedIncome)" icon="fa-coins" theme="emerald" :meta="$totalInvoicesCount . ' Invoices Processed'" />
+        <x-owner.kpi-card title="Current MRR" :value="currency($currentMrr)" icon="fa-arrow-trend-up" theme="blue" meta="Monthly Subscription Run" />
+        <x-owner.kpi-card title="Lifetime Collected" :value="currency($lifetimeIncome)" icon="fa-vault" theme="purple" meta="Gross Platform Income" />
+        <x-owner.kpi-card title="Outstanding Due" :value="currency($totalOutstandingDue)" icon="fa-clock" theme="rose" meta="Unpaid & Overdue" />
     </div>
 
     <!-- Filter Control Bar -->
@@ -270,7 +225,7 @@
                                 @if($row->discount > 0)
                                     <span class="text-rose-500">-@currency($row->discount)</span>
                                 @else
-                                    <span>৳0.00</span>
+                                    <span>@currency(0)</span>
                                 @endif
                             </td>
                             <td class="px-3 py-2 text-center">
@@ -320,14 +275,15 @@
         
         const labels = @json($chartLabels);
         const data = @json($chartData);
+        const currencySymbol = @json($currencySymbol ?? ($globalSettings['currency_symbol'] ?? '৳'));
 
-        new Chart(ctx, {
+        const incomeTrendChart = new Chart(ctx, {
             type: 'bar',
             data: {
                 labels: labels,
                 datasets: [
                     {
-                        label: 'Income (BDT)',
+                        label: 'Income ({{ $currencyCode ?? ($globalSettings['currency_code'] ?? 'BDT') }})',
                         data: data,
                         backgroundColor: '#10b981',
                         borderRadius: 3,
@@ -348,7 +304,7 @@
                         cornerRadius: 4,
                         callbacks: {
                             label: function(context) {
-                                return 'Income: ৳' + context.raw.toLocaleString();
+                                return 'Income: ' + currencySymbol + context.raw.toLocaleString();
                             }
                         }
                     }
@@ -364,13 +320,21 @@
                             font: { size: 9 },
                             color: '#64748b',
                             callback: function(value) {
-                                return '৳' + value.toLocaleString();
+                                return currencySymbol + value.toLocaleString();
                             }
                         }
                     }
                 }
             }
         });
+
+        incomeTrendChart.options.plugins.tooltip.callbacks.label = function(context) {
+            return 'Income: ' + currencySymbol + context.raw.toLocaleString();
+        };
+        incomeTrendChart.options.scales.y.ticks.callback = function(value) {
+            return currencySymbol + value.toLocaleString();
+        };
+        incomeTrendChart.update();
     });
 </script>
 @endsection

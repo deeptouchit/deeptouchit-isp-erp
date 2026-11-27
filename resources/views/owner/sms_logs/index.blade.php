@@ -33,50 +33,14 @@
         </div>
     </div>
 
-    <!-- Analytics Metric Cards Strip -->
-    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
-        <div class="p-2.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
-            <div>
-                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Dispatched</span>
-                <span class="text-base font-extrabold text-slate-800 font-mono">{{ number_format($totalSmsCount) }} SMS</span>
-            </div>
-            <div class="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-sm">
-                <i class="fas fa-paper-plane"></i>
-            </div>
-        </div>
-
-        <div class="p-2.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between"><div><span class="text-[9px] font-medium uppercase tracking-wider block">Providers</span><span class="text-[13px] font-bold font-mono">Live</span></div><span class="w-6 h-6 rounded-md text-[10px] border flex items-center justify-center bg-cyan-50 text-cyan-600 border-cyan-100"><i class="fas fa-tower-broadcast"></i></span></div>
-        <div class="p-2.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between"><div><span class="text-[9px] font-medium uppercase tracking-wider block">Ledger</span><span class="text-[13px] font-bold font-mono">Active</span></div><span class="w-6 h-6 rounded-md text-[10px] border flex items-center justify-center bg-slate-50 text-slate-600 border-slate-100"><i class="fas fa-shield-halved"></i></span></div>
-
-        <div class="p-3.5 bg-white rounded-xl border border-slate-200/80 shadow-xs flex items-center justify-between">
-            <div>
-                <span class="text-[10px] font-bold text-emerald-600 uppercase tracking-wider block">Total Incurred Cost</span>
-                <span class="text-base font-extrabold text-emerald-700 font-mono">@currency($totalSmsCost)</span>
-            </div>
-            <div class="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm">
-                <i class="fas fa-coins"></i>
-            </div>
-        </div>
-
-        <div class="p-3.5 bg-white rounded-xl border border-slate-200/80 shadow-xs flex items-center justify-between">
-            <div>
-                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Delivered Rate</span>
-                <span class="text-base font-extrabold text-emerald-600 font-mono">{{ number_format($deliveredSmsCount) }}</span>
-            </div>
-            <div class="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm">
-                <i class="fas fa-check-double"></i>
-            </div>
-        </div>
-
-        <div class="p-3.5 bg-white rounded-xl border border-slate-200/80 shadow-xs flex items-center justify-between">
-            <div>
-                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Failed / Errors</span>
-                <span class="text-base font-extrabold text-rose-600 font-mono">{{ number_format($failedSmsCount) }}</span>
-            </div>
-            <div class="w-9 h-9 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center text-sm">
-                <i class="fas fa-circle-exclamation"></i>
-            </div>
-        </div>
+    <!-- Global KPI Cards -->
+    <div class="owner-kpi-grid">
+        <x-owner.kpi-card title="Total Dispatched" :value="number_format($totalSmsCount) . ' SMS'" icon="fa-paper-plane" theme="blue" />
+        <x-owner.kpi-card title="Providers" value="Live" icon="fa-tower-broadcast" theme="cyan" />
+        <x-owner.kpi-card title="Ledger" value="Active" icon="fa-shield-halved" theme="slate" />
+        <x-owner.kpi-card title="Total Incurred Cost" :value="currency($totalSmsCost)" icon="fa-coins" theme="emerald" />
+        <x-owner.kpi-card title="Delivered Rate" :value="number_format($deliveredSmsCount)" icon="fa-check-double" theme="emerald" />
+        <x-owner.kpi-card title="Failed / Errors" :value="number_format($failedSmsCount)" icon="fa-circle-exclamation" theme="rose" />
     </div>
 
     <!-- Filters Strip -->

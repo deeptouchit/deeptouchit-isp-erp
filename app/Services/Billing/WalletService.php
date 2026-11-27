@@ -59,7 +59,7 @@ class WalletService
             $wallet->save();
 
             $transaction = TenantWalletTransaction::create([
-                'wallet_id' => $wallet->id,
+                'tenant_wallet_id' => $wallet->id,
                 'tenant_id' => $tenant->id,
                 'transaction_type' => 'credit',
                 'amount' => $amount,
@@ -108,7 +108,7 @@ class WalletService
             $wallet->save();
 
             $transaction = TenantWalletTransaction::create([
-                'wallet_id' => $wallet->id,
+                'tenant_wallet_id' => $wallet->id,
                 'tenant_id' => $tenant->id,
                 'transaction_type' => 'debit',
                 'amount' => $amount,

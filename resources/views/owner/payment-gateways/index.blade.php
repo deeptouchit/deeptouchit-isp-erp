@@ -63,47 +63,12 @@
         </div>
     </div>
 
-    <!-- Real-time PGW Metrics Strip -->
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div class="bg-white p-3 rounded-xl border border-slate-200/80 shadow-xs flex items-center gap-2.5">
-            <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xs">
-                <i class="fas fa-toggle-on"></i>
-            </div>
-            <div>
-                <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Active Gateways</span>
-                <span class="text-xs font-bold text-slate-800 font-mono">{{ $activeGatewaysCount }} Active Channels</span>
-            </div>
-        </div>
-
-        <div class="bg-white p-3 rounded-xl border border-slate-200/80 shadow-xs flex items-center gap-2.5">
-            <div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs">
-                <i class="fas fa-coins"></i>
-            </div>
-            <div>
-                <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Base Settlement Currency</span>
-                <span class="text-xs font-bold text-slate-800 font-mono">{{ $settings['currency_code'] ?? 'BDT' }} ({{ $settings['currency_symbol'] ?? '৳' }})</span>
-            </div>
-        </div>
-
-        <div class="bg-white p-3 rounded-xl border border-slate-200/80 shadow-xs flex items-center gap-2.5">
-            <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs">
-                <i class="fas fa-receipt"></i>
-            </div>
-            <div>
-                <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Paid Online Invoices</span>
-                <span class="text-xs font-bold text-emerald-600 font-mono">৳ {{ number_format($paidInvoicesTotal, 2) }}</span>
-            </div>
-        </div>
-
-        <div class="bg-white p-3 rounded-xl border border-slate-200/80 shadow-xs flex items-center gap-2.5">
-            <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-xs">
-                <i class="fas fa-shield-halved"></i>
-            </div>
-            <div>
-                <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Environment Health</span>
-                <span class="text-xs font-bold text-slate-800">{{ $liveCount }} Live &bull; {{ $sandboxCount }} Sandbox</span>
-            </div>
-        </div>
+    <!-- Global KPI Cards -->
+    <div class="owner-kpi-grid">
+        <x-owner.kpi-card title="Active Gateways" :value="$activeGatewaysCount . ' Active Channels'" icon="fa-toggle-on" theme="blue" />
+        <x-owner.kpi-card title="Settlement Currency" :value="($settings['currency_code'] ?? 'BDT') . ' (' . ($settings['currency_symbol'] ?? '৳') . ')'" icon="fa-coins" theme="cyan" />
+        <x-owner.kpi-card title="Paid Online Invoices" :value="currency($paidInvoicesTotal)" icon="fa-receipt" theme="emerald" />
+        <x-owner.kpi-card title="Environment Health" :value="$liveCount . ' Live · ' . $sandboxCount . ' Sandbox'" icon="fa-shield-halved" theme="amber" />
     </div>
 
 
@@ -998,7 +963,7 @@ if (isset($response['GatewayPageURL'])) {
                 <select name="gateway" required class="w-full h-[34px] px-3 rounded-lg border border-slate-200 bg-slate-50 text-xs"><option value="">Select gateway</option>@foreach($gatewayRegistry as $gateway)<option value="{{ $gateway['key'] }}">{{ $gateway['name'] }}</option>@endforeach</select>
                 <select name="mode" class="w-full h-[34px] px-3 rounded-lg border border-slate-200 bg-slate-50 text-xs"><option value="sandbox">Sandbox</option><option value="live">Live</option><option value="test">Test</option><option value="manual">Manual</option></select>
                 <input name="name" x-model="gatewayForm.name" placeholder="Gateway name" class="w-full h-[34px] px-3 rounded-lg border border-slate-200 bg-slate-50 text-xs">
-                <div class="grid grid-cols-2 gap-2"><input name="app_key" placeholder="App Key / Store ID" class="h-[34px] px-3 rounded-lg border border-slate-200 bg-slate-50 text-xs"><input name="app_secret" type="password" placeholder="App Secret / Password" class="h-[34px] px-3 rounded-lg border border-slate-200 bg-slate-50 text-xs"><input name="username" placeholder="Username / Merchant ID" class="h-[34px] px-3 rounded-lg border border-slate-200 bg-slate-50 text-xs"><input name="password" type="password" placeholder="Password" class="h-[34px] px-3 rounded-lg border border-slate-200 bg-slate-50 text-xs"><input name="public_key" placeholder="Public Key" class="h-[34px] px-3 rounded-lg border border-slate-200 bg-slate-50 text-xs"><input name="private_key" placeholder="Private Key" class="h-[34px] px-3 rounded-lg border border-slate-200 bg-slate-50 text-xs"></div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2"><input name="app_key" placeholder="App Key / Store ID" class="h-[34px] px-3 rounded-lg border border-slate-200 bg-slate-50 text-xs"><input name="app_secret" type="password" placeholder="App Secret / Password" class="h-[34px] px-3 rounded-lg border border-slate-200 bg-slate-50 text-xs"><input name="username" placeholder="Username / Merchant ID" class="h-[34px] px-3 rounded-lg border border-slate-200 bg-slate-50 text-xs"><input name="password" type="password" placeholder="Password" class="h-[34px] px-3 rounded-lg border border-slate-200 bg-slate-50 text-xs"><input name="public_key" placeholder="Public Key" class="h-[34px] px-3 rounded-lg border border-slate-200 bg-slate-50 text-xs"><input name="private_key" placeholder="Private Key" class="h-[34px] px-3 rounded-lg border border-slate-200 bg-slate-50 text-xs"></div>
                 <input name="api_url" x-model="gatewayForm.api_url" placeholder="API URL" class="w-full h-[34px] px-3 rounded-lg border border-slate-200 bg-slate-50 text-xs"><input name="webhook_url" x-model="gatewayForm.webhook_url" placeholder="Webhook / IPN URL" class="w-full h-[34px] px-3 rounded-lg border border-slate-200 bg-slate-50 text-xs">
                 <input type="number" name="fee" x-model="gatewayForm.fee" step="0.01" min="0" max="100" placeholder="Transaction fee (%)" class="w-full h-[34px] px-3 rounded-lg border border-slate-200 bg-slate-50 text-xs">
                 <div class="flex justify-end gap-2"><button type="button" @click="showGatewayCreate=false" class="px-3 py-1.5 rounded-lg border text-xs">Cancel</button><button class="px-4 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-semibold">Save Gateway</button></div>

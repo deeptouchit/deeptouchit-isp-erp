@@ -19,6 +19,6 @@ class TenantWallet extends Model
 
     public function transactions()
     {
-        return $this->hasMany(TenantWalletTransaction::class, 'wallet_id');
+        return $this->hasMany(TenantWalletTransaction::class, 'tenant_wallet_id');
     }
 }

@@ -171,13 +171,14 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
-        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs"><span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Total Plans</span><span class="text-[13px] font-bold font-mono leading-tight block">{{ $plans->count() }}</span></div>
-        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs"><span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Active Plans</span><span class="text-[13px] font-bold font-mono leading-tight block text-emerald-700">{{ $activePlansCount }}</span></div>
-        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs"><span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Subscribers</span><span class="text-[13px] font-bold font-mono leading-tight block">{{ $totalSubscribers }}</span></div>
-        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs"><span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Starting Price</span><span class="text-[13px] font-bold font-mono leading-tight block">@currency($minPrice)</span></div>
-        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs"><span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Top Price</span><span class="text-[13px] font-bold font-mono leading-tight block">@currency($maxPrice)</span></div>
-        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs"><span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Popular Plan</span><span class="text-[13px] font-bold leading-tight block truncate">{{ $popularPlan->name ?? '—' }}</span></div>
+    <!-- Global KPI Cards -->
+    <div class="owner-kpi-grid">
+        <x-owner.kpi-card title="Total Plans" :value="$plans->count()" icon="fa-layer-group" theme="blue" />
+        <x-owner.kpi-card title="Active Plans" :value="$activePlansCount" icon="fa-circle-check" theme="emerald" />
+        <x-owner.kpi-card title="Subscribers" :value="$totalSubscribers" icon="fa-users" theme="cyan" />
+        <x-owner.kpi-card title="Starting Price" :value="currency($minPrice)" icon="fa-arrow-down-short-wide" theme="slate" />
+        <x-owner.kpi-card title="Top Price" :value="currency($maxPrice)" icon="fa-arrow-up-wide-short" theme="purple" />
+        <x-owner.kpi-card title="Popular Plan" :value="$popularPlan->name ?? '—'" icon="fa-star" theme="amber" />
     </div>
 
     <!-- Search & Filter Controls -->

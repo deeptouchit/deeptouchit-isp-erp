@@ -12,7 +12,7 @@
                 <i class="fas fa-layer-group"></i>
             </div>
             <div class="flex items-center gap-2">
-                <h2 class="text-xs font-bold text-slate-900 tracking-tight">Executive Dashboard</h2>
+                <h2 class="text-xs font-bold text-slate-900 tracking-tight">Overview Dashboard <span class="font-normal text-slate-400">· Executive Dashboard</span></h2>
                 <span class="inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[9px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                     <span class="w-1 h-1 rounded-full bg-emerald-500"></span>
                     Live
@@ -46,69 +46,16 @@
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-2">
         
         <!-- Estimated MRR -->
-        <div class="p-2.5 rounded-lg bg-white border border-slate-200/90 shadow-2xs flex items-center justify-between">
-            <div class="min-w-0">
-                <span class="text-[9.5px] font-bold text-slate-500 uppercase tracking-wider block">Estimated MRR</span>
-                <h3 class="text-sm font-bold text-slate-900 font-mono tracking-tight mt-0.5">@currency($mrr)</h3>
-                <span class="text-[9.5px] text-emerald-600 font-medium block truncate">Total: @currency($totalRevenue)</span>
-            </div>
-            <div class="w-7 h-7 rounded-md bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs border border-emerald-100 flex-shrink-0">
-                <i class="fas fa-coins text-[11px]"></i>
-            </div>
-        </div>
+        <x-owner.kpi-card title="Estimated MRR" :value="currency($mrr)" icon="fa-coins" theme="emerald" :meta="'Total: ' . currency($totalRevenue)" />
 
         <!-- ISP Tenants -->
-        <div class="p-2.5 rounded-lg bg-white border border-slate-200/90 shadow-2xs flex items-center justify-between">
-            <div class="min-w-0">
-                <span class="text-[9.5px] font-bold text-slate-500 uppercase tracking-wider block">ISP Tenants</span>
-                <div class="flex items-baseline gap-1 mt-0.5">
-                    <h3 class="text-sm font-bold text-slate-900 font-mono">{{ $totalTenants }}</h3>
-                    <span class="text-[9.5px] text-slate-400">Total</span>
-                </div>
-                <span class="text-[9.5px] text-slate-500 font-medium block truncate">
-                    <span class="text-emerald-600 font-semibold">{{ $activeTenants }} Active</span>
-                    @if($suspendedTenants > 0)
-                        • <span class="text-rose-600 font-semibold">{{ $suspendedTenants }} Off</span>
-                    @endif
-                </span>
-            </div>
-            <div class="w-7 h-7 rounded-md bg-blue-50 text-blue-600 flex items-center justify-center text-xs border border-blue-100 flex-shrink-0">
-                <i class="fas fa-building text-[11px]"></i>
-            </div>
-        </div>
+        <x-owner.kpi-card title="ISP Tenants" :value="$totalTenants" icon="fa-building" theme="blue" :meta="$activeTenants . ' Active' . ($suspendedTenants > 0 ? ' · ' . $suspendedTenants . ' Off' : '')" />
 
         <!-- Unpaid Invoices -->
-        <div class="p-2.5 rounded-lg bg-white border border-slate-200/90 shadow-2xs flex items-center justify-between">
-            <div class="min-w-0">
-                <span class="text-[9.5px] font-bold text-slate-500 uppercase tracking-wider block">Receivables</span>
-                <h3 class="text-sm font-bold text-slate-900 font-mono tracking-tight mt-0.5">@currency($pendingInvoicesAmount)</h3>
-                <span class="text-[9.5px] text-amber-600 font-medium block truncate">{{ $pendingInvoicesCount }} Pending Invoices</span>
-            </div>
-            <div class="w-7 h-7 rounded-md bg-amber-50 text-amber-600 flex items-center justify-center text-xs border border-amber-100 flex-shrink-0">
-                <i class="fas fa-receipt text-[11px]"></i>
-            </div>
-        </div>
+        <x-owner.kpi-card title="Receivables" :value="currency($pendingInvoicesAmount)" icon="fa-receipt" theme="amber" :meta="$pendingInvoicesCount . ' Pending Invoices'" />
 
         <!-- Support Desk -->
-        <div class="p-2.5 rounded-lg bg-white border border-slate-200/90 shadow-2xs flex items-center justify-between">
-            <div class="min-w-0">
-                <span class="text-[9.5px] font-bold text-slate-500 uppercase tracking-wider block">Support Desk</span>
-                <div class="flex items-baseline gap-1 mt-0.5">
-                    <h3 class="text-sm font-bold text-slate-900 font-mono">{{ $openTicketsCount }}</h3>
-                    <span class="text-[9.5px] text-slate-400">Tickets</span>
-                </div>
-                <span class="text-[9.5px] font-medium block truncate">
-                    @if($urgentTicketsCount > 0)
-                        <span class="text-rose-600 font-bold">{{ $urgentTicketsCount }} Urgent</span>
-                    @else
-                        <span class="text-slate-500">All caught up</span>
-                    @endif
-                </span>
-            </div>
-            <div class="w-7 h-7 rounded-md bg-purple-50 text-purple-600 flex items-center justify-center text-xs border border-purple-100 flex-shrink-0">
-                <i class="fas fa-headset text-[11px]"></i>
-            </div>
-        </div>
+        <x-owner.kpi-card title="Support Desk" :value="$openTicketsCount . ' Tickets'" icon="fa-headset" theme="purple" :meta="$urgentTicketsCount > 0 ? $urgentTicketsCount . ' Urgent' : 'All caught up'" />
 
     </div>
 
@@ -154,7 +101,7 @@
                         </div>
                     </div>
                     <div class="text-right">
-                        <span class="font-mono font-bold text-indigo-700 text-xs block leading-tight">{{ $smsBalanceInfo['formatted'] ?? '৳0.00' }}</span>
+                        <span class="font-mono font-bold text-indigo-700 text-xs block leading-tight">{{ $smsBalanceInfo['formatted'] ?? (($globalSettings['currency_symbol'] ?? '৳') . '0.00') }}</span>
                         <a href="{{ route('owner.sms-gateways.index') }}" class="text-[9px] font-semibold text-blue-600 hover:underline">Manage</a>
                     </div>
                 </div>
@@ -320,8 +267,9 @@
         const labels = @json($chartLabels);
         const revenueData = @json($chartRevenue);
         const tenantsData = @json($chartTenants);
+        const currencySymbol = @json($currencySymbol ?? ($globalSettings['currency_symbol'] ?? '৳'));
 
-        new Chart(ctx, {
+        const revenueTrendChart = new Chart(ctx, {
             type: 'line',
             data: {
                 labels: labels,
@@ -384,7 +332,7 @@
                             font: { size: 9 },
                             color: '#64748b',
                             callback: function(value) {
-                                return '৳' + value.toLocaleString();
+                                return currencySymbol + value.toLocaleString();
                             }
                         }
                     },

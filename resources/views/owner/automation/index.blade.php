@@ -43,55 +43,12 @@
         </div>
     </div>
 
-    <!-- Queue & Cron Health 4-Card Grid -->
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <!-- Card 1: Queue Pending Jobs -->
-        <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-base">
-                <i class="fas fa-layer-group"></i>
-            </div>
-            <div>
-                <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Pending Jobs</p>
-                <p class="text-lg font-black text-slate-900 font-mono">{{ number_format($queueHealth['pending_jobs']) }}</p>
-                <span class="text-[10px] text-slate-500">{{ $queueHealth['worker_status'] }}</span>
-            </div>
-        </div>
-
-        <!-- Card 2: Failed Jobs -->
-        <div class="bg-white p-3.5 rounded-xl border {{ $queueHealth['failed_jobs'] > 0 ? 'border-rose-300 bg-rose-50/20' : 'border-slate-200' }} shadow-xs flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl {{ $queueHealth['failed_jobs'] > 0 ? 'bg-rose-100 text-rose-600' : 'bg-slate-100 text-slate-500' }} flex items-center justify-center text-base">
-                <i class="fas fa-triangle-exclamation"></i>
-            </div>
-            <div>
-                <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Failed Jobs</p>
-                <p class="text-lg font-black {{ $queueHealth['failed_jobs'] > 0 ? 'text-rose-600' : 'text-slate-900' }} font-mono">{{ number_format($queueHealth['failed_jobs']) }}</p>
-                <span class="text-[10px] text-slate-500">{{ $queueHealth['failed_jobs'] > 0 ? 'Action required' : 'All clear' }}</span>
-            </div>
-        </div>
-
-        <!-- Card 3: Scheduler Heartbeat -->
-        <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl {{ $cronStatus === 'healthy' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600' }} flex items-center justify-center text-base">
-                <i class="fas fa-heart-pulse"></i>
-            </div>
-            <div>
-                <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Host Scheduler</p>
-                <p class="text-xs font-bold {{ $cronStatus === 'healthy' ? 'text-emerald-700' : 'text-amber-700' }}">{{ $cronStatusText }}</p>
-                <span class="text-[10px] text-slate-500 font-mono">{{ $heartbeatCarbon ? $heartbeatCarbon->diffForHumans() : 'Never' }}</span>
-            </div>
-        </div>
-
-        <!-- Card 4: Total Executions -->
-        <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-base">
-                <i class="fas fa-chart-line"></i>
-            </div>
-            <div>
-                <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Automation Runs</p>
-                <p class="text-lg font-black text-slate-900 font-mono">{{ number_format($totalRuns) }}</p>
-                <span class="text-[10px] text-emerald-600 font-semibold">{{ $successRuns }} Passed</span>
-            </div>
-        </div>
+    <!-- Global KPI Cards -->
+    <div class="owner-kpi-grid">
+        <x-owner.kpi-card title="Pending Jobs" :value="number_format($queueHealth['pending_jobs'])" icon="fa-layer-group" theme="blue" :meta="$queueHealth['worker_status']" />
+        <x-owner.kpi-card title="Failed Jobs" :value="number_format($queueHealth['failed_jobs'])" icon="fa-triangle-exclamation" :theme="$queueHealth['failed_jobs'] > 0 ? 'rose' : 'slate'" :meta="$queueHealth['failed_jobs'] > 0 ? 'Action required' : 'All clear'" />
+        <x-owner.kpi-card title="Host Scheduler" :value="$cronStatusText" icon="fa-heart-pulse" :theme="$cronStatus === 'healthy' ? 'emerald' : 'amber'" :meta="$heartbeatCarbon ? $heartbeatCarbon->diffForHumans() : 'Never'" />
+        <x-owner.kpi-card title="Automation Runs" :value="number_format($totalRuns)" icon="fa-chart-line" theme="purple" :meta="$successRuns . ' Passed'" />
     </div>
 
     <!-- 1. Live Cron Heartbeat & Server Setup Card -->

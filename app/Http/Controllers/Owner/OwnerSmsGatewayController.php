@@ -11,6 +11,7 @@ use App\Services\SmsService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class OwnerSmsGatewayController extends Controller
 {
@@ -27,10 +28,14 @@ class OwnerSmsGatewayController extends Controller
 
         $gateways = OwnerSmsGateway::query()->latest('is_active')->latest()->get();
         $activeGateway = $gateways->firstWhere('is_active', true);
-        $gatewaySmsCounts = SmsLog::query()
-            ->selectRaw('gateway_name, COUNT(*) as total')
-            ->groupBy('gateway_name')
-            ->pluck('total', 'gateway_name');
+        $gatewaySmsCounts = collect();
+        $hasGatewayNameColumn = Schema::hasColumn('sms_logs', 'gateway_name');
+        if ($hasGatewayNameColumn) {
+            $gatewaySmsCounts = SmsLog::query()
+                ->selectRaw('gateway_name, COUNT(*) as total')
+                ->groupBy('gateway_name')
+                ->pluck('total', 'gateway_name');
+        }
         $normalizedSmsCounts = $gatewaySmsCounts->mapWithKeys(
             fn ($count, $name) => [strtolower(preg_replace('/[^a-z0-9]+/i', '', (string) $name)) => (int) $count]
         );
@@ -59,10 +64,12 @@ class OwnerSmsGatewayController extends Controller
 
         if ($request->filled('search')) {
             $search = trim($request->search);
-            $query->where(function ($q) use ($search) {
+            $query->where(function ($q) use ($search, $hasGatewayNameColumn) {
                 $q->where('recipient_phone', 'like', "%{$search}%")
-                  ->orWhere('message_body', 'like', "%{$search}%")
-                  ->orWhere('gateway_name', 'like', "%{$search}%");
+                  ->orWhere('message_body', 'like', "%{$search}%");
+                if ($hasGatewayNameColumn) {
+                    $q->orWhere('gateway_name', 'like', "%{$search}%");
+                }
             });
         }
 

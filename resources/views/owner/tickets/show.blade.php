@@ -266,7 +266,7 @@
                         <span class="text-slate-400 text-[10.5px] block">Current SaaS Plan</span>
                         <div class="flex items-center justify-between mt-0.5">
                             <span class="font-bold text-blue-700">{{ $ticket->tenant?->plan?->name ?? 'Custom Plan' }}</span>
-                            <span class="font-mono text-slate-600 text-[11px]">৳{{ number_format($ticket->tenant?->plan?->price_monthly ?? 0) }}/mo</span>
+                            <span class="font-mono text-slate-600 text-[11px]">@currency($ticket->tenant?->plan?->price_monthly ?? 0)/mo</span>
                         </div>
                     </div>
 

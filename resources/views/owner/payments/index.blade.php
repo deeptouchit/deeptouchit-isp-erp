@@ -22,51 +22,12 @@
         </div>
     </div>
 
-    <!-- 4 Key Payment Metrics Strip -->
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div class="p-3.5 bg-white rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
-            <div class="space-y-0.5">
-                <span class="text-[10px] font-bold text-emerald-600 uppercase tracking-wider block">All-time Settled</span>
-                <span class="text-base font-extrabold text-emerald-700 tracking-tight font-mono">@currency($totalPaidAmount)</span>
-                <span class="text-[10px] text-slate-400 block">Total Realized Revenue</span>
-            </div>
-            <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs">
-                <i class="fas fa-sack-dollar"></i>
-            </div>
-        </div>
-
-        <div class="p-3.5 bg-white rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
-            <div class="space-y-0.5">
-                <span class="text-[10px] font-bold text-blue-600 uppercase tracking-wider block">This Month</span>
-                <span class="text-base font-extrabold text-blue-700 tracking-tight font-mono">@currency($thisMonthPaidAmount)</span>
-                <span class="text-[10px] text-slate-400 block">{{ date('F Y') }} Total</span>
-            </div>
-            <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xs">
-                <i class="fas fa-calendar-check"></i>
-            </div>
-        </div>
-
-        <div class="p-3.5 bg-white rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
-            <div class="space-y-0.5">
-                <span class="text-[10px] font-bold text-purple-600 uppercase tracking-wider block">Today's Collection</span>
-                <span class="text-base font-extrabold text-purple-700 tracking-tight font-mono">@currency($todayPaidAmount)</span>
-                <span class="text-[10px] text-slate-400 block">{{ date('d M, Y') }}</span>
-            </div>
-            <div class="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center text-xs">
-                <i class="fas fa-receipt"></i>
-            </div>
-        </div>
-
-        <div class="p-3.5 bg-white rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
-            <div class="space-y-0.5">
-                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Paid Receipts</span>
-                <span class="text-base font-extrabold text-slate-900 tracking-tight font-mono">{{ $totalPaidCount }}</span>
-                <span class="text-[10px] text-slate-400 block">Settled Invoices</span>
-            </div>
-            <div class="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center text-xs">
-                <i class="fas fa-file-invoice"></i>
-            </div>
-        </div>
+    <!-- Global KPI Cards -->
+    <div class="owner-kpi-grid">
+        <x-owner.kpi-card title="All-time Settled" :value="currency($totalPaidAmount)" icon="fa-sack-dollar" theme="emerald" meta="Total Realized Revenue" />
+        <x-owner.kpi-card title="This Month" :value="currency($thisMonthPaidAmount)" icon="fa-calendar-check" theme="blue" :meta="date('F Y') . ' Total'" />
+        <x-owner.kpi-card title="Today's Collection" :value="currency($todayPaidAmount)" icon="fa-receipt" theme="purple" :meta="date('d M, Y')" />
+        <x-owner.kpi-card title="Paid Receipts" :value="$totalPaidCount" icon="fa-file-invoice" theme="slate" meta="Settled Invoices" />
     </div>
 
     <!-- Filters -->

@@ -35,20 +35,13 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
-        @foreach([
-            ['Events', number_format($totalLogsCount), 'fa-list-check', 'purple'],
-            ['Today', number_format($logs->total()), 'fa-calendar-day', 'blue'],
-            ['Filtered', $logs->hasPages() ? 'Paged' : 'All', 'fa-filter', 'cyan'],
-            ['Tenants', number_format($tenants->count()), 'fa-building', 'emerald'],
-            ['Audit', 'Active', 'fa-shield-halved', 'amber'],
-            ['Access', 'Owner', 'fa-user-shield', 'slate'],
-        ] as [$label, $value, $icon, $color])
-            <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center gap-2">
-                <span class="w-6 h-6 rounded-md text-[10px] border flex items-center justify-center flex-shrink-0 bg-{{ $color }}-50 text-{{ $color }}-600 border-{{ $color }}-100"><i class="fas {{ $icon }}"></i></span>
-                <span class="min-w-0"><span class="text-[9px] font-medium uppercase tracking-wider block truncate">{{ $label }}</span><span class="text-[13px] font-bold font-mono leading-tight block truncate">{{ $value }}</span></span>
-            </div>
-        @endforeach
+    <div class="owner-kpi-grid">
+        <x-owner.kpi-card title="Events" :value="number_format($totalLogsCount)" icon="fa-list-check" theme="purple" />
+        <x-owner.kpi-card title="Today" :value="number_format($logs->total())" icon="fa-calendar-day" theme="blue" />
+        <x-owner.kpi-card title="Filtered" :value="$logs->hasPages() ? 'Paged' : 'All'" icon="fa-filter" theme="cyan" />
+        <x-owner.kpi-card title="Tenants" :value="number_format($tenants->count())" icon="fa-building" theme="emerald" />
+        <x-owner.kpi-card title="Audit" value="Active" icon="fa-shield-halved" theme="amber" />
+        <x-owner.kpi-card title="Access" value="Owner" icon="fa-user-shield" theme="slate" />
     </div>
 
     <!-- Filters Strip -->

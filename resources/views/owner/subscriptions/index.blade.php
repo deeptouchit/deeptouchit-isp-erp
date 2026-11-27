@@ -49,53 +49,13 @@
         </div>
     </div>
 
-    <!-- 5 Subscription State Metrics Strip -->
-    <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
-        <div class="p-3 bg-white rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
-            <div>
-                <span class="text-[10px] font-bold text-emerald-600 uppercase block">Active</span>
-                <span class="text-base font-extrabold text-slate-900 font-mono">{{ $activeCount }}</span>
-            </div>
-            <div class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs">
-                <i class="fas fa-check"></i>
-            </div>
-        </div>
-        <div class="p-3 bg-white rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
-            <div>
-                <span class="text-[10px] font-bold text-blue-600 uppercase block">Trial</span>
-                <span class="text-base font-extrabold text-slate-900 font-mono">{{ $trialCount }}</span>
-            </div>
-            <div class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xs">
-                <i class="fas fa-flask"></i>
-            </div>
-        </div>
-        <div class="p-3 bg-white rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
-            <div>
-                <span class="text-[10px] font-bold text-amber-600 uppercase block">Grace Period</span>
-                <span class="text-base font-extrabold text-amber-700 font-mono">{{ $gracePeriodCount }}</span>
-            </div>
-            <div class="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-xs">
-                <i class="fas fa-clock"></i>
-            </div>
-        </div>
-        <div class="p-3 bg-white rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
-            <div>
-                <span class="text-[10px] font-bold text-rose-600 uppercase block">Suspended</span>
-                <span class="text-base font-extrabold text-rose-700 font-mono">{{ $suspendedCount }}</span>
-            </div>
-            <div class="w-7 h-7 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center text-xs">
-                <i class="fas fa-lock"></i>
-            </div>
-        </div>
-        <div class="p-3 bg-white rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
-            <div>
-                <span class="text-[10px] font-bold text-purple-600 uppercase block">Auto Renew</span>
-                <span class="text-base font-extrabold text-purple-700 font-mono">{{ $autoRenewCount }}</span>
-            </div>
-            <div class="w-7 h-7 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center text-xs">
-                <i class="fas fa-sync-alt"></i>
-            </div>
-        </div>
+    <!-- Global KPI Cards -->
+    <div class="owner-kpi-grid">
+        <x-owner.kpi-card title="Active" :value="$activeCount" icon="fa-check" theme="emerald" />
+        <x-owner.kpi-card title="Trial" :value="$trialCount" icon="fa-flask" theme="blue" />
+        <x-owner.kpi-card title="Grace Period" :value="$gracePeriodCount" icon="fa-clock" theme="amber" />
+        <x-owner.kpi-card title="Suspended" :value="$suspendedCount" icon="fa-lock" theme="rose" />
+        <x-owner.kpi-card title="Auto Renew" :value="$autoRenewCount" icon="fa-sync-alt" theme="purple" />
     </div>
 
     <!-- Filters -->

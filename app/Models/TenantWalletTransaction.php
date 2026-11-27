@@ -14,7 +14,7 @@ class TenantWalletTransaction extends Model
 
     public function wallet()
     {
-        return $this->belongsTo(TenantWallet::class, 'wallet_id');
+        return $this->belongsTo(TenantWallet::class, 'tenant_wallet_id');
     }
 
     public function tenant()

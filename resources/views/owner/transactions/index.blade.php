@@ -32,51 +32,12 @@
         </div>
     </div>
 
-    <!-- 4 Key Transaction Metrics Strip -->
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div class="p-3.5 bg-white rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
-            <div class="space-y-0.5">
-                <span class="text-[10px] font-bold text-emerald-600 uppercase tracking-wider block">Successful Handshakes</span>
-                <span class="text-base font-extrabold text-emerald-700 tracking-tight font-mono">{{ $successfulCount }}</span>
-                <span class="text-[10px] text-slate-400 block">@currency($successfulVolume) Volume</span>
-            </div>
-            <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs">
-                <i class="fas fa-check-double"></i>
-            </div>
-        </div>
-
-        <div class="p-3.5 bg-white rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
-            <div class="space-y-0.5">
-                <span class="text-[10px] font-bold text-amber-600 uppercase tracking-wider block">Pending Sessions</span>
-                <span class="text-base font-extrabold text-amber-700 tracking-tight font-mono">{{ $pendingCount }}</span>
-                <span class="text-[10px] text-slate-400 block">Awaiting Verification</span>
-            </div>
-            <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-xs">
-                <i class="fas fa-spinner"></i>
-            </div>
-        </div>
-
-        <div class="p-3.5 bg-white rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
-            <div class="space-y-0.5">
-                <span class="text-[10px] font-bold text-rose-600 uppercase tracking-wider block">Failed / Cancelled</span>
-                <span class="text-base font-extrabold text-rose-700 tracking-tight font-mono">{{ $failedCount }}</span>
-                <span class="text-[10px] text-slate-400 block">Aborted Handshakes</span>
-            </div>
-            <div class="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center text-xs">
-                <i class="fas fa-triangle-exclamation"></i>
-            </div>
-        </div>
-
-        <div class="p-3.5 bg-white rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
-            <div class="space-y-0.5">
-                <span class="text-[10px] font-bold text-blue-600 uppercase tracking-wider block">Total Attempts</span>
-                <span class="text-base font-extrabold text-slate-900 tracking-tight font-mono">{{ $totalTransactions }}</span>
-                <span class="text-[10px] text-slate-400 block">Gateway Calls</span>
-            </div>
-            <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xs">
-                <i class="fas fa-network-wired"></i>
-            </div>
-        </div>
+    <!-- Global KPI Cards -->
+    <div class="owner-kpi-grid">
+        <x-owner.kpi-card title="Successful Handshakes" :value="$successfulCount" icon="fa-check-double" theme="emerald" :meta="currency($successfulVolume) . ' Volume'" />
+        <x-owner.kpi-card title="Pending Sessions" :value="$pendingCount" icon="fa-spinner" theme="amber" meta="Awaiting Verification" />
+        <x-owner.kpi-card title="Failed / Cancelled" :value="$failedCount" icon="fa-triangle-exclamation" theme="rose" meta="Aborted Handshakes" />
+        <x-owner.kpi-card title="Total Attempts" :value="$totalTransactions" icon="fa-network-wired" theme="blue" meta="Gateway Calls" />
     </div>
 
     <!-- Filters -->

@@ -55,36 +55,14 @@
         </div>
     @endif
 
-    <!-- Active Mail Engine Summary Strip -->
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div class="bg-white p-3 rounded-xl border border-slate-200/80 shadow-xs">
-            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">SMTP Server</span>
-            <span class="text-xs font-bold text-slate-800 font-mono">{{ $settings['mail_host'] ?? 'mail.somitysoft.com' }}:{{ $settings['mail_port'] ?? '465' }}</span>
-        </div>
-
-        <div class="bg-white p-3 rounded-xl border border-slate-200/80 shadow-xs">
-            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Encryption</span>
-            <span class="text-xs font-bold text-slate-800 font-mono uppercase">{{ $settings['mail_encryption'] ?? 'SSL' }}</span>
-        </div>
-
-        <div class="bg-white p-3 rounded-xl border border-slate-200/80 shadow-xs">
-            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Active Billing Mailbox</span>
-            <span class="text-xs font-bold text-blue-600 font-mono">{{ $settings['billing_email'] ?? $settings['mail_username'] ?? 'billing@somitysoft.com' }}</span>
-        </div>
-
-        <div class="bg-white p-3 rounded-xl border border-slate-200/80 shadow-xs">
-            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Sender Display</span>
-            <span class="text-xs font-bold text-slate-800 truncate block">{{ $settings['mail_from_name'] ?? 'SomitySoft Billing' }}</span>
-        </div>
-
-        <div class="bg-white p-3 rounded-xl border border-slate-200/80 shadow-xs">
-            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Health Checks</span>
-            <span class="text-xs font-bold text-slate-800 font-mono">{{ $mailHealth['total'] }}</span>
-        </div>
-        <div class="bg-white p-3 rounded-xl border border-slate-200/80 shadow-xs">
-            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Passed / Failed</span>
-            <span class="text-xs font-bold text-emerald-600 font-mono">{{ $mailHealth['passed'] }} / <span class="text-rose-600">{{ $mailHealth['failed'] }}</span></span>
-        </div>
+    <!-- Global KPI Cards -->
+    <div class="owner-kpi-grid">
+        <x-owner.kpi-card title="SMTP Server" :value="($settings['mail_host'] ?? 'mail.somitysoft.com') . ':' . ($settings['mail_port'] ?? '465')" icon="fa-server" theme="blue" />
+        <x-owner.kpi-card title="Encryption" :value="strtoupper($settings['mail_encryption'] ?? 'SSL')" icon="fa-lock" theme="cyan" />
+        <x-owner.kpi-card title="Billing Mailbox" :value="$settings['billing_email'] ?? $settings['mail_username'] ?? 'billing@somitysoft.com'" icon="fa-inbox" theme="purple" />
+        <x-owner.kpi-card title="Sender Display" :value="$settings['mail_from_name'] ?? 'SomitySoft Billing'" icon="fa-signature" theme="slate" />
+        <x-owner.kpi-card title="Health Checks" :value="$mailHealth['total']" icon="fa-heart-pulse" theme="emerald" />
+        <x-owner.kpi-card title="Passed / Failed" :value="$mailHealth['passed'] . ' / ' . $mailHealth['failed']" icon="fa-chart-simple" theme="amber" />
     </div>
 
     <!-- MAIN DOMAIN MAIL CONFIGURATION FORM -->

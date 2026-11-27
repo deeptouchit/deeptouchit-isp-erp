@@ -34,75 +34,14 @@
         </div>
     </div>
 
-    <!-- 2. KPI Summary Strip (Strictly 6 Cards) -->
-    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
-        
-        <!-- Card 1: Total Users -->
-        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
-            <div class="overflow-hidden">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Total Users</span>
-                <span class="text-[13px] font-bold font-mono leading-tight block text-slate-800">{{ number_format($totalUsers) }}</span>
-            </div>
-            <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 flex items-center justify-center bg-blue-50 text-blue-600 border-blue-100">
-                <i class="fas fa-users"></i>
-            </div>
-        </div>
-
-        <!-- Card 2: Super Admins -->
-        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
-            <div class="overflow-hidden">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-purple-700">Platform Owners</span>
-                <span class="text-[13px] font-bold font-mono leading-tight block text-purple-700">{{ number_format($superAdmins) }}</span>
-            </div>
-            <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 flex items-center justify-center bg-purple-50 text-purple-600 border-purple-100">
-                <i class="fas fa-crown"></i>
-            </div>
-        </div>
-
-        <!-- Card 3: ISP Admins -->
-        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
-            <div class="overflow-hidden">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-indigo-700">ISP Admins</span>
-                <span class="text-[13px] font-bold font-mono leading-tight block text-indigo-700">{{ number_format($ispAdmins) }}</span>
-            </div>
-            <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 flex items-center justify-center bg-indigo-50 text-indigo-600 border-indigo-100">
-                <i class="fas fa-shield-halved"></i>
-            </div>
-        </div>
-
-        <!-- Card 4: ISP Staff & NOC -->
-        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
-            <div class="overflow-hidden">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-emerald-700">Staff & Techs</span>
-                <span class="text-[13px] font-bold font-mono leading-tight block text-emerald-700">{{ number_format($ispStaff) }}</span>
-            </div>
-            <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 flex items-center justify-center bg-emerald-50 text-emerald-600 border-emerald-100">
-                <i class="fas fa-user-gear"></i>
-            </div>
-        </div>
-
-        <!-- Card 5: Sub-ISP Resellers -->
-        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
-            <div class="overflow-hidden">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-amber-700">Reseller Users</span>
-                <span class="text-[13px] font-bold font-mono leading-tight block text-amber-700">{{ number_format($resellers) }}</span>
-            </div>
-            <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 flex items-center justify-center bg-amber-50 text-amber-600 border-amber-100">
-                <i class="fas fa-handshake"></i>
-            </div>
-        </div>
-
-        <!-- Card 6: Active Ratio -->
-        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
-            <div class="overflow-hidden">
-                <span class="text-[9px] font-medium uppercase tracking-wider block truncate text-teal-700">Active Accounts</span>
-                <span class="text-[13px] font-bold font-mono leading-tight block text-teal-700">{{ number_format($activeUsers) }}</span>
-            </div>
-            <div class="w-6 h-6 rounded-md text-[10px] border flex-shrink-0 flex items-center justify-center bg-teal-50 text-teal-600 border-teal-100">
-                <i class="fas fa-circle-check"></i>
-            </div>
-        </div>
-
+    <!-- Global KPI Cards -->
+    <div class="owner-kpi-grid">
+        <x-owner.kpi-card title="Total Users" :value="number_format($totalUsers)" icon="fa-users" theme="blue" />
+        <x-owner.kpi-card title="Platform Owners" :value="number_format($superAdmins)" icon="fa-crown" theme="purple" />
+        <x-owner.kpi-card title="ISP Admins" :value="number_format($ispAdmins)" icon="fa-shield-halved" theme="cyan" />
+        <x-owner.kpi-card title="Staff & Techs" :value="number_format($ispStaff)" icon="fa-user-gear" theme="emerald" />
+        <x-owner.kpi-card title="Reseller Users" :value="number_format($resellers)" icon="fa-handshake" theme="amber" />
+        <x-owner.kpi-card title="Active Accounts" :value="number_format($activeUsers)" icon="fa-circle-check" theme="cyan" />
     </div>
 
     <!-- 3. Search & Multi-Filter Toolbar -->

@@ -40,47 +40,12 @@
     </div>
 
 
-    <!-- Security Status Badges Strip -->
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-        <div class="bg-white p-2.5 rounded-xl border border-slate-200/80 shadow-2xs flex items-center gap-2.5">
-            <div class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs">
-                <i class="fas fa-lock"></i>
-            </div>
-            <div>
-                <div class="text-[10px] text-slate-400 font-medium">SSL / HTTPS Enforced</div>
-                <div class="text-xs font-bold text-emerald-700">Active & Encrypted</div>
-            </div>
-        </div>
-
-        <div class="bg-white p-2.5 rounded-xl border border-slate-200/80 shadow-2xs flex items-center gap-2.5">
-            <div class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xs">
-                <i class="fas fa-fire"></i>
-            </div>
-            <div>
-                <div class="text-[10px] text-slate-400 font-medium">Rate Limiter Shield</div>
-                <div class="text-xs font-bold text-slate-800">{{ $settings['max_login_attempts'] ?? '5' }} Attempts / 15m</div>
-            </div>
-        </div>
-
-        <div class="bg-white p-2.5 rounded-xl border border-slate-200/80 shadow-2xs flex items-center gap-2.5">
-            <div class="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs">
-                <i class="fas fa-key"></i>
-            </div>
-            <div>
-                <div class="text-[10px] text-slate-400 font-medium">2FA Authentication</div>
-                <div class="text-xs font-bold text-slate-800">{{ ($settings['enforce_2fa_admins'] ?? '0') == '1' ? 'Enforced' : 'Optional' }}</div>
-            </div>
-        </div>
-
-        <div class="bg-white p-2.5 rounded-xl border border-slate-200/80 shadow-2xs flex items-center gap-2.5">
-            <div class="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-xs">
-                <i class="fas fa-cloud-arrow-up"></i>
-            </div>
-            <div>
-                <div class="text-[10px] text-slate-400 font-medium">Automated Backups</div>
-                <div class="text-xs font-bold text-slate-800">{{ ucfirst($settings['backup_frequency'] ?? 'Daily') }} Active</div>
-            </div>
-        </div>
+    <!-- Global KPI Cards -->
+    <div class="owner-kpi-grid">
+        <x-owner.kpi-card title="SSL / HTTPS" value="Active & Encrypted" icon="fa-lock" theme="emerald" />
+        <x-owner.kpi-card title="Rate Limiter" :value="($settings['max_login_attempts'] ?? '5') . ' Attempts / 15m'" icon="fa-fire" theme="blue" />
+        <x-owner.kpi-card title="2FA Authentication" :value="($settings['enforce_2fa_admins'] ?? '0') == '1' ? 'Enforced' : 'Optional'" icon="fa-key" theme="cyan" />
+        <x-owner.kpi-card title="Automated Backups" :value="ucfirst($settings['backup_frequency'] ?? 'Daily') . ' Active'" icon="fa-cloud-arrow-up" theme="amber" />
     </div>
 
     <!-- Navigation Tabs -->

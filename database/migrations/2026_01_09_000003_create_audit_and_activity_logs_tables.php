@@ -32,7 +32,7 @@ return new class extends Migration
         if (!Schema::hasTable('sms_logs')) {
             Schema::create('sms_logs', function (Blueprint $table) {
                 $table->id();
-                $table->foreignId('tenant_id')->constrained('tenants')->cascadeOnDelete();
+                $table->foreignId('tenant_id')->nullable()->constrained('tenants')->cascadeOnDelete();
                 $table->foreignId('customer_id')->nullable()->constrained('tenant_customers')->nullOnDelete();
                 $table->string('recipient', 50);
                 $table->text('message');

@@ -28,68 +28,14 @@
 }">
 
 
-    <!-- KPI Metrics Grid -->
-    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
-        <!-- 1. Total Tickets -->
-        <div class="p-3 rounded-xl bg-white border border-slate-200 shadow-xs flex items-center justify-between">
-            <div>
-                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Tickets</span>
-                <h3 class="text-lg font-bold text-slate-800 mt-0.5">{{ number_format($stats['total']) }}</h3>
-            </div>
-            <div class="w-8 h-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-600 flex items-center justify-center text-xs">
-                <i class="fas fa-ticket"></i>
-            </div>
-        </div>
-
-        <!-- 2. Open / In Progress -->
-        <div class="p-3 rounded-xl bg-white border border-blue-200 shadow-xs flex items-center justify-between bg-gradient-to-br from-white to-blue-50/40">
-            <div>
-                <span class="text-[10px] font-bold text-blue-600 uppercase tracking-wider">Active Open</span>
-                <h3 class="text-lg font-bold text-blue-800 mt-0.5">{{ number_format($stats['open']) }}</h3>
-            </div>
-            <div class="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center text-xs">
-                <i class="fas fa-folder-open"></i>
-            </div>
-        </div>
-
-        <!-- 3. Awaiting Reply -->
-        <div class="p-3 rounded-xl bg-white border border-amber-200 shadow-xs flex items-center justify-between bg-gradient-to-br from-white to-amber-50/40">
-            <div>
-                <span class="text-[10px] font-bold text-amber-600 uppercase tracking-wider">Pending Reply</span>
-                <h3 class="text-lg font-bold text-amber-800 mt-0.5">{{ number_format($stats['awaiting_reply']) }}</h3>
-            </div>
-            <div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center text-xs">
-                <i class="fas fa-reply-all"></i>
-            </div>
-        </div>
-
-        <!-- 4. Urgent Priority -->
-        <div class="p-3 rounded-xl bg-white border border-rose-200 shadow-xs flex items-center justify-between bg-gradient-to-br from-white to-rose-50/40">
-            <div>
-                <span class="text-[10px] font-bold text-rose-600 uppercase tracking-wider">Urgent Attention</span>
-                <h3 class="text-lg font-bold text-rose-800 mt-0.5">{{ number_format($stats['urgent']) }}</h3>
-            </div>
-            <div class="w-8 h-8 rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center text-xs">
-                <i class="fas fa-fire"></i>
-            </div>
-        </div>
-
-        <!-- 5. Resolved / Closed -->
-        <div class="p-3 rounded-xl bg-white border border-emerald-200 shadow-xs flex items-center justify-between bg-gradient-to-br from-white to-emerald-50/40 col-span-2 sm:col-span-1">
-            <div>
-                <span class="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Resolved</span>
-                <h3 class="text-lg font-bold text-emerald-800 mt-0.5">{{ number_format($stats['resolved']) }}</h3>
-            </div>
-            <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs">
-                <i class="fas fa-circle-check"></i>
-            </div>
-        </div>
-
-        <!-- 6. Departments -->
-        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
-            <div><span class="text-[9px] font-medium text-slate-500 uppercase tracking-wider block truncate">Departments</span><span class="text-[13px] font-bold font-mono leading-tight block text-indigo-700">{{ number_format($stats['departments']) }}</span></div>
-            <div class="w-6 h-6 rounded-md bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center justify-center text-[10px] flex-shrink-0"><i class="fas fa-layer-group"></i></div>
-        </div>
+    <!-- Global KPI Cards -->
+    <div class="owner-kpi-grid">
+        <x-owner.kpi-card title="Total Tickets" :value="number_format($stats['total'])" icon="fa-ticket" theme="slate" />
+        <x-owner.kpi-card title="Active Open" :value="number_format($stats['open'])" icon="fa-folder-open" theme="blue" />
+        <x-owner.kpi-card title="Pending Reply" :value="number_format($stats['awaiting_reply'])" icon="fa-reply-all" theme="amber" />
+        <x-owner.kpi-card title="Urgent Attention" :value="number_format($stats['urgent'])" icon="fa-fire" theme="rose" />
+        <x-owner.kpi-card title="Resolved" :value="number_format($stats['resolved'])" icon="fa-circle-check" theme="emerald" />
+        <x-owner.kpi-card title="Departments" :value="number_format($stats['departments'])" icon="fa-layer-group" theme="purple" />
     </div>
 
     <!-- Filters & Search Toolbar -->

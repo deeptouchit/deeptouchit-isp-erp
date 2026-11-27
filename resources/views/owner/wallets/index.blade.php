@@ -29,43 +29,14 @@
             </div>
     </div>
 
-    <!-- KPI Summary Strip -->
-    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
-        <div class="px-2.5 py-1.5 bg-white rounded-lg border border-slate-200 shadow-xs flex items-center justify-between">
-            <div class="space-y-0.5">
-                <span class="text-[10px] font-bold text-emerald-600 uppercase tracking-wider block">Total Held Credits</span>
-                <span class="text-lg font-extrabold text-emerald-700 tracking-tight font-mono">@currency($totalBalance)</span>
-                <span class="text-[10px] text-slate-400 block">All-time Advance Balances</span>
-            </div>
-            <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs">
-                <i class="fas fa-wallet"></i>
-            </div>
-        </div>
-
-        <div class="px-2.5 py-1.5 bg-white rounded-lg border border-slate-200 shadow-xs flex items-center justify-between">
-            <div class="space-y-0.5">
-                <span class="text-[10px] font-bold text-purple-600 uppercase tracking-wider block">Funded Wallets</span>
-                <span class="text-lg font-extrabold text-purple-700 tracking-tight font-mono">{{ $walletsWithBalanceCount }}</span>
-                <span class="text-[10px] text-slate-400 block">Tenants with Active Balance</span>
-            </div>
-            <div class="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center text-xs">
-                <i class="fas fa-coins"></i>
-            </div>
-        </div>
-
-        <div class="px-2.5 py-1.5 bg-white rounded-lg border border-slate-200 shadow-xs flex items-center justify-between">
-            <div class="space-y-0.5">
-                <span class="text-[10px] font-bold text-blue-600 uppercase tracking-wider block">Total Tenant Wallets</span>
-                <span class="text-lg font-extrabold text-slate-900 tracking-tight font-mono">{{ $totalWalletsCount }}</span>
-                <span class="text-[10px] text-slate-400 block">Provisioned Accounts</span>
-            </div>
-            <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xs">
-                <i class="fas fa-building-columns"></i>
-            </div>
-        </div>
-        <div class="px-2.5 py-1.5 bg-white rounded-lg border border-slate-200 shadow-xs"><span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Average Balance</span><span class="text-[13px] font-bold font-mono leading-tight block">@currency($totalWalletsCount ? $totalBalance / $totalWalletsCount : 0)</span></div>
-        <div class="px-2.5 py-1.5 bg-white rounded-lg border border-slate-200 shadow-xs"><span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Zero Balance</span><span class="text-[13px] font-bold font-mono leading-tight block text-slate-700">{{ $totalWalletsCount - $walletsWithBalanceCount }}</span></div>
-        <div class="px-2.5 py-1.5 bg-white rounded-lg border border-slate-200 shadow-xs"><span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Ledger Entries</span><span class="text-[13px] font-bold font-mono leading-tight block">{{ $ledgerEntriesCount }}</span></div>
+    <!-- Global KPI Cards -->
+    <div class="owner-kpi-grid">
+        <x-owner.kpi-card title="Total Held Credits" :value="currency($totalBalance)" icon="fa-wallet" theme="emerald" meta="All-time Advance Balances" />
+        <x-owner.kpi-card title="Funded Wallets" :value="$walletsWithBalanceCount" icon="fa-coins" theme="purple" meta="Tenants with Active Balance" />
+        <x-owner.kpi-card title="Total Tenant Wallets" :value="$totalWalletsCount" icon="fa-building-columns" theme="blue" meta="Provisioned Accounts" />
+        <x-owner.kpi-card title="Average Balance" :value="currency($totalWalletsCount ? $totalBalance / $totalWalletsCount : 0)" icon="fa-scale-balanced" theme="cyan" />
+        <x-owner.kpi-card title="Zero Balance" :value="$totalWalletsCount - $walletsWithBalanceCount" icon="fa-circle-minus" theme="amber" />
+        <x-owner.kpi-card title="Ledger Entries" :value="$ledgerEntriesCount" icon="fa-list-ol" theme="slate" />
     </div>
 
     <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5">

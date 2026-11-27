@@ -26,62 +26,19 @@
         </div>
     </div>
 
-    <!-- Top Statistics Strip -->
-    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+    <!-- Global KPI Cards -->
+    <div class="owner-kpi-grid">
         
-        <!-- Metric 1: Total Tenants -->
-        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
-            <div class="space-y-0.5">
-                <span class="text-[10.5px] font-medium text-slate-500 uppercase tracking-wider block">Total Tenants</span>
-                <span class="text-[13px] font-bold text-slate-900 leading-tight block">{{ number_format($totalTenants) }}</span>
-            </div>
-            <div class="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-sm border border-blue-100 flex-shrink-0">
-                <i class="fas fa-building"></i>
-            </div>
-        </div>
+        <x-owner.kpi-card title="Total Tenants" :value="number_format($totalTenants)" icon="fa-building" theme="blue" />
 
-        <!-- Metric 2: Active Subscriptions -->
-        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
-            <div class="space-y-0.5">
-                <span class="text-[10.5px] font-medium text-emerald-700 uppercase tracking-wider block">Active Licenses</span>
-                <span class="text-[13px] font-bold text-emerald-700 leading-tight block">{{ number_format($activeTenants) }}</span>
-            </div>
-            <div class="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm border border-emerald-100 flex-shrink-0">
-                <i class="fas fa-check-double"></i>
-            </div>
-        </div>
+        <x-owner.kpi-card title="Active Licenses" :value="number_format($activeTenants)" icon="fa-check-double" theme="emerald" />
 
-        <!-- Metric 3: Expired / Suspended -->
-        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
-            <div class="space-y-0.5">
-                <span class="text-[10.5px] font-medium text-rose-700 uppercase tracking-wider block">Suspended / Expired</span>
-                <div class="flex items-center gap-1.5">
-                    <span class="text-[13px] font-bold text-rose-700 leading-tight block">{{ number_format($suspendedTenants + $expiredTenants) }}</span>
-                    @if(($suspendedTenants + $expiredTenants) > 0)
-                        <span class="px-1.5 py-0.2 rounded bg-rose-100 text-rose-800 text-[9.5px] font-bold">Action Needed</span>
-                    @endif
-                </div>
-                <span class="text-[10px] text-slate-400 block">{{ $expiredTenants }} Expired • {{ $suspendedTenants }} Suspended</span>
-            </div>
-            <div class="w-9 h-9 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center text-sm border border-rose-100 flex-shrink-0">
-                <i class="fas fa-exclamation-triangle"></i>
-            </div>
-        </div>
+        <x-owner.kpi-card title="Suspended / Expired" :value="number_format($suspendedTenants + $expiredTenants)" icon="fa-exclamation-triangle" theme="rose" :meta="$expiredTenants . ' Expired · ' . $suspendedTenants . ' Suspended'" />
 
-        <!-- Metric 4: Estimated MRR -->
-        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between">
-            <div class="space-y-0.5">
-                <span class="text-[10.5px] font-medium text-purple-700 uppercase tracking-wider block">Estimated MRR</span>
-                <span class="text-[13px] font-bold text-purple-700 leading-tight block">@currency($estimatedMrr)</span>
-                <span class="text-[10px] text-slate-400 block">Monthly Platform Run-Rate</span>
-            </div>
-            <div class="w-9 h-9 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center text-sm border border-purple-100 flex-shrink-0">
-                <i class="fas fa-wallet"></i>
-            </div>
-        </div>
+        <x-owner.kpi-card title="Estimated MRR" :value="currency($estimatedMrr)" icon="fa-wallet" theme="purple" meta="Monthly Platform Run-Rate" />
 
-        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between"><div><span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">Expiring Soon</span><span class="text-[13px] font-bold text-amber-700 leading-tight block">{{ number_format($tenants->filter(fn($t) => $t->subscription_expires_at && $t->subscription_expires_at->isBetween(now(), now()->addDays(7)))->count()) }}</span></div><i class="fas fa-clock w-6 h-6 rounded-md text-[10px] border border-amber-100 bg-amber-50 text-amber-600 flex items-center justify-center"></i></div>
-        <div class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between"><div><span class="text-[9px] font-medium uppercase tracking-wider block truncate text-slate-500">MRR Currency</span><span class="text-[13px] font-bold text-cyan-700 leading-tight block">{{ $currencyCode ?? 'BDT' }}</span></div><i class="fas fa-coins w-6 h-6 rounded-md text-[10px] border border-cyan-100 bg-cyan-50 text-cyan-600 flex items-center justify-center"></i></div>
+        <x-owner.kpi-card title="Expiring Soon" :value="number_format($tenants->filter(fn($t) => $t->subscription_expires_at && $t->subscription_expires_at->isBetween(now(), now()->addDays(7)))->count())" icon="fa-clock" theme="amber" />
+        <x-owner.kpi-card title="MRR Currency" :value="$currencyCode ?? 'BDT'" icon="fa-coins" theme="cyan" />
     </div>
 
     <!-- Filter & Search Bar -->

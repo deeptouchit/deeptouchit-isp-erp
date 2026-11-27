@@ -67,7 +67,7 @@ class TenantOlt extends Model
                 break;
             }
         }
-        $this->attributes['snmp_community'] = $clean;
+        $this->attributes['snmp_community'] = !empty($clean) ? Crypt::encryptString($clean) : null;
     }
 
     /**

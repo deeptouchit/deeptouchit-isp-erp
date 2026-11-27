@@ -203,7 +203,7 @@ class AutomationEngineService
                         $wallet->save();
 
                         TenantWalletTransaction::create([
-                            'wallet_id' => $wallet->id,
+                            'tenant_wallet_id' => $wallet->id,
                             'tenant_id' => $tenant->id,
                             'type' => 'debit',
                             'amount' => $due,

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Owner;
 
 use App\Http\Controllers\Controller;
 use App\Models\PaymentTransaction;
+use App\Models\FinancialLedgerEntry;
 use App\Models\SaasInvoice;
 use App\Models\SaasPlan;
 use App\Models\Tenant;
@@ -374,6 +375,11 @@ class OwnerBillingController extends Controller
             ['balance' => 0, 'currency' => 'BDT']
         );
 
+        if (blank($wallet->currency)) {
+            $wallet->currency = Setting::get('currency_code', 'BDT');
+            $wallet->save();
+        }
+
         $amount = (float) $validated['amount'];
         $type = $validated['type'];
 
@@ -386,7 +392,7 @@ class OwnerBillingController extends Controller
         $wallet->save();
 
         TenantWalletTransaction::create([
-            'wallet_id' => $wallet->id,
+            'tenant_wallet_id' => $wallet->id,
             'tenant_id' => $tenant->id,
             'type' => $type,
             'amount' => $amount,
@@ -395,7 +401,8 @@ class OwnerBillingController extends Controller
             'reference' => 'ADJ-' . strtoupper(Str::random(6)),
         ]);
 
-        return back()->with('success', "Wallet {$type} adjustment of ৳" . number_format($amount, 2) . " processed successfully.");
+        $currencySymbol = Setting::get('currency_symbol', '৳');
+        return back()->with('success', "Wallet {$type} adjustment of {$currencySymbol}" . number_format($amount, 2) . " processed successfully.");
     }
 
     /**
@@ -403,6 +410,41 @@ class OwnerBillingController extends Controller
      */
     public function toggleStatus(SaasInvoice $invoice)
     {
+        if ($invoice->status === 'paid') {
+            DB::transaction(function () use ($invoice): void {
+                $invoice = SaasInvoice::query()->lockForUpdate()->findOrFail($invoice->id);
+                $settlementEntries = FinancialLedgerEntry::query()
+                    ->where('saas_invoice_id', $invoice->id)
+                    ->where('entry_type', 'invoice_settlement')
+                    ->get();
+
+                if ($settlementEntries->isNotEmpty()) {
+                    FinancialLedgerEntry::create([
+                        'tenant_id' => $invoice->tenant_id,
+                        'saas_invoice_id' => $invoice->id,
+                        'payment_transaction_id' => null,
+                        'entry_type' => 'invoice_settlement_reversal',
+                        'amount' => -1 * (float) $invoice->amount,
+                        'currency' => $invoice->currency ?? config('app.currency', 'BDT'),
+                        'reference' => 'REVERSAL-' . $invoice->id . '-' . Str::upper(Str::random(10)),
+                        'metadata' => ['source' => 'owner_invoice_toggle'],
+                        'created_by' => auth()->id(),
+                    ]);
+                }
+
+                $invoice->update([
+                    'status' => 'unpaid',
+                    'paid_at' => null,
+                    'paid_amount' => 0,
+                    'due_amount' => $invoice->amount,
+                    'trx_id' => null,
+                    'payment_method' => null,
+                ]);
+            });
+
+            return back()->with('success', "Invoice #{$invoice->invoice_no} has been marked unpaid.");
+        }
+
         $invoice = app(InvoiceSettlementService::class)->settle($invoice, auth()->id());
         return back()->with('success', "Invoice #{$invoice->invoice_no} has been settled and recorded in the ledger.");
     }

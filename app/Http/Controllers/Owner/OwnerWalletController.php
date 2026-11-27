@@ -77,8 +77,13 @@ class OwnerWalletController extends Controller
 
         $wallet = TenantWallet::firstOrCreate(
             ['tenant_id' => $tenant->id],
-            ['balance' => 0, 'currency' => Setting::whereNull('tenant_id')->where('key', 'currency_code')->value('value')]
+            ['balance' => 0, 'currency' => Setting::get('currency_code', 'BDT')]
         );
+
+        if (blank($wallet->currency)) {
+            $wallet->currency = Setting::get('currency_code', 'BDT');
+            $wallet->save();
+        }
 
         $amount = (float) $validated['amount'];
         $type = $validated['type'];
@@ -92,7 +97,7 @@ class OwnerWalletController extends Controller
         $wallet->save();
 
         TenantWalletTransaction::create([
-            'wallet_id' => $wallet->id,
+            'tenant_wallet_id' => $wallet->id,
             'tenant_id' => $tenant->id,
             'type' => $type,
             'amount' => $amount,
@@ -101,14 +106,16 @@ class OwnerWalletController extends Controller
             'reference' => 'ADJ-' . strtoupper(Str::random(6)),
         ]);
 
+        $currencySymbol = Setting::get('currency_symbol', '৳');
+
         // Record Audit Log
         app(\App\Services\Audit\TenantAuditService::class)->log(
             $tenant,
             'wallet_adjusted',
-            "Manual wallet {$type} of ৳" . number_format($amount, 2) . ". Description: {$validated['description']}",
+            "Manual wallet {$type} of {$currencySymbol}" . number_format($amount, 2) . ". Description: {$validated['description']}",
             ['type' => $type, 'amount' => $amount, 'new_balance' => $newBalance]
         );
 
-        return back()->with('success', "Wallet {$type} adjustment of ৳" . number_format($amount, 2) . " processed successfully for {$tenant->name}.");
+        return back()->with('success', "Wallet {$type} adjustment of {$currencySymbol}" . number_format($amount, 2) . " processed successfully for {$tenant->name}.");
     }
 }

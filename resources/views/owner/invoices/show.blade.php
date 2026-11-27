@@ -538,7 +538,7 @@
                 <input type="hidden" name="redirect_to" value="show">
 
                 <div>
-                    <label class="block font-semibold text-slate-700 text-[11px] mb-1">Invoice Amount (৳)</label>
+                    <label class="block font-semibold text-slate-700 text-[11px] mb-1">Invoice Amount ({{ $currencySymbol ?? ($globalSettings['currency_symbol'] ?? '৳') }})</label>
                     <input type="number" 
                            step="0.01" 
                            name="amount" 

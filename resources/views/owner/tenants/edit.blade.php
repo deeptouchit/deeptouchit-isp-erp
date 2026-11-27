@@ -121,7 +121,7 @@
                         <select name="saas_plan_id" required class="w-full px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 text-xs font-semibold">
                             @foreach ($plans as $plan)
                                 <option value="{{ $plan->id }}" {{ old('saas_plan_id', $tenant->saas_plan_id) == $plan->id ? 'selected' : '' }}>
-                                    {{ $plan->name }} ({{ $currencySymbol ?? '৳' }}{{ number_format($plan->monthly_price) }}/mo • Max {{ number_format($plan->customer_limit) }} Users)
+                                    {{ $plan->name }} (@currency($plan->monthly_price)/mo • Max {{ number_format($plan->customer_limit) }} Users)
                                 </option>
                             @endforeach
                         </select>

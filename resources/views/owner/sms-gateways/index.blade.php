@@ -6,8 +6,15 @@
         <div class="flex items-center gap-3"><span class="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center"><i class="fas fa-tower-broadcast"></i></span><h1 class="text-sm font-bold text-slate-800">SMS Gateways</h1></div>
         <div class="flex items-center gap-1.5"><button type="button" @click="showTestModal=true" class="h-[34px] px-3 rounded-lg bg-emerald-600 text-white text-xs font-semibold"><i class="fas fa-paper-plane mr-1"></i>Live Test SMS</button><a href="{{ route('owner.sms-gateways.balance') }}" class="h-[34px] px-3 rounded-lg bg-amber-500 text-white text-xs font-semibold flex items-center"><i class="fas fa-wallet mr-1"></i>Refresh Balance</a><button type="button" @click="openCreate()" class="h-[34px] px-3 rounded-lg bg-cyan-600 text-white text-xs font-semibold"><i class="fas fa-plus mr-1"></i>Add Gateway</button></div>
     </div>
-    <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-2">
-        @foreach([['Total gateways',$gateways->count(),'slate'],['Active gateway',$activeGateway?->name ?? 'Not set','emerald'],['Providers',$gateways->pluck('provider')->unique()->count(),'slate'],['Configured keys',$gateways->filter(fn($g)=>!empty($g->credentials['api_key']??null))->count(),'slate'],['SMS sent',number_format($totalSmsCount),'slate'],['Failed',number_format($failedSmsCount),'rose'],['Total SMS',number_format($totalSmsCount),'cyan'],['Total balance',number_format($totalGatewayBalance,2),'amber']] as $card)<div class="px-2.5 py-1.5 rounded-lg bg-{{ $card[2] }}-50 border border-{{ $card[2] }}-200 shadow-xs"><span class="text-[9px] uppercase text-{{ $card[2] }}-700">{{ $card[0] }}</span><b class="block text-[13px] font-mono text-{{ $card[2] }}-800 truncate">{{ $card[1] }}</b></div>@endforeach
+    <div class="owner-kpi-grid">
+        <x-owner.kpi-card title="Total Gateways" :value="$gateways->count()" icon="fa-tower-broadcast" theme="slate" />
+        <x-owner.kpi-card title="Active Gateway" :value="$activeGateway?->name ?? 'Not set'" icon="fa-circle-check" theme="emerald" />
+        <x-owner.kpi-card title="Providers" :value="$gateways->pluck('provider')->unique()->count()" icon="fa-layer-group" theme="slate" />
+        <x-owner.kpi-card title="Configured Keys" :value="$gateways->filter(fn($g) => !empty($g->credentials['api_key'] ?? null))->count()" icon="fa-key" theme="slate" />
+        <x-owner.kpi-card title="SMS Sent" :value="number_format($totalSmsCount)" icon="fa-paper-plane" theme="slate" />
+        <x-owner.kpi-card title="Failed" :value="number_format($failedSmsCount)" icon="fa-triangle-exclamation" theme="rose" />
+        <x-owner.kpi-card title="Total SMS" :value="number_format($totalSmsCount)" icon="fa-comment-dots" theme="cyan" />
+        <x-owner.kpi-card title="Total Balance" :value="number_format($totalGatewayBalance, 2)" icon="fa-wallet" theme="amber" />
     </div>
     <section class="bg-white rounded-xl border border-slate-200/90 shadow-xs overflow-hidden">
         <div class="px-4 py-3 bg-slate-50/80 border-b border-slate-200 flex justify-between"><div><h2 class="text-xs font-bold text-slate-800">Configured gateways</h2><span class="text-[10px] text-slate-500">Balance and delivery usage by gateway.</span></div><span class="text-[10px] text-slate-500">{{ $gateways->count() }} records</span></div>
