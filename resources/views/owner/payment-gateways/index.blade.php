@@ -8,6 +8,10 @@
     showGatewayCreate: false,
     editGateway: null,
     showGatewayDetails: null,
+    gatewayForm: { name: '', mode: 'sandbox', fee: '', api_url: '', webhook_url: '' },
+    syncGatewayForm(value) {
+        this.gatewayForm = value ? { name: value.name || '', mode: value.mode || 'sandbox', fee: value.fee ?? '', api_url: value.api_url || '', webhook_url: value.webhook_url || '' } : { name: '', mode: 'sandbox', fee: '', api_url: '', webhook_url: '' };
+    },
     showBkashSecret: false,
     showBkashPass: false,
     showNagadPriv: false,
@@ -29,7 +33,7 @@
             return (this.amount * (rate / 100)).toFixed(2);
         }
     }
-}">
+}" x-init="$watch('editGateway', value => syncGatewayForm(value))">
 
     <!-- Top Header & PGW Status -->
     <div class="bg-white rounded-xl border border-slate-200/80 shadow-xs p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -996,10 +1000,10 @@ if (isset($response['GatewayPageURL'])) {
             <form method="POST" action="{{ route('owner.payment-gateways.registry.store') }}" class="p-4 space-y-3">@csrf
                 <select name="gateway" required class="w-full h-[34px] px-3 rounded-lg border border-slate-200 bg-slate-50 text-xs"><option value="">Select gateway</option>@foreach($gatewayRegistry as $gateway)<option value="{{ $gateway['key'] }}">{{ $gateway['name'] }}</option>@endforeach</select>
                 <select name="mode" class="w-full h-[34px] px-3 rounded-lg border border-slate-200 bg-slate-50 text-xs"><option value="sandbox">Sandbox</option><option value="live">Live</option><option value="test">Test</option><option value="manual">Manual</option></select>
-                <input name="name" placeholder="Gateway name" class="w-full h-[34px] px-3 rounded-lg border border-slate-200 bg-slate-50 text-xs">
+                <input name="name" x-model="gatewayForm.name" placeholder="Gateway name" class="w-full h-[34px] px-3 rounded-lg border border-slate-200 bg-slate-50 text-xs">
                 <div class="grid grid-cols-2 gap-2"><input name="app_key" placeholder="App Key / Store ID" class="h-[34px] px-3 rounded-lg border border-slate-200 bg-slate-50 text-xs"><input name="app_secret" type="password" placeholder="App Secret / Password" class="h-[34px] px-3 rounded-lg border border-slate-200 bg-slate-50 text-xs"><input name="username" placeholder="Username / Merchant ID" class="h-[34px] px-3 rounded-lg border border-slate-200 bg-slate-50 text-xs"><input name="password" type="password" placeholder="Password" class="h-[34px] px-3 rounded-lg border border-slate-200 bg-slate-50 text-xs"><input name="public_key" placeholder="Public Key" class="h-[34px] px-3 rounded-lg border border-slate-200 bg-slate-50 text-xs"><input name="private_key" placeholder="Private Key" class="h-[34px] px-3 rounded-lg border border-slate-200 bg-slate-50 text-xs"></div>
-                <input name="api_url" placeholder="API URL" class="w-full h-[34px] px-3 rounded-lg border border-slate-200 bg-slate-50 text-xs"><input name="webhook_url" placeholder="Webhook / IPN URL" class="w-full h-[34px] px-3 rounded-lg border border-slate-200 bg-slate-50 text-xs">
-                <input type="number" name="fee" step="0.01" min="0" max="100" placeholder="Transaction fee (%)" class="w-full h-[34px] px-3 rounded-lg border border-slate-200 bg-slate-50 text-xs">
+                <input name="api_url" x-model="gatewayForm.api_url" placeholder="API URL" class="w-full h-[34px] px-3 rounded-lg border border-slate-200 bg-slate-50 text-xs"><input name="webhook_url" x-model="gatewayForm.webhook_url" placeholder="Webhook / IPN URL" class="w-full h-[34px] px-3 rounded-lg border border-slate-200 bg-slate-50 text-xs">
+                <input type="number" name="fee" x-model="gatewayForm.fee" step="0.01" min="0" max="100" placeholder="Transaction fee (%)" class="w-full h-[34px] px-3 rounded-lg border border-slate-200 bg-slate-50 text-xs">
                 <div class="flex justify-end gap-2"><button type="button" @click="showGatewayCreate=false" class="px-3 py-1.5 rounded-lg border text-xs">Cancel</button><button class="px-4 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-semibold">Save Gateway</button></div>
             </form>
         </div>
