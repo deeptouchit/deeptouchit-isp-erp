@@ -83,7 +83,7 @@ class OwnerPaymentGatewayController extends Controller
         });
 
         $gatewayRegistry = PaymentGateway::query()->orderBy('sort_order')->get()->map(function (PaymentGateway $gateway) use ($settings) {
-            $statusKey = $gateway->slug === 'sslcommerz' ? 'ssl_status' : $gateway->slug . '_status';
+            $statusKey = $gateway->slug === 'sslcommerz' ? 'ssl_status' : ($gateway->slug === 'bank_qr' ? 'bank_status' : $gateway->slug . '_status');
             return [
                 'key' => $gateway->slug,
                 'name' => $gateway->name,
@@ -198,7 +198,7 @@ class OwnerPaymentGatewayController extends Controller
     public function saveRegistryGateway(Request $request)
     {
         $data = $request->validate([
-            'gateway' => ['required', Rule::in(['bkash', 'nagad', 'rocket', 'sslcommerz', 'aamarpay', 'shurjopay', 'stripe', 'bank', 'mfs_manual'])],
+            'gateway' => ['required', Rule::in(['bkash', 'nagad', 'rocket', 'sslcommerz', 'aamarpay', 'shurjopay', 'stripe', 'bank', 'bank_qr', 'mfs_manual'])],
             'name' => ['nullable', 'string', 'max:100'],
             'mode' => ['nullable', Rule::in(['sandbox', 'test', 'live', 'manual'])],
             'fee' => ['nullable', 'numeric', 'min:0', 'max:100'],
@@ -210,7 +210,7 @@ class OwnerPaymentGatewayController extends Controller
             'webhook_url' => ['nullable', 'url:http,https', 'max:1000'],
         ]);
         $key = $data['gateway'];
-        $prefix = $key === 'sslcommerz' ? 'ssl' : $key;
+        $prefix = $key === 'sslcommerz' ? 'ssl' : ($key === 'bank_qr' ? 'bank' : $key);
         $credentialKeys = ['app_key', 'app_secret', 'username', 'password', 'merchant_id', 'public_key', 'private_key', 'store_id', 'store_password', 'signature_key', 'prefix', 'publishable_key', 'secret_key', 'webhook_secret', 'account_name', 'account_number', 'instructions'];
         $credentials = collect($credentialKeys)->mapWithKeys(fn ($credential) => [$credential => $request->input($credential)])->filter(fn ($value) => filled($value))->all();
         $gateway = PaymentGateway::firstOrNew(['slug' => $key]);
@@ -240,9 +240,9 @@ class OwnerPaymentGatewayController extends Controller
 
     public function toggleRegistryGateway(string $gateway)
     {
-        $allowed = ['bkash', 'nagad', 'rocket', 'sslcommerz', 'aamarpay', 'shurjopay', 'stripe', 'bank', 'mfs_manual'];
+        $allowed = ['bkash', 'nagad', 'rocket', 'sslcommerz', 'aamarpay', 'shurjopay', 'stripe', 'bank', 'bank_qr', 'mfs_manual'];
         abort_unless(in_array($gateway, $allowed, true), 404);
-        $prefix = $gateway === 'sslcommerz' ? 'ssl' : $gateway;
+        $prefix = $gateway === 'sslcommerz' ? 'ssl' : ($gateway === 'bank_qr' ? 'bank' : $gateway);
         $settings = Setting::getGroup('payment_gateways');
         $active = ($settings[$prefix . '_status'] ?? '0') === '1';
         Setting::set($prefix . '_status', $active ? '0' : '1', 'payment_gateways', null);
@@ -252,9 +252,9 @@ class OwnerPaymentGatewayController extends Controller
 
     public function deleteRegistryGateway(string $gateway)
     {
-        $allowed = ['bkash', 'nagad', 'rocket', 'sslcommerz', 'aamarpay', 'shurjopay', 'stripe', 'bank', 'mfs_manual'];
+        $allowed = ['bkash', 'nagad', 'rocket', 'sslcommerz', 'aamarpay', 'shurjopay', 'stripe', 'bank', 'bank_qr', 'mfs_manual'];
         abort_unless(in_array($gateway, $allowed, true), 404);
-        $prefix = $gateway === 'sslcommerz' ? 'ssl' : $gateway;
+        $prefix = $gateway === 'sslcommerz' ? 'ssl' : ($gateway === 'bank_qr' ? 'bank' : $gateway);
         Setting::set($prefix . '_status', '0', 'payment_gateways', null);
 
         return back()->with('success', ucfirst($gateway) . ' gateway disabled successfully.');
