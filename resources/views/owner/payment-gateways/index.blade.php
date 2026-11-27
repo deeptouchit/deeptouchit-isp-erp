@@ -102,6 +102,31 @@
     </div>
 
 
+    <!-- Payment Gateway Registry -->
+    <section class="bg-white rounded-xl border border-slate-200/90 shadow-xs overflow-hidden">
+        <div class="px-4 py-3 bg-slate-50/80 border-b border-slate-200 flex items-center justify-between">
+            <div class="flex items-center gap-2"><i class="fas fa-table-list text-blue-600"></i><h3 class="text-xs font-bold text-slate-800">Payment Gateway Registry</h3></div>
+            <span class="text-[10px] text-slate-500">{{ $gatewayRegistry->count() }} gateways</span>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="saas-table">
+                <thead><tr><th class="text-center">#</th><th class="text-left">Gateway</th><th class="text-center">Mode</th><th class="text-right">Fee</th><th class="text-center">Status</th><th class="text-center no-sort">Action</th></tr></thead>
+                <tbody>
+                @foreach($gatewayRegistry as $gateway)
+                    <tr>
+                        <td class="text-center font-mono text-slate-400">{{ $loop->iteration }}</td>
+                        <td class="text-left font-semibold">{{ $gateway['name'] }}</td>
+                        <td class="text-center uppercase">{{ $gateway['mode'] }}</td>
+                        <td class="text-right font-mono">{{ number_format($gateway['fee'], 2) }}%</td>
+                        <td class="text-center">@if($gateway['is_active'])<span class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-semibold">Active</span>@else<span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200 text-[10px] font-semibold">Inactive</span>@endif</td>
+                        <td class="text-center"><button type="button" @click="activeTab='gateways'; window.scrollTo({top: document.querySelector('[x-show=\"activeTab === \'gateways\'\"]')?.offsetTop || 0, behavior:'smooth'})" class="w-7 h-7 rounded-lg hover:bg-slate-100 text-slate-500"><i class="fas fa-ellipsis-v text-[11px]"></i></button></td>
+                    </tr>
+                @endforeach
+                </tbody>
+            </table>
+        </div>
+    </section>
+
     <!-- Test Result Notification if present -->
     @if(session('test_result'))
         @php $tr = session('test_result'); @endphp

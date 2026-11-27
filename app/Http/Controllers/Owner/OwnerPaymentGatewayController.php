@@ -64,6 +64,23 @@ class OwnerPaymentGatewayController extends Controller
         $paidInvoicesTotal = SaasInvoice::where('status', 'paid')->sum('amount');
         $paidInvoicesCount = SaasInvoice::where('status', 'paid')->count();
 
+        $gatewayRegistry = collect([
+            ['key' => 'bkash', 'name' => 'bKash', 'mode_key' => 'bkash_mode', 'status_key' => 'bkash_status', 'fee_key' => 'bkash_fee_percent'],
+            ['key' => 'nagad', 'name' => 'Nagad', 'mode_key' => 'nagad_mode', 'status_key' => 'nagad_status', 'fee_key' => 'nagad_fee_percent'],
+            ['key' => 'sslcommerz', 'name' => 'SSLCommerz', 'mode_key' => 'ssl_mode', 'status_key' => 'ssl_status', 'fee_key' => 'ssl_fee_percent'],
+            ['key' => 'aamarpay', 'name' => 'AamarPay', 'mode_key' => 'aamarpay_mode', 'status_key' => 'aamarpay_status', 'fee_key' => 'aamarpay_fee_percent'],
+            ['key' => 'shurjopay', 'name' => 'ShurjoPay', 'mode_key' => 'shurjopay_mode', 'status_key' => 'shurjopay_status', 'fee_key' => 'shurjopay_fee_percent'],
+            ['key' => 'stripe', 'name' => 'Stripe', 'mode_key' => 'stripe_mode', 'status_key' => 'stripe_status', 'fee_key' => 'stripe_fee_percent'],
+            ['key' => 'bank', 'name' => 'Bank Transfer', 'mode_key' => null, 'status_key' => 'bank_status', 'fee_key' => null],
+            ['key' => 'mfs_manual', 'name' => 'Manual MFS', 'mode_key' => null, 'status_key' => 'mfs_manual_status', 'fee_key' => null],
+        ])->map(function (array $gateway) use ($settings) {
+            return array_merge($gateway, [
+                'mode' => $gateway['mode_key'] ? ($settings[$gateway['mode_key']] ?? 'sandbox') : 'manual',
+                'is_active' => ($settings[$gateway['status_key']] ?? '0') === '1',
+                'fee' => $gateway['fee_key'] ? (float) ($settings[$gateway['fee_key']] ?? 0) : 0,
+            ]);
+        });
+
         // Real gateway transaction audit data; never show fabricated production records.
         $auditLogs = PaymentTransaction::withoutWalletCheckouts()
             ->with(['tenant', 'invoice.plan'])
@@ -98,6 +115,7 @@ class OwnerPaymentGatewayController extends Controller
             'paidInvoicesTotal',
             'paidInvoicesCount',
             'auditLogs'
+            , 'gatewayRegistry'
         ));
     }
 
