@@ -4,6 +4,8 @@
 
 @section('content')
 <div class="space-y-4" x-data="{ 
+    saving: false,
+    testing: false,
     showPassword: false,
     applyDomainPreset(host, port, enc, user) {
         $refs.mailHost.value = host;
@@ -36,6 +38,16 @@
         </div>
     </div>
 
+    @if(session('success'))
+        <div class="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800 flex items-center gap-2"><i class="fas fa-circle-check"></i><span>{{ session('success') }}</span></div>
+    @endif
+    @if(session('error'))
+        <div class="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800 flex items-center gap-2"><i class="fas fa-circle-exclamation"></i><span>{{ session('error') }}</span></div>
+    @endif
+    @if($errors->any())
+        <div class="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800"><div class="font-semibold mb-1">Please correct the following:</div><ul class="list-disc pl-4 space-y-0.5">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>
+    @endif
+
     <!-- Active Mail Engine Summary Strip -->
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div class="bg-white p-3 rounded-xl border border-slate-200/80 shadow-xs">
@@ -60,7 +72,7 @@
     </div>
 
     <!-- MAIN DOMAIN MAIL CONFIGURATION FORM -->
-    <form action="{{ route('owner.mail-settings.update') }}" method="POST" class="space-y-4">
+    <form action="{{ route('owner.mail-settings.update') }}" method="POST" class="space-y-4" @submit="saving=true">
         @csrf
 
         <!-- Card 1: Domain SMTP Server Parameters -->
@@ -204,9 +216,9 @@
 
         <!-- Submit Button -->
         <div class="flex items-center justify-end gap-3 pt-1">
-            <button type="submit" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-xs transition flex items-center gap-1.5 cursor-pointer">
-                <i class="fas fa-save text-[11px]"></i>
-                <span>Save Mail & SMTP Configuration</span>
+            <button type="submit" :disabled="saving" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold text-xs shadow-xs transition flex items-center gap-1.5 cursor-pointer">
+                <i class="fas text-[11px]" :class="saving ? 'fa-spinner fa-spin' : 'fa-save'"></i>
+                <span x-text="saving ? 'Saving...' : 'Save Mail & SMTP Configuration'"></span>
             </button>
         </div>
     </form>
@@ -226,14 +238,14 @@
                 Send a test email to verify that your domain email credentials can establish an authenticated connection with <strong class="text-slate-800 font-mono">{{ $settings['mail_host'] ?? 'mail.somitysoft.com' }}</strong>.
             </p>
 
-            <form action="{{ route('owner.mail-settings.test') }}" method="POST" class="flex flex-col sm:flex-row items-center gap-3">
+            <form action="{{ route('owner.mail-settings.test') }}" method="POST" class="flex flex-col sm:flex-row items-center gap-3" @submit="testing=true">
                 @csrf
                 <div class="flex-1 w-full">
                     <input type="email" name="test_email" value="{{ $settings['support_email'] ?? 'salzarrahman84@gmail.com' }}" placeholder="Enter destination email (e.g. salzarrahman84@gmail.com)" required class="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs focus:ring-1 focus:ring-blue-500 font-medium">
                 </div>
-                <button type="submit" class="w-full sm:w-auto px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap">
-                    <i class="fas fa-paper-plane text-[10px]"></i>
-                    <span>Send Test Email</span>
+                <button type="submit" :disabled="testing" class="w-full sm:w-auto px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold text-xs shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap">
+                    <i class="fas text-[10px]" :class="testing ? 'fa-spinner fa-spin' : 'fa-paper-plane'"></i>
+                    <span x-text="testing ? 'Sending...' : 'Send Test Email'"></span>
                 </button>
             </form>
         </div>
