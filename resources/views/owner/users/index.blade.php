@@ -33,20 +33,17 @@
         <x-owner.kpi-card title="Active Accounts" :value="number_format($activeUsers)" icon="fa-circle-check" theme="cyan" />
     </div>
 
-    <!-- 3. Search & Multi-Filter Toolbar -->
-    <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs">
-        <form action="{{ route('owner.users.index') }}" method="GET" class="flex flex-col md:flex-row items-stretch md:items-center gap-2">
+    <!-- Shared customer-style two-tier filter toolbar -->
+    <x-owner.filter-toolbar action="{{ route('owner.users.index') }}" reset-url="{{ route('owner.users.index') }}" :show-more-open="request()->filled('tenant_id') || request()->filled('role') || request()->filled('status')" :active-more-count="request()->filled('tenant_id') || request()->filled('role') || request()->filled('status') ? 3 : 0" :search-value="request('search', '')" form-id="owner-users-filter">
+        <x-slot:primary>
             
-            <!-- Search Keyword -->
             <div class="relative flex-1 min-w-[200px]">
-                <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                <input type="text" name="search" value="{{ request('search') }}" placeholder="Search by name, email, phone..." 
-                       class="w-full h-[34px] bg-slate-50 border border-slate-200 rounded-lg text-xs pl-8 pr-3 focus:bg-white focus:border-cyan-500 focus:outline-none transition">
+                <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px]" :class="searchQuery ? 'text-cyan-600 font-bold' : 'text-slate-400'" aria-hidden="true"></i>
+                <input type="search" name="search" value="{{ request('search') }}" x-model="searchQuery" placeholder="Search by name, email, phone..." class="w-full h-[34px] bg-slate-50 border border-slate-200 rounded-lg text-xs pl-8 pr-7 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
+                <button type="button" x-show="searchQuery.length > 0" x-cloak @click="searchQuery = ''; $nextTick(() => $el.closest('form').requestSubmit())" aria-label="Clear search" class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500"><i class="fas fa-times-circle text-[10px]"></i></button>
             </div>
 
-            <!-- Organization / Tenant Filter -->
-            <div>
-                <select name="tenant_id" class="w-full h-[34px] bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 py-0 focus:bg-white focus:border-cyan-500 focus:outline-none transition">
+            <select name="tenant_id" aria-label="Organization" class="h-[34px] w-full md:w-40 bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 py-0 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                     <option value="">All Organizations</option>
                     <option value="none" {{ request('tenant_id') === 'none' ? 'selected' : '' }}>Platform Global (No Tenant)</option>
                     @foreach($tenants as $tenant)
@@ -54,54 +51,39 @@
                             {{ $tenant->company_name ?: $tenant->name }}
                         </option>
                     @endforeach
-                </select>
-            </div>
-
-            <!-- Role Filter -->
-            <div>
-                <select name="role" class="w-full h-[34px] bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 py-0 focus:bg-white focus:border-cyan-500 focus:outline-none transition">
+            </select>
+            <select name="role" aria-label="Role" class="h-[34px] w-full md:w-32 bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 py-0 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                     <option value="">All Roles</option>
                     @foreach($rolesList as $key => $label)
                         <option value="{{ $key }}" {{ request('role') === $key ? 'selected' : '' }}>{{ $label }}</option>
                     @endforeach
-                </select>
-            </div>
-
-            <!-- Status Filter -->
-            <div>
-                <select name="status" class="w-full h-[34px] bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 py-0 focus:bg-white focus:border-cyan-500 focus:outline-none transition">
+            </select>
+            <select name="status" aria-label="Status" class="h-[34px] w-full md:w-32 bg-slate-50 border border-slate-200 rounded-lg text-xs px-2.5 py-0 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                     <option value="">All Statuses</option>
                     <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>Active</option>
                     <option value="inactive" {{ request('status') === 'inactive' ? 'selected' : '' }}>Inactive</option>
                     <option value="suspended" {{ request('status') === 'suspended' ? 'selected' : '' }}>Suspended</option>
-                </select>
-            </div>
-
-            <!-- Action & Per Page Buttons -->
-            <div class="flex items-center gap-1.5 md:ml-auto">
-                <select name="per_page" class="w-24 h-[34px] bg-slate-50 border border-slate-200 rounded-lg text-xs px-2 py-0 focus:bg-white focus:border-cyan-500 focus:outline-none transition">
+            </select>
+            <select name="per_page" aria-label="Users per page" class="h-[34px] w-full md:w-24 bg-slate-50 border border-slate-200 rounded-lg text-xs px-2 py-0 focus:bg-white focus:border-cyan-500 focus:outline-hidden transition">
                     <option value="10" {{ request('per_page') == 10 ? 'selected' : '' }}>10</option>
                     <option value="20" {{ request('per_page', 20) == 20 ? 'selected' : '' }}>20</option>
                     <option value="50" {{ request('per_page') == 50 ? 'selected' : '' }}>50</option>
                     <option value="100" {{ request('per_page') == 100 ? 'selected' : '' }}>100</option>
-                </select>
-
-                <button type="submit" class="h-[34px] bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-0 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1">
-                    <i class="fas fa-filter text-[10px]"></i>
-                    <span>Filter</span>
-                </button>
-
-                <a href="{{ route('owner.users.index') }}" title="Reset Filters" class="h-[34px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs px-2.5 rounded-lg border border-slate-200/80 transition flex items-center justify-center gap-1"><i class="fas fa-rotate-left text-[10px]"></i><span>Reset</span></a>
-            </div>
-
-        </form>
-    </div>
+            </select>
+        </x-slot:primary>
+        <x-slot:secondary>
+            <span class="text-[11px] text-slate-500">Use organization, role and status filters to narrow user access records.</span>
+        </x-slot:secondary>
+    </x-owner.filter-toolbar>
 
     <!-- 4. Master Compact Table (<table class="saas-table">) -->
-    <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="saas-table">
-                <thead>
+    <x-owner.table-shell
+        :has-rows="$users->isNotEmpty()"
+        empty-title="No users found"
+        empty-message="No users match the current filters."
+        empty-icon="fa-users"
+    >
+        <x-slot:head>
                     <tr>
                         <th class="w-10 text-center">#</th>
                         <th class="text-center">Name</th>
@@ -111,9 +93,9 @@
                         <th class="text-center">Created Date</th>
                         <th class="actions-col no-sort text-center">Actions</th>
                     </tr>
-                </thead>
-                <tbody>
-                    @forelse($users as $index => $u)
+        </x-slot:head>
+        <x-slot:body>
+                    @foreach($users as $index => $u)
                         @php
                             $userJson = [
                                 'id' => $u->id,
@@ -184,30 +166,21 @@
                                 </button>
                             </td>
                         </tr>
-                    @empty
-                        <tr>
-                            <td colspan="7" class="py-8 text-center text-slate-400">
-                                <i class="fas fa-user-slash text-2xl mb-1.5 block text-slate-300"></i>
-                                <span class="text-xs font-medium">No users found matching the selected filters.</span>
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
+                    @endforeach
+        </x-slot:body>
 
         <!-- Compact Pagination Footer -->
-        @if($users->hasPages())
-            <div class="px-3.5 py-2.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+        <x-slot:pagination>
+            @if($users->hasPages())
                 <span class="text-[11px] text-slate-500 font-mono">
                     Showing {{ $users->firstItem() }} - {{ $users->lastItem() }} of {{ $users->total() }} users
                 </span>
                 <div>
                     {{ $users->links() }}
                 </div>
-            </div>
-        @endif
-    </div>
+            @endif
+        </x-slot:pagination>
+    </x-owner.table-shell>
 
     <!-- 5. Floating Action Dropdown Menu (Fixed z-50 with Positioning Algorithm) -->
     <div x-show="activeMenu" 

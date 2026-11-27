@@ -230,3 +230,10 @@ Document print view, create/edit form এবং detail-only page এই scope-�
 - Existing filter query parameter ও tenant isolation নষ্ট করা যাবে না।
 - Sensitive credential/API key table বা diff-এ প্রকাশ করা যাবে না।
 - Unrelated deleted/untracked file stage বা commit করা যাবে না।
+#### Task 4.3 — Users filter/table migration `[x]`
+
+- Users primary ও secondary filter `x-owner.filter-toolbar` component-এ migrate করা হয়েছে।
+- Tenant, role, status, search এবং per-page filter-এর existing query contract রাখা হয়েছে।
+- Users table `x-owner.table-shell` component-এ migrate করা হয়েছে; shared empty state ও pagination slot ব্যবহার করা হয়েছে।
+- Existing action menu, user payload এবং modal flow অপরিবর্তিত রাখা হয়েছে।
+- Blade cache, `test_owner_can_access_all_dedicated_menus` এবং `git diff --check` সফল হয়েছে।
