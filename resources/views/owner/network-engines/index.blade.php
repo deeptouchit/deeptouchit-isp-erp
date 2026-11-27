@@ -136,7 +136,8 @@
                 <div class="flex flex-wrap items-center gap-2 flex-1 min-w-[260px]">
                     <div class="relative flex-1 max-w-sm">
                         <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                        <input type="text" name="router_search" value="{{ request('router_search') }}" placeholder="Search router name, IP, model, tenant..." class="w-full h-[34px] pl-8 pr-3 text-xs rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:border-cyan-500 focus:outline-hidden shadow-xs">
+                        <label for="router-search" class="sr-only">Search routers</label>
+                        <input id="router-search" type="text" name="router_search" value="{{ request('router_search') }}" placeholder="Search router name, IP, model, tenant..." class="w-full h-[34px] pl-8 pr-3 text-xs rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:border-cyan-500 focus:outline-hidden shadow-xs">
                     </div>
                     <select name="router_status" class="h-[34px] py-0 px-2.5 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 focus:border-cyan-500 shadow-xs">
                         <option value="">All Statuses</option>
@@ -275,7 +276,8 @@
                 <div class="flex flex-wrap items-center gap-2 flex-1 min-w-[260px]">
                     <div class="relative flex-1 max-w-sm">
                         <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                        <input type="text" name="olt_search" value="{{ request('olt_search') }}" placeholder="Search OLT name, IP, brand, tenant..." class="w-full h-[34px] pl-8 pr-3 text-xs rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:border-cyan-500 focus:outline-hidden shadow-xs">
+                        <label for="olt-search" class="sr-only">Search OLT devices</label>
+                        <input id="olt-search" type="text" name="olt_search" value="{{ request('olt_search') }}" placeholder="Search OLT name, IP, brand, tenant..." class="w-full h-[34px] pl-8 pr-3 text-xs rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:border-cyan-500 focus:outline-hidden shadow-xs">
                     </div>
                     <select name="olt_brand" class="h-[34px] py-0 px-2.5 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 focus:border-cyan-500 shadow-xs">
                         <option value="">All Brands</option>
