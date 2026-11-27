@@ -23,12 +23,8 @@
             </div>
             <div>
                 <div class="flex items-center gap-2">
-                    <h2 class="text-sm font-bold text-slate-800">Domain Mail & SMTP Configuration</h2>
-                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[10.5px] font-mono font-bold bg-blue-50 text-blue-700 border border-blue-200">
-                        somitysoft.com
-                    </span>
+                    <h2 class="text-sm font-bold text-slate-800">Mail Settings</h2>
                 </div>
-                <p class="text-[11px] text-slate-500 mt-0.5">Configure official domain mailboxes (billing@, support@) and outgoing SMTP credentials</p>
             </div>
         </div>
 
