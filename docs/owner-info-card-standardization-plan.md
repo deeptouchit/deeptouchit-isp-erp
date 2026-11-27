@@ -291,6 +291,12 @@ node .\\node_modules\\vite\\bin\\vite.js build
 - No upstream tracking branch is configured, so any push must explicitly target `origin main`.
 - Unrelated worktree deletions and untracked files remain outside the committed scope.
 
+### Task 8.5 — GitHub push `[x]`
+
+- `main` was pushed successfully to `origin`.
+- Remote `main` verified at commit `f6092fa4edaf50b583352e503e34f61db4a8d867`.
+- Unrelated unstaged deletions and untracked files were not included.
+
 1. শুধু সংশ্লিষ্ট ফাইল commit করা
 2. `main` branch-এ push করা
 3. live commit যাচাই করা
