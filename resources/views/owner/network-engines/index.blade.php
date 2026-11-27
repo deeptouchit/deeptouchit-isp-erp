@@ -392,9 +392,13 @@
                 </a>
             </div>
 
-            <div class="overflow-x-auto border border-slate-200 rounded-lg">
-                <table class="saas-table network-engines-table">
-                    <thead class="bg-slate-50 text-[10.5px] font-bold text-slate-500 uppercase tracking-wider">
+            <x-owner.table-shell
+                :has-rows="$recentAuditLogs->isNotEmpty()"
+                empty-title="No recent audit events"
+                empty-message="Recent network actions will appear here."
+                empty-icon="fa-list-check"
+            >
+                    <x-slot:head>
                         <tr>
                             <th class="text-center">Timestamp</th>
                             <th class="text-center">Device Type / Target</th>
@@ -403,9 +407,9 @@
                             <th class="text-center">Status</th>
                             <th class="text-center">Response Summary</th>
                         </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-100 bg-white">
-                        @forelse($recentAuditLogs as $log)
+                    </x-slot:head>
+                    <x-slot:body>
+                        @foreach($recentAuditLogs as $log)
                             <tr class="hover:bg-slate-50/80 transition">
                                 <td class="px-3 py-2 font-mono text-[10.5px] text-slate-500">
                                     {{ $log->created_at->format('Y-m-d H:i:s') }}
@@ -442,16 +446,9 @@
                                     {{ $log->response_summary ?? 'Operation logged cleanly' }}
                                 </td>
                             </tr>
-                        @empty
-                            <tr>
-                                <td colspan="6" class="px-4 py-8 text-center text-slate-400 text-xs">
-                                    No audit actions recorded yet.
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
+                        @endforeach
+                    </x-slot:body>
+            </x-owner.table-shell>
         </div>
 
     </div>
