@@ -47,6 +47,7 @@
         </div>
 
         <div class="flex items-center gap-2">
+            @if(false)
             <button type="button" @click="activeTab = 'dev_docs'" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-semibold transition border border-slate-200 flex items-center gap-1.5">
                 <i class="fas fa-code text-slate-500 text-[10px]"></i>
                 <span>PGW API Specs</span>
@@ -55,6 +56,7 @@
                 <i class="fas fa-flask text-[10px]"></i>
                 <span>Test Gateway Handshake</span>
             </button>
+            @endif
         </div>
     </div>
 
@@ -153,7 +155,8 @@
         </div>
     @endif
 
-    <!-- Main Navigation Tabs -->
+    @if(false)
+    <!-- Legacy provider tabs and configuration panels are retained for backend compatibility. -->
     <div class="bg-white rounded-xl border border-slate-200/80 shadow-xs p-1.5 flex items-center gap-1 overflow-x-auto">
         <button type="button" @click="activeTab = 'gateways'" :class="activeTab === 'gateways' ? 'bg-blue-600 text-white shadow-xs font-bold' : 'text-slate-600 hover:bg-slate-100 font-medium'" class="px-3 py-1.5 rounded-lg text-xs transition flex items-center gap-1.5 whitespace-nowrap">
             <i class="fas fa-credit-card text-[11px]"></i>
@@ -981,5 +984,6 @@ if (isset($response['GatewayPageURL'])) {
         </div>
     </div>
 
+    @endif
 </div>
 @endsection
