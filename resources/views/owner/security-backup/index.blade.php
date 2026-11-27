@@ -564,9 +564,13 @@
                 <span class="text-[10px] text-slate-400">Tamper-evident system log feed</span>
             </div>
 
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse text-xs">
-                    <thead>
+            <x-owner.table-shell
+                :has-rows="$auditLogs->isNotEmpty()"
+                empty-title="No security audit logs found"
+                empty-message="Security events will appear here as the platform operates."
+                empty-icon="fa-shield-halved"
+            >
+                    <x-slot:head>
                         <tr class="border-b border-slate-100 bg-slate-50/40 text-[10.5px] font-bold uppercase tracking-wider text-slate-500">
                             <th class="py-2.5 px-4">Severity</th>
                             <th class="py-2.5 px-4">Event & Description</th>
@@ -575,9 +579,9 @@
                             <th class="py-2.5 px-4">Status</th>
                             <th class="py-2.5 px-4 text-right">Timestamp</th>
                         </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-100 text-slate-700">
-                        @forelse($auditLogs as $log)
+                    </x-slot:head>
+                    <x-slot:body>
+                        @foreach($auditLogs as $log)
                             <tr class="hover:bg-slate-50/80 transition">
                                 <td class="py-2.5 px-4">
                                     @if($log->severity === 'critical' || $log->severity === 'alert')
@@ -637,23 +641,15 @@
                                     <div class="text-[10px] text-slate-400">{{ $log->created_at->format('d M, H:i:s') }}</div>
                                 </td>
                             </tr>
-                        @empty
-                            <tr>
-                                <td colspan="6" class="py-8 text-center text-slate-400 text-xs">
-                                    <i class="fas fa-shield-halved text-2xl mb-1 text-slate-300 block"></i>
-                                    No security audit logs recorded yet.
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
+                        @endforeach
+                    </x-slot:body>
 
-            @if($auditLogs->hasPages())
-                <div class="p-3 bg-slate-50/50">
+            <x-slot:pagination>
+                @if($auditLogs->hasPages())
                     {{ $auditLogs->links() }}
-                </div>
-            @endif
+                @endif
+            </x-slot:pagination>
+            </x-owner.table-shell>
         </div>
     </div>
 
