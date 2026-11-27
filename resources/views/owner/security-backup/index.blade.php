@@ -427,9 +427,13 @@
             </div>
 
             <!-- Table of Backups -->
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse text-xs">
-                    <thead>
+            <x-owner.table-shell
+                :has-rows="!empty($backupFiles)"
+                empty-title="No backup archives found"
+                empty-message="Create a live snapshot to generate the first backup."
+                empty-icon="fa-folder-open"
+            >
+                    <x-slot:head>
                         <tr class="border-b border-slate-100 bg-slate-50/40 text-[10.5px] font-bold uppercase tracking-wider text-slate-500">
                             <th class="py-2.5 px-4">Backup Filename</th>
                             <th class="py-2.5 px-4">Type</th>
@@ -438,9 +442,9 @@
                             <th class="py-2.5 px-4">Timestamp</th>
                             <th class="py-2.5 px-4 text-right">Disaster Recovery Actions</th>
                         </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-100 text-slate-700">
-                        @forelse($backupFiles as $backup)
+                    </x-slot:head>
+                    <x-slot:body>
+                        @foreach($backupFiles as $backup)
                             <tr class="hover:bg-slate-50/80 transition">
                                 <td class="py-2.5 px-4 font-mono font-semibold text-slate-800 flex items-center gap-2">
                                     <i class="fas fa-file-code text-blue-600 text-xs"></i>
@@ -500,17 +504,9 @@
                                     </div>
                                 </td>
                             </tr>
-                        @empty
-                            <tr>
-                                <td colspan="6" class="py-8 text-center text-slate-400 text-xs">
-                                    <i class="fas fa-folder-open text-2xl mb-1 text-slate-300 block"></i>
-                                    No backup archives generated yet. Click "Create Live Snapshot" above to generate your first backup.
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
+                        @endforeach
+                    </x-slot:body>
+            </x-owner.table-shell>
         </div>
     </div>
 
