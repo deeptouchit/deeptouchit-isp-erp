@@ -82,6 +82,22 @@ class OwnerPaymentGatewayController extends Controller
             ]);
         });
 
+        $gatewayRegistry = PaymentGateway::query()->orderBy('sort_order')->get()->map(function (PaymentGateway $gateway) use ($settings) {
+            $statusKey = $gateway->slug === 'sslcommerz' ? 'ssl_status' : $gateway->slug . '_status';
+            return [
+                'key' => $gateway->slug,
+                'name' => $gateway->name,
+                'mode' => $gateway->mode,
+                'fee' => (float) $gateway->fee_value,
+                'is_active' => ($settings[$statusKey] ?? ($gateway->is_active ? '1' : '0')) === '1',
+                'category' => $gateway->category,
+                'last_test_status' => $gateway->last_test_status,
+                'last_tested_at' => $gateway->last_tested_at,
+                'api_url' => $gateway->api_url,
+                'webhook_url' => $gateway->webhook_url,
+            ];
+        });
+
         // Real gateway transaction audit data; never show fabricated production records.
         $auditLogs = PaymentTransaction::withoutWalletCheckouts()
             ->with(['tenant', 'invoice.plan'])
@@ -146,22 +162,6 @@ class OwnerPaymentGatewayController extends Controller
             'currency_symbol' => ['nullable', 'string', 'max:8'],
             'pgw_grace_period_days' => ['nullable', 'integer', 'between:0,365'],
         ]);
-
-        $gatewayRegistry = PaymentGateway::query()->orderBy('sort_order')->get()->map(function (PaymentGateway $gateway) use ($settings) {
-            $statusKey = $gateway->slug === 'sslcommerz' ? 'ssl_status' : $gateway->slug . '_status';
-            return [
-                'key' => $gateway->slug,
-                'name' => $gateway->name,
-                'mode' => $gateway->mode,
-                'fee' => (float) $gateway->fee_value,
-                'is_active' => ($settings[$statusKey] ?? ($gateway->is_active ? '1' : '0')) === '1',
-                'category' => $gateway->category,
-                'last_test_status' => $gateway->last_test_status,
-                'last_tested_at' => $gateway->last_tested_at,
-                'api_url' => $gateway->api_url,
-                'webhook_url' => $gateway->webhook_url,
-            ];
-        });
 
         // Checkbox states to handle
         $checkboxes = [
