@@ -5,23 +5,8 @@
 @section('content')
 <div class="space-y-3" x-data="{ showMoreFilters: {{ request()->hasAny(['sms_type', 'tenant_id']) ? 'true' : 'false' }}, searchQuery: @js(request('search', '')) }">
 
-    <!-- Top Banner & Summary Header -->
-    <div class="bg-white rounded-xl border border-slate-200/80 shadow-xs p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-700 flex items-center justify-center text-white text-base font-bold shadow-xs flex-shrink-0">
-                <i class="fas fa-comment-dots text-sm"></i>
-            </div>
-            <div>
-                <div class="flex items-center gap-2">
-                    <h2 class="text-sm font-bold text-slate-800">Platform-Wide SMS Delivery & Cost Consumption Ledger</h2>
-                    <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono">
-                        {{ number_format($totalSmsCount) }} Total SMS
-                    </span>
-                </div>
-            </div>
-        </div>
-
-        <div class="flex items-center gap-2">
+    <!-- Page-specific SMS log actions; page title is provided by the global Owner header. -->
+    <div class="flex justify-end items-center gap-2 flex-wrap">
             <a href="{{ route('owner.sms-gateways.index') }}" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-semibold transition border border-slate-200 flex items-center gap-1.5">
                 <i class="fas fa-sliders-h text-[10px]"></i>
                 <span>SMS Gateway Settings</span>
@@ -30,7 +15,6 @@
                 <i class="fas fa-arrows-rotate text-[10px]"></i>
                 <span>Refresh Logs</span>
             </a>
-        </div>
     </div>
 
     <!-- Global KPI Cards -->

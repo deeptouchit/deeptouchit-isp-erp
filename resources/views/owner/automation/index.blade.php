@@ -13,19 +13,8 @@
 }">
 
 
-    <!-- Top Header Bar -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
-        <div>
-            <div class="flex items-center gap-2">
-                <h2 class="text-sm font-bold text-slate-900 tracking-tight">SaaS Automation & Cron Engine (Queue & Supervisor Control)</h2>
-                <span class="px-2 py-0.5 rounded-full {{ $cronStatus === 'healthy' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200' }} text-[10px] font-bold font-mono">
-                    Cron: {{ $cronStatusText }}
-                </span>
-            </div>
-            <p class="text-[11px] text-slate-500 mt-0.5">Scheduler → Dispatcher → Queue Worker → Supervisor → Idempotent Service → Audit Ledger</p>
-        </div>
-
-        <div class="flex items-center gap-2">
+    <!-- Page-specific automation actions; page title is provided by the global Owner header. -->
+    <div class="flex justify-end items-center gap-2 flex-wrap">
             <form action="{{ route('owner.automation.dispatch', 'heartbeat_now') }}" method="POST">
                 @csrf
                 <button type="submit" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition flex items-center gap-1.5 shadow-2xs">
@@ -40,7 +29,6 @@
                     <span>Run Master Engine</span>
                 </button>
             </form>
-        </div>
     </div>
 
     <!-- Global KPI Cards -->

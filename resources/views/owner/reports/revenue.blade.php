@@ -5,19 +5,8 @@
 @section('content')
 <div class="space-y-3 max-w-7xl mx-auto">
     
-    <!-- Top Compact Header Strip -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-white px-3.5 py-2.5 rounded-lg border border-slate-200/90 shadow-2xs">
-        <div class="flex items-center gap-2.5">
-            <div class="w-7 h-7 rounded-md bg-emerald-600 text-white flex items-center justify-center font-bold text-xs shadow-2xs flex-shrink-0">
-                <i class="fas fa-chart-line"></i>
-            </div>
-            <div>
-                <h2 class="text-xs font-bold text-slate-900 tracking-tight leading-none">Platform Revenue & Income Statement</h2>
-                <p class="text-[10px] text-slate-500 mt-0.5">SaaS subscription income, gateway settlements, and financial ledger</p>
-            </div>
-        </div>
-
-        <div class="flex items-center gap-1.5">
+    <!-- Page-specific report actions; page title is provided by the global Owner header. -->
+    <div class="flex justify-end items-center gap-1.5 flex-wrap">
             <a href="{{ route('owner.reports.revenue.export', request()->query()) }}" 
                class="px-2.5 py-1 rounded bg-slate-50 hover:bg-slate-100 text-slate-700 text-[10.5px] font-semibold border border-slate-200 transition flex items-center gap-1 shadow-2xs">
                 <i class="fas fa-file-csv text-emerald-600 text-[10px]"></i>
@@ -28,7 +17,6 @@
                 <i class="fas fa-print text-slate-500 text-[10px]"></i>
                 <span>Print Statement</span>
             </button>
-        </div>
     </div>
 
     <!-- Global KPI Cards -->

@@ -4,21 +4,12 @@
 
 @section('content')
 <div class="space-y-4" x-data="{ activeTab: 'branding' }">
-    <!-- Top Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs">
-        <div>
-            <h2 class="text-sm font-bold text-slate-800 flex items-center gap-2">
-                <i class="fas fa-sliders-h text-blue-600 text-xs"></i>
-                General Platform Configuration & Branding
-            </h2>
-            <p class="text-[11px] text-slate-500 mt-0.5">Application logo, date-time localization, footer credits, trial rules, and general policies</p>
-        </div>
-        <div class="flex items-center gap-2">
+    <!-- Page-specific settings status; page title is provided by the global Owner header. -->
+    <div class="flex justify-end items-center gap-2 flex-wrap">
             <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10.5px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                 <i class="fas fa-check-circle text-[9px]"></i>
                 Version {{ $settings['app_version'] ?? 'v3.2 Enterprise' }}
             </span>
-        </div>
     </div>
 
 

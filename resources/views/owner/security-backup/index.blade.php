@@ -5,24 +5,9 @@
 @section('content')
 <div class="space-y-4" x-data="{ activeTab: 'firewall' }">
 
-    <!-- Top Security Posture Score & Header -->
-    <div class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div class="flex items-center gap-3.5">
-            <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-lg border border-emerald-200 shadow-2xs flex-shrink-0">
-                <i class="fas fa-shield-halved"></i>
-            </div>
-            <div>
-                <div class="flex items-center gap-2">
-                    <h2 class="text-sm font-bold text-slate-800">Enterprise Security Shield & Automated Backups</h2>
-                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                        Rating: 98% (Grade A+)
-                    </span>
-                </div>
-                <p class="text-[11px] text-slate-500 mt-0.5">Rate limiting, login guards, IP filtering, 2FA, and automated cloud database snapshots</p>
-            </div>
-        </div>
-
-        <div class="flex items-center gap-2 flex-wrap">
+    <!-- Page-specific security actions; page title is provided by the global Owner header. -->
+    <div class="flex justify-end items-center gap-2 flex-wrap">
+            <span class="sr-only">Enterprise Security Shield</span>
             <form action="{{ route('owner.security-backup.trigger') }}" method="POST" class="inline-flex">
                 @csrf
                 <input type="hidden" name="backup_type" value="database">
@@ -36,7 +21,6 @@
                 <i class="fas fa-folder-open text-[10px]"></i>
                 <span>Backup Archive ({{ count($backupFiles) }})</span>
             </button>
-        </div>
     </div>
 
 

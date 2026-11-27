@@ -66,7 +66,7 @@ Owner panel-এর সব পেজে Dashboard-এর মতো একই glob
 - Mobile breakpoint-এ title truncation, compact spacing এবং action visibility hardening করা হয়েছে।
 - Compiled CSS source ও production asset build সফল হয়েছে।
 
-### Task 4 — Owner page migration `[ ]`
+### Task 4 — Owner page migration `[x]`
 
 - Dashboard, Tenants & Plans, Network Engines, Billing & Finance, Support, Gateways, Reports এবং Settings পেজ যাচাই করা।
 - প্রতিটি পেজের duplicate top header standard layout-এ রূপান্তর করা।
@@ -99,6 +99,13 @@ Owner panel-এর সব পেজে Dashboard-এর মতো একই glob
 - Back, Global Settings, Export CSV, Save Policies, Engines Hub এবং Script actions compact responsive toolbar-এ রাখা হয়েছে।
 - Existing forms, probes, audit filters এবং diagnostic behavior অক্ষত রাখা হয়েছে।
 - Blade cache এবং Network Engine test suite সফল হয়েছে।
+
+#### Task 4.5 — Reports, logs ও system pages batch `[x]`
+
+- Revenue Report, Activity Logs, SMS Logs, Automation, Security & Backup এবং Platform Settings-এর duplicate title header সরানো হয়েছে।
+- Export, print, clear, refresh, dispatch, backup, tab এবং settings status actions অক্ষত রাখা হয়েছে।
+- Legacy labels-এর জন্য প্রয়োজনীয় accessible compatibility text রাখা হয়েছে; কোনো visual duplicate header রাখা হয়নি।
+- Blade cache, selected Owner tests এবং diff check সফল হয়েছে।
 
 ### Task 5 — Responsive ও accessibility hardening `[ ]`
 
