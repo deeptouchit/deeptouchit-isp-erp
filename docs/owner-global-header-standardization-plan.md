@@ -129,13 +129,21 @@ Owner panel-এর সব পেজে Dashboard-এর মতো একই glob
 - Mobile title truncation, compact spacing এবং action overflow protection যুক্ত হয়েছে।
 - Static duplicate-header audit, Blade cache, production Vite build এবং selected Owner tests সফল হয়েছে।
 
-### Task 6 — Visual consistency validation `[ ]`
+### Task 6 — Visual consistency validation `[x]`
 
 - সব Owner route-এ header height, padding, typography, icon এবং action alignment তুলনা করা।
 - Duplicate title/header, oversized spacing এবং inconsistent action placement সরানো।
 - Existing global KPI card standard-এর সঙ্গে vertical rhythm মিলিয়ে নেওয়া।
 
-### Task 7 — Runtime ও build validation `[ ]`
+#### Validation Findings
+
+- ২৭টি Owner view `owner.layouts.app` ব্যবহার করছে এবং একই global topbar পাচ্ছে।
+- Static audit-এ কোনো duplicate legacy top-header marker অবশিষ্ট নেই।
+- Listing pages-এর page-specific actions compact, right-aligned ও wrapping-safe রাখা হয়েছে।
+- Create/edit/detail/print view-এর document-specific content header global navigation header থেকে আলাদা রাখা হয়েছে, যাতে তাদের form/document context নষ্ট না হয়।
+- Header, action toolbar, KPI strip এবং content spacing-এর visual rhythm একই compact Owner design system অনুসরণ করছে।
+
+### Task 7 — Runtime ও build validation `[x]`
 
 - `php artisan view:cache`
 - `node .\\node_modules\\vite\\bin\\vite.js build`
@@ -143,6 +151,15 @@ Owner panel-এর সব পেজে Dashboard-এর মতো একই glob
 - Owner route smoke test
 - `git diff --check`
 - গুরুত্বপূর্ণ Owner page-এ HTTP 500 বা missing route আছে কি না যাচাই
+
+#### Validation Result
+
+- Owner route list loaded successfully.
+- Blade templates cached successfully.
+- Production Vite build completed successfully.
+- Selected Owner suite passed: 19 tests, 151 assertions.
+- Duplicate-header static audit returned `DUPLICATE_HEADER_MARKERS_NONE`.
+- `git diff --check` completed without errors.
 
 ### Task 8 — Documentation ও deployment `[ ]`
 
