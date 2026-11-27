@@ -1006,21 +1006,21 @@ if (isset($response['GatewayPageURL'])) {
 @endsection
 @push('styles')
 <style>
-    .gateway-action > div { width: 176px !important; min-width: 176px; padding: 6px !important; }
-    .gateway-action > div button { display:flex; align-items:center; gap:8px; width:100%; min-height:30px; padding:6px 8px; border-radius:6px; text-align:left; font-size:10px; line-height:1.25; }
-    .gateway-action > div button i { width:14px; flex:0 0 14px; text-align:center; }
+    .saas-table details > div { width: 176px !important; min-width: 176px; padding: 6px !important; }
+    .saas-table details > div button { display:flex; align-items:center; gap:8px; width:100%; min-height:30px; padding:6px 8px; border-radius:6px; text-align:left; font-size:10px; line-height:1.25; }
+    .saas-table details > div button i { width:14px; flex:0 0 14px; text-align:center; }
 </style>
 @endpush
 @push('scripts')
 <script>
 (function () {
     function closeGatewayMenus(except) {
-        document.querySelectorAll('.gateway-action[open]').forEach(function (details) {
+        document.querySelectorAll('.saas-table details[open]').forEach(function (details) {
             if (details !== except) details.removeAttribute('open');
         });
     }
     document.addEventListener('click', function (event) {
-        const summary = event.target.closest('.gateway-action > summary');
+        const summary = event.target.closest('.saas-table details > summary');
         if (!summary) return;
         event.preventDefault();
         const details = summary.parentElement;
