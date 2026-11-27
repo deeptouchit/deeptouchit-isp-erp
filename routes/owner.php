@@ -261,6 +261,8 @@ Route::prefix('owner')->name('owner.')->group(function () {
         // 15. Tenant Activity & Audit Logs
         Route::get('/activity-logs', [OwnerActivityLogController::class, 'index'])
             ->middleware('owner.capability:activity-logs.view')->name('activity-logs.index');
+        Route::delete('/activity-logs', [OwnerActivityLogController::class, 'clear'])
+            ->middleware('owner.capability:activity-logs.view')->name('activity-logs.clear');
 
         // 16. SMS Consumption & Delivery Logs
         Route::get('/sms-logs', [OwnerSmsLogController::class, 'index'])

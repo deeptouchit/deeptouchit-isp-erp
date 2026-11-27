@@ -22,6 +22,12 @@
         </div>
 
         <div class="flex items-center gap-2">
+            <form method="POST" action="{{ route('owner.activity-logs.clear') }}" onsubmit="return confirmActivityLogClear(event, this)">
+                @csrf @method('DELETE')
+                <button type="submit" class="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-semibold transition shadow-xs flex items-center gap-1.5">
+                    <i class="fas fa-trash-can text-[10px]"></i><span>Clear Logs</span>
+                </button>
+            </form>
             <a href="{{ route('owner.activity-logs.index') }}" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-semibold transition border border-slate-200 flex items-center gap-1.5">
                 <i class="fas fa-arrows-rotate text-[10px]"></i>
                 <span>Refresh Logs</span>
@@ -153,3 +159,26 @@
 
 </div>
 @endsection
+
+@push('scripts')
+<script>
+function confirmActivityLogClear(event, form) {
+    event.preventDefault();
+    const submit = () => form.submit();
+    if (window.Swal) {
+        Swal.fire({
+            title: 'Clear all activity logs?',
+            text: 'This will permanently remove the complete activity history.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#e11d48',
+            confirmButtonText: 'Yes, clear logs',
+            cancelButtonText: 'Cancel'
+        }).then(result => { if (result.isConfirmed) submit(); });
+    } else if (window.confirm('Clear all activity logs permanently?')) {
+        submit();
+    }
+    return false;
+}
+</script>
+@endpush

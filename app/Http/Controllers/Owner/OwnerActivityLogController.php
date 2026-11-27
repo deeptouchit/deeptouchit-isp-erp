@@ -54,4 +54,11 @@ class OwnerActivityLogController extends Controller
             'totalLogsCount'
         ));
     }
+
+    public function clear(): \Illuminate\Http\RedirectResponse
+    {
+        $deleted = TenantActivityLog::query()->delete();
+
+        return back()->with('success', "{$deleted} activity log records cleared successfully.");
+    }
 }
