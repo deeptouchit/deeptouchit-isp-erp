@@ -32,6 +32,14 @@ Remaining work is validation-only: manual responsive checks, keyboard/focus chec
 - Blade cache, Owner regression tests and Vite production build passed after the accessibility update.
 - Live browser viewport and keyboard-tab walkthrough remain pending because no browser automation tool is installed in the project.
 
+### Duplicate and non-standard table audit — 2026-11-28
+
+- Direct non-`saas-table` tables were reviewed across Owner views.
+- The automation failed-jobs table is a secondary operational ledger, not a master listing.
+- Invoice print/detail and tenant detail tables are intentional detail/print exceptions.
+- No unclassified Owner master listing table was found outside `x-owner.table-shell`.
+- No duplicate master-table action pattern was found in the audited listing views.
+
 ## Current Implementation Status
 
 - Shared filter toolbar and table shell components are implemented.
