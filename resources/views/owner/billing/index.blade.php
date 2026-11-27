@@ -64,19 +64,9 @@
 }">
 
 
-    <!-- Top Header Bar with Run Billing Engine & Generate Invoice -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
-        <div>
-            <div class="flex items-center gap-2">
-                <h2 class="text-sm font-bold text-slate-900 tracking-tight">SaaS Billing & Invoices</h2>
-                <span class="px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-bold font-mono">
-                    {{ $totalInvoicesCount }} Invoices
-                </span>
-            </div>
-            <p class="text-[11px] text-slate-500 mt-0.5">Manage subscription billing vouchers, overdue tracking, itemized lines, and payment settlements</p>
-        </div>
-
-        <div class="flex items-center gap-2 flex-wrap">
+    <!-- Page-specific billing actions; page title is provided by the global Owner header. -->
+    <div class="flex justify-end items-center gap-2 flex-wrap">
+            <span class="sr-only">Billing & Invoices</span>
             <!-- Run Billing Engine -->
             <form action="{{ route('owner.billing.run-engine') }}" method="POST" onsubmit="return confirm('Run automated billing engine now? This generates upcoming invoices and enforces grace periods.');">
                 @csrf
@@ -93,7 +83,6 @@
                 <i class="fas fa-plus-circle text-[11px]"></i>
                 <span>Generate Invoice</span>
             </button>
-        </div>
     </div>
 
     <!-- Global KPI Cards -->

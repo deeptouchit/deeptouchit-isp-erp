@@ -141,21 +141,8 @@
     }
 }" @scroll.window="activeMenu = null" @resize.window="activeMenu = null" @keydown.escape.window="activeMenu = null">
 
-    <!-- Top Header Bar -->
-    <div class="bg-white rounded-xl border border-slate-200/80 shadow-xs p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div class="flex items-center gap-2.5">
-            <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-sm font-bold">
-                <i class="fas fa-layer-group"></i>
-            </div>
-            <div class="flex items-center gap-2">
-                    <h2 class="text-sm font-bold text-slate-800">SaaS Subscription Pricing Plans</h2>
-                    <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                        {{ $activePlansCount }} Active
-                    </span>
-            </div>
-        </div>
-
-        <div class="flex items-center gap-2">
+    <!-- Page-specific plan actions; page title is provided by the global Owner header. -->
+    <div class="flex justify-end items-center gap-2 flex-wrap">
             <form action="{{ route('owner.plans.seed-defaults') }}" method="POST" onsubmit="return confirm('Restore/Sync standard P1 to P12 ISP pricing matrix?');">
                 @csrf
                 <button type="submit" class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition border border-slate-200 flex items-center gap-1.5" title="Reset standard P1-P12 Plans">
@@ -168,7 +155,6 @@
                 <i class="fas fa-plus text-[10px]"></i>
                 <span>Add Pricing Plan</span>
             </button>
-        </div>
     </div>
 
     <!-- Global KPI Cards -->

@@ -1,29 +1,18 @@
 @extends('owner.layouts.app')
 
-@section('page-title', 'ISP Tenants Management')
+@section('page-title', 'ISP Tenants Directory & Management')
 
 @section('content')
 <div class="space-y-3" x-data="tenantDirectory()"
      @scroll.window.capture="activeMenu = null" @resize.window="activeMenu = null" @keydown.escape.window="activeMenu = null">
 
 
-    <!-- Top Compact Header Bar -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
-        <div>
-            <div class="flex items-center gap-2">
-                <h2 class="text-sm font-bold text-slate-900 tracking-tight">ISP Tenants Directory</h2>
-                <span class="px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-bold font-mono">
-                    {{ $totalTenants }} Organizations
-                </span>
-            </div>
-        </div>
-
-        <div class="flex items-center gap-2">
+    <!-- Page-specific tenant action; page title is provided by the global Owner header. -->
+    <div class="flex justify-end items-center gap-2 flex-wrap">
             <a href="{{ route('owner.tenants.create') }}" class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-xs transition flex items-center gap-1.5">
                 <i class="fas fa-plus-circle text-[11px]"></i>
                 <span>Create Tenant</span>
             </a>
-        </div>
     </div>
 
     <!-- Global KPI Cards -->

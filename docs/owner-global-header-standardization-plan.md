@@ -79,6 +79,13 @@ Owner panel-এর সব পেজে Dashboard-এর মতো একই glob
 - Legacy test-visible wording page-title-এর মাধ্যমে compatibility-safe রাখা হয়েছে।
 - Blade cache, Owner regression tests এবং diff check সফল হয়েছে।
 
+#### Task 4.2 — Billing, plans ও tenants batch `[x]`
+
+- Billing, Plans এবং Tenants listing page-এর duplicate title header সরানো হয়েছে।
+- Generate Invoice, Sync Plans, Add Plan এবং Create Tenant-এর মতো page-specific actions compact action row-তে রাখা হয়েছে।
+- Legacy page labels accessible compatibility text/page-title-এর মাধ্যমে বজায় রাখা হয়েছে।
+- Blade cache এবং dedicated financial Owner test সফল হয়েছে।
+
 ### Task 5 — Responsive ও accessibility hardening `[ ]`
 
 - Desktop, tablet এবং mobile viewport-এ overflow, truncation ও alignment যাচাই করা।
