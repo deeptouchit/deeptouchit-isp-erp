@@ -19,19 +19,6 @@
     }
 }">
 
-    <!-- Top Header Bar -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
-        <div>
-            <div class="flex items-center gap-2">
-                <h2 class="text-sm font-bold text-slate-900 tracking-tight">Gateway Transactions & Handshakes</h2>
-                <span class="px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-bold font-mono">
-                    {{ $totalTransactions }} Handshakes
-                </span>
-            </div>
-            <p class="text-[11px] text-slate-500 mt-0.5">Real-time technical transaction ledger for bKash Tokenized, Nagad Direct, SSLCommerz, and Bank Transfers</p>
-        </div>
-    </div>
-
     <!-- Global KPI Cards -->
     <div class="owner-kpi-grid">
         <x-owner.kpi-card title="Successful Handshakes" :value="$successfulCount" icon="fa-check-double" theme="emerald" :meta="currency($successfulVolume) . ' Volume'" />

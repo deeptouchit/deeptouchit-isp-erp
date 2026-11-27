@@ -1,6 +1,6 @@
 @extends('owner.layouts.app')
 
-@section('page-title', 'Tenant Wallets & Advance Ledger')
+@section('page-title', 'Tenant Prepaid Wallets & Advance Ledger')
 
 @section('content')
 <div class="space-y-3" x-data="{
@@ -17,17 +17,6 @@
         this.walletModalOpen = true;
     }
 }">
-
-
-    <!-- Top Header Bar -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
-            <div class="flex items-center gap-2">
-                <h2 class="text-sm font-bold text-slate-900 tracking-tight">ISP Tenant Prepaid Wallets</h2>
-                <span class="px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200 text-[10px] font-bold font-mono">
-                    {{ $totalWalletsCount }} Wallets
-                </span>
-            </div>
-    </div>
 
     <!-- Global KPI Cards -->
     <div class="owner-kpi-grid">

@@ -25,30 +25,6 @@
     }
 }">
 
-
-    <!-- Top Header Bar -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
-        <div>
-            <div class="flex items-center gap-2">
-                <h2 class="text-sm font-bold text-slate-900 tracking-tight">ISP Tenant Subscriptions</h2>
-                <span class="px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-bold font-mono">
-                    {{ $totalSubscriptions }} Subscriptions
-                </span>
-            </div>
-            <p class="text-[11px] text-slate-500 mt-0.5">Manage SaaS cloud licenses, billing periods, scheduled auto-renewals, and grace period states</p>
-        </div>
-
-        <div class="flex items-center gap-2">
-            <form action="{{ route('owner.billing.run-engine') }}" method="POST" onsubmit="return confirm('Run automated billing engine now?');">
-                @csrf
-                <button type="submit" class="px-3 py-1.5 rounded-lg bg-purple-50 hover:bg-purple-600 hover:text-white text-purple-700 border border-purple-200 font-bold text-xs shadow-2xs transition flex items-center gap-1.5">
-                    <i class="fas fa-bolt text-[11px]"></i>
-                    <span>Run Billing Engine</span>
-                </button>
-            </form>
-        </div>
-    </div>
-
     <!-- Global KPI Cards -->
     <div class="owner-kpi-grid">
         <x-owner.kpi-card title="Active" :value="$activeCount" icon="fa-check" theme="emerald" />

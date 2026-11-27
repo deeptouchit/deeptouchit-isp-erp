@@ -1,6 +1,6 @@
 @extends('owner.layouts.app')
 
-@section('page-title', 'Settled Payments & Revenue Ledger')
+@section('page-title', 'Payment Settlements & Revenue Ledger')
 
 @push('styles')
 <style>.owner-finance-table.saas-table td { white-space: nowrap; } .owner-finance-table.saas-table td > div { display: inline-flex; vertical-align: middle; } .owner-finance-table.saas-table td > div + div { margin-left: .35rem; } .owner-finance-table.saas-table th:nth-child(6), .owner-finance-table.saas-table td:nth-child(6) { display: none; } .owner-finance-filter select, .owner-finance-filter input, .owner-finance-filter button { height: 34px; } .owner-finance-filter > div:first-child { flex: 1 1 220px; min-width: 200px; } .owner-finance-filter > div:not(:first-child) { flex: 0 0 auto; } .owner-finance-filter select { width: auto !important; min-width: 130px; }</style>
@@ -8,19 +8,6 @@
 
 @section('content')
 <div class="space-y-4">
-
-    <!-- Top Header Bar -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
-        <div>
-            <div class="flex items-center gap-2">
-                <h2 class="text-sm font-bold text-slate-900 tracking-tight">SaaS Payment Settlements</h2>
-                <span class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold font-mono">
-                    {{ $totalPaidCount }} Paid Records
-                </span>
-            </div>
-            <p class="text-[11px] text-slate-500 mt-0.5">Audit log of all realized subscription renewals, MFS settlements, and gateway payments</p>
-        </div>
-    </div>
 
     <!-- Global KPI Cards -->
     <div class="owner-kpi-grid">

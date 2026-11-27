@@ -72,6 +72,13 @@ Owner panel-এর সব পেজে Dashboard-এর মতো একই glob
 - প্রতিটি পেজের duplicate top header standard layout-এ রূপান্তর করা।
 - প্রয়োজনীয় page-specific action শুধু অনুমোদিত slot/section-এ রাখা।
 
+#### Task 4.1 — Finance listing batch `[x]`
+
+- Payments, Wallets, Subscriptions এবং Transactions page-এর duplicate body header সরানো হয়েছে।
+- Existing KPI, filters, tables, actions এবং modal behavior অক্ষত রাখা হয়েছে।
+- Legacy test-visible wording page-title-এর মাধ্যমে compatibility-safe রাখা হয়েছে।
+- Blade cache, Owner regression tests এবং diff check সফল হয়েছে।
+
 ### Task 5 — Responsive ও accessibility hardening `[ ]`
 
 - Desktop, tablet এবং mobile viewport-এ overflow, truncation ও alignment যাচাই করা।
