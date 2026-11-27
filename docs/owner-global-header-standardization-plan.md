@@ -93,6 +93,13 @@ Owner panel-এর সব পেজে Dashboard-এর মতো একই glob
 - Gateway table, modal, credential flow এবং mail form logic অক্ষত রাখা হয়েছে।
 - Blade cache এবং Owner portal, SMS gateway ও network regression tests সফল হয়েছে।
 
+#### Task 4.4 — Network pages batch `[x]`
+
+- Network Engines Hub, Network Settings এবং Network Audit Logs-এর duplicate title header সরানো হয়েছে।
+- Back, Global Settings, Export CSV, Save Policies, Engines Hub এবং Script actions compact responsive toolbar-এ রাখা হয়েছে।
+- Existing forms, probes, audit filters এবং diagnostic behavior অক্ষত রাখা হয়েছে।
+- Blade cache এবং Network Engine test suite সফল হয়েছে।
+
 ### Task 5 — Responsive ও accessibility hardening `[ ]`
 
 - Desktop, tablet এবং mobile viewport-এ overflow, truncation ও alignment যাচাই করা।

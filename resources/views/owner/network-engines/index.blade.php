@@ -58,24 +58,8 @@
     }
 }">
 
-    <!-- Top Header Bar (Project Standard Sequence) -->
-    <div class="bg-white rounded-xl border border-slate-200 shadow-xs p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center text-white text-base font-bold shadow-xs flex-shrink-0">
-                <i class="fas fa-network-wired text-sm"></i>
-            </div>
-            <div>
-                <div class="flex items-center gap-2">
-                    <h2 class="text-sm font-bold text-slate-800">Carrier Network Engines Hub</h2>
-                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono">
-                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1 animate-pulse"></span>
-                        5-Engines Core
-                    </span>
-                </div>
-            </div>
-        </div>
-
-        <div class="flex items-center gap-2 flex-shrink-0">
+    <!-- Page-specific network actions; page title is provided by the global Owner header. -->
+    <div class="flex justify-end items-center gap-2 flex-wrap">
             <a href="{{ route('owner.network-engines.settings') }}" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition border border-slate-200 flex items-center gap-1.5">
                 <i class="fas fa-sliders text-slate-500 text-[10px]"></i>
                 <span>Global Settings</span>
@@ -84,7 +68,6 @@
                 <i class="fas fa-terminal text-[10px]"></i>
                 <span>1-Click MikroTik Script</span>
             </button>
-        </div>
     </div>
 
     <!-- Alert / Banner Feedback -->

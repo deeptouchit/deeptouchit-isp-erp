@@ -65,23 +65,12 @@
     }
 }">
 
-    <!-- Page Header (Matching Project Standard Sequence) -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3.5 sm:p-4 rounded-xl border border-slate-200 shadow-xs">
-        <div class="flex items-center gap-3">
-            <a href="{{ route('owner.network-engines.index') }}" class="w-9 h-9 rounded-lg bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 transition flex-shrink-0">
+    <!-- Page-specific settings actions; page title is provided by the global Owner header. -->
+    <div class="flex justify-end items-center gap-2 flex-wrap">
+            <span class="sr-only">Global Network Infrastructure</span>
+            <a href="{{ route('owner.network-engines.index') }}" class="w-9 h-9 rounded-lg bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 transition flex-shrink-0" aria-label="Back to network engines">
                 <i class="fas fa-arrow-left text-xs"></i>
             </a>
-            <div>
-                <div class="flex items-center gap-2">
-                    <h2 class="text-sm sm:text-base font-bold text-slate-800 leading-tight">Global Network Infrastructure & Device Vault</h2>
-                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200 font-mono">
-                        Carrier Grade
-                    </span>
-                </div>
-            </div>
-        </div>
-
-        <div class="flex items-center gap-2 flex-shrink-0">
             <a href="{{ route('owner.network-engines.audit-logs') }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 font-semibold text-xs shadow-xs transition">
                 <i class="fas fa-shield-halved text-slate-500 text-[10px]"></i>
                 <span>Audit Logs</span>
@@ -90,7 +79,6 @@
                 <i class="fas fa-floppy-disk text-[10px]"></i>
                 <span>Save All Engine Policies</span>
             </button>
-        </div>
     </div>
 
     <!-- Alert / Feedback Banner -->
