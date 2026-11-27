@@ -188,6 +188,8 @@ Route::prefix('owner')->name('owner.')->group(function () {
             ->middleware('owner.capability:sms.view')->name('sms-gateways.index');
         Route::post('/sms-gateways/store', [OwnerSmsGatewayController::class, 'storeGateway'])
             ->middleware('owner.capability:sms.manage')->name('sms-gateways.store');
+        Route::put('/sms-gateways/store', [OwnerSmsGatewayController::class, 'storeGateway'])
+            ->middleware('owner.capability:sms.manage');
         Route::put('/sms-gateways/{gateway}', [OwnerSmsGatewayController::class, 'updateGateway'])
             ->middleware('owner.capability:sms.manage')->name('sms-gateways.gateway.update');
         Route::post('/sms-gateways/{gateway}/activate', [OwnerSmsGatewayController::class, 'activateGateway'])
