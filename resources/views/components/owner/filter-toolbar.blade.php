@@ -44,6 +44,7 @@
 
         <div id="{{ $formId ? $formId . '-more-filters' : 'owner-more-filters' }}"
              x-show="showMoreFilters"
+             :aria-hidden="(!showMoreFilters).toString()"
              x-cloak
              x-transition
              class="owner-filter-secondary pt-2 border-t border-slate-100 flex flex-wrap items-center gap-2">

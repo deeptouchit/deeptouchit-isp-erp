@@ -22,7 +22,7 @@
                 <tbody>
                     <tr>
                         <td colspan="100" class="owner-table-empty">
-                            <div class="flex flex-col items-center justify-center gap-2 py-8 px-4 text-center">
+                            <div class="flex flex-col items-center justify-center gap-2 py-8 px-4 text-center" role="status" aria-live="polite">
                                 <span class="w-9 h-9 rounded-lg bg-slate-100 text-slate-400 flex items-center justify-center">
                                     <i class="fas {{ $emptyIcon }} text-sm" aria-hidden="true"></i>
                                 </span>
