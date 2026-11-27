@@ -55,9 +55,16 @@
     </div>
 
     <!-- Filters & Forensic Search Bar -->
-    <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
-        <form action="{{ route('owner.network-engines.audit-logs') }}" method="GET" class="space-y-3" aria-label="Network audit filters">
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2.5">
+    <x-owner.filter-toolbar
+        action="{{ route('owner.network-engines.audit-logs') }}"
+        reset-url="{{ route('owner.network-engines.audit-logs') }}"
+        form-id="owner-network-audit-filter"
+        :show-more-button="false"
+        :search-value="request('search', '')"
+    >
+        <x-slot:primary>
+            <div class="w-full space-y-2.5">
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2.5">
                 <!-- Search Input -->
                 <div class="relative lg:col-span-2">
                     <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
@@ -97,11 +104,10 @@
                         @endforeach
                     </select>
                 </div>
-            </div>
+                </div>
 
-            <!-- Second Row: Date Ranges & Reset -->
-            <div class="flex flex-wrap items-center justify-between gap-2.5 pt-1 border-t border-slate-100 text-xs">
-                <div class="flex flex-wrap items-center gap-2">
+                <!-- Secondary forensic filters -->
+                <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100 text-xs">
                     <span class="text-[11px] font-semibold text-slate-500">Date Range:</span>
                     <input type="date" name="date_from" aria-label="Audit date from" value="{{ request('date_from') }}" class="h-[34px] py-0 px-2 rounded-lg border border-slate-200 text-xs text-slate-700 bg-slate-50 shadow-2xs">
                     <span class="text-slate-400">to</span>
@@ -116,20 +122,20 @@
                         </select>
                     @endif
 
-                    <button type="submit" class="h-[34px] py-0 px-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs transition shadow-2xs cursor-pointer flex items-center gap-1.5">
-                        <i class="fas fa-filter text-[10px]"></i><span>Filter</span>
-                    </button>
-                </div>
-
-                <div class="flex items-center gap-2">
-                    <div class="text-[11px] text-slate-500 font-mono">
-                        Showing {{ $logs->firstItem() ?? 0 }}-{{ $logs->lastItem() ?? 0 }} of {{ $logs->total() }} events
-                    </div>
-                    <a href="{{ route('owner.network-engines.audit-logs') }}" class="h-[34px] py-0 px-2.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition border border-slate-200/80 flex items-center gap-1"><i class="fas fa-rotate-left text-[10px]"></i><span>Reset</span></a>
                 </div>
             </div>
-        </form>
-    </div>
+        </x-slot:primary>
+
+        <x-slot:actions>
+            <div class="text-[11px] text-slate-500 font-mono whitespace-nowrap">
+                Showing {{ $logs->firstItem() ?? 0 }}-{{ $logs->lastItem() ?? 0 }} of {{ $logs->total() }} events
+            </div>
+            <button type="submit" form="owner-network-audit-filter" class="h-[34px] py-0 px-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs transition shadow-2xs cursor-pointer flex items-center gap-1.5">
+                <i class="fas fa-filter text-[10px]"></i><span>Filter</span>
+            </button>
+            <a href="{{ route('owner.network-engines.audit-logs') }}" class="h-[34px] py-0 px-2.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition border border-slate-200/80 flex items-center gap-1"><i class="fas fa-rotate-left text-[10px]"></i><span>Reset</span></a>
+        </x-slot:actions>
+    </x-owner.filter-toolbar>
 
     <!-- Audit Logs Ledger Table -->
     <x-owner.table-shell
