@@ -198,7 +198,7 @@ class OwnerPaymentGatewayController extends Controller
     public function saveRegistryGateway(Request $request)
     {
         $data = $request->validate([
-            'gateway' => ['required', Rule::in(['bkash', 'nagad', 'sslcommerz', 'aamarpay', 'shurjopay', 'stripe', 'bank', 'mfs_manual'])],
+            'gateway' => ['required', Rule::in(['bkash', 'nagad', 'rocket', 'sslcommerz', 'aamarpay', 'shurjopay', 'stripe', 'bank', 'mfs_manual'])],
             'name' => ['nullable', 'string', 'max:100'],
             'mode' => ['nullable', Rule::in(['sandbox', 'test', 'live', 'manual'])],
             'fee' => ['nullable', 'numeric', 'min:0', 'max:100'],
@@ -240,7 +240,7 @@ class OwnerPaymentGatewayController extends Controller
 
     public function toggleRegistryGateway(string $gateway)
     {
-        $allowed = ['bkash', 'nagad', 'sslcommerz', 'aamarpay', 'shurjopay', 'stripe', 'bank', 'mfs_manual'];
+        $allowed = ['bkash', 'nagad', 'rocket', 'sslcommerz', 'aamarpay', 'shurjopay', 'stripe', 'bank', 'mfs_manual'];
         abort_unless(in_array($gateway, $allowed, true), 404);
         $prefix = $gateway === 'sslcommerz' ? 'ssl' : $gateway;
         $settings = Setting::getGroup('payment_gateways');
@@ -252,7 +252,7 @@ class OwnerPaymentGatewayController extends Controller
 
     public function deleteRegistryGateway(string $gateway)
     {
-        $allowed = ['bkash', 'nagad', 'sslcommerz', 'aamarpay', 'shurjopay', 'stripe', 'bank', 'mfs_manual'];
+        $allowed = ['bkash', 'nagad', 'rocket', 'sslcommerz', 'aamarpay', 'shurjopay', 'stripe', 'bank', 'mfs_manual'];
         abort_unless(in_array($gateway, $allowed, true), 404);
         $prefix = $gateway === 'sslcommerz' ? 'ssl' : $gateway;
         Setting::set($prefix . '_status', '0', 'payment_gateways', null);
