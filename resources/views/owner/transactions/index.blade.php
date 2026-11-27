@@ -64,10 +64,13 @@
     </div>
 
     <!-- Transactions Table -->
-    <div class="rounded-xl bg-white border border-slate-200 overflow-hidden shadow-xs">
-        <div class="overflow-x-auto">
-            <table class="saas-table owner-finance-table">
-                <thead class="bg-slate-50 text-slate-600 uppercase tracking-wider text-[10px] border-b border-slate-200 font-bold text-center">
+    <x-owner.table-shell
+        :has-rows="$transactions->isNotEmpty()"
+        empty-title="No payment transactions found"
+        empty-message="Payment transaction handshakes will appear here."
+        empty-icon="fa-right-left"
+    >
+        <x-slot:head>
                     <tr>
                         <th class="px-3 py-2.5 border-r border-slate-200">Date & Time</th>
                         <th class="px-3.5 py-2.5 border-r border-slate-200">ISP Tenant</th>
@@ -78,9 +81,9 @@
                         <th class="px-3.5 py-2.5 border-r border-slate-200">Status</th>
                         <th class="px-3.5 py-2.5 text-center">Payload</th>
                     </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-200 bg-white">
-                    @forelse($transactions as $trx)
+        </x-slot:head>
+        <x-slot:body>
+                    @foreach($transactions as $trx)
                         <tr class="hover:bg-slate-50 transition">
                             <td class="px-3.5 py-2.5 border-r border-slate-200 font-mono text-[10.5px] text-slate-500 text-center">
                                 {{ $trx->created_at ? $trx->created_at->format('d M, Y (h:i A)') : '—' }}
@@ -123,20 +126,14 @@
                                 </button>
                             </td>
                         </tr>
-                    @empty
-                        <tr>
-                            <td colspan="8" class="px-4 py-8 text-center text-slate-400">No payment transaction handshakes found.</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
+                    @endforeach
 
-        <div class="px-4 py-3 border-t border-slate-200 bg-slate-50 flex items-center justify-between text-xs text-slate-600">
+        </x-slot:body>
+        <x-slot:pagination>
             <div>Showing {{ $transactions->firstItem() ?? 0 }} to {{ $transactions->lastItem() ?? 0 }} of {{ $transactions->total() }} Records</div>
             <div>{{ $transactions->links() }}</div>
-        </div>
-    </div>
+        </x-slot:pagination>
+    </x-owner.table-shell>
 
     <!-- Payload JSON Modal -->
     <div x-show="payloadModalOpen" 

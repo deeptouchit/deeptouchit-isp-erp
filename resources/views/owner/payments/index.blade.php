@@ -55,10 +55,13 @@
     </div>
 
     <!-- Payments Table -->
-    <div class="rounded-xl bg-white border border-slate-200 overflow-hidden shadow-xs">
-        <div class="overflow-x-auto">
-            <table class="saas-table owner-finance-table">
-                <thead class="bg-slate-50 text-slate-600 uppercase tracking-wider text-[10px] border-b border-slate-200 font-bold text-center">
+    <x-owner.table-shell
+        :has-rows="$payments->isNotEmpty()"
+        empty-title="No settled payments found"
+        empty-message="Settled payment records will appear here."
+        empty-icon="fa-money-check-dollar"
+    >
+        <x-slot:head>
                     <tr>
                         <th class="px-3 py-2.5 border-r border-slate-200">Payment Date</th>
                         <th class="px-3.5 py-2.5 border-r border-slate-200">Invoice #</th>
@@ -69,9 +72,9 @@
                         <th class="px-3.5 py-2.5 border-r border-slate-200">Settled Amount</th>
                         <th class="px-3.5 py-2.5 text-center">Status</th>
                     </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-200 bg-white">
-                    @forelse($payments as $p)
+        </x-slot:head>
+        <x-slot:body>
+                    @foreach($payments as $p)
                         <tr class="hover:bg-slate-50 transition">
                             <td class="px-3.5 py-2.5 border-r border-slate-200 font-mono text-[10.5px] text-slate-600 text-center">
                                 {{ $p->paid_at ? \Carbon\Carbon::parse($p->paid_at)->format('d M, Y (h:i A)') : ($p->created_at ? $p->created_at->format('d M, Y') : '—') }}
@@ -110,20 +113,14 @@
                                 </span>
                             </td>
                         </tr>
-                    @empty
-                        <tr>
-                            <td colspan="8" class="px-4 py-8 text-center text-slate-400">No settled payment records found.</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
+                    @endforeach
 
-        <div class="px-4 py-3 border-t border-slate-200 bg-slate-50 flex items-center justify-between text-xs text-slate-600">
+        </x-slot:body>
+        <x-slot:pagination>
             <div>Showing {{ $payments->firstItem() ?? 0 }} to {{ $payments->lastItem() ?? 0 }} of {{ $payments->total() }} Records</div>
             <div>{{ $payments->links() }}</div>
-        </div>
-    </div>
+        </x-slot:pagination>
+    </x-owner.table-shell>
 
 </div>
 @endsection
