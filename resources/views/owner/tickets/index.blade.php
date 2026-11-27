@@ -39,9 +39,8 @@
     </div>
 
     <!-- Filters & Search Toolbar -->
-    <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs">
-        <form action="{{ route('owner.tickets.index') }}" method="GET" x-data="{ showMoreFilters: {{ request()->filled('tenant_id') || request()->filled('priority') ? 'true' : 'false' }}, searchQuery: @js(request('search', '')) }" class="owner-ticket-filter flex flex-col md:flex-row items-stretch md:items-center gap-2">
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 flex-1">
+    <x-owner.filter-toolbar action="{{ route('owner.tickets.index') }}" reset-url="{{ route('owner.tickets.index') }}" form-id="owner-tickets-filter" :show-more-open="request()->filled('tenant_id') || request()->filled('priority')" :active-more-count="request()->filled('tenant_id') || request()->filled('priority') ? 2 : 0" :search-value="request('search', '')">
+        <x-slot:primary>
                 <!-- Search Input -->
                 <div class="relative lg:col-span-2">
                     <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px]" :class="searchQuery ? 'text-cyan-600 font-bold' : 'text-slate-400'"></i>
@@ -54,8 +53,9 @@
                     <button type="button" x-show="searchQuery" x-cloak @click="searchQuery = ''; $nextTick(() => $el.closest('form').submit())" class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-600"><i class="fas fa-times text-[10px]"></i></button>
                 </div>
 
-                <!-- Tenant Filter -->
-                <select name="tenant_id" x-show="showMoreFilters" x-cloak class="text-xs rounded-lg border border-slate-200 bg-slate-50 px-2 py-0 focus:bg-white focus:outline-none focus:ring-1 focus:ring-cyan-500">
+        </x-slot:primary>
+        <x-slot:secondary>
+                <select name="tenant_id" class="h-[34px] text-xs rounded-lg border border-slate-200 bg-slate-50 px-2 focus:bg-white focus:outline-none focus:ring-1 focus:ring-cyan-500">
                     <option value="">All ISP Tenants</option>
                     @foreach($tenants as $t)
                         <option value="{{ $t->id }}" {{ request('tenant_id') == $t->id ? 'selected' : '' }}>
@@ -64,8 +64,7 @@
                     @endforeach
                 </select>
 
-                <!-- Status Filter -->
-                <select name="status" class="text-xs rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500">
+                <select name="status" class="h-[34px] text-xs rounded-lg border border-slate-200 bg-slate-50 px-2 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500">
                     <option value="">All Statuses</option>
                     <option value="open" {{ request('status') == 'open' ? 'selected' : '' }}>All Active (Open/Answered)</option>
                     <option value="pending_reply" {{ request('status') == 'pending_reply' ? 'selected' : '' }}>Pending Owner Reply</option>
@@ -75,28 +74,15 @@
                     <option value="closed" {{ request('status') == 'closed' ? 'selected' : '' }}>Closed</option>
                 </select>
 
-                <!-- Priority Filter -->
-                <select name="priority" x-show="showMoreFilters" x-cloak class="text-xs rounded-lg border border-slate-200 bg-slate-50 px-2 py-0 focus:bg-white focus:outline-none focus:ring-1 focus:ring-cyan-500">
+                <select name="priority" class="h-[34px] text-xs rounded-lg border border-slate-200 bg-slate-50 px-2 focus:bg-white focus:outline-none focus:ring-1 focus:ring-cyan-500">
                     <option value="">All Priorities</option>
                     <option value="urgent" {{ request('priority') == 'urgent' ? 'selected' : '' }}>🔴 Urgent</option>
                     <option value="high" {{ request('priority') == 'high' ? 'selected' : '' }}>🟠 High</option>
                     <option value="medium" {{ request('priority') == 'medium' ? 'selected' : '' }}>🔵 Medium</option>
                     <option value="low" {{ request('priority') == 'low' ? 'selected' : '' }}>⚪ Low</option>
                 </select>
-            </div>
-
-            <!-- Action Buttons -->
-            <div class="flex items-center gap-1.5 flex-shrink-0">
-                <button type="button" @click="showMoreFilters = !showMoreFilters" class="h-[34px] py-0 px-2.5 rounded-lg border border-slate-200 bg-white text-slate-700 text-xs font-semibold flex items-center gap-1.5"><i class="fas" :class="showMoreFilters ? 'fa-chevron-up text-cyan-600' : 'fa-chevron-down text-slate-400'"></i><span>More Filters</span></button>
-                <button type="submit" class="h-[34px] py-0 px-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs transition shadow-xs flex items-center gap-1.5">
-                    <i class="fas fa-filter text-[10px]"></i>
-                    <span>Apply Filter</span>
-                </button>
-
-                <a href="{{ route('owner.tickets.index') }}" class="h-[34px] py-0 px-2.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs transition flex items-center gap-1 border border-slate-200/80" title="Clear Filters"><i class="fas fa-rotate-left text-[10px]"></i><span>Reset</span></a>
-            </div>
-        </form>
-    </div>
+        </x-slot:secondary>
+    </x-owner.filter-toolbar>
 
     <!-- Tickets Table Card -->
     <x-owner.table-shell
