@@ -5,43 +5,6 @@
 @section('content')
 <div class="space-y-2.5 max-w-7xl mx-auto">
     
-    <!-- Top Ultra-Compact Header Strip -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-white px-3 py-2 rounded-lg border border-slate-200/90 shadow-2xs">
-        <div class="flex items-center gap-2">
-            <div class="w-6 h-6 rounded-md bg-blue-600 text-white flex items-center justify-center font-bold text-[10px] shadow-2xs flex-shrink-0">
-                <i class="fas fa-layer-group"></i>
-            </div>
-            <div class="flex items-center gap-2">
-                <h2 class="text-xs font-bold text-slate-900 tracking-tight">Overview Dashboard <span class="font-normal text-slate-400">· Executive Dashboard</span></h2>
-                <span class="inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[9px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                    <span class="w-1 h-1 rounded-full bg-emerald-500"></span>
-                    Live
-                </span>
-            </div>
-        </div>
-
-        <div class="flex items-center gap-2 flex-wrap">
-            <!-- SMS Live Balance Pill -->
-            <a href="{{ route('owner.sms-gateways.index') }}" class="px-2 py-1 rounded bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[10px] font-semibold border border-indigo-200/80 transition flex items-center gap-1.5">
-                <i class="fas fa-comment-dots text-[9px] text-indigo-500"></i>
-                <span>SMS Balance: <span class="font-bold font-mono">{{ $smsBalanceInfo['formatted'] ?? 'N/A' }}</span></span>
-            </a>
-
-            <form action="{{ route('owner.billing.run-engine') }}" method="POST" class="inline" onsubmit="return confirm('Execute automated billing engine now?');">
-                @csrf
-                <button type="submit" class="px-2 py-1 rounded bg-slate-50 hover:bg-slate-100 text-slate-700 text-[10.5px] font-semibold border border-slate-200 transition flex items-center gap-1">
-                    <i class="fas fa-bolt text-amber-500 text-[9px]"></i>
-                    <span>Run Billing</span>
-                </button>
-            </form>
-
-            <a href="{{ route('owner.tenants.create') }}" class="px-2.5 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white text-[10.5px] font-semibold shadow-2xs transition flex items-center gap-1">
-                <i class="fas fa-plus text-[9px]"></i>
-                <span>New Tenant</span>
-            </a>
-        </div>
-    </div>
-
     <!-- 4 Ultra-Compact Metric Cards -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-2">
         

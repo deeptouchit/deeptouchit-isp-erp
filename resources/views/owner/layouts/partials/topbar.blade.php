@@ -1,8 +1,15 @@
-<!-- Professional Production Sticky Topbar -->
-<header class="sticky top-0 z-30 h-14 bg-white/90 backdrop-blur-md border-b border-slate-200/80 px-3.5 sm:px-6 flex items-center justify-between shadow-xs transition-all">
+@php
+    $ownerHeaderTitle = request()->routeIs('owner.dashboard')
+        ? 'Overview Dashboard'
+        : (trim(View::yieldContent('page-title')) ?: 'Owner Console');
+    $ownerHeaderSubtitle = request()->routeIs('owner.dashboard') ? 'Executive Dashboard' : 'Owner Console';
+@endphp
+
+<!-- Global Owner Console Header -->
+<header class="sticky top-0 z-30 min-h-14 bg-white/90 backdrop-blur-md border-b border-slate-200/80 px-3.5 sm:px-6 py-2 flex items-center justify-between gap-3 shadow-xs transition-all">
     
     <!-- Left Section: Mobile Toggle, Breadcrumb & Context Title -->
-    <div class="flex items-center gap-3 min-w-0">
+    <div class="flex items-center gap-2.5 min-w-0">
         <!-- Mobile Sidebar Toggle -->
         <button type="button" 
                 @click="mobileSidebar = true" 
@@ -11,10 +18,45 @@
             <i class="fas fa-bars-staggered text-sm"></i>
         </button>
 
+        <div class="w-6 h-6 rounded-md bg-blue-600 text-white flex items-center justify-center font-bold text-[10px] shadow-2xs flex-shrink-0">
+            <i class="fas fa-layer-group"></i>
+        </div>
+        <div class="flex items-center gap-2 min-w-0">
+            <h1 class="text-xs font-bold text-slate-900 tracking-tight truncate max-w-[180px] sm:max-w-none">
+                {{ $ownerHeaderTitle }}
+                <span class="hidden sm:inline font-normal text-slate-400">· {{ $ownerHeaderSubtitle }}</span>
+            </h1>
+            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 flex-shrink-0">
+                <span class="w-1 h-1 rounded-full bg-emerald-500"></span>
+                Live
+            </span>
+        </div>
+
     </div>
 
     <!-- Right Section: System Actions, Live Feed & User Menu -->
-    <div class="flex items-center gap-2 sm:gap-2.5 flex-shrink-0">
+    <div class="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+
+        <!-- Shared Owner Actions -->
+        <div class="hidden md:flex items-center gap-1.5">
+            <a href="{{ route('owner.sms-gateways.index') }}" class="px-2 py-1 rounded bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[10px] font-semibold border border-indigo-200/80 transition flex items-center gap-1.5">
+                <i class="fas fa-comment-dots text-[9px] text-indigo-500"></i>
+                <span>SMS Balance: <span class="font-bold font-mono">{{ $smsBalanceInfo['formatted'] ?? '—' }}</span></span>
+            </a>
+
+            <form action="{{ route('owner.billing.run-engine') }}" method="POST" class="inline" onsubmit="return confirm('Execute automated billing engine now?');">
+                @csrf
+                <button type="submit" class="px-2 py-1 rounded bg-slate-50 hover:bg-slate-100 text-slate-700 text-[10.5px] font-semibold border border-slate-200 transition flex items-center gap-1">
+                    <i class="fas fa-bolt text-amber-500 text-[9px]"></i>
+                    <span>Run Billing</span>
+                </button>
+            </form>
+
+            <a href="{{ route('owner.tenants.create') }}" class="px-2.5 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white text-[10.5px] font-semibold shadow-2xs transition flex items-center gap-1">
+                <i class="fas fa-plus text-[9px]"></i>
+                <span>New Tenant</span>
+            </a>
+        </div>
 
 
         <!-- Notification Bell Widget -->
