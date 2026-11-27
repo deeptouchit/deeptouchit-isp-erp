@@ -47,6 +47,13 @@
     @if($errors->any())
         <div class="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800"><div class="font-semibold mb-1">Please correct the following:</div><ul class="list-disc pl-4 space-y-0.5">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>
     @endif
+    @if(session('mail_test_result'))
+        @php($testResult = session('mail_test_result'))
+        <div class="rounded-lg border {{ $testResult['success'] ? 'border-emerald-200 bg-emerald-50' : 'border-rose-200 bg-rose-50' }} px-3 py-2 text-xs {{ $testResult['success'] ? 'text-emerald-900' : 'text-rose-900' }}">
+            <div class="flex items-center gap-2 font-semibold"><i class="fas {{ $testResult['success'] ? 'fa-circle-check' : 'fa-circle-exclamation' }}"></i><span>SMTP Diagnostic {{ $testResult['success'] ? 'Passed' : 'Failed' }}</span></div>
+            <div class="mt-1 grid grid-cols-2 sm:grid-cols-5 gap-2 font-mono text-[10px]"><span>Host: {{ $testResult['host'] }}</span><span>Port: {{ $testResult['port'] }}</span><span>Encryption: {{ strtoupper($testResult['encryption']) }}</span><span>Latency: {{ $testResult['latency'] }}</span><span>To: {{ $testResult['recipient'] }}</span></div>
+        </div>
+    @endif
 
     <!-- Active Mail Engine Summary Strip -->
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">

@@ -122,11 +122,13 @@ class OwnerMailSettingController extends Controller
             Mail::to($request->test_email)->send(new SystemTestMail($details));
             $latency = round((microtime(true) - $startTime) * 1000);
 
-            return back()->with('success', "Test email successfully delivered to '{$request->test_email}' in {$latency}ms via {$host}:{$port} ({$encryption}).");
+            return back()->with('success', "Test email successfully delivered to '{$request->test_email}'.")
+                ->with('mail_test_result', array_merge($details, ['success' => true, 'latency' => $latency . ' ms']));
         } catch (\Throwable $e) {
             $latency = round((microtime(true) - $startTime) * 1000);
             report($e);
-            return back()->with('error', "SMTP dispatch failed ({$latency}ms). Check the mail configuration and server logs.");
+            return back()->with('error', 'SMTP dispatch failed. Check the mail configuration and try again.')
+                ->with('mail_test_result', array_merge($details, ['success' => false, 'latency' => $latency . ' ms']));
         }
     }
 }
