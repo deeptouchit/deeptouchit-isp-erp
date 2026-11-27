@@ -156,10 +156,13 @@
     </div>
 
     <!-- Invoices Table -->
-    <div class="rounded-xl bg-white border border-slate-200 overflow-hidden shadow-xs">
-        <div class="overflow-x-auto">
-            <table class="saas-table owner-finance-table">
-                <thead class="bg-slate-50 text-slate-600 uppercase tracking-wider text-[10px] border-b border-slate-200 font-bold select-none text-center">
+    <x-owner.table-shell
+        :has-rows="$invoices->isNotEmpty()"
+        empty-title="No invoices found"
+        empty-message="Generate an invoice to get started."
+        empty-icon="fa-file-invoice-dollar"
+    >
+        <x-slot:head>
                     <tr>
                         <th class="px-2.5 py-1.5 border-r border-slate-200 text-center w-10">#</th>
                         <th class="px-2.5 py-1.5 border-r border-slate-200 text-center">Invoice #</th>
@@ -171,9 +174,9 @@
                         <th class="px-2.5 py-1.5 border-r border-slate-200 text-center">Status</th>
                         <th class="px-2.5 py-1.5 text-center">Actions</th>
                     </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-200 bg-white">
-                    @forelse ($invoices as $inv)
+        </x-slot:head>
+        <x-slot:body>
+                    @foreach ($invoices as $inv)
                         @php
                             $isOverdue = $inv->status === 'unpaid' && $inv->due_date && \Carbon\Carbon::parse($inv->due_date)->isPast();
                         @endphp
@@ -295,27 +298,19 @@
                                 </form>
                             </td>
                         </tr>
-                    @empty
-                        <tr>
-                            <td colspan="9" class="px-4 py-8 text-center text-slate-400 text-xs">
-                                No invoices found. Generate an invoice to get started.
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
+                    @endforeach
+        </x-slot:body>
 
         <!-- Invoices Pagination -->
-        <div class="px-4 py-2.5 border-t border-slate-200 bg-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-600">
+        <x-slot:pagination>
             <div>
                 Showing <span class="font-bold text-slate-800">{{ $invoices->firstItem() ?? 0 }}</span> to <span class="font-bold text-slate-800">{{ $invoices->lastItem() ?? 0 }}</span> of <span class="font-bold text-slate-800">{{ $invoices->total() }}</span> Invoices
             </div>
             <div>
                 {{ $invoices->links() }}
             </div>
-        </div>
-    </div>
+        </x-slot:pagination>
+    </x-owner.table-shell>
 
     <!-- Global Floating Actions Dropdown Menu (Free from Table Overflow Clipping) -->
     <div x-show="activeMenuInvoice !== null" 
