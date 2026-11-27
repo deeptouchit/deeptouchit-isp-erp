@@ -8,9 +8,9 @@
     showGatewayCreate: false,
     editGateway: null,
     showGatewayDetails: null,
-    gatewayForm: { name: '', mode: 'sandbox', fee: '', api_url: '', webhook_url: '' },
+    gatewayForm: { gateway: '', name: '', mode: 'sandbox', fee: '', api_url: '', webhook_url: '' },
     syncGatewayForm(value) {
-        this.gatewayForm = value ? { name: value.name || '', mode: value.mode || 'sandbox', fee: value.fee ?? '', api_url: value.api_url || '', webhook_url: value.webhook_url || '' } : { name: '', mode: 'sandbox', fee: '', api_url: '', webhook_url: '' };
+        this.gatewayForm = value ? { gateway: value.key || '', name: value.name || '', mode: value.mode || 'sandbox', fee: value.fee ?? '', api_url: value.api_url || '', webhook_url: value.webhook_url || '' } : { gateway: '', name: '', mode: 'sandbox', fee: '', api_url: '', webhook_url: '' };
     },
     showBkashSecret: false,
     showBkashPass: false,
@@ -120,7 +120,7 @@
         </div>
         <div class="overflow-x-auto">
             <table class="saas-table">
-                <thead><tr><th class="text-center">#</th><th class="text-left">Gateway</th><th class="text-center">Mode</th><th class="text-right">Fee</th><th class="text-center">Status</th><th class="text-center no-sort">Action</th></tr></thead>
+                <thead><tr><th class="text-center">#</th><th class="text-left">Gateway</th><th class="text-center">Mode</th><th class="text-right">Fee</th><th class="text-center">Credentials</th><th class="text-center">Last Test</th><th class="text-center">Status</th><th class="text-center no-sort">Action</th></tr></thead>
                 <tbody>
                 @foreach($gatewayRegistry as $gateway)
                     <tr>
@@ -128,6 +128,8 @@
                         <td class="text-left font-semibold">{{ $gateway['name'] }}</td>
                         <td class="text-center uppercase">{{ $gateway['mode'] }}</td>
                         <td class="text-right font-mono">{{ number_format($gateway['fee'], 2) }}%</td>
+                        <td class="text-center"><span class="px-2 py-0.5 rounded-full bg-slate-50 text-slate-600 border border-slate-200 text-[10px]">{{ !empty($gateway['api_url']) || !empty($gateway['webhook_url']) ? 'Configured' : 'Setup needed' }}</span></td>
+                        <td class="text-center text-[10px]">{{ $gateway['last_test_status'] ?: 'Not tested' }}</td>
                         <td class="text-center">@if($gateway['is_active'])<span class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-semibold">Active</span>@else<span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200 text-[10px] font-semibold">Inactive</span>@endif</td>
                         <td class="text-center"><details class="relative inline-block"><summary class="list-none cursor-pointer w-7 h-7 rounded-lg hover:bg-slate-100 text-slate-500 flex items-center justify-center"><i class="fas fa-ellipsis-v text-[11px]"></i></summary><div class="absolute right-0 z-30 mt-1 w-40 p-1.5 bg-white border border-slate-200 rounded-xl shadow-xl text-left"><button type="button" @click="showGatewayDetails={{ Js::from($gateway) }}; $el.closest('details').open=false" class="w-full px-2 py-1.5 text-left text-[10px] hover:bg-slate-50"><i class="fas fa-circle-info w-4 text-blue-600"></i>View Details</button><button type="button" @click="showGatewayCreate=true; editGateway={{ Js::from($gateway) }}; $el.closest('details').open=false" class="w-full px-2 py-1.5 text-left text-[10px] hover:bg-slate-50"><i class="fas fa-pen w-4 text-cyan-600"></i>Edit Gateway</button><form method="POST" action="{{ route('owner.payment-gateways.registry.toggle', $gateway['key']) }}">@csrf<button class="w-full px-2 py-1.5 text-left text-[10px] text-amber-700 hover:bg-amber-50"><i class="fas fa-toggle-on w-4"></i>{{ $gateway['is_active'] ? 'Deactivate' : 'Activate' }}</button></form><form method="POST" action="{{ route('owner.payment-gateways.registry.delete', $gateway['key']) }}" onsubmit="return confirm('Disable this payment gateway?')">@csrf @method('DELETE')<button class="w-full px-2 py-1.5 text-left text-[10px] text-rose-700 hover:bg-rose-50"><i class="fas fa-trash w-4"></i>Delete</button></form></div></details></td>
                     </tr>
