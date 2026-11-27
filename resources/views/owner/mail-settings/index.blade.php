@@ -232,7 +232,17 @@
     </div>
 
     <section class="bg-white rounded-xl border border-slate-200/80 shadow-xs overflow-hidden">
-        <div class="p-3.5 bg-slate-50/50 border-b border-slate-100 flex items-center justify-between gap-2"><span class="text-xs font-bold text-slate-800"><i class="fas fa-clock-rotate-left text-blue-600 mr-1.5"></i>SMTP Test History</span><div class="flex items-center gap-1.5"><form method="GET" class="flex"><select name="test_status" onchange="this.form.submit()" class="h-[30px] px-2 rounded-lg border border-slate-200 bg-white text-[10px]"><option value="">All</option><option value="passed" @selected(request('test_status') === 'passed')>Passed</option><option value="failed" @selected(request('test_status') === 'failed')>Failed</option></select></form><a href="{{ route('owner.mail-settings.test-history.export') }}" class="h-[30px] px-2 rounded-lg bg-slate-100 text-slate-700 text-[10px] flex items-center">Export</a><form method="POST" action="{{ route('owner.mail-settings.test-history.clear') }}" onsubmit="return confirm('Clear SMTP test history?')">@csrf @method('DELETE')<button class="h-[30px] px-2 rounded-lg bg-rose-50 text-rose-700 text-[10px]">Clear</button></form></div></div>
+        <div class="p-3.5 bg-slate-50/50 border-b border-slate-100 flex items-center justify-between gap-2">
+            <span class="text-xs font-bold text-slate-800"><i class="fas fa-clock-rotate-left text-blue-600 mr-1.5"></i>SMTP Test History</span>
+            <div class="flex items-center gap-1.5">
+                <form method="GET" class="flex">
+                    <label for="smtp-test-status" class="sr-only">SMTP test status</label>
+                    <select id="smtp-test-status" name="test_status" onchange="this.form.submit()" class="h-[30px] px-2 rounded-lg border border-slate-200 bg-white text-[10px]"><option value="">All</option><option value="passed" @selected(request('test_status') === 'passed')>Passed</option><option value="failed" @selected(request('test_status') === 'failed')>Failed</option></select>
+                </form>
+                <a href="{{ route('owner.mail-settings.test-history.export') }}" class="h-[30px] px-2 rounded-lg bg-slate-100 text-slate-700 text-[10px] flex items-center">Export</a>
+                <form method="POST" action="{{ route('owner.mail-settings.test-history.clear') }}" onsubmit="return confirm('Clear SMTP test history?')">@csrf @method('DELETE')<button class="h-[30px] px-2 rounded-lg bg-rose-50 text-rose-700 text-[10px]">Clear</button></form>
+            </div>
+        </div>
         <x-owner.table-shell
             :has-rows="$mailTestLogs->isNotEmpty()"
             empty-title="No SMTP tests found"
