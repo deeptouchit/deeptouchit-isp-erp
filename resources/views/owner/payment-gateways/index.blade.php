@@ -990,8 +990,8 @@ if (isset($response['GatewayPageURL'])) {
 
     @endif
 
-    <div x-show="showGatewayCreate" x-cloak class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
-        <div @click.outside="showGatewayCreate=false; editGateway=null" class="bg-white rounded-xl border border-slate-200 shadow-2xl w-full max-w-md overflow-hidden">
+    <div x-show="showGatewayCreate" x-cloak class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4" @click.self="showGatewayCreate=false; editGateway=null">
+        <div class="bg-white rounded-xl border border-slate-200 shadow-2xl w-full max-w-md overflow-hidden">
             <div class="px-4 py-3 bg-slate-50 border-b flex items-center justify-between"><h3 class="text-sm font-bold text-slate-800" x-text="editGateway ? 'Edit Payment Gateway' : 'Add Payment Gateway'"></h3><button type="button" @click="showGatewayCreate=false; editGateway=null" class="w-6 h-6 rounded-md hover:bg-slate-200">&times;</button></div>
             <form method="POST" action="{{ route('owner.payment-gateways.registry.store') }}" class="p-4 space-y-3">@csrf
                 <select name="gateway" required class="w-full h-[34px] px-3 rounded-lg border border-slate-200 bg-slate-50 text-xs"><option value="">Select gateway</option>@foreach($gatewayRegistry as $gateway)<option value="{{ $gateway['key'] }}">{{ $gateway['name'] }}</option>@endforeach</select>
@@ -1001,7 +1001,7 @@ if (isset($response['GatewayPageURL'])) {
             </form>
         </div>
     </div>
-    <div x-show="showGatewayDetails" x-cloak class="fixed inset-0 z-50 bg-slate-900/40 flex items-center justify-center p-4"><div @click.outside="showGatewayDetails=null" class="bg-white rounded-xl border border-slate-200 shadow-2xl w-full max-w-md overflow-hidden"><div class="px-4 py-3 bg-slate-50 border-b flex justify-between"><h3 class="text-sm font-bold">Gateway Details</h3><button type="button" @click="showGatewayDetails=null">&times;</button></div><div class="p-4 grid grid-cols-2 gap-2 text-xs"><div class="p-2 bg-slate-50 rounded-lg">Gateway<br><b x-text="showGatewayDetails?.name"></b></div><div class="p-2 bg-slate-50 rounded-lg">Mode<br><b x-text="showGatewayDetails?.mode"></b></div><div class="p-2 bg-slate-50 rounded-lg">Fee<br><b x-text="(showGatewayDetails?.fee || 0) + '%' "></b></div><div class="p-2 bg-slate-50 rounded-lg">Status<br><b x-text="showGatewayDetails?.is_active ? 'Active' : 'Inactive'"></b></div></div></div></div>
+    <div x-show="showGatewayDetails" x-cloak class="fixed inset-0 z-50 bg-slate-900/40 flex items-center justify-center p-4" @click.self="showGatewayDetails=null"><div class="bg-white rounded-xl border border-slate-200 shadow-2xl w-full max-w-md overflow-hidden"><div class="px-4 py-3 bg-slate-50 border-b flex justify-between"><h3 class="text-sm font-bold">Gateway Details</h3><button type="button" @click="showGatewayDetails=null">&times;</button></div><div class="p-4 grid grid-cols-2 gap-2 text-xs"><div class="p-2 bg-slate-50 rounded-lg">Gateway<br><b x-text="showGatewayDetails?.name"></b></div><div class="p-2 bg-slate-50 rounded-lg">Mode<br><b x-text="showGatewayDetails?.mode"></b></div><div class="p-2 bg-slate-50 rounded-lg">Fee<br><b x-text="(showGatewayDetails?.fee || 0) + '%' "></b></div><div class="p-2 bg-slate-50 rounded-lg">Status<br><b x-text="showGatewayDetails?.is_active ? 'Active' : 'Inactive'"></b></div></div></div></div>
 </div>
 @endsection
 @push('styles')
