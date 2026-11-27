@@ -1,8 +1,26 @@
 @import url('https://fonts.googleapis.com/css2?family=Baloo+Da+2:wght@400;500;600;700;800&family=Hind+Siliguri:wght@400;500;600;700&family=Source+Sans+3:wght@300;400;600;700&display=swap');
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@source "../views";
+@source "../js";
+
+@theme {
+    --color-hslate-50: #f8fafc;
+    --color-hslate-200: #e2e8f0;
+    --color-hslate-400: #94a3b8;
+    --color-hslate-700: #334155;
+    --color-hslate-900: #0f172a;
+    --color-brand-50: #eff6ff;
+    --color-brand-100: #dbeafe;
+    --color-brand-200: #bfdbfe;
+    --color-brand-300: #93c5fd;
+    --color-brand-600: #2563eb;
+    --color-brand-700: #1d4ed8;
+    --color-brand-900: #1e3a8a;
+    --shadow-hcard: 0 2px 8px rgba(15, 23, 42, 0.04);
+    --shadow-hcard-hover: 0 8px 24px rgba(37, 99, 235, 0.12);
+}
 
 @layer base {
     html, body, button, input, select, textarea {
