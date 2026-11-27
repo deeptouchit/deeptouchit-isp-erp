@@ -67,7 +67,7 @@
 
                 <!-- Device Type -->
                 <div>
-                    <select name="device_type" class="w-full h-[34px] py-0 px-2.5 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 focus:border-cyan-500 shadow-2xs">
+                    <select name="device_type" aria-label="Device type" class="w-full h-[34px] py-0 px-2.5 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 focus:border-cyan-500 shadow-2xs">
                         <option value="">All Device Types</option>
                         <option value="router" {{ request('device_type') == 'router' ? 'selected' : '' }}>MikroTik Router</option>
                         <option value="olt" {{ request('device_type') == 'olt' ? 'selected' : '' }}>OLT PON Device</option>
@@ -80,7 +80,7 @@
 
                 <!-- Status -->
                 <div>
-                    <select name="status" class="w-full h-[34px] py-0 px-2.5 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 focus:border-cyan-500 shadow-2xs">
+                    <select name="status" aria-label="Audit status" class="w-full h-[34px] py-0 px-2.5 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 focus:border-cyan-500 shadow-2xs">
                         <option value="">All Statuses</option>
                         <option value="success" {{ request('status') == 'success' ? 'selected' : '' }}>Success</option>
                         <option value="failed" {{ request('status') == 'failed' ? 'selected' : '' }}>Failed</option>
@@ -90,7 +90,7 @@
 
                 <!-- Tenant Filter -->
                 <div>
-                    <select name="tenant_id" class="w-full h-[34px] py-0 px-2.5 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 focus:border-cyan-500 shadow-2xs">
+                    <select name="tenant_id" aria-label="Tenant" class="w-full h-[34px] py-0 px-2.5 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 focus:border-cyan-500 shadow-2xs">
                         <option value="">All Tenants</option>
                         @foreach($tenants as $t)
                             <option value="{{ $t->id }}" {{ request('tenant_id') == $t->id ? 'selected' : '' }}>{{ $t->company_name }}</option>
@@ -103,12 +103,12 @@
             <div class="flex flex-wrap items-center justify-between gap-2.5 pt-1 border-t border-slate-100 text-xs">
                 <div class="flex flex-wrap items-center gap-2">
                     <span class="text-[11px] font-semibold text-slate-500">Date Range:</span>
-                    <input type="date" name="date_from" value="{{ request('date_from') }}" class="h-[34px] py-0 px-2 rounded-lg border border-slate-200 text-xs text-slate-700 bg-slate-50 shadow-2xs">
+                    <input type="date" name="date_from" aria-label="Audit date from" value="{{ request('date_from') }}" class="h-[34px] py-0 px-2 rounded-lg border border-slate-200 text-xs text-slate-700 bg-slate-50 shadow-2xs">
                     <span class="text-slate-400">to</span>
-                    <input type="date" name="date_to" value="{{ request('date_to') }}" class="h-[34px] py-0 px-2 rounded-lg border border-slate-200 text-xs text-slate-700 bg-slate-50 shadow-2xs">
+                    <input type="date" name="date_to" aria-label="Audit date to" value="{{ request('date_to') }}" class="h-[34px] py-0 px-2 rounded-lg border border-slate-200 text-xs text-slate-700 bg-slate-50 shadow-2xs">
                     
                     @if(!empty($actionTypes))
-                        <select name="action_filter" class="h-[34px] py-0 px-2 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 shadow-2xs">
+                        <select name="action_filter" aria-label="Audit action type" class="h-[34px] py-0 px-2 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 shadow-2xs">
                             <option value="">All Action Types</option>
                             @foreach($actionTypes as $act)
                                 <option value="{{ $act }}" {{ request('action_filter') == $act ? 'selected' : '' }}>{{ $act }}</option>
