@@ -80,10 +80,13 @@
     </div>
 
     <!-- Subscriptions Table -->
-    <div class="rounded-xl bg-white border border-slate-200 overflow-hidden shadow-xs">
-        <div class="overflow-x-auto">
-            <table class="saas-table owner-finance-table">
-                <thead class="bg-slate-50 text-slate-600 uppercase tracking-wider text-[10px] border-b border-slate-200 font-bold text-center">
+    <x-owner.table-shell
+        :has-rows="$subscriptions->isNotEmpty()"
+        empty-title="No subscriptions found"
+        empty-message="No tenant subscriptions match the current filters."
+        empty-icon="fa-repeat"
+    >
+        <x-slot:head>
                     <tr>
                         <th class="px-3 py-2.5 border-r border-slate-200">ISP Tenant</th>
                         <th class="px-3.5 py-2.5 border-r border-slate-200">Plan & Cycle</th>
@@ -94,9 +97,9 @@
                         <th class="px-3.5 py-2.5 border-r border-slate-200">Status</th>
                         <th class="px-3.5 py-2.5 text-center">Actions</th>
                     </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-200 bg-white">
-                    @forelse($subscriptions as $sub)
+        </x-slot:head>
+        <x-slot:body>
+                    @foreach($subscriptions as $sub)
                         <tr class="hover:bg-slate-50 transition">
                             <td class="px-3.5 py-2.5 border-r border-slate-200 font-bold text-slate-900">
                                 <a href="{{ route('owner.tenants.show', $sub->tenant) }}" class="text-blue-700 hover:underline">
@@ -157,20 +160,14 @@
                                 </div>
                             </td>
                         </tr>
-                    @empty
-                        <tr>
-                            <td colspan="8" class="px-4 py-8 text-center text-slate-400">No tenant subscriptions found.</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
+                    @endforeach
 
-        <div class="px-4 py-3 border-t border-slate-200 bg-slate-50 flex items-center justify-between text-xs text-slate-600">
+        </x-slot:body>
+        <x-slot:pagination>
             <div>Showing {{ $subscriptions->firstItem() ?? 0 }} to {{ $subscriptions->lastItem() ?? 0 }} of {{ $subscriptions->total() }}</div>
             <div>{{ $subscriptions->links() }}</div>
-        </div>
-    </div>
+        </x-slot:pagination>
+    </x-owner.table-shell>
 
     <!-- Status Change Modal -->
     <div x-show="subModalOpen" 
