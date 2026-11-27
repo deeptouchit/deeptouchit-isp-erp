@@ -50,6 +50,7 @@
         </div>
 
         <div class="flex items-center gap-2">
+            <button type="button" @click="showGatewayCreate=true" class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-semibold transition shadow-xs flex items-center gap-1.5"><i class="fas fa-plus text-[10px]"></i><span>Add Gateway</span></button>
             @if(false)
             <button type="button" @click="activeTab = 'dev_docs'" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-semibold transition border border-slate-200 flex items-center gap-1.5">
                 <i class="fas fa-code text-slate-500 text-[10px]"></i>
@@ -111,7 +112,6 @@
     <section class="bg-white rounded-xl border border-slate-200/90 shadow-xs overflow-hidden">
         <div class="px-4 py-3 bg-slate-50/80 border-b border-slate-200 flex items-center justify-between">
             <div class="flex items-center gap-2"><i class="fas fa-table-list text-blue-600"></i><h3 class="text-xs font-bold text-slate-800">Payment Gateway Registry</h3></div>
-            <button type="button" @click="showGatewayCreate=true" class="h-[32px] px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-semibold"><i class="fas fa-plus mr-1"></i>Add Gateway</button>
             <span class="text-[10px] text-slate-500">{{ $gatewayRegistry->count() }} gateways</span>
         </div>
         <div class="overflow-x-auto">
