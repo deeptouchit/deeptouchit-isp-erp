@@ -28,12 +28,13 @@
     </div>
 
     <!-- Filters -->
-    <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs">
-        <form action="{{ route('owner.transactions.index') }}" method="GET" x-data="{ showMoreFilters: {{ request()->filled('gateway') || request()->filled('status') ? 'true' : 'false' }}, searchQuery: @js(request('search', '')) }" class="owner-finance-filter flex flex-col md:flex-row items-stretch md:items-center gap-2">
-            <div class="lg:col-span-2">
+    <x-owner.filter-toolbar action="{{ route('owner.transactions.index') }}" reset-url="{{ route('owner.transactions.index') }}" form-id="owner-transactions-filter" :show-more-open="request()->filled('gateway') || request()->filled('status')" :active-more-count="request()->filled('gateway') || request()->filled('status') ? 2 : 0" :search-value="request('search', '')">
+        <x-slot:primary>
+            <div class="relative flex-1 min-w-[200px]">
                 <div class="relative"><i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px]" :class="searchQuery ? 'text-cyan-600 font-bold' : 'text-slate-400'"></i><input type="text" name="search" x-model="searchQuery" value="{{ request('search') }}" placeholder="Transaction Reference, Gateway, Tenant..." class="w-full h-[34px] pl-8 pr-7 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 text-xs focus:bg-white focus:ring-1 focus:ring-cyan-500 focus:border-cyan-500"><button type="button" x-show="searchQuery" x-cloak @click="searchQuery = ''; $nextTick(() => $el.closest('form').submit())" class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-600"><i class="fas fa-times text-[10px]"></i></button></div>
             </div>
-            <div x-show="showMoreFilters" x-cloak class="pt-2 border-t border-slate-100">
+        </x-slot:primary>
+        <x-slot:secondary>
                 <select name="gateway" class="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 text-xs focus:ring-1 focus:ring-blue-500">
                     <option value="">All Gateways</option>
                     <option value="bkash" {{ request('gateway') === 'bkash' ? 'selected' : '' }}>bKash Tokenized</option>
@@ -41,27 +42,14 @@
                     <option value="sslcommerz" {{ request('gateway') === 'sslcommerz' ? 'selected' : '' }}>SSLCommerz</option>
                     <option value="bank" {{ request('gateway') === 'bank' ? 'selected' : '' }}>Bank Wire</option>
                 </select>
-            </div>
-            <div x-show="showMoreFilters" x-cloak>
                 <select name="status" class="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 text-xs focus:ring-1 focus:ring-blue-500">
                     <option value="">All Statuses</option>
                     <option value="successful" {{ request('status') === 'successful' ? 'selected' : '' }}>Successful</option>
                     <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>Pending</option>
                     <option value="failed" {{ request('status') === 'failed' ? 'selected' : '' }}>Failed</option>
                 </select>
-            </div>
-            <div class="flex items-center gap-1.5 flex-shrink-0 md:ml-auto">
-                <button type="button" @click="showMoreFilters = !showMoreFilters" class="h-[34px] py-0 px-2.5 rounded-lg border border-slate-200 bg-white text-slate-700 text-xs font-semibold flex items-center gap-1.5"><i class="fas" :class="showMoreFilters ? 'fa-chevron-up text-cyan-600' : 'fa-chevron-down text-slate-400'"></i><span>More Filters</span></button>
-                <button type="submit" class="h-[34px] py-0 px-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs transition flex items-center justify-center gap-1.5 shadow-xs">
-                    <i class="fas fa-filter text-[10px]"></i>
-                    <span>Filter</span>
-                </button>
-                <a href="{{ route('owner.transactions.index') }}" title="Reset" class="h-[34px] py-0 px-2.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center justify-center gap-1 border border-slate-200/80">
-                    <i class="fas fa-rotate-left text-[10px]"></i><span>Reset</span>
-                </a>
-            </div>
-        </form>
-    </div>
+        </x-slot:secondary>
+    </x-owner.filter-toolbar>
 
     <!-- Transactions Table -->
     <x-owner.table-shell
