@@ -56,12 +56,13 @@
 
     <!-- Filters & Forensic Search Bar -->
     <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
-        <form action="{{ route('owner.network-engines.audit-logs') }}" method="GET" class="space-y-3">
+        <form action="{{ route('owner.network-engines.audit-logs') }}" method="GET" class="space-y-3" aria-label="Network audit filters">
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2.5">
                 <!-- Search Input -->
                 <div class="relative lg:col-span-2">
                     <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Search device, action, IP, command..." class="w-full h-[34px] pl-8 pr-3 text-xs rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:border-cyan-500 focus:outline-hidden shadow-2xs">
+                    <label for="network-audit-search" class="sr-only">Search audit events</label>
+                    <input id="network-audit-search" type="text" name="search" value="{{ request('search') }}" placeholder="Search device, action, IP, command..." class="w-full h-[34px] pl-8 pr-3 text-xs rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:border-cyan-500 focus:outline-hidden shadow-2xs">
                 </div>
 
                 <!-- Device Type -->
