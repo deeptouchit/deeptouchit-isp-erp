@@ -28,9 +28,9 @@
     </div>
 
     <!-- Filter Control Bar -->
-    <div class="bg-white rounded-lg border border-slate-200/90 p-3 shadow-2xs">
-        <form method="GET" action="{{ route('owner.reports.revenue') }}" class="space-y-2.5">
-            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 items-end">
+    <x-owner.filter-toolbar action="{{ route('owner.reports.revenue') }}" reset-url="{{ route('owner.reports.revenue') }}" form-id="owner-revenue-filter" :search-value="''">
+        <x-slot:primary>
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 items-end flex-1">
                 
                 <!-- Date Preset -->
                 <div>
@@ -93,15 +93,13 @@
                     <div class="flex items-center gap-1.5">
                         <input type="date" name="end_date" value="{{ request('end_date', $to ? $to->format('Y-m-d') : '') }}" 
                                class="w-full text-[11px] rounded border border-slate-200 bg-white py-1 px-2 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
-                        <button type="submit" class="px-2.5 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white font-bold text-[11px] transition shadow-2xs flex-shrink-0">
-                            <i class="fas fa-filter text-[10px]"></i>
-                        </button>
+                        <span></span>
                     </div>
                 </div>
 
             </div>
-        </form>
-    </div>
+        </x-slot:primary>
+    </x-owner.filter-toolbar>
 
     <!-- Analytics Chart & Channel Breakdown (2-cols) -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-2.5 items-stretch">
