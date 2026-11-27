@@ -279,6 +279,11 @@ node .\\node_modules\\vite\\bin\\vite.js build
 - Migration, runtime test and build readiness were verified before commit.
 - Only a non-functional EOF blank-line warning remains in this plan document.
 
+### Task 8.3 — Scoped local commit `[x]`
+
+- Commit created: `1c5362d` (`Standardize owner KPI cards and harden runtime validation`).
+- Commit contains only the staged implementation scope; unrelated worktree changes remain outside the commit.
+
 1. শুধু সংশ্লিষ্ট ফাইল commit করা
 2. `main` branch-এ push করা
 3. live commit যাচাই করা
