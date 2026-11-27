@@ -99,16 +99,19 @@
     </div>
 
     <!-- Tickets Table Card -->
-    <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="saas-table owner-ticket-table">
-                <thead>
+    <x-owner.table-shell
+        :has-rows="$tickets->isNotEmpty()"
+        empty-title="No support tickets found"
+        empty-message="No support tickets match the current filters."
+        empty-icon="fa-ticket"
+    >
+        <x-slot:head>
                     <tr class="bg-slate-50/80 border-b border-slate-200 text-slate-500 font-semibold uppercase tracking-wider text-[10px]">
                         <th class="text-center">Ticket ID</th><th class="text-center">ISP Tenant</th><th class="text-center">Subject</th><th class="text-center">Priority</th><th class="text-center">Status</th><th class="text-center">Last Activity</th><th class="no-sort text-center">Actions</th>
                     </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100 text-slate-700">
-                    @forelse($tickets as $t)
+        </x-slot:head>
+        <x-slot:body>
+                    @foreach($tickets as $t)
                         <tr class="hover:bg-slate-50/60 transition {{ $t->isUrgent() && $t->isOpen() ? 'bg-rose-50/20' : '' }}">
                             <!-- Ticket Number -->
                             <td class="py-3 px-3 whitespace-nowrap">
@@ -199,28 +202,15 @@
                                 </div>
                             </td>
                         </tr>
-                    @empty
-                        <tr>
-                            <td colspan="7" class="py-8 text-center text-slate-400">
-                                <div class="flex flex-col items-center justify-center gap-2">
-                                    <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 text-sm">
-                                        <i class="fas fa-inbox"></i>
-                                    </div>
-                                    <p class="font-medium text-xs text-slate-500">No support tickets found matching your criteria</p>
-                                </div>
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
+                    @endforeach
+        </x-slot:body>
 
-        @if($tickets->hasPages())
-            <div class="p-3 border-t border-slate-100 bg-slate-50/50">
+        <x-slot:pagination>
+            @if($tickets->hasPages())
                 {{ $tickets->links() }}
-            </div>
-        @endif
-    </div>
+            @endif
+        </x-slot:pagination>
+    </x-owner.table-shell>
 
     <!-- Quick Status Change Modal -->
     <div x-show="statusModalOpen" 
