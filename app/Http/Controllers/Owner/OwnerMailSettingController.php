@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Owner;
 use App\Http\Controllers\Controller;
 use App\Mail\SystemTestMail;
 use App\Models\Setting;
+use App\Models\OwnerMailTestLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Mail;
@@ -25,7 +26,8 @@ class OwnerMailSettingController extends Controller
             }
         }
 
-        return view('owner.mail-settings.index', compact('settings'));
+        $mailTestLogs = OwnerMailTestLog::latest('tested_at')->limit(10)->get();
+        return view('owner.mail-settings.index', compact('settings', 'mailTestLogs'));
     }
 
     /**
@@ -121,12 +123,14 @@ class OwnerMailSettingController extends Controller
         try {
             Mail::to($request->test_email)->send(new SystemTestMail($details));
             $latency = round((microtime(true) - $startTime) * 1000);
+            OwnerMailTestLog::create(['recipient' => $request->test_email, 'host' => $host, 'port' => $port, 'encryption' => $encryption, 'latency_ms' => $latency, 'success' => true, 'ip_address' => $request->ip(), 'tested_at' => now()]);
 
             return back()->with('success', "Test email successfully delivered to '{$request->test_email}'.")
                 ->with('mail_test_result', array_merge($details, ['success' => true, 'latency' => $latency . ' ms']));
         } catch (\Throwable $e) {
             $latency = round((microtime(true) - $startTime) * 1000);
             report($e);
+            OwnerMailTestLog::create(['recipient' => $request->test_email, 'host' => $host, 'port' => $port, 'encryption' => $encryption, 'latency_ms' => $latency, 'success' => false, 'ip_address' => $request->ip(), 'tested_at' => now()]);
             return back()->with('error', 'SMTP dispatch failed. Check the mail configuration and try again.')
                 ->with('mail_test_result', array_merge($details, ['success' => false, 'latency' => $latency . ' ms']));
         }

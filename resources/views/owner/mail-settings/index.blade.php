@@ -258,5 +258,10 @@
         </div>
     </div>
 
+    <section class="bg-white rounded-xl border border-slate-200/80 shadow-xs overflow-hidden">
+        <div class="p-3.5 bg-slate-50/50 border-b border-slate-100 flex items-center justify-between"><span class="text-xs font-bold text-slate-800"><i class="fas fa-clock-rotate-left text-blue-600 mr-1.5"></i>SMTP Test History</span><span class="text-[10px] text-slate-400">Last 10 attempts</span></div>
+        <div class="overflow-x-auto"><table class="saas-table"><thead><tr><th class="text-center">Recipient</th><th class="text-center">Server</th><th class="text-center">Port</th><th class="text-center">Encryption</th><th class="text-center">Latency</th><th class="text-center">Status</th><th class="text-center">Tested At</th></tr></thead><tbody>@forelse($mailTestLogs as $log)<tr><td class="text-center">{{ $log->recipient }}</td><td class="text-center font-mono">{{ $log->host }}</td><td class="text-center">{{ $log->port }}</td><td class="text-center uppercase">{{ $log->encryption }}</td><td class="text-center">{{ $log->latency_ms !== null ? $log->latency_ms . ' ms' : '—' }}</td><td class="text-center">@if($log->success)<span class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px]">Passed</span>@else<span class="px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 text-[10px]">Failed</span>@endif</td><td class="text-center text-slate-500">{{ $log->tested_at?->format('d M Y, h:i A') }}</td></tr>@empty<tr><td colspan="7" class="py-8 text-center text-xs text-slate-400">No SMTP tests recorded yet.</td></tr>@endforelse</tbody></table></div>
+    </section>
+
 </div>
 @endsection
