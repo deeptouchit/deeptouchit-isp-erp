@@ -78,12 +78,16 @@ function showGatewayDetails(button) {
 }
 </script>
 <script>
-window.smsGatewayEditFields = @json($gateways->map(fn ($gateway) => [
-    'id' => $gateway->id,
-    'sms_api_url' => $gateway->sms_api_url,
-    'balance_api_url' => $gateway->balance_api_url,
-    'rate_per_part' => $gateway->rate_per_part,
-])->keyBy('id'));
+@php
+    $smsGatewayEditFields = $gateways->mapWithKeys(function ($gateway) {
+        return [(string) $gateway->id => [
+            'sms_api_url' => $gateway->sms_api_url,
+            'balance_api_url' => $gateway->balance_api_url,
+            'rate_per_part' => $gateway->rate_per_part,
+        ]];
+    })->toJson();
+@endphp
+window.smsGatewayEditFields = {!! $smsGatewayEditFields !!};
 
 const originalGatewayPage = window.gatewayPage;
 if (typeof originalGatewayPage === 'function') {
