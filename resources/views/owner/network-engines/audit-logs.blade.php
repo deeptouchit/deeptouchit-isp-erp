@@ -131,10 +131,13 @@
     </div>
 
     <!-- Audit Logs Ledger Table -->
-    <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="saas-table network-audit-table">
-                <thead class="bg-slate-50 text-[10.5px] font-bold text-slate-500 uppercase tracking-wider">
+    <x-owner.table-shell
+        :has-rows="$logs->isNotEmpty()"
+        empty-title="No audit events found"
+        empty-message="The network audit ledger is currently clean."
+        empty-icon="fa-shield-halved"
+    >
+        <x-slot:head>
                     <tr>
                         <th class="text-center">Date & Time</th>
                         <th class="text-center">Target & Scope</th>
@@ -144,9 +147,9 @@
                         <th class="text-center">Response / Output</th>
                         <th class="no-sort text-center">Forensic Trace</th>
                     </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100 bg-white">
-                    @forelse($logs as $log)
+        </x-slot:head>
+        <x-slot:body>
+                    @foreach($logs as $log)
                         <tr class="hover:bg-slate-50/80 transition">
                             <!-- Timestamp -->
                             <td class="px-3.5 py-2.5 whitespace-nowrap">
@@ -233,27 +236,15 @@
                                 </button>
                             </td>
                         </tr>
-                    @empty
-                        <tr>
-                            <td colspan="7" class="px-4 py-12 text-center text-slate-400 text-xs">
-                                <div class="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center mx-auto mb-2 text-slate-300 border border-slate-100">
-                                    <i class="fas fa-shield-halved text-xl"></i>
-                                </div>
-                                <div class="font-semibold text-slate-600 text-xs">No Audit Events Recorded</div>
-                                <div class="text-[11px] text-slate-400 mt-0.5">Network audit ledger is clean. Device reboots, CoA disconnections and config changes will appear here automatically.</div>
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
+                    @endforeach
+        </x-slot:body>
 
-        @if($logs->hasPages())
-            <div class="p-3 border-t border-slate-100 bg-slate-50/50">
+        <x-slot:pagination>
+            @if($logs->hasPages())
                 {{ $logs->links() }}
-            </div>
-        @endif
-    </div>
+            @endif
+        </x-slot:pagination>
+    </x-owner.table-shell>
 
     <!-- Forensic Trace & Metadata Inspector Modal (Alpine.js) -->
     <div x-show="payloadModal" 
