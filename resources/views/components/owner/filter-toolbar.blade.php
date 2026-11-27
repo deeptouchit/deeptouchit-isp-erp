@@ -31,14 +31,18 @@
             </button>
 
             <div class="owner-filter-submit flex items-center gap-1.5 flex-shrink-0 md:ml-auto">
-                <button type="submit" class="h-[34px] py-0 px-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs transition flex items-center justify-center gap-1.5 shadow-xs">
-                    <i class="fas fa-filter text-[10px]" aria-hidden="true"></i>
-                    <span>Filter</span>
-                </button>
-                <a href="{{ $resetUrl ?: $action }}" class="h-[34px] py-0 px-2.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs transition flex items-center justify-center gap-1 border border-slate-200/80">
-                    <i class="fas fa-rotate-left text-[10px]" aria-hidden="true"></i>
-                    <span>Reset</span>
-                </a>
+                @isset($actions)
+                    {{ $actions }}
+                @else
+                    <button type="submit" class="h-[34px] py-0 px-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs transition flex items-center justify-center gap-1.5 shadow-xs">
+                        <i class="fas fa-filter text-[10px]" aria-hidden="true"></i>
+                        <span>Filter</span>
+                    </button>
+                    <a href="{{ $resetUrl ?: $action }}" class="h-[34px] py-0 px-2.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs transition flex items-center justify-center gap-1 border border-slate-200/80">
+                        <i class="fas fa-rotate-left text-[10px]" aria-hidden="true"></i>
+                        <span>Reset</span>
+                    </a>
+                @endisset
             </div>
         </div>
 
