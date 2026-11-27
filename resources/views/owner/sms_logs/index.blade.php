@@ -153,8 +153,8 @@
                         <td class="text-center text-slate-400">
                             {{ $log->created_at ? $log->created_at->format('d M Y, h:i A') : '—' }}
                         </td>
-                        <td class="text-center text-slate-400">{{ $log->created_at?->format('d M Y, h:i A') ?: '—' }}</td>
                         <td class="text-center">{{ str_replace('_', ' ', $log->source ?: $log->sms_type) }}</td>
+                        <td class="text-center text-slate-400">{{ $log->created_at?->format('d M Y, h:i A') ?: '—' }}</td>
                         <td class="text-center text-slate-500">{{ $log->ip_address ?: '—' }}</td>
                     </tr>
                     @empty
