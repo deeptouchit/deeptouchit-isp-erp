@@ -180,7 +180,7 @@ class OwnerSmsGatewayController extends Controller
             'sms_api_url' => $data['sms_api_url'] ?? ($gateway?->sms_api_url),
             'balance_api_url' => $data['balance_api_url'] ?? ($gateway?->balance_api_url),
             'credentials' => $credentials,
-            'rate_per_part' => $data['rate_per_part'] ?? 0,
+            'rate_per_part' => $data['rate_per_part'] ?? ($gateway?->rate_per_part ?? 0),
             'is_active' => false,
         ];
     }
@@ -193,6 +193,20 @@ class OwnerSmsGatewayController extends Controller
             abort(422, 'Unsupported SMS provider.');
         }
         $balanceInfo = SmsService::getBalance($provider);
+
+        $gateway = OwnerSmsGateway::where('is_active', true)->first();
+        if ($gateway && ($provider === null || $gateway->provider === $provider)) {
+            $balanceValue = $balanceInfo['balance'] ?? null;
+            if ($balanceInfo['success'] && is_numeric(str_replace(',', '', (string) $balanceValue))) {
+                $gateway->update([
+                    'last_balance' => (float) str_replace(',', '', (string) $balanceValue),
+                    'last_balance_checked_at' => now(),
+                    'last_test_error' => null,
+                ]);
+            } elseif (! $balanceInfo['success']) {
+                $gateway->update(['last_test_error' => $balanceInfo['error'] ?? $balanceInfo['formatted'] ?? 'Balance check failed']);
+            }
+        }
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json($balanceInfo);
