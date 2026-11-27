@@ -373,9 +373,13 @@
             </div>
         </div>
 
-        <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs border-collapse">
-                <thead>
+        <x-owner.table-shell
+            :has-rows="$logs->isNotEmpty()"
+            empty-title="No automation logs found"
+            empty-message="Automation execution records will appear here."
+            empty-icon="fa-list-check"
+        >
+                <x-slot:head>
                     <tr class="bg-slate-50 text-slate-500 text-[10.5px] uppercase font-bold tracking-wider border-b border-slate-200">
                         <th class="p-2.5">Timestamp</th>
                         <th class="p-2.5">Task Name</th>
@@ -384,9 +388,9 @@
                         <th class="p-2.5">Duration</th>
                         <th class="p-2.5">Summary</th>
                     </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100 font-mono text-[11px]">
-                    @forelse($logs as $log)
+                </x-slot:head>
+                <x-slot:body>
+                    @foreach($logs as $log)
                         <tr class="hover:bg-slate-50/70 transition">
                             <td class="p-2.5 text-slate-500 font-sans">{{ $log->created_at->format('d M, Y h:i A') }}</td>
                             <td class="p-2.5 font-bold text-slate-800">{{ $log->task_name }}</td>
@@ -399,20 +403,15 @@
                             <td class="p-2.5 text-slate-500">{{ $log->duration_ms }} ms</td>
                             <td class="p-2.5 text-slate-700 font-sans max-w-sm truncate" title="{{ $log->output_summary }}">{{ $log->output_summary }}</td>
                         </tr>
-                    @empty
-                        <tr>
-                            <td colspan="6" class="p-4 text-center text-slate-400 font-sans">No automation logs recorded yet.</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
+                    @endforeach
+                </x-slot:body>
 
-        @if($logs->hasPages())
-            <div class="pt-2 border-t border-slate-100">
+        <x-slot:pagination>
+            @if($logs->hasPages())
                 {{ $logs->links() }}
-            </div>
-        @endif
+            @endif
+        </x-slot:pagination>
+        </x-owner.table-shell>
     </div>
 </div>
 @endsection
