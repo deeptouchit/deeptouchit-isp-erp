@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Setting;
+use App\Models\OwnerSmsGateway;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -24,7 +25,8 @@ class SmsService
     public static function send($to, string $message, ?string $provider = null): array
     {
         $settings = Setting::whereNull('tenant_id')->pluck('value', 'key')->toArray();
-        $provider = $provider ?: ($settings['sms_provider'] ?? 'bulksmsbd');
+        $gateway = self::activeGateway();
+        $provider = $provider ?: ($gateway?->provider ?? ($settings['sms_provider'] ?? 'bulksmsbd'));
         $startTime = microtime(true);
 
         // Normalize phone number(s)
@@ -35,9 +37,10 @@ class SmsService
             $formattedNumbers = implode(',', array_map([self::class, 'formatNumber'], $numbers));
         }
 
-        $apiKey = $settings['sms_api_key'] ?? '';
-        $senderId = $settings['sms_sender_id'] ?? 'SomitySoft';
-        $apiSecret = $settings['sms_api_secret'] ?? '';
+        $gatewayCredentials = $gateway?->credentials ?? [];
+        $apiKey = $gatewayCredentials['api_key'] ?? ($settings['sms_api_key'] ?? '');
+        $senderId = $gateway?->sender_id ?: ($settings['sms_sender_id'] ?? 'SomitySoft');
+        $apiSecret = $gatewayCredentials['api_secret'] ?? ($settings['sms_api_secret'] ?? '');
 
         $responseBody = '';
         $isSuccess = false;
@@ -134,7 +137,7 @@ class SmsService
 
                 case 'custom_http':
                 default:
-                    $customUrl = $settings['sms_custom_url'] ?? '';
+                    $customUrl = $gateway?->custom_url ?: ($settings['sms_custom_url'] ?? '');
                     if (!empty($customUrl)) {
                         $parsedUrl = str_replace(
                             ['{number}', '{phone}', '{message}', '{msg}', '{text}', '{api_key}', '{token}', '{sender_id}', '{senderid}'],
@@ -180,9 +183,11 @@ class SmsService
     public static function sendMany(array $messages, ?string $provider = null): array
     {
         $settings = Setting::whereNull('tenant_id')->pluck('value', 'key')->toArray();
-        $provider = $provider ?: ($settings['sms_provider'] ?? 'bulksmsbd');
-        $apiKey = $settings['sms_api_key'] ?? '';
-        $senderId = $settings['sms_sender_id'] ?? 'SomitySoft';
+        $gateway = self::activeGateway();
+        $provider = $provider ?: ($gateway?->provider ?? ($settings['sms_provider'] ?? 'bulksmsbd'));
+        $credentials = $gateway?->credentials ?? [];
+        $apiKey = $credentials['api_key'] ?? ($settings['sms_api_key'] ?? '');
+        $senderId = $gateway?->sender_id ?: ($settings['sms_sender_id'] ?? 'SomitySoft');
 
         $startTime = microtime(true);
 
@@ -246,8 +251,10 @@ class SmsService
     public static function getBalance(?string $provider = null): array
     {
         $settings = Setting::whereNull('tenant_id')->pluck('value', 'key')->toArray();
-        $provider = $provider ?: ($settings['sms_provider'] ?? 'bulksmsbd');
-        $apiKey = $settings['sms_api_key'] ?? '';
+        $gateway = self::activeGateway();
+        $provider = $provider ?: ($gateway?->provider ?? ($settings['sms_provider'] ?? 'bulksmsbd'));
+        $credentials = $gateway?->credentials ?? [];
+        $apiKey = $credentials['api_key'] ?? ($settings['sms_api_key'] ?? '');
 
         if (empty($apiKey)) {
             return [
@@ -331,6 +338,11 @@ class SmsService
             'balance' => '0.00',
             'formatted' => 'Not supported'
         ];
+    }
+
+    public static function activeGateway(): ?OwnerSmsGateway
+    {
+        return OwnerSmsGateway::query()->where('is_active', true)->latest('id')->first();
     }
 
     /**

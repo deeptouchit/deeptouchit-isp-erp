@@ -3,12 +3,14 @@
 namespace App\Http\Controllers\Owner;
 
 use App\Http\Controllers\Controller;
+use App\Models\OwnerSmsGateway;
 use App\Models\Setting;
 use App\Models\SmsLog;
 use App\Services\Sms\SmsTrackerService;
 use App\Services\SmsService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\DB;
 
 class OwnerSmsGatewayController extends Controller
 {
@@ -22,6 +24,9 @@ class OwnerSmsGatewayController extends Controller
     public function index(Request $request)
     {
         $settings = Setting::getGroup('sms');
+
+        $gateways = OwnerSmsGateway::query()->latest('is_active')->latest()->get();
+        $activeGateway = $gateways->firstWhere('is_active', true);
 
         foreach (config('secure_settings.keys', []) as $secureKey) {
             if (array_key_exists($secureKey, $settings) && $settings[$secureKey] !== '') {
@@ -66,6 +71,8 @@ class OwnerSmsGatewayController extends Controller
         ];
 
         return view('owner.sms-gateways.index', compact(
+            'gateways',
+            'activeGateway',
             'settings',
             'realSmsLogs',
             'totalSmsCount',
@@ -74,6 +81,94 @@ class OwnerSmsGatewayController extends Controller
             'failedSmsCount',
             'balanceInfo'
         ));
+    }
+
+    public function storeGateway(Request $request)
+    {
+        $data = $this->validateGateway($request);
+        $gateway = OwnerSmsGateway::create($data);
+
+        if ($request->boolean('is_active')) {
+            $this->activateGateway($gateway);
+        }
+
+        return back()->with('success', "SMS gateway '{$gateway->name}' was added successfully.");
+    }
+
+    public function updateGateway(Request $request, OwnerSmsGateway $gateway)
+    {
+        $data = $this->validateGateway($request, $gateway);
+        $gateway->update($data);
+
+        if ($request->boolean('is_active')) {
+            $this->activateGateway($gateway->fresh());
+        } elseif ($gateway->is_active && ! $request->boolean('keep_active')) {
+            $gateway->update(['is_active' => false]);
+        }
+
+        return back()->with('success', "SMS gateway '{$gateway->name}' was updated successfully.");
+    }
+
+    public function activateGateway(OwnerSmsGateway $gateway)
+    {
+        DB::transaction(function () use ($gateway) {
+            OwnerSmsGateway::where('id', '!=', $gateway->id)->update(['is_active' => false]);
+            $gateway->update(['is_active' => true, 'last_test_error' => null]);
+        });
+
+        return request()->expectsJson()
+            ? response()->json(['success' => true, 'message' => "{$gateway->name} is now active."])
+            : back()->with('success', "SMS gateway '{$gateway->name}' is now active.");
+    }
+
+    public function destroyGateway(OwnerSmsGateway $gateway)
+    {
+        $wasActive = $gateway->is_active;
+        $gateway->delete();
+
+        if ($wasActive) {
+            OwnerSmsGateway::latest()->first()?->update(['is_active' => true]);
+        }
+
+        return back()->with('success', 'SMS gateway removed successfully.');
+    }
+
+    private function validateGateway(Request $request, ?OwnerSmsGateway $gateway = null): array
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:100'],
+            'provider' => ['required', Rule::in(SmsService::supportedProviders())],
+            'sender_id' => ['nullable', 'string', 'max:100'],
+            'custom_url' => ['nullable', 'string', 'max:1000', function (string $attribute, mixed $value, \Closure $fail): void {
+                $candidate = preg_replace('/\{(?:number|phone|message|msg|text|api_key|token|sender_id|senderid)\}/', 'placeholder', (string) $value);
+                if (! filter_var($candidate, FILTER_VALIDATE_URL) || ! preg_match('/^https?:\/\//i', $candidate)) {
+                    $fail('The custom URL must be a valid HTTP or HTTPS URL.');
+                }
+            }],
+            'api_key' => ['nullable', 'string', 'max:500'],
+            'api_secret' => ['nullable', 'string', 'max:500'],
+            'client_id' => ['nullable', 'string', 'max:255'],
+            'rate_per_part' => ['nullable', 'numeric', 'min:0', 'max:100000'],
+            'is_active' => ['nullable', 'boolean'],
+            'keep_active' => ['nullable', 'boolean'],
+        ]);
+
+        $credentials = $gateway?->credentials ?? [];
+        foreach (['api_key', 'api_secret', 'client_id'] as $key) {
+            if (filled($data[$key] ?? null)) {
+                $credentials[$key] = $data[$key];
+            }
+        }
+
+        return [
+            'name' => $data['name'],
+            'provider' => $data['provider'],
+            'sender_id' => $data['sender_id'] ?? null,
+            'custom_url' => $data['custom_url'] ?? null,
+            'credentials' => $credentials,
+            'rate_per_part' => $data['rate_per_part'] ?? 0,
+            'is_active' => false,
+        ];
     }
 
     public function checkBalance(?Request $request = null)

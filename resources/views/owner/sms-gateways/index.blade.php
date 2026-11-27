@@ -95,6 +95,70 @@
         </div>
     </div>
 
+    <!-- Production SMS Gateway Registry -->
+    <section class="bg-white rounded-xl border border-slate-200/80 shadow-xs overflow-hidden">
+        <div class="px-4 py-3 bg-slate-50/80 border-b border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-2">
+            <div>
+                <h3 class="text-sm font-bold text-slate-800 flex items-center gap-1.5"><i class="fas fa-server text-emerald-600"></i> SMS Gateway Registry</h3>
+                <p class="text-[10.5px] text-slate-500 mt-0.5">Only one gateway can be active at a time. Credentials are encrypted at rest.</p>
+            </div>
+            <span class="text-[10px] font-semibold text-slate-500">{{ $gateways->count() }} configured</span>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="saas-table">
+                <thead><tr>
+                    <th class="text-center">Gateway</th><th class="text-center">Provider</th><th class="text-center">Sender ID</th><th class="text-center">Status</th><th class="text-center no-sort">Actions</th>
+                </tr></thead>
+                <tbody>
+                @forelse($gateways as $gateway)
+                    <tr>
+                        <td class="text-left font-semibold">{{ $gateway->name }}</td>
+                        <td class="text-center font-mono text-xs uppercase">{{ $gateway->provider }}</td>
+                        <td class="text-center font-mono">{{ $gateway->sender_id ?: '—' }}</td>
+                        <td class="text-center">
+                            @if($gateway->is_active)
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-semibold"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Active</span>
+                            @else
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200 text-[10px] font-semibold">Inactive</span>
+                            @endif
+                        </td>
+                        <td class="text-center">
+                            <div class="flex items-center justify-center gap-1.5">
+                                @unless($gateway->is_active)
+                                    <form method="POST" action="{{ route('owner.sms-gateways.gateway.activate', $gateway) }}">@csrf<button class="px-2 py-1 rounded-md bg-emerald-600 text-white text-[10px] font-semibold hover:bg-emerald-700">Activate</button></form>
+                                @endunless
+                                <details class="relative"><summary class="list-none cursor-pointer px-2 py-1 rounded-md bg-slate-100 text-slate-600 text-[10px] font-semibold">Edit</summary>
+                                    <div class="absolute right-0 z-20 mt-1 w-72 p-3 bg-white border border-slate-200 rounded-lg shadow-xl text-left">
+                                        <form method="POST" action="{{ route('owner.sms-gateways.gateway.update', $gateway) }}" class="space-y-2">@csrf @method('PUT')
+                                            <input name="name" value="{{ $gateway->name }}" required class="w-full h-[32px] px-2 rounded border border-slate-200 text-xs" placeholder="Gateway name">
+                                            <select name="provider" class="w-full h-[32px] px-2 rounded border border-slate-200 text-xs">@foreach(\App\Services\SmsService::supportedProviders() as $provider)<option value="{{ $provider }}" @selected($gateway->provider === $provider)>{{ strtoupper($provider) }}</option>@endforeach</select>
+                                            <input name="sender_id" value="{{ $gateway->sender_id }}" class="w-full h-[32px] px-2 rounded border border-slate-200 text-xs" placeholder="Sender ID">
+                                            <input name="api_key" class="w-full h-[32px] px-2 rounded border border-slate-200 text-xs" placeholder="API key (leave blank to keep)">
+                                            <input name="custom_url" value="{{ $gateway->custom_url }}" class="w-full h-[32px] px-2 rounded border border-slate-200 text-xs" placeholder="Custom URL (optional)">
+                                            <button class="w-full h-[32px] rounded bg-cyan-600 text-white text-xs font-semibold">Save changes</button>
+                                        </form>
+                                    </div>
+                                </details>
+                                <form method="POST" action="{{ route('owner.sms-gateways.gateway.delete', $gateway) }}" onsubmit="return confirm('Remove this SMS gateway?')">@csrf @method('DELETE')<button class="px-2 py-1 rounded-md bg-rose-50 text-rose-700 border border-rose-200 text-[10px] font-semibold">Delete</button></form>
+                            </div>
+                        </td>
+                    </tr>
+                @empty
+                    <tr><td colspan="5" class="text-center py-8 text-xs text-slate-500">No SMS gateway configured yet.</td></tr>
+                @endforelse
+                </tbody>
+            </table>
+        </div>
+        <form method="POST" action="{{ route('owner.sms-gateways.store') }}" class="p-3 bg-slate-50/60 border-t border-slate-200 grid grid-cols-1 md:grid-cols-6 gap-2">@csrf
+            <input name="name" required class="h-[34px] px-2.5 rounded-lg border border-slate-200 text-xs" placeholder="New gateway name">
+            <select name="provider" class="h-[34px] px-2.5 rounded-lg border border-slate-200 text-xs">@foreach(\App\Services\SmsService::supportedProviders() as $provider)<option value="{{ $provider }}">{{ strtoupper($provider) }}</option>@endforeach</select>
+            <input name="sender_id" class="h-[34px] px-2.5 rounded-lg border border-slate-200 text-xs" placeholder="Sender ID">
+            <input name="api_key" class="h-[34px] px-2.5 rounded-lg border border-slate-200 text-xs" placeholder="API key">
+            <input name="custom_url" class="h-[34px] px-2.5 rounded-lg border border-slate-200 text-xs" placeholder="Custom URL">
+            <button class="h-[34px] rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold"><i class="fas fa-plus mr-1"></i>Add gateway</button>
+        </form>
+    </section>
+
 
     <!-- Navigation Tabs -->
     <div class="bg-white p-1.5 rounded-xl border border-slate-200/80 shadow-xs flex flex-wrap items-center gap-1">

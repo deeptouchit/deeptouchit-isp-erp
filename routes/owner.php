@@ -186,6 +186,14 @@ Route::prefix('owner')->name('owner.')->group(function () {
         // 11. SMS Gateways - Dedicated Menu
         Route::get('/sms-gateways', [OwnerSmsGatewayController::class, 'index'])
             ->middleware('owner.capability:sms.view')->name('sms-gateways.index');
+        Route::post('/sms-gateways/store', [OwnerSmsGatewayController::class, 'storeGateway'])
+            ->middleware('owner.capability:sms.manage')->name('sms-gateways.store');
+        Route::put('/sms-gateways/{gateway}', [OwnerSmsGatewayController::class, 'updateGateway'])
+            ->middleware('owner.capability:sms.manage')->name('sms-gateways.gateway.update');
+        Route::post('/sms-gateways/{gateway}/activate', [OwnerSmsGatewayController::class, 'activateGateway'])
+            ->middleware('owner.capability:sms.manage')->name('sms-gateways.gateway.activate');
+        Route::delete('/sms-gateways/{gateway}', [OwnerSmsGatewayController::class, 'destroyGateway'])
+            ->middleware('owner.capability:sms.manage')->name('sms-gateways.gateway.delete');
         Route::post('/sms-gateways', [OwnerSmsGatewayController::class, 'update'])
             ->middleware('owner.capability:sms.manage')->name('sms-gateways.update');
         Route::post('/sms-gateways/test', [OwnerSmsGatewayController::class, 'test'])
