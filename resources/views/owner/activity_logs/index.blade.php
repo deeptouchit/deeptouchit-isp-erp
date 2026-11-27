@@ -29,18 +29,12 @@
     </div>
 
     <!-- Filters Strip -->
-    <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5">
-        <form action="{{ route('owner.activity-logs.index') }}" method="GET" class="space-y-2.5">
-            <!-- Search -->
-            <div class="flex flex-col md:flex-row items-stretch md:items-center gap-2">
-                <div class="relative flex-1 min-w-[200px]"><i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-[10px]"></i><input x-model="searchQuery" type="search" name="search" value="{{ request('search') }}" placeholder="Search description, actor, IP..." class="w-full h-[34px] pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-purple-500 focus:outline-hidden"></div>
-                <select name="per_page" class="w-full md:w-28 flex-shrink-0 h-[34px] px-2 rounded-lg border border-slate-200 bg-slate-50 text-xs"><option value="20">20 / page</option><option value="30" @selected(request('per_page') == 30)>30 / page</option><option value="50" @selected(request('per_page') == 50)>50 / page</option><option value="100" @selected(request('per_page') == 100)>100 / page</option></select>
-                <button type="button" @click="showMoreFilters = !showMoreFilters" class="h-[34px] py-0 px-3 rounded-lg border border-slate-200 bg-white text-slate-700 font-semibold text-xs flex items-center gap-1.5 whitespace-nowrap"><i class="fas" :class="showMoreFilters ? 'fa-chevron-up text-purple-600' : 'fa-chevron-down text-slate-400'"></i><span>More Filters</span><span class="px-1 rounded bg-purple-50 text-purple-700">{{ request()->hasAny(['event_type', 'tenant_id']) ? 2 : 0 }}</span></button>
-                <div class="flex items-center gap-1.5 flex-shrink-0 md:ml-auto"><button type="submit" class="h-[34px] bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs py-0 px-3 rounded-lg shadow-xs flex items-center gap-1.5"><i class="fas fa-filter text-[10px]"></i><span>Filter</span></button><a href="{{ route('owner.activity-logs.index') }}" class="h-[34px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-0 px-2.5 rounded-lg border border-slate-200/80 flex items-center gap-1"><i class="fas fa-rotate-left text-[10px]"></i><span>Reset</span></a></div>
-            </div>
-
-            <!-- Tenant Filter -->
-            <div x-show="showMoreFilters" x-cloak x-transition class="pt-2 border-t border-slate-100 flex flex-wrap items-center gap-2">
+    <x-owner.filter-toolbar action="{{ route('owner.activity-logs.index') }}" reset-url="{{ route('owner.activity-logs.index') }}" form-id="owner-activity-filter" :show-more-open="request()->hasAny(['event_type', 'tenant_id'])" :active-more-count="request()->hasAny(['event_type', 'tenant_id']) ? 2 : 0" :search-value="request('search', '')">
+        <x-slot:primary>
+            <div class="relative flex-1 min-w-[200px]"><i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px]" :class="searchQuery ? 'text-cyan-600 font-bold' : 'text-slate-400'"></i><input x-model="searchQuery" type="search" name="search" value="{{ request('search') }}" placeholder="Search description, actor, IP..." class="w-full h-[34px] pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden"></div>
+            <select name="per_page" class="w-full md:w-28 h-[34px] px-2 rounded-lg border border-slate-200 bg-slate-50 text-xs"><option value="20">20 / page</option><option value="30" @selected(request('per_page') == 30)>30 / page</option><option value="50" @selected(request('per_page') == 50)>50 / page</option><option value="100" @selected(request('per_page') == 100)>100 / page</option></select>
+        </x-slot:primary>
+        <x-slot:secondary>
                 <select name="tenant_id" class="w-full sm:w-auto sm:min-w-[180px] h-[34px] px-2 rounded-lg border border-slate-200 bg-slate-50 text-xs focus:ring-1 focus:ring-purple-500">
                     <option value="">All ISP Tenants</option>
                     @foreach($tenants as $t)
@@ -63,9 +57,8 @@
             </div>
             </div>
 
-            <!-- Filter Buttons -->
-        </form>
-    </div>
+        </x-slot:secondary>
+    </x-owner.filter-toolbar>
 
     <!-- Logs Table -->
     <x-owner.table-shell
