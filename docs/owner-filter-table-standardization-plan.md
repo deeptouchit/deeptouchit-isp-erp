@@ -13,8 +13,9 @@
 
 - `php artisan view:cache` passes after each scoped migration.
 - `tests/Feature/OwnerPortalTest.php --filter=test_owner_can_access_all_dedicated_menus` passes with 10 assertions.
+- Full `tests/Feature/OwnerPortalTest.php --no-coverage` passes: 9 tests and 63 assertions.
 - `git diff --check` passes for each committed change.
-- Full PHPUnit suite remains environment-blocked because it runs without output; Vite build is blocked by the workspace path containing `&` and the Windows npm wrapper resolving the wrong path.
+- Broader `tests/Feature` execution remains environment-blocked because it runs without output; the Vite production build succeeds when invoked directly from the quoted workspace path.
 - No deployment, database reset, credential change or unrelated file cleanup was performed.
 
 ## লক্ষ্য
