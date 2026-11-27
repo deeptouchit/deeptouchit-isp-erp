@@ -43,13 +43,8 @@
             </div>
             <div>
                 <div class="flex items-center gap-2">
-                    <h2 class="text-sm font-bold text-slate-800">Enterprise Payment Gateways & Merchant Settlements</h2>
-                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1 animate-pulse"></span>
-                        Auto-Settlement Ready
-                    </span>
+                    <h2 class="text-sm font-bold text-slate-800">Payment Gateways</h2>
                 </div>
-                <p class="text-[11px] text-slate-500 mt-0.5">Automated online checkout APIs (bKash Tokenized, Nagad PGW, SSLCommerz, AamarPay, Stripe & Bank Wire)</p>
             </div>
         </div>
 
