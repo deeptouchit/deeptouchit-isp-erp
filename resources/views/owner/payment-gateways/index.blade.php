@@ -5,6 +5,9 @@
 @section('content')
 <div class="space-y-4" x-data="{ 
     activeTab: 'gateways',
+    showGatewayCreate: false,
+    editGateway: null,
+    showGatewayDetails: null,
     showBkashSecret: false,
     showBkashPass: false,
     showNagadPriv: false,
@@ -108,6 +111,7 @@
     <section class="bg-white rounded-xl border border-slate-200/90 shadow-xs overflow-hidden">
         <div class="px-4 py-3 bg-slate-50/80 border-b border-slate-200 flex items-center justify-between">
             <div class="flex items-center gap-2"><i class="fas fa-table-list text-blue-600"></i><h3 class="text-xs font-bold text-slate-800">Payment Gateway Registry</h3></div>
+            <button type="button" @click="showGatewayCreate=true" class="h-[32px] px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-semibold"><i class="fas fa-plus mr-1"></i>Add Gateway</button>
             <span class="text-[10px] text-slate-500">{{ $gatewayRegistry->count() }} gateways</span>
         </div>
         <div class="overflow-x-auto">
@@ -121,7 +125,7 @@
                         <td class="text-center uppercase">{{ $gateway['mode'] }}</td>
                         <td class="text-right font-mono">{{ number_format($gateway['fee'], 2) }}%</td>
                         <td class="text-center">@if($gateway['is_active'])<span class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-semibold">Active</span>@else<span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200 text-[10px] font-semibold">Inactive</span>@endif</td>
-                        <td class="text-center"><button type="button" @click="activeTab='gateways'; window.scrollTo({top: document.querySelector('[x-show=\"activeTab === \'gateways\'\"]')?.offsetTop || 0, behavior:'smooth'})" class="w-7 h-7 rounded-lg hover:bg-slate-100 text-slate-500"><i class="fas fa-ellipsis-v text-[11px]"></i></button></td>
+                        <td class="text-center"><details class="relative inline-block"><summary class="list-none cursor-pointer w-7 h-7 rounded-lg hover:bg-slate-100 text-slate-500 flex items-center justify-center"><i class="fas fa-ellipsis-v text-[11px]"></i></summary><div class="absolute right-0 z-30 mt-1 w-40 p-1.5 bg-white border border-slate-200 rounded-xl shadow-xl text-left"><button type="button" @click="showGatewayDetails={{ Js::from($gateway) }}; $el.closest('details').open=false" class="w-full px-2 py-1.5 text-left text-[10px] hover:bg-slate-50"><i class="fas fa-circle-info w-4 text-blue-600"></i>View Details</button><button type="button" @click="showGatewayCreate=true; editGateway={{ Js::from($gateway) }}; $el.closest('details').open=false" class="w-full px-2 py-1.5 text-left text-[10px] hover:bg-slate-50"><i class="fas fa-pen w-4 text-cyan-600"></i>Edit Gateway</button><form method="POST" action="{{ route('owner.payment-gateways.registry.toggle', $gateway['key']) }}">@csrf<button class="w-full px-2 py-1.5 text-left text-[10px] text-amber-700 hover:bg-amber-50"><i class="fas fa-toggle-on w-4"></i>{{ $gateway['is_active'] ? 'Deactivate' : 'Activate' }}</button></form><form method="POST" action="{{ route('owner.payment-gateways.registry.delete', $gateway['key']) }}" onsubmit="return confirm('Disable this payment gateway?')">@csrf @method('DELETE')<button class="w-full px-2 py-1.5 text-left text-[10px] text-rose-700 hover:bg-rose-50"><i class="fas fa-trash w-4"></i>Delete</button></form></div></details></td>
                     </tr>
                 @endforeach
                 </tbody>
@@ -985,5 +989,18 @@ if (isset($response['GatewayPageURL'])) {
     </div>
 
     @endif
+
+    <div x-show="showGatewayCreate" x-cloak class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+        <div @click.outside="showGatewayCreate=false; editGateway=null" class="bg-white rounded-xl border border-slate-200 shadow-2xl w-full max-w-md overflow-hidden">
+            <div class="px-4 py-3 bg-slate-50 border-b flex items-center justify-between"><h3 class="text-sm font-bold text-slate-800" x-text="editGateway ? 'Edit Payment Gateway' : 'Add Payment Gateway'"></h3><button type="button" @click="showGatewayCreate=false; editGateway=null" class="w-6 h-6 rounded-md hover:bg-slate-200">&times;</button></div>
+            <form method="POST" action="{{ route('owner.payment-gateways.registry.store') }}" class="p-4 space-y-3">@csrf
+                <select name="gateway" required class="w-full h-[34px] px-3 rounded-lg border border-slate-200 bg-slate-50 text-xs"><option value="">Select gateway</option>@foreach($gatewayRegistry as $gateway)<option value="{{ $gateway['key'] }}">{{ $gateway['name'] }}</option>@endforeach</select>
+                <select name="mode" class="w-full h-[34px] px-3 rounded-lg border border-slate-200 bg-slate-50 text-xs"><option value="sandbox">Sandbox</option><option value="live">Live</option><option value="test">Test</option><option value="manual">Manual</option></select>
+                <input type="number" name="fee" step="0.01" min="0" max="100" placeholder="Transaction fee (%)" class="w-full h-[34px] px-3 rounded-lg border border-slate-200 bg-slate-50 text-xs">
+                <div class="flex justify-end gap-2"><button type="button" @click="showGatewayCreate=false" class="px-3 py-1.5 rounded-lg border text-xs">Cancel</button><button class="px-4 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-semibold">Save Gateway</button></div>
+            </form>
+        </div>
+    </div>
+    <div x-show="showGatewayDetails" x-cloak class="fixed inset-0 z-50 bg-slate-900/40 flex items-center justify-center p-4"><div @click.outside="showGatewayDetails=null" class="bg-white rounded-xl border border-slate-200 shadow-2xl w-full max-w-md overflow-hidden"><div class="px-4 py-3 bg-slate-50 border-b flex justify-between"><h3 class="text-sm font-bold">Gateway Details</h3><button type="button" @click="showGatewayDetails=null">&times;</button></div><div class="p-4 grid grid-cols-2 gap-2 text-xs"><div class="p-2 bg-slate-50 rounded-lg">Gateway<br><b x-text="showGatewayDetails?.name"></b></div><div class="p-2 bg-slate-50 rounded-lg">Mode<br><b x-text="showGatewayDetails?.mode"></b></div><div class="p-2 bg-slate-50 rounded-lg">Fee<br><b x-text="(showGatewayDetails?.fee || 0) + '%' "></b></div><div class="p-2 bg-slate-50 rounded-lg">Status<br><b x-text="showGatewayDetails?.is_active ? 'Active' : 'Inactive'"></b></div></div></div></div>
 </div>
 @endsection

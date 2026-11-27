@@ -178,6 +178,49 @@ class OwnerPaymentGatewayController extends Controller
         return back()->with('success', 'Payment gateway configurations and policies saved successfully.');
     }
 
+    public function saveRegistryGateway(Request $request)
+    {
+        $data = $request->validate([
+            'gateway' => ['required', Rule::in(['bkash', 'nagad', 'sslcommerz', 'aamarpay', 'shurjopay', 'stripe', 'bank', 'mfs_manual'])],
+            'mode' => ['nullable', Rule::in(['sandbox', 'test', 'live', 'manual'])],
+            'fee' => ['nullable', 'numeric', 'min:0', 'max:100'],
+        ]);
+        $key = $data['gateway'];
+        $prefix = $key === 'sslcommerz' ? 'ssl' : $key;
+        if ($key === 'bank' || $key === 'mfs_manual') {
+            $prefix = $key;
+        }
+        Setting::set($prefix . '_status', '1', 'payment_gateways', null);
+        if (! in_array($key, ['bank', 'mfs_manual'], true)) {
+            Setting::set($prefix . '_mode', $data['mode'] ?? 'sandbox', 'payment_gateways', null);
+            Setting::set($prefix . '_fee_percent', (string) ($data['fee'] ?? 0), 'payment_gateways', null);
+        }
+
+        return back()->with('success', ucfirst($key) . ' payment gateway configured successfully.');
+    }
+
+    public function toggleRegistryGateway(string $gateway)
+    {
+        $allowed = ['bkash', 'nagad', 'sslcommerz', 'aamarpay', 'shurjopay', 'stripe', 'bank', 'mfs_manual'];
+        abort_unless(in_array($gateway, $allowed, true), 404);
+        $prefix = $gateway === 'sslcommerz' ? 'ssl' : $gateway;
+        $settings = Setting::getGroup('payment_gateways');
+        $active = ($settings[$prefix . '_status'] ?? '0') === '1';
+        Setting::set($prefix . '_status', $active ? '0' : '1', 'payment_gateways', null);
+
+        return back()->with('success', ucfirst($gateway) . ' gateway ' . ($active ? 'disabled.' : 'enabled.'));
+    }
+
+    public function deleteRegistryGateway(string $gateway)
+    {
+        $allowed = ['bkash', 'nagad', 'sslcommerz', 'aamarpay', 'shurjopay', 'stripe', 'bank', 'mfs_manual'];
+        abort_unless(in_array($gateway, $allowed, true), 404);
+        $prefix = $gateway === 'sslcommerz' ? 'ssl' : $gateway;
+        Setting::set($prefix . '_status', '0', 'payment_gateways', null);
+
+        return back()->with('success', ucfirst($gateway) . ' gateway disabled successfully.');
+    }
+
     public function test(Request $request)
     {
         $request->validate([

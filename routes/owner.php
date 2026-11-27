@@ -179,6 +179,12 @@ Route::prefix('owner')->name('owner.')->group(function () {
             ->middleware('owner.capability:gateways.view')->name('payment-gateways.index');
         Route::post('/payment-gateways', [OwnerPaymentGatewayController::class, 'update'])
             ->middleware('owner.capability:gateways.manage')->name('payment-gateways.update');
+        Route::post('/payment-gateways/registry', [OwnerPaymentGatewayController::class, 'saveRegistryGateway'])
+            ->middleware('owner.capability:gateways.manage')->name('payment-gateways.registry.store');
+        Route::post('/payment-gateways/registry/{gateway}/toggle', [OwnerPaymentGatewayController::class, 'toggleRegistryGateway'])
+            ->middleware('owner.capability:gateways.manage')->name('payment-gateways.registry.toggle');
+        Route::delete('/payment-gateways/registry/{gateway}', [OwnerPaymentGatewayController::class, 'deleteRegistryGateway'])
+            ->middleware('owner.capability:gateways.manage')->name('payment-gateways.registry.delete');
         Route::post('/payment-gateways/test', [OwnerPaymentGatewayController::class, 'test'])
             ->middleware(['owner.capability:gateways.test', 'throttle:10,1'])
             ->name('payment-gateways.test');
