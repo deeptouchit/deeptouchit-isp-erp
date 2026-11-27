@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Models\Setting;
 use App\Models\OwnerSmsGateway;
+use App\Services\Sms\SmsTrackerService;
+use App\Services\Tenancy\TenantContext;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -162,6 +164,28 @@ class SmsService
         $msgLength = mb_strlen($message);
         $isUnicode = (bool)preg_match('/[^\x00-\x7F]/', $message);
         $smsParts = $isUnicode ? ceil($msgLength / 70) : ceil($msgLength / 160);
+
+        try {
+            app(SmsTrackerService::class)->recordSms(
+                TenantContext::getTenantId(),
+                $formattedNumbers,
+                $message,
+                'system_sms',
+                $gateway?->name ?: strtoupper(str_replace('_', ' ', $provider)),
+                $isSuccess ? 'delivered' : 'failed',
+                (float) ($gateway?->rate_per_part ?? ($settings['sms_rate_per_part'] ?? 0)),
+                $responseBody,
+                $isSuccess ? null : $responseBody,
+                $senderId,
+                'sms_service',
+                app()->bound('request') ? request()->ip() : null
+            );
+        } catch (\Throwable $loggingException) {
+            Log::warning('SMS dispatch succeeded/failed but audit logging failed.', [
+                'error' => $loggingException->getMessage(),
+                'provider' => $provider,
+            ]);
+        }
 
         return [
             'success' => $isSuccess,

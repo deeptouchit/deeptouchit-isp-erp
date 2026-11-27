@@ -5,6 +5,7 @@ namespace App\Services\Sms;
 use App\Models\Setting;
 use App\Models\SmsLog;
 use App\Models\Tenant;
+use App\Services\Tenancy\TenantContext;
 
 class SmsTrackerService
 {
@@ -59,7 +60,10 @@ class SmsTrackerService
         string $status = 'delivered',
         ?float $ratePerPart = null,
         ?string $apiResponse = null,
-        ?string $errorMessage = null
+        ?string $errorMessage = null,
+        ?string $senderId = null,
+        ?string $source = null,
+        ?string $ipAddress = null
     ): SmsLog {
         $tenantId = $tenant instanceof Tenant ? $tenant->id : $tenant;
 
@@ -75,7 +79,10 @@ class SmsTrackerService
             'tenant_id' => $tenantId,
             'gateway_name' => $gatewayName,
             'recipient_phone' => $recipientPhone,
+            'sender_id' => $senderId,
             'sms_type' => $smsType,
+            'source' => $source ?: 'tracker',
+            'ip_address' => $ipAddress ?: (app()->bound('request') ? request()->ip() : null),
             'message_body' => $messageBody,
             'character_count' => $charCount,
             'parts_count' => $partsCount,

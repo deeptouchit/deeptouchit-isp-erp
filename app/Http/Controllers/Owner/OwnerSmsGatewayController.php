@@ -300,19 +300,6 @@ class OwnerSmsGatewayController extends Controller
         $parts = $result['parts'];
         $status = $result['success'] ? 'delivered' : 'failed';
 
-        // Record into database ledger
-        $this->smsTracker->recordSms(
-            null,
-            $phone,
-            $message,
-            'test_sms',
-            $providerName,
-            $status,
-            (float)($settings['sms_rate_per_part'] ?? 0.35),
-            $result['response'],
-            $result['success'] ? null : $result['response']
-        );
-
         if ($result['success']) {
             return back()->with('success', "Live SMS test dispatched to '+{$formattedNum}' ({$parts} SMS part, {$latency}ms) via {$providerName} API. Provider Response: " . substr($result['response'], 0, 150));
         }

@@ -122,33 +122,19 @@
             <table class="saas-table">
                 <thead>
                     <tr class="border-b border-slate-100 bg-slate-50/40 text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                        <th class="text-center">Recipient</th><th class="text-center">ISP Tenant</th><th class="text-center">Event Type</th><th class="text-center">Gateway</th><th class="text-center">Cost</th><th class="text-center">Status</th><th class="text-center">Dispatched At</th>
+                        <th class="text-center">ID</th><th class="text-center">Sender</th><th class="text-center">Recipient</th><th class="text-left">Message</th><th class="text-center">Send Time</th><th class="text-center">SMS Count</th><th class="text-center">SMS Rate</th><th class="text-center">Status</th><th class="text-center">Source</th><th class="text-center">Date Time</th><th class="text-center">IP Address</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 text-slate-700 font-mono">
                     @forelse($logs as $log)
                     <tr>
-                        <td class="text-center font-bold text-slate-900">
-                            {{ $log->recipient_phone }}
-                        </td>
-                        <td class="text-left font-sans font-semibold text-slate-800">
-                            @if($log->tenant)
-                                <a href="{{ route('owner.tenants.show', $log->tenant) }}" class="text-blue-600 hover:underline">
-                                    {{ $log->tenant->name }}
-                                </a>
-                            @else
-                                <span class="text-slate-400">System Direct</span>
-                            @endif
-                        </td>
-                        <td class="text-center font-sans uppercase">
-                            {{ str_replace('_', ' ', $log->sms_type) }}
-                        </td>
-                        <td class="text-center text-slate-600">
-                            {{ $log->gateway_name }}
-                        </td>
-                        <td class="text-right font-bold text-emerald-700">
-                            @currency($log->total_cost)
-                        </td>
+                        <td class="text-center">{{ $log->id }}</td>
+                        <td class="text-center font-sans font-semibold">{{ $log->sender_id ?: $log->gateway_name ?: '—' }}</td>
+                        <td class="text-center font-bold text-slate-900">{{ $log->recipient_phone }}</td>
+                        <td class="text-left font-sans max-w-[260px] truncate" title="{{ $log->message_body }}">{{ $log->message_body }}</td>
+                        <td class="text-center">{{ $log->created_at?->format('h:i A') ?: '—' }}</td>
+                        <td class="text-center">{{ number_format((int) ($log->parts_count ?: 1)) }}</td>
+                        <td class="text-right">@currency($log->cost_per_part)</td>
                         <td class="text-center">
                             @if($log->status === 'delivered')
                                 <span class="inline-flex items-center px-2 py-0.5 rounded text-[9.5px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -165,12 +151,15 @@
                             @endif
                         </td>
                         <td class="text-center text-slate-400">
-                            {{ $log->created_at ? $log->created_at->format('d M, h:i A') : '—' }}
+                            {{ $log->created_at ? $log->created_at->format('d M Y, h:i A') : '—' }}
                         </td>
+                        <td class="text-center text-slate-400">{{ $log->created_at?->format('d M Y, h:i A') ?: '—' }}</td>
+                        <td class="text-center">{{ str_replace('_', ' ', $log->source ?: $log->sms_type) }}</td>
+                        <td class="text-center text-slate-500">{{ $log->ip_address ?: '—' }}</td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="7" class="py-8 text-center text-slate-400 font-sans text-xs">
+                        <td colspan="11" class="py-8 text-center text-slate-400 font-sans text-xs">
                             No SMS transmission logs found.
                         </td>
                     </tr>
