@@ -24,6 +24,14 @@ Remaining work is validation-only: manual responsive checks, keyboard/focus chec
 - No sidebar-linked master listing was removed from scope.
 - Secondary table markup remains only where it belongs to a detail/configuration surface; it is not treated as a master listing replacement.
 
+### Responsive and accessibility validation — 2026-11-28
+
+- Shared filter forms now expose `aria-label="Owner list filters"`.
+- Shared filter controls now receive a consistent visible `:focus-visible` ring from the global Owner CSS.
+- Static responsive contract audit passed for the shared toolbar (`flex-col` to `md:flex-row`), secondary drawer, and table `overflow-x-auto` wrapper.
+- Blade cache, Owner regression tests and Vite production build passed after the accessibility update.
+- Live browser viewport and keyboard-tab walkthrough remain pending because no browser automation tool is installed in the project.
+
 ## Current Implementation Status
 
 - Shared filter toolbar and table shell components are implemented.

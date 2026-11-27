@@ -14,6 +14,7 @@
     <form method="{{ strtoupper($method) }}"
           action="{{ $action }}"
           @if($formId) id="{{ $formId }}" @endif
+          aria-label="Owner list filters"
           class="space-y-2.5">
         <div class="owner-filter-primary flex flex-col md:flex-row items-stretch md:items-center gap-2">
             {{ $primary }}
