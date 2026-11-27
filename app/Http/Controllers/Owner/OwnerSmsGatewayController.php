@@ -27,6 +27,15 @@ class OwnerSmsGatewayController extends Controller
 
         $gateways = OwnerSmsGateway::query()->latest('is_active')->latest()->get();
         $activeGateway = $gateways->firstWhere('is_active', true);
+        $gatewaySmsCounts = SmsLog::query()
+            ->selectRaw('gateway_name, COUNT(*) as total')
+            ->groupBy('gateway_name')
+            ->pluck('total', 'gateway_name');
+        $totalGatewayBalance = (float) $gateways->sum(fn (OwnerSmsGateway $gateway) => (float) ($gateway->last_balance ?? 0));
+
+        foreach ($gateways as $gateway) {
+            $gateway->sms_count = (int) ($gatewaySmsCounts[$gateway->name] ?? $gatewaySmsCounts[strtoupper(str_replace('_', ' ', $gateway->provider))] ?? 0);
+        }
 
         foreach (config('secure_settings.keys', []) as $secureKey) {
             if (array_key_exists($secureKey, $settings) && $settings[$secureKey] !== '') {
@@ -73,6 +82,7 @@ class OwnerSmsGatewayController extends Controller
         return view('owner.sms-gateways.index', compact(
             'gateways',
             'activeGateway',
+            'totalGatewayBalance',
             'settings',
             'realSmsLogs',
             'totalSmsCount',
