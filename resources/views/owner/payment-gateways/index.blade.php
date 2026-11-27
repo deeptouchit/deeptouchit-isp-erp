@@ -1006,9 +1006,9 @@ if (isset($response['GatewayPageURL'])) {
 @endsection
 @push('styles')
 <style>
-    .gateway-action-menu { width: 176px; padding: 6px; }
-    .gateway-action-menu button { display:flex; align-items:center; gap:8px; width:100%; min-height:30px; padding:6px 8px; border-radius:6px; text-align:left; font-size:10px; line-height:1.25; }
-    .gateway-action-menu button i { width:14px; flex:0 0 14px; text-align:center; }
+    .gateway-action > div { width: 176px !important; min-width: 176px; padding: 6px !important; }
+    .gateway-action > div button { display:flex; align-items:center; gap:8px; width:100%; min-height:30px; padding:6px 8px; border-radius:6px; text-align:left; font-size:10px; line-height:1.25; }
+    .gateway-action > div button i { width:14px; flex:0 0 14px; text-align:center; }
 </style>
 @endpush
 @push('scripts')
@@ -1026,7 +1026,8 @@ if (isset($response['GatewayPageURL'])) {
         const details = summary.parentElement;
         closeGatewayMenus(details);
         details.setAttribute('open', '');
-        const menu = details.querySelector('.gateway-action-menu');
+        const menu = details.querySelector(':scope > div');
+        if (!menu) return;
         const rect = summary.getBoundingClientRect();
         const height = Math.min(210, menu.scrollHeight || 170);
         const top = rect.bottom + 2;
