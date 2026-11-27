@@ -159,7 +159,14 @@ Document print view, create/edit form এবং detail-only page এই scope-�
 - Existing columns, three-dot actions, tenant pagination এবং modal behavior অক্ষত রাখা হয়েছে।
 - Empty state component-এর natural empty-state contract-এ নেওয়া হয়েছে।
 - Blade cache ও tenant management regression test সফল হয়েছে।
-- Tenants filter এখনো legacy page markup-এ আছে; Task 4.1-এর filter migration পরবর্তী focused step হিসেবে থাকবে।
+- Tenants filter migration আলাদা Task 4.2 হিসেবে সম্পন্ন করা হয়েছে।
+
+#### Task 4.2 — Tenants filter migration `[x]`
+
+- Tenants legacy filter `x-owner.filter-toolbar` component-এ migrate করা হয়েছে।
+- Search, plan, status, per-page, active filter counter, secondary drawer এবং Filter/Reset sequence standard contract অনুসরণ করছে।
+- Existing tenant query parameters ও CRUD/action flow অক্ষত রাখা হয়েছে।
+- Blade cache, tenant regression test এবং diff check সফল হয়েছে।
 
 ### Task 5 — Owner page migration batch 2 `[ ]`
 

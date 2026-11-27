@@ -30,59 +30,43 @@
         <x-owner.kpi-card title="MRR Currency" :value="$currencyCode ?? 'BDT'" icon="fa-coins" theme="cyan" />
     </div>
 
-    <!-- Filter & Search Bar -->
-    <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5" x-data="{ showMoreFilters: {{ request()->filled('status') || request()->filled('plan_id') ? 'true' : 'false' }}, searchQuery: @js(request('search', '')) }">
-        <form action="{{ route('owner.tenants.index') }}" method="GET" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5">
-            
-            <!-- Search Keyword -->
-            <div class="lg:col-span-2">
-                <div class="relative">
-                    <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-[11px]"></i>
-                    <input type="text" 
-                           name="search" 
-                           value="{{ request('search') }}" 
-                           placeholder="Search company, domain, email, phone..." 
-                           x-model="searchQuery" class="w-full h-[34px] pl-7 pr-3 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 text-xs focus:outline-none focus:ring-1 focus:ring-cyan-500 focus:border-cyan-500 transition placeholder:text-slate-400">
-                </div>
+    <!-- Shared customer-style two-tier filter toolbar -->
+    <x-owner.filter-toolbar
+        :action="route('owner.tenants.index')"
+        :reset-url="route('owner.tenants.index')"
+        :show-more-open="request()->filled('status') || request()->filled('plan_id')"
+        :active-more-count="request()->filled('status') || request()->filled('plan_id') ? 2 : 0"
+        :search-value="request('search', '')"
+        form-id="owner-tenants-filter">
+        <x-slot:primary>
+            <div class="relative flex-1 min-w-[200px]">
+                <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px] pointer-events-none" :class="searchQuery ? 'text-cyan-600 font-bold' : 'text-slate-400'" aria-hidden="true"></i>
+                <input type="search" name="search" value="{{ request('search') }}" x-model="searchQuery" placeholder="Search company, domain, email, phone..." class="w-full h-[34px] pl-8 pr-7 rounded-lg bg-slate-50 border border-slate-200 text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden">
+                <button type="button" x-show="searchQuery.length > 0" x-cloak @click="searchQuery = ''; $nextTick(() => $el.closest('form').requestSubmit())" aria-label="Clear search" class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500"><i class="fas fa-times-circle text-[10px]"></i></button>
             </div>
-
-            <!-- SaaS Plan Filter -->
-            <div>
-                <select name="plan_id" class="w-full h-[34px] px-2.5 py-0 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 text-xs focus:outline-none focus:ring-1 focus:ring-cyan-500">
-                    <option value="">All Plans</option>
-                    @foreach($plans as $plan)
-                        <option value="{{ $plan->id }}" {{ request('plan_id') == $plan->id ? 'selected' : '' }}>
-                            {{ $plan->name }} ({{ number_format($plan->customer_limit) }} Users)
-                        </option>
-                    @endforeach
-                </select>
-            </div>
-
-            <!-- Status Filter -->
-            <div>
-                <select name="status" class="w-full h-[34px] px-2.5 py-0 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 text-xs focus:outline-none focus:ring-1 focus:ring-cyan-500">
-                    <option value="">All Statuses</option>
-                    <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>Active</option>
-                    <option value="suspended" {{ request('status') === 'suspended' ? 'selected' : '' }}>Suspended</option>
-                    <option value="expiring_soon" {{ request('status') === 'expiring_soon' ? 'selected' : '' }}>Expiring Soon (<=7 Days)</option>
-                    <option value="expired" {{ request('status') === 'expired' ? 'selected' : '' }}>Expired</option>
-                </select>
-            </div>
-
-            <!-- Filter Action Buttons -->
-            <div class="flex items-center gap-1.5">
-                    <button type="submit" class="flex-1 h-[34px] py-0 px-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs transition flex items-center justify-center gap-1.5 shadow-xs">
-                    <i class="fas fa-filter text-[10px]"></i>
-                    <span>Filter</span>
-                </button>
-                <a href="{{ route('owner.tenants.index') }}" title="Reset Filters" class="h-[34px] py-0 px-2.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition flex items-center justify-center gap-1">
-                    <i class="fas fa-rotate-left text-[11px]"></i>
-                    <span>Reset</span>
-                </a>
-            </div>
-
-        </form>
-    </div>
+            <select name="plan_id" aria-label="Plan" class="h-[34px] w-full md:w-40 px-2.5 py-0 rounded-lg bg-slate-50 border border-slate-200 text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden">
+                <option value="">All Plans</option>
+                @foreach($plans as $plan)
+                    <option value="{{ $plan->id }}" @selected(request('plan_id') == $plan->id)>{{ $plan->name }} ({{ number_format($plan->customer_limit) }} Users)</option>
+                @endforeach
+            </select>
+            <select name="status" aria-label="Status" class="h-[34px] w-full md:w-36 px-2.5 py-0 rounded-lg bg-slate-50 border border-slate-200 text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden">
+                <option value="">All Statuses</option>
+                <option value="active" @selected(request('status') === 'active')>Active</option>
+                <option value="suspended" @selected(request('status') === 'suspended')>Suspended</option>
+                <option value="expiring_soon" @selected(request('status') === 'expiring_soon')>Expiring Soon</option>
+                <option value="expired" @selected(request('status') === 'expired')>Expired</option>
+            </select>
+            <select name="per_page" aria-label="Tenants per page" class="h-[34px] w-full md:w-28 px-2.5 py-0 rounded-lg bg-slate-50 border border-slate-200 text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden">
+                @foreach([15, 30, 50, 100] as $limit)
+                    <option value="{{ $limit }}" @selected(request('per_page', 15) == $limit)>{{ $limit }} / page</option>
+                @endforeach
+            </select>
+        </x-slot:primary>
+        <x-slot:secondary>
+            <span class="text-[11px] text-slate-500">Use status and plan filters to narrow the tenant directory.</span>
+        </x-slot:secondary>
+    </x-owner.filter-toolbar>
 
     <!-- Essential Clean High-Density Administrative Matrix Table -->
     <x-owner.table-shell :has-rows="$tenants->isNotEmpty()" empty-title="No ISP Tenants Found" empty-message="No tenants matched your query. Clear filters or provision a new ISP organization." empty-icon="fa-building">
