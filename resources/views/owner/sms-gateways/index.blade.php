@@ -3,7 +3,7 @@
 @section('content')
 <div class="space-y-3" x-data="gatewayPage()">
     <div class="bg-white rounded-xl border border-slate-200/90 shadow-xs px-4 py-3 flex items-center justify-between gap-3">
-        <div class="flex items-center gap-3"><span class="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center"><i class="fas fa-tower-broadcast"></i></span><div><h1 class="text-sm font-bold text-slate-800">SMS Gateway Registry</h1><span class="text-[10.5px] text-slate-500">Manage active provider connections.</span></div></div>
+        <div class="flex items-center gap-3"><span class="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center"><i class="fas fa-tower-broadcast"></i></span><h1 class="text-sm font-bold text-slate-800">SMS Gateways</h1></div>
         <div class="flex items-center gap-1.5"><button type="button" @click="showTestModal=true" class="h-[34px] px-3 rounded-lg bg-emerald-600 text-white text-xs font-semibold"><i class="fas fa-paper-plane mr-1"></i>Live Test SMS</button><a href="{{ route('owner.sms-gateways.balance') }}" class="h-[34px] px-3 rounded-lg bg-amber-500 text-white text-xs font-semibold flex items-center"><i class="fas fa-wallet mr-1"></i>Refresh Balance</a><button type="button" @click="openCreate()" class="h-[34px] px-3 rounded-lg bg-cyan-600 text-white text-xs font-semibold"><i class="fas fa-plus mr-1"></i>Add Gateway</button></div>
     </div>
     <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-2">
