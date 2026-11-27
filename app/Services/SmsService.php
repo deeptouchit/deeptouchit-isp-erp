@@ -137,7 +137,7 @@ class SmsService
 
                 case 'custom_http':
                 default:
-                    $customUrl = $gateway?->custom_url ?: ($settings['sms_custom_url'] ?? '');
+                    $customUrl = $gateway?->sms_api_url ?: ($gateway?->custom_url ?: ($settings['sms_custom_url'] ?? ''));
                     if (!empty($customUrl)) {
                         $parsedUrl = str_replace(
                             ['{number}', '{phone}', '{message}', '{msg}', '{text}', '{api_key}', '{token}', '{sender_id}', '{senderid}'],
@@ -268,7 +268,7 @@ class SmsService
         try {
             if ($provider === 'bulksmsbd') {
                 // Official BulkSMS BD Balance API: http://bulksmsbd.net/api/getBalanceApi?api_key=...
-                $url = "https://bulksmsbd.net/api/getBalanceApi?api_key=" . urlencode($apiKey);
+                $url = ($gateway?->balance_api_url ?: "https://bulksmsbd.net/api/getBalanceApi") . (str_contains($gateway?->balance_api_url ?? '', '?') ? '&' : '?') . "api_key=" . urlencode($apiKey);
                 
                 $ch = curl_init();
                 curl_setopt($ch, CURLOPT_URL, $url);
@@ -313,7 +313,7 @@ class SmsService
                     'provider' => 'BulkSMS BD',
                 ];
             } elseif ($provider === 'greenweb') {
-                $url = "http://api.greenweb.com.bd/g_api.php?token=" . urlencode($apiKey) . "&balance";
+                $url = ($gateway?->balance_api_url ?: "http://api.greenweb.com.bd/g_api.php") . (str_contains($gateway?->balance_api_url ?? '', '?') ? '&' : '?') . "token=" . urlencode($apiKey) . "&balance";
                 $res = Http::timeout(10)->get($url);
                 $body = trim($res->body());
                 return [

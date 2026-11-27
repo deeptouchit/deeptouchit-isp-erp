@@ -155,6 +155,8 @@ class OwnerSmsGatewayController extends Controller
                     $fail('The custom URL must be a valid HTTP or HTTPS URL.');
                 }
             }],
+            'sms_api_url' => ['nullable', 'url:http,https', 'max:1000'],
+            'balance_api_url' => ['nullable', 'url:http,https', 'max:1000'],
             'api_key' => ['nullable', 'string', 'max:500'],
             'api_secret' => ['nullable', 'string', 'max:500'],
             'client_id' => ['nullable', 'string', 'max:255'],
@@ -175,6 +177,8 @@ class OwnerSmsGatewayController extends Controller
             'provider' => $data['provider'],
             'sender_id' => $data['sender_id'] ?? null,
             'custom_url' => $data['custom_url'] ?? null,
+            'sms_api_url' => $data['sms_api_url'] ?? ($gateway?->sms_api_url),
+            'balance_api_url' => $data['balance_api_url'] ?? ($gateway?->balance_api_url),
             'credentials' => $credentials,
             'rate_per_part' => $data['rate_per_part'] ?? 0,
             'is_active' => false,
