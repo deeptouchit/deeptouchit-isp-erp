@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Mail\SystemTestMail;
 use App\Models\Setting;
 use App\Models\OwnerMailTestLog;
+use App\Models\OwnerMailConfigAudit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Mail;
@@ -29,7 +30,13 @@ class OwnerMailSettingController extends Controller
         $mailTestLogs = OwnerMailTestLog::query()
             ->when($request->filled('test_status'), fn ($q) => $q->where('success', $request->test_status === 'passed'))
             ->latest('tested_at')->paginate(10, ['*'], 'mail_tests_page')->withQueryString();
-        return view('owner.mail-settings.index', compact('settings', 'mailTestLogs'));
+        $mailHealth = [
+            'total' => OwnerMailTestLog::count(),
+            'passed' => OwnerMailTestLog::where('success', true)->count(),
+            'failed' => OwnerMailTestLog::where('success', false)->count(),
+            'last' => OwnerMailTestLog::latest('tested_at')->first(),
+        ];
+        return view('owner.mail-settings.index', compact('settings', 'mailTestLogs', 'mailHealth'));
     }
 
     public function exportTestLogs()
@@ -74,12 +81,25 @@ class OwnerMailSettingController extends Controller
             $inputs[$key] = $request->has($key) ? '1' : '0';
         }
 
+        $before = Setting::getGroup('smtp');
+        $changedKeys = [];
         foreach ($inputs as $key => $value) {
             if (Setting::isSecureKey($key) && ($value === '' || $value === '••••••••••••')) {
                 unset($inputs[$key]);
                 continue;
             }
+            if ((string) ($before[$key] ?? '') !== (string) $value) {
+                $changedKeys[] = Setting::isSecureKey($key) ? $key . ' (credential)' : $key;
+            }
             Setting::set($key, (string)$value, 'smtp', null);
+        }
+
+        if ($changedKeys !== []) {
+            OwnerMailConfigAudit::create([
+                'user_id' => optional($request->user())->id,
+                'changed_keys' => $changedKeys,
+                'ip_address' => $request->ip(),
+            ]);
         }
 
         return back()->with('success', 'Domain mail & SMTP configuration saved successfully.');

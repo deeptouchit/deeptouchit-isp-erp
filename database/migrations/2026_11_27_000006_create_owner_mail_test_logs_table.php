@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->string('recipient');
             $table->string('host');
-            $table->unsignedSmallInteger('port');
+            $table->unsignedSmallInteger('port')->nullable();
             $table->string('encryption', 20);
             $table->unsignedInteger('latency_ms')->nullable();
             $table->boolean('success')->default(false);

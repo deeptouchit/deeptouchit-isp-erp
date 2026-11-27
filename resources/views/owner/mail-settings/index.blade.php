@@ -76,6 +76,15 @@
             <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Sender Display</span>
             <span class="text-xs font-bold text-slate-800 truncate block">{{ $settings['mail_from_name'] ?? 'SomitySoft Billing' }}</span>
         </div>
+
+        <div class="bg-white p-3 rounded-xl border border-slate-200/80 shadow-xs">
+            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Health Checks</span>
+            <span class="text-xs font-bold text-slate-800 font-mono">{{ $mailHealth['total'] }}</span>
+        </div>
+        <div class="bg-white p-3 rounded-xl border border-slate-200/80 shadow-xs">
+            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Passed / Failed</span>
+            <span class="text-xs font-bold text-emerald-600 font-mono">{{ $mailHealth['passed'] }} / <span class="text-rose-600">{{ $mailHealth['failed'] }}</span></span>
+        </div>
     </div>
 
     <!-- MAIN DOMAIN MAIL CONFIGURATION FORM -->

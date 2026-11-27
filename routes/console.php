@@ -15,6 +15,11 @@ Schedule::command('system:heartbeat')
     ->everyMinute()
     ->runInBackground();
 
+Schedule::command('mail:check-health')
+    ->everyThirtyMinutes()
+    ->withoutOverlapping(10)
+    ->runInBackground();
+
 // 2. Master SaaS Subscription Billing Engine (Daily at 00:05 AM)
 // Evaluates upcoming renewals, generates itemized invoices, executes wallet auto-settlements,
 // enforces grace periods, and applies non-destructive safe suspensions.
