@@ -40,15 +40,18 @@
     </div>
 
     <!-- Wallets Table -->
-    <div class="rounded-xl bg-white border border-slate-200 overflow-hidden shadow-xs">
+    <x-owner.table-shell
+        :has-rows="$wallets->isNotEmpty()"
+        empty-title="No tenant wallets found"
+        empty-message="No tenant wallets match the current filters."
+        empty-icon="fa-wallet"
+    >
         <div class="p-3.5 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
             <h3 class="font-bold text-slate-900 text-xs">ISP Tenant Wallets Ledger</h3>
             <span class="text-[11px] text-slate-500 font-mono">{{ $wallets->total() }} Records</span>
         </div>
 
-        <div class="overflow-x-auto">
-            <table class="saas-table">
-                <thead class="bg-slate-50 text-slate-600 uppercase tracking-wider text-[10px] border-b border-slate-200 font-bold text-center">
+        <x-slot:head>
                     <tr>
                         <th class="px-3 py-2.5 border-r border-slate-200">ISP Organization</th>
                         <th class="px-3.5 py-2.5 border-r border-slate-200">Current Balance</th>
@@ -56,9 +59,9 @@
                         <th class="px-3.5 py-2.5 border-r border-slate-200">Recent Transactions</th>
                         <th class="px-3.5 py-2.5 text-center">Actions</th>
                     </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-200 bg-white">
-                    @forelse($wallets as $w)
+        </x-slot:head>
+        <x-slot:body>
+                    @foreach($wallets as $w)
                         <tr class="hover:bg-slate-50 transition">
                             <td class="px-3.5 py-2.5 border-r border-slate-200 font-bold text-slate-900">
                                 @if($w->tenant)
@@ -88,23 +91,22 @@
                                 </button>
                             </td>
                         </tr>
-                    @empty
-                        <tr>
-                            <td colspan="5" class="px-4 py-8 text-center text-slate-400">No tenant wallets provisioned yet.</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
+                    @endforeach
+        </x-slot:body>
 
-        <div class="px-4 py-3 border-t border-slate-200 bg-slate-50 flex items-center justify-between text-xs text-slate-600">
+        <x-slot:pagination>
             <div>Showing {{ $wallets->firstItem() ?? 0 }} to {{ $wallets->lastItem() ?? 0 }} of {{ $wallets->total() }} Records</div>
             <div>{{ $wallets->links() }}</div>
-        </div>
-    </div>
+        </x-slot:pagination>
+    </x-owner.table-shell>
 
     <!-- Recent Adjustments Ledger -->
-    <div class="rounded-xl bg-white border border-slate-200 overflow-hidden shadow-xs">
+    <x-owner.table-shell
+        :has-rows="$recentTransactions->isNotEmpty()"
+        empty-title="No wallet transactions found"
+        empty-message="Recent wallet transaction records will appear here."
+        empty-icon="fa-list"
+    >
         <div class="p-3.5 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
             <h3 class="font-bold text-slate-900 text-xs flex items-center gap-1.5">
                 <i class="fas fa-list text-slate-600"></i>
@@ -112,9 +114,7 @@
             </h3>
         </div>
 
-        <div class="overflow-x-auto">
-            <table class="saas-table">
-                <thead class="bg-slate-50 text-slate-600 uppercase tracking-wider text-[10px] border-b border-slate-200 font-bold text-center">
+        <x-slot:head>
                     <tr>
                         <th class="px-3 py-2.5 border-r border-slate-200">Date</th>
                         <th class="px-3.5 py-2.5 border-r border-slate-200">ISP Tenant</th>
@@ -123,9 +123,9 @@
                         <th class="px-3.5 py-2.5 border-r border-slate-200">Balance After</th>
                         <th class="px-3.5 py-2.5 border-r border-slate-200">Reason / Reference</th>
                     </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-200 bg-white">
-                    @forelse($recentTransactions as $tx)
+        </x-slot:head>
+        <x-slot:body>
+                    @foreach($recentTransactions as $tx)
                         <tr class="hover:bg-slate-50 transition">
                             <td class="px-3.5 py-2.5 border-r border-slate-200 font-mono text-[10.5px] text-slate-500 text-center">
                                 {{ $tx->created_at ? $tx->created_at->format('d M, Y (h:i A)') : '—' }}
@@ -150,15 +150,9 @@
                                 {{ $tx->description }} <span class="text-slate-400 font-mono text-[10px]">({{ $tx->reference }})</span>
                             </td>
                         </tr>
-                    @empty
-                        <tr>
-                            <td colspan="6" class="px-4 py-8 text-center text-slate-400">No recent wallet transaction records.</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-    </div>
+                    @endforeach
+        </x-slot:body>
+    </x-owner.table-shell>
 
     <!-- Modal for Wallet Adjustment -->
     <div x-show="walletModalOpen" 
