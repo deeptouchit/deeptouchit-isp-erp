@@ -131,6 +131,15 @@ class OwnerSmsGatewayController extends Controller
             : back()->with('success', "SMS gateway '{$gateway->name}' is now active.");
     }
 
+    public function deactivateGateway(OwnerSmsGateway $gateway)
+    {
+        if ($gateway->is_active) {
+            $gateway->update(['is_active' => false]);
+        }
+
+        return back()->with('success', "SMS gateway '{$gateway->name}' was deactivated.");
+    }
+
     public function destroyGateway(OwnerSmsGateway $gateway)
     {
         $wasActive = $gateway->is_active;

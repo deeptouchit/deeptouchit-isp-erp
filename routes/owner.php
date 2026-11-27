@@ -194,6 +194,8 @@ Route::prefix('owner')->name('owner.')->group(function () {
             ->middleware('owner.capability:sms.manage')->name('sms-gateways.gateway.update');
         Route::post('/sms-gateways/{gateway}/activate', [OwnerSmsGatewayController::class, 'activateGateway'])
             ->middleware('owner.capability:sms.manage')->name('sms-gateways.gateway.activate');
+        Route::post('/sms-gateways/{gateway}/deactivate', [OwnerSmsGatewayController::class, 'deactivateGateway'])
+            ->middleware('owner.capability:sms.manage')->name('sms-gateways.gateway.deactivate');
         Route::delete('/sms-gateways/{gateway}', [OwnerSmsGatewayController::class, 'destroyGateway'])
             ->middleware('owner.capability:sms.manage')->name('sms-gateways.gateway.delete');
         Route::post('/sms-gateways', [OwnerSmsGatewayController::class, 'update'])
