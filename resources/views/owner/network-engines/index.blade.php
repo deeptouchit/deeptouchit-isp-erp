@@ -300,9 +300,13 @@
             </form>
 
             <!-- OLT Table -->
-            <div class="overflow-x-auto border border-slate-200 rounded-lg">
-            <table class="saas-table network-engines-table">
-                    <thead class="bg-slate-50 text-[10.5px] font-bold text-slate-500 uppercase tracking-wider">
+            <x-owner.table-shell
+                :has-rows="$olts->isNotEmpty()"
+                empty-title="No OLT devices found"
+                empty-message="Configured OLT devices will appear here with live telemetry."
+                empty-icon="fa-microchip"
+            >
+                    <x-slot:head>
                         <tr>
                             <th class="text-center">OLT Name / Tenant</th>
                             <th class="text-center">Brand & Model</th>
@@ -312,9 +316,9 @@
                             <th class="text-center">Status & Sync</th>
                             <th class="no-sort text-center">Actions</th>
                         </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-100 bg-white">
-                        @forelse($olts as $olt)
+                    </x-slot:head>
+                    <x-slot:body>
+                        @foreach($olts as $olt)
                             <tr class="hover:bg-slate-50/80 transition">
                                 <td class="px-3.5 py-2.5">
                                     <div class="font-bold text-slate-900">{{ $olt->name }}</div>
@@ -369,29 +373,15 @@
                                     </button>
                                 </td>
                             </tr>
-                        @empty
-                            <tr>
-                                <td colspan="7" class="px-4 py-10 text-center text-slate-500 text-xs">
-                                    <div class="w-12 h-12 rounded-xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-2.5 text-lg">
-                                        <i class="fas fa-microchip"></i>
-                                    </div>
-                                    <div class="font-bold text-slate-800 text-sm">No OLT Devices Configured</div>
-                                    <p class="text-[11px] text-slate-400 max-w-sm mx-auto mt-1">
-                                        V-SOL, BDCOM, Huawei and ZTE OLTs configured by tenant ISPs will appear here with real-time optical power and LOS telemetry.
-                                    </p>
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
+                        @endforeach
+                    </x-slot:body>
 
-            @if($olts->hasPages())
-                <div class="pt-2">
+            <x-slot:pagination>
+                @if($olts->hasPages())
                     {{ $olts->links() }}
-                </div>
-            @endif
-        </div>
+                @endif
+            </x-slot:pagination>
+            </x-owner.table-shell>
 
         <!-- TAB 4: NOC AUDIT STREAM -->
         <div x-show="activeTab === 'audit'" class="p-4 space-y-3" style="display: none;">
