@@ -199,14 +199,36 @@ class OwnerPaymentGatewayController extends Controller
     {
         $data = $request->validate([
             'gateway' => ['required', Rule::in(['bkash', 'nagad', 'sslcommerz', 'aamarpay', 'shurjopay', 'stripe', 'bank', 'mfs_manual'])],
+            'name' => ['nullable', 'string', 'max:100'],
             'mode' => ['nullable', Rule::in(['sandbox', 'test', 'live', 'manual'])],
             'fee' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'api_url' => ['nullable', 'url:http,https', 'max:1000'],
+            'callback_url' => ['nullable', 'url:http,https', 'max:1000'],
+            'success_url' => ['nullable', 'url:http,https', 'max:1000'],
+            'fail_url' => ['nullable', 'url:http,https', 'max:1000'],
+            'cancel_url' => ['nullable', 'url:http,https', 'max:1000'],
+            'webhook_url' => ['nullable', 'url:http,https', 'max:1000'],
         ]);
         $key = $data['gateway'];
         $prefix = $key === 'sslcommerz' ? 'ssl' : $key;
-        if ($key === 'bank' || $key === 'mfs_manual') {
-            $prefix = $key;
-        }
+        $credentialKeys = ['app_key', 'app_secret', 'username', 'password', 'merchant_id', 'public_key', 'private_key', 'store_id', 'store_password', 'signature_key', 'prefix', 'publishable_key', 'secret_key', 'webhook_secret', 'account_name', 'account_number', 'instructions'];
+        $credentials = collect($credentialKeys)->mapWithKeys(fn ($credential) => [$credential => $request->input($credential)])->filter(fn ($value) => filled($value))->all();
+        $gateway = PaymentGateway::firstOrNew(['slug' => $key]);
+        $gateway->fill([
+            'name' => $data['name'] ?: ($gateway->name ?: ucfirst($key)),
+            'mode' => $data['mode'] ?? ($gateway->mode ?: 'sandbox'),
+            'fee_type' => 'percentage',
+            'fee_value' => $data['fee'] ?? ($gateway->fee_value ?? 0),
+            'is_active' => true,
+            'credentials' => array_merge($gateway->credentials ?? [], $credentials),
+            'api_url' => $data['api_url'] ?? $gateway->api_url,
+            'callback_url' => $data['callback_url'] ?? $gateway->callback_url,
+            'success_url' => $data['success_url'] ?? $gateway->success_url,
+            'fail_url' => $data['fail_url'] ?? $gateway->fail_url,
+            'cancel_url' => $data['cancel_url'] ?? $gateway->cancel_url,
+            'webhook_url' => $data['webhook_url'] ?? $gateway->webhook_url,
+        ]);
+        $gateway->save();
         Setting::set($prefix . '_status', '1', 'payment_gateways', null);
         if (! in_array($key, ['bank', 'mfs_manual'], true)) {
             Setting::set($prefix . '_mode', $data['mode'] ?? 'sandbox', 'payment_gateways', null);
