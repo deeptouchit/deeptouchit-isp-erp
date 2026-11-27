@@ -132,7 +132,8 @@
         <!-- TAB 1: MIKROTIK ROUTERS FLEET -->
         <div x-show="activeTab === 'routers'" class="p-4 space-y-3">
             <!-- Search & Filter Controls -->
-            <form action="{{ route('owner.network-engines.index') }}" method="GET" class="flex flex-wrap items-center justify-between gap-2.5">
+            <x-owner.filter-toolbar action="{{ route('owner.network-engines.index') }}" reset-url="{{ route('owner.network-engines.index') }}" form-id="owner-router-filter" :show-more-button="false" :search-value="request('router_search', '')">
+                <x-slot:primary>
                 <div class="flex flex-wrap items-center gap-2 flex-1 min-w-[260px]">
                     <div class="relative flex-1 max-w-sm">
                         <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
@@ -147,7 +148,8 @@
                         <option value="pending" {{ request('router_status') == 'pending' ? 'selected' : '' }}>Pending</option>
                     </select>
                 </div>
-                <div class="flex items-center gap-2">
+                </x-slot:primary>
+                <x-slot:actions>
                     <button type="submit" class="h-[34px] py-0 px-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs shadow-xs flex items-center gap-1.5"><i class="fas fa-filter text-[10px]"></i><span>Filter</span></button>
                     <a href="{{ route('owner.network-engines.index') }}" class="h-[34px] py-0 px-2.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs border border-slate-200/80 flex items-center gap-1"><i class="fas fa-rotate-left text-[10px]"></i><span>Reset</span></a>
                     <button type="button" @click="probeModal = true" class="h-[34px] py-0 px-2.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition border border-slate-200 flex items-center gap-1.5 cursor-pointer">
@@ -157,8 +159,8 @@
                     <div class="text-[11px] text-slate-500 font-mono">
                         {{ $routers->count() }} of {{ $routers->total() }} Routers
                     </div>
-                </div>
-            </form>
+                </x-slot:actions>
+            </x-owner.filter-toolbar>
 
             <!-- Routers Table -->
             <x-owner.table-shell
