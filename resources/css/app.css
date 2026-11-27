@@ -136,6 +136,29 @@
     .owner-kpi-icon-cyan { @apply bg-cyan-50 text-cyan-600 border-cyan-100; }
     .owner-kpi-icon-slate { @apply bg-slate-50 text-slate-600 border-slate-200; }
 
+    /* Owner global header contract: restrained corners, no pill-shaped containers, responsive overflow safety. */
+    .owner-global-header {
+        @apply w-full overflow-visible;
+    }
+
+    .owner-global-header-title {
+        @apply min-w-0 whitespace-nowrap;
+    }
+
+    .owner-global-header-actions {
+        @apply flex-nowrap whitespace-nowrap;
+    }
+
+    @media (max-width: 767px) {
+        .owner-global-header {
+            @apply gap-2 px-3;
+        }
+
+        .owner-global-header-title {
+            @apply max-w-[calc(100vw-120px)];
+        }
+    }
+
     .saas-table th,
     .saas-table td {
         @apply text-[11px] leading-tight;

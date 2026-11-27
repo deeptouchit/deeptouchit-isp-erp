@@ -6,7 +6,7 @@
 @endphp
 
 <!-- Global Owner Console Header -->
-<header class="sticky top-0 z-30 min-h-14 bg-white/90 backdrop-blur-md border-b border-slate-200/80 px-3.5 sm:px-6 py-2 flex items-center justify-between gap-3 shadow-xs transition-all">
+<header class="owner-global-header sticky top-0 z-30 min-h-14 bg-white/90 backdrop-blur-md border-b border-slate-200/80 px-3.5 sm:px-6 py-2 flex items-center justify-between gap-3 shadow-xs transition-all">
     
     <!-- Left Section: Mobile Toggle, Breadcrumb & Context Title -->
     <div class="flex items-center gap-2.5 min-w-0">
@@ -22,7 +22,7 @@
             <i class="fas fa-layer-group"></i>
         </div>
         <div class="flex items-center gap-2 min-w-0">
-            <h1 class="text-xs font-bold text-slate-900 tracking-tight truncate max-w-[180px] sm:max-w-none">
+            <h1 class="owner-global-header-title text-xs font-bold text-slate-900 tracking-tight truncate max-w-[180px] sm:max-w-none">
                 {{ $ownerHeaderTitle }}
                 <span class="hidden sm:inline font-normal text-slate-400">· {{ $ownerHeaderSubtitle }}</span>
             </h1>
@@ -38,7 +38,7 @@
     <div class="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
 
         <!-- Shared Owner Actions -->
-        <div class="hidden md:flex items-center gap-1.5">
+        <div class="owner-global-header-actions hidden md:flex items-center gap-1.5">
             <a href="{{ route('owner.sms-gateways.index') }}" class="px-2 py-1 rounded bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[10px] font-semibold border border-indigo-200/80 transition flex items-center gap-1.5">
                 <i class="fas fa-comment-dots text-[9px] text-indigo-500"></i>
                 <span>SMS Balance: <span class="font-bold font-mono">{{ $smsBalanceInfo['formatted'] ?? '—' }}</span></span>
