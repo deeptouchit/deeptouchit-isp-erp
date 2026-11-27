@@ -68,16 +68,21 @@
     </div>
 
     <!-- Logs Table -->
-    <div class="bg-white rounded-xl border border-slate-200/80 shadow-xs divide-y divide-slate-100 overflow-hidden">
+    <x-owner.table-shell
+        :has-rows="$logs->isNotEmpty()"
+        empty-title="No activity logs found"
+        empty-message="No tenant activity logs match the current filters."
+        empty-icon="fa-clock-rotate-left"
+    >
         <div class="overflow-x-auto">
             <table class="saas-table">
-                <thead>
+                <x-slot:head>
                     <tr class="border-b border-slate-100 bg-slate-50/40 text-[10px] font-bold uppercase tracking-wider text-slate-500">
                         <th class="text-center">Event</th><th class="text-center">ISP Tenant</th><th class="text-center">Actor</th><th class="text-center">IP Address</th><th class="text-center">Timestamp</th>
                     </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100 text-slate-700">
-                    @forelse($logs as $log)
+                </x-slot:head>
+                <x-slot:body>
+                    @foreach($logs as $log)
                     <tr class="hover:bg-slate-50/80 transition">
                         <td class="text-left">
                             <div class="flex items-center gap-2 flex-nowrap whitespace-nowrap">
@@ -116,23 +121,17 @@
                             {{ $log->created_at ? $log->created_at->format('d M, h:i A') : '—' }}
                         </td>
                     </tr>
-                    @empty
-                    <tr>
-                        <td colspan="5" class="py-8 text-center text-slate-400 font-sans text-xs">
-                            No tenant activity logs found matching the filter criteria.
-                        </td>
-                    </tr>
-                    @endforelse
-                </tbody>
+                    @endforeach
+                </x-slot:body>
             </table>
         </div>
 
-        @if($logs->hasPages())
-            <div class="p-3 bg-slate-50/50">
+        <x-slot:pagination>
+            @if($logs->hasPages())
                 {{ $logs->links() }}
-            </div>
-        @endif
-    </div>
+            @endif
+        </x-slot:pagination>
+    </x-owner.table-shell>
 
 </div>
 @endsection

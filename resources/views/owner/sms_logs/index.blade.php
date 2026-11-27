@@ -57,7 +57,12 @@
     </div>
 
     <!-- Logs Table -->
-    <div class="bg-white rounded-xl border border-slate-200/80 shadow-xs divide-y divide-slate-100 overflow-hidden">
+    <x-owner.table-shell
+        :has-rows="$logs->isNotEmpty()"
+        empty-title="No SMS logs found"
+        empty-message="No SMS transmission logs match the current filters."
+        empty-icon="fa-comment-sms"
+    >
         <div class="p-3.5 flex items-center justify-between bg-slate-50/50">
             <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                 <i class="fas fa-list-check text-emerald-600"></i>
@@ -68,13 +73,13 @@
 
         <div class="overflow-x-auto">
             <table class="saas-table">
-                <thead>
+                <x-slot:head>
                     <tr class="border-b border-slate-100 bg-slate-50/40 text-[10px] font-bold uppercase tracking-wider text-slate-500">
                         <th class="text-center">ID</th><th class="text-center">Sender</th><th class="text-center">Recipient</th><th class="text-left">Message</th><th class="text-center">Send Time</th><th class="text-center">SMS Count</th><th class="text-center">SMS Rate</th><th class="text-center">Status</th><th class="text-center">Source</th><th class="text-center">Date Time</th><th class="text-center">IP Address</th>
                     </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100 text-slate-700 font-mono">
-                    @forelse($logs as $log)
+                </x-slot:head>
+                <x-slot:body>
+                    @foreach($logs as $log)
                     <tr>
                         <td class="text-center">{{ $log->id }}</td>
                         <td class="text-center font-sans font-semibold">{{ $log->sender_id ?: $log->gateway_name ?: '—' }}</td>
@@ -105,23 +110,17 @@
                         <td class="text-center text-slate-400">{{ $log->created_at?->format('d M Y, h:i A') ?: '—' }}</td>
                         <td class="text-center text-slate-500">{{ $log->ip_address ?: '—' }}</td>
                     </tr>
-                    @empty
-                    <tr>
-                        <td colspan="11" class="py-8 text-center text-slate-400 font-sans text-xs">
-                            No SMS transmission logs found.
-                        </td>
-                    </tr>
-                    @endforelse
-                </tbody>
+                    @endforeach
+                </x-slot:body>
             </table>
         </div>
 
-        @if($logs->hasPages())
-            <div class="p-3 bg-slate-50/50">
+        <x-slot:pagination>
+            @if($logs->hasPages())
                 {{ $logs->links() }}
-            </div>
-        @endif
-    </div>
+            @endif
+        </x-slot:pagination>
+    </x-owner.table-shell>
 
 </div>
 @endsection
