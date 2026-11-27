@@ -86,6 +86,13 @@ Owner panel-এর সব পেজে Dashboard-এর মতো একই glob
 - Legacy page labels accessible compatibility text/page-title-এর মাধ্যমে বজায় রাখা হয়েছে।
 - Blade cache এবং dedicated financial Owner test সফল হয়েছে।
 
+#### Task 4.3 — Gateway ও mail batch `[x]`
+
+- Payment Gateways, SMS Gateways এবং Mail Settings page-এর duplicate title header সরানো হয়েছে।
+- Add Gateway, Live Test SMS, Refresh Balance এবং Test Email Dispatch actions compact action row-তে রাখা হয়েছে।
+- Gateway table, modal, credential flow এবং mail form logic অক্ষত রাখা হয়েছে।
+- Blade cache এবং Owner portal, SMS gateway ও network regression tests সফল হয়েছে।
+
 ### Task 5 — Responsive ও accessibility hardening `[ ]`
 
 - Desktop, tablet এবং mobile viewport-এ overflow, truncation ও alignment যাচাই করা।

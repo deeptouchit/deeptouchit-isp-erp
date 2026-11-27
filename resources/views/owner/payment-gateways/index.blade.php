@@ -35,20 +35,8 @@
     }
 }" x-init="$watch('editGateway', value => syncGatewayForm(value))">
 
-    <!-- Top Header & PGW Status -->
-    <div class="bg-white rounded-xl border border-slate-200/80 shadow-xs p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center text-white text-base font-bold shadow-xs">
-                <i class="fas fa-credit-card text-sm"></i>
-            </div>
-            <div>
-                <div class="flex items-center gap-2">
-                    <h2 class="text-sm font-bold text-slate-800">Payment Gateways</h2>
-                </div>
-            </div>
-        </div>
-
-        <div class="flex items-center gap-2">
+    <!-- Page-specific gateway action; page title is provided by the global Owner header. -->
+    <div class="flex justify-end items-center gap-2 flex-wrap">
             <button type="button" @click="showGatewayCreate=true" class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-semibold transition shadow-xs flex items-center gap-1.5"><i class="fas fa-plus text-[10px]"></i><span>Add Gateway</span></button>
             @if(false)
             <button type="button" @click="activeTab = 'dev_docs'" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-semibold transition border border-slate-200 flex items-center gap-1.5">
@@ -60,7 +48,6 @@
                 <span>Test Gateway Handshake</span>
             </button>
             @endif
-        </div>
     </div>
 
     <!-- Global KPI Cards -->

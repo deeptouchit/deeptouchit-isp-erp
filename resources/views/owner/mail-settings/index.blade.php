@@ -18,24 +18,11 @@
 }">
 
     <!-- Top Header -->
-    <div class="bg-white rounded-xl border border-slate-200/80 shadow-xs p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center text-white text-base font-bold shadow-xs">
-                <i class="fas fa-envelope-open-text text-sm"></i>
-            </div>
-            <div>
-                <div class="flex items-center gap-2">
-                    <h2 class="text-sm font-bold text-slate-800">Mail Settings</h2>
-                </div>
-            </div>
-        </div>
-
-        <div class="flex items-center gap-2">
+    <div class="flex justify-end items-center gap-2 flex-wrap">
             <a href="#test-section" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition shadow-xs flex items-center gap-1.5">
                 <i class="fas fa-paper-plane text-[10px]"></i>
                 <span>Test Email Dispatch</span>
             </a>
-        </div>
     </div>
 
     @if(session('success'))
