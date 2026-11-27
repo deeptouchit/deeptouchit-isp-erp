@@ -168,9 +168,13 @@
             </span>
         </div>
 
-        <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs text-slate-600">
-                <thead class="bg-slate-50 text-slate-500 uppercase tracking-wider text-[9.5px] border-b border-slate-100">
+        <x-owner.table-shell
+            :has-rows="$invoices->isNotEmpty()"
+            empty-title="No revenue records found"
+            empty-message="No revenue or invoice records match the selected filters."
+            empty-icon="fa-chart-line"
+        >
+            <x-slot:head>
                     <tr>
                         <th class="px-3.5 py-2">Invoice #</th>
                         <th class="px-3 py-2">Date & Time</th>
@@ -181,9 +185,9 @@
                         <th class="px-3 py-2 text-right">Discount</th>
                         <th class="px-3 py-2 text-center">Status</th>
                     </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100">
-                    @forelse ($invoices as $row)
+            </x-slot:head>
+            <x-slot:body>
+                    @foreach ($invoices as $row)
                         <tr class="hover:bg-slate-50/70 transition font-medium">
                             <td class="px-3.5 py-2 font-mono font-bold text-slate-800 text-[11px]">
                                 {{ $row->invoice_no ?? '#INV-' . $row->id }}
@@ -235,22 +239,15 @@
                                 @endif
                             </td>
                         </tr>
-                    @empty
-                        <tr>
-                            <td colspan="8" class="px-4 py-6 text-center text-slate-400 text-xs">
-                                No revenue or invoice records found for the selected filter criteria.
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
+                    @endforeach
+            </x-slot:body>
 
-        @if($invoices->hasPages())
-            <div class="px-3 py-2 border-t border-slate-100 bg-slate-50/50">
+            <x-slot:pagination>
+                @if($invoices->hasPages())
                 {{ $invoices->links() }}
-            </div>
-        @endif
+                @endif
+            </x-slot:pagination>
+        </x-owner.table-shell>
     </div>
 
 </div>
