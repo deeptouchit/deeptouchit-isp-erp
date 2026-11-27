@@ -284,6 +284,13 @@ node .\\node_modules\\vite\\bin\\vite.js build
 - Commit created: `1c5362d` (`Standardize owner KPI cards and harden runtime validation`).
 - Commit contains only the staged implementation scope; unrelated worktree changes remain outside the commit.
 
+### Task 8.4 — Remote push preflight `[x]`
+
+- Current branch is `main`.
+- Remote `origin` points to the expected GitHub repository.
+- No upstream tracking branch is configured, so any push must explicitly target `origin main`.
+- Unrelated worktree deletions and untracked files remain outside the committed scope.
+
 1. শুধু সংশ্লিষ্ট ফাইল commit করা
 2. `main` branch-এ push করা
 3. live commit যাচাই করা
