@@ -219,6 +219,10 @@ Route::prefix('owner')->name('owner.')->group(function () {
             ->middleware('owner.capability:mail.manage')->name('mail-settings.update');
         Route::post('/mail-settings/test', [OwnerMailSettingController::class, 'test'])
             ->middleware(['owner.capability:mail.test', 'throttle:5,1'])->name('mail-settings.test');
+        Route::get('/mail-settings/test-history/export', [OwnerMailSettingController::class, 'exportTestLogs'])
+            ->middleware('owner.capability:mail.view')->name('mail-settings.test-history.export');
+        Route::delete('/mail-settings/test-history', [OwnerMailSettingController::class, 'clearTestLogs'])
+            ->middleware('owner.capability:mail.manage')->name('mail-settings.test-history.clear');
 
         // 13. Security & Backup - Dedicated Menu
         Route::get('/security-backup', [OwnerSecurityBackupController::class, 'index'])->name('security-backup.index');

@@ -16,7 +16,7 @@ class OwnerMailSettingController extends Controller
     /**
      * Display the domain mail server and SMTP configuration interface.
      */
-    public function index()
+    public function index(Request $request)
     {
         $settings = Setting::getGroup('smtp');
 
@@ -26,8 +26,28 @@ class OwnerMailSettingController extends Controller
             }
         }
 
-        $mailTestLogs = OwnerMailTestLog::latest('tested_at')->limit(10)->get();
+        $mailTestLogs = OwnerMailTestLog::query()
+            ->when($request->filled('test_status'), fn ($q) => $q->where('success', $request->test_status === 'passed'))
+            ->latest('tested_at')->paginate(10, ['*'], 'mail_tests_page')->withQueryString();
         return view('owner.mail-settings.index', compact('settings', 'mailTestLogs'));
+    }
+
+    public function exportTestLogs()
+    {
+        return response()->streamDownload(function () {
+            $out = fopen('php://output', 'w');
+            fputcsv($out, ['ID', 'Recipient', 'Host', 'Port', 'Encryption', 'Latency MS', 'Status', 'IP Address', 'Tested At']);
+            OwnerMailTestLog::latest('tested_at')->chunk(200, function ($logs) use ($out) {
+                foreach ($logs as $log) fputcsv($out, [$log->id, $log->recipient, $log->host, $log->port, $log->encryption, $log->latency_ms, $log->success ? 'Passed' : 'Failed', $log->ip_address, $log->tested_at]);
+            });
+            fclose($out);
+        }, 'smtp-test-history.csv', ['Content-Type' => 'text/csv']);
+    }
+
+    public function clearTestLogs()
+    {
+        $count = OwnerMailTestLog::query()->delete();
+        return back()->with('success', "{$count} SMTP test history records cleared.");
     }
 
     /**
