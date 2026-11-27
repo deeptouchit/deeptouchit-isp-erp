@@ -14,7 +14,8 @@ return new class extends Migration
             $table->string('provider', 50);
             $table->string('sender_id', 100)->nullable();
             $table->string('custom_url', 1000)->nullable();
-            $table->json('credentials')->nullable();
+            // encrypted:array stores ciphertext, so this must not be a JSON column.
+            $table->text('credentials')->nullable();
             $table->decimal('rate_per_part', 10, 4)->default(0);
             $table->boolean('is_active')->default(false);
             $table->decimal('last_balance', 12, 2)->nullable();
