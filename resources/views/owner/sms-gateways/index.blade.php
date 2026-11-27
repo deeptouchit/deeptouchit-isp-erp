@@ -130,11 +130,13 @@
                                 <details class="relative"><summary class="list-none cursor-pointer px-2 py-1 rounded-md bg-slate-100 text-slate-600 text-[10px] font-semibold">Edit</summary>
                                     <div class="absolute right-0 z-20 mt-1 w-72 p-3 bg-white border border-slate-200 rounded-lg shadow-xl text-left">
                                         <form method="POST" action="{{ route('owner.sms-gateways.gateway.update', $gateway) }}" class="space-y-2">@csrf @method('PUT')
+                                            @if($gateway->is_active)<input type="hidden" name="keep_active" value="1">@endif
                                             <input name="name" value="{{ $gateway->name }}" required class="w-full h-[32px] px-2 rounded border border-slate-200 text-xs" placeholder="Gateway name">
                                             <select name="provider" class="w-full h-[32px] px-2 rounded border border-slate-200 text-xs">@foreach(\App\Services\SmsService::supportedProviders() as $provider)<option value="{{ $provider }}" @selected($gateway->provider === $provider)>{{ strtoupper($provider) }}</option>@endforeach</select>
                                             <input name="sender_id" value="{{ $gateway->sender_id }}" class="w-full h-[32px] px-2 rounded border border-slate-200 text-xs" placeholder="Sender ID">
                                             <input name="api_key" class="w-full h-[32px] px-2 rounded border border-slate-200 text-xs" placeholder="API key (leave blank to keep)">
                                             <input name="custom_url" value="{{ $gateway->custom_url }}" class="w-full h-[32px] px-2 rounded border border-slate-200 text-xs" placeholder="Custom URL (optional)">
+                                            <label class="flex items-center gap-2 text-[10px] text-slate-600"><input type="checkbox" name="is_active" value="1" @checked($gateway->is_active) class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"> Set as active gateway</label>
                                             <button class="w-full h-[32px] rounded bg-cyan-600 text-white text-xs font-semibold">Save changes</button>
                                         </form>
                                     </div>
@@ -155,6 +157,7 @@
             <input name="sender_id" class="h-[34px] px-2.5 rounded-lg border border-slate-200 text-xs" placeholder="Sender ID">
             <input name="api_key" class="h-[34px] px-2.5 rounded-lg border border-slate-200 text-xs" placeholder="API key">
             <input name="custom_url" class="h-[34px] px-2.5 rounded-lg border border-slate-200 text-xs" placeholder="Custom URL">
+            <label class="h-[34px] flex items-center gap-1.5 px-2 rounded-lg border border-slate-200 bg-white text-[10px] text-slate-600"><input type="checkbox" name="is_active" value="1" class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"> Active gateway</label>
             <button class="h-[34px] rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold"><i class="fas fa-plus mr-1"></i>Add gateway</button>
         </form>
     </section>
