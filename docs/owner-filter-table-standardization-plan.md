@@ -16,6 +16,14 @@ Implementation status verified against the repository:
 
 Remaining work is validation-only: manual responsive checks, keyboard/focus checks, final sidebar linked-view inventory, and duplicate/non-standard table audit. The broader feature suite remains environment-limited when it produces no output; the dedicated Owner regression suite is green.
 
+### Sidebar inventory audit — 2026-11-28
+
+- All 21 linked Owner menu entries in `resources/views/owner/layouts/partials/sidebar.blade.php` were checked against the Owner route/view inventory.
+- Master listing pages are covered by the shared filter/table migration or explicitly identified as non-filterable configuration pages.
+- Intentional non-master table exceptions: invoice print, invoice detail and tenant detail views.
+- No sidebar-linked master listing was removed from scope.
+- Secondary table markup remains only where it belongs to a detail/configuration surface; it is not treated as a master listing replacement.
+
 ## Current Implementation Status
 
 - Shared filter toolbar and table shell components are implemented.
