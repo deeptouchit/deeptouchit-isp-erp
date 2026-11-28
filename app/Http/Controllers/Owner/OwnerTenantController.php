@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\SaasInvoice;
 use App\Models\SaasPlan;
 use App\Models\Tenant;
+use App\Models\TenantCustomer;
 use App\Models\User;
 use App\Models\Setting;
 use App\Services\Audit\TenantAuditService;
@@ -266,12 +267,26 @@ class OwnerTenantController extends Controller
             'invoices' => fn($q) => $q->with('items')->latest()->limit(15),
             'payments' => fn($q) => $q->latest()->limit(15),
             'wallet.transactions' => fn($q) => $q->latest()->limit(10),
-            'activityLogs' => fn($q) => $q->latest()->limit(25),
             'smsLogs' => fn($q) => $q->latest()->limit(25),
         ]);
+        $customers = TenantCustomer::where('tenant_id', $tenant->id)
+            ->with('package')
+            ->latest('id')
+            ->limit(15)
+            ->get();
+        $customerCount = TenantCustomer::where('tenant_id', $tenant->id)->count();
+        $activeCustomerCount = TenantCustomer::where('tenant_id', $tenant->id)->where('status', 'active')->count();
+        $customerDueTotal = TenantCustomer::where('tenant_id', $tenant->id)->sum('due_amount');
         $plans = SaasPlan::where('is_active', true)->orderBy('sort_order')->get();
 
-        return view('owner.tenants.show', compact('tenant', 'plans'));
+        return view('owner.tenants.show', compact(
+            'tenant',
+            'plans',
+            'customers',
+            'customerCount',
+            'activeCustomerCount',
+            'customerDueTotal'
+        ));
     }
 
     /**

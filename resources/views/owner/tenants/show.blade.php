@@ -135,7 +135,7 @@
     </div>
 
     <!-- 4 High-Density Key Metric Cards -->
-    <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         
         <!-- Metric 1: Assigned Plan -->
         <div class="p-3.5 rounded-xl bg-white border border-slate-200 shadow-xs flex items-center justify-between">
@@ -200,6 +200,30 @@
             </div>
             <div class="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm border border-emerald-100 flex-shrink-0">
                 <i class="fas fa-wallet"></i>
+            </div>
+        </div>
+
+        <!-- Metric 5: Customers -->
+        <div class="p-3.5 rounded-xl bg-white border border-slate-200 shadow-xs flex items-center justify-between">
+            <div class="space-y-0.5">
+                <span class="text-[10px] font-bold text-cyan-600 uppercase tracking-wider block">Customers</span>
+                <span class="text-base font-extrabold text-slate-900 tracking-tight block font-mono">{{ number_format($customerCount) }}</span>
+                <span class="text-[10px] text-slate-400 block">{{ number_format($activeCustomerCount) }} active</span>
+            </div>
+            <div class="w-9 h-9 rounded-lg bg-cyan-50 text-cyan-600 flex items-center justify-center text-sm border border-cyan-100 flex-shrink-0">
+                <i class="fas fa-users"></i>
+            </div>
+        </div>
+
+        <!-- Metric 6: Customer Due -->
+        <div class="p-3.5 rounded-xl bg-white border border-slate-200 shadow-xs flex items-center justify-between">
+            <div class="space-y-0.5">
+                <span class="text-[10px] font-bold text-amber-600 uppercase tracking-wider block">Customer Due</span>
+                <span class="text-base font-extrabold text-amber-700 tracking-tight block font-mono">@currency($customerDueTotal)</span>
+                <span class="text-[10px] text-slate-400 block">Outstanding balance</span>
+            </div>
+            <div class="w-9 h-9 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-sm border border-amber-100 flex-shrink-0">
+                <i class="fas fa-file-invoice-dollar"></i>
             </div>
         </div>
 
@@ -469,57 +493,46 @@
                 </div>
             </div>
 
-            <!-- Card 5: Tenant Activity & Audit Trail Timeline -->
+            <!-- Customer Directory Snapshot -->
             <div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
                 <div class="px-4 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
                     <div class="flex items-center gap-2">
-                        <i class="fas fa-history text-purple-600"></i>
-                        <h3 class="font-bold text-slate-900 text-xs">Tenant Activity & Audit Trail</h3>
+                        <i class="fas fa-users text-cyan-600"></i>
+                        <h3 class="font-bold text-slate-900 text-xs">Customers</h3>
                     </div>
-                    <span class="text-[11px] text-slate-500 font-mono">{{ count($tenant->activityLogs) }} Audit Logs</span>
+                    <span class="text-[11px] text-slate-500 font-mono">{{ number_format($customerCount) }} Total</span>
                 </div>
-
-                <div class="p-4 divide-y divide-slate-100 max-h-96 overflow-y-auto space-y-3">
-                    @forelse($tenant->activityLogs as $log)
-                        <div class="pt-3 first:pt-0 flex items-start gap-3 text-xs">
-                            <div class="w-7 h-7 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center flex-shrink-0 text-xs mt-0.5 border border-purple-100">
-                                @if(str_contains($log->event_type, 'created'))
-                                    <i class="fas fa-plus"></i>
-                                @elseif(str_contains($log->event_type, 'wallet'))
-                                    <i class="fas fa-wallet"></i>
-                                @elseif(str_contains($log->event_type, 'impersonate'))
-                                    <i class="fas fa-user-secret"></i>
-                                @elseif(str_contains($log->event_type, 'suspend'))
-                                    <i class="fas fa-lock text-rose-600"></i>
-                                @elseif(str_contains($log->event_type, 'extend') || str_contains($log->event_type, 'renew'))
-                                    <i class="fas fa-calendar-check text-emerald-600"></i>
-                                @else
-                                    <i class="fas fa-bolt"></i>
-                                @endif
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <div class="flex items-center justify-between gap-2">
-                                    <span class="font-bold text-slate-900 text-xs truncate">
-                                        {{ $log->description }}
-                                    </span>
-                                    <span class="text-[10px] text-slate-400 font-mono flex-shrink-0">
-                                        {{ $log->created_at ? $log->created_at->diffForHumans() : '—' }}
-                                    </span>
-                                </div>
-                                <div class="flex items-center gap-3 text-[10.5px] text-slate-400 mt-1">
-                                    <span>Actor: <strong class="text-slate-600">{{ $log->actor_name ?: ucfirst($log->actor_type) }}</strong></span>
-                                    <span>•</span>
-                                    <span>IP: <code class="font-mono text-slate-600">{{ $log->ip_address ?: '127.0.0.1' }}</code></span>
-                                    <span>•</span>
-                                    <span>Time: {{ $log->created_at ? $log->created_at->format('d M Y, h:i A') : '' }}</span>
-                                </div>
-                            </div>
-                        </div>
-                    @empty
-                        <div class="text-center py-6 text-slate-400 text-xs">
-                            No activity audit logs recorded yet.
-                        </div>
-                    @endforelse
+                <div class="overflow-x-auto">
+                    <table class="saas-table">
+                        <thead>
+                            <tr>
+                                <th class="text-center">Customer</th>
+                                <th class="text-center">Phone</th>
+                                <th class="text-center">Package</th>
+                                <th class="text-center">Monthly Bill</th>
+                                <th class="text-center">Due</th>
+                                <th class="text-center">Status</th>
+                                <th class="text-center">Expiry</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($customers as $customer)
+                                <tr>
+                                    <td class="text-left font-semibold">{{ $customer->name ?: $customer->customer_id }}</td>
+                                    <td class="text-center font-mono">{{ $customer->phone ?: '—' }}</td>
+                                    <td class="text-left">{{ $customer->package_display_name }}</td>
+                                    <td class="text-right font-mono">@currency($customer->monthly_bill)</td>
+                                    <td class="text-right font-mono">@currency($customer->due_amount)</td>
+                                    <td class="text-center">{{ ucfirst($customer->effective_status) }}</td>
+                                    <td class="text-center font-mono">{{ $customer->expiry_date?->format('d M, Y') ?? 'Lifetime' }}</td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="7" class="text-center">No customers registered for this tenant.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
