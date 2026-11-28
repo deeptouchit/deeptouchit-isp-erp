@@ -4,8 +4,8 @@
 
 @section('content')
 <div class="space-y-3" x-data="{ 
-    searchQuery: '',
-    statusFilter: 'all',
+    searchQuery: @js(request('search', '')),
+    pageOffset: {{ ($plans->currentPage() - 1) * $plans->perPage() }},
     sortColumn: 'sort_order',
     sortAsc: true,
     currencySymbol: '{{ $currencySymbol ?? ($globalSettings['currency_symbol'] ?? '৳') }}',
@@ -22,21 +22,10 @@
     activeMenu: null,
     menuPos: {},
     
-    plansList: @js($plans),
+    plansList: @js($plans->items()),
 
     get filteredPlans() {
-        let result = this.plansList.filter(p => {
-            let matchSearch = this.searchQuery === '' || 
-                (p.code && p.code.toLowerCase().includes(this.searchQuery.toLowerCase())) ||
-                p.name.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-                String(p.customer_limit).includes(this.searchQuery);
-            
-            let matchStatus = this.statusFilter === 'all' || 
-                (this.statusFilter === 'active' && p.is_active) || 
-                (this.statusFilter === 'inactive' && !p.is_active);
-
-            return matchSearch && matchStatus;
-        });
+        let result = [...this.plansList];
 
         result.sort((a, b) => {
             let valA = a[this.sortColumn];
@@ -80,14 +69,6 @@
             left: 'auto'
         };
         this.activeMenu = id;
-    },
-
-    resetFilters() {
-        this.searchQuery = '';
-        this.statusFilter = 'all';
-        this.showMoreFilters = false;
-        this.sortColumn = 'sort_order';
-        this.sortAsc = true;
     },
 
     openDetailsModal(plan) {
@@ -168,29 +149,36 @@
     </div>
 
     <!-- Search & Filter Controls -->
-    <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5">
-        <div class="flex flex-col md:flex-row items-stretch md:items-center gap-2">
+    <x-owner.filter-toolbar
+        action="{{ route('owner.plans.index') }}"
+        reset-url="{{ route('owner.plans.index') }}"
+        form-id="owner-plans-filter"
+        :show-more-open="request()->filled('status')"
+        :active-more-count="request()->filled('status') ? 1 : 0"
+        :search-value="request('search', '')"
+    >
+        <x-slot:primary>
             <div class="relative flex-1 min-w-[200px]">
-                <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px]" :class="searchQuery ? 'text-cyan-600 font-bold' : 'text-slate-400'"></i>
-                <input type="text" x-model="searchQuery" placeholder="Search plan code, name or capacity..." class="w-full h-[34px] pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden">
-                <button type="button" x-show="searchQuery" x-cloak @click="searchQuery = ''" class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-600"><i class="fas fa-times"></i></button>
+                <div class="relative">
+                    <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px]" :class="searchQuery ? 'text-cyan-600 font-bold' : 'text-slate-400'"></i>
+                    <input type="text" name="search" x-model="searchQuery" value="{{ request('search', '') }}" placeholder="Search plan code, name or capacity..." class="w-full h-[34px] pl-8 pr-7 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden">
+                    <button type="button" x-show="searchQuery" x-cloak @click="searchQuery = ''; $nextTick(() => $el.closest('form').submit())" aria-label="Clear plan search" class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-600"><i class="fas fa-times text-[10px]"></i></button>
+                </div>
             </div>
-            <select x-model="statusFilter" class="h-[34px] md:w-36 px-2.5 py-0 text-xs rounded-lg border border-slate-200 bg-slate-50 font-semibold text-slate-700">
-                <option value="all">All Tiers</option>
-                <option value="active">Active Only</option>
-                <option value="inactive">Disabled Only</option>
+            <select name="per_page" aria-label="Plans per page" class="w-full md:w-28 flex-shrink-0 h-[34px] px-2.5 py-0 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700">
+                @foreach([15, 20, 30, 50, 100, 250, 500] as $size)
+                    <option value="{{ $size }}" {{ (int) request('per_page', 15) === $size ? 'selected' : '' }}>{{ $size }} / page</option>
+                @endforeach
             </select>
-            <select class="h-[34px] md:w-28 px-2.5 py-0 text-xs rounded-lg border border-slate-200 bg-slate-50 font-semibold text-slate-700"><option>All Plans</option></select>
-            <button type="button" @click="showMoreFilters = !showMoreFilters" class="h-[34px] py-0 px-3 rounded-lg border border-slate-200 bg-slate-50 text-slate-700 text-xs font-semibold flex items-center justify-center gap-1.5"><i class="fas" :class="showMoreFilters ? 'fa-chevron-up text-cyan-600' : 'fa-chevron-down text-slate-400'"></i> More Filters</button>
-            <div class="flex items-center gap-1.5 md:ml-auto">
-                <button type="button" class="h-[34px] bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-0 px-3 rounded-lg shadow-xs flex items-center justify-center gap-1.5"><i class="fas fa-filter text-[10px]"></i><span>Filter</span></button>
-                <button type="button" @click.prevent="resetFilters()" class="h-[34px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-0 px-2.5 rounded-lg border border-slate-200/80 flex items-center justify-center gap-1"><i class="fas fa-rotate-left text-[10px]"></i><span>Reset</span></button>
-            </div>
-        </div>
-        <div x-show="showMoreFilters" x-cloak x-transition class="pt-2 border-t border-slate-100 flex flex-wrap items-center gap-2">
-            <span class="text-[10px] text-slate-500 font-medium">Use the table headers to sort plans by name, capacity, price, or subscribers.</span>
-        </div>
-    </div>
+        </x-slot:primary>
+        <x-slot:secondary>
+            <select name="status" aria-label="Plan status" class="h-[34px] min-w-[160px] px-2.5 py-0 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700">
+                <option value="">All Statuses</option>
+                <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>Active Only</option>
+                <option value="inactive" {{ request('status') === 'inactive' ? 'selected' : '' }}>Disabled Only</option>
+            </select>
+        </x-slot:secondary>
+    </x-owner.filter-toolbar>
 
     <!-- High-Density Administrative Matrix Table with Column/Row Borders and Sortable Headers -->
     <x-owner.table-shell
@@ -250,7 +238,7 @@
                             
                             <!-- Index Number Cell -->
                             <td class="py-2 px-3 border-r border-slate-200 text-center font-mono font-bold text-slate-500 whitespace-nowrap">
-                                <span x-text="index + 1"></span>
+                                <span x-text="pageOffset + index + 1"></span>
                             </td>
 
                             <!-- Plan Name Cell -->
@@ -296,6 +284,9 @@
                         </tr>
                     </template>
         </x-slot:body>
+        <x-slot:pagination>
+            {{ $plans->links() }}
+        </x-slot:pagination>
     </x-owner.table-shell>
 
     <!-- 1. VIEW DETAILS MODAL -->

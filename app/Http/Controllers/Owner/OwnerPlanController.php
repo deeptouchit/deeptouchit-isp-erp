@@ -9,18 +9,40 @@ use Illuminate\Support\Str;
 
 class OwnerPlanController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $plans = SaasPlan::withCount('tenants')
+        $baseQuery = SaasPlan::withCount('tenants');
+
+        $allPlans = (clone $baseQuery)
             ->orderBy('sort_order', 'asc')
             ->orderBy('customer_limit', 'asc')
             ->get();
 
-        $activePlansCount = $plans->where('is_active', true)->count();
-        $totalSubscribers = $plans->sum('tenants_count');
-        $minPrice = $plans->min('monthly_price') ?? 600;
-        $maxPrice = $plans->max('monthly_price') ?? 8000;
-        $popularPlan = $plans->where('is_popular', true)->first() ?? $plans->first();
+        $search = trim((string) $request->query('search', ''));
+        $status = (string) $request->query('status', '');
+        $perPage = (int) $request->query('per_page', 15);
+        $perPage = in_array($perPage, [15, 20, 30, 50, 100, 250, 500], true) ? $perPage : 15;
+
+        $plansQuery = SaasPlan::withCount('tenants')
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($nested) use ($search) {
+                    $nested->where('code', 'like', "%{$search}%")
+                        ->orWhere('name', 'like', "%{$search}%")
+                        ->orWhere('customer_limit', 'like', "%{$search}%");
+                });
+            })
+            ->when($status === 'active', fn ($query) => $query->where('is_active', true))
+            ->when($status === 'inactive', fn ($query) => $query->where('is_active', false))
+            ->orderBy('sort_order', 'asc')
+            ->orderBy('customer_limit', 'asc');
+
+        $plans = $plansQuery->paginate($perPage)->withQueryString();
+
+        $activePlansCount = $allPlans->where('is_active', true)->count();
+        $totalSubscribers = $allPlans->sum('tenants_count');
+        $minPrice = $allPlans->min('monthly_price') ?? 600;
+        $maxPrice = $allPlans->max('monthly_price') ?? 8000;
+        $popularPlan = $allPlans->where('is_popular', true)->first() ?? $allPlans->first();
 
         return view('owner.plans.index', compact(
             'plans',
