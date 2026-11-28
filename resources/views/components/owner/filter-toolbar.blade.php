@@ -24,7 +24,7 @@
                     @click="showMoreFilters = !showMoreFilters"
                     :aria-expanded="showMoreFilters.toString()"
                     aria-controls="{{ $formId ? $formId . '-more-filters' : 'owner-more-filters' }}"
-                    class="h-[34px] py-0 px-2.5 rounded-md border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-medium transition flex items-center justify-center gap-1.5 flex-shrink-0 cursor-pointer shadow-2xs">
+                    class="h-[34px] py-0 px-2.5 rounded-sm border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-medium transition flex items-center justify-center gap-1.5 flex-shrink-0 cursor-pointer shadow-2xs">
                 <i class="fas fa-sliders-h text-[10px]" aria-hidden="true"></i>
                 <span>More Filters</span>
                 @if((int) $activeMoreCount > 0)
@@ -38,11 +38,11 @@
                 @isset($actions)
                     {{ $actions }}
                 @else
-                    <button type="submit" class="h-[34px] py-0 px-3 rounded-md bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs transition flex items-center justify-center gap-1.5 shadow-xs">
+                    <button type="submit" class="h-[34px] py-0 px-3 rounded-sm bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs transition flex items-center justify-center gap-1.5 shadow-xs">
                         <i class="fas fa-filter text-[10px]" aria-hidden="true"></i>
                         <span>Filter</span>
                     </button>
-                    <a href="{{ $resetUrl ?: $action }}" class="h-[34px] py-0 px-2.5 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs transition flex items-center justify-center gap-1 border border-slate-200/80">
+                    <a href="{{ $resetUrl ?: $action }}" class="h-[34px] py-0 px-2.5 rounded-sm bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs transition flex items-center justify-center gap-1 border border-slate-200/80">
                         <i class="fas fa-rotate-left text-[10px]" aria-hidden="true"></i>
                         <span>Reset</span>
                     </a>
