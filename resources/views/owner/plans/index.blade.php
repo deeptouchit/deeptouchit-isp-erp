@@ -164,16 +164,17 @@
                     <button type="button" x-show="searchQuery" x-cloak @click="searchQuery = ''; $nextTick(() => $el.closest('form').submit())" aria-label="Clear plan search" class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-600"><i class="fas fa-times text-[10px]"></i></button>
                 </div>
             </div>
-            <select name="per_page" aria-label="Plans per page" class="w-full md:w-28 flex-shrink-0 h-[34px] px-2.5 py-0 text-xs rounded-sm border border-slate-200 bg-slate-50 text-slate-700">
-                @foreach([15, 20, 30, 50, 100, 250, 500] as $size)
-                    <option value="{{ $size }}" {{ (int) request('per_page', 15) === $size ? 'selected' : '' }}>{{ $size }} / page</option>
-                @endforeach
-            </select>
             <select name="status" aria-label="Plan status" class="w-full md:w-36 flex-shrink-0 h-[34px] px-2.5 py-0 text-xs rounded-sm border border-slate-200 bg-slate-50 text-slate-700">
                 <option value="">All Statuses</option>
                 <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>Active Only</option>
                 <option value="inactive" {{ request('status') === 'inactive' ? 'selected' : '' }}>Disabled Only</option>
             </select>
+            <select name="per_page" aria-label="Plans per page" class="w-full md:w-28 flex-shrink-0 h-[34px] px-2.5 py-0 text-xs rounded-sm border border-slate-200 bg-slate-50 text-slate-700">
+                @foreach([15, 20, 30, 50, 100, 250, 500] as $size)
+                    <option value="{{ $size }}" {{ (int) request('per_page', 15) === $size ? 'selected' : '' }}>{{ $size }} / page</option>
+                @endforeach
+            </select>
+   
         </x-slot:primary>
     </x-owner.filter-toolbar>
 
