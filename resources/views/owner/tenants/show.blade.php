@@ -60,7 +60,7 @@
         </div>
 
         <!-- Action Buttons -->
-        <div class="owner-global-header-actions flex items-center justify-end gap-1.5 flex-wrap lg:max-w-[70%]">
+        <div class="owner-global-header-actions flex items-center justify-end gap-1.5 flex-wrap lg:flex-nowrap lg:max-w-none lg:overflow-x-auto">
             
             <!-- 1-Click Login / Impersonate -->
             <form method="POST" action="{{ route('owner.tenants.impersonate', $tenant) }}" class="inline">
