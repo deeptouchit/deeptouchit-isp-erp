@@ -5,9 +5,6 @@
 @section('content')
 <div class="space-y-3" x-data="{ 
     searchQuery: @js(request('search', '')),
-    pageOffset: {{ ($plans->currentPage() - 1) * $plans->perPage() }},
-    sortColumn: 'sort_order',
-    sortAsc: true,
     currencySymbol: '{{ $currencySymbol ?? ($globalSettings['currency_symbol'] ?? '৳') }}',
     currencyPosition: '{{ $currencyPosition ?? ($globalSettings['currency_position'] ?? 'left') }}',
     formatCurrency(amount) {
@@ -22,41 +19,6 @@
     activeMenu: null,
     menuPos: {},
     
-    plansList: @js($plans->items()),
-
-    get filteredPlans() {
-        let result = [...this.plansList];
-
-        result.sort((a, b) => {
-            let valA = a[this.sortColumn];
-            let valB = b[this.sortColumn];
-
-            // Numerical check
-            if (!isNaN(valA) && !isNaN(valB)) {
-                valA = Number(valA);
-                valB = Number(valB);
-            } else {
-                valA = String(valA || '').toLowerCase();
-                valB = String(valB || '').toLowerCase();
-            }
-
-            if (valA < valB) return this.sortAsc ? -1 : 1;
-            if (valA > valB) return this.sortAsc ? 1 : -1;
-            return 0;
-        });
-
-        return result;
-    },
-
-    sortBy(column) {
-        if (this.sortColumn === column) {
-            this.sortAsc = !this.sortAsc;
-        } else {
-            this.sortColumn = column;
-            this.sortAsc = true;
-        }
-    },
-
     toggleMenu(id, event) {
         if (this.activeMenu === id) { this.activeMenu = null; return; }
         const rect = event.currentTarget.getBoundingClientRect();
@@ -188,99 +150,87 @@
         <x-slot:head>
                     <tr class="bg-slate-100/90 text-slate-700 text-[11px] font-bold uppercase tracking-wider border-b border-slate-200 select-none">
                         <!-- Sortable Index / SL -->
-                        <th @click="sortBy('sort_order')" class="py-2.5 px-3 border-r border-slate-200 cursor-pointer hover:bg-slate-200/80 transition whitespace-nowrap text-center w-12">
-                            <div class="flex items-center justify-center gap-1">
-                                <span>#</span>
-                                <i class="fas text-[9px]" :class="sortColumn === 'sort_order' ? (sortAsc ? 'fa-arrow-up text-blue-600' : 'fa-arrow-down text-blue-600') : 'fa-sort text-slate-400'"></i>
-                            </div>
+                        <th class="text-center w-12">
+                            <span>#</span>
                         </th>
 
                         <!-- Sortable Plan Name -->
-                        <th @click="sortBy('name')" class="py-2.5 px-3 border-r border-slate-200 text-center cursor-pointer hover:bg-slate-200/80 transition whitespace-nowrap">
-                            <div class="flex items-center justify-between gap-1.5">
-                                <span>Plan Name</span>
-                                <i class="fas text-[9px]" :class="sortColumn === 'name' ? (sortAsc ? 'fa-arrow-up text-blue-600' : 'fa-arrow-down text-blue-600') : 'fa-sort text-slate-400'"></i>
-                            </div>
+                        <th class="text-center">
+                            <span>Plan Name</span>
                         </th>
 
                         <!-- Sortable Customer Capacity -->
-                        <th @click="sortBy('customer_limit')" class="py-2.5 px-3 border-r border-slate-200 text-center cursor-pointer hover:bg-slate-200/80 transition whitespace-nowrap">
-                            <div class="flex items-center justify-end gap-1.5">
-                                <span>Customer Cap</span>
-                                <i class="fas text-[9px]" :class="sortColumn === 'customer_limit' ? (sortAsc ? 'fa-arrow-up text-blue-600' : 'fa-arrow-down text-blue-600') : 'fa-sort text-slate-400'"></i>
-                            </div>
+                        <th class="text-center">
+                            <span>Customer Cap</span>
                         </th>
 
                         <!-- Sortable Standard Monthly -->
-                        <th @click="sortBy('monthly_price')" class="py-2.5 px-3 border-r border-slate-200 text-center cursor-pointer hover:bg-slate-200/80 transition whitespace-nowrap">
-                            <div class="flex items-center justify-end gap-1.5">
-                                <span>Standard / Mo</span>
-                                <i class="fas text-[9px]" :class="sortColumn === 'monthly_price' ? (sortAsc ? 'fa-arrow-up text-blue-600' : 'fa-arrow-down text-blue-600') : 'fa-sort text-slate-400'"></i>
-                            </div>
+                        <th class="text-center">
+                            <span>Standard / Mo</span>
                         </th>
 
                         <!-- Status Column -->
-                        <th class="py-2.5 px-3 border-r border-slate-200 text-center whitespace-nowrap">
+                        <th class="no-sort text-center">
                             <span>Status</span>
                         </th>
 
                         <!-- Actions Column -->
-                        <th class="py-2.5 px-3 text-center whitespace-nowrap">
+                        <th class="no-sort text-center">
                             <span>Action</span>
                         </th>
                     </tr>
         </x-slot:head>
         <x-slot:body>
-                    <template x-for="(plan, index) in filteredPlans" :key="plan.id">
-                        <tr class="hover:bg-slate-50 transition" :class="plan.is_popular ? 'bg-amber-50/20' : ''">
+                    @foreach($plans as $index => $plan)
+                        <tr class="hover:bg-slate-50 transition {{ $plan->is_popular ? 'bg-amber-50/20' : '' }}">
                             
                             <!-- Index Number Cell -->
                             <td class="py-2 px-3 border-r border-slate-200 text-center font-mono font-bold text-slate-500 whitespace-nowrap">
-                                <span x-text="pageOffset + index + 1"></span>
+                                {{ $plans->firstItem() + $index }}
                             </td>
 
                             <!-- Plan Name Cell -->
-                            <td class="py-2 px-3 border-r border-slate-200 whitespace-nowrap">
-                                <span class="font-extrabold text-slate-900 text-xs font-mono" x-text="plan.name"></span>
+                            <td class="text-left">
+                                <span class="font-extrabold text-slate-900 text-xs font-mono">{{ $plan->name }}</span>
                             </td>
 
                             <!-- Customer Capacity Cell -->
-                            <td class="py-2 px-3 border-r border-slate-200 text-right font-mono font-extrabold text-blue-700 whitespace-nowrap">
-                                <span x-text="Number(plan.customer_limit).toLocaleString() + ' Users'"></span>
+                            <td class="text-right font-mono font-extrabold text-blue-700">
+                                {{ number_format($plan->customer_limit) }} Users
                             </td>
 
                             <!-- Standard Monthly Price Cell -->
-                            <td class="py-2 px-3 border-r border-slate-200 text-right font-mono font-extrabold text-slate-900 whitespace-nowrap">
-                                <span x-text="formatCurrency(plan.monthly_price)"></span>
+                            <td class="text-right font-mono font-extrabold text-slate-900">
+                                @currency($plan->monthly_price)
                             </td>
 
                             <!-- Status Cell -->
-                            <td class="py-2 px-3 border-r border-slate-200 text-center whitespace-nowrap">
-                                <form :action="'/owner/plans/' + plan.id + '/toggle'" method="POST" class="inline-block">
-                                    @csrf
-                                    <button type="submit" class="px-2 py-0.5 rounded text-[10px] font-bold transition"
-                                            :class="plan.is_active ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200' : 'bg-slate-100 text-slate-500 hover:bg-slate-200 border border-slate-200'"
-                                            x-text="plan.is_active ? 'Active' : 'Disabled'">
-                                    </button>
-                                </form>
+                            <td class="text-center">
+                                <span class="px-2 py-0.5 rounded text-[10px] font-bold {{ $plan->is_active ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-500 border border-slate-200' }}">
+                                    {{ $plan->is_active ? 'Active' : 'Disabled' }}
+                                </span>
                             </td>
 
                             <!-- Actions Cell (Details + Edit + Delete) -->
-                            <td class="py-2 px-3 text-center whitespace-nowrap">
-                                <button type="button" @click="toggleMenu(plan.id, $event)" class="w-7 h-7 rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 inline-flex items-center justify-center" aria-label="Plan actions">
+                            <td class="text-center">
+                                <button type="button" @click="toggleMenu({{ $plan->id }}, $event)" class="w-7 h-7 rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 inline-flex items-center justify-center" aria-label="Actions for {{ $plan->name }}">
                                     <i class="fas fa-ellipsis-v text-[10px]"></i>
                                 </button>
                                 <template x-teleport="body">
-                                    <div x-show="activeMenu === plan.id" x-cloak :style="menuPos" @click.outside="activeMenu = null" class="fixed z-50 w-44 rounded-lg border border-slate-200 bg-white p-1 text-xs shadow-lg">
-                                        <button type="button" @click="activeMenu = null; openDetailsModal(plan)" class="flex w-full items-center gap-2 rounded-md px-2 py-1.5 hover:bg-slate-50"><i class="fas fa-eye fa-fw"></i> View Details</button>
-                                        <button type="button" @click="activeMenu = null; openEditModal(plan)" class="flex w-full items-center gap-2 rounded-md px-2 py-1.5 hover:bg-slate-50"><i class="fas fa-edit fa-fw"></i> Edit Configuration</button>
-                                        <button type="button" @click="activeMenu = null; confirmDeletePlan(plan)" class="flex w-full items-center gap-2 rounded-md border-t border-slate-100 px-2 py-1.5 text-rose-700 hover:bg-rose-50"><i class="fas fa-trash-alt fa-fw"></i> Delete Plan</button>
+                                    <div x-show="activeMenu === {{ $plan->id }}" x-cloak :style="menuPos" @click.outside="activeMenu = null" class="fixed z-50 w-48 rounded-lg border border-slate-200 bg-white p-1 text-xs shadow-lg">
+                                        <button type="button" @click="activeMenu = null; openDetailsModal(@js($plan))" class="flex w-full items-center gap-2 rounded-md px-2 py-1.5 hover:bg-slate-50"><i class="fas fa-eye fa-fw"></i> View Details</button>
+                                        <button type="button" @click="activeMenu = null; openEditModal(@js($plan))" class="flex w-full items-center gap-2 rounded-md px-2 py-1.5 hover:bg-slate-50"><i class="fas fa-edit fa-fw"></i> Edit Configuration</button>
+                                        <form action="{{ route('owner.plans.toggle', $plan) }}" method="POST" class="block">
+                                            @csrf
+                                            <button type="submit" class="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-amber-700 hover:bg-amber-50"><i class="fas fa-power-off fa-fw"></i> {{ $plan->is_active ? 'Disable Plan' : 'Enable Plan' }}</button>
+                                        </form>
+                                        <button type="button" @click="activeMenu = null; confirmDeletePlan(@js($plan))" class="flex w-full items-center gap-2 rounded-md border-t border-slate-100 px-2 py-1.5 text-rose-700 hover:bg-rose-50"><i class="fas fa-trash-alt fa-fw"></i> Delete Plan</button>
                                     </div>
                                 </template>
                             </td>
 
                         </tr>
-                    </template>
+                    @endforeach
         </x-slot:body>
         <x-slot:pagination>
             {{ $plans->links() }}
