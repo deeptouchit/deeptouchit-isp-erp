@@ -169,6 +169,10 @@
                             <span>Standard / Mo</span>
                         </th>
 
+                        <th class="text-center">
+                            <span>Tenants</span>
+                        </th>
+
                         <!-- Status Column -->
                         <th class="no-sort text-center">
                             <span>Status</span>
@@ -202,6 +206,11 @@
                             <!-- Standard Monthly Price Cell -->
                             <td class="text-right font-mono font-extrabold text-slate-900">
                                 @currency($plan->monthly_price)
+                            </td>
+
+                            <!-- Tenant Count Cell -->
+                            <td class="text-right font-mono font-extrabold text-cyan-700">
+                                {{ number_format($plan->tenants_count) }}
                             </td>
 
                             <!-- Status Cell -->
