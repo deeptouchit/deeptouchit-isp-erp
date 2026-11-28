@@ -208,22 +208,46 @@
             <div class="space-y-0.5">
                 <span class="text-[10px] font-bold text-cyan-600 uppercase tracking-wider block">Customers</span>
                 <span class="text-base font-extrabold text-slate-900 tracking-tight block font-mono">{{ number_format($customerCount) }}</span>
-                <span class="text-[10px] text-slate-400 block">{{ number_format($activeCustomerCount) }} active</span>
+                <span class="text-[10px] text-slate-400 block">Total registered subscribers</span>
             </div>
             <div class="w-9 h-9 rounded-lg bg-cyan-50 text-cyan-600 flex items-center justify-center text-sm border border-cyan-100 flex-shrink-0">
                 <i class="fas fa-users"></i>
             </div>
         </div>
 
-        <!-- Metric 6: Customer Due -->
+        <!-- Metric 6: Online Routers -->
         <div class="p-3.5 rounded-xl bg-white border border-slate-200 shadow-xs flex items-center justify-between">
             <div class="space-y-0.5">
-                <span class="text-[10px] font-bold text-amber-600 uppercase tracking-wider block">Customer Due</span>
-                <span class="text-base font-extrabold text-amber-700 tracking-tight block font-mono">@currency($customerDueTotal)</span>
-                <span class="text-[10px] text-slate-400 block">Outstanding balance</span>
+                <span class="text-[10px] font-bold text-blue-600 uppercase tracking-wider block">Online Routers</span>
+                <span class="text-base font-extrabold text-blue-700 tracking-tight block font-mono">{{ number_format($onlineRouters) }} / {{ number_format($totalRouters) }}</span>
+                <span class="text-[10px] text-slate-400 block">MikroTik routers</span>
             </div>
-            <div class="w-9 h-9 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-sm border border-amber-100 flex-shrink-0">
-                <i class="fas fa-file-invoice-dollar"></i>
+            <div class="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-sm border border-blue-100 flex-shrink-0">
+                <i class="fas fa-router"></i>
+            </div>
+        </div>
+
+        <!-- Metric 7: OLT Devices -->
+        <div class="p-3.5 rounded-xl bg-white border border-slate-200 shadow-xs flex items-center justify-between">
+            <div class="space-y-0.5">
+                <span class="text-[10px] font-bold text-purple-600 uppercase tracking-wider block">OLT Devices</span>
+                <span class="text-base font-extrabold text-purple-700 tracking-tight block font-mono">{{ number_format($totalOlts) }}</span>
+                <span class="text-[10px] text-slate-400 block">Optical line terminals</span>
+            </div>
+            <div class="w-9 h-9 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center text-sm border border-purple-100 flex-shrink-0">
+                <i class="fas fa-server"></i>
+            </div>
+        </div>
+
+        <!-- Metric 8: ONU / ONT -->
+        <div class="p-3.5 rounded-xl bg-white border border-slate-200 shadow-xs flex items-center justify-between">
+            <div class="space-y-0.5">
+                <span class="text-[10px] font-bold text-emerald-600 uppercase tracking-wider block">ONU / ONT</span>
+                <span class="text-base font-extrabold text-emerald-700 tracking-tight block font-mono">{{ number_format($totalOnus) }}</span>
+                <span class="text-[10px] text-slate-400 block">Optical network units</span>
+            </div>
+            <div class="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm border border-emerald-100 flex-shrink-0">
+                <i class="fas fa-network-wired"></i>
             </div>
         </div>
 
@@ -493,48 +517,6 @@
                 </div>
             </div>
 
-            <!-- Customer Directory Snapshot -->
-            <div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
-                <div class="px-4 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                        <i class="fas fa-users text-cyan-600"></i>
-                        <h3 class="font-bold text-slate-900 text-xs">Customers</h3>
-                    </div>
-                    <span class="text-[11px] text-slate-500 font-mono">{{ number_format($customerCount) }} Total</span>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="saas-table">
-                        <thead>
-                            <tr>
-                                <th class="text-center">Customer</th>
-                                <th class="text-center">Phone</th>
-                                <th class="text-center">Package</th>
-                                <th class="text-center">Monthly Bill</th>
-                                <th class="text-center">Due</th>
-                                <th class="text-center">Status</th>
-                                <th class="text-center">Expiry</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($customers as $customer)
-                                <tr>
-                                    <td class="text-left font-semibold">{{ $customer->name ?: $customer->customer_id }}</td>
-                                    <td class="text-center font-mono">{{ $customer->phone ?: '—' }}</td>
-                                    <td class="text-left">{{ $customer->package_display_name }}</td>
-                                    <td class="text-right font-mono">@currency($customer->monthly_bill)</td>
-                                    <td class="text-right font-mono">@currency($customer->due_amount)</td>
-                                    <td class="text-center">{{ ucfirst($customer->effective_status) }}</td>
-                                    <td class="text-center font-mono">{{ $customer->expiry_date?->format('d M, Y') ?? 'Lifetime' }}</td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="7" class="text-center">No customers registered for this tenant.</td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-            </div>
 
         </div>
 
