@@ -34,38 +34,34 @@
     <x-owner.filter-toolbar
         :action="route('owner.tenants.index')"
         :reset-url="route('owner.tenants.index')"
-        :show-more-open="request()->filled('status') || request()->filled('plan_id')"
-        :active-more-count="request()->filled('status') || request()->filled('plan_id') ? 2 : 0"
+        :show-more-button="false"
         :search-value="request('search', '')"
         form-id="owner-tenants-filter">
         <x-slot:primary>
             <div class="relative flex-1 min-w-[200px]">
                 <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px] pointer-events-none" :class="searchQuery ? 'text-cyan-600 font-bold' : 'text-slate-400'" aria-hidden="true"></i>
-                <input type="search" name="search" value="{{ request('search') }}" x-model="searchQuery" placeholder="Search company, domain, email, phone..." class="w-full h-[34px] pl-8 pr-7 rounded-lg bg-slate-50 border border-slate-200 text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden">
+                <input type="search" name="search" value="{{ request('search') }}" x-model="searchQuery" placeholder="Search company, domain, email, phone..." class="w-full h-[34px] pl-8 pr-7 rounded-sm bg-slate-50 border border-slate-200 text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden">
                 <button type="button" x-show="searchQuery.length > 0" x-cloak @click="searchQuery = ''; $nextTick(() => $el.closest('form').requestSubmit())" aria-label="Clear search" class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500"><i class="fas fa-times-circle text-[10px]"></i></button>
             </div>
-            <select name="plan_id" aria-label="Plan" class="h-[34px] w-full md:w-40 px-2.5 py-0 rounded-lg bg-slate-50 border border-slate-200 text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden">
+            <select name="plan_id" aria-label="Plan" class="h-[34px] w-full md:w-40 px-2.5 py-0 rounded-sm bg-slate-50 border border-slate-200 text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden">
                 <option value="">All Plans</option>
                 @foreach($plans as $plan)
                     <option value="{{ $plan->id }}" @selected(request('plan_id') == $plan->id)>{{ $plan->name }} ({{ number_format($plan->customer_limit) }} Users)</option>
                 @endforeach
             </select>
-            <select name="status" aria-label="Status" class="h-[34px] w-full md:w-36 px-2.5 py-0 rounded-lg bg-slate-50 border border-slate-200 text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden">
+            <select name="status" aria-label="Status" class="h-[34px] w-full md:w-36 px-2.5 py-0 rounded-sm bg-slate-50 border border-slate-200 text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden">
                 <option value="">All Statuses</option>
                 <option value="active" @selected(request('status') === 'active')>Active</option>
                 <option value="suspended" @selected(request('status') === 'suspended')>Suspended</option>
                 <option value="expiring_soon" @selected(request('status') === 'expiring_soon')>Expiring Soon</option>
                 <option value="expired" @selected(request('status') === 'expired')>Expired</option>
             </select>
-            <select name="per_page" aria-label="Tenants per page" class="h-[34px] w-full md:w-28 px-2.5 py-0 rounded-lg bg-slate-50 border border-slate-200 text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden">
+            <select name="per_page" aria-label="Tenants per page" class="h-[34px] w-full md:w-28 px-2.5 py-0 rounded-sm bg-slate-50 border border-slate-200 text-xs focus:bg-white focus:border-cyan-500 focus:outline-hidden">
                 @foreach([15, 30, 50, 100] as $limit)
                     <option value="{{ $limit }}" @selected(request('per_page', 15) == $limit)>{{ $limit }} / page</option>
                 @endforeach
             </select>
         </x-slot:primary>
-        <x-slot:secondary>
-            <span class="text-[11px] text-slate-500">Use status and plan filters to narrow the tenant directory.</span>
-        </x-slot:secondary>
     </x-owner.filter-toolbar>
 
     <!-- Essential Clean High-Density Administrative Matrix Table -->
@@ -74,11 +70,10 @@
                     <tr>
                         <th class="w-12 text-center font-semibold">#</th>
                         <th class="text-center font-semibold">Name</th>
-                        <th class="text-center font-semibold">Address</th>
                         <th class="text-center font-semibold">Phone</th>
                         <th class="text-center font-semibold">Package</th>
                         <th class="text-center font-semibold">Expiry</th>
-                        <th class="text-center font-semibold">Status</th>
+                        <th class="no-sort text-center font-semibold">Status</th>
                         <th class="no-sort text-center font-semibold">Actions</th>
                     </tr>
         </x-slot:head>
@@ -100,9 +95,6 @@
                             </td>
                             <td class="text-left">
                                 <a href="{{ route('owner.tenants.show', $tenant) }}" class="font-semibold text-slate-900 hover:text-cyan-700">{{ $tenant->name }}</a>
-                            </td>
-                            <td class="text-left">
-                                <span class="block max-w-xs truncate" title="{{ $tenant->address }}">{{ $tenant->address ?: '—' }}</span>
                             </td>
                             <td class="text-center font-mono">{{ $tenant->phone ?: '—' }}</td>
                             <td class="text-left">{{ $tenant->plan->name ?? 'P1' }}</td>

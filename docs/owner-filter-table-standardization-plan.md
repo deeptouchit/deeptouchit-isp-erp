@@ -92,6 +92,13 @@ Owner panel-এর সব master listing page-এ একই filter ও table des
 - Status is a read-only badge in the Status column. Enable/Disable belongs inside the row's floating three-dot action menu.
 - Status and Action headers are `no-sort`; only explicitly sortable data headers may expose sorting behavior.
 - Plan Name is left aligned; numeric capacity, currency and tenant count are right aligned; status and action are centered.
+
+### ISP Tenants page-specific rules
+
+- `/owner/tenants` primary filter row will contain Search, Plan, Status and Per-page controls, followed by Filter and Reset; `More Filters` is not allowed at exactly four page-specific controls.
+- The Tenants master table is limited to seven essential columns: `#`, Name, Phone, Package, Expiry, Status and Actions. Address remains available in the tenant details view rather than widening the listing table.
+- Status is a badge only; tenant activation/suspension remains inside the floating three-dot action menu.
+- Status and Actions headers are `no-sort`; descriptive fields are left aligned, fixed identifiers/dates/status/actions are centered.
 - Form submit-এ অপ্রয়োজনীয় sort query parameter যোগ করা যাবে না।
 
 ### Table system
