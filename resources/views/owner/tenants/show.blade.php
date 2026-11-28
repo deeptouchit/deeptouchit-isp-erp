@@ -60,37 +60,37 @@
         </div>
 
         <!-- Action Buttons -->
-        <div class="owner-global-header-actions flex items-center justify-end gap-1.5 flex-wrap lg:flex-nowrap lg:max-w-none lg:overflow-x-auto">
+        <div class="owner-global-header-actions flex items-center justify-end gap-1 flex-wrap lg:flex-nowrap lg:max-w-none lg:overflow-visible">
             
             <!-- 1-Click Login / Impersonate -->
             <form method="POST" action="{{ route('owner.tenants.impersonate', $tenant) }}" class="inline">
                 @csrf
                 <button type="submit"
-               class="px-3 py-1.5 rounded-md bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-xs transition flex items-center gap-1.5">
+               class="px-2 py-1.5 rounded-md bg-blue-600 hover:bg-blue-700 text-white font-bold text-[10px] shadow-xs transition flex items-center gap-1">
                 <i class="fas fa-sign-in-alt text-[11px]"></i>
-                <span>Login as ISP Admin</span>
+                <span>Login</span>
                 </button>
             </form>
 
             <!-- Quick Extend Validity -->
             <button type="button" 
                     @click="extendModalOpen = true"
-                    class="px-3 py-1.5 rounded-md bg-purple-50 hover:bg-purple-600 hover:text-white text-purple-700 border border-purple-200 font-bold text-xs transition flex items-center gap-1.5 shadow-2xs">
+                    class="px-2 py-1.5 rounded-md bg-purple-50 hover:bg-purple-600 hover:text-white text-purple-700 border border-purple-200 font-bold text-[10px] transition flex items-center gap-1 shadow-2xs">
                 <i class="fas fa-calendar-plus text-[11px]"></i>
-                <span>Extend Validity</span>
+                <span>Extend</span>
             </button>
 
             <!-- Adjust Wallet -->
             <button type="button" 
                     @click="walletModalOpen = true"
-                    class="px-3 py-1.5 rounded-md bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-700 border border-emerald-200 font-bold text-xs transition flex items-center gap-1.5 shadow-2xs">
+                    class="px-2 py-1.5 rounded-md bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-700 border border-emerald-200 font-bold text-[10px] transition flex items-center gap-1 shadow-2xs">
                 <i class="fas fa-wallet text-[11px]"></i>
-                <span>Adjust Wallet</span>
+                <span>Wallet</span>
             </button>
 
             <!-- Edit Settings -->
             <a href="{{ route('owner.tenants.edit', $tenant) }}" 
-               class="px-3 py-1.5 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs transition flex items-center gap-1.5">
+               class="px-2 py-1.5 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-[10px] transition flex items-center gap-1">
                 <i class="fas fa-pencil-alt text-[10px]"></i>
                 <span>Edit</span>
             </a>
@@ -99,7 +99,7 @@
             <form action="{{ route('owner.tenants.toggle-status', $tenant) }}" method="POST" onsubmit="return confirm('Change status for {{ addslashes($tenant->name) }}?');" class="inline">
                 @csrf
                 <button type="submit" 
-                        class="px-3 py-1.5 rounded-md {{ $tenant->status === 'active' ? 'bg-amber-50 text-amber-600 hover:bg-amber-600 hover:text-white border border-amber-200' : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white border border-emerald-200' }} font-semibold text-xs transition flex items-center gap-1.5 shadow-2xs">
+                        class="px-2 py-1.5 rounded-md {{ $tenant->status === 'active' ? 'bg-amber-50 text-amber-600 hover:bg-amber-600 hover:text-white border border-amber-200' : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white border border-emerald-200' }} font-semibold text-[10px] transition flex items-center gap-1 shadow-2xs">
                     <i class="fas {{ $tenant->status === 'active' ? 'fa-ban' : 'fa-check' }} text-[10px]"></i>
                     <span>{{ $tenant->status === 'active' ? 'Suspend' : 'Activate' }}</span>
                 </button>
@@ -108,7 +108,7 @@
             <!-- Delete Button -->
             <button type="button" 
                     onclick="confirmDeleteTenant({{ $tenant->id }}, '{{ addslashes($tenant->name) }}')"
-                    class="px-3 py-1.5 rounded-md bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white border border-rose-200 font-semibold text-xs transition flex items-center gap-1.5 shadow-2xs">
+                    class="px-2 py-1.5 rounded-md bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white border border-rose-200 font-semibold text-[10px] transition flex items-center gap-1 shadow-2xs">
                 <i class="fas fa-trash-alt text-[10px]"></i>
                 <span>Delete</span>
             </button>
@@ -122,7 +122,7 @@
 
             <!-- Back to Index -->
             <a href="{{ route('owner.tenants.index') }}" 
-               class="px-3 py-1.5 rounded-md bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 font-semibold text-xs transition flex items-center gap-1.5">
+               class="px-2 py-1.5 rounded-md bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 font-semibold text-[10px] transition flex items-center gap-1">
                 <i class="fas fa-arrow-left text-[10px]"></i>
                 <span>Back</span>
             </a>
