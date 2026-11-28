@@ -79,6 +79,7 @@ Owner panel-এর সব master listing page-এ একই filter ও table des
 - Search input-এ dynamic search icon state এবং এক-click clear action থাকবে।
 - `More Filters` button-এ active filter counter, `aria-expanded` এবং `aria-controls` থাকবে।
 - Filter state server-side request থেকে hydrate হবে; reset action সবসময় visible থাকবে।
+- `More Filters` কেবল page-specific filter/control চারটির বেশি হলে ব্যবহার হবে; Search, সর্বোচ্চ তিনটি common primary control, Filter এবং Reset একই primary row-তে থাকবে।
 - Form submit-এ অপ্রয়োজনীয় sort query parameter যোগ করা যাবে না।
 
 ### Table system

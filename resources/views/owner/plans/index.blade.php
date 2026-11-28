@@ -153,8 +153,7 @@
         action="{{ route('owner.plans.index') }}"
         reset-url="{{ route('owner.plans.index') }}"
         form-id="owner-plans-filter"
-        :show-more-open="request()->filled('status')"
-        :active-more-count="request()->filled('status') ? 1 : 0"
+        :show-more-button="false"
         :search-value="request('search', '')"
     >
         <x-slot:primary>
@@ -170,14 +169,12 @@
                     <option value="{{ $size }}" {{ (int) request('per_page', 15) === $size ? 'selected' : '' }}>{{ $size }} / page</option>
                 @endforeach
             </select>
-        </x-slot:primary>
-        <x-slot:secondary>
-            <select name="status" aria-label="Plan status" class="h-[34px] min-w-[160px] px-2.5 py-0 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700">
+            <select name="status" aria-label="Plan status" class="w-full md:w-36 flex-shrink-0 h-[34px] px-2.5 py-0 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700">
                 <option value="">All Statuses</option>
                 <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>Active Only</option>
                 <option value="inactive" {{ request('status') === 'inactive' ? 'selected' : '' }}>Disabled Only</option>
             </select>
-        </x-slot:secondary>
+        </x-slot:primary>
     </x-owner.filter-toolbar>
 
     <!-- High-Density Administrative Matrix Table with Column/Row Borders and Sortable Headers -->
