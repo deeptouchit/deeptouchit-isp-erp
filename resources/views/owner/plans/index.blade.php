@@ -174,7 +174,7 @@
                     <option value="{{ $size }}" {{ (int) request('per_page', 15) === $size ? 'selected' : '' }}>{{ $size }} / page</option>
                 @endforeach
             </select>
-   
+
         </x-slot:primary>
     </x-owner.filter-toolbar>
 
