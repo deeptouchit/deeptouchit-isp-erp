@@ -82,6 +82,16 @@ Owner panel-এর সব master listing page-এ একই filter ও table des
 - `More Filters` কেবল page-specific filter/control চারটির বেশি হলে ব্যবহার হবে; Search, সর্বোচ্চ তিনটি common primary control, Filter এবং Reset একই primary row-তে থাকবে।
 - Filter controls compact rectangular হবে; input, select এবং Filter/Reset button-এ `rounded-sm` ব্যবহার হবে, pill/egg-shaped `rounded-full` নয়।
 - Filter toolbar container-এও compact `rounded-md` থাকবে; বড় `rounded-xl` corner ব্যবহার করা যাবে না।
+
+### SaaS Plans page-specific rules
+
+- `/owner/plans` primary filter row will contain Search, Status and Per-page controls, followed by Filter and Reset; `More Filters` is not allowed because there are not more than four page-specific controls.
+- The Plans master table will show at most seven essential columns: `#`, Plan Name, Customer Capacity, Standard Monthly Price, Tenants, Status and Action.
+- Tenant totals must come from the dynamic `tenants_count` relationship count; hardcoded totals are prohibited.
+- Monthly price must be rendered server-side with `@currency()`; client-side currency formatting is not allowed in the master table.
+- Status is a read-only badge in the Status column. Enable/Disable belongs inside the row's floating three-dot action menu.
+- Status and Action headers are `no-sort`; only explicitly sortable data headers may expose sorting behavior.
+- Plan Name is left aligned; numeric capacity, currency and tenant count are right aligned; status and action are centered.
 - Form submit-এ অপ্রয়োজনীয় sort query parameter যোগ করা যাবে না।
 
 ### Table system
