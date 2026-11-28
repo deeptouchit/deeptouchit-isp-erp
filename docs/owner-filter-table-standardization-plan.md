@@ -81,6 +81,7 @@ Owner panel-এর সব master listing page-এ একই filter ও table des
 - Filter state server-side request থেকে hydrate হবে; reset action সবসময় visible থাকবে।
 - `More Filters` কেবল page-specific filter/control চারটির বেশি হলে ব্যবহার হবে; Search, সর্বোচ্চ তিনটি common primary control, Filter এবং Reset একই primary row-তে থাকবে।
 - Filter controls compact rectangular হবে; input, select এবং Filter/Reset button-এ `rounded-sm` ব্যবহার হবে, pill/egg-shaped `rounded-full` নয়।
+- Filter toolbar container-এও compact `rounded-md` থাকবে; বড় `rounded-xl` corner ব্যবহার করা যাবে না।
 - Form submit-এ অপ্রয়োজনীয় sort query parameter যোগ করা যাবে না।
 
 ### Table system

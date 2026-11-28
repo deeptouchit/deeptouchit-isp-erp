@@ -9,7 +9,7 @@
     'showMoreButton' => true,
 ])
 
-<div class="owner-filter-toolbar bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5"
+<div class="owner-filter-toolbar bg-white p-2.5 rounded-md border border-slate-200/90 shadow-2xs space-y-2.5"
      x-data="{ showMoreFilters: @js((bool) $showMoreOpen), searchQuery: @js($searchValue) }">
     <form method="{{ strtoupper($method) }}"
           action="{{ $action }}"
